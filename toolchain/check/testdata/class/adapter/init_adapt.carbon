@@ -56,28 +56,22 @@ let a: C = {.a = 1, .b = 2};
 
 // Cannot implicitly convert between a type and an adapter for the type.
 
-// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+11]]:17
+// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+8]]:17
 // CHECK:STDERR: ->     │ let b: AdaptC = a;
 // CHECK:STDERR:        ·                 ┳
 // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type `C` to
-// CHECK:STDERR:        ·                 │  ┃        `AdaptC`
-// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                 ╰────┤ type `C` does not implement interface
-// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(AdaptC)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                    ┃        `AdaptC`
+// CHECK:STDERR:        ·                    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: AdaptC = a;
 
-// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+11]]:12
+// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ let c: C = b;
 // CHECK:STDERR:        ·            ┳
 // CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `AdaptC` to
-// CHECK:STDERR:        ·            │  ┃        `C`
-// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·            ╰────┤ type `AdaptC` does not implement interface
-// CHECK:STDERR:        ·                 │ `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·               ┃        `C`
+// CHECK:STDERR:        ·               ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: C = b;
@@ -86,24 +80,20 @@ fn MakeC() -> C;
 
 fn MakeAdaptC() -> AdaptC;
 
-// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ var d: AdaptC = MakeC();
 // CHECK:STDERR:        · ━━━━━━┳━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type `C` to `AdaptC`
-// CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·       ╰────┤ type `C` does not implement interface `Core.ImplicitAs(AdaptC)`
-// CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·          ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var d: AdaptC = MakeC();
 
-// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_not_implicit.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ var e: C = MakeAdaptC();
 // CHECK:STDERR:        · ━━━━┳━━━
 // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `AdaptC` to `C`
-// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·     ╰────┤ type `AdaptC` does not implement interface `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var e: C = MakeAdaptC();
@@ -441,14 +431,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.98b = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc28: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %AdaptC.ref.loc28: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %.loc25: %AdaptC = converted @__global_init.%a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %AdaptC.ref.loc25: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %b: %AdaptC = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.720 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc41: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %C.ref.loc41: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc35: %C = converted @__global_init.%b.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc35: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %c: %C = wrapper_binding c, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.98b = value_binding_pattern c [concrete = constants.%c.patt]
@@ -458,7 +448,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc43: Core.Form = init_form %C.ref [concrete = constants.%.a44]
+// CHECK:STDOUT:     %.loc37: Core.Form = init_form %C.ref [concrete = constants.%.a44]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -467,19 +457,19 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:     %return.patt: %pattern_type.720 = return_slot_pattern %return.param_patt, %AdaptC.ref [concrete = constants.%return.patt.794]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %AdaptC.ref: type = name_ref AdaptC, file.%AdaptC.decl [concrete = constants.%AdaptC]
-// CHECK:STDOUT:     %.loc45: Core.Form = init_form %AdaptC.ref [concrete = constants.%.624]
+// CHECK:STDOUT:     %.loc39: Core.Form = init_form %AdaptC.ref [concrete = constants.%.624]
 // CHECK:STDOUT:     %return.param: ref %AdaptC = out_param call_param0
 // CHECK:STDOUT:     %return: ref %AdaptC = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %AdaptC = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %AdaptC.ref.loc56: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
+// CHECK:STDOUT:   %AdaptC.ref.loc48: type = name_ref AdaptC, %AdaptC.decl [concrete = constants.%AdaptC]
 // CHECK:STDOUT:   %d: ref %AdaptC = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.720 = ref_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.720 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %C = var_storage %e.var_patt [concrete]
-// CHECK:STDOUT:   %C.ref.loc67: type = name_ref C, %C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc57: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %e: ref %C = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.98b = ref_binding_pattern e [concrete = constants.%e.patt]
@@ -526,14 +516,14 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, file.%a
 // CHECK:STDOUT:   %b.ref: %AdaptC = name_ref b, file.%b [concrete = <error>]
 // CHECK:STDOUT:   %MakeC.ref: %MakeC.type = name_ref MakeC, file.%MakeC.decl [concrete = constants.%MakeC]
-// CHECK:STDOUT:   %.loc56_23: ref %C = temporary_storage
-// CHECK:STDOUT:   %MakeC.call: init %C to %.loc56_23 = call %MakeC.ref()
-// CHECK:STDOUT:   %.loc56_1: %AdaptC = converted %MakeC.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc48_23: ref %C = temporary_storage
+// CHECK:STDOUT:   %MakeC.call: init %C to %.loc48_23 = call %MakeC.ref()
+// CHECK:STDOUT:   %.loc48_1: %AdaptC = converted %MakeC.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   %MakeAdaptC.ref: %MakeAdaptC.type = name_ref MakeAdaptC, file.%MakeAdaptC.decl [concrete = constants.%MakeAdaptC]
-// CHECK:STDOUT:   %.loc67_23: ref %AdaptC = temporary_storage
-// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC to %.loc67_23 = call %MakeAdaptC.ref()
-// CHECK:STDOUT:   %.loc67_1: %C = converted %MakeAdaptC.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc57_23: ref %AdaptC = temporary_storage
+// CHECK:STDOUT:   %MakeAdaptC.call: init %AdaptC to %.loc57_23 = call %MakeAdaptC.ref()
+// CHECK:STDOUT:   %.loc57_1: %C = converted %MakeAdaptC.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%e.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

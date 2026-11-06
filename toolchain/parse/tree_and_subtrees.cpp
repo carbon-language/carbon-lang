@@ -313,7 +313,8 @@ auto TreeAndSubtrees::GetSubtreeTokenRange(NodeId node_id) const
   return range;
 }
 
-auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
+auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id,
+                                          LocExtent extent) const
     -> Diagnostics::ConvertedLoc {
   // Support the invalid token as a way to emit only the filename, when there
   // is no line association.
@@ -321,8 +322,18 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
     return {{.filename = tree_->tokens().source().filename()}, -1};
   }
 
-  if (token_only) {
+  if (extent == LocExtent::Token) {
     return tree_->tokens().TokenToDiagnosticLoc(tree_->node_token(node_id));
+  }
+
+  if (extent == LocExtent::DeclaredName) {
+    // `children` visits the last child first, so this finds the last name.
+    for (NodeId child : children(node_id)) {
+      if (tree_->node_kind(child).category().HasAnyOf(
+              NodeCategory::NonExprName)) {
+        return tree_->tokens().TokenToDiagnosticLoc(tree_->node_token(child));
+      }
+    }
   }
 
   // Construct a location that encompasses all tokens that descend from this

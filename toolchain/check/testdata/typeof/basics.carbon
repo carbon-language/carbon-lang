@@ -109,9 +109,9 @@ fn G[T: type](x: T, unused y: typeof(x)) {}
 fn Call() {
   // CHECK:STDERR:        ╭─┤ fail_generic_mismatch.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn G[T: type](x: T, unused y: typeof(x)) {}
-  // CHECK:STDERR:        · ─────────────────────┬────────────────────
-  // CHECK:STDERR:        ·                      ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                         │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   G(true, {} as C);
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━

@@ -45,8 +45,8 @@ class C {
 fn F() {
   // CHECK:STDERR:        ╭─┤ fail_private_static_field_invalid_access.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private static var static_field: i32;
-  // CHECK:STDERR:        ·                      ────────┬────────
-  // CHECK:STDERR:        ·                              ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·                      ──────┬─────
+  // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   C.static_field = 123;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━

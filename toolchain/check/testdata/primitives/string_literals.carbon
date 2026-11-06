@@ -69,8 +69,8 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ incomplete_string.carbon
   // CHECK:STDERR:        │ class String;
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ───┬──
+  // CHECK:STDERR:        ·          ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "hello";

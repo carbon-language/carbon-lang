@@ -24,8 +24,8 @@ fn F(c: Class) {
   Class.NoSelf();
   // CHECK:STDERR:        ╭─┤ fail_method.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   fn WithSelf(self: Class);
-  // CHECK:STDERR:        ·   ────────────┬────────────
-  // CHECK:STDERR:        ·               ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·      ────┬───
+  // CHECK:STDERR:        ·          ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Class.WithSelf();
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
@@ -38,8 +38,8 @@ fn F(c: Class) {
 
   // CHECK:STDERR:        ╭─┤ fail_method.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   fn WithSelf(self: Class);
-  // CHECK:STDERR:        ·   ────────────┬────────────
-  // CHECK:STDERR:        ·               ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·      ────┬───
+  // CHECK:STDERR:        ·          ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   A();
   // CHECK:STDERR:        ·   ━┳━

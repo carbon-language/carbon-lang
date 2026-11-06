@@ -69,7 +69,7 @@ struct UnitAndImports {
     auto ConvertLoc(Parse::NodeId node_id, ContextFnT /*context_fn*/) const
         -> Diagnostics::ConvertedLoc override {
       return tree_and_subtrees_getter_().NodeToDiagnosticLoc(
-          node_id, /*token_only=*/false);
+          node_id, Parse::LocExtent::Subtree);
     }
 
    private:

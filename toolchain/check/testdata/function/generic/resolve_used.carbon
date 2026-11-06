@@ -11,6 +11,25 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
+// CHECK:STDERR:        ╭─┤ min_prelude/parts/int.carbon:11:9
+// CHECK:STDERR: ->     │   adapt MakeInt(N);
+// CHECK:STDERR:        ·         ━━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: integer type width of 0 is not positive
+// CHECK:STDERR:        ·                 ┃        [IntWidthNotPositive]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_todo_call_monomorphization_error.carbon
+// CHECK:STDERR:        │   var unused v: Core.Int(N);
+// CHECK:STDERR:        ·                 ─────┬─────
+// CHECK:STDERR:        ·                      ╰──┤ in monomorphization of `i0` here
+// CHECK:STDERR:        ·                      │  │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ·                      ╰────┤ in completion of type `i0` here [InTypeCompletion]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   ErrorIfNIsZero(0);
+// CHECK:STDERR:        ·   ───────┬──────
+// CHECK:STDERR:        ·          ╰──┤ in monomorphization of `ErrorIfNIsZero(0)` here
+// CHECK:STDERR:        ·             │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 
 // --- fail_todo_call_monomorphization_error.carbon
 
@@ -25,23 +44,6 @@ fn ErrorIfNIsZero(generic N: Core.IntLiteral) {
 }
 
 fn CallNegative() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_monomorphization_error.carbon:[[@LINE+17]]:3
-  // CHECK:STDERR:        │   var unused v: Core.Int(N);
-  // CHECK:STDERR:        ·                 ─────┬─────
-  // CHECK:STDERR:        ·                      ╰──┤ `Core.Int(N)` evaluates to incomplete type `i0`
-  // CHECK:STDERR:        ·                         │ [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   ErrorIfNIsZero(0);
-  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `ErrorIfNIsZero(0)`
-  // CHECK:STDERR:        ·             ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ min_prelude/parts/int.carbon
-  // CHECK:STDERR:        │   adapt MakeInt(N);
-  // CHECK:STDERR:        ·         ─────┬────
-  // CHECK:STDERR:        ·              ╰──┤ integer type width of 0 is not positive [IntWidthNotPositive]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   ErrorIfNIsZero(0);
 }
 

@@ -29,11 +29,11 @@ fn F[T: (type, )](unused generic A: T.0, unused x: HoldsType(T)) {}
 fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom) {
   // CHECK:STDERR:        ╭─┤ fail_deduction_uses_runtime_type_conversion.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn F[T: (type, )](unused generic A: T.0, unused x: HoldsType(T)) {}
-  // CHECK:STDERR:        · ───────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                        ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                        │  │ [DeductionGenericHere]
-  // CHECK:STDERR:        ·                        ╰────┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·    │  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ╰────┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(from, holds_to);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━

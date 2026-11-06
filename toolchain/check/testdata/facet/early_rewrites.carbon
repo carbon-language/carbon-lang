@@ -134,21 +134,18 @@ class D;
 //
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So () can't convert to it.
-// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+17]]:38
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+14]]:38
 // CHECK:STDERR:        │ class C(T: Z & Y, U: T.(Z.Z1)) {}
-// CHECK:STDERR:        · ────────────────┬───────────────
-// CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·          │ [DeductionGenericHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
 // CHECK:STDERR:        ·                                      ┳━━━━━━━━━━━━
 // CHECK:STDERR:        ·                                      ┗━━┫ error: cannot implicitly convert
-// CHECK:STDERR:        ·                                      │  ┃        expression of type `type` to
-// CHECK:STDERR:        ·                                      │  ┃        `.(Z.Z1)`
-// CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                                      ╰────┤ type `type` does not implement
-// CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(.(Z.Z1))`
-// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                         ┃        expression of type `type` to
+// CHECK:STDERR:        ·                                         ┃        `.(Z.Z1)`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
@@ -177,20 +174,17 @@ class D;
 //
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So `.Z1` can't convert to it.
-// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+16]]:25
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+13]]:25
 // CHECK:STDERR:        │ class C(T: Z & Y, U: T.(Z.Z1)) {}
-// CHECK:STDERR:        · ────────────────┬───────────────
-// CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·          │ [DeductionGenericHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}
 // CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━
 // CHECK:STDERR:        ·                         ┗━━┫ error: cannot implicitly convert expression of type
-// CHECK:STDERR:        ·                         │  ┃        `type` to `.(Z.Z1)`
-// CHECK:STDERR:        ·                         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                         ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                              │ `Core.ImplicitAs(.(Z.Z1))`
-// CHECK:STDERR:        ·                              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                            ┃        `type` to `.(Z.Z1)`
+// CHECK:STDERR:        ·                            ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}

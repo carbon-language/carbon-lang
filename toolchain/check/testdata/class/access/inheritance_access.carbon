@@ -83,8 +83,8 @@ class Square {
   fn GetPosition(self) -> i32 {
     // CHECK:STDERR:        ╭─┤ fail_inherited_private_field_access.carbon:[[@LINE+11]]:12
     // CHECK:STDERR:        │   private var y: i32;
-    // CHECK:STDERR:        ·               ───┬──
-    // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·               ┬
+    // CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     return self.y;
     // CHECK:STDERR:        ·            ━━━┳━━
@@ -132,8 +132,8 @@ class C {
   extend base: B;
   // CHECK:STDERR:        ╭─┤ fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+11]]:12
   // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn G() { Self.F(); }
   // CHECK:STDERR:        ·            ━━━┳━━
@@ -164,8 +164,8 @@ class C {
 
   // CHECK:STDERR:        ╭─┤ fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+12]]:27
   // CHECK:STDERR:        │   private let SOME_PRIVATE_CONSTANT: i32 = 86;
-  // CHECK:STDERR:        ·               ─────────────┬────────────
-  // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·               ──────────┬──────────
+  // CHECK:STDERR:        ·                         ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
   // CHECK:STDERR:        ·                           ┳━━━━━━━━━━━━━━━━━━━━
@@ -178,8 +178,8 @@ class C {
 
   // CHECK:STDERR:        ╭─┤ fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+11]]:13
   // CHECK:STDERR:        │   private fn Fa() {}
-  // CHECK:STDERR:        ·   ────────┬────────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ─┬
+  // CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn G2() { Fa(); }
   // CHECK:STDERR:        ·             ━┳
@@ -191,8 +191,8 @@ class C {
 
   // CHECK:STDERR:        ╭─┤ fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+11]]:13
   // CHECK:STDERR:        │   private fn Fb() {}
-  // CHECK:STDERR:        ·   ────────┬────────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ─┬
+  // CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn G3() { Fb(); }
   // CHECK:STDERR:        ·             ━┳
@@ -235,8 +235,8 @@ class B {
   fn G() -> i32 {
     // CHECK:STDERR:        ╭─┤ fail_non_inherited_access.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private let SOME_PRIVATE_CONSTANT: i32 = 5;
-    // CHECK:STDERR:        ·               ─────────────┬────────────
-    // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·               ──────────┬──────────
+    // CHECK:STDERR:        ·                         ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     A.SOME_PRIVATE_CONSTANT;
     // CHECK:STDERR:        ·     ┳━━━━━━━━━━━━━━━━━━━━━━
@@ -248,8 +248,8 @@ class B {
 
     // CHECK:STDERR:        ╭─┤ fail_non_inherited_access.carbon:[[@LINE+12]]:12
     // CHECK:STDERR:        │   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
-    // CHECK:STDERR:        ·                 ──────────────┬─────────────
-    // CHECK:STDERR:        ·                               ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·                 ───────────┬───────────
+    // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     return A.SOME_PROTECTED_CONSTANT;
     // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -264,8 +264,8 @@ class B {
   fn SomeFunc(self) -> i32{
     // CHECK:STDERR:        ╭─┤ fail_non_inherited_access.carbon:[[@LINE+12]]:12
     // CHECK:STDERR:        │   protected let INTERNAL_CONSTANT: i32 = 5;
-    // CHECK:STDERR:        ·                 ───────────┬──────────
-    // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·                 ────────┬────────
+    // CHECK:STDERR:        ·                         ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     return self.internal.INTERNAL_CONSTANT;
     // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -291,8 +291,8 @@ class B {
   fn F(self) {
     // CHECK:STDERR:        ╭─┤ fail_compound_member_access.carbon:[[@LINE+11]]:11
     // CHECK:STDERR:        │   private var x: i32;
-    // CHECK:STDERR:        ·               ───┬──
-    // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·               ┬
+    // CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     self.(A.x);
     // CHECK:STDERR:        ·           ━┳━
@@ -344,15 +344,14 @@ fn G() {
     var d: C(i32) = {
         .base = Cpp.B.B(),
     };
-    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE+29]]:13
+    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE+28]]:13
     // CHECK:STDERR: ->     │     Cpp.F(&d);
     // CHECK:STDERR:        ·             ┳
     // CHECK:STDERR:        ·             ┗━━┫ error: cannot access private member `X` of type `Cpp.B`
-    // CHECK:STDERR:        ·             │  ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ·             ╰────┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·                ┃        [ClassInvalidMemberAccess]
     // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
-    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE-20]]:8
+    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE-19]]:8
     // CHECK:STDERR:        │   bool X() const;
     // CHECK:STDERR:        ·        ┬
     // CHECK:STDERR:        ·        ╰──┤ member is declared here [CppInteropParseNote]

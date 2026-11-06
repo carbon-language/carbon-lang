@@ -31,8 +31,8 @@ import library "a";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ interface I;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface I {}

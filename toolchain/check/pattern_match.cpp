@@ -282,10 +282,10 @@ class MatchContext {
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::Match(State state, WorkItem entry) -> void {
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context_.emitter(), [&](auto& builder) {
         if (std::holds_alternative<CallerState*>(state)) {
-          CARBON_DIAGNOSTIC_LABEL(InCallToFunctionParam, Info,
+          CARBON_DIAGNOSTIC_LABEL(InCallToFunctionParam,
                                   "initializing function parameter");
           builder.Attach(entry.pattern_id, InCallToFunctionParam);
         }

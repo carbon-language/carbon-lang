@@ -39,12 +39,12 @@ namespace Carbon::Check {
 // Adds the location of the associated function to a diagnostic.
 static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
-  CARBON_DIAGNOSTIC_LABEL(AssociatedFunctionHere, Info,
+  CARBON_DIAGNOSTIC_LABEL(AssociatedFunctionHere,
                           "associated function {0} declared here",
                           SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Attach(function.latest_decl_id(), AssociatedFunctionHere,
-                 function.name_id);
+  builder.Attach(LocIdForDiagnostics::DeclaredName(function.latest_decl_id()),
+                 AssociatedFunctionHere, function.name_id);
 }
 
 auto CheckAssociatedFunctionImplementation(
@@ -193,7 +193,7 @@ static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
                       "redefinition of `impl {0} as {1}`", InstIdAsRawType,
                       InstIdAsRawType);
-    CARBON_DIAGNOSTIC_LABEL(ImplPreviousDefinition, Info,
+    CARBON_DIAGNOSTIC_LABEL(ImplPreviousDefinition,
                             "previous definition was here");
     context.emitter()
         .Build(new_impl.latest_decl_id(), ImplRedefinition, new_impl.self_id,
@@ -288,12 +288,13 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
 
   if (!RequireCompleteType(
           context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-          SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC_CONTEXT(
-                ExtendImplAsIncomplete,
-                "`extend impl as` incomplete facet type {0}", InstIdAsType);
-            builder.Attach(impl.latest_decl_id(), ExtendImplAsIncomplete,
-                           impl.constraint_id);
+          SemIR::LocId(impl.constraint_id), [&] {
+            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Error,
+                              "`extend impl as` incomplete facet type {0}",
+                              InstIdAsType);
+            return context.emitter().Build(impl.latest_decl_id(),
+                                           ExtendImplAsIncomplete,
+                                           impl.constraint_id);
           })) {
     parent_scope.set_has_error();
     return false;
@@ -646,14 +647,14 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   {
     if (!RequireCompleteType(
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
-            SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-              CARBON_DIAGNOSTIC_CONTEXT(
-                  ImplAsIncompleteFacetTypeDefinition,
+            SemIR::LocId(impl.constraint_id), [&] {
+              CARBON_DIAGNOSTIC(
+                  ImplAsIncompleteFacetTypeDefinition, Error,
                   "definition of impl as incomplete facet type {0}",
                   InstIdAsType);
-              builder.Attach(SemIR::LocId(impl.latest_decl_id()),
-                             ImplAsIncompleteFacetTypeDefinition,
-                             impl.constraint_id);
+              return context.emitter().Build(
+                  SemIR::LocId(impl.latest_decl_id()),
+                  ImplAsIncompleteFacetTypeDefinition, impl.constraint_id);
             })) {
       FillImplWitnessWithErrors(context, impl);
       return;
@@ -706,7 +707,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
                           "associated constant {0} not given a value in impl "
                           "of interface {1}",
                           SemIR::NameId, SemIR::NameId);
-        CARBON_DIAGNOSTIC_LABEL(AssociatedConstantHere, Info,
+        CARBON_DIAGNOSTIC_LABEL(AssociatedConstantHere,
                                 "associated constant declared here");
         context.emitter()
             .Build(impl.definition_id, ImplAssociatedConstantNeedsValue,
@@ -1006,12 +1007,12 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(full_constraint_id),
       context.constant_values().Get(self_id),
-      context.types().GetTypeIdForTypeInstId(full_constraint_id),
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(
-            ImplOfUnidentifiedFacetType,
-            "facet type {0} cannot be identified in `impl as`", InstIdAsType);
-        builder.Attach(loc_id, ImplOfUnidentifiedFacetType, full_constraint_id);
+      context.types().GetTypeIdForTypeInstId(full_constraint_id), [&] {
+        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Error,
+                          "facet type {0} cannot be identified in `impl as`",
+                          InstIdAsType);
+        return context.emitter().Build(loc_id, ImplOfUnidentifiedFacetType,
+                                       full_constraint_id);
       });
   if (!identified_id.has_value()) {
     return {IdentifiedFacetTypeId::None, SemIR::SpecificInterface::None};

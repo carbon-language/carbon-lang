@@ -62,15 +62,12 @@ var a: array(i32, 39999999999999999993);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_invalid_type_with_overflow.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        ╭─┤ fail_invalid_type_with_overflow.carbon:[[@LINE+8]]:14
 // CHECK:STDERR: ->     │ var b: array(1, 39999999999999999993);
 // CHECK:STDERR:        ·              ┳
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert non-type value of type
-// CHECK:STDERR:        ·              │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·                 ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);

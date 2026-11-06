@@ -16,7 +16,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [SortingConsumer](#sortingconsumer)
 -   [Producing diagnostics](#producing-diagnostics)
 -   [Attaching labels](#attaching-labels)
-    -   [Context](#context)
+    -   [Diagnosers](#diagnosers)
+    -   [Context scopes](#context-scopes)
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
 -   [Choosing what a label marks](#choosing-what-a-label-marks)
@@ -137,18 +138,16 @@ emitter.Emit(location, InvalidInScope);
 
 A label is a range of source attached to a diagnostic, with optional text saying
 what that range has to do with the problem. It is declared with
-`CARBON_DIAGNOSTIC_LABEL`, which takes the category before the format, and is
-attached with `Attach`:
+`CARBON_DIAGNOSTIC_LABEL` and attached with `Attach`:
 
 ```cpp
 CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
                   "{0} argument{0:s} passed to function expecting "
                   "{1} argument{1:s}",
                   IntAsSelect, IntAsSelect);
-CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, Primary,
-                        "{0} argument{0:s} passed here", IntAsSelect);
-CARBON_DIAGNOSTIC_LABEL(InCallToFunction, Info,
-                        "calling function declared here");
+CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, "{0} argument{0:s} passed here",
+                        IntAsSelect);
+CARBON_DIAGNOSTIC_LABEL(InCallToFunction, "calling function declared here");
 context.emitter()
     .Build(call_parse_node, CallArgCountMismatch,
            arg_refs.size(), param_refs.size())
@@ -159,23 +158,25 @@ context.emitter()
 
 A label has a format and arguments of its own, validated the way a message's
 are, so it says only what it needs to about the place it marks. It has no level,
-because it belongs to the message it is attached to.
+because it belongs to the message it is attached to. A label explains the
+problem; code that is part of the problem is one of the message's ranges.
 
-The category is `Primary` for source directly part of the problem and `Info` for
-source that explains it without being part of it. Those two are all there is:
-anything a diagnostic has to say that isn't read against the code it names is
-not a label, and is declared with `CARBON_DIAGNOSTIC_CONTEXT` or
-`CARBON_DIAGNOSTIC_LOCATION_INFO` instead.
+In the framed form, the message's text is placed under the range at its
+location, or under one of its ranges that contains that location. Word it to
+read correctly there and by itself: the sentence under `Run0(1);` is the same
+one that follows `foo.carbon:4:3-9: error:` in a build log. A label on that
+range that restates the message adds nothing.
 
-`Attach` also takes a location alone, with no label:
+The message's location is one range; `ExtraRange` adds another range the
+problem covers, with no text:
 
 ```cpp
-emitter.Build(loc, InvalidCode).Attach(operand_loc).Emit();
+emitter.Build(loc, InvalidCode).ExtraRange(operand_loc).Emit();
 ```
 
-That marks a range as part of the problem and says nothing about it, which is
-how a diagnostic points at the code its message is about without repeating the
-message against it.
+Anything a diagnostic has to say that isn't read against the code it names is
+not a label: it is the message, or a step of the path the message's location was
+reached by, declared with `CARBON_DIAGNOSTIC_LOCATION_INFO`.
 
 Attach every label at a location that reaches source: one that converts to only
 a filename -- an invalid node, code the compiler generated -- leaves its words
@@ -184,40 +185,49 @@ today; the goal is to restructure them until none do, and to give a diagnostic
 genuinely about a file as a whole a start-of-file or end-of-file location with
 a rendering of its own.
 
-### Context
+### Diagnosers
 
-A context states a problem in terms of the operation it happened inside. It is
-not a label: its text is a sentence in its own right, so where a diagnostic has
-one it leads and the message is read against the code like anything else
-explaining it.
+Some code detects a problem without being able to state it in the reader's
+terms. Type completion finds that a class is incomplete, but not whether the
+class was needed for a binding's type, a base class, or a call. The caller
+states the problem by passing a `Diagnoser`: a callback that builds the
+diagnostic with the caller's own `CARBON_DIAGNOSTIC`. The callee calls it,
+attaches its own labels, and emits the result:
 
-A context is declared with `CARBON_DIAGNOSTIC_CONTEXT` and registered in a
-scope, so that every diagnostic produced inside it says what larger operation
-was being performed:
+```cpp
+RequireCompleteType(context, base_type_id, node_id, [&] {
+  CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                    "base {0} is an incomplete type", InstIdAsType);
+  return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                 base_type_inst_id);
+});
+```
+
+The kind and the message are the caller's; `class was forward declared here` is
+a label the callee attaches. A callee that accepts a null diagnoser emits
+nothing without one, as `TryToCompleteType` does, or emits a generic diagnostic
+of its own, as `BuildBinaryOperator` does.
+
+### Context scopes
+
+A caller running an operation, such as checking a call or monomorphizing a
+specific, can label every diagnostic emitted while it runs. A `ContextScope`
+attaches that label to each one and leaves the message to the emitting code,
+which is the code that found the problem:
 
 ```cpp
 Diagnostics::ContextScope diagnostic_context(
     &context.emitter(), [&](auto& builder) {
-      CARBON_DIAGNOSTIC_CONTEXT(
-          QualifiedDeclInIncompleteClassScope,
-          "cannot declare a member of incomplete class {0}", SemIR::TypeId);
-      builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
-                     context.classes().Get(class_id).self_type_id);
+      CARBON_DIAGNOSTIC_LABEL(ResolvingSpecificHere,
+                              "in monomorphization of {0} here",
+                              SemIR::SpecificId);
+      builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
     });
 ```
 
-This is useful when delegating to another part of Check that may produce many
-different kinds of diagnostic. `CARBON_DIAGNOSTIC_SOFT_CONTEXT` declares a
-fallback: it is dropped when the diagnostic already has a context, which is
-assumed to describe the failure better. `ResolvingSpecificHere` is one: a
-failure while monomorphizing a specific says `unable to monomorphize specific`
-only when no enclosing scope has said what operation needed the specific.
-
-An `AnnotationScope` works the same way for labels, attaching one to every
-diagnostic emitted inside it. The two kinds of scope are independent: however
-they nest, a diagnostic gets the label of every `AnnotationScope` it is emitted
-inside and the context of every `ContextScope`, less a soft one dropped as
-above.
+Scopes nest, and a diagnostic emitted inside several gets each one's label,
+innermost first. Word the label as one, read together with the code it is
+attached to, rather than as a sentence about the failure.
 
 ## Diagnostic registry
 
@@ -232,15 +242,15 @@ This produces a central enumeration of all diagnostics. The eventual intent is
 to require tests for every diagnostic that can be produced, but that isn't
 currently implemented.
 
-Labels, contexts, and location info are not registered. Each is declared where
-it is attached and nowhere else, so there is nothing for a registry to make
-unique and nothing that needs to name one from a distance. Each still carries
-its own name, so `--include-diagnostic-kind` says which one produced a line and
-a test can match on it as it does on a kind.
+Labels and location info are not registered. Each is declared where it is
+attached and nowhere else, so there is nothing for a registry to make unique
+and nothing that needs to name one from a distance. Each still has its own
+name, so `--include-diagnostic-kind` says which one produced a line and a test
+can match on it as it does on a kind.
 
 What the registry does for a diagnostic is done for those by
 `check_diagnostics.py`, which reads the declarations and the testdata directly
--- `label` below stands for any of the three:
+-- `label` below stands for either:
 
 -   Every declared label is attached somewhere. The compiler warns about most of
     these, but not about one declared in a header.
@@ -276,12 +286,10 @@ So the question for each diagnostic is not whether it marks anything but whether
 it marks the right thing:
 
 -   Where the message's own location is what the reader should look at, leave it
-    alone. Attaching a label with the same range and no text says nothing the
-    message's own range didn't.
+    alone. An extra range equal to it adds nothing.
 
--   Where something narrower is what went wrong, attach a primary label naming
-    it: the operand rather than the operator, the one argument rather than the
-    call.
+-   Where something narrower is what went wrong, add it as an extra range: the
+    operand rather than the operator, the one argument rather than the call.
 
 -   Give the label words when they point at where a part of the message became
     relevant, and leave it wordless otherwise. A message that says two things
@@ -290,6 +298,15 @@ it marks the right thing:
     declaration with the arity it was declared with. Repeating the message that
     way is worth it, because the reader is being shown where each half of the
     sentence came from.
+
+-   A label that only locates a declaration is attached to its name. `previously
+    declared here` on `class Shape {}` is attached to `Shape`; the rest of the
+    line is in view. `LocIdForDiagnostics::DeclaredName` names what a location
+    declares, in that declaration's own file, and falls back to the whole
+    location where nothing is declared: an `impl`, a pattern. A label whose text
+    is about some other part of the declaration is attached to that part: the
+    parameter list for `previously declared with parameter count of 2`, and
+    the modifiers for ``previously declared with `extern library` here``.
 
 -   Where the right range isn't reachable, attach the closest one that is and
     leave a TODO saying which range it should be and what would make it
@@ -301,7 +318,7 @@ it marks the right thing:
     operation whose operands don't match reports the interface it looked up not
     being implemented, which names both types and points at neither, so each
     operand is marked with the type it contributed. `BuildBinaryOperator` takes
-    a `MissingImplDiagnostic` for this, and installs it as an `AnnotationScope`,
+    a `MissingImplDiagnostic` for this, and installs it as a `ContextScope`,
     because the diagnostic is emitted further down where only one operand is
     still in hand.
 
@@ -311,12 +328,12 @@ it marks the right thing:
     than everything that reaches `BuildBinaryOperator` saying "left" and
     "right".
 
-    Once the operands carry labels, the message points at whatever they leave
-    over rather than at the expression they make up. For an infix operator that
-    is the operator itself, which `LocIdForDiagnostics::TokenOnly` names since
-    the parse node is the operator token. For `a[i]` the parse node names the
-    closing bracket, so the message points at the index -- the operand the
-    object failed to accept.
+    With the operands labeled, the message is located at what remains of the
+    expression. For an infix operator that is the operator itself, which
+    `LocIdForDiagnostics::TokenOnly` names since the parse node is the operator
+    token. For `a[i]` the parse node names the closing bracket, so the message
+    is located at the index, the operand the object failed to accept, and only
+    the object gets a label.
 
 -   Mark the syntax that required an `impl`, and name the interface in the same
     breath. Which interface a piece of syntax needs is a language rule the
@@ -403,11 +420,11 @@ its message is located where they would put the cursor to start fixing it:
     with `=` is reported at the `=` rather than at the end of the statement
     before it.
 
--   Inside a token, the lexer locates the message at the point to fix and
-    attaches the range of what is malformed, which the snippet underlines
-    instead. An unterminated string literal is located where its terminator
-    goes and underlines the literal; a `\x` escape without two digits is
-    located at the digit that is missing or wrong and underlines the escape.
+-   Inside a token, the lexer locates the message at the point to fix and adds
+    the range of what is malformed with `ExtraRange`, which the snippet
+    underlines instead. An unterminated string literal is located where its
+    terminator goes and underlines the literal; a `\x` escape without two digits
+    is located at the digit that is missing or wrong and underlines the escape.
 
 In the lexer, a location is a `Lex::SourceLoc`. A `const char*` into the source
 buffer converts to the one character it points at, `SourceLoc::Before` makes a

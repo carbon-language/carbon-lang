@@ -60,8 +60,7 @@ static auto CheckCompleteAdapterClassType(
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
-    CARBON_DIAGNOSTIC_LABEL(AdaptWithBaseHere, Info,
-                            "`base` declaration is here");
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithBaseHere, "`base` declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithBase)
         .Attach(class_info.base_id, AdaptWithBaseHere)
@@ -71,7 +70,7 @@ static auto CheckCompleteAdapterClassType(
 
   if (!field_decls.empty()) {
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
-    CARBON_DIAGNOSTIC_LABEL(AdaptWithFieldHere, Info,
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithFieldHere,
                             "first field declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
@@ -88,7 +87,7 @@ static auto CheckCompleteAdapterClassType(
           SemIR::Function::VirtualModifier::Virtual) {
         CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
                           "adapter with virtual function");
-        CARBON_DIAGNOSTIC_LABEL(AdaptWithVirtualHere, Info,
+        CARBON_DIAGNOSTIC_LABEL(AdaptWithVirtualHere,
                                 "first virtual function declaration is here");
         context.emitter()
             .Build(class_info.adapt_id, AdaptWithVirtual)
@@ -318,7 +317,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
       CARBON_DIAGNOSTIC_LABEL(
-          OverrideCandidateArityMismatch, Info,
+          OverrideCandidateArityMismatch,
           "base class function has {2:more|fewer} parameters "
           "({0} vs {1} excluding `self`)",
           Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,

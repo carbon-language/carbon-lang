@@ -64,9 +64,9 @@ fn A[T: I({}, {})](unused t: T) {}
 fn B() {
   // CHECK:STDERR:        ╭─┤ fail_mismatch_impl_constraint_with_fixed_specific.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn A[T: I({}, {})](unused t: T) {}
-  // CHECK:STDERR:        · ────────────────┬────────────────
-  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   A({} as C);
   // CHECK:STDERR:        ·   ━━━━━┳━━━━
@@ -91,9 +91,9 @@ fn A[T: I](unused t: T) {}
 fn B() {
   // CHECK:STDERR:        ╭─┤ fail_mismatch_impl_self_with_fixed_specific.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn A[T: I](unused t: T) {}
-  // CHECK:STDERR:        · ────────────┬────────────
-  // CHECK:STDERR:        ·             ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   A({} as C({}, {}));
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━

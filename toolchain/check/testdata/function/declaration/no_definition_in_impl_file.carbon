@@ -59,7 +59,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl_in_api_decl_in_impl.carbon
 // CHECK:STDERR:        │ fn C();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -89,7 +89,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl_in_api_decl_and_definition_in_impl.carbon
 // CHECK:STDERR:        │ fn D();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

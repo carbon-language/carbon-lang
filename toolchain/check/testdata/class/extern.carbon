@@ -51,8 +51,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_decl_fn_in_extern.carbon:[[@LINE+11]]:4
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn C.F();
 // CHECK:STDERR:        ·    ┳
@@ -75,8 +75,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_extern_decl_after_extern_decl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern class C;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
@@ -92,8 +92,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_decl_after_extern_decl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ class C;
 // CHECK:STDERR:        · ━━━━┳━━━
@@ -124,8 +124,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_def_after_extern_decl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ class C {}
 // CHECK:STDERR:        · ━━━━┳━━━━
@@ -142,8 +142,8 @@ library "[[@TEST_NAME]]";
 class C;
 // CHECK:STDERR:        ╭─┤ fail_extern_decl_after_decl.carbon:[[@LINE+88]]:1
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern class C;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
@@ -159,8 +159,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_decl_then_extern_decl.carbon [InImport]
@@ -172,8 +172,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl.carbon
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_extern_decl_then_def.carbon [InImport]
@@ -185,8 +185,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
@@ -198,8 +198,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
@@ -211,8 +211,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_todo_import_extern_decl_copy.carbon [InImport]
@@ -224,8 +224,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -279,8 +279,8 @@ import library "extern_decl";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -299,8 +299,8 @@ import library "decl";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl.carbon
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -319,8 +319,8 @@ import library "def";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -339,8 +339,8 @@ import library "def";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;

@@ -44,12 +44,7 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
 
   // Turns a diagnostic into an LSP diagnostic.
   auto HandleDiagnostic(Diagnostics::Diagnostic diagnostic) -> void override {
-    // A context names the operation that failed, and is what the reader is
-    // told about when a diagnostic has one, so it is what an editor shows too.
-    const Diagnostics::Context* context =
-        Diagnostics::LeadingContext(diagnostic);
-    const Diagnostics::Loc& loc =
-        context ? context->loc : diagnostic.message.loc;
+    const Diagnostics::Loc& loc = diagnostic.message.loc;
     if (loc.filename != params_.uri.file()) {
       // `pushDiagnostic` requires diagnostics to be associated with a location
       // in the current file. Suppress diagnostics rooted in other files.
@@ -72,7 +67,7 @@ class DiagnosticConsumer : public Diagnostics::Consumer {
         .range = GetRange(loc),
         .severity = GetSeverity(diagnostic.level),
         .source = "carbon",
-        .message = context ? context->Format() : diagnostic.message.Format(),
+        .message = diagnostic.message.Format(),
     });
     // TODO: Figure out constructing URIs for the locations of labels.
   }

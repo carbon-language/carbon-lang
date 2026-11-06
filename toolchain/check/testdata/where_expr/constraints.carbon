@@ -84,17 +84,13 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_left_of_impls_non_type.carbon:[[@LINE+13]]:39
+// CHECK:STDERR:        ╭─┤ fail_left_of_impls_non_type.carbon:[[@LINE+9]]:39
 // CHECK:STDERR: ->     │ fn NonTypeImpls(generic U: type where 7 impls type);
 // CHECK:STDERR:        ·                                       ┳
 // CHECK:STDERR:        ·                                       ┗━━┫ error: cannot implicitly convert
-// CHECK:STDERR:        ·                                       │  ┃        non-type value of type
-// CHECK:STDERR:        ·                                       │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·                                       │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                       ╰────┤ type `Core.IntLiteral` does not
-// CHECK:STDERR:        ·                                            │ implement interface
-// CHECK:STDERR:        ·                                            │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                            │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                          ┃        non-type value of type
+// CHECK:STDERR:        ·                                          ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·                                          ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
@@ -103,20 +99,15 @@ fn NonTypeImpls(generic U: type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_right_of_impls_non_type.carbon:[[@LINE+16]]:51
+// CHECK:STDERR:        ╭─┤ fail_right_of_impls_non_type.carbon:[[@LINE+11]]:51
 // CHECK:STDERR: ->     │ fn ImplsNonType(generic U: type where .Self impls 7);
 // CHECK:STDERR:        ·                                                   ┳
 // CHECK:STDERR:        ·                                                   ┗━━┫ error: cannot implicitly
-// CHECK:STDERR:        ·                                                   │  ┃        convert non-type
-// CHECK:STDERR:        ·                                                   │  ┃        value of type
-// CHECK:STDERR:        ·                                                   │  ┃        `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                   │  ┃        to `type`
-// CHECK:STDERR:        ·                                                   │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                                   ╰────┤ type `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                        │ does not implement
-// CHECK:STDERR:        ·                                                        │ interface
-// CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                      ┃        convert non-type
+// CHECK:STDERR:        ·                                                      ┃        value of type
+// CHECK:STDERR:        ·                                                      ┃        `Core.IntLiteral`
+// CHECK:STDERR:        ·                                                      ┃        to `type`
+// CHECK:STDERR:        ·                                                      ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ImplsNonType(generic U: type where .Self impls 7);

@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "method_ptr.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+39]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+36]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: member name of type `<C++ type void (C::*)(void) const>` in
@@ -84,7 +84,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:        ·      ┃        [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+30]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+27]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
@@ -97,21 +97,18 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:        ·    ┃        function pointer
   // CHECK:STDERR:        ·    ┃        [CppInteropParseError]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon:[[@LINE+14]]:3
   // CHECK:STDERR:        │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ─────────────┬────────────
   // CHECK:STDERR:        ·                ╰──┤ in thunk for C++ function pointer type used here
   // CHECK:STDERR:        ·                   │ [InCppFunctionPointerThunk]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━┳━━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:        ·                   ┃        [CallArgCountMismatch]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon
-  // CHECK:STDERR:        · ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.(Cpp.GetMethodPtr())(42);

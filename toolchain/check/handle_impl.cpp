@@ -90,7 +90,7 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
         // If the explicit self type is the default, suggest removing it with a
         // diagnostic, but continue as if no error occurred since the self-type
         // is semantically valid.
-        CARBON_DIAGNOSTIC_LABEL(ExtendImplSelfAsDefault, Info,
+        CARBON_DIAGNOSTIC_LABEL(ExtendImplSelfAsDefault,
                                 "remove the explicit `Self` type here");
         diag.Attach(self_node, ExtendImplSelfAsDefault);
         if (self_type.type_id != SemIR::ErrorInst::TypeId) {
@@ -339,7 +339,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
                         "`final impl` in `match_first` block");
       CARBON_DIAGNOSTIC_LABEL(
-          FinalImplInMatchFirstNote, Info,
+          FinalImplInMatchFirstNote,
           "the `match_first` block can be modified as `final` instead");
       context.emitter()
           .Build(node_id, FinalImplInMatchFirst)
@@ -371,7 +371,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
               CARBON_DIAGNOSTIC(
                   ImplInTwoMatchFirst, Error,
                   "impl declared in `match_first` more than once");
-              CARBON_DIAGNOSTIC_LABEL(ImplInTwoMatchFirstNote, Info,
+              CARBON_DIAGNOSTIC_LABEL(ImplInTwoMatchFirstNote,
                                       "previous declaration here");
               context.emitter()
                   .Build(node_id, ImplInTwoMatchFirst)

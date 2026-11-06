@@ -449,9 +449,13 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   }
   auto& [class_type_id, class_type] = *carbon_class_info;
 
-  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
-  if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(),
-                           context_fn)) {
+  if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(), [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInCppUse, Error,
+                          "use in C++ of incomplete Carbon type {0}",
+                          SemIR::TypeId);
+        return context_->emitter().Build(GetCurrentCppLocId(),
+                                         IncompleteTypeInCppUse, class_type_id);
+      })) {
     return;
   }
 
@@ -1064,12 +1068,12 @@ auto GenerateAst(Context& context,
   CARBON_CHECK(!context.cpp_context());
   CARBON_CHECK(!context.sem_ir().cpp_file());
 
-  // Register an annotation scope to flush any Clang diagnostics when we
-  // return. This ensures C++ diagnostics get flushed before `diags` is
-  // destroyed, and that diagnostics created here don't interleave with later
-  // Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  // Register a context scope to flush any Clang diagnostics when we return.
+  // This ensures C++ diagnostics get flushed before `diags` is destroyed, and
+  // that diagnostics created here don't interleave with later Carbon
+  // diagnostics.
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   auto clang_instance = domain.clang_instance_ptr();
 

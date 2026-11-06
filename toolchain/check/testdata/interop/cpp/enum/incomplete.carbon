@@ -52,14 +52,13 @@ import Cpp library "declaration.h";
 fn MyF() {
   // TODO: It's a bit surprising to refer to this type as a class, even though
   // we model it as a class in Carbon. Consider customizing the diagnostic.
-  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+14]]:17
+  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+13]]:17
   // CHECK:STDERR: ->     │   var unused e: Cpp.UnsizedEnum;
   // CHECK:STDERR:        ·                 ┳━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has incomplete type `UnsizedEnum` in
   // CHECK:STDERR:        ·                    ┃        name binding declaration
   // CHECK:STDERR:        ·                    ┃        [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_use_declaration_as_definition.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./declaration.h
   // CHECK:STDERR:        │ enum UnsizedEnum;
   // CHECK:STDERR:        ·      ┬

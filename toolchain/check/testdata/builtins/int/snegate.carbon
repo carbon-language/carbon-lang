@@ -129,8 +129,8 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
 // CHECK:STDERR:        │ fn Negate(a: i32) -> i32 = "int.snegate";
-// CHECK:STDERR:        · ─────────────┬────────────
-// CHECK:STDERR:        ·              ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ·    ───┬──
+// CHECK:STDERR:        ·       ╰──┤ calling function declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var bad_call: array(i32, Negate(1, 2));
 // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━

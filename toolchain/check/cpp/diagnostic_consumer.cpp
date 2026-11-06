@@ -63,18 +63,18 @@ template <typename BuilderT, typename LocT>
 static auto AttachFixIt(BuilderT& builder, LocT loc,
                         const CppDiagnosticListener::FixIt& fix_it) -> void {
   if (fix_it.text.empty()) {
-    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItRemoval, Info, "remove this");
+    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItRemoval, "remove this");
     builder.Attach(loc, CppInteropFixItRemoval);
     return;
   }
   if (fix_it.range.getBegin() == fix_it.range.getEnd()) {
-    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItInsertion, Info, "insert `{0}` here",
+    CARBON_DIAGNOSTIC_LABEL(CppInteropFixItInsertion, "insert `{0}` here",
                             std::string);
     builder.Attach(loc, CppInteropFixItInsertion, fix_it.text);
     return;
   }
-  CARBON_DIAGNOSTIC_LABEL(CppInteropFixItReplacement, Info,
-                          "replace with `{0}`", std::string);
+  CARBON_DIAGNOSTIC_LABEL(CppInteropFixItReplacement, "replace with `{0}`",
+                          std::string);
   builder.Attach(loc, CppInteropFixItReplacement, fix_it.text);
 }
 
@@ -214,42 +214,46 @@ static auto FindEmptyParameterList(const clang::SourceManager& source_manager,
 // Returns the label to attach for a Clang note, which says more about the
 // diagnostic it follows rather than reporting a problem of its own.
 static auto GetNoteLabel() -> const Diagnostics::LabelBase<std::string>& {
-  CARBON_DIAGNOSTIC_LABEL(CppInteropParseNote, Info, "{0}", std::string);
+  CARBON_DIAGNOSTIC_LABEL(CppInteropParseNote, "{0}", std::string);
   return CppInteropParseNote;
 }
 
 // Returns the label to attach for what a note says about the source it marks,
 // as opposed to the declaration the note names.
 static auto GetNoteReasonLabel() -> const Diagnostics::LabelBase<std::string>& {
-  CARBON_DIAGNOSTIC_LABEL(CppInteropParseNoteReason, Info, "{0}", std::string);
+  CARBON_DIAGNOSTIC_LABEL(CppInteropParseNoteReason, "{0}", std::string);
   return CppInteropParseNoteReason;
 }
 
-// Attaches what `info` marks: the ranges Clang would underline, which say
-// nothing the message doesn't and so only mark, and the changes it suggests,
-// which explain rather than state and so carry words.
-//
-// A range belonging to the leading diagnostic is part of the problem; one
-// belonging to a note explains it, the same as the note itself does.
-//
-// `to_loc` maps a Clang range onto whatever locations the builder takes.
+// Attaches a label with text for each change `info` suggests. `to_loc` maps a
+// Clang range onto whatever locations the builder takes.
 template <typename BuilderT, typename ToLocT>
-static auto AttachMarks(BuilderT& builder,
-                        const CppDiagnosticListener::Diagnostic& info,
-                        bool is_note, ToLocT to_loc) -> void {
-  for (clang::CharSourceRange range : info.ranges) {
-    builder.Attach(to_loc(range), is_note
-                                      ? Diagnostics::LabelCategory::Info
-                                      : Diagnostics::LabelCategory::Primary);
-  }
+static auto AttachFixIts(BuilderT& builder,
+                         const CppDiagnosticListener::Diagnostic& info,
+                         ToLocT to_loc) -> void {
   for (const CppDiagnosticListener::FixIt& fix_it : info.fix_its) {
     AttachFixIt(builder, to_loc(fix_it.range), fix_it);
   }
 }
 
-// Attaches `note_info`, a note trailing the diagnostic being built: its words
+// Adds the ranges Clang would underline for the leading diagnostic `info` to
+// the message, since they are part of the problem, and attaches the changes
+// `info` suggests.
+template <typename BuilderT, typename ToLocT>
+static auto AttachRangesAndFixIts(BuilderT& builder,
+                                  const CppDiagnosticListener::Diagnostic& info,
+                                  ToLocT to_loc) -> void {
+  for (clang::CharSourceRange range : info.ranges) {
+    builder.ExtraRange(to_loc(range));
+  }
+  AttachFixIts(builder, info, to_loc);
+}
+
+// Attaches `note_info`, a note trailing the diagnostic being built: its text
 // on the declaration it names, its reason half -- when it split into one --
-// on the source that half is about, and then whatever it marks.
+// on the source that half is about, its ranges, and the changes it suggests.
+//
+// A note's ranges are attached as labels with no text.
 template <typename BuilderT, typename ToLocT>
 static auto AttachNote(BuilderT& builder,
                        const CppDiagnosticListener::Diagnostic& note_info,
@@ -259,7 +263,11 @@ static auto AttachNote(BuilderT& builder,
     builder.Attach(to_loc(note_info.reason_range), GetNoteReasonLabel(),
                    note_info.reason);
   }
-  AttachMarks(builder, note_info, /*is_note=*/true, to_loc);
+  CARBON_DIAGNOSTIC_LABEL(CppInteropNoteRange, "");
+  for (clang::CharSourceRange range : note_info.ranges) {
+    builder.Attach(to_loc(range), CppInteropNoteRange);
+  }
+  AttachFixIts(builder, note_info, to_loc);
 }
 
 // A listener that emits Clang diagnostics directly to a provided Carbon
@@ -283,7 +291,7 @@ class FallbackDiagnosticListener : public CppDiagnosticListener {
       const Diagnostic& info = diags[i];
       auto builder =
           emitter.Build(info.location, GetDiagnostic(info.level), info.message);
-      AttachMarks(builder, info, /*is_note=*/false, as_range);
+      AttachRangesAndFixIts(builder, info, as_range);
       for (; i + 1 < diags.size() &&
              diags[i + 1].level == clang::DiagnosticsEngine::Note;
            ++i) {
@@ -323,15 +331,15 @@ class ContextDiagnosticListener : public CppDiagnosticListener {
       auto as_loc_id = [&](clang::CharSourceRange range) {
         return SemIR::LocId(AddImportIRInst(context_->sem_ir(), range));
       };
-      AttachMarks(builder, info, /*is_note=*/false, as_loc_id);
+      AttachRangesAndFixIts(builder, info, as_loc_id);
       for (; i + 1 < diags.size() &&
              diags[i + 1].level == clang::DiagnosticsEngine::Note;
            ++i) {
         AttachNote(builder, diags[i + 1], as_loc_id);
       }
-      // TODO: This will apply all current Carbon annotation functions. We
-      // should instead track how Clang's context notes and Carbon's annotation
-      // functions are interleaved, and interleave the notes in the same order.
+      // TODO: This attaches the labels of every active Carbon context scope.
+      // We should instead track how Clang's context notes and Carbon's context
+      // scopes are interleaved, and interleave the labels in the same order.
       builder.Emit();
     }
   }

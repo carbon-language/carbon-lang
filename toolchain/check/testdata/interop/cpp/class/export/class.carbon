@@ -59,16 +59,21 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete_concrete.carbon:[[@LINE+7]]:1
-// CHECK:STDERR: ->     │ class IncompleteConcreteA;
-// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
-// CHECK:STDERR:        ·              ┗━━┫ error: class was forward declared here
-// CHECK:STDERR:        ·                 ┃        [ClassForwardDeclaredHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 class IncompleteConcreteA;
 
 inline Cpp '''
+// CHECK:STDERR:        ╭─┤ fail_incomplete_concrete.carbon:[[@LINE+27]]:50
+// CHECK:STDERR:        │ class IncompleteConcreteA;
+// CHECK:STDERR:        ·       ─────────┬─────────
+// CHECK:STDERR:        ·                ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ Carbon::IncompleteConcreteA incomplete_concrete_a;
+// CHECK:STDERR:        ·                                                  ┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: use in C++ of incomplete Carbon type `IncompleteConcreteA`
+// CHECK:STDERR:        · ┃        [IncompleteTypeInCppUse]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_incomplete_concrete.carbon:[[@LINE+15]]:29
 // CHECK:STDERR:        │ class IncompleteConcreteA;
 // CHECK:STDERR:        ·                          ┬

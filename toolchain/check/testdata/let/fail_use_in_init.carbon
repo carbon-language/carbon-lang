@@ -23,7 +23,7 @@ fn F() {
   // CHECK:STDERR:        ╭─┤ fail_use_in_init.carbon:[[@LINE+8]]:14
   // CHECK:STDERR: ->     │   let unused a: i32 = a;
   // CHECK:STDERR:        ·              ━━━┳━━   ┬
-  // CHECK:STDERR:        ·                 ┗━━━━━━━━┫ error: variable `a` marked `unused` but used
+  // CHECK:STDERR:        ·                 ┗━━━━━━━━┫ error: binding `a` marked `unused` but used
   // CHECK:STDERR:        ·                       │  ┃        [UnusedButUsed]
   // CHECK:STDERR:        ·                       ╰────┤ usage here [UnusedButUsedHere]
   // CHECK:STDERR:        ╰────

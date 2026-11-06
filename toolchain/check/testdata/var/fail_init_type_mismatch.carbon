@@ -12,13 +12,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_init_type_mismatch.carbon
 
-// CHECK:STDERR:        ╭─┤ fail_init_type_mismatch.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_init_type_mismatch.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ var x: {} = ();
 // CHECK:STDERR:        · ━━━━┳━━━━
 // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `()` to `{}`
-// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·     ╰────┤ type `()` does not implement interface `Core.ImplicitAs({})`
-// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {} = ();
@@ -54,9 +52,9 @@ var x: {} = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc24_9.1: type = splice_block %.loc24_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc24_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc24_9.3: type = converted %.loc24_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc22_9.1: type = splice_block %.loc22_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc22_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc22_9.3: type = converted %.loc22_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -67,8 +65,8 @@ var x: {} = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_14: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc24_1: %empty_struct_type = converted %.loc24_14, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_14: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc22_1: %empty_struct_type = converted %.loc22_14, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

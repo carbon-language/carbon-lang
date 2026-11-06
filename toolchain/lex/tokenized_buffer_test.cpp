@@ -1414,10 +1414,10 @@ TEST_F(LexerTest, DiagnosticBadHex) {
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
-  // Only the invalid digit is marked, since the message says which literal it
-  // is in.
+  // The message is located at only the invalid digit, since it already names
+  // the literal the digit is in.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsSingleDiagnostic(
                   Diagnostics::Kind::InvalidDigit, Diagnostics::Level::Error, 1,
                   6, HasSubstr("'a'"))));
   compile_helper_.GetTokenizedBuffer("0x123abc", &consumer);

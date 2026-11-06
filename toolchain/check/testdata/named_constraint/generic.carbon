@@ -68,7 +68,7 @@ library "[[@TEST_NAME]]";
 constraint Generic(T: type) {}
 // CHECK:STDERR:        ╭─┤ fail_inside_definition.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ constraint Generic(T: type) {}
-// CHECK:STDERR:        · ──────────────┬──────────────
+// CHECK:STDERR:        ·            ───┬───
 // CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ constraint Generic(T: type) {}
@@ -85,7 +85,7 @@ constraint Generic(T: type) {}
 
 // CHECK:STDERR:        ╭─┤ fail_args_count_mismatch.carbon:[[@LINE+12]]:24
 // CHECK:STDERR:        │ constraint Generic(T: type) {}
-// CHECK:STDERR:        · ──────────────┬──────────────
+// CHECK:STDERR:        ·            ───┬───
 // CHECK:STDERR:        ·               ╰──┤ calling generic constraint declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(unused generic T: Generic((), ())) {}

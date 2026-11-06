@@ -9,6 +9,26 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/array/basics.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/array/basics.carbon
+// CHECK:STDERR:        ╭─┤ min_prelude/parts/array.carbon:13:3
+// CHECK:STDERR: ->     │   adapt MakeArray(T, N);
+// CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·   ┗━━┫ error: `<builtin array(T, N)>` evaluates to incomplete type
+// CHECK:STDERR:        ·      ┃        `<builtin array(Incomplete, 1)>`
+// CHECK:STDERR:        ·      ┃        [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_incomplete_element.carbon
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ var a: array(Incomplete, 1);
+// CHECK:STDERR:        ·        ──────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ in monomorphization of `array(Incomplete, 1)` here
+// CHECK:STDERR:        ·                  │  │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ·                  ╰────┤ in completion of type `array(Incomplete, 1)` here
+// CHECK:STDERR:        ·                       │ [InTypeCompletion]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 
 // --- assign_var.carbon
 
@@ -81,29 +101,10 @@ library "[[@TEST_NAME]]";
 
 class Incomplete;
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete_element.carbon:[[@LINE+31]]:8
-// CHECK:STDERR:        │ class Incomplete;
-// CHECK:STDERR:        · ────────┬────────
-// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ var a: array(Incomplete, 1);
-// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `array(Incomplete, 1)` in
-// CHECK:STDERR:        ·           ┃        name binding declaration
-// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR:        ├─┤ min_prelude/parts/array.carbon
-// CHECK:STDERR:        │   adapt MakeArray(T, N);
-// CHECK:STDERR:        ·   ┬─────────────────────
-// CHECK:STDERR:        ·   ╰──┤ `<builtin array(T, N)>` evaluates to incomplete type
-// CHECK:STDERR:        ·      │ `<builtin array(Incomplete, 1)>`
-// CHECK:STDERR:        ·      │ [IncompleteTypeInMonomorphization]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_incomplete_element.carbon:[[@LINE+12]]:8
 // CHECK:STDERR:        │ class Incomplete;
-// CHECK:STDERR:        · ────────┬────────
-// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var a: array(Incomplete, 1);
 // CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━━━━━
@@ -120,15 +121,12 @@ var p: Incomplete* = &a[0];
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_invalid_element.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        ╭─┤ fail_invalid_element.carbon:[[@LINE+8]]:14
 // CHECK:STDERR: ->     │ var a: array(1, 1);
 // CHECK:STDERR:        ·              ┳
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert non-type value of type
-// CHECK:STDERR:        ·              │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·                 ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(1, 1);

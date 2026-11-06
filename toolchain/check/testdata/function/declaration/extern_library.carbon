@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR:        ╭─┤ fail_extern_library_nonextern.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_extern_library_nonextern.carbon:[[@LINE+13]]:1
 // CHECK:STDERR: ->     │ fn F();
 // CHECK:STDERR:        · ━━━┳━━━
 // CHECK:STDERR:        ·    ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
@@ -62,8 +62,9 @@ import library "extern_library";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_library.carbon
 // CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
-// CHECK:STDERR:        · ──────────────────────┬──────────────────────
-// CHECK:STDERR:        ·                       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·                                          ┬
+// CHECK:STDERR:        ·                                          ╰──┤ previously declared here
+// CHECK:STDERR:        ·                                             │ [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F();
@@ -95,7 +96,7 @@ extern library "extern_library_owner" fn F();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR:        ╷ ╭── imported from: fail_extern_library_collision.carbon [InImport]
-// CHECK:STDERR:        ├─┤ extern_library_copy.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ├─┤ extern_library_copy.carbon:[[@LINE+13]]:1
 // CHECK:STDERR: ->     │ extern library "extern_library_owner" fn F();
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·                  ┗━━┫ error: duplicate name `F` being declared in the same scope
@@ -103,8 +104,9 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_library.carbon
 // CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
-// CHECK:STDERR:        · ──────────────────────┬──────────────────────
-// CHECK:STDERR:        ·                       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·                                          ┬
+// CHECK:STDERR:        ·                                          ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                             │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_library_owner" fn F();
@@ -178,7 +180,7 @@ import library "extern_of_import";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_of_import.carbon
 // CHECK:STDERR:        │ fn F();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

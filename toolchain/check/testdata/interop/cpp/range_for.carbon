@@ -253,9 +253,9 @@ public:
   // CHECK:STDERR:        ·                                       │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
   // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
@@ -275,9 +275,9 @@ public:
   // CHECK:STDERR:        ·                                     │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = f64](r: R) {
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
   // CHECK:STDERR:        │   fn End(self) -> Sentinel;
@@ -397,9 +397,9 @@ public:
   // CHECK:STDERR:        ·                                       │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.Val...
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
   // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
@@ -419,9 +419,9 @@ public:
   // CHECK:STDERR:        ·                                     │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.Val...
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
   // CHECK:STDERR:        │   fn End(self) -> Sentinel;
@@ -448,9 +448,9 @@ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.ValueType
 fn TestIterateDriver(var m: Cpp.DiffMutableADL.MutableRange) {
   // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+28]]:3
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.Val...
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TestIterate(m);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━
@@ -461,9 +461,9 @@ fn TestIterateDriver(var m: Cpp.DiffMutableADL.MutableRange) {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.DiffMutableADL.Val...
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TestIterate(m);
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
@@ -532,9 +532,9 @@ class MutableAndConstRange {
     // CHECK:STDERR:        ·                                                 │ [InCallToFunctionParam]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.OverloadADL.ValueT...
-    // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-    // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·    ─────┬─────
+    // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·            │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
     // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
@@ -554,9 +554,9 @@ class MutableAndConstRange {
     // CHECK:STDERR:        ·                                               │ [InCallToFunctionParam]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR:        │ fn TestIterate[R: Core.Iterate where .ElementType = Cpp.OverloadADL.ValueT...
-    // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────────────
-    // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·    ─────┬─────
+    // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·            │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR:        ├─┤ {{.*}}/prelude/iterate.carbon
     // CHECK:STDERR:        │   fn End(self) -> Sentinel;
@@ -679,9 +679,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 {
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(no_begin_end);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
@@ -694,9 +694,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(no_begin_method);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━
@@ -709,9 +709,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(no_end_method);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━
@@ -724,9 +724,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(no_begin_adl);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
@@ -739,9 +739,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(no_end_adl);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
@@ -754,9 +754,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_method_end_adl);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -769,9 +769,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_adl_end_method);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -784,9 +784,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_field_end_method);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -799,9 +799,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_method_end_field);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -819,9 +819,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:        ·           │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_method_deleted);
   // CHECK:STDERR:        ·                            ┳
@@ -831,9 +831,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_method_deleted);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -850,9 +850,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:        ·        ╰──┤ 'end' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(end_method_deleted);
   // CHECK:STDERR:        ·                          ┳
@@ -862,9 +862,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(end_method_deleted);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━
@@ -882,9 +882,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:        ·                  │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_function_deleted);
   // CHECK:STDERR:        ·                              ┳
@@ -894,9 +894,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(begin_function_deleted);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -914,9 +914,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:        ·                  │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(end_function_deleted);
   // CHECK:STDERR:        ·                            ┳
@@ -926,9 +926,9 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn Test[R: Core.Iterate](unused r: R) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Test(end_function_deleted);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━

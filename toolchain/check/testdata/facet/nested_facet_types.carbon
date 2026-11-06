@@ -348,14 +348,12 @@ constraint NZ2 {
 }
 
 fn F(generic FF: ((Y where .Y1 = ()) where .Self impls NZ1) where .Self impls NZ2) -> FF.(Z.Z1) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_nested_impl_combine_rewrites_from_named_constraints.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   return () as C(());
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `C(())` to
-  // CHECK:STDERR:        ·   │  ┃        `FF.(Z.Z1)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `C(())` does not implement interface `Core.ImplicitAs(FF.(Z.Z1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `FF.(Z.Z1)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return () as C(());

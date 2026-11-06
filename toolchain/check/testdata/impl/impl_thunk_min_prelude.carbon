@@ -51,13 +51,11 @@ interface OpWith(U: type) {
 }
 
 impl forall [T: type, U: Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_out_of_line_thunk.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_out_of_line_thunk.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   fn Op(self, other: Self);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━━
   // CHECK:STDERR:        ·               ┗━━┫ error: use of undefined generic function
-  // CHECK:STDERR:        ·               │  ┃        [MissingGenericFunctionDefinition]
-  // CHECK:STDERR:        ·               ╰────┤ generic function declared here
-  // CHECK:STDERR:        ·                    │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ·                  ┃        [MissingGenericFunctionDefinition]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn Op(self, other: Self);

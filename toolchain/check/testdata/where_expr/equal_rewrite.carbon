@@ -178,18 +178,13 @@ interface I {
 }
 
 // `2` can't be converted to the type of `I.Member`
-// CHECK:STDERR:        ╭─┤ fail_check_rewrite_constraints.carbon:[[@LINE+14]]:53
+// CHECK:STDERR:        ╭─┤ fail_check_rewrite_constraints.carbon:[[@LINE+9]]:53
 // CHECK:STDERR: ->     │ fn RewriteTypeMismatch(generic X: I where .Member = 2);
 // CHECK:STDERR:        ·                                                     ┳
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert non-type value of type `Core.IntLiteral` to
 // CHECK:STDERR:        · ┃        `type`
 // CHECK:STDERR:        · ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                                     ╰──┤ type `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                        │ does not implement
-// CHECK:STDERR:        ·                                                        │ interface
-// CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);

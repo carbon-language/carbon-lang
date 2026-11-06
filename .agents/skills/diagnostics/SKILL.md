@@ -156,12 +156,12 @@ Custom structures can define how they serialize inside diagnostics using the
 
 ### Fluent Builder Pattern
 
-A diagnostic is one message plus the labels that mark the source explaining it.
-Use `Build` to state the message and `Attach` to mark each place the reader has
-to look, chained fluently:
+A diagnostic is one message plus the labels attached to the source that explains
+it. Use `Build` to state the message and `Attach` to attach a label to each
+place the reader has to look, chained fluently:
 
 ```cpp
-CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, Info, "`{0}` previously appeared here",
+CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, "`{0}` previously appeared here",
                         Lex::TokenKind);
 
 context.emitter()
@@ -172,16 +172,12 @@ context.emitter()
 
 Labels are declared with `CARBON_DIAGNOSTIC_LABEL` where they are attached, and
 are not registered in `kind.def`; `check_diagnostics.py` checks that each one is
-attached and covered. A label is either `Primary` -- the range the message
-itself is about -- or `Info`, for somewhere else the reader must look; those two
-are the only categories, because anything not read against the code it names is
-not a label. `Attach(loc)` with no label marks a range wordlessly, which is what
-to use when a label would only restate the message.
-
-Every diagnostic should attach at least one label; a message with nothing
-attached has nothing to show. See
+attached and covered. A label explains the problem. Code that is part of the
+problem belongs to the message: its own location, and any further range added
+with `ExtraRange(loc)`, which has no text. Text not read together with the code
+it is attached to is not a label. See
 [diagnostics.md](../../../toolchain/docs/diagnostics.md) for which range to pick
-and when a label earns words.
+and when a label needs text.
 
 > [!SAFETY] Emitter builders are marked `[[nodiscard]]`. To prevent a developer
 > from creating a builder but failing to terminal-chain `.Emit()`, the builder
@@ -189,33 +185,35 @@ and when a label earns words.
 > `static_assert(false)`. You must save the builder to an lvalue or execute the
 > chain exactly as `emitter.Build(...).Attach(...).Emit()`.
 
-### RAII Context & Annotation Scopes
+### Diagnosers & Context Scopes
 
-Manage large checking structures requiring blanket context using RAII block
-scopes:
+-   `Diagnoser`: When a caller can state the problem better than the code that
+    detects it, it passes a callback that builds the diagnostic with the
+    caller's own `CARBON_DIAGNOSTIC`. The callee calls it, attaches its own
+    labels, and emits the result:
 
--   `ContextScope`: Attaches a context to every diagnostic emitted within its
-    scope, describing the higher-level operation that failed because of it. A
-    context is declared with `CARBON_DIAGNOSTIC_CONTEXT`, or
-    `CARBON_DIAGNOSTIC_SOFT_CONTEXT` for one dropped when the diagnostic
-    already has a context:
+    ```cpp
+    RequireCompleteType(context, base_type_id, node_id, [&] {
+      CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                        "base {0} is an incomplete type", InstIdAsType);
+      return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                     base_type_inst_id);
+    });
+    ```
+
+-   `ContextScope`: RAII block scope that attaches a label to every diagnostic
+    emitted within it, saying what was being done when it was emitted. It only
+    attaches a label; the message stays whatever the emitting code said:
 
     ```cpp
     Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC_CONTEXT(
-              QualifiedDeclInIncompleteClassScope,
-              "cannot declare a member of incomplete class {0}", SemIR::TypeId);
-          builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
-                         context.classes().Get(class_id).self_type_id);
+          CARBON_DIAGNOSTIC_LABEL(ResolvingSpecificHere,
+                                  "in monomorphization of {0} here",
+                                  SemIR::SpecificId);
+          builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
         });
     ```
-
-    A context is not a label: its text stands alone as a sentence, which is why
-    it leads the diagnostic rather than following it.
-
--   `AnnotationScope`: RAII block scope that attaches labels to every diagnostic
-    emitted within it, using the same `Builder` as a direct emission.
 
 ---
 

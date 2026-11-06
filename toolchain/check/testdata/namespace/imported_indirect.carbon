@@ -56,18 +56,16 @@ package Same library "[[@TEST_NAME]]";
 
 import library "b";
 
-// CHECK:STDERR:        ╭─┤ fail_named_indirectly_same_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_same_package.carbon:[[@LINE+17]]:10
 // CHECK:STDERR: ->     │ fn G() { F(); }
 // CHECK:STDERR:        ·          ━┳━
 // CHECK:STDERR:        ·           ┗━━┫ error: function returns incomplete type `A.C`
 // CHECK:STDERR:        ·              ┃        [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_same_package.carbon [InImport]
-// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class A.C;
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·         ┬
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ b.carbon
 // CHECK:STDERR:        │ fn F() -> A.C;
@@ -83,18 +81,16 @@ package Other library "[[@TEST_NAME]]";
 
 import Same library "b";
 
-// CHECK:STDERR:        ╭─┤ fail_named_indirectly_different_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_different_package.carbon:[[@LINE+17]]:10
 // CHECK:STDERR: ->     │ fn G() { Same.F(); }
 // CHECK:STDERR:        ·          ━━━━┳━━━
 // CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Same.A.C`
 // CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_different_package.carbon [InImport]
-// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class A.C;
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·         ┬
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ b.carbon
 // CHECK:STDERR:        │ fn F() -> A.C;

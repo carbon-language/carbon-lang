@@ -139,14 +139,13 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn Var5() {
-  // CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+14]]:18
+  // CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+13]]:18
   // CHECK:STDERR: ->     │   var unused v5: (Abstract,);
   // CHECK:STDERR:        ·                  ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                  ┗━━┫ error: binding pattern has abstract type `(Abstract,)` in
   // CHECK:STDERR:        ·                     ┃        `var` pattern
   // CHECK:STDERR:        ·                     ┃        [AbstractTypeInVarPattern]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── imported from: fail_import.carbon [InImport]
   // CHECK:STDERR:        ├─┤ lib.carbon
   // CHECK:STDERR:        │ abstract class Abstract {}
   // CHECK:STDERR:        · ────────────┬────────────
@@ -625,10 +624,10 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v5.var, <error>
-// CHECK:STDOUT:   %.loc20_28.1: type = splice_block %.loc20_28.3 [concrete = constants.%tuple.type.763] {
+// CHECK:STDOUT:   %.loc19_28.1: type = splice_block %.loc19_28.3 [concrete = constants.%tuple.type.763] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %.loc20_28.2: %tuple.type.135 = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc20_28.3: type = converted %.loc20_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
+// CHECK:STDOUT:     %.loc19_28.2: %tuple.type.135 = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc19_28.3: type = converted %.loc19_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

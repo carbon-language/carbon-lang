@@ -97,15 +97,12 @@ fn Class.F(unused self: Class) {}
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR:        ╭─┤ fail_return_self_value.carbon:[[@LINE+11]]:17
+  // CHECK:STDERR:        ╭─┤ fail_return_self_value.carbon:[[@LINE+8]]:17
   // CHECK:STDERR: ->     │   fn F(self) -> self;
   // CHECK:STDERR:        ·                 ┳━━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
-  // CHECK:STDERR:        ·                 │  ┃        `Self` to `type`
-  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·                 ╰────┤ type `Class` does not implement interface
-  // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                    ┃        `Self` to `type`
+  // CHECK:STDERR:        ·                    ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F(self) -> self;
@@ -468,7 +465,7 @@ class Class {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.ref: %Class = name_ref self, %self
-// CHECK:STDOUT:     %.loc15: type = converted %self.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc12: type = converted %self.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %self.param: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self: %Class = wrapper_binding self, %self.param

@@ -52,15 +52,12 @@ var c_bad: C({.c = 1, .d = 2}) = F();
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+8]]:1
 // CHECK:STDERR: ->     │ var c_bad: C({.a = 3, .b = 4}) = F();
 // CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `C({.a = 1, .b = 2})`
-// CHECK:STDERR:        · │  ┃        to `C({.a = 3, .b = 4})`
-// CHECK:STDERR:        · │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╰────┤ type `C({.a = 1, .b = 2})` does not implement interface
-// CHECK:STDERR:        ·      │ `Core.ImplicitAs(C({.a = 3, .b = 4}))`
-// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·    ┃        to `C({.a = 3, .b = 4})`
+// CHECK:STDERR:        ·    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C({.a = 3, .b = 4}) = F();

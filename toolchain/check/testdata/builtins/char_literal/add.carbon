@@ -53,8 +53,8 @@ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
 
 // CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+19]]:5
 // CHECK:STDERR:        │ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
-// CHECK:STDERR:        ·     ───────┬──────
-// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·     ┬
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
 // CHECK:STDERR:        ·     ┳

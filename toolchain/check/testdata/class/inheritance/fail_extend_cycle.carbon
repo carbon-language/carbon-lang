@@ -20,8 +20,8 @@ base class B {
 
 // CHECK:STDERR:        ╭─┤ fail_extend_cycle.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ base class A {
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·            ┬
+// CHECK:STDERR:        ·            ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ base class A {
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━

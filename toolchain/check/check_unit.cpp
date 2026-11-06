@@ -385,7 +385,8 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   // On crash, report which token we were handling.
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     const auto& tree = tree_and_subtrees_getter_();
-    auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
+    auto converted =
+        tree.NodeToDiagnosticLoc(node_id, Parse::LocExtent::Subtree);
     output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
@@ -521,15 +522,22 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
       case DefinitionResolution::NotDefinedYet: {
         CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
                           "use of undefined generic function");
-        CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere, Info,
+        CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere,
                                 "generic function declared here");
         auto generic_decl_id =
             context_.generics()
                 .Get(context_.specifics().Get(specific_id).generic_id)
                 .decl_id;
-        emitter_.Build(loc, MissingGenericFunctionDefinition)
-            .Attach(generic_decl_id, MissingGenericFunctionDefinitionHere)
-            .Emit();
+        auto diag = emitter_.Build(loc, MissingGenericFunctionDefinition);
+        // Only attach a label when the declaration has a location distinct from
+        // the use's.
+        auto decl_loc_id = context_.insts().GetCanonicalLocId(generic_decl_id);
+        if (decl_loc_id.has_value() &&
+            decl_loc_id != context_.insts().GetCanonicalLocId(loc)) {
+          diag.Attach(LocIdForDiagnostics::DeclaredName(generic_decl_id),
+                      MissingGenericFunctionDefinitionHere);
+        }
+        diag.Emit();
         break;
       }
     }
@@ -588,10 +596,10 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
             "use of `{0} as {1}`",
             InstIdAsRawType, SpecificInterfaceIdAsRawType);
         CARBON_DIAGNOSTIC_LABEL(
-            PoisonedImplLookupConcreteResultNoteBadImpl, Info,
+            PoisonedImplLookupConcreteResultNoteBadImpl,
             "the use would select the `impl` here but it was not found yet");
         CARBON_DIAGNOSTIC_LABEL(
-            PoisonedImplLookupConcreteResultNotePreviousImpl, Info,
+            PoisonedImplLookupConcreteResultNotePreviousImpl,
             "the use had selected the `impl` here");
         emitter_
             .Build(poison.loc_id, PoisonedImplLookupConcreteResult,
@@ -608,7 +616,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
             "found `impl` for {0} as {1}, which has a custom witness",
             InstIdAsRawType, SpecificInterfaceIdAsRawType);
         CARBON_DIAGNOSTIC_LABEL(
-            PoisonedImplLookupCustomResultNoteBadImpl, Info,
+            PoisonedImplLookupCustomResultNoteBadImpl,
             "the use tried to select the `impl` here, but a custom "
             "witness was already chosen");
 

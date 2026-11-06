@@ -257,7 +257,7 @@ static auto DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
                       "structure as another non-final `impl`");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            ImplNonFinalSameTypeStructure);
-    CARBON_DIAGNOSTIC_LABEL(ImplNonFinalSameTypeStructureNote, Info,
+    CARBON_DIAGNOSTIC_LABEL(ImplNonFinalSameTypeStructureNote,
                             "other `impl` here");
     builder.Attach(impl_a.latest_decl_id, ImplNonFinalSameTypeStructureNote);
     builder.Emit();
@@ -286,7 +286,7 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(Context& context,
       auto builder = context.emitter().Build(query_impl.latest_decl_id,
                                              ImplFinalOverlapsNonFinal);
       CARBON_DIAGNOSTIC_LABEL(
-          ImplFinalOverlapsNonFinalNote, Info,
+          ImplFinalOverlapsNonFinalNote,
           "`final impl` declared here would always be used instead");
       builder.Attach(final_impl.latest_decl_id, ImplFinalOverlapsNonFinalNote);
       builder.Emit();
@@ -316,7 +316,7 @@ static auto DiagnoseFinalImplsOverlapInDifferentFiles(Context& context,
     CARBON_DIAGNOSTIC(
         FinalImplOverlapsDifferentFile, Error,
         "`final impl` overlaps with `final impl` from another file");
-    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsDifferentFileNote, Info,
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsDifferentFileNote,
                             "imported `final impl` here");
     if (impl_a.is_local) {
       auto builder = context.emitter().Build(impl_a.latest_decl_id,
@@ -351,7 +351,7 @@ static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
                       "outside a `match_first` block");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            FinalImplOverlapsSameFile);
-    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsSameFileNote, Info,
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsSameFileNote,
                             "other `final impl` here");
     builder.Attach(impl_a.latest_decl_id, FinalImplOverlapsSameFileNote);
     builder.Emit();

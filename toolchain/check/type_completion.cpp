@@ -4,6 +4,9 @@
 
 #include "toolchain/check/type_completion.h"
 
+#include <optional>
+#include <variant>
+
 #include "common/concepts.h"
 #include "common/increment_scope.h"
 #include "llvm/ADT/SmallVector.h"
@@ -31,86 +34,114 @@
 
 namespace Carbon::Check {
 
-auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id)
-    -> void {
-  // The caller must provide context for any diagnostics in type completion.
-  context.emitter().CheckHasContext();
+// The entity whose incompleteness stopped a type from being completed. It is
+// recorded so that the diagnostic can be built after the completion work is
+// done, outside the context scope that labels diagnostics from that work.
+using IncompleteEntity =
+    std::variant<SemIR::ClassId, SemIR::InterfaceId, SemIR::NamedConstraintId>;
 
+auto DiagnoseIncompleteClass(Context& context, SemIR::ClassId class_id,
+                             Diagnoser diagnoser) -> void {
+  CARBON_CHECK(diagnoser);
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(!class_info.is_complete(), "Class is not incomplete");
+  auto diag = diagnoser();
   if (class_info.has_definition_started()) {
-    CARBON_DIAGNOSTIC(ClassIncompleteWithinDefinition, Error,
-                      "class is incomplete within its definition");
-    context.emitter().Emit(class_info.definition_id,
-                           ClassIncompleteWithinDefinition);
+    CARBON_DIAGNOSTIC_LABEL(ClassIncompleteWithinDefinition,
+                            "class is incomplete within its definition");
+    diag.Attach(class_info.definition_id, ClassIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(ClassForwardDeclaredHere, Error,
-                      "class was forward declared here");
-    context.emitter().Emit(class_info.latest_decl_id(),
-                           ClassForwardDeclaredHere);
+    CARBON_DIAGNOSTIC_LABEL(ClassForwardDeclaredHere,
+                            "class was forward declared here");
+    diag.Attach(LocIdForDiagnostics::DeclaredName(class_info.latest_decl_id()),
+                ClassForwardDeclaredHere);
   }
+  diag.Emit();
 }
 
 auto DiagnoseIncompleteInterface(Context& context,
-                                 SemIR::InterfaceId interface_id) -> void {
-  // The caller must provide context for any diagnostics in type completion.
-  context.emitter().CheckHasContext();
-
+                                 SemIR::InterfaceId interface_id,
+                                 Diagnoser diagnoser) -> void {
+  CARBON_CHECK(diagnoser);
   const auto& interface_info = context.interfaces().Get(interface_id);
   CARBON_CHECK(!interface_info.is_complete(), "Interface is not incomplete");
+  auto diag = diagnoser();
   if (interface_info.is_being_defined()) {
-    CARBON_DIAGNOSTIC(InterfaceIncompleteWithinDefinition, Error,
-                      "interface is currently being defined");
-    context.emitter().Emit(interface_info.definition_id,
-                           InterfaceIncompleteWithinDefinition);
+    CARBON_DIAGNOSTIC_LABEL(InterfaceIncompleteWithinDefinition,
+                            "interface is incomplete within its definition");
+    diag.Attach(interface_info.definition_id,
+                InterfaceIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(InterfaceForwardDeclaredHere, Error,
-                      "interface was forward declared here");
-    context.emitter().Emit(interface_info.latest_decl_id(),
-                           InterfaceForwardDeclaredHere);
+    CARBON_DIAGNOSTIC_LABEL(InterfaceForwardDeclaredHere,
+                            "interface was forward declared here");
+    diag.Attach(
+        LocIdForDiagnostics::DeclaredName(interface_info.latest_decl_id()),
+        InterfaceForwardDeclaredHere);
   }
+  diag.Emit();
 }
 
 auto DiagnoseAbstractClass(Context& context, SemIR::ClassId class_id,
-                           bool direct_use) -> void {
-  // The caller must provide context for any diagnostics in type completion.
-  context.emitter().CheckHasContext();
-
+                           bool direct_use, Diagnoser diagnoser) -> void {
+  CARBON_CHECK(diagnoser);
   const auto& class_info = context.classes().Get(class_id);
   CARBON_CHECK(
       class_info.inheritance_kind == SemIR::Class::InheritanceKind::Abstract,
       "Class is not abstract");
-  CARBON_DIAGNOSTIC(
-      ClassAbstractHere, Error,
+  CARBON_DIAGNOSTIC_LABEL(
+      ClassAbstractHere,
       "{0:=0:uses class that|=1:class} was declared abstract here",
       Diagnostics::IntAsSelect);
-  context.emitter().Emit(class_info.definition_id, ClassAbstractHere,
-                         static_cast<int>(direct_use));
+  auto diag = diagnoser();
+  diag.Attach(class_info.definition_id, ClassAbstractHere,
+              static_cast<int>(direct_use));
+  diag.Emit();
 }
 
 static auto DiagnoseIncompleteNamedConstraint(
-    Context& context, SemIR::NamedConstraintId named_constraint_id) -> void {
-  // The caller must provide context for any diagnostics in type completion.
-  context.emitter().CheckHasContext();
-
+    Context& context, SemIR::NamedConstraintId named_constraint_id,
+    Diagnoser diagnoser) -> void {
+  CARBON_CHECK(diagnoser);
   const auto& constraint = context.named_constraints().Get(named_constraint_id);
   CARBON_CHECK(!constraint.is_complete(), "Named constraint is not incomplete");
+  auto diag = diagnoser();
   if (constraint.is_being_defined()) {
-    CARBON_DIAGNOSTIC(NamedConstraintIncompleteWithinDefinition, Error,
-                      "constraint is currently being defined");
-    context.emitter().Emit(constraint.definition_id,
-                           NamedConstraintIncompleteWithinDefinition);
+    CARBON_DIAGNOSTIC_LABEL(NamedConstraintIncompleteWithinDefinition,
+                            "constraint is incomplete within its definition");
+    diag.Attach(constraint.definition_id,
+                NamedConstraintIncompleteWithinDefinition);
   } else {
-    CARBON_DIAGNOSTIC(NamedConstraintForwardDeclaredHere, Error,
-                      "constraint was forward declared here");
-    context.emitter().Emit(constraint.latest_decl_id(),
-                           NamedConstraintForwardDeclaredHere);
+    CARBON_DIAGNOSTIC_LABEL(NamedConstraintForwardDeclaredHere,
+                            "constraint was forward declared here");
+    diag.Attach(LocIdForDiagnostics::DeclaredName(constraint.latest_decl_id()),
+                NamedConstraintForwardDeclaredHere);
   }
+  diag.Emit();
 }
 
-static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
-                                     const SemIR::FacetType& facet_type,
-                                     bool diagnose) -> bool {
+// Emits the diagnostic `diagnoser` builds for `incomplete` not being complete,
+// with a label saying why it isn't.
+static auto DiagnoseIncomplete(Context& context, IncompleteEntity incomplete,
+                               Diagnoser diagnoser) -> void {
+  std::visit(
+      [&](auto id) {
+        if constexpr (std::same_as<decltype(id), SemIR::ClassId>) {
+          DiagnoseIncompleteClass(context, id, diagnoser);
+        } else if constexpr (std::same_as<decltype(id), SemIR::InterfaceId>) {
+          DiagnoseIncompleteInterface(context, id, diagnoser);
+        } else {
+          DiagnoseIncompleteNamedConstraint(context, id, diagnoser);
+        }
+      },
+      incomplete);
+}
+
+// Requires the interfaces and named constraints `facet_type` extends to be
+// complete. Returns false where one isn't, recording it in `incomplete`, or
+// where resolving a specific failed.
+static auto RequireCompleteFacetType(
+    Context& context, SemIR::LocId loc_id, const SemIR::FacetType& facet_type,
+    std::optional<IncompleteEntity>* incomplete) -> bool {
   const auto& declared_facet_type =
       context.declared_facet_types().Get(facet_type.declared_facet_type_id);
 
@@ -118,9 +149,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     auto interface_id = extends.interface_id;
     const auto& interface = context.interfaces().Get(interface_id);
     if (!interface.is_complete()) {
-      if (diagnose) {
-        DiagnoseIncompleteInterface(context, interface_id);
-      }
+      *incomplete = interface_id;
       return false;
     }
     if (interface.generic_id.has_value()) {
@@ -147,9 +176,7 @@ static auto RequireCompleteFacetType(Context& context, SemIR::LocId loc_id,
     const auto& constraint =
         context.named_constraints().Get(named_constraint_id);
     if (!constraint.is_complete()) {
-      if (diagnose) {
-        DiagnoseIncompleteNamedConstraint(context, named_constraint_id);
-      }
+      *incomplete = named_constraint_id;
       return false;
     }
     if (constraint.generic_id.has_value()) {
@@ -189,12 +216,18 @@ namespace {
 class TypeCompleter {
  public:
   // `context` mut not be null.
-  TypeCompleter(Context* context, SemIR::LocId loc_id, bool diagnose)
-      : context_(context), loc_id_(loc_id), diagnose_(diagnose) {}
+  TypeCompleter(Context* context, SemIR::LocId loc_id)
+      : context_(context), loc_id_(loc_id) {}
 
   // Attempts to complete the given type. Returns true if it is now complete,
   // false if it could not be completed.
   auto Complete(SemIR::TypeId type_id) -> bool;
+
+  // The entity that stopped `Complete` from completing the type, when that is
+  // what stopped it rather than an error already diagnosed.
+  auto incomplete() const -> std::optional<IncompleteEntity> {
+    return incomplete_;
+  }
 
  private:
   enum class Phase : int8_t {
@@ -356,7 +389,7 @@ class TypeCompleter {
   Context* context_;
   llvm::SmallVector<WorkItem> work_list_;
   SemIR::LocId loc_id_;
-  bool diagnose_;
+  std::optional<IncompleteEntity> incomplete_;
 };
 }  // namespace
 
@@ -470,9 +503,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
         }
       }
       if (!class_info.is_complete()) {
-        if (diagnose_) {
-          DiagnoseIncompleteClass(*context_, inst.class_id);
-        }
+        incomplete_ = inst.class_id;
         return false;
       }
       if (inst.specific_id.has_value()) {
@@ -506,7 +537,7 @@ auto TypeCompleter::AddNestedIncompleteTypes(SemIR::Inst type_inst) -> bool {
       break;
     }
     case CARBON_KIND(SemIR::FacetType inst): {
-      if (!RequireCompleteFacetType(*context_, loc_id_, inst, diagnose_)) {
+      if (!RequireCompleteFacetType(*context_, loc_id_, inst, &incomplete_)) {
         return false;
       }
       break;
@@ -867,25 +898,53 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
   }
 }
 
+// Completes `type_id`. If it can't be completed because an entity it is built
+// from isn't complete, emits the diagnostic `diagnoser` builds, with a label
+// saying which entity.
+//
+// Completing a type can evaluate what it is built from, such as a specific's
+// definition or a builtin's constant, and import its definition from C++, and
+// each of those can emit a diagnostic of its own. A context scope labels those
+// with the type being completed and `loc_id`. The diagnoser's diagnostic is
+// built after the scope ends, so that it does not get that label: its message
+// already says what was being completed and where.
+static auto CompleteType(Context& context, SemIR::TypeId type_id,
+                         SemIR::LocId loc_id, Diagnoser diagnoser) -> bool {
+  TypeCompleter completer(&context, loc_id);
+  bool complete;
+  {
+    auto label_fn = [&](DiagnosticBuilder& builder) {
+      CARBON_DIAGNOSTIC_LABEL(InTypeCompletion,
+                              "in completion of type {0} here", SemIR::TypeId);
+      builder.Attach(loc_id, InTypeCompletion, type_id);
+    };
+    std::optional<DiagnosticContextScope> scope;
+    if (loc_id.has_value()) {
+      scope.emplace(&context.emitter(), label_fn);
+    }
+    complete = completer.Complete(type_id);
+  }
+  if (!complete && diagnoser && completer.incomplete()) {
+    DiagnoseIncomplete(context, *completer.incomplete(), diagnoser);
+  }
+  return complete;
+}
+
 auto TryToCompleteType(Context& context, SemIR::TypeId type_id,
-                       SemIR::LocId loc_id, bool diagnose) -> bool {
-  return TypeCompleter(&context, loc_id, diagnose).Complete(type_id);
+                       SemIR::LocId loc_id, Diagnoser diagnoser) -> bool {
+  return CompleteType(context, type_id, loc_id, diagnoser);
 }
 
 auto CompleteTypeOrCheckFail(Context& context, SemIR::TypeId type_id) -> void {
-  bool complete =
-      TypeCompleter(&context, SemIR::LocId::None, false).Complete(type_id);
+  bool complete = TypeCompleter(&context, SemIR::LocId::None).Complete(type_id);
   CARBON_CHECK(complete, "Expected {0} to be a complete type",
                context.types().GetAsInst(type_id));
 }
 
 auto RequireCompleteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id,
-                         DiagnosticContextFn diagnostic_context) -> bool {
-  CARBON_CHECK(diagnostic_context);
-  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
-
-  if (!TypeCompleter(&context, loc_id, true).Complete(type_id)) {
+                         SemIR::LocId loc_id, Diagnoser diagnoser) -> bool {
+  CARBON_CHECK(diagnoser);
+  if (!CompleteType(context, type_id, loc_id, diagnoser)) {
     return false;
   }
 
@@ -918,18 +977,12 @@ auto TryIsConcreteType(Context& context, SemIR::TypeId type_id,
 }
 
 auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
-                         SemIR::LocId loc_id,
-                         DiagnosticContextFn complete_type_diagnostic_context,
-                         DiagnosticContextFn concrete_type_diagnostic_context)
-    -> bool {
-  if (!RequireCompleteType(context, type_id, loc_id,
-                           complete_type_diagnostic_context)) {
+                         SemIR::LocId loc_id, Diagnoser complete_type_diagnoser,
+                         Diagnoser concrete_type_diagnoser) -> bool {
+  if (!RequireCompleteType(context, type_id, loc_id, complete_type_diagnoser)) {
     return false;
   }
-
-  CARBON_CHECK(concrete_type_diagnostic_context);
-  Diagnostics::ContextScope scope(&context.emitter(),
-                                  concrete_type_diagnostic_context);
+  CARBON_CHECK(concrete_type_diagnoser);
 
   // TODO: For symbolic types, should add an implicit constraint that they are
   // not abstract.
@@ -947,16 +1000,19 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
       direct_use = true;
     }
   }
-  DiagnoseAbstractClass(context, complete_info.abstract_class_id, direct_use);
+  DiagnoseAbstractClass(context, complete_info.abstract_class_id, direct_use,
+                        concrete_type_diagnoser);
   return false;
 }
 
 // Identifies the facet type in the `facet_type_inst_id`. Returns None if an
-// error is encountered or diagnosed.
+// error is encountered, recording in `incomplete` the constraint that stopped
+// it when one did.
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId initial_self_const_id,
                               SemIR::ConstantId facet_type_const_id,
-                              bool allow_partially_identified, bool diagnose)
+                              bool allow_partially_identified,
+                              std::optional<IncompleteEntity>* incomplete)
     -> IdentifiedFacetTypeId {
   if (facet_type_const_id == SemIR::ErrorInst::ConstantId) {
     return IdentifiedFacetTypeId::None;
@@ -1106,10 +1162,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           continue;
         }
       } else {
-        if (diagnose) {
-          DiagnoseIncompleteNamedConstraint(context,
-                                            extends.named_constraint_id);
-        }
+        *incomplete = extends.named_constraint_id;
         return IdentifiedFacetTypeId::None;
       }
 
@@ -1164,9 +1217,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           continue;
         }
       } else {
-        if (diagnose) {
-          DiagnoseIncompleteNamedConstraint(context, impls.named_constraint_id);
-        }
+        *incomplete = impls.named_constraint_id;
         return IdentifiedFacetTypeId::None;
       }
 
@@ -1222,9 +1273,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           continue;
         }
       } else {
-        if (diagnose) {
-          DiagnoseIncompleteNamedConstraint(context, impls.named_constraint_id);
-        }
+        *incomplete = impls.named_constraint_id;
         return IdentifiedFacetTypeId::None;
       }
 
@@ -1272,22 +1321,40 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::TypeId facet_type_type_id,
                             bool allow_partially_identified)
     -> IdentifiedFacetTypeId {
+  std::optional<IncompleteEntity> incomplete;
   return IdentifyFacetType(context, loc_id, self_const_id,
                            facet_type_type_id.AsConstantId(),
-                           allow_partially_identified,
-                           /*diagnose=*/false);
+                           allow_partially_identified, &incomplete);
 }
 
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 SemIR::TypeId facet_type_type_id,
-                                DiagnosticContextFn diagnostic_context,
-                                bool diagnose) -> IdentifiedFacetTypeId {
-  CARBON_CHECK(diagnostic_context);
-  Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
-  return IdentifyFacetType(context, loc_id, self_const_id,
-                           facet_type_type_id.AsConstantId(),
-                           /*allow_partially_identified=*/false, diagnose);
+                                Diagnoser diagnoser) -> IdentifiedFacetTypeId {
+  // Identifying a facet type resolves the specifics of what it extends, which
+  // can emit diagnostics. As in `CompleteType`, a context scope labels those,
+  // and the diagnoser's diagnostic is built after the scope ends.
+  std::optional<IncompleteEntity> incomplete;
+  auto identified_id = IdentifiedFacetTypeId::None;
+  {
+    auto label_fn = [&](DiagnosticBuilder& builder) {
+      CARBON_DIAGNOSTIC_LABEL(InFacetTypeIdentification,
+                              "in identification of facet type {0} here",
+                              SemIR::TypeId);
+      builder.Attach(loc_id, InFacetTypeIdentification, facet_type_type_id);
+    };
+    std::optional<DiagnosticContextScope> scope;
+    if (loc_id.has_value()) {
+      scope.emplace(&context.emitter(), label_fn);
+    }
+    identified_id = IdentifyFacetType(
+        context, loc_id, self_const_id, facet_type_type_id.AsConstantId(),
+        /*allow_partially_identified=*/false, &incomplete);
+  }
+  if (!identified_id.has_value() && diagnoser && incomplete) {
+    DiagnoseIncomplete(context, *incomplete, diagnoser);
+  }
+  return identified_id;
 }
 
 }  // namespace Carbon::Check

@@ -140,8 +140,8 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ local_other.carbon
 // CHECK:STDERR:        │ class Other {}
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Other library "o1";
@@ -170,8 +170,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ local_other.carbon
 // CHECK:STDERR:        │ class Other {}
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Other library "o1";

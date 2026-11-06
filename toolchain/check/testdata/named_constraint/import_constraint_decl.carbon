@@ -39,18 +39,17 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}
-// CHECK:STDERR:        ╭─┤ fail_import_not_identified.carbon:[[@LINE+14]]:1
+// CHECK:STDERR:        ╭─┤ fail_import_not_identified.carbon:[[@LINE+13]]:1
 // CHECK:STDERR: ->     │ impl C as A;
 // CHECK:STDERR:        · ━━━━━━┳━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: facet type `A` cannot be identified in `impl as`
 // CHECK:STDERR:        ·          ┃        [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_import_not_identified.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ constraint A;
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
-// CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR:        ·            ┬
+// CHECK:STDERR:        ·            ╰──┤ constraint was forward declared here
+// CHECK:STDERR:        ·               │ [NamedConstraintForwardDeclaredHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C as A;

@@ -31,8 +31,8 @@ class ForwardDeclared;
 
 // CHECK:STDERR:        ╭─┤ fail_name_conflict.carbon:[[@LINE+12]]:12
 // CHECK:STDERR:        │ class ForwardDeclared;
-// CHECK:STDERR:        · ───────────┬──────────
-// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ───────┬───────
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ constraint ForwardDeclared {}
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━
@@ -50,8 +50,8 @@ constraint Declared {}
 
 // CHECK:STDERR:        ╭─┤ fail_defined_twice.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ constraint Declared {}
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·            ────┬───
+// CHECK:STDERR:        ·                ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ constraint Declared {}
 // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━

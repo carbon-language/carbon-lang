@@ -14,8 +14,8 @@ class Class {
   fn F() {}
   // CHECK:STDERR:        ╭─┤ fail_method_redefinition.carbon:[[@LINE+10]]:3
   // CHECK:STDERR:        │   fn F() {}
-  // CHECK:STDERR:        ·   ────┬───
-  // CHECK:STDERR:        ·       ╰──┤ previously defined here [RedeclPrevDef]
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ previously defined here [RedeclPrevDef]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn F() {}
   // CHECK:STDERR:        ·   ━━━━┳━━━

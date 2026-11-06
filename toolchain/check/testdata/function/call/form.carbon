@@ -82,15 +82,12 @@ fn G(x:? F());
 // --- fail_form_param_not_form.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_form_param_not_form.carbon:[[@LINE+11]]:10
+// CHECK:STDERR:        ╭─┤ fail_form_param_not_form.carbon:[[@LINE+8]]:10
 // CHECK:STDERR: ->     │ fn F(x:? i32);
 // CHECK:STDERR:        ·          ┳━━
 // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `type` to
-// CHECK:STDERR:        ·          │  ┃        `Core.Form`
-// CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·          ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·               │ `Core.ImplicitAs(Core.Form)`
-// CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·             ┃        `Core.Form`
+// CHECK:STDERR:        ·             ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(x:? i32);
@@ -152,7 +149,7 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR:        ╭─┤ fail_todo_composite_generic_form.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_composite_generic_form.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn F(generic Fm: Core.Form, unused x:? Fm) {}
   // CHECK:STDERR:        ·              ──────┬──────
   // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `Fm` declared here
@@ -161,11 +158,8 @@ fn G() {
   // CHECK:STDERR: ->     │   F((form(var i32), form(ref i32)), (x, ref x));
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·   │  ┃        `(Core.Form, Core.Form)` to `Core.Form`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `(Core.Form, Core.Form)` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Core.Form)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `(Core.Form, Core.Form)` to `Core.Form`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F((form(var i32), form(ref i32)), (x, ref x));
@@ -182,9 +176,9 @@ fn G() {
   var v: i32 = 0;
   // CHECK:STDERR:        ╭─┤ fail_todo_deduce_generic_form.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn F[Fm: Core.Form](v:? Fm);
-  // CHECK:STDERR:        · ──────────────┬─────────────
-  // CHECK:STDERR:        ·               ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(ref v);
   // CHECK:STDERR:        ·   ━━━━┳━━━
@@ -204,7 +198,7 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR:        ╭─┤ fail_form_generic_arg_not_form.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        ╭─┤ fail_form_generic_arg_not_form.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn F(generic Fm: Core.Form, unused x:? Fm) {}
   // CHECK:STDERR:        ·              ──────┬──────
   // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `Fm` declared here
@@ -213,9 +207,7 @@ fn G() {
   // CHECK:STDERR: ->     │   F(i32, x);
   // CHECK:STDERR:        ·   ┳━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `type` to `Core.Form`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `type` does not implement interface `Core.ImplicitAs(Core.Form)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(i32, x);
@@ -376,15 +368,12 @@ fn G[T: I](x: T) {
 // --- fail_return_form_not_form.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_return_form_not_form.carbon:[[@LINE+11]]:12
+// CHECK:STDERR:        ╭─┤ fail_return_form_not_form.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ fn F() ->? i32;
 // CHECK:STDERR:        ·            ┳━━
 // CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `type` to
-// CHECK:STDERR:        ·            │  ┃        `Core.Form`
-// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·            ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                 │ `Core.ImplicitAs(Core.Form)`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·               ┃        `Core.Form`
+// CHECK:STDERR:        ·               ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() ->? i32;

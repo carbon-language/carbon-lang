@@ -28,7 +28,7 @@ fn Test() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+6]]:3
   // CHECK:STDERR: ->     │   &(&undeclared);
-  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┳ ───────────
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:

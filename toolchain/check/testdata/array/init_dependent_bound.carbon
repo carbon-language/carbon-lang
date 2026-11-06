@@ -54,9 +54,9 @@ constraint Z(N: i32) {
   // have no location. The error should still point somewhere reasonable.
   // CHECK:STDERR:        ╭─┤ fail_init_dependent_bound_in_constant.carbon:[[@LINE+13]]:24
   // CHECK:STDERR:        │ interface Y(T: type, U: T) {}
-  // CHECK:STDERR:        · ──────────────┬─────────────
-  // CHECK:STDERR:        ·               ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·           ┬
+  // CHECK:STDERR:        ·           ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   extend require impls Y(array((), N), ());
   // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━━━━━━

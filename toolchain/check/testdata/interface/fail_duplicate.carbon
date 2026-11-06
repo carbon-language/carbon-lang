@@ -20,8 +20,8 @@ interface Interface { }
 
 // CHECK:STDERR:        ╭─┤ fail_redefine_without_dependents.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ interface Interface { }
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Interface {
 // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━
@@ -40,8 +40,8 @@ interface Interface {}
 
 // CHECK:STDERR:        ╭─┤ fail_redefine_with_dependents.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ interface Interface {}
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Interface {
 // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━
@@ -60,7 +60,7 @@ fn Function();
 
 // CHECK:STDERR:        ╭─┤ fail_name_conflict_with_fn.carbon:[[@LINE+11]]:11
 // CHECK:STDERR:        │ fn Function();
-// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·    ────┬───
 // CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Function;
@@ -77,8 +77,8 @@ class Class;
 
 // CHECK:STDERR:        ╭─┤ fail_name_conflict_with_class.carbon:[[@LINE+11]]:11
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Class { }
 // CHECK:STDERR:        ·           ━━┳━━

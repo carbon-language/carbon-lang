@@ -41,8 +41,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ redecl_after_def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C;
@@ -64,8 +64,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ redef_after_def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C {}

@@ -18,7 +18,7 @@ fn G(b: array(i32, 3)) {
   // Indexing an array value gives a value.
   // CHECK:STDERR:        ╭─┤ fail_expr_category.carbon:[[@LINE+8]]:25
   // CHECK:STDERR: ->     │   var unused pb: i32* = &b[0];
-  // CHECK:STDERR:        ·                         ┳
+  // CHECK:STDERR:        ·                         ╻╶───
   // CHECK:STDERR:        ·                         ┗━━┫ error: cannot take the address of non-reference
   // CHECK:STDERR:        ·                            ┃        expression
   // CHECK:STDERR:        ·                            ┃        [AddrOfNonRef]
@@ -37,7 +37,7 @@ fn G(b: array(i32, 3)) {
   // expression) gives a value.
   // CHECK:STDERR:        ╭─┤ fail_expr_category.carbon:[[@LINE+8]]:25
   // CHECK:STDERR: ->     │   var unused pf: i32* = &F()[0];
-  // CHECK:STDERR:        ·                         ┳
+  // CHECK:STDERR:        ·                         ╻╶─────
   // CHECK:STDERR:        ·                         ┗━━┫ error: cannot take the address of non-reference
   // CHECK:STDERR:        ·                            ┃        expression
   // CHECK:STDERR:        ·                            ┃        [AddrOfNonRef]

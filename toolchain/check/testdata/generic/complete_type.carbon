@@ -19,30 +19,29 @@ library "[[@TEST_NAME]]";
 class B;
 
 class A(T: type) {
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_in_class.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ class B;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var v: T;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: `T` evaluates to incomplete type `B`
+  // CHECK:STDERR:        ·             ┃        [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn F(unused x: A(B)) {}
+  // CHECK:STDERR:        ·             ───┬───
+  // CHECK:STDERR:        ·                ╰──┤ in monomorphization of `A(B)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ·                ╰────┤ in completion of type `A(B)` here [InTypeCompletion]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   var v: T;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete_in_class.carbon:[[@LINE+29]]:13
-// CHECK:STDERR:        │ class B;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR:        │   var v: T;
-// CHECK:STDERR:        ·          ┬
-// CHECK:STDERR:        ·          ╰──┤ `T` evaluates to incomplete type `B`
-// CHECK:STDERR:        ·             │ [IncompleteTypeInMonomorphization]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ fn F(unused x: A(B)) {}
-// CHECK:STDERR:        ·             ┳━━━━━━
-// CHECK:STDERR:        ·             ┗━━┫ error: parameter has incomplete type `A(B)` in function
-// CHECK:STDERR:        ·                ┃        definition
-// CHECK:STDERR:        ·                ┃        [IncompleteTypeInFunctionParam]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_incomplete_in_class.carbon:[[@LINE+12]]:13
 // CHECK:STDERR:        │ class B;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(unused x: A(B)) {}
 // CHECK:STDERR:        ·             ┳━━━━━━
@@ -77,25 +76,24 @@ library "[[@TEST_NAME]]";
 class B;
 
 fn F(generic T: type, p: T*) {
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_in_function_at_eof.carbon:[[@LINE+15]]:10
+  // CHECK:STDERR:        │ class B;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let _: T = *p;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: `T` evaluates to incomplete type `B`
+  // CHECK:STDERR:        ·             ┃        [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn G(p: B*) { F(B, p); }
+  // CHECK:STDERR:        ·               ┬
+  // CHECK:STDERR:        ·               ╰──┤ in monomorphization of `F(B)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let _: T = *p;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete_in_function_at_eof.carbon:[[@LINE+16]]:15
-// CHECK:STDERR:        │ class B;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR:        │   let _: T = *p;
-// CHECK:STDERR:        ·          ┬
-// CHECK:STDERR:        ·          ╰──┤ `T` evaluates to incomplete type `B`
-// CHECK:STDERR:        ·             │ [IncompleteTypeInMonomorphization]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ fn G(p: B*) { F(B, p); }
-// CHECK:STDERR:        ·               ┳
-// CHECK:STDERR:        ·               ┗━━┫ error: unable to monomorphize specific `F(B)`
-// CHECK:STDERR:        ·                  ┃        [ResolvingSpecificHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 fn G(p: B*) { F(B, p); }
 
 // CHECK:STDOUT: --- fail_incomplete_in_class.carbon
@@ -157,14 +155,14 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %x.patt: %pattern_type.709 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %A.7d2 = value_param call_param0
-// CHECK:STDOUT:     %.loc39: type = splice_block %A [concrete = constants.%A.7d2] {
+// CHECK:STDOUT:     %.loc38: type = splice_block %A [concrete = constants.%A.7d2] {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, file.%B.decl.loc4 [concrete = constants.%B]
 // CHECK:STDOUT:       %A: type = class_type @A, @A(constants.%B) [concrete = constants.%A.7d2]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: %A.7d2 = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc41: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %B.decl.loc40: type = class_decl @B [concrete = constants.%B] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -184,14 +182,14 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %A: type = class_type @A, @A(%T.loc6_10.1) [symbolic = %A (constants.%A.59f)]
 // CHECK:STDOUT:   %A.elem: type = unbound_element_type %A, %T.loc6_10.1 [symbolic = %A.elem (constants.%A.elem.ca6)]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: @A.%T.loc6_10.1 (%T)} [symbolic = %struct_type.v (constants.%struct_type.v.a4d)]
-// CHECK:STDOUT:   %complete_type.loc8_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
+// CHECK:STDOUT:   %complete_type.loc24_1.2: <witness> = complete_type_witness %struct_type.v [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.136)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %field_decl: @A.%A.elem (%A.elem.ca6) = field_decl v, element0, %T.ref in [concrete] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_10.2 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %complete_type.loc8_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc8_1.2 (constants.%complete_type.136)]
-// CHECK:STDOUT:     complete_type_witness = %complete_type.loc8_1.1
+// CHECK:STDOUT:     %complete_type.loc24_1.1: <witness> = complete_type_witness constants.%struct_type.v.a4d [symbolic = %complete_type.loc24_1.2 (constants.%complete_type.136)]
+// CHECK:STDOUT:     complete_type_witness = %complete_type.loc24_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = constants.%A.59f
@@ -219,7 +217,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %A => constants.%A.7d2
 // CHECK:STDOUT:   %A.elem => constants.%A.elem.77c
 // CHECK:STDOUT:   %struct_type.v => constants.%struct_type.v.410
-// CHECK:STDOUT:   %complete_type.loc8_1.2 => constants.%complete_type.a68
+// CHECK:STDOUT:   %complete_type.loc24_1.2 => constants.%complete_type.a68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- incomplete_in_function.carbon
@@ -428,9 +426,9 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:     %p.patt: %pattern_type.3c8 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt.8dd]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %ptr.432 = value_param call_param0
-// CHECK:STDOUT:     %.loc26: type = splice_block %ptr [concrete = constants.%ptr.432] {
-// CHECK:STDOUT:       %B.ref.loc26_9: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc26_9 [concrete = constants.%ptr.432]
+// CHECK:STDOUT:     %.loc25: type = splice_block %ptr [concrete = constants.%ptr.432] {
+// CHECK:STDOUT:       %B.ref.loc25_9: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:       %ptr: type = ptr_type %B.ref.loc25_9 [concrete = constants.%ptr.432]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.432 = wrapper_binding p, %p.param
 // CHECK:STDOUT:   }
@@ -448,19 +446,19 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6: <witness> = require_complete_type %ptr.loc6_27.1 [symbolic = %require_complete.loc6 (constants.%require_complete.ef1)]
-// CHECK:STDOUT:   %require_complete.loc7: <witness> = require_complete_type %T.loc6_15.1 [symbolic = %require_complete.loc7 (constants.%require_complete.944)]
-// CHECK:STDOUT:   %pattern_type.loc7: type = pattern_type %T.loc6_15.1 [symbolic = %pattern_type.loc7 (constants.%pattern_type.51d)]
-// CHECK:STDOUT:   %_.patt.loc7_8.2: @F.%pattern_type.loc7 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc7_8.2 (constants.%_.patt.ee9)]
+// CHECK:STDOUT:   %require_complete.loc22: <witness> = require_complete_type %T.loc6_15.1 [symbolic = %require_complete.loc22 (constants.%require_complete.944)]
+// CHECK:STDOUT:   %pattern_type.loc22: type = pattern_type %T.loc6_15.1 [symbolic = %pattern_type.loc22 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %_.patt.loc22_8.2: @F.%pattern_type.loc22 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc22_8.2 (constants.%_.patt.ee9)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%p.param: @F.%ptr.loc6_27.1 (%ptr.e8f)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %p.ref: @F.%ptr.loc6_27.1 (%ptr.e8f) = name_ref p, %p
-// CHECK:STDOUT:     %.loc7_14.1: ref @F.%T.loc6_15.1 (%T) = deref %p.ref
-// CHECK:STDOUT:     %.loc7_14.2: @F.%T.loc6_15.1 (%T) = acquire_value %.loc7_14.1
-// CHECK:STDOUT:     %T.ref.loc7: type = name_ref T, %T.loc6_15.2 [symbolic = %T.loc6_15.1 (constants.%T)]
-// CHECK:STDOUT:     %_: @F.%T.loc6_15.1 (%T) = wrapper_binding _, %.loc7_14.2
+// CHECK:STDOUT:     %.loc22_14.1: ref @F.%T.loc6_15.1 (%T) = deref %p.ref
+// CHECK:STDOUT:     %.loc22_14.2: @F.%T.loc6_15.1 (%T) = acquire_value %.loc22_14.1
+// CHECK:STDOUT:     %T.ref.loc22: type = name_ref T, %T.loc6_15.2 [symbolic = %T.loc6_15.1 (constants.%T)]
+// CHECK:STDOUT:     %_: @F.%T.loc6_15.1 (%T) = wrapper_binding _, %.loc22_14.2
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %_.patt.loc7_8.1: @F.%pattern_type.loc7 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc7_8.2 (constants.%_.patt.ee9)]
+// CHECK:STDOUT:       %_.patt.loc22_8.1: @F.%pattern_type.loc22 (%pattern_type.51d) = value_binding_pattern _ [symbolic = %_.patt.loc22_8.2 (constants.%_.patt.ee9)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -469,7 +467,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT: fn @G(%p.param: %ptr.432) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %B.ref.loc26_17: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc25_17: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %p.ref: %ptr.432 = name_ref p, %p
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%B) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn(%p.ref)
@@ -495,8 +493,8 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc6 => constants.%complete_type
-// CHECK:STDOUT:   %require_complete.loc7 => <error>
-// CHECK:STDOUT:   %pattern_type.loc7 => constants.%pattern_type.e39
-// CHECK:STDOUT:   %_.patt.loc7_8.2 => constants.%_.patt.fb1
+// CHECK:STDOUT:   %require_complete.loc22 => <error>
+// CHECK:STDOUT:   %pattern_type.loc22 => constants.%pattern_type.e39
+// CHECK:STDOUT:   %_.patt.loc22_8.2 => constants.%_.patt.fb1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

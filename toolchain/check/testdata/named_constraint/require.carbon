@@ -169,9 +169,9 @@ constraint Y;
 constraint Z {
   // CHECK:STDERR:        ╭─┤ fail_require_impls_incomplete_constraint.carbon:[[@LINE+13]]:17
   // CHECK:STDERR:        │ constraint Y;
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
-  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·               │ [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls Y;
   // CHECK:STDERR:        ·                 ┳
@@ -273,9 +273,9 @@ constraint Z;
 constraint Y {
   // CHECK:STDERR:        ╭─┤ fail_require_impls_incomplete_indirect.carbon:[[@LINE+13]]:17
   // CHECK:STDERR:        │ constraint Z;
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
-  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·               │ [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls Z;
   // CHECK:STDERR:        ·                 ┳
@@ -421,15 +421,12 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 constraint Z(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_non_type_impls.carbon:[[@LINE+11]]:11
+  // CHECK:STDERR:        ╭─┤ fail_non_type_impls.carbon:[[@LINE+8]]:11
   // CHECK:STDERR: ->     │   require 1 impls Y;
   // CHECK:STDERR:        ·           ┳
   // CHECK:STDERR:        ·           ┗━━┫ error: cannot implicitly convert non-type value of type
-  // CHECK:STDERR:        ·           │  ┃        `Core.IntLiteral` to `type`
-  // CHECK:STDERR:        ·           │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·           ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·                │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·              ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require 1 impls Y;

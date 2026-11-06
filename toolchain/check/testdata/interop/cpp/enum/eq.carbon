@@ -78,9 +78,9 @@ fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
 fn CompareHeterogeneousFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
   // CHECK:STDERR:        ╭─┤ fail_heterogeneous.carbon:[[@LINE+13]]:10
   // CHECK:STDERR:        │ fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───────┬──────
+  // CHECK:STDERR:        ·           ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return CompareGeneric(x, y);
   // CHECK:STDERR:        ·          ┳━━━━━━━━━━━━━━━━━━━

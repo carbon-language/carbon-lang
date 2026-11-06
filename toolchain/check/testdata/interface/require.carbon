@@ -391,15 +391,12 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_non_type_impls.carbon:[[@LINE+11]]:11
+  // CHECK:STDERR:        ╭─┤ fail_non_type_impls.carbon:[[@LINE+8]]:11
   // CHECK:STDERR: ->     │   require 1 impls Y;
   // CHECK:STDERR:        ·           ┳
   // CHECK:STDERR:        ·           ┗━━┫ error: cannot implicitly convert non-type value of type
-  // CHECK:STDERR:        ·           │  ┃        `Core.IntLiteral` to `type`
-  // CHECK:STDERR:        ·           │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·           ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·                │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·              ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require 1 impls Y;

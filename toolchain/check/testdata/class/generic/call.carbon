@@ -31,8 +31,8 @@ class Class(T: type, N: i32) {}
 
 // CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+11]]:8
 // CHECK:STDERR:        │ class Class(T: type, N: i32) {}
-// CHECK:STDERR:        · ───────────────┬──────────────
-// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ calling generic class declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var a: Class(i32*);
 // CHECK:STDERR:        ·        ━━━━━┳━━━━━
@@ -50,8 +50,8 @@ class Class(T: type, N: i32) {}
 
 // CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+11]]:8
 // CHECK:STDERR:        │ class Class(T: type, N: i32) {}
-// CHECK:STDERR:        · ───────────────┬──────────────
-// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ calling generic class declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var a: Class(i32*, 1, 2);
 // CHECK:STDERR:        ·        ━━━━┳━━━━━━━━━━━━
@@ -67,7 +67,7 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+16]]:8
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+13]]:8
 // CHECK:STDERR:        │ class Class(T: type, N: i32) {}
 // CHECK:STDERR:        ·             ───┬───
 // CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
@@ -76,11 +76,8 @@ class Class(T: type, N: i32) {}
 // CHECK:STDERR: ->     │ var a: Class(5, i32*);
 // CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━
 // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert non-type value of type
-// CHECK:STDERR:        ·        │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·        ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·             │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·           ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·           ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(5, i32*);
@@ -579,7 +576,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
-// CHECK:STDOUT:     %.loc22: type = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc19: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

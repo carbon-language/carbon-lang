@@ -29,8 +29,8 @@ package Other library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ conflict.carbon
 // CHECK:STDERR:        │ fn C() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_conflict_on_export_import.carbon
 // CHECK:STDERR:        │ alias C = Other.C;
@@ -55,8 +55,8 @@ package Other library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ base.carbon
 // CHECK:STDERR:        │ class C {
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_conflict_on_export_name.carbon
 // CHECK:STDERR:        │ alias C = Other.C;

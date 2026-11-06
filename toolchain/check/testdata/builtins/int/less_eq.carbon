@@ -79,11 +79,10 @@ fn LessEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.less_eq";
 fn Test(n: Core.IntLiteral) {
   // OK
   LessEq(1, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn LessEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.less_eq";
-  // CHECK:STDERR:        · ─────────────────────────────┬─────────────────────────────
-  // CHECK:STDERR:        ·                              ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                 │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   LessEq(n, 1);
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
@@ -92,11 +91,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   LessEq(n, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn LessEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.less_eq";
-  // CHECK:STDERR:        · ─────────────────────────────┬─────────────────────────────
-  // CHECK:STDERR:        ·                              ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                 │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   LessEq(1, n);
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
@@ -105,11 +103,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   LessEq(1, n);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn LessEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.less_eq";
-  // CHECK:STDERR:        · ─────────────────────────────┬─────────────────────────────
-  // CHECK:STDERR:        ·                              ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                 │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   LessEq(n, n);
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
