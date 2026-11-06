@@ -425,7 +425,7 @@ import Cpp library "deduced_pointer_param.h";
 
 fn F() {
   // This could return a null pointer, so should not be given the type `Cpp.DeducedPointerS*`.
-  // CHECK:STDERR:        ╭─┤ fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+14]]:40
+  // CHECK:STDERR:        ╭─┤ fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+10]]:40
   // CHECK:STDERR: ->     │   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
   // CHECK:STDERR:        ·                                        ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -433,10 +433,6 @@ fn F() {
   // CHECK:STDERR:        · ┃        `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` to
   // CHECK:STDERR:        · ┃        `Cpp.DeducedPointerS*`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` does not
-  // CHECK:STDERR:        · │ implement interface `Core.ImplicitAs(Cpp.DeducedPointerS*)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);

@@ -38,6 +38,17 @@ fn Test2(x: {.m: i32, .n: i32}) {
 library "[[@TEST_NAME]]";
 
 fn F[template T: type](x: T) -> i32 {
+  // CHECK:STDERR:        ╭─┤ fail_no_such_member.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR: ->     │   let n: i32 = x.n;
+  // CHECK:STDERR:        ·                ━┳━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: member name `n` not found in `D`
+  // CHECK:STDERR:        ·                    ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   F(d);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ in monomorphization of `F(D)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let n: i32 = x.n;
   return n;
 }
@@ -47,17 +58,6 @@ class D {
 }
 
 fn Test(d: D) {
-  // CHECK:STDERR:        ╭─┤ fail_no_such_member.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   let n: i32 = x.n;
-  // CHECK:STDERR:        ·                ─┬─
-  // CHECK:STDERR:        ·                 ╰──┤ member name `n` not found in `D`
-  // CHECK:STDERR:        ·                    │ [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   F(d);
-  // CHECK:STDERR:        ·   ┳
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   F(d);
 }
 
@@ -66,6 +66,18 @@ fn Test(d: D) {
 library "[[@TEST_NAME]]";
 
 fn F[template T: type](x: T) -> i32 {
+  // CHECK:STDERR:        ╭─┤ fail_member_wrong_type.carbon:[[@LINE+12]]:16
+  // CHECK:STDERR: ->     │   let n: i32 = x.n;
+  // CHECK:STDERR:        ·                ┳━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type `F` to
+  // CHECK:STDERR:        ·                   ┃        `i32`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailure]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   F(e);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ in monomorphization of `F(E)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let n: i32 = x.n;
   return n;
 }
@@ -76,20 +88,6 @@ class E {
 }
 
 fn Test(e: E) {
-  // CHECK:STDERR:        ╭─┤ fail_member_wrong_type.carbon:[[@LINE+14]]:3
-  // CHECK:STDERR:        │   let n: i32 = x.n;
-  // CHECK:STDERR:        ·                ┬──
-  // CHECK:STDERR:        ·                ╰──┤ cannot implicitly convert expression of type `F` to `i32`
-  // CHECK:STDERR:        ·                │  │ [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `F` does not implement interface
-  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   F(e);
-  // CHECK:STDERR:        ·   ┳
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `F(E)` [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   F(e);
 }
 

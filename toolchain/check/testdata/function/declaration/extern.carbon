@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern fn F();
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━
@@ -48,8 +48,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_redecl_extern.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F();
 // CHECK:STDERR:        · ━━━┳━━━
@@ -95,8 +95,8 @@ import library "basic";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ basic.carbon
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "basic" fn F();

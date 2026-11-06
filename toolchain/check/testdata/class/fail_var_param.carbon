@@ -14,10 +14,10 @@
 // generic type.
 // CHECK:STDERR:        ╭─┤ fail_var_param.carbon:[[@LINE+8]]:13
 // CHECK:STDERR: ->     │ class C(var x: i32);
-// CHECK:STDERR:        ·             ━━━┳━━
-// CHECK:STDERR:        ·                ┗━━┫ error: parameters of generic types must be constant
-// CHECK:STDERR:        ·                │  ┃        [GenericParamMustBeConstant]
-// CHECK:STDERR:        ·                ╰────┤ `var` parameters are runtime [VarParamIsRuntime]
+// CHECK:STDERR:        ·             ┳━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: `var` parameter of a generic type; parameters of generic
+// CHECK:STDERR:        ·                ┃        types must be constant
+// CHECK:STDERR:        ·                ┃        [VarParamIsRuntime]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C(var x: i32);

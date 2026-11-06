@@ -70,7 +70,7 @@ import library "api";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn A();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -83,8 +83,8 @@ extern fn A();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn B(b: i32) -> i32;
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn B(b: i32) -> i32;
@@ -96,8 +96,8 @@ extern fn B(b: i32) -> i32;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR:        · ──────────────┬──────────────
-// CHECK:STDERR:        ·               ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn C(c: (i32,)) -> {.c: i32};
@@ -108,12 +108,12 @@ extern fn C(c: (i32,)) -> {.c: i32};
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ extern fn D();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn D();
-// CHECK:STDERR:        ╭─┤ fail_redecl_api.carbon:[[@LINE+144]]:1
+// CHECK:STDERR:        ╭─┤ fail_redecl_api.carbon:[[@LINE+147]]:1
 // CHECK:STDERR: ->     │ extern fn NS.E();
 // CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·         ┗━━┫ error: redeclarations of `fn E` must match use of `extern`
@@ -121,8 +121,8 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn NS.E();
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge.carbon [InImport]
@@ -134,7 +134,7 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn A();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -147,8 +147,8 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn B(b: i32) -> i32;
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge.carbon [InImport]
@@ -160,8 +160,8 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR:        · ──────────────┬──────────────
-// CHECK:STDERR:        ·               ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge.carbon [InImport]
@@ -173,8 +173,8 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ extern fn D();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge.carbon [InImport]
@@ -186,8 +186,8 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api.carbon
 // CHECK:STDERR:        │ fn NS.E();
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge_reverse.carbon [InImport]
@@ -199,8 +199,9 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern library "redecl_extern_api" fn A();
-// CHECK:STDERR:        · ─────────────────────┬────────────────────
-// CHECK:STDERR:        ·                      ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·                                       ┬
+// CHECK:STDERR:        ·                                       ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                          │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge_reverse.carbon [InImport]
@@ -212,9 +213,9 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern library "redecl_extern_api" fn B(b: i32) -> i32;
-// CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
-// CHECK:STDERR:        ·                            ╰──┤ name is previously declared here
-// CHECK:STDERR:        ·                               │ [NameDeclPrevious]
+// CHECK:STDERR:        ·                                       ┬
+// CHECK:STDERR:        ·                                       ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                          │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge_reverse.carbon [InImport]
@@ -226,9 +227,9 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern library "redecl_extern_api" fn C(c: (i32,)) -> {.c: i32};
-// CHECK:STDERR:        · ────────────────────────────────┬───────────────────────────────
-// CHECK:STDERR:        ·                                 ╰──┤ name is previously declared here
-// CHECK:STDERR:        ·                                    │ [NameDeclPrevious]
+// CHECK:STDERR:        ·                                       ┬
+// CHECK:STDERR:        ·                                       ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                          │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge_reverse.carbon [InImport]
@@ -240,8 +241,9 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern library "redecl_extern_api" fn D();
-// CHECK:STDERR:        · ─────────────────────┬────────────────────
-// CHECK:STDERR:        ·                      ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·                                       ┬
+// CHECK:STDERR:        ·                                       ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                          │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_merge_reverse.carbon [InImport]
@@ -253,8 +255,9 @@ extern fn D();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern library "redecl_extern_api" fn NS.E();
-// CHECK:STDERR:        · ──────────────────────┬──────────────────────
-// CHECK:STDERR:        ·                       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·                                          ┬
+// CHECK:STDERR:        ·                                          ╰──┤ name is previously declared here
+// CHECK:STDERR:        ·                                             │ [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn NS.E();
@@ -850,9 +853,9 @@ import library "extern_api";
 // CHECK:STDOUT:   %D.decl: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   %E.decl: %E.type = fn_decl @E [concrete = constants.%E] {} {}
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc203_9.1: type = splice_block %.loc203_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc203_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc203_9.3: type = converted %.loc203_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc206_9.1: type = splice_block %.loc206_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc206_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc206_9.3: type = converted %.loc206_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -860,15 +863,15 @@ import library "extern_api";
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.cb1 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc204: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc207: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = ref_binding_pattern b [concrete = constants.%b.patt.920]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.d94 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %struct_type.c = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %.loc205: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
-// CHECK:STDOUT:     %i32.loc205: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc208: type = splice_block %struct_type.c [concrete = constants.%struct_type.c] {
+// CHECK:STDOUT:     %i32.loc208: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.c: type = struct_type {.c: %i32} [concrete = constants.%struct_type.c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c: ref %struct_type.c = wrapper_binding c, %c.var [concrete = %c.var]
@@ -877,9 +880,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.51a = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %empty_tuple.type = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %.loc206_9.1: type = splice_block %.loc206_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc206_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc206_9.3: type = converted %.loc206_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc209_9.1: type = splice_block %.loc209_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc209_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc209_9.3: type = converted %.loc209_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %empty_tuple.type = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -887,9 +890,9 @@ import library "extern_api";
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.cb1 = var_pattern %d.patt [concrete = constants.%d.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
-// CHECK:STDOUT:   %.loc207_9.1: type = splice_block %.loc207_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc207_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc207_9.3: type = converted %.loc207_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc210_9.1: type = splice_block %.loc210_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc210_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc210_9.3: type = converted %.loc210_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -914,29 +917,29 @@ import library "extern_api";
 // CHECK:STDOUT:   %A.call: init %empty_tuple.type = call %A.ref()
 // CHECK:STDOUT:   assign file.%a.var, %A.call
 // CHECK:STDOUT:   %B.ref: %B.type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %int_1.loc204: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %impl.elem0.loc204: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc204_16.1: <bound method> = bound_method %int_1.loc204, %impl.elem0.loc204 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc204: <specific function> = specific_function %impl.elem0.loc204, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc204_16.2: <bound method> = bound_method %int_1.loc204, %specific_fn.loc204 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc204: init %i32 = call %bound_method.loc204_16.2(%int_1.loc204) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc204_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc204 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc204_16.2: %i32 = converted %int_1.loc204, %.loc204_16.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc204_16.2)
+// CHECK:STDOUT:   %int_1.loc207: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %impl.elem0.loc207: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc207_16.1: <bound method> = bound_method %int_1.loc207, %impl.elem0.loc207 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc207: <specific function> = specific_function %impl.elem0.loc207, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc207_16.2: <bound method> = bound_method %int_1.loc207, %specific_fn.loc207 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc207: init %i32 = call %bound_method.loc207_16.2(%int_1.loc207) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc207_16.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc207 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc207_16.2: %i32 = converted %int_1.loc207, %.loc207_16.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %B.call: init %i32 = call %B.ref(%.loc207_16.2)
 // CHECK:STDOUT:   assign file.%b.var, %B.call
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %int_1.loc205: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc205_25.1: %tuple.type.985 = tuple_literal (%int_1.loc205) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %impl.elem0.loc205: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc205_25.1: <bound method> = bound_method %int_1.loc205, %impl.elem0.loc205 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc205: <specific function> = specific_function %impl.elem0.loc205, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc205_25.2: <bound method> = bound_method %int_1.loc205, %specific_fn.loc205 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc205: init %i32 = call %bound_method.loc205_25.2(%int_1.loc205) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc205_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc205 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc205_25.3: %i32 = converted %int_1.loc205, %.loc205_25.2 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %tuple: %tuple.type.294 = tuple_value (%.loc205_25.3) [concrete = constants.%tuple.f6b]
-// CHECK:STDOUT:   %.loc205_25.4: %tuple.type.294 = converted %.loc205_25.1, %tuple [concrete = constants.%tuple.f6b]
-// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc205_25.4)
+// CHECK:STDOUT:   %int_1.loc208: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc208_25.1: %tuple.type.985 = tuple_literal (%int_1.loc208) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %impl.elem0.loc208: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc208_25.1: <bound method> = bound_method %int_1.loc208, %impl.elem0.loc208 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc208: <specific function> = specific_function %impl.elem0.loc208, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc208_25.2: <bound method> = bound_method %int_1.loc208, %specific_fn.loc208 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc208: init %i32 = call %bound_method.loc208_25.2(%int_1.loc208) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc208_25.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc208 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc208_25.3: %i32 = converted %int_1.loc208, %.loc208_25.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %tuple: %tuple.type.294 = tuple_value (%.loc208_25.3) [concrete = constants.%tuple.f6b]
+// CHECK:STDOUT:   %.loc208_25.4: %tuple.type.294 = converted %.loc208_25.1, %tuple [concrete = constants.%tuple.f6b]
+// CHECK:STDOUT:   %C.call: init %struct_type.c = call %C.ref(%.loc208_25.4)
 // CHECK:STDOUT:   assign file.%c.var, %C.call
 // CHECK:STDOUT:   %D.ref: %D.type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %D.call: init %empty_tuple.type = call %D.ref()

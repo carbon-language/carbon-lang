@@ -16,15 +16,12 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_impl_as_false.carbon:[[@LINE+11]]:13
+// CHECK:STDERR:        ╭─┤ fail_impl_as_false.carbon:[[@LINE+8]]:13
 // CHECK:STDERR: ->     │ impl i32 as false {}
 // CHECK:STDERR:        ·             ┳━━━━
 // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert non-type value of type `bool`
-// CHECK:STDERR:        ·             │  ┃        to `type`
-// CHECK:STDERR:        ·             │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·             ╰────┤ type `bool` does not implement interface
-// CHECK:STDERR:        ·                  │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                ┃        to `type`
+// CHECK:STDERR:        ·                ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl i32 as false {}
@@ -98,7 +95,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc15: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
 // CHECK:STDOUT:   impl_decl @i32.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]

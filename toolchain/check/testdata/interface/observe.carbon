@@ -48,22 +48,19 @@ fn F[T: Transitive](t: T) {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ transitive.carbon
   // CHECK:STDERR:        │   fn TakesC(self, c: C);
-  // CHECK:STDERR:        ·   ───────────┬──────────
-  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·      ───┬──
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   t.TakesC(a);
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_equivalent.carbon:[[@LINE+11]]:4
+  // CHECK:STDERR:        ╭─┤ fail_todo_equivalent.carbon:[[@LINE+8]]:4
   // CHECK:STDERR: ->     │   (a as T.C).InR();
   // CHECK:STDERR:        ·    ┳━━━━━━━
   // CHECK:STDERR:        ·    ┗━━┫ error: cannot convert expression of type `T.(Transitive.A)` to
-  // CHECK:STDERR:        ·    │  ┃        `T.(Transitive.C)` with `as`
-  // CHECK:STDERR:        ·    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·    ╰────┤ type `T.(Transitive.A)` does not implement interface
-  // CHECK:STDERR:        ·         │ `Core.As(T.(Transitive.C))`
-  // CHECK:STDERR:        ·         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·       ┃        `T.(Transitive.C)` with `as`
+  // CHECK:STDERR:        ·       ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (a as T.C).InR();
@@ -82,9 +79,9 @@ fn F[T: C](x: T) {
 
   // CHECK:STDERR:        ╭─┤ fail_todo_impls.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn RequiresA[T: A](unused x: T) {}
-  // CHECK:STDERR:        · ────────────────┬────────────────
-  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────┬────
+  // CHECK:STDERR:        ·        ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·           │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   RequiresA(x);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━
@@ -119,9 +116,9 @@ fn G[T: Transitive](t: T) {
   observe T.A == T.C impls R;
   // CHECK:STDERR:        ╭─┤ fail_todo_equivalent_impls.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn TakesPQR[U: P & Q & R](unused u: U) {}
-  // CHECK:STDERR:        · ────────────────────┬───────────────────
-  // CHECK:STDERR:        ·                     ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                        │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────┬───
+  // CHECK:STDERR:        ·        ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·           │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TakesPQR(a);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━
@@ -154,9 +151,9 @@ fn G[T: Transitive](t: T) {
 
   // CHECK:STDERR:        ╭─┤ fail_equivalent_impls_without_observe.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn TakesPQR[U: P & Q & R](unused u: U) {}
-  // CHECK:STDERR:        · ────────────────────┬───────────────────
-  // CHECK:STDERR:        ·                     ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                        │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────┬───
+  // CHECK:STDERR:        ·        ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·           │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TakesPQR(a);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━
@@ -217,9 +214,9 @@ fn F[U: Z](t: U.Z1) {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ transitive.carbon
   // CHECK:STDERR:        │   fn TakesC(self, c: C);
-  // CHECK:STDERR:        ·   ───────────┬──────────
-  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·      ───┬──
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   t.TakesC(a);
@@ -260,9 +257,9 @@ fn F[T: Y](t: T.Y1) {
 
   // CHECK:STDERR:        ╭─┤ fail_todo_observe_nested_associated_constants.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │   fn TakesC(self, c: C);
-  // CHECK:STDERR:        ·   ───────────┬──────────
-  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·      ───┬──
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   t.TakesC(a);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━
@@ -289,9 +286,9 @@ fn F[T: A, U: B where .Self == T, V: C where .Self == U]() {
   fn InnerF(x: V) {
     // CHECK:STDERR:        ╭─┤ fail_todo_nested_functions_in_outer.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │ fn TakesA[T: A](unused x: T) {}
-    // CHECK:STDERR:        · ───────────────┬──────────────
-    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·    ───┬──
+    // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·          │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     TakesA(x);
     // CHECK:STDERR:        ·     ┳━━━━━━━━
@@ -319,9 +316,9 @@ fn F[T: A, U: B where .Self == T, V: C where .Self == U]() {
 
     // CHECK:STDERR:        ╭─┤ fail_todo_nested_functions_in_inner.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │ fn TakesA[T: A](unused x: T) {}
-    // CHECK:STDERR:        · ───────────────┬──────────────
-    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·    ───┬──
+    // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·          │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     TakesA(x);
     // CHECK:STDERR:        ·     ┳━━━━━━━━
@@ -347,9 +344,9 @@ fn F[T: A, U: B where .Self == T, V: C where .Self == U]() {
   fn InnerF(x: V) {
     // CHECK:STDERR:        ╭─┤ fail_nested_functions_lexical_order.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │ fn TakesA[T: A](unused x: T) {}
-    // CHECK:STDERR:        · ───────────────┬──────────────
-    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·    ───┬──
+    // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·          │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     TakesA(x);
     // CHECK:STDERR:        ·     ┳━━━━━━━━
@@ -380,9 +377,9 @@ fn F[T: A, U: B where .Self == T, V: C where .Self == U](x: V) {
 
   // CHECK:STDERR:        ╭─┤ fail_nested_functions_leak_upward.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn TakesA[T: A](unused x: T) {}
-  // CHECK:STDERR:        · ───────────────┬──────────────
-  // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TakesA(x);
   // CHECK:STDERR:        ·   ┳━━━━━━━━
@@ -425,9 +422,9 @@ fn F[T: A, U: B](x: U) {
   observe T == U;
   // CHECK:STDERR:        ╭─┤ fail_invalid_equivalent.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn TakesA[T: A](unused x: T) {}
-  // CHECK:STDERR:        · ───────────────┬──────────────
-  // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   TakesA(x);
   // CHECK:STDERR:        ·   ┳━━━━━━━━
@@ -585,9 +582,9 @@ fn F[W: A, X: I(W)](x: X) {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ generic_observe.carbon
   // CHECK:STDERR:        │   fn TakesT(self, t: T);
-  // CHECK:STDERR:        ·   ───────────┬──────────
-  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·      ───┬──
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   x.TakesT(v);

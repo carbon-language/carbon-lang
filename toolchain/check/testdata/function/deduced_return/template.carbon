@@ -36,6 +36,18 @@ fn H() -> i32 { return G(0 as i32); }
 // --- fail_instantiation_error.carbon
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╭─┤ fail_instantiation_error.carbon:[[@LINE+12]]:47
+// CHECK:STDERR: ->     │ fn F[template T: type](x: T) -> auto { return x.n; }
+// CHECK:STDERR:        ·                                               ┳━━
+// CHECK:STDERR:        ·                                               ┗━━┫ error: member name `n` not
+// CHECK:STDERR:        ·                                                  ┃        found in `D`
+// CHECK:STDERR:        ·                                                  ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   return F(d);
+// CHECK:STDERR:        ·          ──┬─
+// CHECK:STDERR:        ·            ╰──┤ in monomorphization of `F(D)` here [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn F[template T: type](x: T) -> auto { return x.n; }
 
 class D {
@@ -45,19 +57,6 @@ class D {
 // The definition of `F(D)` is needed to determine the return type, so it's
 // instantiated at the call.
 fn G(d: D) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_instantiation_error.carbon:[[@LINE+13]]:10
-  // CHECK:STDERR:        │ fn F[template T: type](x: T) -> auto { return x.n; }
-  // CHECK:STDERR:        ·                                               ┬──
-  // CHECK:STDERR:        ·                                               ╰──┤ member name `n` not found in
-  // CHECK:STDERR:        ·                                                  │ `D`
-  // CHECK:STDERR:        ·                                                  │ [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   return F(d);
-  // CHECK:STDERR:        ·          ━━┳━
-  // CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `F(D)`
-  // CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   return F(d);
 }
 
@@ -65,26 +64,26 @@ fn G(d: D) -> i32 {
 library "[[@TEST_NAME]]";
 
 fn F[template T: type](x: T) -> auto {
-  return F(x);
-}
-
-fn G() {
-  // CHECK:STDERR:        ╭─┤ fail_recursion_before_deduced.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        ╭─┤ fail_recursion_before_deduced.carbon:[[@LINE+16]]:10
   // CHECK:STDERR:        │ fn F[template T: type](x: T) -> auto {
   // CHECK:STDERR:        · ───────────────────┬──────────────────
   // CHECK:STDERR:        ·                    ╰──┤ return type of `F` is deduced from its definition
   // CHECK:STDERR:        ·                       │ [ReturnTypeDeducedFromDefinition]
-  // CHECK:STDERR:        │   return F(x);
-  // CHECK:STDERR:        ·          ──┬─
-  // CHECK:STDERR:        ·            ╰──┤ call to `F` before its return type is known
-  // CHECK:STDERR:        ·               │ [CallBeforeReturnTypeDeduced]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   F(0 as i32);
-  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
-  // CHECK:STDERR:        ·        ┗━━┫ error: unable to monomorphize specific `F(i32)`
-  // CHECK:STDERR:        ·           ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR: ->     │   return F(x);
+  // CHECK:STDERR:        ·          ━━┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: call to `F` before its return type is known
+  // CHECK:STDERR:        ·               ┃        [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   F(0 as i32);
+  // CHECK:STDERR:        ·   ─────┬─────
+  // CHECK:STDERR:        ·        ╰──┤ in monomorphization of `F(i32)` here [ResolvingSpecificHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
+  return F(x);
+}
+
+fn G() {
   F(0 as i32);
 }
 

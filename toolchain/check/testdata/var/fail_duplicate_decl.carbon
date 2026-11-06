@@ -18,8 +18,8 @@ fn Main() {
   var unused x: () = ();
   // CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+11]]:14
   // CHECK:STDERR:        │   var unused x: () = ();
-  // CHECK:STDERR:        ·              ──┬──
-  // CHECK:STDERR:        ·                ╰──┤ name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var unused x: () = ();
   // CHECK:STDERR:        ·              ┳

@@ -16,9 +16,9 @@ interface Undefined;
 
 // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:4
 // CHECK:STDERR:        │ interface Undefined;
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ interface was forward declared here
-// CHECK:STDERR:        ·              │ [InterfaceForwardDeclaredHere]
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ interface was forward declared here
+// CHECK:STDERR:        ·                  │ [InterfaceForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Undefined.F();
 // CHECK:STDERR:        ·    ━━━━┳━━━━
@@ -31,9 +31,9 @@ fn Undefined.F();
 fn Test() {
   // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ interface Undefined;
-  // CHECK:STDERR:        · ──────────┬─────────
-  // CHECK:STDERR:        ·           ╰──┤ interface was forward declared here
-  // CHECK:STDERR:        ·              │ [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR:        ·           ────┬────
+  // CHECK:STDERR:        ·               ╰──┤ interface was forward declared here
+  // CHECK:STDERR:        ·                  │ [InterfaceForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Undefined.G();
   // CHECK:STDERR:        ·   ━━━━━┳━━━━━
@@ -48,7 +48,7 @@ interface BeingDefined {
   // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:13
   // CHECK:STDERR:        │ interface BeingDefined {
   // CHECK:STDERR:        · ────────────┬───────────
-  // CHECK:STDERR:        ·             ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·             ╰──┤ interface is incomplete within its definition
   // CHECK:STDERR:        ·                │ [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn H() -> BeingDefined.T;

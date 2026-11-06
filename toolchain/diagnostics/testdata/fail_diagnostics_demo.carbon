@@ -63,33 +63,29 @@ import Cpp inline '''
 fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
 
 fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:     63 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
-  // CHECK:STDERR:        · ────────────────────────────────┬────────────────────────────────
-  // CHECK:STDERR:        ·                                 ╰──┤ calling function declared here
-  // CHECK:STDERR:        ·                                    │ [InCallToEntity]
+  // CHECK:STDERR:        ·    ──┬──
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  78 │   Blend(1);
+  // CHECK:STDERR: ->  77 │   Blend(1);
   // CHECK:STDERR:        ·   ━━━━┳━━━
   // CHECK:STDERR:        ·       ┗━━┫ error: 1 argument passed to function expecting 2 arguments
   // CHECK:STDERR:        ·          ┃        [CallArgCountMismatch]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Blend(1);
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+16]]:12
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+13]]:12
   // CHECK:STDERR:     63 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
   // CHECK:STDERR:        ·                              ───────────────┬──────────────────
   // CHECK:STDERR:        ·                                             ╰──┤ initializing function parameter
   // CHECK:STDERR:        ·                                                │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  95 │   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を...
+  // CHECK:STDERR: ->  91 │   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を...
   // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `str` to
-  // CHECK:STDERR:        ·            │  ┃        `Core.Optional(i32 as Core.OptionalStorage)`
-  // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·            ╰────┤ type `str` does not implement interface
-  // CHECK:STDERR:        ·                 │ `Core.ImplicitAs(Core.Optional(i32 as Core.OptionalStorage))`
-  // CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               ┃        `Core.Optional(i32 as Core.OptionalStorage)`
+  // CHECK:STDERR:        ·               ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を切り詰めて窓のように表示されます");
@@ -100,7 +96,7 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ·                        ╰────┤ requires 2 arguments, but 1 was provided
   // CHECK:STDERR:        ·                             │ [CppInteropParseNoteReason]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 109 │   Cpp.Paint(0);
+  // CHECK:STDERR: -> 105 │   Cpp.Paint(0);
   // CHECK:STDERR:        ·   ━━━━┳━━━━
   // CHECK:STDERR:        ·       ┗━━┫ error: no matching function for call to 'Paint'
   // CHECK:STDERR:        ·          ┃        [CppInteropParseError]
@@ -108,14 +104,14 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:
   Cpp.Paint(0);
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+6]]:19
-  // CHECK:STDERR: -> 116 │   var tint: i32 = missing;
+  // CHECK:STDERR: -> 112 │   var tint: i32 = missing;
   // CHECK:STDERR:        ·                   ━━━┳━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: name `missing` not found [NameNotFound]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var tint: i32 = missing;
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+32]]:10
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR: -> 145 │   return count * flag + cell[n] + -flag;
   // CHECK:STDERR:        ·          ┳━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.MulWith(bool)` in
   // CHECK:STDERR:        ·             ┃        type `i32` that does not implement that interface
@@ -123,7 +119,7 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+24]]:25
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR: -> 145 │   return count * flag + cell[n] + -flag;
   // CHECK:STDERR:        ·                         ┳━━━━━━
   // CHECK:STDERR:        ·                         ┗━━┫ error: cannot access member of interface
   // CHECK:STDERR:        ·                            ┃        `Core.IndexWith(i32)` in type `{.a: i32}`
@@ -132,7 +128,7 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+15]]:35
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR: -> 145 │   return count * flag + cell[n] + -flag;
   // CHECK:STDERR:        ·                                   ┳━━━━
   // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot access member of interface
   // CHECK:STDERR:        ·                                      ┃        `Core.Negate` in type `bool` that
@@ -141,7 +137,7 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE-27]]:7
-  // CHECK:STDERR: -> 116 │   var tint: i32 = missing;
+  // CHECK:STDERR: -> 112 │   var tint: i32 = missing;
   // CHECK:STDERR:        ·       ━━━━┳━━━━
   // CHECK:STDERR:        ·           ┗━━┫ warning: binding `tint` unused [UnusedBinding]
   // CHECK:STDERR:        ╰────

@@ -32,7 +32,7 @@ import library "fn";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fn.carbon
 // CHECK:STDERR:        │ fn NS();
-// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·    ─┬
 // CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

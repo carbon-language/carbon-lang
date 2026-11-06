@@ -283,7 +283,7 @@ import Cpp library "struct_init.h";
 fn MakeThreeFields() -> {.a: i32, .b: i32, .c: i32};
 
 fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: i32, .c: i32}) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+20]]:23
+  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+16]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
   // CHECK:STDERR:        ·                       ━━━━━━━━━━━━┳━━━━━━━━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -291,10 +291,6 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        · ┃        `{.a: Core.IntLiteral, .b: Core.IntLiteral, .c: Core.IntLiteral}` to
   // CHECK:STDERR:        · ┃        `Cpp.ThreeFields`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭─────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `{.a: Core.IntLiteral, .b: Core.IntLiteral, .c: Core.IntLiteral}` does
-  // CHECK:STDERR:        · │ not implement interface `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -305,17 +301,13 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:
   Cpp.PassThreeFields({.a = 1, .b = 2, .c = 3});
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+19]]:23
+  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+15]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(value);
   // CHECK:STDERR:        ·                       ┳━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `{.a: i32, .b: i32, .c: i32}` to
-  // CHECK:STDERR:        ·                       │  ┃        `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
-  // CHECK:STDERR:        ·                            │ implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `{.a: i32, .b: i32, .c: i32}` to
+  // CHECK:STDERR:        ·                          ┃        `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -326,17 +318,13 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:
   Cpp.PassThreeFields(value);
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+19]]:23
+  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+15]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:        ·                       ┳━━━━━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `{.a: i32, .b: i32, .c: i32}` to
-  // CHECK:STDERR:        ·                       │  ┃        `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
-  // CHECK:STDERR:        ·                            │ implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `{.a: i32, .b: i32, .c: i32}` to
+  // CHECK:STDERR:        ·                          ┃        `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -347,17 +335,13 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:
   Cpp.PassThreeFields(reference);
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+19]]:23
+  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+15]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:        ·                       ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `{.a: i32, .b: i32, .c: i32}` to
-  // CHECK:STDERR:        ·                       │  ┃        `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
-  // CHECK:STDERR:        ·                            │ implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `{.a: i32, .b: i32, .c: i32}` to
+  // CHECK:STDERR:        ·                          ┃        `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -368,7 +352,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:
   Cpp.PassThreeFields(MakeThreeFields());
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+20]]:23
+  // CHECK:STDERR:        ╭─┤ fail_todo_struct_init_nonempty.carbon:[[@LINE+16]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields({.b = 1, .c = 2, .a = 3});
   // CHECK:STDERR:        ·                       ━━━━━━━━━━━━┳━━━━━━━━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -376,10 +360,6 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        · ┃        `{.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral}` to
   // CHECK:STDERR:        · ┃        `Cpp.ThreeFields`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭─────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `{.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral}` does
-  // CHECK:STDERR:        · │ not implement interface `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -462,15 +442,12 @@ import Cpp library "struct_init.h";
 fn MakeEmpty() -> ();
 
 fn Empty(value: (), ref reference: ()) {
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:20
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:20
   // CHECK:STDERR: ->     │   Cpp.PassNoFields(());
   // CHECK:STDERR:        ·                    ┳━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
-  // CHECK:STDERR:        ·                    │  ┃        to `Cpp.NoFields`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        to `Cpp.NoFields`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -481,15 +458,12 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:
   Cpp.PassNoFields(());
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:20
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:20
   // CHECK:STDERR: ->     │   Cpp.PassNoFields(value);
   // CHECK:STDERR:        ·                    ┳━━━━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
-  // CHECK:STDERR:        ·                    │  ┃        to `Cpp.NoFields`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        to `Cpp.NoFields`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -500,15 +474,12 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:
   Cpp.PassNoFields(value);
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:20
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:20
   // CHECK:STDERR: ->     │   Cpp.PassNoFields(reference);
   // CHECK:STDERR:        ·                    ┳━━━━━━━━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
-  // CHECK:STDERR:        ·                    │  ┃        to `Cpp.NoFields`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        to `Cpp.NoFields`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -519,15 +490,12 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:
   Cpp.PassNoFields(reference);
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:20
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:20
   // CHECK:STDERR: ->     │   Cpp.PassNoFields(MakeEmpty());
   // CHECK:STDERR:        ·                    ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
-  // CHECK:STDERR:        ·                    │  ┃        to `Cpp.NoFields`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        to `Cpp.NoFields`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -542,19 +510,14 @@ fn Empty(value: (), ref reference: ()) {
 fn MakeThreeFields() -> (i32, i32, i32);
 
 fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+21]]:23
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+16]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields((1, 2, 3));
-  // CHECK:STDERR:        ·                       ┳━━━━━━━━
-  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        ·                       ━━━━┳━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type
   // CHECK:STDERR:        · ┃        `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)` to
   // CHECK:STDERR:        · ┃        `Cpp.ThreeFields`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰──┤ type
-  // CHECK:STDERR:        ·                          │ `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)`
-  // CHECK:STDERR:        ·                          │ does not implement interface
-  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -565,15 +528,12 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:
   Cpp.PassThreeFields((1, 2, 3));
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:23
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(value);
   // CHECK:STDERR:        ·                       ┳━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -584,15 +544,12 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:
   Cpp.PassThreeFields(value);
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:23
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(reference);
   // CHECK:STDERR:        ·                       ┳━━━━━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -603,15 +560,12 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:
   Cpp.PassThreeFields(reference);
 
-  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+17]]:23
+  // CHECK:STDERR:        ╭─┤ fail_struct_init_from_tuple.carbon:[[@LINE+14]]:23
   // CHECK:STDERR: ->     │   Cpp.PassThreeFields(MakeThreeFields());
   // CHECK:STDERR:        ·                       ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `(i32, i32, i32)` to `Cpp.ThreeFields`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -641,15 +595,12 @@ import Cpp library "int_from_struct.h";
 fn F() {
   // C++ permits `{}` to be used to initialize an int, but Carbon does not.
 
-  // CHECK:STDERR:        ╭─┤ fail_int_from_struct.carbon:[[@LINE+16]]:15
+  // CHECK:STDERR:        ╭─┤ fail_int_from_struct.carbon:[[@LINE+13]]:15
   // CHECK:STDERR: ->     │   Cpp.PassInt({});
   // CHECK:STDERR:        ·               ┳━
   // CHECK:STDERR:        ·               ┗━━┫ error: cannot implicitly convert expression of type `{}` to
-  // CHECK:STDERR:        ·               │  ┃        `i32`
-  // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·               ╰────┤ type `{}` does not implement interface
-  // CHECK:STDERR:        ·                    │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                  ┃        `i32`
+  // CHECK:STDERR:        ·                  ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassInt(int n) -> void;
@@ -659,15 +610,12 @@ fn F() {
   // CHECK:STDERR:
   Cpp.PassInt({});
 
-  // CHECK:STDERR:        ╭─┤ fail_int_from_struct.carbon:[[@LINE+16]]:15
+  // CHECK:STDERR:        ╭─┤ fail_int_from_struct.carbon:[[@LINE+13]]:15
   // CHECK:STDERR: ->     │   Cpp.PassInt(());
   // CHECK:STDERR:        ·               ┳━
   // CHECK:STDERR:        ·               ┗━━┫ error: cannot implicitly convert expression of type `()` to
-  // CHECK:STDERR:        ·               │  ┃        `i32`
-  // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·               ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                    │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                  ┃        `i32`
+  // CHECK:STDERR:        ·                  ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassInt(int n) -> void;
@@ -688,15 +636,12 @@ fn F() {
   // C++ overload resolution prefers to convert `{}` to `int` rather than to an
   // empty struct. So that's the overload we pick, even though we can't call it.
 
-  // CHECK:STDERR:        ╭─┤ fail_int_from_struct_overloaded.carbon:[[@LINE+17]]:22
+  // CHECK:STDERR:        ╭─┤ fail_int_from_struct_overloaded.carbon:[[@LINE+14]]:22
   // CHECK:STDERR: ->     │   Cpp.PassOverloaded({});
   // CHECK:STDERR:        ·                      ┳━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                      │  ┃        `{}` to `i32`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `{}` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        `{}` to `i32`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassOverloaded(int n) -> void;
@@ -707,15 +652,12 @@ fn F() {
   // CHECK:STDERR:
   Cpp.PassOverloaded({});
 
-  // CHECK:STDERR:        ╭─┤ fail_int_from_struct_overloaded.carbon:[[@LINE+17]]:22
+  // CHECK:STDERR:        ╭─┤ fail_int_from_struct_overloaded.carbon:[[@LINE+14]]:22
   // CHECK:STDERR: ->     │   Cpp.PassOverloaded(());
   // CHECK:STDERR:        ·                      ┳━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                      │  ┃        `()` to `i32`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        `()` to `i32`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassOverloaded(int n) -> void;
@@ -771,7 +713,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "nested_structs.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_pass_nested_structs.carbon:[[@LINE+19]]:13
+  // CHECK:STDERR:        ╭─┤ fail_todo_pass_nested_structs.carbon:[[@LINE+15]]:13
   // CHECK:STDERR: ->     │   Cpp.TakeB({.a = {.x = 1, .y = 2}, .n = 3});
   // CHECK:STDERR:        ·             ━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┛
@@ -779,10 +721,6 @@ fn F() {
   // CHECK:STDERR:        · ┃        `{.a: {.x: Core.IntLiteral, .y: Core.IntLiteral}, .n: Core.IntLiteral}`
   // CHECK:STDERR:        · ┃        to `Cpp.B`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭──────────────────────────╯
-  // CHECK:STDERR:        · │ type `{.a: {.x: Core.IntLiteral, .y: Core.IntLiteral}, .n: Core.IntLiteral}`
-  // CHECK:STDERR:        · │ does not implement interface `Core.ImplicitAs(Cpp.B)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./nested_structs.h
   // CHECK:STDERR:        │ void TakeB(B);
@@ -822,15 +760,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "signedness_change.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_signedness_change_rejected.carbon:[[@LINE+17]]:22
+  // CHECK:STDERR:        ╭─┤ fail_signedness_change_rejected.carbon:[[@LINE+14]]:22
   // CHECK:STDERR: ->     │   Cpp.signedness_foo(1 as i32);
   // CHECK:STDERR:        ·                      ┳━━━━━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                      │  ┃        `i32` to `u32`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `i32` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        `i32` to `u32`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./signedness_change.h
   // CHECK:STDERR:        │ auto signedness_foo(unsigned int a) -> void;
@@ -853,15 +788,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "downsizing_rejected.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_downsizing_rejected.carbon:[[@LINE+17]]:22
+  // CHECK:STDERR:        ╭─┤ fail_import_downsizing_rejected.carbon:[[@LINE+14]]:22
   // CHECK:STDERR: ->     │   Cpp.downsizing_foo(1 as i32);
   // CHECK:STDERR:        ·                      ┳━━━━━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                      │  ┃        `i32` to `i16`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `i32` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i16)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        `i32` to `i16`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./downsizing_rejected.h
   // CHECK:STDERR:        │ auto downsizing_foo(short a) -> void;
@@ -989,9 +921,9 @@ fn EchoValue[ValueT: I](unused generic value: ValueT) {}
 fn F() {
   // CHECK:STDERR:        ╭─┤ fail_missing_impl.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EchoValue[ValueT: I](unused generic value: ValueT) {}
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────┬────
+  // CHECK:STDERR:        ·        ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·           │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EchoValue(Cpp.missing_impl_foo);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

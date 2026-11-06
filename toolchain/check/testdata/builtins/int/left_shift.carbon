@@ -230,9 +230,9 @@ var an_i32: i32 = 34;
 // This can't be valid: we don't have a compile-time or runtime integer value for `a_lit`.
 // CHECK:STDERR:        ╭─┤ fail_comp_time_only_shift.carbon:[[@LINE+12]]:17
 // CHECK:STDERR:        │ fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
-// CHECK:STDERR:        · ───────────────────────────┬──────────────────────────
-// CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ───────┬──────
+// CHECK:STDERR:        ·           ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·              │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 // CHECK:STDERR:        ·                 ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
@@ -245,9 +245,9 @@ let bad1: i32 = LeftShiftByLit(an_i32, a_lit);
 // TODO: This could be valid because we don't actually need the return value at runtime.
 // CHECK:STDERR:        ╭─┤ fail_comp_time_only_shift.carbon:[[@LINE+13]]:29
 // CHECK:STDERR:        │ fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.le...
-// CHECK:STDERR:        · ─────────────────────────────────┬────────────────────────────────
-// CHECK:STDERR:        ·                                  ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                                     │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ───────┬──────
+// CHECK:STDERR:        ·           ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·              │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
 // CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -261,9 +261,9 @@ let bad2: Core.IntLiteral = LeftShiftOfLit(a_lit, an_i32);
 // TODO: This could be valid because the literal argument has a constant value.
 // CHECK:STDERR:        ╭─┤ fail_comp_time_only_shift.carbon:[[@LINE+12]]:17
 // CHECK:STDERR:        │ fn LeftShiftByLit(a: i32, b: Core.IntLiteral) -> i32 = "int.left_shift";
-// CHECK:STDERR:        · ───────────────────────────┬──────────────────────────
-// CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ───────┬──────
+// CHECK:STDERR:        ·           ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·              │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let bad3: i32 = LeftShiftByLit(an_i32, 12);
 // CHECK:STDERR:        ·                 ━━━━━┳━━━━━━━━━━━━━━━━━━━━
@@ -276,9 +276,9 @@ let bad3: i32 = LeftShiftByLit(an_i32, 12);
 // TODO: This could be valid because we don't actually need the return value at runtime.
 // CHECK:STDERR:        ╭─┤ fail_comp_time_only_shift.carbon:[[@LINE+13]]:29
 // CHECK:STDERR:        │ fn LeftShiftOfLit(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.le...
-// CHECK:STDERR:        · ─────────────────────────────────┬────────────────────────────────
-// CHECK:STDERR:        ·                                  ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                                     │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ───────┬──────
+// CHECK:STDERR:        ·           ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·              │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 // CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━━━━━━━━━━━

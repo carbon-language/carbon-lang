@@ -15,15 +15,12 @@
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   adapt 100;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        to `type`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt 100;
@@ -43,15 +40,12 @@ fn Use(b: Bad) { b.F(); }
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR:        ╭─┤ fail_extend_not_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_extend_not_type.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   extend adapt 100;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        to `type`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend adapt 100;

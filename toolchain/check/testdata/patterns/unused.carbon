@@ -127,7 +127,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ╭─┤ fail_read_from_param_unused_ref.carbon:[[@LINE+10]]:26
 // CHECK:STDERR: ->     │ fn RefParamUnused(unused ref y: i32) {
 // CHECK:STDERR:        ·                          ━━━━━┳━━━━
-// CHECK:STDERR:        ·                               ┗━━┫ error: variable `y` marked `unused` but used
+// CHECK:STDERR:        ·                               ┗━━┫ error: binding `y` marked `unused` but used
 // CHECK:STDERR:        ·                                  ┃        [UnusedButUsed]
 // CHECK:STDERR:        │   var _: i32 = y;
 // CHECK:STDERR:        ·                ┬
@@ -142,12 +142,11 @@ fn RefParamUnused(unused ref y: i32) {
 library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_unused_returned_var.carbon:[[@LINE+8]]:23
+  // CHECK:STDERR:        ╭─┤ fail_unused_returned_var.carbon:[[@LINE+7]]:23
   // CHECK:STDERR: ->     │   returned var unused x: i32 = 0;
   // CHECK:STDERR:        ·                       ━━━┳━━
-  // CHECK:STDERR:        ·                          ┗━━┫ error: variable `x` marked `unused` but used
-  // CHECK:STDERR:        ·                          │  ┃        [UnusedButUsed]
-  // CHECK:STDERR:        ·                          ╰────┤ usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ·                          ┗━━┫ error: binding `x` marked `unused` but used
+  // CHECK:STDERR:        ·                             ┃        [UnusedButUsed]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var unused x: i32 = 0;
@@ -159,11 +158,10 @@ library "[[@TEST_NAME]]";
 
 fn F(x: i32) {
   var _: i32 = x;
-  // CHECK:STDERR:        ╭─┤ fail_read_from_unused_local_var.carbon:[[@LINE+10]]:14
+  // CHECK:STDERR:        ╭─┤ fail_read_from_unused_local_var.carbon:[[@LINE+9]]:14
   // CHECK:STDERR: ->     │   var unused y: i32 = x;
   // CHECK:STDERR:        ·              ━━━┳━━
-  // CHECK:STDERR:        ·                 ┗━━┫ error: variable `y` marked `unused` but used
-  // CHECK:STDERR:        ·                    ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding `y` marked `unused` but used [UnusedButUsed]
   // CHECK:STDERR:        │   var unused z: i32 = y;
   // CHECK:STDERR:        ·                       ┬
   // CHECK:STDERR:        ·                       ╰──┤ usage here [UnusedButUsedHere]
@@ -257,11 +255,10 @@ class C {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_multiple_uses_of_unused.carbon:[[@LINE+10]]:14
+  // CHECK:STDERR:        ╭─┤ fail_multiple_uses_of_unused.carbon:[[@LINE+9]]:14
   // CHECK:STDERR: ->     │   var unused x: i32 = 0;
   // CHECK:STDERR:        ·              ━━━┳━━
-  // CHECK:STDERR:        ·                 ┗━━┫ error: variable `x` marked `unused` but used
-  // CHECK:STDERR:        ·                    ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding `x` marked `unused` but used [UnusedButUsed]
   // CHECK:STDERR:        │   x;
   // CHECK:STDERR:        ·   ┬
   // CHECK:STDERR:        ·   ╰──┤ usage here [UnusedButUsedHere]
@@ -344,11 +341,10 @@ class C(unused T: type) {}
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_unused_let_multiple_uses.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR:        ╭─┤ fail_unused_let_multiple_uses.carbon:[[@LINE+10]]:14
   // CHECK:STDERR: ->     │   let unused x: i32 = 0;
   // CHECK:STDERR:        ·              ━━━┳━━
-  // CHECK:STDERR:        ·                 ┗━━┫ error: variable `x` marked `unused` but used
-  // CHECK:STDERR:        ·                    ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding `x` marked `unused` but used [UnusedButUsed]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │   var y: i32 = x;
   // CHECK:STDERR:        ·                ┬
@@ -396,11 +392,10 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() -> i32 {
- // CHECK:STDERR:        ╭─┤ fail_unused_tuple.carbon:[[@LINE+11]]:14
+ // CHECK:STDERR:        ╭─┤ fail_unused_tuple.carbon:[[@LINE+10]]:14
  // CHECK:STDERR: ->     │  let unused (a: i32,
  // CHECK:STDERR:        ·              ━━━┳━━
- // CHECK:STDERR:        ·                 ┗━━┫ error: variable `a` marked `unused` but used
- // CHECK:STDERR:        ·                    ┃        [UnusedButUsed]
+ // CHECK:STDERR:        ·                 ┗━━┫ error: binding `a` marked `unused` but used [UnusedButUsed]
  // CHECK:STDERR:        ┆
  // CHECK:STDERR:        │  let i: i32 = a;
  // CHECK:STDERR:        ·               ┬
@@ -408,11 +403,10 @@ fn F() -> i32 {
  // CHECK:STDERR:        ╰────
  // CHECK:STDERR:
  let unused (a: i32,
-             // CHECK:STDERR:        ╭─┤ fail_unused_tuple.carbon:[[@LINE+11]]:14
+             // CHECK:STDERR:        ╭─┤ fail_unused_tuple.carbon:[[@LINE+10]]:14
              // CHECK:STDERR: ->     │              b: i32) = (1, 2);
              // CHECK:STDERR:        ·              ━━━┳━━
-             // CHECK:STDERR:        ·                 ┗━━┫ error: variable `b` marked `unused` but used
-             // CHECK:STDERR:        ·                    ┃        [UnusedButUsed]
+             // CHECK:STDERR:        ·                 ┗━━┫ error: binding `b` marked `unused` but used [UnusedButUsed]
              // CHECK:STDERR:        │  let i: i32 = a;
              // CHECK:STDERR:        │  let unused j: i32 = b;
              // CHECK:STDERR:        ·                      ┬

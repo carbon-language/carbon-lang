@@ -104,9 +104,9 @@ fn G[T: A(P2) & B](unused t: T) {}
 fn F() {
   // CHECK:STDERR:        ╭─┤ fail_wrong_generic_interface.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn G[T: A(P2) & B](unused t: T) {}
-  // CHECK:STDERR:        · ────────────────┬────────────────
-  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   G({} as C);
   // CHECK:STDERR:        ·   ━━━━━┳━━━━
@@ -190,9 +190,9 @@ interface K {}
 fn Test() {
   // CHECK:STDERR:        ╭─┤ fail_compare_not_equal.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J), Type(K & I & J));
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -216,9 +216,9 @@ interface J(T: type) {}
 fn Test() {
   // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J(())), Type(J({}) & I));
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -242,9 +242,9 @@ interface J(T: type) {}
 fn Test() {
   // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J(())), Type(J(()) & J({}) & I));
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

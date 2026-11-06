@@ -52,11 +52,10 @@ library "[[@TEST_NAME]]";
 fn AndLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 
 fn F(a: Core.IntLiteral) -> Core.IntLiteral {
-  // CHECK:STDERR:        ╭─┤ fail_literal_runtime.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        ╭─┤ fail_literal_runtime.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ fn AndLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "in...
-  // CHECK:STDERR:        · ───────────────────────────────────┬──────────────────────────────────
-  // CHECK:STDERR:        ·                                    ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                       │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return AndLit(5, a);
   // CHECK:STDERR:        ·          ━━━━━━┳━━━━━
@@ -114,11 +113,10 @@ fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 fn Test(n: Core.IntLiteral) {
   // OK
   And(1, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR:        · ─────────────────────────────────┬─────────────────────────────────
-  // CHECK:STDERR:        ·                                  ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                     │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬─
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   And(n, 1);
   // CHECK:STDERR:        ·   ━━━━┳━━━━
@@ -127,11 +125,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   And(n, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR:        · ─────────────────────────────────┬─────────────────────────────────
-  // CHECK:STDERR:        ·                                  ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                     │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬─
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   And(1, n);
   // CHECK:STDERR:        ·   ━━━━┳━━━━
@@ -140,11 +137,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   And(1, n);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR:        · ─────────────────────────────────┬─────────────────────────────────
-  // CHECK:STDERR:        ·                                  ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                                     │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬─
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   And(n, n);
   // CHECK:STDERR:        ·   ━━━━┳━━━━

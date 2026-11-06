@@ -13,15 +13,12 @@
 // --- fail_todo_form_binding.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_todo_form_binding.carbon:[[@LINE+17]]:9
+// CHECK:STDERR:        ╭─┤ fail_todo_form_binding.carbon:[[@LINE+14]]:9
 // CHECK:STDERR: ->     │ let x:? () = ();
 // CHECK:STDERR:        ·         ┳━
 // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `()` to
-// CHECK:STDERR:        ·         │  ┃        `Core.Form`
-// CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface
-// CHECK:STDERR:        ·              │ `Core.ImplicitAs(Core.Form)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·            ┃        `Core.Form`
+// CHECK:STDERR:        ·            ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_todo_form_binding.carbon:[[@LINE+6]]:5

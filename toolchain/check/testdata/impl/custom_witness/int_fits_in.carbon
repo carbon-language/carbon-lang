@@ -51,9 +51,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i64, 2 as i32);
@@ -66,9 +66,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i64, 2 as u32);
@@ -81,9 +81,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u64, 2 as i32);
@@ -96,9 +96,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u64, 2 as u32);
@@ -120,9 +120,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as u32, 2 as i32);
@@ -135,9 +135,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i32, 2 as u32);
@@ -159,9 +159,9 @@ fn CheckFail() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core.carbon
   // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: IntFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1 as i32, 2 as u32);

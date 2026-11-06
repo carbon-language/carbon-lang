@@ -236,15 +236,12 @@ fn F() {
   var c: Cpp.BinaryC = {};
 
   // Simple assignment.
-  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   c = 42;
   // CHECK:STDERR:        ·   ┳━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.BinaryC`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.BinaryC)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `Cpp.BinaryC`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c = 42;
@@ -734,7 +731,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:53
   // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:        ·                                                     ┳
+  // CHECK:STDERR:        ·                                                     ╻╶───────
   // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot take the
   // CHECK:STDERR:        ·                                                        ┃        address of
   // CHECK:STDERR:        ·                                                        ┃        non-reference
@@ -1012,7 +1009,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_unary.carbon:[[@LINE+15]]:34
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_unary.carbon:[[@LINE+14]]:34
   // CHECK:STDERR: ->     │   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
   // CHECK:STDERR:        ·                                  ┳━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                                  ┗━━┫ error: looking up a C++ operator with
@@ -1020,7 +1017,6 @@ fn F() {
   // CHECK:STDERR:        ·                                     ┃        `Cpp.Incomplete`
   // CHECK:STDERR:        ·                                     ┃        [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_unary.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬
@@ -1038,7 +1034,7 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_binary.carbon:[[@LINE+15]]:35
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_binary.carbon:[[@LINE+14]]:35
   // CHECK:STDERR: ->     │   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
   // CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                                   ┗━━┫ error: looking up a C++ operator with
@@ -1046,7 +1042,6 @@ fn F() {
   // CHECK:STDERR:        ·                                      ┃        `Cpp.Incomplete`
   // CHECK:STDERR:        ·                                      ┃        [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_binary.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬
@@ -1077,8 +1072,8 @@ fn F() {
   var complete: Cpp.CompleteCpp = Cpp.CompleteCpp.CompleteCpp();
   // CHECK:STDERR:        ╭─┤ fail_incomplete_operand_carbon_type.carbon:[[@LINE+12]]:28
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

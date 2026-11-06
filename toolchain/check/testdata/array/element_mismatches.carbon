@@ -16,15 +16,12 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR:        ╭─┤ fail_arg_wrong_type.carbon:[[@LINE+11]]:22
+// CHECK:STDERR:        ╭─┤ fail_arg_wrong_type.carbon:[[@LINE+8]]:22
 // CHECK:STDERR: ->     │ var a: array(C, 3) = ({}, (), true);
 // CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━
 // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-// CHECK:STDERR:        ·                      │  ┃        `()` to `C`
-// CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                      ╰────┤ type `()` does not implement interface
-// CHECK:STDERR:        ·                           │ `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                         ┃        `()` to `C`
+// CHECK:STDERR:        ·                         ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(C, 3) = ({}, (), true);
@@ -37,27 +34,22 @@ class C {}
 class D {}
 
 var a: (D, C, D);
-// CHECK:STDERR:        ╭─┤ fail_var_wrong_type.carbon:[[@LINE+11]]:22
+// CHECK:STDERR:        ╭─┤ fail_var_wrong_type.carbon:[[@LINE+8]]:22
 // CHECK:STDERR: ->     │ var b: array(C, 3) = a;
 // CHECK:STDERR:        ·                      ┳
 // CHECK:STDERR:        ·                      ┗━━┫ error: cannot implicitly convert expression of type
-// CHECK:STDERR:        ·                      │  ┃        `D` to `C`
-// CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                      ╰────┤ type `D` does not implement interface
-// CHECK:STDERR:        ·                           │ `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                         ┃        `D` to `C`
+// CHECK:STDERR:        ·                         ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: array(C, 3) = a;
 
 var c: (C, D, D);
-// CHECK:STDERR:        ╭─┤ fail_var_wrong_type.carbon:[[@LINE+9]]:22
+// CHECK:STDERR:        ╭─┤ fail_var_wrong_type.carbon:[[@LINE+7]]:22
 // CHECK:STDERR: ->     │ var d: array(C, 3) = c;
 // CHECK:STDERR:        ·                      ┳
 // CHECK:STDERR:        ·                      ┗━━┫ error: cannot copy value of type `C`
-// CHECK:STDERR:        ·                      │  ┃        [CopyOfUncopyableType]
-// CHECK:STDERR:        ·                      ╰────┤ type `C` does not implement interface `Core.Copy`
-// CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                         ┃        [CopyOfUncopyableType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var d: array(C, 3) = c;

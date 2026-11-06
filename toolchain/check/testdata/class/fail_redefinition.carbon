@@ -18,8 +18,8 @@ class Class {
 
 // CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ class Class {
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ class Class {
 // CHECK:STDERR:        · ━━━━━━┳━━━━━━
@@ -45,8 +45,8 @@ fn Class.G() {}
 fn Class.H() {}
 // CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │   fn I() {}
-// CHECK:STDERR:        ·   ────┬───
-// CHECK:STDERR:        ·       ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·      ┬
+// CHECK:STDERR:        ·      ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Class.I() {}
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━

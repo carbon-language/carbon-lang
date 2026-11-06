@@ -18,8 +18,8 @@ class Class;
 
 // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:4
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Class.Function() {}
 // CHECK:STDERR:        ·    ━━┳━━
@@ -32,8 +32,8 @@ fn Class.Function() {}
 fn CallClassFunction() {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Class.Function();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
@@ -46,8 +46,8 @@ fn CallClassFunction() {
 
 // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+12]]:17
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var global_var: Class;
 // CHECK:STDERR:        ·                 ┳━━━━
@@ -60,8 +60,8 @@ var global_var: Class;
 
 // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:24
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn ConvertFromStruct() -> Class { return {}; }
 // CHECK:STDERR:        ·                        ━━━━┳━━━
@@ -74,8 +74,8 @@ fn ConvertFromStruct() -> Class { return {}; }
 fn G(p: Class*) -> () {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p->n;
   // CHECK:STDERR:        ·          ━━┳━
@@ -89,8 +89,8 @@ fn G(p: Class*) -> () {
 fn MemberAccess(p: Class*) -> () {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:11
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return (*p).n;
   // CHECK:STDERR:        ·           ━┳
@@ -103,8 +103,8 @@ fn MemberAccess(p: Class*) -> () {
 
 // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+11]]:20
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Copy(p: Class*) -> Class {
 // CHECK:STDERR:        ·                    ━━━━┳━━━
@@ -119,8 +119,8 @@ fn Copy(p: Class*) -> Class {
 fn Let(p: Class*) {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+12]]:17
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused c: Class = *p;
   // CHECK:STDERR:        ·                 ┳━━━━
@@ -139,8 +139,8 @@ fn ReturnIncomplete() -> Class;
 fn CallTakeIncomplete(p: Class*) {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+16]]:18
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TakeIncomplete(c: Class);
   // CHECK:STDERR:        ·                   ────┬───
@@ -157,8 +157,8 @@ fn CallTakeIncomplete(p: Class*) {
 
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+16]]:18
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn TakeIncomplete(c: Class);
   // CHECK:STDERR:        ·                   ────┬───
@@ -177,8 +177,8 @@ fn CallTakeIncomplete(p: Class*) {
 fn CallReturnIncomplete() {
   // CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ class Class;
-  // CHECK:STDERR:        · ──────┬─────
-  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ──┬──
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn ReturnIncomplete() -> Class;
   // CHECK:STDERR:        ·                       ────┬───

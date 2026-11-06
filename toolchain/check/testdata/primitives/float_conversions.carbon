@@ -107,27 +107,22 @@ import library "test_helpers";
 
 fn F(f: f32) {
   // Lossy explicit conversion using `as` not permitted.
-  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: i32 = 12.34 as i32;
   // CHECK:STDERR:        ·                ┳━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: cannot convert expression of type `Core.FloatLiteral`
-  // CHECK:STDERR:        ·                │  ┃        to `i32` with `as`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `Core.FloatLiteral` does not implement interface
-  // CHECK:STDERR:        ·                     │ `Core.As(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   ┃        to `i32` with `as`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = 12.34 as i32;
 
-  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: i32 = f as i32;
   // CHECK:STDERR:        ·                ┳━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: cannot convert expression of type `f32` to `i32` with
-  // CHECK:STDERR:        ·                │  ┃        `as`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `f32` does not implement interface `Core.As(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   ┃        `as`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = f as i32;
@@ -154,15 +149,12 @@ library "[[@TEST_NAME]]";
 
 fn F(x: f64) {
   // Implicit narrowing conversion (f64 -> f32) is not permitted.
-  // CHECK:STDERR:        ╭─┤ fail_float_to_float_narrowing.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR:        ╭─┤ fail_float_to_float_narrowing.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: f32 = x;
   // CHECK:STDERR:        ·                ┳
   // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type `f64` to
-  // CHECK:STDERR:        ·                │  ┃        `f32`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `f64` does not implement interface
-  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(f32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   ┃        `f32`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = x;

@@ -79,15 +79,12 @@ import Cpp;
 
 fn F() {
   let cpp_long: Cpp.long = 1;
-  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_long_to_i32.carbon:[[@LINE+11]]:32
+  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_long_to_i32.carbon:[[@LINE+8]]:32
   // CHECK:STDERR: ->     │   let unused carbon_i32: i32 = cpp_long;
   // CHECK:STDERR:        ·                                ┳━━━━━━━
   // CHECK:STDERR:        ·                                ┗━━┫ error: cannot implicitly convert expression
-  // CHECK:STDERR:        ·                                │  ┃        of type `long` to `i32`
-  // CHECK:STDERR:        ·                                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                                ╰────┤ type `Cpp.long` does not implement
-  // CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                   ┃        of type `long` to `i32`
+  // CHECK:STDERR:        ·                                   ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused carbon_i32: i32 = cpp_long;
@@ -724,15 +721,12 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `unsigned long`
   // happens to fit in `u32` on this target.
-  // CHECK:STDERR:        ╭─┤ fail_no_ulong_to_u32.carbon:[[@LINE+17]]:25
+  // CHECK:STDERR:        ╭─┤ fail_no_ulong_to_u32.carbon:[[@LINE+14]]:25
   // CHECK:STDERR: ->     │   let carbon_u32: u32 = cpp_unsigned_long;
   // CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                         ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                         │  ┃        `unsigned_long` to `u32`
-  // CHECK:STDERR:        ·                         │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                         ╰────┤ type `Cpp.unsigned_long` does not implement
-  // CHECK:STDERR:        ·                              │ interface `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            ┃        `unsigned_long` to `u32`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_no_ulong_to_u32.carbon:[[@LINE+6]]:7

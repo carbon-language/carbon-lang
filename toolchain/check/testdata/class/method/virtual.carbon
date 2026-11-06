@@ -263,9 +263,9 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·              ┗━━┫ error: use of undefined generic function
 // CHECK:STDERR:        ·                 ┃        [MissingGenericFunctionDefinition]
 // CHECK:STDERR:        │   virtual fn F(self);
-// CHECK:STDERR:        ·   ─────────┬─────────
-// CHECK:STDERR:        ·            ╰──┤ generic function declared here
-// CHECK:STDERR:        ·               │ [MissingGenericFunctionDefinitionHere]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ generic function declared here
+// CHECK:STDERR:        ·                 │ [MissingGenericFunctionDefinitionHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 base class Base(T: type) {
@@ -464,7 +464,7 @@ base class Base(T: type) {
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR:        ╭─┤ fail_impl_generic_specifically_mismatch.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR:        ╭─┤ fail_impl_generic_specifically_mismatch.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │   virtual fn F(unused self, unused t: T1*) { }
   // CHECK:STDERR:        ·   ─────────────┬────────────────────────────
   // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
@@ -473,14 +473,11 @@ class D1 {
   // CHECK:STDERR: ->     │   override fn F(unused self, unused t: T2*) { }
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┯━━━━━━━━
   // CHECK:STDERR:        ·                        ┗━━━━━━━━━━━━━━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                        │            │  ┃        expression of type `T1*` to
-  // CHECK:STDERR:        ·                        │            │  ┃        `T2*`
-  // CHECK:STDERR:        ·                        │            │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                        ╰─────────────────┤ type `T1*` does not implement
-  // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T2*)`
-  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                                     │  ┃        expression of type `T1*` to
+  // CHECK:STDERR:        ·                                     │  ┃        `T2*`
+  // CHECK:STDERR:        ·                                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                                     ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                          │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(unused self, unused t: T2*) { }
@@ -495,7 +492,7 @@ abstract class Base(T: type) {
 }
 class Derived(T: type) {
   extend base: Base(T);
-  // CHECK:STDERR:        ╭─┤ fail_impl_generic_generic_mismatch.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR:        ╭─┤ fail_impl_generic_generic_mismatch.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │   virtual fn F(unused self, unused t: T*) { }
   // CHECK:STDERR:        ·   ─────────────┬───────────────────────────
   // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
@@ -504,13 +501,10 @@ class Derived(T: type) {
   // CHECK:STDERR: ->     │   override fn F(unused self, unused t: T) { }
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┯━━━━━━
   // CHECK:STDERR:        ·                       ┗━━━━━━━━━━━━━━━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                       │             │  ┃        expression of type `T*` to `T`
-  // CHECK:STDERR:        ·                       │             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰──────────────────┤ type `T*` does not implement
-  // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T)`
-  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                                     │  ┃        expression of type `T*` to `T`
+  // CHECK:STDERR:        ·                                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                                     ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                          │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(unused self, unused t: T) { }

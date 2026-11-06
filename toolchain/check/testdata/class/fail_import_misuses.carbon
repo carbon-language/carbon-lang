@@ -32,25 +32,24 @@ import library "a";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class Empty {
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+14]]:8
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+13]]:8
 // CHECK:STDERR: ->     │ var a: Incomplete;
 // CHECK:STDERR:        ·        ┳━━━━━━━━━
 // CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `Incomplete` in name
 // CHECK:STDERR:        ·           ┃        binding declaration
 // CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_b.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class Incomplete;
-// CHECK:STDERR:        · ────────┬────────
-// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Incomplete;

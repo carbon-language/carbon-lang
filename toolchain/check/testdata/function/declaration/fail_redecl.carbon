@@ -15,7 +15,7 @@
 fn A();
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn A();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn A();
@@ -28,8 +28,8 @@ fn A();
 fn B(x: ());
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn B(x: ());
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn B(x: ());
 // CHECK:STDERR:        · ━━━━━━┳━━━━━
@@ -55,8 +55,8 @@ fn C(x: ());
 fn D() {}
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn D() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn D();
 // CHECK:STDERR:        · ━━━┳━━━
@@ -68,8 +68,8 @@ fn D();
 fn E() {}
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn E() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn E() {}
 // CHECK:STDERR:        · ━━━━┳━━━

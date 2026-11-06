@@ -30,9 +30,9 @@ class D(DD: type) {
     //@dump-sem-ir-begin
     // CHECK:STDERR:        ╭─┤ fail_dot_self_symbolic_type.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │   fn F(unused generic T: A(CC) where .X = CC) {}
-    // CHECK:STDERR:        ·   ──────────────────────┬──────────────────────
-    // CHECK:STDERR:        ·                         ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                            │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     C(DD).F(T);
     // CHECK:STDERR:        ·     ┳━━━━━━━━━

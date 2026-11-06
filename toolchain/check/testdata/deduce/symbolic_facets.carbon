@@ -31,9 +31,9 @@ class D(DD: type) {
     //
     // CHECK:STDERR:        ╭─┤ fail_missing_interface.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │   fn F(unused generic T: A) {}
-    // CHECK:STDERR:        ·   ─────────────┬─────────────
-    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     C(()).F(T);
     // CHECK:STDERR:        ·     ┳━━━━━━━━━
@@ -62,9 +62,9 @@ class D(DD: type) {
     //
     // CHECK:STDERR:        ╭─┤ fail_interface_wrong_generic_param.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │   fn F(unused generic T: A) {}
-    // CHECK:STDERR:        ·   ─────────────┬─────────────
-    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     C(()).F(T);
     // CHECK:STDERR:        ·     ┳━━━━━━━━━

@@ -90,12 +90,11 @@ void CallUsingF() { UsingF(); }
 
 package OtherGeneric;
 // CHECK:STDERR:        ╷ ╭── imported from: fail_todo_generic.carbon [InImport]
-// CHECK:STDERR:        ├─┤ other_generic.carbon:[[@LINE+8]]:1
+// CHECK:STDERR:        ├─┤ other_generic.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ fn HasGenericArg(generic T: type, a: T) { a; }
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·                  ┗━━┫ error: 1 argument passed to function expecting 2 arguments
-// CHECK:STDERR:        ·                  │  ┃        [CallArgCountMismatch]
-// CHECK:STDERR:        ·                  ╰────┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ·                     ┃        [CallArgCountMismatch]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn HasGenericArg(generic T: type, a: T) { a; }

@@ -52,7 +52,7 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_method_access.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_method_access.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │   fn F(self);
   // CHECK:STDERR:        ·        ──┬─
   // CHECK:STDERR:        ·          ╰──┤ initializing function parameter [InCallToFunctionParam]
@@ -60,11 +60,8 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: ->     │   a.F();
   // CHECK:STDERR:        ·   ┳
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `SomeClassAdapter` to
-  // CHECK:STDERR:        ·   │  ┃        `SomeClass`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `SomeClassAdapter` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `SomeClass`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.F();
@@ -84,15 +81,12 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_todo_field_access.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        ╭─┤ fail_todo_field_access.carbon:[[@LINE+8]]:10
   // CHECK:STDERR: ->     │   return a.b;
   // CHECK:STDERR:        ·          ┳━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·          │  ┃        `SomeClassAdapter` to `SomeClass`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `SomeClassAdapter` does not implement interface
-  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        `SomeClassAdapter` to `SomeClass`
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.b;
@@ -381,7 +375,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %SomeClass.F.type = name_ref F, @SomeClass.%SomeClass.F.decl [concrete = constants.%SomeClass.F]
 // CHECK:STDOUT:   %SomeClass.F.bound: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc28: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %SomeClass = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SomeClass.F.call: init %empty_tuple.type = call %SomeClass.F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -482,8 +476,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%field_decl.loc6 [concrete = @SomeClass.%field_decl.loc6]
-// CHECK:STDOUT:   %.loc25_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

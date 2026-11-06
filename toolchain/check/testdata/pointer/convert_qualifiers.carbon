@@ -47,7 +47,7 @@ class X {}
 
 fn TakeNonConst(p: X*);
 
-// CHECK:STDERR:        ╭─┤ fail_removed_qualifiers.carbon:[[@LINE+16]]:38
+// CHECK:STDERR:        ╭─┤ fail_removed_qualifiers.carbon:[[@LINE+13]]:38
 // CHECK:STDERR:        │ fn TakeNonConst(p: X*);
 // CHECK:STDERR:        ·                 ──┬──
 // CHECK:STDERR:        ·                   ╰──┤ initializing function parameter [InCallToFunctionParam]
@@ -55,12 +55,9 @@ fn TakeNonConst(p: X*);
 // CHECK:STDERR: ->     │ fn Const(p: const X*) { TakeNonConst(p); }
 // CHECK:STDERR:        ·                                      ┳
 // CHECK:STDERR:        ·                                      ┗━━┫ error: cannot implicitly convert
-// CHECK:STDERR:        ·                                      │  ┃        expression of type `const X*`
-// CHECK:STDERR:        ·                                      │  ┃        to `X*`
-// CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                                      ╰────┤ type `const X*` does not implement
-// CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(X*)`
-// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                         ┃        expression of type `const X*`
+// CHECK:STDERR:        ·                                         ┃        to `X*`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Const(p: const X*) { TakeNonConst(p); }
@@ -77,7 +74,7 @@ fn TakeConstConst(p: const (const X*)*);
 
 fn NonConstNonConst(p: X**) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_nested_qualifiers.carbon:[[@LINE+16]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_nested_qualifiers.carbon:[[@LINE+13]]:18
   // CHECK:STDERR:        │ fn TakeConstConst(p: const (const X*)*);
   // CHECK:STDERR:        ·                   ──────────┬─────────
   // CHECK:STDERR:        ·                             ╰──┤ initializing function parameter
@@ -86,11 +83,8 @@ fn NonConstNonConst(p: X**) {
   // CHECK:STDERR: ->     │   TakeConstConst(p);
   // CHECK:STDERR:        ·                  ┳
   // CHECK:STDERR:        ·                  ┗━━┫ error: cannot implicitly convert expression of type `X**`
-  // CHECK:STDERR:        ·                  │  ┃        to `const (const X*)*`
-  // CHECK:STDERR:        ·                  │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰────┤ type `X**` does not implement interface
-  // CHECK:STDERR:        ·                       │ `Core.ImplicitAs(const (const X*)*)`
-  // CHECK:STDERR:        ·                       │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                     ┃        to `const (const X*)*`
+  // CHECK:STDERR:        ·                     ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -99,7 +93,7 @@ fn NonConstNonConst(p: X**) {
 
 fn ConstNonConst(p: const (X*)*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_nested_qualifiers.carbon:[[@LINE+16]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_nested_qualifiers.carbon:[[@LINE+13]]:18
   // CHECK:STDERR:        │ fn TakeConstConst(p: const (const X*)*);
   // CHECK:STDERR:        ·                   ──────────┬─────────
   // CHECK:STDERR:        ·                             ╰──┤ initializing function parameter
@@ -108,11 +102,8 @@ fn ConstNonConst(p: const (X*)*) {
   // CHECK:STDERR: ->     │   TakeConstConst(p);
   // CHECK:STDERR:        ·                  ┳
   // CHECK:STDERR:        ·                  ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                  │  ┃        `const (X*)*` to `const (const X*)*`
-  // CHECK:STDERR:        ·                  │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰────┤ type `const (X*)*` does not implement interface
-  // CHECK:STDERR:        ·                       │ `Core.ImplicitAs(const (const X*)*)`
-  // CHECK:STDERR:        ·                       │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                     ┃        `const (X*)*` to `const (const X*)*`
+  // CHECK:STDERR:        ·                     ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -127,7 +118,7 @@ class X {}
 
 fn TakeNonConstConst(p: (const X*)*);
 
-// CHECK:STDERR:        ╭─┤ fail_nested_added_qualifiers.carbon:[[@LINE+18]]:49
+// CHECK:STDERR:        ╭─┤ fail_nested_added_qualifiers.carbon:[[@LINE+15]]:49
 // CHECK:STDERR:        │ fn TakeNonConstConst(p: (const X*)*);
 // CHECK:STDERR:        ·                      ───────┬──────
 // CHECK:STDERR:        ·                             ╰──┤ initializing function parameter
@@ -136,13 +127,10 @@ fn TakeNonConstConst(p: (const X*)*);
 // CHECK:STDERR: ->     │ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDERR:        ·                                                 ┳
 // CHECK:STDERR:        ·                                                 ┗━━┫ error: cannot implicitly
-// CHECK:STDERR:        ·                                                 │  ┃        convert expression
-// CHECK:STDERR:        ·                                                 │  ┃        of type `X**` to
-// CHECK:STDERR:        ·                                                 │  ┃        `const X**`
-// CHECK:STDERR:        ·                                                 │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭───────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `X**` does not implement interface `Core.ImplicitAs(const X**)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                    ┃        convert expression
+// CHECK:STDERR:        ·                                                    ┃        of type `X**` to
+// CHECK:STDERR:        ·                                                    ┃        `const X**`
+// CHECK:STDERR:        ·                                                    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
@@ -220,7 +208,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstConst.ref: %TakeConstConst.type = name_ref TakeConstConst, file.%TakeConstConst.decl [concrete = constants.%TakeConstConst]
 // CHECK:STDOUT:   %p.ref: %ptr.9ae = name_ref p, %p
-// CHECK:STDOUT:   %.loc28: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -229,7 +217,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %TakeConstConst.ref: %TakeConstConst.type = name_ref TakeConstConst, file.%TakeConstConst.decl [concrete = constants.%TakeConstConst]
 // CHECK:STDOUT:   %p.ref: %ptr.060 = name_ref p, %p
-// CHECK:STDOUT:   %.loc50: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc44: %ptr.b53 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakeConstConst.call: init %empty_tuple.type = call %TakeConstConst.ref(<error>)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

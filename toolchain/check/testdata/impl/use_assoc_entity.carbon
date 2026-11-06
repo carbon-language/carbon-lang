@@ -387,7 +387,7 @@ interface J2 {
   // CHECK:STDERR:        ╭─┤ fail_todo_self_period_associated_type.carbon:[[@LINE+25]]:17
   // CHECK:STDERR:        │ interface J2 {
   // CHECK:STDERR:        · ───────┬──────
-  // CHECK:STDERR:        ·        ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·        ╰──┤ interface is incomplete within its definition
   // CHECK:STDERR:        ·           │ [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn F(self, z: Self.U2) -> Self.U2;
@@ -399,7 +399,7 @@ interface J2 {
   // CHECK:STDERR:        ╭─┤ fail_todo_self_period_associated_type.carbon:[[@LINE+13]]:29
   // CHECK:STDERR:        │ interface J2 {
   // CHECK:STDERR:        · ───────┬──────
-  // CHECK:STDERR:        ·        ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·        ╰──┤ interface is incomplete within its definition
   // CHECK:STDERR:        ·           │ [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn F(self, z: Self.U2) -> Self.U2;

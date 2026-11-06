@@ -217,10 +217,10 @@ library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 // CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+16]]:13
 // CHECK:STDERR: ->     │ let {a: (), a: ()} = {.a = ()};
-// CHECK:STDERR:        ·      ──┬──  ┳
-// CHECK:STDERR:        ·        │    ┗━━┫ error: duplicate name `a` being declared in the same scope
-// CHECK:STDERR:        ·        │       ┃        [NameDeclDuplicate]
-// CHECK:STDERR:        ·        ╰─────────┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·      ┬      ┳
+// CHECK:STDERR:        ·      │      ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·      │         ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ·      ╰───────────┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+8]]:13
@@ -287,15 +287,12 @@ class C{
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+11]]:20
+// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+8]]:20
 // CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = {}};
 // CHECK:STDERR:        ·                    ┳━━━━━━━━
 // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `{}`
-// CHECK:STDERR:        ·                    │  ┃        to `()`
-// CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                    ╰────┤ type `{}` does not implement interface
-// CHECK:STDERR:        ·                         │ `Core.ImplicitAs(())`
-// CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                       ┃        to `()`
+// CHECK:STDERR:        ·                       ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = {}};
@@ -305,15 +302,12 @@ let {.a = x: ()} = {.a = {}};
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+11]]:5
+// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+8]]:5
 // CHECK:STDERR: ->     │ let {.a = x: ()} = ((), ());
 // CHECK:STDERR:        ·     ┳━━━━━━━━━━━
 // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `((), ())` to
-// CHECK:STDERR:        ·     │  ┃        `{.a: ()}`
-// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·     ╰────┤ type `((), ())` does not implement interface
-// CHECK:STDERR:        ·          │ `Core.ImplicitAs({.a: ()})`
-// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·        ┃        `{.a: ()}`
+// CHECK:STDERR:        ·        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = ((), ());
@@ -1310,17 +1304,17 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc15_28: %empty_tuple.type = converted @__global_init.%.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_28: %empty_tuple.type = converted @__global_init.%.loc12_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15_16: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12_16: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_28: %struct_type.a.225 = struct_literal (%.loc15_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc12_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_28: %struct_type.a.225 = struct_literal (%.loc12_27) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1340,18 +1334,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc15_16.1: %struct_type.a = converted @__global_init.%.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_16.1: %struct_type.a = converted @__global_init.%.loc12_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15_16.2: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12_16.2: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_27: %tuple.type = tuple_literal (%.loc15_22, %.loc15_26) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_27: %tuple.type = tuple_literal (%.loc12_22, %.loc12_26) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

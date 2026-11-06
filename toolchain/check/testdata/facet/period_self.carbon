@@ -182,15 +182,12 @@ fn G(generic U: I(.Self) where .Self impls J(.Self)) {
 
   // TODO: This step should work.
   //
-  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+8]]:14
   // CHECK:STDERR: ->     │   let u: U = U.I1();
   // CHECK:STDERR:        ·              ┳━━━━━
   // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `.Self` to
-  // CHECK:STDERR:        ·              │  ┃        `U`
-  // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·              ╰────┤ type `.Self` does not implement interface
-  // CHECK:STDERR:        ·                   │ `Core.ImplicitAs(U)`
-  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                 ┃        `U`
+  // CHECK:STDERR:        ·                 ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let u: U = U.I1();
@@ -228,15 +225,12 @@ interface I(T: type) {
 }
 
 fn F(generic U: I(.Self)) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+8]]:21
   // CHECK:STDERR: ->     │   let unused a: U = U.G();
   // CHECK:STDERR:        ·                     ┳━━━━
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                     │  ┃        `.Self` to `U`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `.Self` does not implement interface
-  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(U)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `.Self` to `U`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: U = U.G();
@@ -343,21 +337,16 @@ interface Z {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+17]]:53
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+12]]:53
 // CHECK:STDERR: ->     │ fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
 // CHECK:STDERR:        ·                                                     ┳━━━━━━━━
 // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot
-// CHECK:STDERR:        ·                                                     │  ┃        implicitly
-// CHECK:STDERR:        ·                                                     │  ┃        convert
-// CHECK:STDERR:        ·                                                     │  ┃        expression of
-// CHECK:STDERR:        ·                                                     │  ┃        type `T.(L.W)`
-// CHECK:STDERR:        ·                                                     │  ┃        to `{}`
-// CHECK:STDERR:        ·                                                     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                                                     ╰────┤ type `T.(L.W)` does
-// CHECK:STDERR:        ·                                                          │ not implement
-// CHECK:STDERR:        ·                                                          │ interface
-// CHECK:STDERR:        ·                                                          │ `Core.ImplicitAs({})`
-// CHECK:STDERR:        ·                                                          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                        ┃        implicitly
+// CHECK:STDERR:        ·                                                        ┃        convert
+// CHECK:STDERR:        ·                                                        ┃        expression of
+// CHECK:STDERR:        ·                                                        ┃        type `T.(L.W)`
+// CHECK:STDERR:        ·                                                        ┃        to `{}`
+// CHECK:STDERR:        ·                                                        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
@@ -397,15 +386,12 @@ interface Z(T: type) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+11]]:60
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+8]]:60
 // CHECK:STDERR: ->     │ fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
 // CHECK:STDERR:        ·                                                            ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭──────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
@@ -423,15 +409,12 @@ interface Z(T: L) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+11]]:63
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+8]]:63
 // CHECK:STDERR: ->     │ fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
 // CHECK:STDERR:        ·                                                               ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
@@ -472,15 +455,12 @@ interface Z(T: Y) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+11]]:75
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+8]]:75
 // CHECK:STDERR: ->     │ ...c T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
 // CHECK:STDERR:        ·                                                                   ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
@@ -542,15 +522,12 @@ class C(U: Y, v: U.Y1.L1) {
 // This creates a bug in the toolchain since the specific is now wrong and we're
 // unable to get the concrete value of `C(T, ()).C1`.
 fn F(generic T: Y where .Y1 impls M and C(.Self, ()) impls M) -> C(T, ()).C1 {
-  // CHECK:STDERR:        ╭─┤ fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   return ();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `()` to
-  // CHECK:STDERR:        ·   │  ┃        `T.(Y.Y1).(L.L1)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(T.(Y.Y1).(L.L1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `T.(Y.Y1).(L.L1)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return ();

@@ -271,7 +271,7 @@ class WrongSelf {
 }
 
 fn CallWrongSelf(ws: WrongSelf) {
-  // CHECK:STDERR:        ╭─┤ fail_self_wrong_type.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        ╭─┤ fail_self_wrong_type.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │   fn F(self: Class);
   // CHECK:STDERR:        ·        ─────┬─────
   // CHECK:STDERR:        ·             ╰──┤ initializing function parameter [InCallToFunctionParam]
@@ -279,10 +279,8 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR: ->     │   ws.F();
   // CHECK:STDERR:        ·   ┳━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `WrongSelf` to
-  // CHECK:STDERR:        ·   │  ┃        `Class`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `Class`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ws.F();
