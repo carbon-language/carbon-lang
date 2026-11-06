@@ -151,7 +151,7 @@ class C(T: type) {}
 // CHECK:STDERR: ->     │ fn F(unused generic FF: (Z where .T = C(.U)) where .T = {}) {}
 // CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·                         ┗━━┫ error: associated constant `.(Z.T)` given two
-// CHECK:STDERR:        ·                            ┃        different values `C(.(Z.U))` and `{}`
+// CHECK:STDERR:        ·                            ┃        different values `{}` and `C(.(Z.U))`
 // CHECK:STDERR:        ·                            ┃        [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

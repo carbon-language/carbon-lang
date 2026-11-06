@@ -792,30 +792,26 @@ static auto GetConstantDeclaredFacetType(EvalContext& eval_context,
                  &self_phase)}});
   }
 
-  // Rewrite constraints are resolved first before replacing them with their
-  // canonical instruction, so that in a `WhereExpr` we can work with the
-  // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
-  // rather than the value of the associated constant they reference.
-  //
-  // This also implies that we may find `ImplWitnessAccessSubstituted`
-  // instructions in the LHS and RHS of these constraints, which are preserved
-  // to maintain them as an unresolved reference to an associated constant, but
-  // which must be handled gracefully during resolution. They will be replaced
-  // with the constant value of the `ImplWitnessAccess` below when they are
-  // substituted with a constant value.
-  declared_facet_type.rewrite_constraints = orig.rewrite_constraints;
+  // The rewrite constraints may not be fully resolved yet, so there may be
+  // `ImplWitnessAccessSubstituted` insts on the LHS that we need to look
+  // through in order to constant-evaluate correctly.
+  declared_facet_type.rewrite_constraints.reserve(
+      orig.rewrite_constraints.size());
+  for (const auto& rewrite : orig.rewrite_constraints) {
+    declared_facet_type.rewrite_constraints.push_back(
+        {.lhs_id = RequireConstantValue(
+             eval_context,
+             GetImplWitnessAccessWithoutSubstitution(
+                 eval_context.context().sem_ir(), rewrite.lhs_id),
+             &self_phase),
+         .rhs_id =
+             RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase)});
+  }
+
   if (!ResolveFacetTypeRewriteConstraints(
           eval_context.context(), loc_id,
           declared_facet_type.rewrite_constraints)) {
     *phase = Phase::UnknownDueToError;
-  }
-
-  for (auto& rewrite : declared_facet_type.rewrite_constraints) {
-    auto lhs_id =
-        RequireConstantValue(eval_context, rewrite.lhs_id, &self_phase);
-    auto rhs_id =
-        RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase);
-    rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
 
   // Update phase, ignoring `.Self` dependence from constraints whose `.Self` is
