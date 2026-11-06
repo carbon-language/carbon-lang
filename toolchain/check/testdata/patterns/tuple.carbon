@@ -64,7 +64,12 @@ library "[[@TEST_NAME]]";
 
 class C {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+2]]:7-20: error: tuple pattern in field declaration [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╭─┤ fail_in_class_var.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var (a: (), b: ());
+  // CHECK:STDERR:        ·       ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: tuple pattern in field declaration
+  // CHECK:STDERR:        ·                 ┃        [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var (a: (), b: ());
   //@dump-sem-ir-end
@@ -76,7 +81,11 @@ library "[[@TEST_NAME]]";
 
 class C {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_empty_in_class_var.carbon:[[@LINE+2]]:7-8: error: tuple pattern in field declaration [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╭─┤ fail_empty_in_class_var.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   var ();
+  // CHECK:STDERR:        ·       ━┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: tuple pattern in field declaration [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var ();
   //@dump-sem-ir-end
@@ -355,21 +364,21 @@ class C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %field_decl.loc8_9: %C.elem = field_decl a, element0, %.loc8_12.2 in [concrete] {
-// CHECK:STDOUT:     %.loc8_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_12.2: type = converted %.loc8_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %field_decl.loc13_9: %C.elem = field_decl a, element0, %.loc13_12.2 in [concrete] {
+// CHECK:STDOUT:     %.loc13_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_12.2: type = converted %.loc13_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %field_decl.loc8_16: %C.elem = field_decl b, element1, %.loc8_19.2 in [concrete] {
-// CHECK:STDOUT:     %.loc8_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_19.2: type = converted %.loc8_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %field_decl.loc13_16: %C.elem = field_decl b, element1, %.loc13_19.2 in [concrete] {
+// CHECK:STDOUT:     %.loc13_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_19.2: type = converted %.loc13_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .a = %field_decl.loc8_9
-// CHECK:STDOUT:   .b = %field_decl.loc8_16
+// CHECK:STDOUT:   .a = %field_decl.loc13_9
+// CHECK:STDOUT:   .b = %field_decl.loc13_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_empty_in_class_var.carbon

@@ -27,7 +27,7 @@ FunctionContext::FunctionContext(
       specific_file_context_(&specific_file_context),
       specific_sem_ir_function_id_(specific_sem_ir_function_id),
       specific_id_(specific_id),
-      builder_(file_context.llvm_context(), llvm::ConstantFolder(),
+      builder_(file_context.llvm_module(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),

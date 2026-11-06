@@ -123,8 +123,8 @@ void SetX(Carbon::Other::Point* p, int x) { p->x = x; }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!32}
-// CHECK:STDOUT: !llvm.module.flags = !{!64, !65, !66, !12, !13}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!68}
+// CHECK:STDOUT: !llvm.module.flags = !{!64, !65, !66, !67, !12, !13}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!69}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -169,9 +169,10 @@ void SetX(Carbon::Other::Point* p, int x) { p->x = x; }
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !30)
 // CHECK:STDOUT: !62 = !DILocation(line: 32, column: 1, scope: !57)
 // CHECK:STDOUT: !63 = !{!58}
-// CHECK:STDOUT: !64 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !65 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !66 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !67 = !{!"__libc_errno", !5, i64 0}
-// CHECK:STDOUT: !68 = !{!67, !5, i64 0}
+// CHECK:STDOUT: !64 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !65 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !66 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !67 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !68 = !{!"__libc_errno", !5, i64 0}
+// CHECK:STDOUT: !69 = !{!68, !5, i64 0}
 // CHECK:STDOUT:

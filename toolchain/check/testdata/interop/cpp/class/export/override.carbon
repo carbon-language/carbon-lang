@@ -72,7 +72,13 @@ struct VBase {
 
 class A {}
 
-// CHECK:STDERR: fail_todo_generic.carbon:[[@LINE+2]]:1-25: error: semantics TODO: `generic class overriding methods from a C++ virtual class` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_generic.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ class GenericZ(T: type) {
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·    ┃        `generic class overriding methods from a C++ virtual class`
+// CHECK:STDERR:        ·    ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class GenericZ(T: type) {
   extend base: Cpp.VBase;

@@ -29,8 +29,16 @@ fn F() {
     // CHECK:STDOUT:   - { index: 12, kind:       "OpenParen", line: {{ *}}[[@LINE-2]], column:   6, indent: 5, spelling: "(", closing_token: 13 }
     // CHECK:STDOUT:   - { index: 13, kind:      "CloseParen", line: {{ *}}[[@LINE-3]], column:   7, indent: 5, spelling: ")", opening_token: 12 }
     // CHECK:STDOUT:   - { index: 14, kind:            "Semi", line: {{ *}}[[@LINE-4]], column:   8, indent: 5, spelling: ";" }
-  // CHECK:STDERR: fail_mismatched_brackets_line_end.carbon:[[@LINE+3]]:3: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-  // CHECK:STDERR: fail_mismatched_brackets_line_end.carbon:[[@LINE-12]]:12: note: possibly missing `{` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_mismatched_brackets_line_end.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   if (true) // A comment.
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ possibly missing `{` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   }
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: closing symbol without a corresponding opening symbol
+  // CHECK:STDERR:        ·      ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   }
   // CHECK:STDOUT:   - { index: 15, kind: "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:   3, indent: 3, spelling: "}", opening_token: 10, has_leading_space: true }

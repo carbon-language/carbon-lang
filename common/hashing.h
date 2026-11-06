@@ -487,7 +487,8 @@ inline auto CarbonHashValue(llvm::ArrayRef<T> values) -> HashCode {
   return static_cast<HashCode>(hasher);
 }
 
-inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(
+    llvm::ArrayRef<std::byte> bytes) -> HashCode {
   Hasher hasher;
   hasher.HashSizedBytes(bytes);
   return static_cast<HashCode>(hasher);
@@ -495,16 +496,19 @@ inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes) -> HashCode {
 
 // Hashing implementation for `llvm::StringRef`. We forward all the other
 // string-like types that support heterogeneous lookup to this one.
-inline auto CarbonHashValue(llvm::StringRef value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(llvm::StringRef value)
+    -> HashCode {
   return CarbonHashValue(llvm::ArrayRef(
       reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
 
-inline auto CarbonHashValue(std::string_view value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(std::string_view value)
+    -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
-inline auto CarbonHashValue(const std::string& value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(const std::string& value)
+    -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
@@ -607,7 +611,7 @@ concept CanHashAsRawDataType = std::same_as<T, std::nullptr_t> ||
 // overloads, either here, or via ADL. Note that similar to
 // `HasCarbonHashValue`, this must not be moved above any of those overloads.
 template <typename T>
-inline auto DispatchImpl(const T& value) -> HashCode {
+[[clang::always_inline]] inline auto DispatchImpl(const T& value) -> HashCode {
   if constexpr (HasCarbonHashValue<T>) {
     // If we have an explicit overload for `CarbonHashValue`, call it. This may
     // be provided above or via ADL, and is preferred as it represents an
@@ -638,7 +642,7 @@ inline auto DispatchImpl(const T& value) -> HashCode {
 }  // namespace InternalHashDispatch
 
 template <typename T>
-inline auto HashValue(const T& value) -> HashCode {
+[[clang::always_inline]] inline auto HashValue(const T& value) -> HashCode {
   return InternalHashDispatch::DispatchImpl(value);
 }
 
@@ -931,7 +935,8 @@ inline auto Hasher::HashRaw(const T& value) -> void {
   HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)));
 }
 
-inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
+[[clang::always_inline]] inline auto Hasher::HashSizedBytes(
+    llvm::ArrayRef<std::byte> bytes) -> void {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
 

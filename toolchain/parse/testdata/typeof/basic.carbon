@@ -20,48 +20,91 @@ fn F() {
 
 // --- fail_no_paren.carbon
 
-// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:15: error: expected `(` after `typeof` [ExpectedParenAfter]
+// CHECK:STDERR:        ╭─┤ fail_no_paren.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ var x: typeof y;
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: expected `(` after `typeof` [ExpectedParenAfter]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof y;
 
 // --- fail_no_expr.carbon
 
-// CHECK:STDERR: fail_no_expr.carbon:[[@LINE+2]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_no_expr.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ var x: typeof();
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof();
 
 // --- fail_no_close_paren.carbon
 
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+3]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+2]]:14: note: matching this `(` [GroupOpenedHere]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ var x: typeof(y z);
+// CHECK:STDERR:        ·              ┬  ┳
+// CHECK:STDERR:        ·              │  ┗━━┫ error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR:        ·              ╰───────┤ matching this `(` [GroupOpenedHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof(y z);
 
 // --- fail_no_close_paren_multiline.carbon
 
 var x: typeof(y
-              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE+3]]:15: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE-2]]:14: note: matching this `(` [GroupOpenedHere]
+              // CHECK:STDERR:        ╭─┤ fail_no_close_paren_multiline.carbon:[[@LINE+10]]:15
+              // CHECK:STDERR:        │ var x: typeof(y
+              // CHECK:STDERR:        ·              ┬
+              // CHECK:STDERR:        ·              ╰──┤ matching this `(` [GroupOpenedHere]
+              // CHECK:STDERR:        ┆
+              // CHECK:STDERR: ->     │               z);
+              // CHECK:STDERR:        ·               ┳
+              // CHECK:STDERR:        ·               ┗━━┫ error: unexpected tokens before `)` [ExpectedCloseSymbol]
+              // CHECK:STDERR:        ╰────
               // CHECK:STDERR:
               z);
 
 // --- fail_no_close_paren_before_eof_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+7]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+6]]:15: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+21]]:14
+// CHECK:STDERR: ->     │ var x: typeof(
+// CHECK:STDERR:        ·              ╻╷
+// CHECK:STDERR:        ·              ┗━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·               │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·               ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+13]]:15
+// CHECK:STDERR: ->     │ var x: typeof(
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren_before_eof_at_eof.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ var x: typeof(
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                  ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof(
 
 // --- fail_no_close_paren_after_expr_at_eof.carbon
 
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+5]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+4]]:16: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+15]]:14
+// CHECK:STDERR: ->     │ var x: typeof(y
+// CHECK:STDERR:        ·              ┳ ┬
+// CHECK:STDERR:        ·              ┗━━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·                │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·                ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+2]]:16: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_no_close_paren_after_expr_at_eof.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var x: typeof(y
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                   ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof(y
 

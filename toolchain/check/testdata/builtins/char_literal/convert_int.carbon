@@ -45,10 +45,23 @@ fn UInt(n: IntLiteral) -> type = "int.make_type_unsigned";
 
 fn ConvertToU8(c: CharLiteral) -> UInt(8) = "char_literal.convert_int";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+5]]:13-34: error: character value U+0100 too large for type `<builtin u8>` [CharTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+18]]:13
+// CHECK:STDERR: ->     │ let g: u8 = ConvertToU8('\u{100}');
+// CHECK:STDERR:        ·             ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: character value U+0100 too large for type `<builtin u8>`
+// CHECK:STDERR:        ·                ┃        [CharTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:13-34: error: cannot implicitly convert expression of type `<builtin u8>` to `u8` [ConversionFailure]
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:13-34: note: type `<builtin u8>` does not implement interface `Core.ImplicitAs(u8)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+11]]:13
+// CHECK:STDERR: ->     │ let g: u8 = ConvertToU8('\u{100}');
+// CHECK:STDERR:        ·             ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·             │  ┃        `<builtin u8>` to `u8`
+// CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·             ╰────┤ type `<builtin u8>` does not implement interface
+// CHECK:STDERR:        ·                  │ `Core.ImplicitAs(u8)`
+// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let g: u8 = ConvertToU8('\u{100}');
 

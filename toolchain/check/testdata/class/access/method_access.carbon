@@ -18,7 +18,13 @@ class X {
 
 fn G(x: X) {
   // TODO: Produce a better diagnostic for this case.
-  // CHECK:STDERR: fail_multiple_bindings.carbon:[[@LINE+2]]:3-9: error: member name of type `<bound method>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╭─┤ fail_multiple_bindings.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   x.(x.F)();
+  // CHECK:STDERR:        ·   ┳━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: member name of type `<bound method>` in compound member access is
+  // CHECK:STDERR:        ·      ┃        not an instance member or an interface member
+  // CHECK:STDERR:        ·      ┃        [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   x.(x.F)();
 }

@@ -34,7 +34,12 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-39: error: invalid signature for builtin function "int.eq" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.eq"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn WrongResult(a: i32, b: i32) -> i32 = "int.eq";
 
@@ -79,16 +84,43 @@ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 fn Test(n: Core.IntLiteral) {
   // OK
   Eq(1, 1);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-6]]:1-55: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
+  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Eq(n, 1);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·          ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Eq(n, 1);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-10]]:1-55: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
+  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Eq(1, n);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·          ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Eq(1, n);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-14]]:1-55: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
+  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
+  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Eq(n, n);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·          ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Eq(n, n);
 }

@@ -66,7 +66,13 @@ library "[[@TEST_NAME]]";
 choice Never {}
 
 // TODO: Can we produce a better diagnostic?
-// CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+2]]:20-21: error: missing value for field `discriminant` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_no_alternative_construct.carbon:[[@LINE+8]]:20
+// CHECK:STDERR: ->     │ let never: Never = {};
+// CHECK:STDERR:        ·                    ┳━
+// CHECK:STDERR:        ·                    ┗━━┫ error: missing value for field `discriminant` in struct
+// CHECK:STDERR:        ·                       ┃        initialization
+// CHECK:STDERR:        ·                       ┃        [StructInitMissingFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let never: Never = {};
 

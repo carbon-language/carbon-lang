@@ -106,8 +106,16 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:13-19: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:13-19: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+11]]:13
+// CHECK:STDERR: ->     │ let a: {} = 1 as {};
+// CHECK:STDERR:        ·             ┳━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot convert expression of type `Core.IntLiteral` to
+// CHECK:STDERR:        ·             │  ┃        `{}` with `as`
+// CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·             ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·                  │ `Core.As({})`
+// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: {} = 1 as {};
 
@@ -115,8 +123,16 @@ let a: {} = 1 as {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:32-40: error: cannot implicitly convert non-type value of type `{.x: ()}` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+2]]:32-40: note: type `{.x: ()}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:32
+// CHECK:STDERR: ->     │ let n: {.x: ()} = {.x = ()} as {.x = ()};
+// CHECK:STDERR:        ·                                ┳━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: cannot implicitly convert non-type
+// CHECK:STDERR:        ·                                │  ┃        value of type `{.x: ()}` to `type`
+// CHECK:STDERR:        ·                                │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·                                ╰────┤ type `{.x: ()}` does not implement
+// CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};
 

@@ -194,8 +194,8 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!55, !56, !57, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!60}
+// CHECK:STDOUT: !llvm.module.flags = !{!55, !56, !57, !58, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!61}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -230,10 +230,11 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !52 = !{!51, !51, i64 0}
 // CHECK:STDOUT: !53 = !{!"vtable pointer", !48, i64 0}
 // CHECK:STDOUT: !54 = !{!53, !53, i64 0}
-// CHECK:STDOUT: !55 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !56 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !57 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !58 = !{!"int", !49, i64 0}
-// CHECK:STDOUT: !59 = !{!"__libc_errno", !58, i64 0}
-// CHECK:STDOUT: !60 = !{!59, !58, i64 0}
+// CHECK:STDOUT: !55 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !56 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !57 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !58 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !59 = !{!"int", !49, i64 0}
+// CHECK:STDOUT: !60 = !{!"__libc_errno", !59, i64 0}
+// CHECK:STDOUT: !61 = !{!60, !59, i64 0}
 // CHECK:STDOUT:

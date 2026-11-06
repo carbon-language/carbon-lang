@@ -10,19 +10,35 @@
 
 // --- fail_template_before_type.carbon
 
-// CHECK:STDERR: fail_template_before_type.carbon:[[@LINE+2]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR:        ╭─┤ fail_template_before_type.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ fn A(template i32);
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: expected name in binding pattern
+// CHECK:STDERR:        ·                 ┃        [ExpectedBindingPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A(template i32);
 
 // --- fail_template_no_name.carbon
 
-// CHECK:STDERR: fail_template_no_name.carbon:[[@LINE+2]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR:        ╭─┤ fail_template_no_name.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ fn C(template);
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: expected name in binding pattern
+// CHECK:STDERR:        ·                 ┃        [ExpectedBindingPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C(template);
 
 // --- fail_reserved_word_after_generic.carbon
 
-// CHECK:STDERR: fail_reserved_word_after_generic.carbon:[[@LINE+2]]:14-21: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR:        ╭─┤ fail_reserved_word_after_generic.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ fn E(generic template: i32);
+// CHECK:STDERR:        ·              ┳━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: expected name in binding pattern; prefix reserved word
+// CHECK:STDERR:        ·                 ┃        with `r#` to form a valid identifier
+// CHECK:STDERR:        ·                 ┃        [ExpectedBindingPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn E(generic template: i32);
 

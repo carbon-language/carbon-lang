@@ -18,8 +18,17 @@ class X {}
 fn Test() {
   let x: X = {};
   fn Inner() {
-    // CHECK:STDERR: fail_reference_uncaptured.carbon:[[@LINE+3]]:23: error: cannot reference local `x` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured.carbon:[[@LINE-3]]:7-10: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured.carbon:[[@LINE+12]]:23
+    // CHECK:STDERR:        │   let x: X = {};
+    // CHECK:STDERR:        ·       ──┬─
+    // CHECK:STDERR:        ·         ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     let unused y: X = x;
+    // CHECK:STDERR:        ·                       ┳
+    // CHECK:STDERR:        ·                       ┗━━┫ error: cannot reference local `x` declared in
+    // CHECK:STDERR:        ·                          ┃        enclosing scope
+    // CHECK:STDERR:        ·                          ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let unused y: X = x;
   }
@@ -31,8 +40,16 @@ library "[[@TEST_NAME]]";
 fn Test() {
   var n: i32;
   fn G() -> i32 {
-    // CHECK:STDERR: fail_reference_uncaptured_var.carbon:[[@LINE+3]]:12: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_var.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_var.carbon:[[@LINE+11]]:12
+    // CHECK:STDERR:        │   var n: i32;
+    // CHECK:STDERR:        ·       ───┬──
+    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     return n;
+    // CHECK:STDERR:        ·            ┳
+    // CHECK:STDERR:        ·            ┗━━┫ error: cannot reference local `n` declared in enclosing scope
+    // CHECK:STDERR:        ·               ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return n;
   }
@@ -43,8 +60,16 @@ library "[[@TEST_NAME]]";
 
 fn Test(p: i32) {
   fn H() -> i32 {
-    // CHECK:STDERR: fail_reference_uncaptured_param.carbon:[[@LINE+3]]:12: error: cannot reference local `p` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_param.carbon:[[@LINE-3]]:9-14: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_param.carbon:[[@LINE+11]]:12
+    // CHECK:STDERR:        │ fn Test(p: i32) {
+    // CHECK:STDERR:        ·         ───┬──
+    // CHECK:STDERR:        ·            ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     return p;
+    // CHECK:STDERR:        ·            ┳
+    // CHECK:STDERR:        ·            ┗━━┫ error: cannot reference local `p` declared in enclosing scope
+    // CHECK:STDERR:        ·               ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return p;
   }
@@ -58,8 +83,17 @@ class X {}
 fn Test() {
   let x: X = {};
   (fn() {
-    // CHECK:STDERR: fail_reference_uncaptured_lambda.carbon:[[@LINE+3]]:23: error: cannot reference local `x` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_lambda.carbon:[[@LINE-3]]:7-10: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_lambda.carbon:[[@LINE+12]]:23
+    // CHECK:STDERR:        │   let x: X = {};
+    // CHECK:STDERR:        ·       ──┬─
+    // CHECK:STDERR:        ·         ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     let unused y: X = x;
+    // CHECK:STDERR:        ·                       ┳
+    // CHECK:STDERR:        ·                       ┗━━┫ error: cannot reference local `x` declared in
+    // CHECK:STDERR:        ·                          ┃        enclosing scope
+    // CHECK:STDERR:        ·                          ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let unused y: X = x;
   });
@@ -71,8 +105,17 @@ library "[[@TEST_NAME]]";
 fn F() {
   var n: i32 = 0;
   class Local {
-    // CHECK:STDERR: fail_reference_uncaptured_local_var_in_class.carbon:[[@LINE+3]]:22: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_local_var_in_class.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_var_in_class.carbon:[[@LINE+12]]:22
+    // CHECK:STDERR:        │   var n: i32 = 0;
+    // CHECK:STDERR:        ·       ───┬──
+    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     var field: i32 = n;
+    // CHECK:STDERR:        ·                      ┳
+    // CHECK:STDERR:        ·                      ┗━━┫ error: cannot reference local `n` declared in
+    // CHECK:STDERR:        ·                         ┃        enclosing scope
+    // CHECK:STDERR:        ·                         ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     var field: i32 = n;
   }
@@ -84,8 +127,17 @@ library "[[@TEST_NAME]]";
 fn F() {
   let m: i32 = 1;
   class Local {
-    // CHECK:STDERR: fail_reference_uncaptured_local_let_in_class.carbon:[[@LINE+3]]:27: error: cannot reference local `m` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_local_let_in_class.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_let_in_class.carbon:[[@LINE+12]]:27
+    // CHECK:STDERR:        │   let m: i32 = 1;
+    // CHECK:STDERR:        ·       ───┬──
+    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     let member_let: i32 = m;
+    // CHECK:STDERR:        ·                           ┳
+    // CHECK:STDERR:        ·                           ┗━━┫ error: cannot reference local `m` declared in
+    // CHECK:STDERR:        ·                              ┃        enclosing scope
+    // CHECK:STDERR:        ·                              ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let member_let: i32 = m;
   }
@@ -98,8 +150,16 @@ fn F() {
   var n: i32 = 0;
   class Local {
     fn Method() -> i32 {
-      // CHECK:STDERR: fail_reference_uncaptured_local_var_in_method.carbon:[[@LINE+3]]:14: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-      // CHECK:STDERR: fail_reference_uncaptured_local_var_in_method.carbon:[[@LINE-4]]:7-12: note: declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_var_in_method.carbon:[[@LINE+11]]:14
+      // CHECK:STDERR:        │   var n: i32 = 0;
+      // CHECK:STDERR:        ·       ───┬──
+      // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ┆
+      // CHECK:STDERR: ->     │       return n;
+      // CHECK:STDERR:        ·              ┳
+      // CHECK:STDERR:        ·              ┗━━┫ error: cannot reference local `n` declared in enclosing scope
+      // CHECK:STDERR:        ·                 ┃        [UncapturedLocal]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       return n;
     }
@@ -114,8 +174,17 @@ class C {}
 fn F() {
   var n: i32 = 0;
   interface LocalIface {
-    // CHECK:STDERR: fail_reference_uncaptured_local_in_interface.carbon:[[@LINE+3]]:18: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-    // CHECK:STDERR: fail_reference_uncaptured_local_in_interface.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_interface.carbon:[[@LINE+12]]:18
+    // CHECK:STDERR:        │   var n: i32 = 0;
+    // CHECK:STDERR:        ·       ───┬──
+    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     let X: i32 = n;
+    // CHECK:STDERR:        ·                  ┳
+    // CHECK:STDERR:        ·                  ┗━━┫ error: cannot reference local `n` declared in enclosing
+    // CHECK:STDERR:        ·                     ┃        scope
+    // CHECK:STDERR:        ·                     ┃        [UncapturedLocal]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let X: i32 = n;
   }
@@ -131,12 +200,31 @@ fn F() {
   interface LocalIface {
     let Y: i32;
   }
-  // CHECK:STDERR: fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+7]]:35: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-  // CHECK:STDERR: fail_reference_uncaptured_local_in_impl.carbon:[[@LINE-5]]:7-12: note: declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+26]]:35
+  // CHECK:STDERR:        │   var n: i32 = 0;
+  // CHECK:STDERR:        ·       ───┬──
+  // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl C as LocalIface where .Y = n {};
+  // CHECK:STDERR:        ·                                   ┳
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot reference local `n`
+  // CHECK:STDERR:        ·                                      ┃        declared in enclosing scope
+  // CHECK:STDERR:        ·                                      ┃        [UncapturedLocal]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+4]]:39: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+14]]:39
+  // CHECK:STDERR: ->     │   impl C as LocalIface where .Y = n {};
+  // CHECK:STDERR:        ·                                       ┳
+  // CHECK:STDERR:        ·                                       ┗━━┫ error: expected expression
+  // CHECK:STDERR:        ·                                          ┃        [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+2]]:39: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+7]]:39
+  // CHECK:STDERR: ->     │   impl C as LocalIface where .Y = n {};
+  // CHECK:STDERR:        ·                                       ┳
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl C as LocalIface where .Y = n {};
 }
@@ -153,8 +241,16 @@ fn F() {
   }
   impl C as LocalIface {
     fn Get(unused self) -> i32 {
-      // CHECK:STDERR: fail_reference_uncaptured_local_in_interface_member.carbon:[[@LINE+3]]:14: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-      // CHECK:STDERR: fail_reference_uncaptured_local_in_interface_member.carbon:[[@LINE-7]]:7-12: note: declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_interface_member.carbon:[[@LINE+11]]:14
+      // CHECK:STDERR:        │   var n: i32 = 0;
+      // CHECK:STDERR:        ·       ───┬──
+      // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ┆
+      // CHECK:STDERR: ->     │       return n;
+      // CHECK:STDERR:        ·              ┳
+      // CHECK:STDERR:        ·              ┗━━┫ error: cannot reference local `n` declared in enclosing scope
+      // CHECK:STDERR:        ·                 ┃        [UncapturedLocal]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       return n;
     }
@@ -168,7 +264,12 @@ fn F() -> i32 {
   var x: i32 = 0;
   // This should produce an error indicating that the alias initializer is
   // non-constant, not that we cannot reference the local from the alias.
-  // CHECK:STDERR: fail_non_constant_alias_to_local.carbon:[[@LINE+2]]:13: error: alias refers to a runtime value [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_non_constant_alias_to_local.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   alias a = x;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: alias refers to a runtime value
+  // CHECK:STDERR:        ·                ┃        [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias a = x;
   return a;
@@ -179,8 +280,18 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var n: i32 = 0;
-  // CHECK:STDERR: fail_typeof_nested_lambda.carbon:[[@LINE+3]]:46: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
-  // CHECK:STDERR: fail_typeof_nested_lambda.carbon:[[@LINE-2]]:7-12: note: declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ╭─┤ fail_typeof_nested_lambda.carbon:[[@LINE+13]]:46
+  // CHECK:STDERR:        │   var n: i32 = 0;
+  // CHECK:STDERR:        ·       ───┬──
+  // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused x: typeof((fn() -> i32 { return n; })()) = 0;
+  // CHECK:STDERR:        ·                                              ┳
+  // CHECK:STDERR:        ·                                              ┗━━┫ error: cannot reference local
+  // CHECK:STDERR:        ·                                                 ┃        `n` declared in
+  // CHECK:STDERR:        ·                                                 ┃        enclosing scope
+  // CHECK:STDERR:        ·                                                 ┃        [UncapturedLocal]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused x: typeof((fn() -> i32 { return n; })()) = 0;
 }

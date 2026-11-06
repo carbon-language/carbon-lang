@@ -13,20 +13,29 @@
 // --- structured_binding.h
 
 struct X { int a, b; };
+// CHECK:STDERR:        ╷ ╭── included from: fail_todo_use_structured_binding.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./structured_binding.h:[[@LINE+12]]:7
+// CHECK:STDERR: ->     │ auto [a, b] = X{};
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO: `Unsupported: Declaration type Binding`
+// CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_todo_use_structured_binding.carbon
+// CHECK:STDERR:        │   return Cpp.a;
+// CHECK:STDERR:        ·          ──┬──
+// CHECK:STDERR:        ·            ╰──┤ in `Cpp` name lookup for `a` [InCppNameLookup]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto [a, b] = X{};
 
 // --- fail_todo_use_structured_binding.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_todo_use_structured_binding.carbon:[[@LINE+2]]:10 [InCppInclude]
-// CHECK:STDERR: ./structured_binding.h:3:7: error: semantics TODO: `Unsupported: Declaration type Binding` [SemanticsTodo]
 import Cpp library "structured_binding.h";
 
 fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_structured_binding.carbon:[[@LINE+2]]:10-14: note: in `Cpp` name lookup for `a` [InCppNameLookup]
-  // CHECK:STDERR:
   return Cpp.a;
   //@dump-sem-ir-end
 }
