@@ -60,7 +60,7 @@ interface DifferentParams(T: type);
 // CHECK:STDERR:
 interface DifferentParams(T: ()) {}
 
-// CHECK:STDOUT: --- fail_generic_redeclaration.carbon
+// CHECK:STDOUT: --- fail_generic_redeclaration.carbon ($fail_generic_redeclaration)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

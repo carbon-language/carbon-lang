@@ -37,7 +37,7 @@ fn G(c: C) {
   c.F();
 }
 
-// CHECK:STDOUT: --- extend_impl_library.carbon
+// CHECK:STDOUT: --- extend_impl_library.carbon ($extend_impl_library)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -137,7 +137,7 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_imported_class_extend_impl.carbon
+// CHECK:STDOUT: --- use_imported_class_extend_impl.carbon ($use_imported_class_extend_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

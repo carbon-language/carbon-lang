@@ -77,7 +77,7 @@ let a: i32 = Mul(0x7FFF, 0x10000);
 // CHECK:STDERR:
 let b: i32 = Mul(0x8000, 0x10000);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon ($i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

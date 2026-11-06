@@ -95,7 +95,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 class B {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon ($basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -111,7 +111,7 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.impl.carbon
+// CHECK:STDOUT: --- basic.impl.carbon ($basic.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -137,7 +137,7 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_after_def.carbon
+// CHECK:STDOUT: --- redecl_after_def.carbon ($redecl_after_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -161,7 +161,7 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon ($fail_redecl_after_def.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -191,7 +191,7 @@ class B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redef_after_def.carbon
+// CHECK:STDOUT: --- redef_after_def.carbon ($redef_after_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -215,7 +215,7 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon ($fail_redef_after_def.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -255,7 +255,7 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C.08d9e3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_alias.carbon
+// CHECK:STDOUT: --- def_alias.carbon ($def_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -274,7 +274,7 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_alias.impl.carbon
+// CHECK:STDOUT: --- fail_def_alias.impl.carbon ($fail_def_alias.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

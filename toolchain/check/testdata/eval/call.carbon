@@ -169,7 +169,7 @@ fn H() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- dependent_call_type.carbon
+// CHECK:STDOUT: --- dependent_call_type.carbon ($dependent_call_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -320,7 +320,7 @@ fn H() {
 // CHECK:STDOUT:   %.loc11_3.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_in_place_discarded.carbon
+// CHECK:STDOUT: --- return_in_place_discarded.carbon ($return_in_place_discarded)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -408,7 +408,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_in_place_init.carbon
+// CHECK:STDOUT: --- return_in_place_init.carbon ($return_in_place_init)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -513,7 +513,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_return_in_place_tuple.carbon
+// CHECK:STDOUT: --- fail_todo_return_in_place_tuple.carbon ($fail_todo_return_in_place_tuple)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -688,7 +688,7 @@ fn H() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_in_place_class.carbon
+// CHECK:STDOUT: --- return_in_place_class.carbon ($return_in_place_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

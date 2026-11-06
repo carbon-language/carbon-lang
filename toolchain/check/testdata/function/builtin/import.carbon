@@ -33,7 +33,7 @@ import Core library "core";
 
 var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2)))) = (Core.AsI32(1), Core.AsI32(2), Core.AsI32(3));
 
-// CHECK:STDOUT: --- core.carbon
+// CHECK:STDOUT: --- core.carbon ($core)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -193,7 +193,7 @@ var arr: array(i32, Core.AsIntLiteral(Core.TestAdd(Core.AsI32(1), Core.AsI32(2))
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestAdd(%a.param: %i32.builtin, %b.param: %i32.builtin) -> out %return.param: %i32.builtin = "int.sadd";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use.carbon
+// CHECK:STDOUT: --- use.carbon ($use)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

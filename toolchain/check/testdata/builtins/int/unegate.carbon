@@ -143,7 +143,7 @@ fn F() {
   Test(-(Negate(0x8000_0000))) as Expect(0x8000_0000);
 }
 
-// CHECK:STDOUT: --- int_negate.carbon
+// CHECK:STDOUT: --- int_negate.carbon ($int_negate)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

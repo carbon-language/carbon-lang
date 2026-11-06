@@ -1019,7 +1019,7 @@ fn F() {
   () as (Z where .Z1 = ());
 }
 
-// CHECK:STDOUT: --- period_self_param.carbon
+// CHECK:STDOUT: --- period_self_param.carbon ($period_self_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1319,7 +1319,7 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.loc12_54.1 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- period_self_in_function_generic_argument.carbon
+// CHECK:STDOUT: --- period_self_in_function_generic_argument.carbon ($period_self_in_function_generic_argument)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

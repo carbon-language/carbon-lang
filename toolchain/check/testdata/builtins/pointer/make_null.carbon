@@ -72,7 +72,7 @@ fn NoUnformed() -> {}* = "pointer.make_null";
 // CHECK:STDERR:
 fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 
-// CHECK:STDOUT: --- call_exact.carbon
+// CHECK:STDOUT: --- call_exact.carbon ($call_exact)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -136,7 +136,7 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_generic.carbon
+// CHECK:STDOUT: --- call_generic.carbon ($call_generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

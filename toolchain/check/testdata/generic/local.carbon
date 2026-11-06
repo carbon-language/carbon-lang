@@ -48,7 +48,7 @@ library "[[@TEST_NAME]]";
 class C(C: type) {
 }
 
-// CHECK:STDOUT: --- class.carbon
+// CHECK:STDOUT: --- class.carbon ($class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -261,7 +261,7 @@ class C(C: type) {
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_param_shadows_class.carbon
+// CHECK:STDOUT: --- fail_param_shadows_class.carbon ($fail_param_shadows_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -328,7 +328,7 @@ class C(C: type) {
 // CHECK:STDOUT:   %C.loc14_12.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon
+// CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon ($nonlocal_param_shadows_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

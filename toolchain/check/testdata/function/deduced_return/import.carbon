@@ -51,7 +51,7 @@ fn K[U: Core.Copy & Core.Destroy](u: U) -> (U, U) { return Pair(Id(u)); }
 
 fn L() -> (bool, bool) { return K(true); }
 
-// CHECK:STDOUT: --- use.carbon
+// CHECK:STDOUT: --- use.carbon ($use)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -114,7 +114,7 @@ fn L() -> (bool, bool) { return K(true); }
 // CHECK:STDOUT:   return %C.G.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_generic.carbon
+// CHECK:STDOUT: --- use_generic.carbon ($use_generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -48,7 +48,7 @@ interface I {
   fn N.I() {}
 }
 
-// CHECK:STDOUT: --- fail_not_top_level.carbon
+// CHECK:STDOUT: --- fail_not_top_level.carbon ($fail_not_top_level)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

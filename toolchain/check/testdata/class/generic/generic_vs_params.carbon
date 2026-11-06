@@ -90,7 +90,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 class Foo[T: type];
 
-// CHECK:STDOUT: --- params.carbon
+// CHECK:STDOUT: --- params.carbon ($params)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -404,7 +404,7 @@ class Foo[T: type];
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non_generic_implicit_params.carbon
+// CHECK:STDOUT: --- fail_non_generic_implicit_params.carbon ($fail_non_generic_implicit_params)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -430,7 +430,7 @@ class Foo[T: type];
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non_generic_params.carbon
+// CHECK:STDOUT: --- fail_non_generic_params.carbon ($fail_non_generic_params)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -492,7 +492,7 @@ class Foo[T: type];
 // CHECK:STDOUT:   %T.loc14_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon
+// CHECK:STDOUT: --- fail_implicit_params_only_empty.carbon ($fail_implicit_params_only_empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -509,7 +509,7 @@ class Foo[T: type];
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Foo;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit_params_only.carbon
+// CHECK:STDOUT: --- fail_implicit_params_only.carbon ($fail_implicit_params_only)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

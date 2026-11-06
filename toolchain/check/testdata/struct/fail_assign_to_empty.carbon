@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 var x: {} = {.a = 1};
 
-// CHECK:STDOUT: --- fail_assign_to_empty.carbon
+// CHECK:STDOUT: --- fail_assign_to_empty.carbon ($fail_assign_to_empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

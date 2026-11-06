@@ -28,7 +28,7 @@ class C {
   }
 }
 
-// CHECK:STDOUT: --- fail_extend_impl_forall.carbon
+// CHECK:STDOUT: --- fail_extend_impl_forall.carbon ($fail_extend_impl_forall)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -155,7 +155,7 @@ fn Test(n: Core.IntLiteral) {
   And(n, n);
 }
 
-// CHECK:STDOUT: --- int_and.carbon
+// CHECK:STDOUT: --- int_and.carbon ($int_and)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

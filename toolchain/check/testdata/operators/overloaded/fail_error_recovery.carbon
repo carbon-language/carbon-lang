@@ -35,7 +35,7 @@ fn G(n: i32) {
   n + undeclared;
 }
 
-// CHECK:STDOUT: --- fail_error_recovery.carbon
+// CHECK:STDOUT: --- fail_error_recovery.carbon ($fail_error_recovery)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

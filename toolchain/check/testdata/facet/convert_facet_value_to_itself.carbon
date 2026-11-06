@@ -25,7 +25,7 @@ fn F() {
   HandleAnimal(Goat);
 }
 
-// CHECK:STDOUT: --- convert_facet_value_to_itself.carbon
+// CHECK:STDOUT: --- convert_facet_value_to_itself.carbon ($convert_facet_value_to_itself)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

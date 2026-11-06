@@ -57,7 +57,7 @@ class E {
   extend impl Self as I {}
 }
 
-// CHECK:STDOUT: --- fail_extend_impl_type_as.carbon
+// CHECK:STDOUT: --- fail_extend_impl_type_as.carbon ($fail_extend_impl_type_as)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

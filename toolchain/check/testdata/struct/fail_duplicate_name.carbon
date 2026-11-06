@@ -70,7 +70,7 @@ var x: {.a: i32} = {.a = 1, .a = 2};
 // CHECK:STDERR:
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
-// CHECK:STDOUT: --- fail_duplicate_name.carbon
+// CHECK:STDOUT: --- fail_duplicate_name.carbon ($fail_duplicate_name)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

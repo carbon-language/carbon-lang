@@ -237,7 +237,7 @@ impl i32 as Empty {
   let generic Zero: i32 = 0;
 }
 
-// CHECK:STDOUT: --- fail_let_after.carbon
+// CHECK:STDOUT: --- fail_let_after.carbon ($fail_let_after)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +318,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_let_before.carbon
+// CHECK:STDOUT: --- fail_let_before.carbon ($fail_let_before)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -399,7 +399,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_multiple_lets.carbon
+// CHECK:STDOUT: --- fail_multiple_lets.carbon ($fail_multiple_lets)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -483,7 +483,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %b.loc15_17.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_invalid_let_after.carbon
+// CHECK:STDOUT: --- fail_invalid_let_after.carbon ($fail_invalid_let_after)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,7 +549,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return %.loc5_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_in_function.carbon
+// CHECK:STDOUT: --- fail_todo_use_in_function.carbon ($fail_todo_use_in_function)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -559,7 +559,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_in_block.carbon
+// CHECK:STDOUT: --- fail_todo_use_in_block.carbon ($fail_todo_use_in_block)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -569,7 +569,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_in_interface.carbon
+// CHECK:STDOUT: --- return_in_interface.carbon ($return_in_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -664,7 +664,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %return.patt.loc6_10.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_in_class.carbon
+// CHECK:STDOUT: --- fail_return_in_class.carbon ($fail_return_in_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -733,7 +733,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_in_package_scope.carbon
+// CHECK:STDOUT: --- fail_return_in_package_scope.carbon ($fail_return_in_package_scope)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -789,7 +789,7 @@ impl i32 as Empty {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_in_impl.carbon
+// CHECK:STDOUT: --- fail_use_in_impl.carbon ($fail_use_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

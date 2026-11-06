@@ -45,7 +45,7 @@ fn Main() {
   package.NS.C.Foo();
 }
 
-// CHECK:STDOUT: --- global.carbon
+// CHECK:STDOUT: --- global.carbon ($global)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -150,7 +150,7 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inside_fn.carbon
+// CHECK:STDOUT: --- inside_fn.carbon ($inside_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -317,7 +317,7 @@ fn Main() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon ($namespace)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

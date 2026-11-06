@@ -43,7 +43,7 @@ fn F() ->? form(val C) {
   return {.a = 1};
 }
 
-// CHECK:STDOUT: --- param.carbon
+// CHECK:STDOUT: --- param.carbon ($param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

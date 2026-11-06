@@ -50,7 +50,7 @@ fn Read(generic y: Core.IntLiteral) {
 }
 
 
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon ($lib)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -929,7 +929,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %specific_impl_fn.loc6_22.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- trivial.carbon
+// CHECK:STDOUT: --- trivial.carbon ($trivial)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

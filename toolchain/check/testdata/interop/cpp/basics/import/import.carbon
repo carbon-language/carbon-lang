@@ -126,7 +126,7 @@ fn F() {
   Cpp.MyInlineFunction(9 as Cpp.short);
 }
 
-// CHECK:STDOUT: --- fail_todo_import_struct_api.carbon
+// CHECK:STDOUT: --- fail_todo_import_struct_api.carbon ($fail_todo_import_struct_api)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -151,7 +151,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_function_api.carbon
+// CHECK:STDOUT: --- fail_todo_import_function_api.carbon ($fail_todo_import_function_api)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -29,7 +29,7 @@ interface I {
   default let N: i32 = 42;
 }
 
-// CHECK:STDOUT: --- fail_todo_assoc_const_default.carbon
+// CHECK:STDOUT: --- fail_todo_assoc_const_default.carbon ($fail_todo_assoc_const_default)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

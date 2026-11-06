@@ -636,7 +636,8 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   }
 
   Check::CheckParseTrees(check_units, cache_->tree_and_subtrees_getters(),
-                         driver_env.fs, options, clang_invocation_);
+                         cache_->short_file_names(), driver_env.fs, options,
+                         clang_invocation_);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units_) {

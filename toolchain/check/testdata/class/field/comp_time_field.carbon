@@ -73,7 +73,7 @@ class Class {
 
 var x: Class = {};
 
-// CHECK:STDOUT: --- fail_let.carbon
+// CHECK:STDOUT: --- fail_let.carbon ($fail_let)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -127,7 +127,7 @@ var x: Class = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_var.carbon
+// CHECK:STDOUT: --- fail_var.carbon ($fail_var)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

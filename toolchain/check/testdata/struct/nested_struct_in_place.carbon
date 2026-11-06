@@ -18,7 +18,7 @@ fn G() {
   var unused v: {.a: (i32, i32, i32), .b: (i32, i32, i32)} = {.a = F(), .b = F()};
 }
 
-// CHECK:STDOUT: --- nested_struct_in_place.carbon
+// CHECK:STDOUT: --- nested_struct_in_place.carbon ($nested_struct_in_place)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

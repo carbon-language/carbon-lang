@@ -96,7 +96,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_control_flow.carbon
+// CHECK:STDOUT: --- fail_todo_control_flow.carbon ($fail_todo_control_flow)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

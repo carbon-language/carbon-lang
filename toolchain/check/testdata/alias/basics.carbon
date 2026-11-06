@@ -193,7 +193,7 @@ impl alias B = Class;
 // CHECK:STDERR:
 extern alias C = Class;
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- alias.carbon ($alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -210,7 +210,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_of_alias.carbon
+// CHECK:STDOUT: --- alias_of_alias.carbon ($alias_of_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -248,7 +248,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_to_generic.carbon
+// CHECK:STDOUT: --- alias_to_generic.carbon ($alias_to_generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -26,7 +26,7 @@ interface I(template T: type, N: T.I1) {
 // }
 // impl C as I(C, C) where .I1 = C {}
 
-// CHECK:STDOUT: --- template_access_assoc_const.carbon
+// CHECK:STDOUT: --- template_access_assoc_const.carbon ($template_access_assoc_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

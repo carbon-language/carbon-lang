@@ -51,7 +51,7 @@ fn F() -> {} {
   return NS.a;
 }
 
-// CHECK:STDOUT: --- in_namespace.carbon
+// CHECK:STDOUT: --- in_namespace.carbon ($in_namespace)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

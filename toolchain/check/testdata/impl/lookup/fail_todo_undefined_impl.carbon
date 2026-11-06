@@ -56,7 +56,7 @@ fn G() {
   C.F();
 }
 
-// CHECK:STDOUT: --- fail_todo_undefined_impl.carbon
+// CHECK:STDOUT: --- fail_todo_undefined_impl.carbon ($fail_todo_undefined_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

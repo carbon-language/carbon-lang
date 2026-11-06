@@ -60,7 +60,7 @@ fn Class(template T: type).G(self) -> T.U {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_basic.carbon
+// CHECK:STDOUT: --- fail_todo_basic.carbon ($fail_todo_basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -89,7 +89,7 @@ fn Literal() -> type = "float_literal.make_type";
 // CHECK:STDERR:
 fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
 
-// CHECK:STDOUT: --- mul_sub.carbon
+// CHECK:STDOUT: --- mul_sub.carbon ($mul_sub)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -20,7 +20,7 @@ fn ConstPtr(p: const i32*) -> (const i32)* {
   return p;
 }
 
-// CHECK:STDOUT: --- types.carbon
+// CHECK:STDOUT: --- types.carbon ($types)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

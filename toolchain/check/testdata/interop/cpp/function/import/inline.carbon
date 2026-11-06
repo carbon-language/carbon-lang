@@ -90,7 +90,7 @@ fn MyF() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_with_definition.carbon
+// CHECK:STDOUT: --- import_with_definition.carbon ($import_with_definition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -118,7 +118,7 @@ fn MyF() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_import_without_definition.carbon
+// CHECK:STDOUT: --- todo_fail_import_without_definition.carbon ($todo_fail_import_without_definition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -149,7 +149,7 @@ fn MyF() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- automatic_return_type.carbon
+// CHECK:STDOUT: --- automatic_return_type.carbon ($automatic_return_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

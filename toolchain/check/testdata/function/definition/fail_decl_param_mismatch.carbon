@@ -97,7 +97,7 @@ fn K() -> ();
 // CHECK:STDERR:
 fn K() -> {} { return {}; }
 
-// CHECK:STDOUT: --- fail_decl_param_mismatch.carbon
+// CHECK:STDOUT: --- fail_decl_param_mismatch.carbon ($fail_decl_param_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

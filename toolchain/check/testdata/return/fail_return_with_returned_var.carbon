@@ -45,7 +45,7 @@ fn G() -> C {
   return c;
 }
 
-// CHECK:STDOUT: --- fail_return_with_returned_var.carbon
+// CHECK:STDOUT: --- fail_return_with_returned_var.carbon ($fail_return_with_returned_var)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

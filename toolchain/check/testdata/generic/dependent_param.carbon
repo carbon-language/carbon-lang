@@ -27,7 +27,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- nested_class.carbon
+// CHECK:STDOUT: --- nested_class.carbon ($nested_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

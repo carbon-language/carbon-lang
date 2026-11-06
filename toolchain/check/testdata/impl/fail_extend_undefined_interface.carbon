@@ -34,7 +34,7 @@ fn F(c: C) {
   c.F();
 }
 
-// CHECK:STDOUT: --- fail_extend_undefined_interface.carbon
+// CHECK:STDOUT: --- fail_extend_undefined_interface.carbon ($fail_extend_undefined_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -32,7 +32,7 @@ alias ns = NS;
 // CHECK:STDERR:
 fn ns.A() -> i32 { return 0; }
 
-// CHECK:STDOUT: --- fail_decl_in_alias.carbon
+// CHECK:STDOUT: --- fail_decl_in_alias.carbon ($fail_decl_in_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

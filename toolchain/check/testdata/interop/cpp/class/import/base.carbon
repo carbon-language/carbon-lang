@@ -546,7 +546,7 @@ class V {
   extend base: Cpp.U;
 }
 
-// CHECK:STDOUT: --- use_derived_to_base_conversion.carbon
+// CHECK:STDOUT: --- use_derived_to_base_conversion.carbon ($use_derived_to_base_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -656,7 +656,7 @@ class V {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_static_member.carbon
+// CHECK:STDOUT: --- use_static_member.carbon ($use_static_member)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -707,7 +707,7 @@ class V {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_base_field.carbon
+// CHECK:STDOUT: --- use_base_field.carbon ($use_base_field)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -775,7 +775,7 @@ class V {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_base_method.carbon
+// CHECK:STDOUT: --- use_base_method.carbon ($use_base_method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

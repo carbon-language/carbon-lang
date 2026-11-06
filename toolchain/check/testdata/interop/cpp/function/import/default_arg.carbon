@@ -176,7 +176,7 @@ fn Call() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- call_without_default.carbon
+// CHECK:STDOUT: --- call_without_default.carbon ($call_without_default)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -467,7 +467,7 @@ fn Call() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_with_default.carbon
+// CHECK:STDOUT: --- call_with_default.carbon ($call_with_default)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -935,7 +935,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D__carbon_thunk(%_.param: %ptr.ca1, %a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_call_too_few_args.carbon
+// CHECK:STDOUT: --- fail_call_too_few_args.carbon ($fail_call_too_few_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

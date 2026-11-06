@@ -40,7 +40,7 @@ fn CallViaAlias(p: Point) -> i32 {
   return A(p);
 }
 
-// CHECK:STDOUT: --- call_without_method_syntax.carbon
+// CHECK:STDOUT: --- call_without_method_syntax.carbon ($call_without_method_syntax)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

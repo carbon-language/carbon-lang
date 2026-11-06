@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 
-// CHECK:STDOUT: --- float_eq.carbon
+// CHECK:STDOUT: --- float_eq.carbon ($float_eq)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

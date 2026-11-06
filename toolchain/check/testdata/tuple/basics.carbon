@@ -48,7 +48,7 @@ var x: ((), ()) = ((), ());
 var y: ((), ()) = x;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon ($empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -97,7 +97,7 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_tuple.carbon
+// CHECK:STDOUT: --- nested_tuple.carbon ($nested_tuple)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -165,7 +165,7 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- one_element.carbon
+// CHECK:STDOUT: --- one_element.carbon ($one_element)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -230,7 +230,7 @@ var y: ((), ()) = x;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_elements.carbon
+// CHECK:STDOUT: --- two_elements.carbon ($two_elements)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

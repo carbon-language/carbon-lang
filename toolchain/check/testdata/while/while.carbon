@@ -130,7 +130,7 @@ fn While() {
   break;
 }
 
-// CHECK:STDOUT: --- while.carbon
+// CHECK:STDOUT: --- while.carbon ($while)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -175,7 +175,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unreachable_end.carbon
+// CHECK:STDOUT: --- unreachable_end.carbon ($unreachable_end)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -220,7 +220,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- break_continue.carbon
+// CHECK:STDOUT: --- break_continue.carbon ($break_continue)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

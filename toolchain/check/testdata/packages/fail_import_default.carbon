@@ -62,13 +62,13 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import library default;
 
-// CHECK:STDOUT: --- fail_default_api.carbon
+// CHECK:STDOUT: --- fail_default_api.carbon ($fail_default_api)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_default.impl.carbon
+// CHECK:STDOUT: --- fail_default.impl.carbon ($fail_default.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -76,13 +76,13 @@ import library default;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_import_default.carbon
+// CHECK:STDOUT: --- fail_main_import_default.carbon ($fail_main_import_default)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib_import_default.carbon
+// CHECK:STDOUT: --- fail_main_lib_import_default.carbon ($fail_main_lib_import_default)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

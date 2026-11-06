@@ -88,7 +88,7 @@ let b: CharLiteral = AddIntChar(1, '\u{D7FF}');
 // CHECK:STDERR:
 let c: CharLiteral = AddIntChar(Negate(98), 'a');
 
-// CHECK:STDOUT: --- success.carbon
+// CHECK:STDOUT: --- success.carbon ($success)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

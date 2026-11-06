@@ -30,7 +30,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- condition_lifetime.carbon
+// CHECK:STDOUT: --- condition_lifetime.carbon ($condition_lifetime)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

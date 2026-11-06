@@ -50,7 +50,7 @@ class A {
   var a: i32;
 }
 
-// CHECK:STDOUT: --- reorder_qualified.carbon
+// CHECK:STDOUT: --- reorder_qualified.carbon ($reorder_qualified)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -22,7 +22,7 @@ var x: {.a: i32} = {.a = 4};
 // CHECK:STDERR:
 var y: i32 = x.b;
 
-// CHECK:STDOUT: --- fail_non_member_access.carbon
+// CHECK:STDOUT: --- fail_non_member_access.carbon ($fail_non_member_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

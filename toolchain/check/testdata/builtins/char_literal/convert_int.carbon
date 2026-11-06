@@ -65,7 +65,7 @@ fn ConvertToU8(c: CharLiteral) -> UInt(8) = "char_literal.convert_int";
 // CHECK:STDERR:
 let g: u8 = ConvertToU8('\u{100}');
 
-// CHECK:STDOUT: --- success.carbon
+// CHECK:STDOUT: --- success.carbon ($success)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

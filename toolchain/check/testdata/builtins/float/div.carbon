@@ -91,7 +91,7 @@ fn Literal() -> type = "float_literal.make_type";
 // CHECK:STDERR:
 fn DivLiteral(a: Literal(), b: Literal()) -> Literal() = "float.div";
 
-// CHECK:STDOUT: --- float_div.carbon
+// CHECK:STDOUT: --- float_div.carbon ($float_div)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

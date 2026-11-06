@@ -167,7 +167,7 @@ fn G() {
   F(({}, {}, {}));
 }
 
-// CHECK:STDOUT: --- type_only.carbon
+// CHECK:STDOUT: --- type_only.carbon ($type_only)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -446,7 +446,7 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn.loc6_45.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- bound_only.carbon
+// CHECK:STDOUT: --- bound_only.carbon ($bound_only)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -741,7 +741,7 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6_66.2 => constants.%int_3.9f3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- type_and_bound.carbon
+// CHECK:STDOUT: --- type_and_bound.carbon ($type_and_bound)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -991,7 +991,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.1a4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bound_mismatch.carbon
+// CHECK:STDOUT: --- fail_bound_mismatch.carbon ($fail_bound_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1276,7 +1276,7 @@ fn G() {
 // CHECK:STDOUT:   %F.specific_fn.loc6_45.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_type_mismatch.carbon ($fail_type_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1584,7 +1584,7 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7_66.2 => constants.%int_3.9f3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bound_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_bound_type_mismatch.carbon ($fail_bound_type_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1877,7 +1877,7 @@ fn G() {
 // CHECK:STDOUT:   %a.patt.loc6_22.2 => constants.%a.patt.781
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_array_length_from_tuple.carbon
+// CHECK:STDOUT: --- fail_todo_array_length_from_tuple.carbon ($fail_todo_array_length_from_tuple)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

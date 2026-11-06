@@ -34,7 +34,7 @@ fn Foo[runtime a: ()]();
 // CHECK:STDERR:
 fn Boo[runtime a: ()]() {}
 
-// CHECK:STDOUT: --- fail_multi_error.carbon
+// CHECK:STDOUT: --- fail_multi_error.carbon ($fail_multi_error)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

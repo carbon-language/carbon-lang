@@ -25,7 +25,7 @@ fn Main() {
   0[1];
 }
 
-// CHECK:STDOUT: --- fail_non_tuple_access.carbon
+// CHECK:STDOUT: --- fail_non_tuple_access.carbon ($fail_non_tuple_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

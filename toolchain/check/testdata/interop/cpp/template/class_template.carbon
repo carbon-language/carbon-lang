@@ -30,7 +30,7 @@ import Cpp library "class_template.h";
 var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_class_template.carbon
+// CHECK:STDOUT: --- use_class_template.carbon ($use_class_template)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

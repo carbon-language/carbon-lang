@@ -67,7 +67,7 @@ fn G(a: A) {
 }
 
 
-// CHECK:STDOUT: --- need_conversion.carbon
+// CHECK:STDOUT: --- need_conversion.carbon ($need_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -94,7 +94,7 @@ fn G(a: A) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- need_user_conversion.carbon
+// CHECK:STDOUT: --- need_user_conversion.carbon ($need_user_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -169,7 +169,7 @@ fn G(a: A) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc16_8.2(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_conversion_during_deduction.carbon
+// CHECK:STDOUT: --- no_conversion_during_deduction.carbon ($no_conversion_during_deduction)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
