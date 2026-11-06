@@ -2921,14 +2921,27 @@ static auto MakeConstantForCall(EvalContext& eval_context,
 
   // Handle calls to `eval` and `musteval` functions.
   if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
-    // A non-concrete call to `eval` or `musteval` is a template symbolic
-    // constant, unless it is only dependent on `.Self`. Then preserve that so
-    // a Call on the RHS of a `where` does not change the phase of the whole
-    // facet type.
     if (phase != Phase::Concrete) {
       CARBON_CHECK(phase <= Phase::TemplateSymbolic);
-      phase = phase == Phase::PeriodSelfSymbolic ? Phase::PeriodSelfSymbolic
-                                                 : Phase::TemplateSymbolic;
+      // A call to a compile-time function on the RHS of `where` that has
+      // `.Self` in an argument is diagnosed as an error. When this appears on
+      // the RHS of `impl as`, the `.Self` becomes a concrete value with a
+      // witness for an interface before the `impl as` creates an actual
+      // witness. Dependencies on that witness in the function body will be
+      // unable to resolve to a value from the impl's witness table, leaving
+      // unexpected insts behind like ImplWitnessAccess.
+      if (phase == Phase::PeriodSelfSymbolic) {
+        CARBON_DIAGNOSTIC(
+            EvalFnPeriodSelfSymbolic, Error,
+            "compile-time call to `eval fn` with `.Self` dependency");
+        eval_context.emitter().Emit(eval_context.GetDiagnosticLoc({inst_id}),
+                                    EvalFnPeriodSelfSymbolic);
+        return SemIR::ErrorInst::ConstantId;
+      }
+      // A non-concrete call to `eval` or `musteval` is a template symbolic
+      // constant. We do not attempt to evaluate until its arguments are
+      // concrete.
+      phase = Phase::TemplateSymbolic;
       return MakeConstantResult(eval_context.context(), call, phase);
     }
 
