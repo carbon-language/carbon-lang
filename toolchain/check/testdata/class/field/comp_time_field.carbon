@@ -94,21 +94,19 @@ var x: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Class.ref.loc14: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc14_18.1: type = splice_block %.loc14_18.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen.loc14: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc14_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc14
+// CHECK:STDOUT:   %A: type = wrapper_binding A, @__global_init.%Class.ref.loc14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete = constants.%A.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
 // CHECK:STDOUT:   %.loc24_19.1: type = splice_block %.loc24_19.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen.loc24: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.loc24_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc24
+// CHECK:STDOUT:   %B: type = wrapper_binding B, @__global_init.%Class.ref.loc24
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete = constants.%B.patt]
 // CHECK:STDOUT:   }
@@ -120,6 +118,13 @@ var x: Class = {};
 // CHECK:STDOUT:   .A = %A
 // CHECK:STDOUT:   .Class = <poisoned>
 // CHECK:STDOUT:   .B = %B
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Class.ref.loc14: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon
