@@ -119,7 +119,7 @@ class InstNamer {
                SpecificInterfaceId, VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
-  // the provided file.
+  // the provided file. `*sem_ir` must be complete.
   explicit InstNamer(const File* sem_ir, int total_ir_count);
 
   // Returns the scope ID corresponding to an ID of a function, class,

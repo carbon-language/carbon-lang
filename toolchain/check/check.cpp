@@ -333,7 +333,6 @@ static auto MaybeDumpFormattedSemIR(
     const SemIR::File& sem_ir,
     Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
     const SemIR::ShortFileNameStore& short_file_names,
-
     const SemIR::GetInstNamersStore& inst_namer_getters, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   bool dump = options.dump_stream && include_in_dumps;
