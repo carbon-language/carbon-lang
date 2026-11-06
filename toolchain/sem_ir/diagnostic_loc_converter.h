@@ -73,22 +73,23 @@ class DiagnosticLocConverter {
 
   // Converts the given location into a sequence of import locations and a final
   // diagnostic location.
-  auto ConvertWithImports(LocId loc_id, bool token_only) const -> LocAndImports;
+  auto ConvertWithImports(LocId loc_id, Parse::LocExtent extent) const
+      -> LocAndImports;
 
   // Converts the given location into a diagnostic location.
-  auto Convert(LocId loc_id, bool token_only) const
+  auto Convert(LocId loc_id, Parse::LocExtent extent) const
       -> Diagnostics::ConvertedLoc;
 
  private:
   // Converts an `absolute_node_ref` in either a Carbon file or C++ import to a
   // diagnostic location.
-  auto ConvertImpl(AbsoluteNodeRef absolute_node_ref, bool token_only) const
-      -> Diagnostics::ConvertedLoc;
+  auto ConvertImpl(AbsoluteNodeRef absolute_node_ref,
+                   Parse::LocExtent extent) const -> Diagnostics::ConvertedLoc;
 
   // Converts a `node_id` corresponding to a specific check IR to a diagnostic
   // location.
   auto ConvertImpl(CheckIRId check_ir_id, Parse::NodeId node_id,
-                   bool token_only) const -> Diagnostics::ConvertedLoc;
+                   Parse::LocExtent extent) const -> Diagnostics::ConvertedLoc;
 
   // Converts a location pointing into C++ code to a diagnostic location.
   auto ConvertImpl(const File* file, ClangSourceLocId clang_source_loc_id) const

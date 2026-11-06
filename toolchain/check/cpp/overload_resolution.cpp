@@ -267,11 +267,11 @@ auto PerformCppOverloadResolution(
     const SemIR::CppOverloadSet& overload_set,
     llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // Register a context scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   // Map Carbon call argument types to C++ types.
   clang::Expr* self_expr = nullptr;

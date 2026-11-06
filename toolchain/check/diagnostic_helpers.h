@@ -24,24 +24,34 @@ class LocIdForDiagnostics {
   // This means the displayed location will include only the location's specific
   // parse node, instead of also including its descendants.
   static auto TokenOnly(Parse::NodeId node_id) -> LocIdForDiagnostics {
-    return LocIdForDiagnostics(SemIR::LocId(node_id), true);
+    return LocIdForDiagnostics(SemIR::LocId(node_id), Parse::LocExtent::Token);
+  }
+
+  // Constructs a location for the name that `loc_id` declares, for a label
+  // that only locates a declaration. If `loc_id` declares no name, the
+  // location covers all of it.
+  template <typename LocT>
+    requires std::constructible_from<SemIR::LocId, LocT>
+  static auto DeclaredName(LocT loc_id) -> LocIdForDiagnostics {
+    return LocIdForDiagnostics(SemIR::LocId(loc_id),
+                               Parse::LocExtent::DeclaredName);
   }
 
   template <typename LocT>
     requires std::constructible_from<SemIR::LocId, LocT>
   explicit(false) LocIdForDiagnostics(LocT loc_id)
-      : LocIdForDiagnostics(SemIR::LocId(loc_id), false) {}
+      : LocIdForDiagnostics(SemIR::LocId(loc_id), Parse::LocExtent::Subtree) {}
 
   auto loc_id() const -> SemIR::LocId { return loc_id_; }
 
-  auto is_token_only() const -> bool { return is_token_only_; }
+  auto extent() const -> Parse::LocExtent { return extent_; }
 
  private:
-  explicit LocIdForDiagnostics(SemIR::LocId loc_id, bool is_token_only)
-      : loc_id_(loc_id), is_token_only_(is_token_only) {}
+  explicit LocIdForDiagnostics(SemIR::LocId loc_id, Parse::LocExtent extent)
+      : loc_id_(loc_id), extent_(extent) {}
 
   SemIR::LocId loc_id_;
-  bool is_token_only_;
+  Parse::LocExtent extent_;
 };
 
 // We define the emitter separately for dependencies, so only provide a base
@@ -49,11 +59,21 @@ class LocIdForDiagnostics {
 using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
-using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 
-// A function that adds a context label to a diagnostic.
-using DiagnosticContextFn =
-    llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
+// A function that builds a diagnostic with the caller's message, for a callee
+// that detects a problem during an operation the caller performs, so that the
+// message can describe that operation. The callee calls it, attaches labels
+// for what it found, and emits the result. What a null one means depends on
+// the callee.
+using Diagnoser = llvm::function_ref<auto()->DiagnosticBuilder>;
+
+// A function that attaches labels to a diagnostic, for a caller that knows what
+// the code being checked looks like but not which diagnostic will come of it.
+using DiagnosticLabelFn = llvm::function_ref<auto(DiagnosticBuilder&)->void>;
+
+// Attaches labels to every diagnostic emitted while it is in scope.
+using DiagnosticContextScope =
+    Diagnostics::ContextScope<LocIdForDiagnostics, DiagnosticLabelFn>;
 
 // An expression with a constant value, for rendering in a diagnostic. The
 // diagnostic rendering will include enclosing "`"s.

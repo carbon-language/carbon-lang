@@ -98,16 +98,16 @@ static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
         return false;
       }
       if (!is_generic) {
-        CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
-                          "parameters of generic types must be constant");
-        auto builder =
-            context.emitter().Build(loc_id, GenericParamMustBeConstant);
         if (is_var) {
-          CARBON_DIAGNOSTIC_LABEL(VarParamIsRuntime, Info,
-                                  "`var` parameters are runtime");
-          builder.Attach(loc_id, VarParamIsRuntime);
+          CARBON_DIAGNOSTIC(VarParamIsRuntime, Error,
+                            "`var` parameter of a generic type; parameters of "
+                            "generic types must be constant");
+          context.emitter().Emit(loc_id, VarParamIsRuntime);
+        } else {
+          CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                            "parameters of generic types must be constant");
+          context.emitter().Emit(loc_id, GenericParamMustBeConstant);
         }
-        builder.Emit();
         return false;
       }
       return true;
@@ -373,13 +373,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     return binding.pattern_id;
   };
 
-  auto abstract_diagnostic_context = [&](auto& builder) {
-    CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInVarPattern,
-                              "binding pattern has abstract type {0} in `var` "
-                              "pattern",
-                              SemIR::TypeId);
-    builder.Attach(type_expr.node_id, AbstractTypeInVarPattern,
-                   type_expr.type_component_id);
+  auto abstract_diagnoser = [&] {
+    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Error,
+                      "binding pattern has abstract type {0} in `var` pattern",
+                      SemIR::TypeId);
+    return context.emitter().Build(type_expr.node_id, AbstractTypeInVarPattern,
+                                   type_expr.type_component_id);
   };
 
   // A `self` binding must be the first parameter in the explicit parameter
@@ -451,10 +450,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           auto& class_info = context.classes().Get(class_type.class_id);
           if (class_info.inheritance_kind ==
               SemIR::Class::InheritanceKind::Abstract) {
-            Diagnostics::ContextScope scope(&context.emitter(),
-                                            abstract_diagnostic_context);
             DiagnoseAbstractClass(context, class_type.class_id,
-                                  /*direct_use=*/true);
+                                  /*direct_use=*/true, abstract_diagnoser);
             type_expr.type_component_id = SemIR::ErrorInst::TypeId;
           }
         }
@@ -535,26 +532,24 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
       if (node_kind == Parse::NodeKind::FormBindingPattern) {
         return context.TODO(node_id, "support local form bindings");
       }
-      auto incomplete_diagnostic_context = [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(
-            IncompleteTypeInBindingDecl,
-            "binding pattern has incomplete type {0} in name "
-            "binding declaration",
-            InstIdAsType);
-        builder.Attach(type_expr.node_id, IncompleteTypeInBindingDecl,
-                       type_expr.inst_id);
+      auto incomplete_diagnoser = [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
+                          "binding pattern has incomplete type {0} in name "
+                          "binding declaration",
+                          InstIdAsType);
+        return context.emitter().Build(
+            type_expr.node_id, IncompleteTypeInBindingDecl, type_expr.inst_id);
       };
       if (node_kind == Parse::NodeKind::VarBindingPattern ||
           node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
-        if (!RequireConcreteType(
-                context, type_expr.type_component_id, type_expr.node_id,
-                incomplete_diagnostic_context, abstract_diagnostic_context)) {
+        if (!RequireConcreteType(context, type_expr.type_component_id,
+                                 type_expr.node_id, incomplete_diagnoser,
+                                 abstract_diagnoser)) {
           type_expr.type_component_id = SemIR::ErrorInst::TypeId;
         }
       } else {
         if (!RequireCompleteType(context, type_expr.type_component_id,
-                                 type_expr.node_id,
-                                 incomplete_diagnostic_context)) {
+                                 type_expr.node_id, incomplete_diagnoser)) {
           type_expr.type_component_id = SemIR::ErrorInst::TypeId;
         }
       }

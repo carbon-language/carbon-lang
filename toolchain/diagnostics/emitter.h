@@ -32,9 +32,6 @@ using NoTypeDeduction = std::type_identity_t<Arg>;
 
 }  // namespace Internal
 
-template <typename LocT, typename AnnotateFn>
-class AnnotationScope;
-
 // The result of `Emitter::ConvertLoc`. This is non-templated to allow
 // sharing across converters.
 struct ConvertedLoc {
@@ -87,16 +84,10 @@ class Emitter {
     auto Attach(LocT loc, const LabelBase<Args...>& label,
                 Internal::NoTypeDeduction<Args>... args) -> Builder&;
 
-    // Attaches a range of source with nothing to say about it beyond marking
-    // it. This is what points at the code the message is about without
-    // repeating the message against it.
-    //
-    // `category` says what the range is to the diagnostic, the way a declared
-    // label's does. A label saying nothing has no phrase to declare, so there
-    // is nothing for `CARBON_DIAGNOSTIC_LABEL` to hold and the category is
-    // passed here instead.
-    auto Attach(LocT loc, LabelCategory category = LabelCategory::Primary)
-        -> Builder&;
+    // Adds a range the problem covers beyond the message's location: the
+    // operand of an `&` that has no address to take, or the whole string
+    // literal that is missing its terminator. See `Message::ranges`.
+    auto ExtraRange(LocT loc) -> Builder&;
 
     // Emits the built diagnostic and its attached labels.
     // For the expected usage see the builder API: `Emitter::Build`.
@@ -109,7 +100,6 @@ class Emitter {
 
    private:
     friend class Emitter<LocT>;
-    friend class ContextBuilder;
 
     template <typename... Args>
     explicit Builder(Emitter<LocT>* emitter, LocT loc,
@@ -121,18 +111,10 @@ class Emitter {
     auto ConvertLoc(LocT loc, llvm::SmallVector<LocationInfo, 0>& location_info)
         -> Loc;
 
-    // Attaches a label, handling conversion of the location and arguments. The
-    // category comes from `label`, so this is the one path every label takes
-    // however it was attached.
+    // Attaches a label, handling conversion of the location and arguments.
     template <typename... Args>
     auto AttachLabel(LocT loc, const LabelBase<Args...>& label,
                      llvm::SmallVector<llvm::Any> args) -> void;
-
-    // Attaches a context, handling conversion of the location and arguments.
-    // Only a `ContextScope` reaches this, through `ContextBuilder`.
-    template <typename... Args>
-    auto AttachContext(LocT loc, const ContextBase<Args...>& context,
-                       llvm::SmallVector<llvm::Any> args) -> void;
 
     // Returns a function that formats `Args` from the storage types they
     // convert to.
@@ -160,31 +142,9 @@ class Emitter {
     Level level_;
     bool is_on_scope_;
     int32_t last_byte_offset_ = -1;
-    // Absent only while the constructor is gathering the context that comes
-    // before the message.
+    // Absent only while the constructor is converting the message's location.
     std::optional<Message> message_;
-    llvm::SmallVector<Context, 0> contexts_;
     llvm::SmallVector<Label, 0> labels_;
-  };
-
-  class ContextBuilder {
-   public:
-    // Attaches a context describing a higher level operation that failed due to
-    // the diagnostic being built. The API mirrors the main emission API:
-    // `Emitter::Emit`. For the expected usage see the builder API:
-    // `Emitter::Build`.
-    template <typename... Args>
-    auto Attach(LocT loc, const ContextBase<Args...>& context,
-                Internal::NoTypeDeduction<Args>... args) -> ContextBuilder&;
-
-   private:
-    friend class Emitter<LocT>;
-
-    explicit ContextBuilder(Emitter<LocT>* emitter, Builder* builder)
-        : emitter_(emitter), builder_(builder) {}
-
-    Emitter<LocT>* emitter_;
-    Builder* builder_;
   };
 
   // `consumer` is required to outlive the diagnostic emitter.
@@ -227,23 +187,14 @@ class Emitter {
   // the middle of producing a diagnostic, such as between Clang producing an
   // error and producing the attached notes.
   //
-  // This is called automatically before any diagnostic annotator is added or
-  // removed, so that a pending diagnostic gets the annotations that were in
-  // force when it was produced. Destruction deliberately does not flush; see
-  // the `Flush` test.
+  // This is called automatically before a `ContextScope` is entered or left,
+  // so that a pending diagnostic gets the labels that were in force when it
+  // was produced. Destruction does not flush; see the `Flush` test.
   auto Flush() -> void {
     for (auto& flush_fn : flush_fns_) {
       flush_fn();
     }
   }
-
-  // Verifies that a callback is registered to provide context if a diagnostic
-  // is emitted. Allows a code path to require context, which then means its
-  // messages are read against the higher-level operation that failed.
-  //
-  // This is best effort as the registered callback can in practice do nothing,
-  // but that would be highly unusual.
-  auto CheckHasContext() -> void { CARBON_CHECK(!context_fns_.empty()); }
 
  protected:
   // Callback type used to report the path a location was reached by from
@@ -253,8 +204,8 @@ class Emitter {
       llvm::function_ref<auto(Loc, const LocationInfoBase&)->void>;
 
   // Converts a LocT to a Loc and its `last_byte_offset` (see
-  // `Message`). ConvertLoc may invoke context_fn to provide context
-  // messages.
+  // `Diagnostic::last_byte_offset`). Calls `context_fn` for each step in the
+  // path by which the location was reached.
   virtual auto ConvertLoc(LocT loc, ContextFnT context_fn) const
       -> ConvertedLoc = 0;
 
@@ -270,15 +221,11 @@ class Emitter {
 
   template <typename OtherLocT, typename ContextFn>
   friend class ContextScope;
-  template <typename OtherLocT, typename ContextFn>
-  friend class AnnotationScope;
 
   Consumer* consumer_;
   llvm::SmallVector<std::function<auto()->void>, 1> flush_fns_;
-  llvm::SmallVector<llvm::function_ref<auto(ContextBuilder& builder)->void>>
-      context_fns_;
   llvm::SmallVector<llvm::function_ref<auto(Builder& builder)->void>>
-      annotate_fns_;
+      context_fns_;
 };
 
 // This relies on `void*` location handling on `Emitter`.
@@ -307,19 +254,20 @@ class NoLocEmitter : public Emitter<void*> {
   }
 };
 
-// An RAII object that denotes a scope in which any diagnostic produced should
-// carry a context label describing the higher-level operation that failed.
+// An RAII object that denotes a scope in which every diagnostic emitted gets a
+// label naming the operation underway.
 //
 // This object is given a function `context` that will be called with a
-// `ContextBuilder& builder` for any diagnostic that is emitted through the
-// given emitter. That function can provide a context label that explains the
-// higher level failure caused by the diagnostic by calling `builder.Attach`.
+// `Builder& builder` for any diagnostic that is emitted through the given
+// emitter, and that function attaches the label by calling `builder.Attach`.
+// The message is left to the emitting code. A caller that can state the
+// problem better than the code detecting it passes a diagnoser instead; see
+// `/toolchain/docs/diagnostics.md`.
 template <typename LocT, typename ContextFn>
 class ContextScope {
  public:
   ContextScope(Emitter<LocT>* emitter, ContextFn context)
-    requires requires(ContextFn context,
-                      Emitter<LocT>::ContextBuilder& builder) {
+    requires requires(ContextFn context, Emitter<LocT>::Builder& builder) {
       { context(builder) } -> std::same_as<void>;
     }
       : emitter_(emitter), context_(std::move(context)) {
@@ -340,39 +288,6 @@ class ContextScope {
 template <typename LocT, typename ContextFn>
 ContextScope(Emitter<LocT>* emitter, ContextFn context)
     -> ContextScope<LocT, ContextFn>;
-
-// An RAII object that denotes a scope in which any diagnostic produced should
-// be annotated in some way.
-//
-// This object is given a function `annotate` that will be called with a
-// `Builder& builder` for any diagnostic that is emitted through the
-// given emitter. That function can annotate the diagnostic by calling
-// `builder.Attach` to attach labels.
-template <typename LocT, typename AnnotateFn>
-class AnnotationScope {
- public:
-  AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
-    requires requires(AnnotateFn annotate, Emitter<LocT>::Builder& builder) {
-      { annotate(builder) } -> std::same_as<void>;
-    }
-      : emitter_(emitter), annotate_(std::move(annotate)) {
-    emitter_->Flush();
-    emitter_->annotate_fns_.push_back(annotate_);
-  }
-  ~AnnotationScope() {
-    emitter_->Flush();
-    emitter_->annotate_fns_.pop_back();
-  }
-
- private:
-  Emitter<LocT>* emitter_;
-  // Make a copy of the annotation function to ensure that it lives long enough.
-  AnnotateFn annotate_;
-};
-
-template <typename LocT, typename AnnotateFn>
-AnnotationScope(Emitter<LocT>* emitter, AnnotateFn annotate)
-    -> AnnotationScope<LocT, AnnotateFn>;
 
 // ============================================================================
 // Only internal implementation details below this point.
@@ -406,23 +321,22 @@ auto Emitter<LocT>::Builder::Attach(LocT loc, const LabelBase<Args...>& label,
 }
 
 template <typename LocT>
-auto Emitter<LocT>::Builder::Attach(LocT loc, LabelCategory category)
-    -> Builder& {
-  // Left without a format and without a `format_fn`, which is how a label says
-  // it marks its range and no more.
+auto Emitter<LocT>::Builder::ExtraRange(LocT loc) -> Builder& {
+  CARBON_CHECK(message_,
+               "A builder has its message from the moment it exists.");
+  // A range has no `location_info` of its own, so this one is dropped.
   llvm::SmallVector<LocationInfo, 0> location_info;
-  Loc loc_value = ConvertLoc(LocT(loc), location_info);
-  labels_.push_back(Label{.category = category,
-                          .loc = loc_value,
-                          .location_info = std::move(location_info)});
+  message_->ranges.push_back(ConvertLoc(LocT(loc), location_info));
   return *this;
 }
 
 template <typename LocT>
 template <typename... Args>
 auto Emitter<LocT>::Builder::Emit() & -> void {
-  for (auto annotate_fn : llvm::reverse(emitter_->annotate_fns_)) {
-    annotate_fn(*this);
+  // Scope labels follow the ones the emitting code attached, innermost scope
+  // first, so that the most specific operation is listed first.
+  for (auto context_fn : llvm::reverse(emitter_->context_fns_)) {
+    context_fn(*this);
   }
   CARBON_CHECK(message_,
                "A builder has its message from the moment it exists.");
@@ -431,7 +345,6 @@ auto Emitter<LocT>::Builder::Emit() & -> void {
                  .is_on_scope = is_on_scope_,
                  .last_byte_offset = last_byte_offset_,
                  .message = *std::move(message_),
-                 .contexts = std::move(contexts_),
                  .labels = std::move(labels_)});
 }
 
@@ -452,14 +365,6 @@ Emitter<LocT>::Builder::Builder(Emitter<LocT>* emitter, LocT loc,
     : emitter_(emitter),
       level_(diagnostic_base.Level),
       is_on_scope_(diagnostic_base.IsOnScope) {
-  // The context describes the operation the message happened inside, so it is
-  // gathered before the message it encloses -- which is also what makes its
-  // location the one the diagnostic sorts by.
-  ContextBuilder context_builder(emitter, this);
-  for (auto context_fn : emitter_->context_fns_) {
-    context_fn(context_builder);
-  }
-
   llvm::SmallVector<LocationInfo, 0> location_info;
   Loc loc_value = ConvertLoc(LocT(loc), location_info);
   message_ = Message{.kind = diagnostic_base.Kind,
@@ -479,15 +384,12 @@ auto Emitter<LocT>::Builder::ConvertLoc(
         location_info.push_back(LocationInfo{
             .loc = step_loc, .name = step.Name, .format = step.Format});
       });
-  // The diagnostic sorts by where it was first rooted, which is the context's
-  // location when a `ContextScope` supplied one.
+  // The diagnostic sorts by its message's location.
   //
-  // TODO: A location reached through an import leaves the offset unset, because
-  // the steps leading to it count as having been added first. That looks
-  // unintended rather than deliberate, but it decides the order diagnostics are
-  // printed in, so changing it is its own change with its own testdata.
-  if (!message_ && contexts_.empty() && labels_.empty() &&
-      location_info.empty()) {
+  // TODO: A message location reached through an import leaves the offset at
+  // -1, which decides the order diagnostics are printed in. Decide whether that
+  // is intended; changing it needs its own testdata update.
+  if (!message_ && location_info.empty()) {
     last_byte_offset_ = converted.last_byte_offset;
   }
   return converted.loc;
@@ -501,29 +403,12 @@ auto Emitter<LocT>::Builder::AttachLabel(LocT loc,
     -> void {
   llvm::SmallVector<LocationInfo, 0> location_info;
   Loc loc_value = ConvertLoc(LocT(loc), location_info);
-  labels_.push_back(Label{.category = label.Category,
-                          .loc = std::move(loc_value),
+  labels_.push_back(Label{.loc = std::move(loc_value),
                           .location_info = std::move(location_info),
                           .name = label.Name,
                           .format = label.Format,
                           .format_args = std::move(args),
                           .format_fn = MakeFormatFn<Args...>()});
-}
-
-template <typename LocT>
-template <typename... Args>
-auto Emitter<LocT>::Builder::AttachContext(LocT loc,
-                                           const ContextBase<Args...>& context,
-                                           llvm::SmallVector<llvm::Any> args)
-    -> void {
-  llvm::SmallVector<LocationInfo, 0> location_info;
-  Loc loc_value = ConvertLoc(LocT(loc), location_info);
-  contexts_.push_back(Context{.loc = std::move(loc_value),
-                              .location_info = std::move(location_info),
-                              .name = context.Name,
-                              .format = context.Format,
-                              .format_args = std::move(args),
-                              .format_fn = MakeFormatFn<Args...>()});
 }
 
 template <typename LocT>
@@ -562,19 +447,6 @@ auto Emitter<LocT>::Emit(LocT loc,
                          Internal::NoTypeDeduction<Args>... args) -> void {
   Builder builder(this, loc, diagnostic_base, {MakeAny<Args>(args)...});
   builder.Emit();
-}
-
-template <typename LocT>
-template <typename... Args>
-auto Emitter<LocT>::ContextBuilder::Attach(
-    LocT loc, const ContextBase<Args...>& context,
-    Internal::NoTypeDeduction<Args>... args) -> ContextBuilder& {
-  if (context.IsSoft && !builder_->contexts_.empty()) {
-    return *this;
-  }
-  builder_->AttachContext(LocT(loc), context,
-                          {emitter_->template MakeAny<Args>(args)...});
-  return *this;
 }
 
 template <typename LocT>

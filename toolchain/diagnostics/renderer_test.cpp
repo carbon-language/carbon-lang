@@ -49,29 +49,24 @@ static auto MakeMessage(Loc loc, llvm::StringRef text,
           .format_fn = Says(text)};
 }
 
+// Returns `message` with `ranges` as the ranges the problem covers beyond its
+// own location.
+static auto WithRanges(Message message, llvm::SmallVector<Loc, 0> ranges)
+    -> Message {
+  message.ranges = std::move(ranges);
+  return message;
+}
+
 // Builds a label attached to `loc` and saying `text`, reached by `origin`. An
 // empty `text` underlines the range and says nothing.
-static auto MakeLabel(LabelCategory category, Loc loc, llvm::StringRef text,
+static auto MakeLabel(Loc loc, llvm::StringRef text,
                       llvm::SmallVector<LocationInfo, 0> origin = {}) -> Label {
-  return {.category = category,
-          .loc = loc,
+  return {.loc = loc,
           .location_info = std::move(origin),
           .name = "TestLabel",
           .format = "",
           .format_args = {},
           .format_fn = text.empty() ? FormatFn() : Says(text)};
-}
-
-// Builds a context saying `text` about `loc`, reached by `origin`.
-static auto MakeContext(Loc loc, llvm::StringRef text,
-                        llvm::SmallVector<LocationInfo, 0> origin = {})
-    -> Context {
-  return {.loc = loc,
-          .location_info = std::move(origin),
-          .name = "TestContext",
-          .format = "",
-          .format_args = {},
-          .format_fn = Says(text)};
 }
 
 // The columns of source a diagnostic targets with no terminal to measure, which
@@ -305,8 +300,7 @@ TEST(RendererTest, MergedShowsOneViewOfTheFile) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "too many arguments"),
-      .labels = {
-          MakeLabel(LabelCategory::Info, At(1, 1, 12), "declared here")}};
+      .labels = {MakeLabel(At(1, 1, 12), "declared here")}};
   // The note is above the error in the file, so it is drawn first, and the two
   // lines between them are elided.
   EXPECT_THAT(Render(Plain(), diagnostic),
@@ -323,10 +317,9 @@ TEST(RendererTest, MergedShowsOneViewOfTheFile) {
 }
 
 TEST(RendererTest, MergedShowsASingleSkippedLine) {
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(3, 1, 2), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(3, 1, 2), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 2), "here")}};
   // Only line 2 is between them, so it is shown rather than elided.
   EXPECT_THAT(Render(Plain(), diagnostic), Eq("       .-| foo.carbon:3:1\n"
                                               "     1 | fn Run0() {}\n"
@@ -346,10 +339,9 @@ TEST(RendererTest, NotesInAnotherFileGetTheirOwnLocationRow) {
                .line_number = 9,
                .column_number = 1,
                .length = 9};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, other, "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(other, "declared here")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -364,7 +356,7 @@ TEST(RendererTest, NotesInAnotherFileGetTheirOwnLocationRow) {
                  ""));
 }
 
-TEST(RendererTest, APrimaryLabelTeesIntoItsRange) {
+TEST(RendererTest, ALabelTeesIntoItsRange) {
   // The label line leaves the middle of the underline through a junction, so
   // the underline and what it says are one line and the words point into the
   // range rather than off an end of it.
@@ -372,8 +364,7 @@ TEST(RendererTest, APrimaryLabelTeesIntoItsRange) {
       .level = Level::Error,
       .message =
           MakeMessage(At(4, 3, 7), "1 argument passed to function expecting 0"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7),
-                           "1 argument passed here")}};
+      .labels = {MakeLabel(At(4, 3, 7), "1 argument passed here")}};
   EXPECT_THAT(
       Render(Plain(), diagnostic),
       Eq("       .-| foo.carbon:4:3\n"
@@ -394,15 +385,14 @@ TEST(RendererTest, TheShapeTheDesignDocDraws) {
                      .line = "fn Run0() {}",
                      .file_text = LibFile,
                      .line_number = 1,
-                     .column_number = 1,
-                     .length = 12};
+                     .column_number = 4,
+                     .length = 4};
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(
           At(4, 3, 7), "1 argument passed to function expecting 0 arguments"),
-      .labels = {MakeLabel(LabelCategory::Info, declaration,
-                           "calling function declared here")}};
+      .labels = {MakeLabel(declaration, "calling function declared here")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -410,10 +400,10 @@ TEST(RendererTest, TheShapeTheDesignDocDraws) {
                  "       ·      ┗━━┫ error: 1 argument passed to function "
                  "expecting 0 arguments\n"
                  "       ┆\n"
-                 "       ├─┤ lib.carbon:1:1\n"
+                 "       ├─┤ lib.carbon:1:4\n"
                  "     1 │ fn Run0() {}\n"
-                 "       · ──────┬─────\n"
-                 "       ·       ╰──┤ calling function declared here\n"
+                 "       ·    ──┬─\n"
+                 "       ·      ╰──┤ calling function declared here\n"
                  "       ╰────\n"
                  ""));
 
@@ -426,10 +416,10 @@ TEST(RendererTest, TheShapeTheDesignDocDraws) {
                  "       :      '--| error: 1 argument passed to function "
                  "expecting 0 arguments\n"
                  "       :\n"
-                 "       |-| lib.carbon:1:1\n"
+                 "       |-| lib.carbon:1:4\n"
                  "     1 | fn Run0() {}\n"
-                 "       : ------.-----\n"
-                 "       :       '--| calling function declared here\n"
+                 "       :    --.-\n"
+                 "       :      '--| calling function declared here\n"
                  "       '----\n"
                  ""));
 }
@@ -441,7 +431,7 @@ TEST(RendererTest, AFileOnlyLabelIsPlacedUnderItsLocationRow) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 8, 1), "cannot copy argument of type `A`"),
-      .labels = {MakeLabel(LabelCategory::Info, FileOnly(),
+      .labels = {MakeLabel(FileOnly(),
                            "type `A` does not implement interface "
                            "`Core.Copy`")}};
   EXPECT_THAT(
@@ -463,8 +453,8 @@ TEST(RendererTest, ARangeContainingTheMessageLocHostsIt) {
   // its own.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), "")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 3, 7)})};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -480,8 +470,8 @@ TEST(RendererTest, ARangeElsewhereOnTheLineDoesNotHostTheMessage) {
   // the message keeps its own underline and text.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 8, 3), "")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 8, 3)})};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -494,12 +484,13 @@ TEST(RendererTest, ARangeElsewhereOnTheLineDoesNotHostTheMessage) {
 TEST(RendererTest, RepeatedSpansAreOneUnderline) {
   // Two labels attached to the same range draw the same underline in the same
   // columns, so they are one underline rather than two identical rows. A
-  // message that a context leads and the range attached to it reach this shape.
+  // message with an extra range that a label is also attached to reaches this
+  // shape.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), ""),
-                 MakeLabel(LabelCategory::Primary, At(4, 3, 7), "wrong")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 3, 7)}),
+      .labels = {MakeLabel(At(4, 3, 7), "wrong")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -520,10 +511,10 @@ TEST(RendererTest, ARangeCoveringOthersIsRepairedRatherThanStacked) {
   // left.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 3, 4), "callee"),
-                 MakeLabel(LabelCategory::Info, At(4, 8, 1), "argument")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 3, 7)}),
+      .labels = {MakeLabel(At(4, 3, 4), "callee"),
+                 MakeLabel(At(4, 8, 1), "argument")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -540,11 +531,10 @@ TEST(RendererTest, ALabelOnASingleColumnRangeDropsStraightDown) {
   // reaching in from the side would read as attaching to the column beside it.
   // The label line drops straight down the underline's own column, teeing into
   // it.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 8, 1), "bad index"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 4), "indexed here"),
-                 MakeLabel(LabelCategory::Primary, At(4, 8, 1), "with this")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 8, 1), "bad index"),
+                           .labels = {MakeLabel(At(4, 3, 4), "indexed here"),
+                                      MakeLabel(At(4, 8, 1), "with this")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:8\n"
                  "->   4 |   Run0(1);\n"
@@ -562,9 +552,9 @@ TEST(RendererTest, OverlappingSpansStillShareOneRow) {
   // with no text of its own shows nothing.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 7, 3), "")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 3, 7)}),
+      .labels = {MakeLabel(At(4, 7, 3), "")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -580,11 +570,10 @@ TEST(RendererTest, ARangeInsideTheHeavyUnderlineShowsAsItsTee) {
   // as the tee where its label line leaves the heavy underline. Over any other
   // underline, the narrower range is drawn on top.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 4), "callee"),
-                 MakeLabel(LabelCategory::Info, At(4, 8, 1), "argument")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad call"),
+                           .labels = {MakeLabel(At(4, 3, 4), "callee"),
+                                      MakeLabel(At(4, 8, 1), "argument")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -640,17 +629,25 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
     bool has_words;
   };
   auto render = [&](llvm::ArrayRef<Placed> ranges, Terminal::Charset charset,
-                    LabelCategory category) {
+                    bool message_owns_wordless) {
     Terminal::Capabilities capabilities = {.charset = charset};
+    // The message points past every range, so each underline comes from a range
+    // of its own or from a label. A wordless range is the message's or a
+    // label's by turns, which is what draws both themes' underlines.
+    Message message = MakeMessage(at(26, 1), "m");
     llvm::SmallVector<Label> labels;
     for (const Placed& range : ranges) {
-      labels.push_back(MakeLabel(category, at(range.start, range.length),
-                                 range.has_words ? "words" : ""));
+      Loc loc = at(range.start, range.length);
+      if (range.has_words) {
+        labels.push_back(MakeLabel(loc, "words"));
+      } else if (message_owns_wordless) {
+        message.ranges.push_back(loc);
+      } else {
+        labels.push_back(MakeLabel(loc, ""));
+      }
     }
-    // The message points past every range, so each underline comes from a
-    // label.
     Diagnostic diagnostic = {.level = Level::Error,
-                             .message = MakeMessage(at(26, 1), "m"),
+                             .message = std::move(message),
                              .labels = std::move(labels)};
     Renderer renderer(capabilities);
     llvm::SmallString<256> bytes;
@@ -676,8 +673,7 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
 
   for (Terminal::Charset charset :
        {Terminal::Charset::Utf8, Terminal::Charset::Ascii}) {
-    for (LabelCategory category :
-         {LabelCategory::Info, LabelCategory::Primary}) {
+    for (bool message_owns_wordless : {false, true}) {
       // Two and three ranges laid end to end and one column apart, in every
       // combination of lengths and of which carry words.
       for (int gap : {0, 1}) {
@@ -687,7 +683,7 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
               check(charset, "two ranges",
                     render({{3, first, (words & 1) != 0},
                             {3 + first + gap, second, (words & 2) != 0}},
-                           charset, category));
+                           charset, message_owns_wordless));
             }
           }
         }
@@ -700,7 +696,7 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
                               {3 + first + gap, middle, (words & 2) != 0},
                               {3 + first + middle + 2 * gap, last,
                                (words & 4) != 0}},
-                             charset, category));
+                             charset, message_owns_wordless));
               }
             }
           }
@@ -712,12 +708,12 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
               render({{3, 6, (words & 1) != 0},
                       {4, 1, (words & 2) != 0},
                       {5, 1, (words & 4) != 0}},
-                     charset, category));
+                     charset, message_owns_wordless));
         check(charset, "ranges covering one column",
               render({{3, 1, (words & 1) != 0},
                       {3, 1, (words & 2) != 0},
                       {4, 1, (words & 4) != 0}},
-                     charset, category));
+                     charset, message_owns_wordless));
       }
     }
   }
@@ -728,10 +724,9 @@ TEST(RendererTest, AdjacentRangesAreDrawnApart) {
   // next begins, so the ends that meet stop at the centers of their cells and
   // leave a column of gap, half taken from each.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 7, 3), "with these")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 7, 3), "with these")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -749,10 +744,9 @@ TEST(RendererTest, ALabelLineWithNothingToTeeIntoTakesTheUnderlinesColumn) {
   // center of the cell: the column is underlined, and nothing is claimed of the
   // row above it.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 7, 1), "this one")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 7, 1), "this one")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -769,10 +763,9 @@ TEST(RendererTest, ALabelLineInPlaceOfAnUnderlineKeepsTheCaretUnderAscii) {
   // that column in place of the underline. Its top cell is still part of the
   // heavy underline, so under ASCII it is `^`, not the `|` of a light label
   // line, and the rest of the label line is light like any label's.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 7, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 8, 2), "operand")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 7, 1), "bad call"),
+                           .labels = {MakeLabel(At(4, 8, 2), "operand")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:7\n"
                  "->   4 |   Run0(1);\n"
@@ -789,11 +782,10 @@ TEST(RendererTest, AdjacentLabelLinesAreTwoUnderlinesRatherThanOne) {
   // keeps the pair reading as two underlines: running them the height of their
   // cells would draw one unbroken line two columns wide.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 7, 1), "left one"),
-                 MakeLabel(LabelCategory::Info, At(4, 8, 1), "right one")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 7, 1), "left one"),
+                                      MakeLabel(At(4, 8, 1), "right one")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -823,10 +815,9 @@ TEST(RendererTest, ALabelLineStepsAwayFromAnAdjacentRangeToTee) {
   // next range is pulled in, so it steps inward rather than turning a corner
   // where the underline stops. The label follows it.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 5, 2), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 2), "and this")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 5, 2), "bad call"),
+                           .labels = {MakeLabel(At(4, 3, 2), "and this")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:5\n"
                  "->   4 │   Run0(1);\n"
@@ -847,9 +838,8 @@ TEST(RendererTest, AGapGivesWayToAnUnderlineThatCannotSpareIt) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 10, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 2), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 5, 2), "middle"),
-                 MakeLabel(LabelCategory::Info, At(4, 7, 2), "")}};
+      .labels = {MakeLabel(At(4, 3, 2), ""), MakeLabel(At(4, 5, 2), "middle"),
+                 MakeLabel(At(4, 7, 2), "")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:10\n"
                  "->   4 │   Run0(1);\n"
@@ -865,11 +855,10 @@ TEST(RendererTest, ARangeWithNeighborsOnBothSidesAndNoLabelIsAPoint) {
   // words to hang there is no label line to draw down it either. The underline
   // is a point: nothing that fits one column shows a gap on each side of it.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 7, 1), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 8, 1), "this one")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 7, 1), ""),
+                                      MakeLabel(At(4, 8, 1), "this one")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -884,10 +873,9 @@ TEST(RendererTest, AsciiDrawsAdjacentRangesWithoutTheGap) {
   // Half a cell is not something the ASCII stand-ins can draw, so the gap is
   // one of the distinctions that character set costs. The underlines still run
   // the width of their ranges.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 7, 3), "with these")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 7, 3), "with these")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -898,14 +886,13 @@ TEST(RendererTest, AsciiDrawsAdjacentRangesWithoutTheGap) {
                  ""));
 }
 
-TEST(RendererTest, AnInformationalRangeDoesNotHostTheMessage) {
-  // Only a range that is part of the problem stands in for the message's
-  // location. A note covering the same code is a different underline, in the
-  // note's own color, and the message's own location is still underlined.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 7), "")}};
+TEST(RendererTest, ALabelDoesNotHostTheMessage) {
+  // Only one of the message's own ranges is drawn in place of its location. A
+  // label covering the same code is a different underline, in the label color,
+  // and the message's own location is still underlined.
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 1), "bad call"),
+                           .labels = {MakeLabel(At(4, 3, 7), "")}};
   // Rendered in color, since with none the two underlines are the same
   // characters and the whole distinction is which color each is drawn in.
   Terminal::Capabilities capabilities = {.color_mode =
@@ -918,10 +905,9 @@ TEST(RendererTest, AnInformationalRangeDoesNotHostTheMessage) {
 }
 
 TEST(RendererTest, TwoSpansOnOneLineShareItsRow) {
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(1, 4, 4), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(1, 4, 4), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 2), "here")}};
   EXPECT_THAT(Render(Plain(), diagnostic), Eq("       .-| foo.carbon:1:4\n"
                                               "->   1 | fn Run0() {}\n"
                                               "       : -. ^^^^\n"
@@ -949,10 +935,8 @@ TEST(RendererTest, LabelsOnOneLineReadInSourceOrder) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(at(16, 1), "`i32` does not implement `MulWith`"),
-      .labels = {MakeLabel(LabelCategory::Primary, at(10, 5),
-                           "left operand has type `i32`"),
-                 MakeLabel(LabelCategory::Primary, at(18, 4),
-                           "right operand has type `bool`")}};
+      .labels = {MakeLabel(at(10, 5), "left operand has type `i32`"),
+                 MakeLabel(at(18, 4), "right operand has type `bool`")}};
   EXPECT_THAT(
       Render(Plain(), diagnostic),
       Eq("       .-| foo.carbon:3:16\n"
@@ -980,10 +964,9 @@ TEST(RendererTest, SpansOnOneLineShareOneWindow) {
                .column_number = column,
                .length = length};
   };
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(at(21, 5), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, at(41, 6), "and here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(at(21, 5), "bad"),
+                           .labels = {MakeLabel(at(41, 6), "and here")}};
   EXPECT_THAT(
       Render(capabilities, diagnostic),
       Eq("       .-| foo.carbon:1:21\n"
@@ -1008,10 +991,10 @@ TEST(RendererTest, MultipleFilesEachGetALocationRow) {
                 .line_number = 3,
                 .column_number = 1,
                 .length = 14};
-  Diagnostic diagnostic = {.level = Level::Error,
-                           .message = MakeMessage(first, "duplicate name"),
-                           .labels = {MakeLabel(LabelCategory::Info, second,
-                                                "previously declared")}};
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(first, "duplicate name"),
+      .labels = {MakeLabel(second, "previously declared")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| b.carbon:3:1\n"
                  "->   3 | fn Shape() {}\n"
@@ -1040,7 +1023,7 @@ TEST(RendererTest, ALabelsPathIsNotDrawn) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "duplicate name"),
-      .labels = {MakeLabel(LabelCategory::Info, other, "previously declared",
+      .labels = {MakeLabel(other, "previously declared",
                            {MakeOrigin(import_loc, "in import")})}};
   // A label's path is not drawn, so its location row has no path rows above it.
   EXPECT_THAT(Render(Plain(), diagnostic),
@@ -1057,41 +1040,7 @@ TEST(RendererTest, ALabelsPathIsNotDrawn) {
                  ""));
 }
 
-TEST(RendererTest, APathLeadsIntoTheLocationRowItReaches) {
-  Loc import_loc = {.filename = "c.carbon",
-                    .line = "import library \"a\";",
-                    .line_number = 1,
-                    .column_number = 1,
-                    .length = 6};
-  Loc reported = {.filename = "a.carbon",
-                  .line = "class Shape {}",
-                  .line_number = 3,
-                  .column_number = 1,
-                  .length = 14};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(reported, "duplicate name",
-                             {MakeOrigin(import_loc, "in import")}),
-      .contexts = {MakeContext(At(4, 3, 7), "in call")}};
-  // The message's own path is drawn, above the location row of the file it
-  // leads to -- here the second location row, since the context's snippet comes
-  // first.
-  EXPECT_THAT(Render(Plain(), diagnostic),
-              Eq("       .-| foo.carbon:4:3\n"
-                 "->   4 |   Run0(1);\n"
-                 "       :   ^^^^^^^\n"
-                 "       :      '--| error: in call\n"
-                 "       :\n"
-                 "       | .-- in import: c.carbon:1:1\n"
-                 "       |-| a.carbon:3:1\n"
-                 "     3 | class Shape {}\n"
-                 "       : -------.------\n"
-                 "       :        '--| duplicate name\n"
-                 "       '----\n"
-                 ""));
-}
-
-TEST(RendererTest, ContextStepsStackInOrder) {
+TEST(RendererTest, PathStepsStackInOrder) {
   auto step = [](llvm::StringRef file, int line) {
     return Loc{.filename = file, .line_number = line, .column_number = 1};
   };
@@ -1145,11 +1094,10 @@ TEST(RendererTest, AFileOnlyLeadingMessageGivesItsFileOneLocationRow) {
   // A message located at a file and nothing more is placed under that file's
   // location row, and the file's spans follow under the same location row below
   // an elision, so the file has one location row.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(FileOnly(), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "declared here"),
-                 MakeLabel(LabelCategory::Info, At(4, 3, 7), "used here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(FileOnly(), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 2), "declared here"),
+                                      MakeLabel(At(4, 3, 7), "used here")}};
   EXPECT_THAT(Render(Plain(), diagnostic), Eq("->     .-| foo.carbon\n"
                                               "       : '--| error: bad\n"
                                               "       :\n"
@@ -1164,21 +1112,10 @@ TEST(RendererTest, AFileOnlyLeadingMessageGivesItsFileOneLocationRow) {
                                               ""));
 }
 
-TEST(RendererTest, FirstContextMessageTakesTheDiagnosticLevel) {
-  Diagnostic diagnostic = {.level = Level::Error,
-                           .message = MakeMessage({}, "the problem"),
-                           .contexts = {MakeContext({}, "in call"),
-                                        MakeContext({}, "in other call")}};
-  EXPECT_THAT(Render(Plain(), diagnostic), Eq("error: in call\n"
-                                              "note: in other call\n"
-                                              "note: the problem\n"));
-}
-
 TEST(RendererTest, UnnumberedGutterStillPointsToTheReportedLine) {
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(3, 1, 2), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(3, 1, 2), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 2), "here")}};
   // The same rows in the same columns as `MergedShowsASingleSkippedLine`,
   // with no numbers in the gutter. The `->` still points to the reported line.
   EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
@@ -1200,10 +1137,9 @@ TEST(RendererTest, UnnumberedFramesNameALaterFileAlone) {
                .line_number = 9,
                .column_number = 1,
                .length = 9};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, other, "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(other, "declared here")}};
   EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->     |   Run0(1);\n"
@@ -1246,10 +1182,9 @@ TEST(RendererTest, UnnumberedPathStepsKeepOnlyTheirFiles) {
 }
 
 TEST(RendererTest, UnnumberedFramesKeepTheFirstLocationRowsLocation) {
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage({}, "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 7), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage({}, "bad"),
+                           .labels = {MakeLabel(At(4, 3, 7), "here")}};
   // The message has no location, so its location row shows `<no location>` and
   // gets the `->`. The label's location row is the first with a location, so it
   // keeps that location in full; only the gutter's number is withheld.
@@ -1285,10 +1220,9 @@ TEST(RendererTest, KindIsIncludedWhenAsked) {
 
 TEST(RendererTest, Utf8DrawsTheFrameWithBoxDrawing) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 12), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 12), "here")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "     1 │ fn Run0() {}\n"
@@ -1317,7 +1251,7 @@ TEST(RendererTest, Utf8ElisionContinuesTheFrameToTheNextLocationRow) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "too many arguments"),
-      .labels = {MakeLabel(LabelCategory::Info, declaration, "declared here")}};
+      .labels = {MakeLabel(declaration, "declared here")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"
@@ -1332,7 +1266,7 @@ TEST(RendererTest, Utf8ElisionContinuesTheFrameToTheNextLocationRow) {
                  ""));
 }
 
-TEST(RendererTest, Utf8ContextStepsStackIntoOneLine) {
+TEST(RendererTest, Utf8PathStepsStackIntoOneLine) {
   auto step = [](llvm::StringRef file, int line) {
     return Loc{.filename = file, .line_number = line, .column_number = 1};
   };
@@ -1365,10 +1299,9 @@ TEST(RendererTest, Utf8ContextStepsStackIntoOneLine) {
 
 TEST(RendererTest, Utf8LocationLabelIsPlacedUnderItsLocationRow) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, FileOnly(), "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(FileOnly(), "declared here")}};
   // A label with no source has its text placed under a location row naming what
   // location it has, and an elision separates that location row from the
   // snippet above, as for any other location row.
@@ -1386,10 +1319,9 @@ TEST(RendererTest, Utf8LocationLabelIsPlacedUnderItsLocationRow) {
 
 TEST(RendererTest, ALineWithoutAColumnIsPlacedUnderItsLocationRow) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, LineOnly(1), "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(LineOnly(1), "declared here")}};
   // A location with a line and no column has no source, so the label's text
   // is placed under a location row naming the line, as for one naming only a
   // file.
@@ -1407,10 +1339,9 @@ TEST(RendererTest, ALineWithoutAColumnIsPlacedUnderItsLocationRow) {
 
 TEST(RendererTest, APartWithNoLocationGetsANoLocationRow) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, Loc(), "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(Loc(), "declared here")}};
   // A part with no location at all still gets a location row for its text,
   // which names `<no location>`.
   EXPECT_THAT(Render(capabilities, diagnostic),
@@ -1427,10 +1358,9 @@ TEST(RendererTest, APartWithNoLocationGetsANoLocationRow) {
 
 TEST(RendererTest, ALeadingMessageWithNoLocationOpensTheFrame) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(Loc(), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(Loc(), "bad"),
+                           .labels = {MakeLabel(At(1, 1, 2), "declared here")}};
   // A message with no location still leads: its text is placed under a
   // `<no location>` location row with a heavy label line and bar, the location
   // row takes the `->`, and the label's file gets a location row after it.
@@ -1453,7 +1383,7 @@ TEST(RendererTest, Utf8WrappedLocationLabelKeepsItsBar) {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "bad"),
       .labels = {MakeLabel(
-          LabelCategory::Info, FileOnly(),
+          FileOnly(),
           "this one has rather a lot to say about the declaration it points "
           "at, more than fits a row")}};
   // A location label wraps as a label does, with the bar down every row it
@@ -1496,7 +1426,7 @@ TEST(RendererTest, UnderlinesTakeTheColorOfTheirMessage) {
   Diagnostic diagnostic = {
       .level = Level::Warning,
       .message = MakeMessage(At(4, 3, 7), "careful", {}, Level::Warning),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 12), "aside")}};
+      .labels = {MakeLabel(At(1, 1, 12), "aside")}};
   std::string rendered = Render(capabilities, diagnostic);
   // The message's underline is the warning color and the note's is the note
   // color, so each underline matches the text that explains it. The message's
@@ -1517,7 +1447,7 @@ TEST(RendererTest, TheFrameSeparatorIsFrame) {
   Diagnostic diagnostic = {
       .level = Level::Warning,
       .message = MakeMessage(At(4, 3, 7), "careful", {}, Level::Warning),
-      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 12), "aside")}};
+      .labels = {MakeLabel(At(1, 1, 12), "aside")}};
   std::string rendered = Render(capabilities, diagnostic);
   // The frame's glyph on underline and label rows is in the frame's column, so
   // it is the leading part's color on every row, including the note's, whose
@@ -1531,9 +1461,8 @@ TEST(RendererTest, RotateColorsEachRangeOnALine) {
                                              Terminal::ColorMode::Ansi16};
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 4), ""),
-                 MakeLabel(LabelCategory::Primary, At(4, 8, 1), "")}};
+      .message = WithRanges(MakeMessage(At(4, 3, 7), "bad call"),
+                            {At(4, 3, 4), At(4, 8, 1)})};
   std::string rendered = Render(capabilities, diagnostic);
   // The range hosting the message keeps the theme's center color, heavy and
   // bold. The other problem range takes the ramp with the center left out, so
@@ -1548,8 +1477,7 @@ TEST(RendererTest, RotateStaysInsideAThemeWithOnlyNamedColors) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 8, 1), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 9, 1), "")}};
+      .labels = {MakeLabel(At(4, 8, 1), ""), MakeLabel(At(4, 9, 1), "")}};
   std::string rendered = Render(capabilities, diagnostic);
   // The ranges explaining the problem walk their own ramp, so a second note
   // range is another cyan rather than the level's second color.
@@ -1596,10 +1524,9 @@ TEST(RendererTest, TruecolorRotatesInsideATheme) {
                                              Terminal::ColorMode::Truecolor};
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 4), ""),
-                 MakeLabel(LabelCategory::Primary, At(4, 8, 1), ""),
-                 MakeLabel(LabelCategory::Info, At(1, 1, 12), "")}};
+      .message = WithRanges(MakeMessage(At(4, 3, 7), "bad call"),
+                            {At(4, 3, 4), At(4, 8, 1)}),
+      .labels = {MakeLabel(At(1, 1, 12), "")}};
   std::string rendered = Render(capabilities, diagnostic);
   // Three reds for the problem and a cyan for what explains it: every color
   // says which theme it belongs to before it says which range it is.
@@ -1614,8 +1541,7 @@ TEST(RendererTest, RotateLeavesOneRangeOfAKindAlone) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "bad call"),
-      .labels = {
-          MakeLabel(LabelCategory::Info, At(1, 1, 12), "declared here")}};
+      .labels = {MakeLabel(At(1, 1, 12), "declared here")}};
   // A range alone on its line takes its theme's own color; the ramp's other
   // entries only appear once several ranges share a line.
   std::string rendered = Render(capabilities, diagnostic);
@@ -1623,7 +1549,7 @@ TEST(RendererTest, RotateLeavesOneRangeOfAKindAlone) {
   EXPECT_THAT(rendered, Not(HasSubstr("\x1b[36m")));
 }
 
-TEST(RendererTest, ContextIsDim) {
+TEST(RendererTest, PathIsDim) {
   Terminal::Capabilities capabilities = {.color_mode =
                                              Terminal::ColorMode::Ansi16};
   Loc import_loc = {
@@ -1709,10 +1635,9 @@ TEST(RendererTest, LineShownBetweenTwoSpansIsWindowedToo) {
                .column_number = 1,
                .length = 4};
   };
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(at(3), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, at(1), "and")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(at(3), "bad"),
+                           .labels = {MakeLabel(at(1), "and")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       .-| foo.carbon:3:1\n"
                  "     1 | short\n"
@@ -1825,11 +1750,9 @@ static auto RenderLabel(int columns, llvm::StringRef label,
     -> std::string {
   Terminal::Capabilities capabilities = {
       .charset = charset, .is_terminal = true, .columns = columns};
-  return Render(
-      capabilities,
-      {.level = Level::Error,
-       .message = MakeMessage(RoutedLoc(), "bad"),
-       .labels = {MakeLabel(LabelCategory::Primary, RoutedLoc(), label)}});
+  return Render(capabilities, {.level = Level::Error,
+                               .message = MakeMessage(RoutedLoc(), "bad"),
+                               .labels = {MakeLabel(RoutedLoc(), label)}});
 }
 
 TEST(RendererTest, AKindTagTakesARowOfItsOwnWhenItCannotShareOne) {
@@ -1843,11 +1766,9 @@ TEST(RendererTest, AKindTagTakesARowOfItsOwnWhenItCannotShareOne) {
     Renderer renderer(capabilities);
     renderer.set_include_kind(true);
     llvm::SmallString<512> bytes;
-    renderer.Render(
-        bytes,
-        {.level = Level::Error,
-         .message = MakeMessage(RoutedLoc(), "bad"),
-         .labels = {MakeLabel(LabelCategory::Primary, RoutedLoc(), label)}});
+    renderer.Render(bytes, {.level = Level::Error,
+                            .message = MakeMessage(RoutedLoc(), "bad"),
+                            .labels = {MakeLabel(RoutedLoc(), label)}});
     return std::string(bytes);
   };
 
@@ -1869,11 +1790,9 @@ TEST(RendererTest, AKindTagTakesARowOfItsOwnWhenItCannotShareOne) {
     Renderer renderer(colored);
     renderer.set_include_kind(true);
     llvm::SmallString<512> bytes;
-    renderer.Render(
-        bytes,
-        {.level = Level::Error,
-         .message = MakeMessage(RoutedLoc(), "bad"),
-         .labels = {MakeLabel(LabelCategory::Primary, RoutedLoc(), label)}});
+    renderer.Render(bytes, {.level = Level::Error,
+                            .message = MakeMessage(RoutedLoc(), "bad"),
+                            .labels = {MakeLabel(RoutedLoc(), label)}});
     return llvm::StringRef(bytes).contains("\x1b[2m[TestLabel]") ||
            llvm::StringRef(bytes).contains("\x1b[2m [TestLabel]");
   };
@@ -2054,7 +1973,7 @@ TEST(RendererTest, LabelLinesSlideForAnotherLabelsWords) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(at(3, 4), "call would overflow the result"),
-      .labels = {MakeLabel(LabelCategory::Info, at(8, 17), "short")}};
+      .labels = {MakeLabel(at(8, 17), "short")}};
   EXPECT_THAT(
       Render(capabilities, diagnostic),
       Eq("       ╭─┤ foo.carbon:4:3\n"
@@ -2086,9 +2005,9 @@ TEST(RendererTest, RoutedLabelsStackInReadingOrder) {
       .level = Level::Error,
       .message = MakeMessage(at(3, 4), "bad call"),
       .labels = {
-          MakeLabel(LabelCategory::Info, at(8, 5),
+          MakeLabel(at(8, 5),
                     "`ExtremelyLongUnbreakableTypeNameForTestingNumberOne`"),
-          MakeLabel(LabelCategory::Info, at(15, 6),
+          MakeLabel(at(15, 6),
                     "`ExtremelyLongUnbreakableTypeNameForTestingNumberTwo`")}};
   EXPECT_THAT(
       Render(capabilities, diagnostic),
@@ -2123,9 +2042,9 @@ TEST(RendererTest, ALabelFollowsAnOutDentedBlock) {
       .level = Level::Error,
       .message = MakeMessage(at(3, 4), "bad call"),
       .labels = {
-          MakeLabel(LabelCategory::Info, at(8, 5),
+          MakeLabel(at(8, 5),
                     "`ExtremelyLongUnbreakableTypeNameForTestingNumberOne`"),
-          MakeLabel(LabelCategory::Info, at(15, 6), "short")}};
+          MakeLabel(at(15, 6), "short")}};
   EXPECT_THAT(
       Render(capabilities, diagnostic),
       Eq("       ╭─┤ foo.carbon:4:3\n"
@@ -2227,12 +2146,12 @@ TEST(RendererTest, CarriageReturnIsNotDrawn) {
                  ""));
 }
 
-TEST(RendererTest, PrimaryLabelUnderUtf8) {
+TEST(RendererTest, ALabelOnTheMessagesRangeUnderUtf8) {
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "too many arguments"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), "here")}};
+      .labels = {MakeLabel(At(4, 3, 7), "here")}};
   // A primary range turns into its label the same way an informational one
   // does; only the underline itself differs.
   EXPECT_THAT(Render(capabilities, diagnostic),
@@ -2266,8 +2185,7 @@ TEST(RendererTest, SnippetsOffSpellsEachRangeInItsLocation) {
       .level = Level::Error,
       .message =
           MakeMessage(At(4, 3, 7), "1 argument passed to function expecting 0"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7),
-                           "1 argument passed here")}};
+      .labels = {MakeLabel(At(4, 3, 7), "1 argument passed here")}};
   // With snippets off there is no source to draw an extent under, so the
   // location carries it: the byte column the range starts at through the byte
   // column it ends on.
@@ -2283,29 +2201,13 @@ TEST(RendererTest, AWordlessLabelSaysNothingInTheCompactForm) {
   // underline it in, so it contributes no line rather than an empty one.
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 1), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), "")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 1), "bad call"), {At(4, 3, 7)})};
   EXPECT_THAT(Render(Narrow(), diagnostic),
               Eq("foo.carbon:4:3: error: bad call\n"));
 }
 
-TEST(RendererTest, ARepeatedPathIsDrawnOnce) {
-  // A context and the message reached the same way share one drawn path.
-  Loc import_loc = {
-      .filename = "c.carbon", .line_number = 1, .column_number = 1};
-  llvm::SmallVector<LocationInfo, 0> origin = {
-      MakeOrigin(import_loc, "imported from")};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad call", origin),
-      .contexts = {MakeContext(At(4, 3, 1), "in call", origin)}};
-  EXPECT_THAT(Render(Narrow(), diagnostic),
-              Eq("imported from: c.carbon:1:1\n"
-                 "foo.carbon:4:3: error: in call\n"
-                 "foo.carbon:4:3-9: note: bad call\n"));
-}
-
-TEST(RendererTest, SnippetsOffPutsAContextLocationAfterItsWords) {
+TEST(RendererTest, SnippetsOffPutsAPathStepLocationAfterItsWords) {
   Loc import_loc = {.filename = "a.carbon",
                     .line_number = 2,
                     .column_number = 1,
@@ -2323,8 +2225,7 @@ TEST(RendererTest, SnippetsOffRendersOneRowPerPart) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 7), "too many arguments"),
-      .labels = {
-          MakeLabel(LabelCategory::Info, At(1, 1, 12), "declared here")}};
+      .labels = {MakeLabel(At(1, 1, 12), "declared here")}};
   EXPECT_THAT(Render(Plain(), diagnostic, /*snippets=*/false),
               Eq("foo.carbon:4:3-9: error: too many arguments\n"
                  "foo.carbon:1:1-12: note: declared here\n"));
@@ -2398,8 +2299,7 @@ TEST(RendererTest, TheShapeTheHeaderDraws) {
           capabilities,
           {.level = Level::Error,
            .message = MakeMessage(call, "invalid arguments in function call"),
-           .labels = {MakeLabel(LabelCategory::Info, decl,
-                                "calling function declared here")}}),
+           .labels = {MakeLabel(decl, "calling function declared here")}}),
       Eq("       ╭─┤ foo.carbon:19:3\n"
          "     1 │ fn Run0() {}\n"
          "       · ──────┬─────\n"
@@ -2412,25 +2312,24 @@ TEST(RendererTest, TheShapeTheHeaderDraws) {
          ""));
 }
 
-TEST(RendererTest, ARangeOnAnotherLineDoesNotStandInForTheLocation) {
-  // Only a range on the line the message's location names stands in for it. One
-  // somewhere else says nothing about that line, and taking its place would
-  // hang the message's words off code they aren't about while dropping the line
-  // they are, so the message keeps its own underline and both lines show.
-  EXPECT_THAT(Render(Plain(), {.level = Level::Error,
-                               .message = MakeMessage(At(1, 1, 2), "bad"),
-                               .labels = {MakeLabel(LabelCategory::Primary,
-                                                    At(4, 3, 7), "here")}}),
-              Eq("       .-| foo.carbon:1:1\n"
-                 "->   1 | fn Run0() {}\n"
-                 "       : ^^\n"
-                 "       :  '--| error: bad\n"
-                 "       :\n"
-                 "     4 |   Run0(1);\n"
-                 "       :   ---.---\n"
-                 "       :      '--| here\n"
-                 "       '----\n"
-                 ""));
+TEST(RendererTest, ARangeOnAnotherLineDoesNotHostTheMessage) {
+  // Only an extra range on the line the message's location names can be drawn
+  // in place of it. One on another line is about other code, even where its
+  // columns contain the location's, so the message keeps its own underline and
+  // both lines show.
+  EXPECT_THAT(
+      Render(Plain(), {.level = Level::Error,
+                       .message = WithRanges(MakeMessage(At(1, 4, 4), "bad"),
+                                             {At(3, 1, 11)})}),
+      Eq("       .-| foo.carbon:1:4\n"
+         "->   1 | fn Run0() {}\n"
+         "       :    ^^^^\n"
+         "       :      '--| error: bad\n"
+         "     2 |\n"
+         "     3 | fn Main() {\n"
+         "       : -----------\n"
+         "       '----\n"
+         ""));
 }
 
 TEST(RendererTest, RotateLeavesTheHeavyUnderlineTheLevelColor) {
@@ -2442,9 +2341,8 @@ TEST(RendererTest, RotateLeavesTheHeavyUnderlineTheLevelColor) {
                                              Terminal::ColorMode::Truecolor};
   Diagnostic diagnostic = {
       .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .contexts = {MakeContext(At(4, 3, 4), "in call")},
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 8, 1), "")}};
+      .message =
+          WithRanges(MakeMessage(At(4, 3, 4), "bad call"), {At(4, 8, 1)})};
   std::string rendered = Render(capabilities, diagnostic);
   EXPECT_THAT(rendered, HasSubstr("\x1b[1m\x1b[38;2;255;114;97merror: "));
   EXPECT_THAT(rendered, HasSubstr("\x1b[38;2;255;114;97m->"));
@@ -2460,9 +2358,8 @@ TEST(RendererTest, ARampRunsOutAndRepeats) {
   Diagnostic diagnostic = {
       .level = Level::Error,
       .message = MakeMessage(LineOnly(4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 2), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 6, 2), ""),
-                 MakeLabel(LabelCategory::Info, At(4, 9, 2), "")}};
+      .labels = {MakeLabel(At(4, 3, 2), ""), MakeLabel(At(4, 6, 2), ""),
+                 MakeLabel(At(4, 9, 2), "")}};
   std::string rendered = Render(capabilities, diagnostic);
   // Plain cyan starts the ramp and the third range comes back around to it;
   // bright cyan is the second.
@@ -2487,24 +2384,6 @@ TEST(RendererTest, Ansi256GetsTheChosenColors) {
   std::string rendered =
       RenderOne(capabilities, Level::Error, At(4, 3, 7), "bad call");
   EXPECT_THAT(rendered, HasSubstr("\x1b[38;5;"));
-}
-
-TEST(RendererTest, AHostedMessagesLabelLineFollowsTheHostsRampColor) {
-  // With a context leading, the message's words hang from the range containing
-  // its location, and the rotation recolors that host: the label line and bar
-  // follow the host's rotated color rather than keeping the theme's center.
-  Terminal::Capabilities capabilities = {.color_mode =
-                                             Terminal::ColorMode::Truecolor};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 4, 1), "bad call"),
-      .contexts = {MakeContext(At(3, 4, 4), "in `Main`")},
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 4), ""),
-                 MakeLabel(LabelCategory::Primary, At(4, 8, 2), "")}};
-  std::string rendered = Render(capabilities, diagnostic);
-  // The host is the leftmost problem range on its line and takes the dark
-  // end; the message's label line reaches its label in the same color.
-  EXPECT_THAT(rendered, HasSubstr("\x1b[38;2;181;86;0m'--|")) << rendered;
 }
 
 TEST(RendererTest, ASpanPastTheEndOfAFullWidthLineIsWindowedIn) {
@@ -2549,11 +2428,9 @@ TEST(RendererTest, ASpanOutsideASharedWindowIsClampedToIt) {
                .length = length};
   };
   Terminal::Capabilities capabilities = {.is_terminal = true, .columns = 80};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(at(33, 1), "bad"),
-      .labels = {MakeLabel(LabelCategory::Primary, at(31, 5), ""),
-                 MakeLabel(LabelCategory::Primary, at(201, 3), "")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = WithRanges(MakeMessage(at(33, 1), "bad"),
+                                                 {at(31, 5), at(201, 3)})};
   EXPECT_THAT(
       Render(capabilities, diagnostic),
       Eq("       .-| foo.carbon:1:33\n"
@@ -2581,11 +2458,9 @@ TEST(RendererTest, ASpanCutOffTheLeftOfAWindowIsNotCarried) {
                .length = length};
   };
   Terminal::Capabilities capabilities = {.is_terminal = true, .columns = 80};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(at(252, 1), "bad"),
-      .labels = {MakeLabel(LabelCategory::Primary, at(250, 5), ""),
-                 MakeLabel(LabelCategory::Primary, at(11, 40), "")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = WithRanges(MakeMessage(at(252, 1), "bad"),
+                                                 {at(250, 5), at(11, 40)})};
   // The window shows the right span; the left label, cut off, is a one-column
   // underline on the leading `...` rather than dragging its 40-column length
   // across the source that took its place.
@@ -2624,10 +2499,9 @@ TEST(RendererTest, AControlByteInAnUnnumberedFilenameCannotBreakTheFrame) {
                .line_number = 9,
                .column_number = 1,
                .length = 9};
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 7), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, other, "declared here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 7), "bad"),
+                           .labels = {MakeLabel(other, "declared here")}};
   std::string rendered = RenderUnnumbered(Plain(), diagnostic);
   EXPECT_THAT(rendered, HasSubstr("|-| ab cd.carbon\n")) << rendered;
 }
@@ -2643,10 +2517,9 @@ TEST(RendererTest, AMergedPairWithoutFileTextStillElides) {
                .column_number = 1,
                .length = 2};
   };
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(at("first line", 1), "bad"),
-      .labels = {MakeLabel(LabelCategory::Info, at("third line", 3), "here")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(at("first line", 1), "bad"),
+                           .labels = {MakeLabel(at("third line", 3), "here")}};
   EXPECT_THAT(Render(Plain(), diagnostic), Eq("       .-| foo.carbon:1:1\n"
                                               "->   1 | first line\n"
                                               "       : ^^\n"
@@ -2669,10 +2542,9 @@ TEST(RendererTest, ControlCharactersInWordsBecomeSpaces) {
 TEST(RendererTest, AWhitespaceOnlyLabelIsJustAnUnderline) {
   // A label whose text scrubs away to spaces has nothing to hang: it becomes
   // an underline with no label line, rather than rows framing nothing.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 3, 4), "bad call"),
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 8, 2), "\n")}};
+  Diagnostic diagnostic = {.level = Level::Error,
+                           .message = MakeMessage(At(4, 3, 4), "bad call"),
+                           .labels = {MakeLabel(At(4, 8, 2), "\n")}};
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
@@ -2699,27 +2571,6 @@ TEST(RendererTest, AZeroLengthSpanIsDrawnAsAPoint) {
                  ""));
 }
 
-TEST(RendererTest, AContextLeadsTheFrameAndTheMessageHangs) {
-  // A context with a location leads the diagnostic: the level word and the
-  // heavy underline are its, and the message's text is placed like a label's
-  // under the range containing its location, in the problem's color.
-  Diagnostic diagnostic = {
-      .level = Level::Error,
-      .message = MakeMessage(At(4, 4, 1), "no matching call"),
-      .contexts = {MakeContext(At(3, 4, 4), "in `Main`")},
-      .labels = {MakeLabel(LabelCategory::Primary, At(4, 3, 7), "")}};
-  EXPECT_THAT(Render(Plain(), diagnostic),
-              Eq("       .-| foo.carbon:3:4\n"
-                 "->   3 | fn Main() {\n"
-                 "       :    ^^^^\n"
-                 "       :      '--| error: in `Main`\n"
-                 "     4 |   Run0(1);\n"
-                 "       :   ---.---\n"
-                 "       :      '--| no matching call\n"
-                 "       '----\n"
-                 ""));
-}
-
 TEST(RendererTest, ALabelLinePassingAnOutDentedBlockSkipsItsRowsWhole) {
   // An out-dented block occupies its rows from the bar to the right edge,
   // blank cells included, so a label line descending past it skips every row of
@@ -2739,7 +2590,7 @@ TEST(RendererTest, ALabelLinePassingAnOutDentedBlockSkipsItsRowsWhole) {
           RoutedLoc(),
           "type `str` does not implement interface `Core.ImplicitAs("
           "ExtremelyLongNamedGenericContainerTypeForTesting(i32))` at all"),
-      .labels = {MakeLabel(LabelCategory::Info, routed_at(3, 7), "callee")}};
+      .labels = {MakeLabel(routed_at(3, 7), "callee")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:2:11\n"
                  "->   2 │   NeedsIt(\"definitely not the right type\");\n"
@@ -2763,11 +2614,11 @@ TEST(RendererTest, ALabelLineSkipsARoutedLabelsRows) {
       .level = Level::Error,
       .message = MakeMessage(At(4, 3, 1), "bad call"),
       .labels = {
-          MakeLabel(LabelCategory::Info, At(4, 3, 1), "left words"),
-          MakeLabel(LabelCategory::Info, At(4, 8, 2),
+          MakeLabel(At(4, 3, 1), "left words"),
+          MakeLabel(At(4, 8, 2),
                     "`AnExtremelyLongUnbreakableGenericTypeNameForTesting("
                     "AnExtremelyLongUnbreakableGenericTypeNameForTesting)`"),
-          MakeLabel(LabelCategory::Info, At(4, 10, 1), "right words")}};
+          MakeLabel(At(4, 10, 1), "right words")}};
   EXPECT_THAT(Render(capabilities, diagnostic),
               Eq("       ╭─┤ foo.carbon:4:3\n"
                  "->   4 │   Run0(1);\n"

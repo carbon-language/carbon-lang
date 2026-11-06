@@ -870,6 +870,18 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, format);
 }
 
+// Requires `type_id`, one side of a built-in conversion, to be complete.
+static auto RequireCompleteConversionType(Context& context, SemIR::LocId loc_id,
+                                          SemIR::TypeId type_id) -> bool {
+  return RequireCompleteType(context, type_id, loc_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInBuiltinConversion, Error,
+                      "built-in conversion involving incomplete type {0}",
+                      SemIR::TypeId);
+    return context.emitter().Build(loc_id, IncompleteTypeInBuiltinConversion,
+                                   type_id);
+  });
+}
+
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -895,9 +907,8 @@ static auto MakeIntFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
-  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
-      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id)) {
     return std::nullopt;
   }
 
@@ -993,9 +1004,8 @@ static auto MakeFloatFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
-  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
-      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id)) {
     return std::nullopt;
   }
 

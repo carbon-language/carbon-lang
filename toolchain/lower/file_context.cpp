@@ -574,7 +574,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
         &context().tree_and_subtrees_getters(), &sem_ir());
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
-                          /*token_only=*/false);
+                          Parse::LocExtent::Subtree);
     output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Lowering function ";
     if (specific_id.has_value()) {

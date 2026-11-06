@@ -1470,7 +1470,7 @@ static auto DiagnoseUnterminatedString(Diagnostics::Emitter<SourceLoc>& emitter,
   emitter
       .Build(SourceLoc::Before(literal.text().end()), UnterminatedString,
              is_char)
-      .Attach(SourceLoc::Range(literal.text()))
+      .ExtraRange(SourceLoc::Range(literal.text()))
       .Emit();
 }
 
@@ -1512,7 +1512,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                       "type indicator may not contain `'`, `#`, or `\"`, and "
                       "the content must begin on a new line");
     emitter_.Build(literal->text().begin(), MultiLineStringInvalidIntroducer)
-        .Attach(SourceLoc::Range(literal->text()))
+        .ExtraRange(SourceLoc::Range(literal->text()))
         .Emit();
     return lex_as_error();
   }
@@ -1675,7 +1675,7 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     emitter_
         .Build(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
                DigitLimit)
-        .Attach(SourceLoc::Range(suffix))
+        .ExtraRange(SourceLoc::Range(suffix))
         .Emit();
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
@@ -1883,7 +1883,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "encountered unrecognized characters while parsing");
   emitter_.Build(error_text.begin(), UnrecognizedCharacters)
-      .Attach(SourceLoc::Range(error_text))
+      .ExtraRange(SourceLoc::Range(error_text))
       .Emit();
 
   position += error_text.size();
@@ -2473,7 +2473,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
                       "opening symbol without a corresponding closing symbol");
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
                       "closing symbol without a corresponding opening symbol");
-    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere, Info,
+    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere,
                             "possibly missing `{0}` here", Lex::TokenKind);
 
     // The label names a position between two tokens, which only the source

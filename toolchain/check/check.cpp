@@ -123,7 +123,7 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
         !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "library imported more than once");
-      CARBON_DIAGNOSTIC_LABEL(FirstImported, Info, "first import here");
+      CARBON_DIAGNOSTIC_LABEL(FirstImported, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
           .Attach(insert_result.value(), FirstImported)
           .Emit();

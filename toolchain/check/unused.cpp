@@ -34,13 +34,18 @@ auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
   if (entity_name.is_unused) {
     if (result.use_loc_id.has_value()) {
       CARBON_DIAGNOSTIC_ON_SCOPE(UnusedButUsed, Error,
-                                 "variable `{0}` marked `unused` but used",
+                                 "binding `{0}` marked `unused` but used",
                                  SemIR::NameId);
-      CARBON_DIAGNOSTIC_LABEL(UnusedButUsedHere, Info, "usage here");
-      context.emitter()
-          .Build(decl_loc, UnusedButUsed, name_id)
-          .Attach(result.use_loc_id, UnusedButUsedHere)
-          .Emit();
+      CARBON_DIAGNOSTIC_LABEL(UnusedButUsedHere, "usage here");
+      auto diag = context.emitter().Build(decl_loc, UnusedButUsed, name_id);
+      // Only attach a label when the use has a location distinct from the
+      // binding's.
+      auto use_loc_id = context.insts().GetCanonicalLocId(result.use_loc_id);
+      if (use_loc_id.has_value() &&
+          use_loc_id != context.insts().GetCanonicalLocId(decl_loc)) {
+        diag.Attach(result.use_loc_id, UnusedButUsedHere);
+      }
+      diag.Emit();
     }
   } else {
     if (!result.use_loc_id.has_value() && result.is_decl_reachable) {

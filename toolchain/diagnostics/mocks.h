@@ -30,13 +30,6 @@ MATCHER_P(IsDiagnosticsLabelString, matcher, "") {
   return testing::ExplainMatchResult(matcher, label.Format(), result_listener);
 }
 
-// NOLINTNEXTLINE(modernize-use-trailing-return-type): From the macro.
-MATCHER_P(IsDiagnosticsContextString, matcher, "") {
-  const Diagnostics::Context& context = arg;
-  return testing::ExplainMatchResult(matcher, context.Format(),
-                                     result_listener);
-}
-
 // Matches the location fields both a message and a label carry.
 template <typename T>
 auto IsAtLoc(testing::Matcher<int> line_number,
@@ -64,37 +57,22 @@ inline auto IsDiagnosticMessage(testing::Matcher<Diagnostics::Kind> kind,
                IsDiagnosticsMessageString(message));
 }
 
-inline auto IsDiagnosticLabel(
-    testing::Matcher<Diagnostics::LabelCategory> category,
-    testing::Matcher<int> line_number, testing::Matcher<int> column_number,
-    testing::Matcher<std::string> text)
+inline auto IsDiagnosticLabel(testing::Matcher<int> line_number,
+                              testing::Matcher<int> column_number,
+                              testing::Matcher<std::string> text)
     -> testing::Matcher<Diagnostics::Label> {
-  using testing::AllOf;
-  using testing::Field;
-  return AllOf(Field("category", &Diagnostics::Label::category, category),
-               IsAtLoc<Diagnostics::Label>(line_number, column_number),
-               IsDiagnosticsLabelString(text));
-}
-
-inline auto IsDiagnosticContext(testing::Matcher<int> line_number,
-                                testing::Matcher<int> column_number,
-                                testing::Matcher<std::string> text)
-    -> testing::Matcher<Diagnostics::Context> {
-  return testing::AllOf(
-      IsAtLoc<Diagnostics::Context>(line_number, column_number),
-      IsDiagnosticsContextString(text));
+  return testing::AllOf(IsAtLoc<Diagnostics::Label>(line_number, column_number),
+                        IsDiagnosticsLabelString(text));
 }
 
 inline auto IsDiagnostic(
     testing::Matcher<Diagnostics::Level> level,
     testing::Matcher<Diagnostics::Message> message,
-    testing::Matcher<llvm::SmallVector<Diagnostics::Context, 0>> contexts,
     testing::Matcher<llvm::SmallVector<Diagnostics::Label, 0>> labels)
     -> testing::Matcher<Diagnostics::Diagnostic> {
   return testing::AllOf(
       testing::Field("level", &Diagnostics::Diagnostic::level, level),
       testing::Field("message", &Diagnostics::Diagnostic::message, message),
-      testing::Field("contexts", &Diagnostics::Diagnostic::contexts, contexts),
       testing::Field("labels", &Diagnostics::Diagnostic::labels, labels));
 }
 
@@ -105,32 +83,36 @@ struct ExpectedLoc {
   testing::Matcher<int> length;
 };
 
-// Matches a diagnostic with one message and one range attached to it with no
-// text, checking the lengths of the message's location and of the range as
-// well as their starts.
+// Matches a diagnostic whose message has one extra range, checking the lengths
+// of the message's location and of the range as well as their starts, and that
+// has no labels.
 inline auto IsDiagnosticWithRange(testing::Matcher<Diagnostics::Kind> kind,
                                   testing::Matcher<Diagnostics::Level> level,
                                   ExpectedLoc loc,
                                   testing::Matcher<std::string> message,
                                   ExpectedLoc range)
     -> testing::Matcher<Diagnostics::Diagnostic> {
+  using testing::AllOf;
+  using testing::Field;
   return IsDiagnostic(
       level,
-      testing::AllOf(
-          IsDiagnosticMessage(kind, level, loc.line_number, loc.column_number,
-                              message),
-          testing::Field(
-              "loc", &Diagnostics::Message::loc,
-              testing::Field("length", &Diagnostics::Loc::length, loc.length))),
-      testing::IsEmpty(),
-      testing::ElementsAre(testing::AllOf(
-          IsDiagnosticLabel(Diagnostics::LabelCategory::Primary,
-                            range.line_number, range.column_number, ""),
-          testing::Field("loc", &Diagnostics::Label::loc,
-                         testing::Field("length", &Diagnostics::Loc::length,
-                                        range.length)))));
+      AllOf(IsDiagnosticMessage(kind, level, loc.line_number, loc.column_number,
+                                message),
+            Field("loc", &Diagnostics::Message::loc,
+                  Field("length", &Diagnostics::Loc::length, loc.length)),
+            Field("ranges", &Diagnostics::Message::ranges,
+                  testing::ElementsAre(AllOf(
+                      Field("line_number", &Diagnostics::Loc::line_number,
+                            range.line_number),
+                      Field("column_number", &Diagnostics::Loc::column_number,
+                            range.column_number),
+                      Field("length", &Diagnostics::Loc::length,
+                            range.length))))),
+      testing::IsEmpty());
 }
 
+// Matches a diagnostic with a message and nothing else: no extra ranges and no
+// labels.
 inline auto IsSingleDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
                                testing::Matcher<Diagnostics::Level> level,
                                testing::Matcher<int> line_number,
@@ -139,8 +121,11 @@ inline auto IsSingleDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
     -> testing::Matcher<Diagnostics::Diagnostic> {
   return IsDiagnostic(
       level,
-      IsDiagnosticMessage(kind, level, line_number, column_number, message),
-      testing::IsEmpty(), testing::IsEmpty());
+      testing::AllOf(
+          IsDiagnosticMessage(kind, level, line_number, column_number, message),
+          testing::Field("ranges", &Diagnostics::Message::ranges,
+                         testing::IsEmpty())),
+      testing::IsEmpty());
 }
 
 // Matches a diagnostic with one message, located at the point just before
@@ -157,8 +142,10 @@ inline auto IsPointDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
           IsDiagnosticMessage(kind, level, line_number, column_number, message),
           testing::Field(
               "loc", &Diagnostics::Message::loc,
-              testing::Field("length", &Diagnostics::Loc::length, 0))),
-      testing::IsEmpty(), testing::IsEmpty());
+              testing::Field("length", &Diagnostics::Loc::length, 0)),
+          testing::Field("ranges", &Diagnostics::Message::ranges,
+                         testing::IsEmpty())),
+      testing::IsEmpty());
 }
 
 }  // namespace Carbon::Testing
@@ -168,7 +155,6 @@ namespace Carbon::Diagnostics {
 // Printing helpers for tests.
 auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void;
 auto PrintTo(Level level, std::ostream* os) -> void;
-auto PrintTo(LabelCategory category, std::ostream* os) -> void;
 
 }  // namespace Carbon::Diagnostics
 

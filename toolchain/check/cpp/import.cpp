@@ -2097,9 +2097,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
       context.insts().GetAs<SemIR::FunctionDecl>(*function_decl_id).function_id;
   SemIR::Function& imported_function = context.functions().Get(function_id);
   if (IsCppThunkRequired(context, callee_info)) {
-    Diagnostics::AnnotationScope annotate_diagnostics(
+    Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC_LABEL(InCppThunk, Info,
+          CARBON_DIAGNOSTIC_LABEL(InCppThunk,
                                   "in thunk for C++ function used here");
           builder.Attach(loc_id, InCppThunk);
         });
@@ -2164,10 +2164,10 @@ auto ImportFunctionPointerInvoke(
     context.TODO(loc_id,
                  "invoking a C++ member function pointer is unsupported");
   }
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC_LABEL(
-            InCppFunctionPointerThunk, Info,
+            InCppFunctionPointerThunk,
             "in thunk for C++ function pointer type used here");
         builder.Attach(loc_id, InCppFunctionPointerThunk);
       });
@@ -2771,11 +2771,10 @@ auto GetClangIdentifierInfo(Context& context, SemIR::NameId name_id)
 auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
                        SemIR::NameScopeId scope_id, SemIR::NameId name_id)
     -> SemIR::ScopeLookupResult {
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_LABEL(InCppNameLookup, Info,
-                                "in `Cpp` name lookup for `{0}`",
-                                SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(
+            InCppNameLookup, "in `Cpp` name lookup for `{0}`", SemIR::NameId);
         builder.Attach(loc_id, InCppNameLookup, name_id);
       });
   if (IsIncompleteClass(context, scope_id)) {

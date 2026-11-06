@@ -1981,7 +1981,7 @@ auto ExportFunctionToCppPointerConversion(
           ExportedFunctionPtrTypeMismatch, Error,
           "can't convert exported {0:member |}function pointer to `{1}`",
           Diagnostics::BoolAsSelect, CppType);
-      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction, Info,
+      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction,
                               "function exported with pointer type `{0}`",
                               CppType);
       context.emitter()

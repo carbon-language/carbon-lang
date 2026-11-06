@@ -407,7 +407,7 @@ auto NumericLiteral::Parser::CheckDigitSequence(llvm::StringRef text,
     CARBON_DIAGNOSTIC(EmptyDigitSequence, Error,
                       "empty digit sequence in numeric literal");
     emitter_.Build(SourceLoc::Before(text.begin()), EmptyDigitSequence)
-        .Attach(SourceLoc::Range(text))
+        .ExtraRange(SourceLoc::Range(text))
         .Emit();
     return {.ok = false};
   }
@@ -426,7 +426,7 @@ auto NumericLiteral::Parser::CheckLeadingZero() -> bool {
     CARBON_DIAGNOSTIC(UnknownBaseSpecifier, Error,
                       "unknown base specifier in numeric literal");
     emitter_.Build(int_part_.begin(), UnknownBaseSpecifier)
-        .Attach(SourceLoc::Range(int_part_))
+        .ExtraRange(SourceLoc::Range(int_part_))
         .Emit();
     return false;
   }
@@ -455,7 +455,7 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
     emitter_
         .Build(literal_.text_.begin() + literal_.radix_point_,
                InvalidRealLiteralRadix, static_cast<int>(radix_))
-        .Attach(SourceLoc::Range(literal_.text_))
+        .ExtraRange(SourceLoc::Range(literal_.text_))
         .Emit();
     // Carry on and parse the real literal anyway.
   }

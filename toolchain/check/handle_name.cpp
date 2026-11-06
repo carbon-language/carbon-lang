@@ -202,15 +202,13 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
     // `.Self`.
     SemIR::InstId period_self_id = SemIR::InstId::None;
     {
-      // TODO: Instead of annotating the diagnostic, should change
-      // `HandleNameAsExpr` to optionally allow us to produce the diagnostic
-      // instead so we can generate a "name `.Self` implicitly referenced by
-      // designated expression, but not found" diagnostic instead of adding a
-      // note to the current "name `.Self` not found" message.
-      Diagnostics::AnnotationScope annotate_diagnostics(
+      // TODO: Pass a diagnoser to `HandleNameAsExpr`, so that this can emit
+      // "name `.Self` implicitly referenced by designated expression, but not
+      // found" in place of labeling the "name `.Self` not found" diagnostic.
+      Diagnostics::ContextScope diagnostic_context(
           &context.emitter(), [&](auto& builder) {
             CARBON_DIAGNOSTIC_LABEL(
-                NoPeriodSelfForDesignator, Info,
+                NoPeriodSelfForDesignator,
                 "designator may only be used when `.Self` is in scope");
             builder.Attach(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });

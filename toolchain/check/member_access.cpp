@@ -254,11 +254,11 @@ static auto GetWitnessFromSingleImplLookupResult(
 
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
-static auto PerformImplLookup(
-    Context& context, SemIR::LocId loc_id, SemIR::ConstantId type_const_id,
-    SemIR::AssociatedEntityType assoc_type, SemIR::InstId member_id,
-    bool diagnose = true,
-    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId type_const_id,
+                              SemIR::AssociatedEntityType assoc_type,
+                              SemIR::InstId member_id, bool diagnose = true,
+                              Diagnoser missing_impl_diagnostic = nullptr)
     -> SemIR::InstId {
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
   // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
@@ -269,15 +269,9 @@ static auto PerformImplLookup(
                                          interface_type_id.AsConstantId());
   if (!lookup_result.has_value()) {
     if (diagnose) {
-      if (missing_impl_diagnostic_context) {
-        Diagnostics::ContextScope scope(&context.emitter(),
-                                        missing_impl_diagnostic_context);
-        // TODO: Pass in the expression whose type we are printing.
-        CARBON_DIAGNOSTIC(MissingImplInMemberAccessInContext, Error,
-                          "type {1} does not implement interface {0}",
-                          SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(loc_id, MissingImplInMemberAccessInContext,
-                               interface_type_id, self_type_id);
+      if (missing_impl_diagnostic) {
+        auto diag = missing_impl_diagnostic();
+        diag.Emit();
       } else {
         // TODO: Pass in the expression whose type we are printing.
         CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
@@ -537,13 +531,13 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       // here to provide a better diagnostic than what we get when looking for
       // scopes directly on the facet type.
       if (!RequireCompleteType(
-              context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-                CARBON_DIAGNOSTIC_CONTEXT(
-                    IncompleteTypeInMemberAccessOfFacet,
+              context, base_type_id, SemIR::LocId(base_id), [&] {
+                CARBON_DIAGNOSTIC(
+                    IncompleteTypeInMemberAccessOfFacet, Error,
                     "member access into facet of incomplete type {0}",
                     SemIR::TypeId);
-                builder.Attach(base_id, IncompleteTypeInMemberAccessOfFacet,
-                               base_type_id);
+                return context.emitter().Build(
+                    base_id, IncompleteTypeInMemberAccessOfFacet, base_type_id);
               })) {
         // If the scope is invalid in AppendLookupScopesForConstant we still
         // return true and proceed with lookup, just ignoring that scope.
@@ -578,16 +572,16 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // we can produce a better diagnostic here with context about what operation
   // is being done (member access) that requires the complete type.
   //
-  // TODO: ConvertToValueOrRefExpr could take context about the operation being
-  // done to give a better error than "invalid use of" an incomplete type?
-  if (!RequireCompleteType(
-          context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC_CONTEXT(
-                IncompleteTypeInMemberAccess,
-                "member access into object of incomplete type {0}",
-                TypeOfInstId);
-            builder.Attach(base_id, IncompleteTypeInMemberAccess, base_id);
-          })) {
+  // TODO: ConvertToValueOrRefExpr could take a diagnoser for the operation
+  // being done, to give a better error than "invalid use of" an incomplete
+  // type.
+  if (!RequireCompleteType(context, base_type_id, SemIR::LocId(base_id), [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInMemberAccess, Error,
+                          "member access into object of incomplete type {0}",
+                          TypeOfInstId);
+        return context.emitter().Build(base_id, IncompleteTypeInMemberAccess,
+                                       base_id);
+      })) {
     return SemIR::ErrorInst::InstId;
   }
 
@@ -768,8 +762,7 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
 static auto PerformCompoundMemberAccessAction(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
     SemIR::InstId member_expr_id, bool diagnose = true,
-    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
-    -> SemIR::InstId {
+    Diagnoser missing_impl_diagnostic = nullptr) -> SemIR::InstId {
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
@@ -802,9 +795,9 @@ static auto PerformCompoundMemberAccessAction(
     if (IsInstanceType(context, decl_type_id)) {
       // Step 2a: For instance methods, lookup the impl of the interface for
       // this type and get the method.
-      member_id = PerformImplLookup(context, loc_id, base_type_const_id,
-                                    *assoc_type, member_id, diagnose,
-                                    missing_impl_diagnostic_context);
+      member_id =
+          PerformImplLookup(context, loc_id, base_type_const_id, *assoc_type,
+                            member_id, diagnose, missing_impl_diagnostic);
       // Next we will perform instance binding.
     } else {
       // Step 2b: For non-instance methods and associated constants, we access
@@ -840,10 +833,11 @@ static auto PerformCompoundMemberAccessAction(
   return member_id;
 }
 
-auto PerformCompoundMemberAccess(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
-    SemIR::InstId member_expr_id, bool diagnose,
-    DiagnosticContextFn missing_impl_diagnostic_context) -> SemIR::InstId {
+auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
+                                 SemIR::InstId base_id,
+                                 SemIR::InstId member_expr_id, bool diagnose,
+                                 Diagnoser missing_impl_diagnostic)
+    -> SemIR::InstId {
   if (auto splice_inst_id = AddActionSpliceIfDependent(
           context, loc_id, SemIR::TypeInstId::None,
           SemIR::CompoundMemberAccessAction{.type_id = SemIR::InstType::TypeId,
@@ -856,7 +850,7 @@ auto PerformCompoundMemberAccess(
   }
   return PerformCompoundMemberAccessAction(context, loc_id, base_id,
                                            member_expr_id, diagnose,
-                                           missing_impl_diagnostic_context);
+                                           missing_impl_diagnostic);
 }
 
 auto PerformAction(Context& context, SemIR::LocId loc_id,
@@ -885,7 +879,10 @@ auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
     // TODO: Decide what to do if the index is a symbolic constant.
     CARBON_DIAGNOSTIC(TupleIndexNotConstant, Error,
                       "tuple index must be a constant");
-    context.emitter().Emit(loc_id, TupleIndexNotConstant);
+    context.emitter()
+        .Build(loc_id, TupleIndexNotConstant)
+        .ExtraRange(index_inst_id)
+        .Emit();
     return SemIR::ErrorInst::InstId;
   };
   // Diagnose a non-constant index prior to conversion to IntLiteral, because

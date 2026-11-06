@@ -189,7 +189,7 @@ static auto VerifyInImports(Context& context, Lex::TokenIndex intro_token)
                         "`import` declarations must come after the `package` "
                         "declaration (if present) and before any other "
                         "entities in the file");
-      CARBON_DIAGNOSTIC_LABEL(FirstDecl, Info, "first declaration is here");
+      CARBON_DIAGNOSTIC_LABEL(FirstDecl, "first declaration is here");
       context.emitter()
           .Build(intro_token, ImportTooLate)
           .Attach(context.first_non_packaging_token(), FirstDecl)
@@ -273,7 +273,7 @@ static auto HandlePackageAndLibraryDecls(Context& context,
         PackageTooLate, Error,
         "the `{0}` declaration must be the first non-comment line",
         Lex::TokenKind);
-    CARBON_DIAGNOSTIC_LABEL(FirstNonCommentLine, Info,
+    CARBON_DIAGNOSTIC_LABEL(FirstNonCommentLine,
                             "first non-comment line is here");
     context.emitter()
         .Build(state.token, PackageTooLate, intro_token_kind)

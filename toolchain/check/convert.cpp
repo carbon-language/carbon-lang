@@ -1496,10 +1496,9 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
         // While the types are the same, the conversion can still fail if it
         // performs a copy while converting the value to another category, and
         // the type (or some part of it) is not copyable.
-        Diagnostics::AnnotationScope annotate_diagnostics(
+        Diagnostics::ContextScope diagnostic_context(
             &context.emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC_LABEL(InCopy, Info, "in copy of {0}",
-                                      TypeOfInstId);
+              CARBON_DIAGNOSTIC_LABEL(InCopy, "in copy of {0}", TypeOfInstId);
               builder.Attach(value_id, InCopy, value_id);
             });
 
@@ -1867,14 +1866,14 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
 static auto PerformCopy(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId expr_id, const ConversionTarget& target)
     -> SemIR::InstId {
+  auto expr_loc_id = GetInstLocationOrFallback(context, expr_id, loc_id);
   auto copy_id = BuildUnaryOperator(
-      context, GetInstLocationOrFallback(context, expr_id, loc_id),
-      {.interface_name = CoreIdentifier::Copy}, expr_id, target.diagnose,
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(CopyOfUncopyableType,
-                                  "cannot copy value of type {0}",
-                                  TypeOfInstId);
-        builder.Attach(expr_id, CopyOfUncopyableType, expr_id);
+      context, expr_loc_id, {.interface_name = CoreIdentifier::Copy}, expr_id,
+      target.diagnose, [&] {
+        CARBON_DIAGNOSTIC(CopyOfUncopyableType, Error,
+                          "cannot copy value of type {0}", TypeOfInstId);
+        return context.emitter().Build(expr_loc_id, CopyOfUncopyableType,
+                                       expr_id);
       });
   return copy_id;
 }
@@ -1928,32 +1927,33 @@ static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
       .interface_args_ref = interface_args,
       .op_name = CoreIdentifier::Convert,
   };
-  expr_id = BuildUnaryOperator(
-      context, loc_id, op, expr_id, target.diagnose, [&](auto& builder) {
+  expr_id =
+      BuildUnaryOperator(context, loc_id, op, expr_id, target.diagnose, [&] {
         int target_kind_for_diag =
             target.kind == ConversionTarget::ExplicitAs         ? 1
             : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
                                                                 : 0;
         if (context.types().Is<SemIR::FacetType>(target.type_id)) {
-          CARBON_DIAGNOSTIC_CONTEXT(
-              ConversionFailureNonTypeToFacet,
+          CARBON_DIAGNOSTIC(
+              ConversionFailureNonTypeToFacet, Error,
               "cannot{0:=0: implicitly|:} convert non-type value of type {1} "
               "{2:to|into type implementing} {3}"
               "{0:=1: with `as`|=2: with `unsafe as`|:}",
               Diagnostics::IntAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
               SemIR::TypeId);
-          builder.Attach(loc_id, ConversionFailureNonTypeToFacet,
-                         target_kind_for_diag, expr_id,
-                         target.type_id == SemIR::TypeType::TypeId,
-                         target.type_id);
+          return context.emitter().Build(
+              loc_id, ConversionFailureNonTypeToFacet, target_kind_for_diag,
+              expr_id, target.type_id == SemIR::TypeType::TypeId,
+              target.type_id);
         } else {
-          CARBON_DIAGNOSTIC_CONTEXT(
-              ConversionFailure,
+          CARBON_DIAGNOSTIC(
+              ConversionFailure, Error,
               "cannot{0:=0: implicitly|:} convert expression of type "
               "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
               Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
-          builder.Attach(loc_id, ConversionFailure, target_kind_for_diag,
-                         expr_id, target.type_id);
+          return context.emitter().Build(loc_id, ConversionFailure,
+                                         target_kind_for_diag, expr_id,
+                                         target.type_id);
         }
       });
 
@@ -2537,24 +2537,23 @@ auto Convert(Context& context, SemIR::LocId loc_id, SemIR::InstId expr_id,
   // need the type to be complete.
   if (ConversionNeedsCompleteTarget(context, expr_id, target)) {
     if (target.diagnose) {
-      if (!RequireCompleteType(
-              context, target.type_id, loc_id, [&](auto& builder) {
-                CARBON_CHECK(
-                    !target.is_initializer(),
-                    "Initialization of incomplete types is expected to be "
-                    "caught elsewhere.");
-                CARBON_DIAGNOSTIC_CONTEXT(
-                    IncompleteTypeInValueConversion,
-                    "forming value of incomplete type {0}", SemIR::TypeId);
-                CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInConversion,
-                                          "invalid use of incomplete type {0}",
-                                          SemIR::TypeId);
-                builder.Attach(loc_id,
-                               target.kind == ConversionTarget::Value
-                                   ? IncompleteTypeInValueConversion
-                                   : IncompleteTypeInConversion,
-                               target.type_id);
-              })) {
+      if (!RequireCompleteType(context, target.type_id, loc_id, [&] {
+            CARBON_CHECK(!target.is_initializer(),
+                         "Initialization of incomplete types is expected to be "
+                         "caught elsewhere.");
+            CARBON_DIAGNOSTIC(IncompleteTypeInValueConversion, Error,
+                              "forming value of incomplete type {0}",
+                              SemIR::TypeId);
+            CARBON_DIAGNOSTIC(IncompleteTypeInConversion, Error,
+                              "invalid use of incomplete type {0}",
+                              SemIR::TypeId);
+            return context.emitter().Build(
+                loc_id,
+                target.kind == ConversionTarget::Value
+                    ? IncompleteTypeInValueConversion
+                    : IncompleteTypeInConversion,
+                target.type_id);
+          })) {
         return SemIR::ErrorInst::InstId;
       }
     } else {

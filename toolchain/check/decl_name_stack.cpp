@@ -391,15 +391,14 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
                                                         SemIR::LocId loc_id,
                                                         SemIR::ClassId class_id)
     -> void {
-  Diagnostics::ContextScope diagnostic_context(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(
-            QualifiedDeclInIncompleteClassScope,
-            "cannot declare a member of incomplete class {0}", SemIR::TypeId);
-        builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
-                       context.classes().Get(class_id).self_type_id);
-      });
-  DiagnoseIncompleteClass(context, class_id);
+  DiagnoseIncompleteClass(context, class_id, [&] {
+    CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Error,
+                      "cannot declare a member of incomplete class {0}",
+                      SemIR::TypeId);
+    return context.emitter().Build(
+        loc_id, QualifiedDeclInIncompleteClassScope,
+        context.classes().Get(class_id).self_type_id);
+  });
 }
 
 // Diagnose that a qualified declaration name specifies an undefined interface
@@ -407,15 +406,13 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
 static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     Context& context, SemIR::LocId loc_id, SemIR::InterfaceId interface_id,
     SemIR::InstId interface_inst_id) -> void {
-  Diagnostics::ContextScope diagnostic_context(
-      &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(
-            QualifiedDeclInUndefinedInterfaceScope,
-            "cannot declare a member of undefined interface {0}", InstIdAsType);
-        builder.Attach(loc_id, QualifiedDeclInUndefinedInterfaceScope,
-                       interface_inst_id);
-      });
-  DiagnoseIncompleteInterface(context, interface_id);
+  DiagnoseIncompleteInterface(context, interface_id, [&] {
+    CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Error,
+                      "cannot declare a member of undefined interface {0}",
+                      InstIdAsType);
+    return context.emitter().Build(
+        loc_id, QualifiedDeclInUndefinedInterfaceScope, interface_inst_id);
+  });
 }
 
 // Diagnose that a qualified declaration name specifies a different package as
@@ -426,7 +423,7 @@ static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                     "imported packages cannot be used for declarations");
-  CARBON_DIAGNOSTIC_LABEL(QualifiedDeclOutsidePackageSource, Info,
+  CARBON_DIAGNOSTIC_LABEL(QualifiedDeclOutsidePackageSource,
                           "package imported here");
   context.emitter()
       .Build(use_loc_id, QualifiedDeclOutsidePackage)
@@ -442,7 +439,7 @@ static auto DiagnoseQualifiedDeclInNonScope(
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
                     "name qualifiers are only allowed for entities that "
                     "provide a scope");
-  CARBON_DIAGNOSTIC_LABEL(QualifiedNameNonScopeEntity, Info,
+  CARBON_DIAGNOSTIC_LABEL(QualifiedNameNonScopeEntity,
                           "referenced non-scope entity declared here");
   context.emitter()
       .Build(use_loc_id, QualifiedNameInNonScope)

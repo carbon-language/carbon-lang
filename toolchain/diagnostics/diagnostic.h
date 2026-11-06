@@ -30,21 +30,6 @@ enum class Level : int8_t {
   Error,
 };
 
-// What a labeled range of source has to do with the diagnostic it is attached
-// to.
-//
-// A label is read against the code it marks rather than on its own, which is
-// what separates one from a message: `declared here` is not a sentence anyone
-// would want to read by itself. Anything that doesn't mark source that way is
-// not a label: see `CARBON_DIAGNOSTIC_CONTEXT` and
-// `CARBON_DIAGNOSTIC_LOCATION_INFO`.
-enum class LabelCategory : int8_t {
-  // Source that explains why the problem happened without being part of it.
-  Info,
-  // Source that is directly part of the problem.
-  Primary,
-};
-
 // Provides a definition of a diagnostic: the message that reports a problem
 // and stands alone as the sentence describing it. For example:
 //   CARBON_DIAGNOSTIC(MyDiagnostic, Error, "invalid code!");
@@ -64,14 +49,18 @@ enum class LabelCategory : int8_t {
 
 // Provides a definition of a label: a phrase attached to a range of source,
 // saying what that range has to do with the diagnostic. For example:
-//   CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, Primary,
-//                           "{0} argument{0:s} passed here", IntAsSelect);
-//   CARBON_DIAGNOSTIC_LABEL(FunctionDeclaredHere, Info,
+//   CARBON_DIAGNOSTIC_LABEL(FunctionDeclaredHere,
 //                           "calling function declared here");
+//   CARBON_DIAGNOSTIC_LABEL(OperandType, "operand has type {0}", TypeOfInstId);
 //
-// The category says what the range is to the diagnostic; see `LabelCategory`.
+// A label is read together with the code it is attached to, which is what
+// separates one from a message: `declared here` is not a sentence anyone would
+// want to read by itself. A label explains the problem; code that is part of
+// the problem is one of the message's ranges, added with
+// `Emitter::Builder::ExtraRange`.
 // A label has a format and arguments of its own, so it says only what it needs
-// to about the place it marks, and both are validated as a message's are.
+// to about the source it is attached to, and both are validated as a message's
+// are.
 //
 // It has no level, because it is read against the code rather than on its own,
 // and no kind, because there is no central registry of labels: a label is
@@ -82,43 +71,17 @@ enum class LabelCategory : int8_t {
 // It still carries its own name, so that `--include-diagnostic-kind` can say
 // which label produced a line and a test can match on it. See
 // `Emitter::Builder::Attach`.
-#define CARBON_DIAGNOSTIC_LABEL(LabelName, CategoryValue, Format, ...)     \
-  static constexpr auto LabelName =                                        \
-      ::Carbon::Diagnostics::LabelBase<__VA_ARGS__>(                       \
-          ::Carbon::Diagnostics::LabelCategory::CategoryValue, #LabelName, \
-          Format)
-
-// Provides a definition of a context: a sentence stating a problem in terms of
-// the operation it happened inside. For example:
-//   CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInFunctionReturnType,
-//                             "function returns incomplete type {0}",
-//                             SemIR::TypeId);
-//
-// A context is not a label. It is a sentence in its own right, the way a
-// message is, so where a diagnostic has one it leads and the message is read
-// against the code like anything else explaining it; see `LeadingContext`. It
-// is attached by a `ContextScope` rather than by the code emitting a
-// diagnostic.
-#define CARBON_DIAGNOSTIC_CONTEXT(ContextName, Format, ...)              \
-  static constexpr auto ContextName =                                    \
-      ::Carbon::Diagnostics::ContextBase<__VA_ARGS__>(/*is_soft=*/false, \
-                                                      #ContextName, Format)
-
-// Like `CARBON_DIAGNOSTIC_CONTEXT`, for a context used only as a fallback: it
-// is dropped when the diagnostic already has one, which is assumed to describe
-// the failure better.
-#define CARBON_DIAGNOSTIC_SOFT_CONTEXT(ContextName, Format, ...)        \
-  static constexpr auto ContextName =                                   \
-      ::Carbon::Diagnostics::ContextBase<__VA_ARGS__>(/*is_soft=*/true, \
-                                                      #ContextName, Format)
+#define CARBON_DIAGNOSTIC_LABEL(LabelName, Format, ...) \
+  static constexpr auto LabelName =                     \
+      ::Carbon::Diagnostics::LabelBase<__VA_ARGS__>(#LabelName, Format)
 
 // Provides a definition of a step in the path by which a location was reached
 // -- an import, an include, a macro expansion. For example:
 //   CARBON_DIAGNOSTIC_LOCATION_INFO(InImport, "imported from");
 //
-// This is not a label either: it marks no source, and is drawn as
-// `<text>: <location>` above the file it leads to. It is attached by an
-// emitter's `ConvertLoc`, and takes no arguments, because that is all the
+// This is not a label: it is attached to no source. The terminal renderer
+// shows it as `<text>: <location>` above the file it leads to. It is attached
+// by an emitter's `ConvertLoc`, and takes no arguments, because that is all the
 // conversion has to give it.
 #define CARBON_DIAGNOSTIC_LOCATION_INFO(StepName, Format) \
   static constexpr auto StepName =                        \
@@ -170,9 +133,9 @@ struct Loc {
   // `column_number` can be one more than the line's length.
   //
   // This is the range underlined in the source snippet. A message's own
-  // location is a point that an editor puts a cursor on, so where a range was
-  // attached to the same line to say what the problem covers, that range is
-  // drawn in its place rather than this one. See `Emitter::Builder::Attach`.
+  // location is a point that an editor puts a cursor on, so where one of the
+  // message's ranges contains it, that range is underlined in its place. See
+  // `Message::ranges`.
   int32_t length = 1;
 };
 
@@ -229,6 +192,11 @@ struct Message {
   // cursor, and the range underlined in the snippet. See `Loc::length`.
   Loc loc;
 
+  // The ranges the problem covers beyond `loc`, added with
+  // `Emitter::Builder::ExtraRange`. One that contains `loc` is underlined in
+  // place of `loc`'s own range; the rest are underlined with no text.
+  llvm::SmallVector<Loc, 0> ranges;
+
   // How `loc` was reached, when it was reached through an import, an include,
   // or a macro expansion. Inline storage is off because a step is large and
   // almost nothing is reached through one.
@@ -250,22 +218,17 @@ struct Message {
   FormatFn format_fn;
 };
 
-// A range of source attached to a diagnostic, and optionally a phrase saying
-// what that range has to do with it.
+// A range of source attached to a diagnostic to explain it, and optionally a
+// phrase saying what that range has to do with it.
 //
-// A label with no text marks its range and says nothing, which is how a
-// diagnostic points at the code its message is about without repeating the
-// message against it.
+// A label with no text attaches only its range.
 struct Label {
-  // Returns the label's text, which is empty when it only marks a range.
+  // Returns the label's text, which is empty when the label has none.
   auto Format() const -> std::string {
     return format_fn ? format_fn(format, format_args) : std::string();
   }
 
-  // What this range has to do with the diagnostic.
-  LabelCategory category;
-
-  // The range of source this marks, from `Loc::column_number` across
+  // The range of source this is attached to, from `Loc::column_number` across
   // `Loc::length`.
   Loc loc;
 
@@ -274,48 +237,16 @@ struct Label {
   // almost nothing is reached through one.
   llvm::SmallVector<LocationInfo, 0> location_info;
 
-  // The label's own name; see `CARBON_DIAGNOSTIC_LABEL`. Empty for a label that
-  // only marks its range, which nothing needs to name because it says nothing.
+  // The label's own name; see `CARBON_DIAGNOSTIC_LABEL`.
   llvm::StringLiteral name = "";
 
-  // The label's format for llvm::formatv, and the arguments to apply to it.
-  // Both are empty for a label that only marks its range.
+  // The label's format for llvm::formatv, and the arguments to apply to it. An
+  // empty format makes a label with no text.
   llvm::StringLiteral format = "";
   llvm::SmallVector<llvm::Any> format_args;
 
-  // Empty for a label that only marks its range.
-  FormatFn format_fn;
-};
-
-// A problem stated in terms of the operation it happened inside; see
-// `CARBON_DIAGNOSTIC_CONTEXT`.
-//
-// This is not a label: its text stands alone as a sentence rather than being
-// read against the source it names, which is what lets it lead a diagnostic in
-// place of the message.
-struct Context {
-  // Returns the context's text.
-  auto Format() const -> std::string {
-    CARBON_CHECK(format_fn, "A context always has a `format_fn`.");
-    return format_fn(format, format_args);
-  }
-
-  // Where the operation was entered.
-  Loc loc;
-
-  // How `loc` was reached, when it was reached through an import, an include,
-  // or a macro expansion. Inline storage is off because a step is large and
-  // almost nothing is reached through one.
-  llvm::SmallVector<LocationInfo, 0> location_info;
-
-  // The context's own name; see `CARBON_DIAGNOSTIC_CONTEXT`.
-  llvm::StringLiteral name;
-
-  // The context's format for llvm::formatv, and the arguments to apply to it.
-  llvm::StringLiteral format;
-  llvm::SmallVector<llvm::Any> format_args;
-
-  // Returns the formatted string. By default, this uses llvm::formatv.
+  // Returns the formatted string. Empty only in a `Label` built by hand, which
+  // `Format` treats as having no text.
   FormatFn format_fn;
 };
 
@@ -346,31 +277,12 @@ struct Diagnostic {
   // The one problem being reported.
   Message message;
 
-  // The operations the problem happened inside, outermost first, which is the
-  // order their `ContextScope`s were entered in.
-  //
-  // A `Context` is undesirably large for inline storage by SmallVector, so we
-  // specify 0.
-  llvm::SmallVector<Context, 0> contexts;
-
   // The source attached to the message, in the order it was attached.
   //
   // A `Label` is undesirably large for inline storage by SmallVector, so we
   // specify 0.
   llvm::SmallVector<Label, 0> labels;
 };
-
-// Returns the context that leads the diagnostic in place of its message, or
-// null when there is none.
-//
-// A context names the operation that failed, and when a diagnostic has one that
-// is what the reader is told about; the message is then read against the code
-// like anything else explaining it. Anything presenting a diagnostic as a
-// single sentence, such as an editor's hover text, uses this instead of the
-// message.
-inline auto LeadingContext(const Diagnostic& diagnostic) -> const Context* {
-  return diagnostic.contexts.empty() ? nullptr : &diagnostic.contexts.front();
-}
 
 // Rejects `Args` a diagnostic or label may not be formatted with, when the
 // enclosing constructor is instantiated.
@@ -404,43 +316,20 @@ struct DiagnosticBase {
 };
 
 // Use the CARBON_DIAGNOSTIC_LABEL macro to instantiate this. This stores the
-// static information about a label: what it is to the diagnostic, what it is
-// called, its format, and the types of its arguments.
+// static information about a label: what it is called, its format, and the
+// types of its arguments.
 template <typename... Args>
 struct LabelBase {
-  explicit constexpr LabelBase(LabelCategory category, llvm::StringLiteral name,
+  explicit constexpr LabelBase(llvm::StringLiteral name,
                                llvm::StringLiteral format)
-      : Category(category), Name(name), Format(format) {
+      : Name(name), Format(format) {
     CheckArgTypes<Args...>();
   }
 
-  // What the labeled range is to the diagnostic.
-  LabelCategory Category;
   // The label's own name, which stands in for a diagnostic's kind when naming
   // what produced a line of output.
   llvm::StringLiteral Name;
   // The label's format for llvm::formatv.
-  llvm::StringLiteral Format;
-};
-
-// Use the CARBON_DIAGNOSTIC_CONTEXT macro to instantiate this. This stores the
-// static information about a context: whether it is only a fallback, what it is
-// called, its format, and the types of its arguments.
-template <typename... Args>
-struct ContextBase {
-  explicit constexpr ContextBase(bool is_soft, llvm::StringLiteral name,
-                                 llvm::StringLiteral format)
-      : IsSoft(is_soft), Name(name), Format(format) {
-    CheckArgTypes<Args...>();
-  }
-
-  // Whether this is dropped when the diagnostic already has a context; see
-  // `CARBON_DIAGNOSTIC_SOFT_CONTEXT`.
-  bool IsSoft;
-  // The context's own name, which stands in for a diagnostic's kind when naming
-  // what produced a line of output.
-  llvm::StringLiteral Name;
-  // The context's format for llvm::formatv.
   llvm::StringLiteral Format;
 };
 

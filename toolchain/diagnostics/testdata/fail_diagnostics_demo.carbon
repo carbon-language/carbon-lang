@@ -35,9 +35,9 @@
 //
 // - `Blend(1)`: a label elsewhere in the same file, shown with the error in
 //   one view of the file, with the lines between them elided.
-// - `Blend(0, "...")`: a context leading the diagnostic, so the message is read
-//   against the code as a label. The underline is measured in columns rather
-//   than bytes.
+// - `Blend(0, "...")`: a conversion failure, placed under the argument that
+//   wouldn't convert, with a label on the parameter it was initializing in the
+//   declaration. The underline is measured in columns rather than bytes.
 // - `Cpp.Paint(0)`: a diagnostic from Clang, drawn here rather than by Clang.
 //   It is located at the callee the message names, as Clang does, and its note
 //   becomes two labels: the candidate considered, on its name, and what was

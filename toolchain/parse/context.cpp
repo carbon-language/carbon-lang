@@ -92,7 +92,7 @@ auto Context::DiagnoseAndSkipToCloseSymbol(State state, NodeKind close_kind)
 
   CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                     "unexpected tokens before `{0}`", Lex::TokenKind);
-  CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "matching this `{0}`",
+  CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, "matching this `{0}`",
                           Lex::TokenKind);
   auto matched_close = tokens().GetMatchedClosingToken(state.token);
   emitter_
