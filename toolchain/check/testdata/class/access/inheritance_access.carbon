@@ -332,27 +332,7 @@ struct B : private A {};
 
 template<typename T>
 auto F(T* _Nonnull t) -> void {
-    t->X();
-}
-''';
-
-class C(T: type) {
-  extend base: Cpp.B;
-};
-
-fn G() {
-    var d: C(i32) = {
-        .base = Cpp.B.B(),
-    };
-    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE+29]]:13
-    // CHECK:STDERR: ->     │     Cpp.F(&d);
-    // CHECK:STDERR:        ·             ┳
-    // CHECK:STDERR:        ·             ┗━━┫ error: cannot access private member `X` of type `Cpp.B`
-    // CHECK:STDERR:        ·             │  ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ·             ╰────┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
-    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE-20]]:8
+    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_in_generic.carbon:[[@LINE+21]]:8
     // CHECK:STDERR:        │   bool X() const;
     // CHECK:STDERR:        ·        ┬
     // CHECK:STDERR:        ·        ╰──┤ member is declared here [CppInteropParseNote]
@@ -373,5 +353,17 @@ fn G() {
     // CHECK:STDERR:        ·                │ [CppInteropParseNote]
     // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
+    t->X();
+}
+''';
+
+class C(T: type) {
+  extend base: Cpp.B;
+};
+
+fn G() {
+    var d: C(i32) = {
+        .base = Cpp.B.B(),
+    };
     Cpp.F(&d);
 }
