@@ -68,7 +68,7 @@ void FUnsupported() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_unsupported_specific_arg.carbon:[[@LINE+7]]:11
   // CHECK:STDERR: ->     │   Carbon::AliasEmptyTuple a;
-  // CHECK:STDERR:        ·   ───────╴╻
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
   // CHECK:STDERR:        ·           ┗━━┫ error: no type named 'AliasEmptyTuple' in namespace 'Carbon'
   // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -98,7 +98,7 @@ void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
   // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   c.M();
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'M' in 'Carbon::Main::ClassWithMethod<int>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

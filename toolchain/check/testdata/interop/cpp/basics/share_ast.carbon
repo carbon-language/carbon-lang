@@ -150,7 +150,7 @@ namespace N;
 inline Cpp '''
 // CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+8]]:23
 // CHECK:STDERR: ->     │ using Leak1 = Carbon::ExportedClass;
-// CHECK:STDERR:        ·               ───────╴╻
+// CHECK:STDERR:        ·               ━━━━━━━╸╻
 // CHECK:STDERR:        ·                       ┗━━┫ error: no type named 'ExportedClass' in namespace
 // CHECK:STDERR:        ·                          ┃        'Carbon'
 // CHECK:STDERR:        ·                          ┃        [CppInteropParseError]
@@ -159,7 +159,7 @@ inline Cpp '''
 using Leak1 = Carbon::ExportedClass;
 // CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+8]]:26
 // CHECK:STDERR: ->     │ using Leak2 = Carbon::N::ExportedNested;
-// CHECK:STDERR:        ·               ──────────╴╻
+// CHECK:STDERR:        ·               ━━━━━━━━━━╸╻
 // CHECK:STDERR:        ·                          ┗━━┫ error: no type named 'ExportedNested' in namespace
 // CHECK:STDERR:        ·                             ┃        'Carbon::N'
 // CHECK:STDERR:        ·                             ┃        [CppInteropParseError]
@@ -168,7 +168,7 @@ using Leak1 = Carbon::ExportedClass;
 using Leak2 = Carbon::N::ExportedNested;
 // CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+7]]:23
 // CHECK:STDERR: ->     │ using Leak3 = Carbon::PkgA::SameName;
-// CHECK:STDERR:        ·               ───────╴╻
+// CHECK:STDERR:        ·               ━━━━━━━╸╻
 // CHECK:STDERR:        ·                       ┗━━┫ error: no member named 'PkgA' in namespace 'Carbon'
 // CHECK:STDERR:        ·                          ┃        [CppInteropParseError]
 // CHECK:STDERR:        ╰────

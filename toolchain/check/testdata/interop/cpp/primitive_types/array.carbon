@@ -86,7 +86,7 @@ void G() {
   // CHECK:STDERR:        ·        ╰──┤ forward declaration of 'Carbon::Main::C' [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
-  // CHECK:STDERR:        ·                   ─────────────╴╻
+  // CHECK:STDERR:        ·                   ━━━━━━━━━━━━━╸╻
   // CHECK:STDERR:        ·                                 ┗━━┫ error: subscript of pointer to incomplete
   // CHECK:STDERR:        ·                                    ┃        type 'Carbon::Main::C'
   // CHECK:STDERR:        ·                                    ┃        [CppInteropParseError]

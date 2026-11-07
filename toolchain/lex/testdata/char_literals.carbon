@@ -156,7 +156,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+6]]:2
 // CHECK:STDERR: ->     │ '
-// CHECK:STDERR:        · ╴╻
+// CHECK:STDERR:        · ╸╻
 // CHECK:STDERR:        ·  ┗━━┫ error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -165,7 +165,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+6]]:4
 // CHECK:STDERR: ->     │ '\'
-// CHECK:STDERR:        · ──╴╻
+// CHECK:STDERR:        · ━━╸╻
 // CHECK:STDERR:        ·    ┗━━┫ error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -174,7 +174,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+6]]:3
 // CHECK:STDERR: ->     │ '\
-// CHECK:STDERR:        · ─╴╻
+// CHECK:STDERR:        · ━╸╻
 // CHECK:STDERR:        ·   ┗━━┫ error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

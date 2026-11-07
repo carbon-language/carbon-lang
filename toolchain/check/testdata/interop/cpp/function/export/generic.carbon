@@ -141,7 +141,7 @@ void CallEnclosingF() {
   Carbon::EnclosingB b;
   // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   b.MemberF(1, 2);
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'MemberF' in 'Carbon::Main::EnclosingA<int>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

@@ -24,7 +24,7 @@ impl forall [T: type] T as Z {
 fn F() {
   // CHECK:STDERR:        ╭─┤ fail_function_type_with_self_type.carbon:[[@LINE+14]]:3
   // CHECK:STDERR: ->     │   &(().(Z.G)) as type;
-  // CHECK:STDERR:        ·   ┳ ────────
+  // CHECK:STDERR:        ·   ┳ ━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -47,7 +47,7 @@ fn F() {
   //
   // CHECK:STDERR:        ╭─┤ fail_function_type.carbon:[[@LINE+14]]:3
   // CHECK:STDERR: ->     │   &F as type;
-  // CHECK:STDERR:        ·   ╻╶
+  // CHECK:STDERR:        ·   ╻╺
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:

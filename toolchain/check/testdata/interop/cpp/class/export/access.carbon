@@ -37,7 +37,7 @@ void F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var.carbon:[[@LINE+6]]:5
   // CHECK:STDERR: ->     │   b.a;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ warning: expression result unused [CppInteropParseWarning]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -104,7 +104,7 @@ void F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var_in_generic.carbon:[[@LINE+6]]:5
   // CHECK:STDERR: ->     │   b.a;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ warning: expression result unused [CppInteropParseWarning]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -140,7 +140,7 @@ void F() {
   // TODO: this error should be that `F` is a private member of `B`.
   // CHECK:STDERR:        ╭─┤ fail_todo_access_exported_private_method_in_generic.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   b.F();
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'F' in 'Carbon::Main::B<Carbon::Main::A>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

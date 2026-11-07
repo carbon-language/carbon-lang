@@ -77,7 +77,7 @@ void AccessNonexistentField() {
   Carbon::EmptyClass a;
   // CHECK:STDERR:        ╭─┤ fail_nonexistent_field.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   a.x = 12;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'x' in 'Carbon::Main::EmptyClass'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -85,7 +85,7 @@ void AccessNonexistentField() {
   a.x = 12;
   // CHECK:STDERR:        ╭─┤ fail_nonexistent_field.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   a.y = 34;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'y' in 'Carbon::Main::EmptyClass'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -122,7 +122,7 @@ void AccessUnsupportedField() {
   Carbon::UnsupportedFieldType a;
   // CHECK:STDERR:        ╭─┤ fail_unsupported_field_type.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   a.x;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'x' in 'Carbon::Main::UnsupportedFieldType'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -130,7 +130,7 @@ void AccessUnsupportedField() {
   a.x;
   // CHECK:STDERR:        ╭─┤ fail_unsupported_field_type.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   a.y;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'y' in 'Carbon::Main::UnsupportedFieldType'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -152,7 +152,7 @@ void AccessAdaptedField() {
   Carbon::AdaptedClass a;
   // CHECK:STDERR:        ╭─┤ fail_adapter.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   a.x = 12;
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'x' in 'Carbon::Main::AdaptedClass'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

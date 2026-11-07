@@ -544,7 +544,7 @@ void f(const int n) {
   // CHECK:STDERR:        ·             ╰──┤ variable 'n' declared const here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ++n;
-  // CHECK:STDERR:        ·   ┳ ─
+  // CHECK:STDERR:        ·   ┳ ━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot assign to variable 'n' with const-qualified type 'const
   // CHECK:STDERR:        ·      ┃        int'
   // CHECK:STDERR:        ·      ┃        [CppInteropParseError]

@@ -68,7 +68,7 @@ int GArrayVarParam() {
   // CHECK:STDERR:        ·     ╰──┤ 'GArrayVarParam' declared here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return Carbon::FArrayVarParam({1, 2, 3, 4, 5});
-  // CHECK:STDERR:        ·          ┳─────────────────────
+  // CHECK:STDERR:        ·          ┳───────━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: no member named 'FArrayVarParam' in namespace 'Carbon'; did
   // CHECK:STDERR:        ·          │  ┃        you mean 'GArrayVarParam'?
   // CHECK:STDERR:        ·          │  ┃        [CppInteropParseError]
@@ -81,7 +81,7 @@ int GArrayVarParam() {
   // CHECK:STDERR:        ·     ╰──┤ 'GArrayVarParam' declared here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return Carbon::FArrayVarParam({1, 2, 3, 4, 5});
-  // CHECK:STDERR:        ·                  ────────────── ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ━━━━━━━━━━━━━━ ┳━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                                 ┗━━┫ error: too many arguments to function call,
   // CHECK:STDERR:        ·                                    ┃        expected 0, have 1
   // CHECK:STDERR:        ·                                    ┃        [CppInteropParseError]
@@ -120,7 +120,7 @@ int GArrayReturn() {
   // CHECK:STDERR:        ·     ╰──┤ 'GArrayReturn' declared here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   auto &&arr = Carbon::FArrayReturn();
-  // CHECK:STDERR:        ·                ┳───────────────────
+  // CHECK:STDERR:        ·                ┳───────━━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: no member named 'FArrayReturn' in namespace 'Carbon';
   // CHECK:STDERR:        ·                │  ┃        did you mean 'GArrayReturn'?
   // CHECK:STDERR:        ·                │  ┃        [CppInteropParseError]
@@ -130,7 +130,7 @@ int GArrayReturn() {
   auto &&arr = Carbon::FArrayReturn();
   // CHECK:STDERR:        ╭─┤ fail_todo_array_return.carbon:[[@LINE+7]]:13
   // CHECK:STDERR: ->     │   return arr[0];
-  // CHECK:STDERR:        ·          ──╴╻╶
+  // CHECK:STDERR:        ·          ━━╸╻╺
   // CHECK:STDERR:        ·             ┗━━┫ error: subscripted value is not an array, pointer, or vector
   // CHECK:STDERR:        ·                ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

@@ -121,7 +121,7 @@ inline Cpp '''
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_todo_monomorphization_failure.carbon:[[@LINE+7]]:9
 // CHECK:STDERR: ->     │ Carbon::T t;
-// CHECK:STDERR:        · ───────╴╻
+// CHECK:STDERR:        · ━━━━━━━╸╻
 // CHECK:STDERR:        ·         ┗━━┫ error: no type named 'T' in namespace 'Carbon'
 // CHECK:STDERR:        ·            ┃        [CppInteropParseError]
 // CHECK:STDERR:        ╰────

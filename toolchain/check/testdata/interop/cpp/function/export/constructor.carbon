@@ -53,7 +53,7 @@ void CallFactoryIsMethod() {
   // CHECK:STDERR:        ·                              │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::FactoryIsMethod a(42);
-  // CHECK:STDERR:        ·                           ┳ ──
+  // CHECK:STDERR:        ·                           ┳ ━━
   // CHECK:STDERR:        ·                           ┗━━┫ error: no matching constructor for initialization
   // CHECK:STDERR:        ·                              ┃        of 'Carbon::FactoryIsMethod' (aka
   // CHECK:STDERR:        ·                              ┃        'Carbon::Main::FactoryIsMethod')
@@ -94,7 +94,7 @@ void CallFactoryDoesntReturnSelf() {
   // CHECK:STDERR:        ·                                      │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::FactoryDoesntReturnSelf a(42);
-  // CHECK:STDERR:        ·                                   ┳ ──
+  // CHECK:STDERR:        ·                                   ┳ ━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: no matching constructor for initialization of
   // CHECK:STDERR:        · ┃        'Carbon::FactoryDoesntReturnSelf' (aka
@@ -136,7 +136,7 @@ void CallFactoryReturnsByRef() {
   // CHECK:STDERR:        ·                                  │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::FactoryReturnsByRef a(42);
-  // CHECK:STDERR:        ·                               ┳ ──
+  // CHECK:STDERR:        ·                               ┳ ━━
   // CHECK:STDERR:        ·                               ┗━━┫ error: no matching constructor for
   // CHECK:STDERR:        ·                                  ┃        initialization of
   // CHECK:STDERR:        ·                                  ┃        'Carbon::FactoryReturnsByRef' (aka
@@ -187,7 +187,7 @@ void CallGenericConstructor() {
   // CHECK:STDERR:        ·                                 │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::GenericConstructor b(0);
-  // CHECK:STDERR:        ·                              ┳ ─
+  // CHECK:STDERR:        ·                              ┳ ━
   // CHECK:STDERR:        ·                              ┗━━┫ error: no matching constructor for
   // CHECK:STDERR:        ·                                 ┃        initialization of
   // CHECK:STDERR:        ·                                 ┃        'Carbon::GenericConstructor' (aka
@@ -238,7 +238,7 @@ void CallGenericClass() {
   // CHECK:STDERR:        ·                                    │ [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::GenericClass<int> c(0);
-  // CHECK:STDERR:        ·                             ┳ ─
+  // CHECK:STDERR:        ·                             ┳ ━
   // CHECK:STDERR:        ·                             ┗━━┫ error: no matching constructor for
   // CHECK:STDERR:        ·                                ┃        initialization of
   // CHECK:STDERR:        ·                                ┃        'Carbon::GenericClass<int>'
