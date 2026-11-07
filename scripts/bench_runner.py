@@ -185,6 +185,11 @@ binary.
         help="A regex filter on the names of extra metrics to display.",
     )
     parser.add_argument(
+        "--no_extra_metrics",
+        action="store_true",
+        help="Disable collecting extra non-time metrics.",
+    )
+    parser.add_argument(
         "--alpha",
         default=0.05,
         metavar="𝛂",
@@ -196,14 +201,36 @@ compute the confidence intervals for individual metrics.
     )
     parser.add_argument(
         "--output",
-        choices=["console", "json"],
+        choices=["console", "json", "bmf"],
         default="console",
         help="""
-Output format to use, note that `json` output doesn't do any analysis of the
-results, and just dumps the aggregate JSON data from the repeated runs.
+Output format to use. `json` dumps raw run data without analysis. `bmf` outputs
+Bencher Metric Format medians and confidence intervals.
 """.strip(),
     )
+    parser.add_argument(
+        "--output_file",
+        metavar="FILE",
+        type=Path,
+        help="Write `json` or `bmf` output to FILE instead of stdout.",
+    )
+    parser.add_argument(
+        "--benchmark_prefix",
+        default="",
+        metavar="PREFIX",
+        type=str,
+        help="Prefix prepended to each benchmark name in `bmf` output.",
+    )
     return parser.parse_args(args=args)
+
+
+# Multipliers to convert Google Benchmark `time_unit` values into nanoseconds.
+TIME_UNIT_TO_NS: dict[str, float] = {
+    "ns": 1.0,
+    "us": 1e3,
+    "ms": 1e6,
+    "s": 1e9,
+}
 
 
 # Default arguments that will be passed even when arguments are passed with
@@ -734,7 +761,9 @@ def run_benchmark_binary(
     runs_data = []
     unique_stderr: list[bytes] = []
     for _ in track(
-        range(num_runs), description=f"Running {binary_path.name}..."
+        range(num_runs),
+        description=f"Running {binary_path.name}...",
+        console=console,
     ):
         p = subprocess.run(
             run_cmd,
@@ -855,13 +884,14 @@ def get_benchmark_names_and_metrics(
                 )
                 sys.exit(1)
 
-        # Add any extra metrics from this benchmark.
-        for key in benchmark.keys():
-            if key in metrics or key in IGNORED_BENCHMARK_KEYS:
-                continue
-            if metrics_filter and not re.search(metrics_filter, key):
-                continue
-            metrics.append(key)
+        # Add any extra metrics from this benchmark unless disabled.
+        if not parsed_args.no_extra_metrics:
+            for key in benchmark.keys():
+                if key in metrics or key in IGNORED_BENCHMARK_KEYS:
+                    continue
+                if metrics_filter and not re.search(metrics_filter, key):
+                    continue
+                metrics.append(key)
 
     benchmark_names = sorted(
         list(benchmark_name_set), key=lambda name: benchmark_name_indices[name]
@@ -1083,15 +1113,137 @@ def print_results_table(
     console.print(table)
 
 
+def compute_bmf_metric(alpha: float, values: list[float]) -> dict[str, float]:
+    """Computes a Bencher Metric Format entry from repeated sample values.
+
+    Returns a dictionary with `value` set to the sample median and, when at
+    least two runs were collected and a finite confidence interval is available,
+    `lower_value` and `upper_value` bounds at confidence level `1 - alpha`.
+    """
+    median = float(np.median(values))
+    if len(values) < 2:
+        return {"value": median}
+
+    if all(v == values[0] for v in values):
+        return {
+            "value": median,
+            "lower_value": median,
+            "upper_value": median,
+        }
+
+    median_ci = sp.stats.quantile_test(values, q=median).confidence_interval(
+        confidence_level=(1.0 - alpha)
+    )
+    if math.isfinite(median_ci.low) and math.isfinite(median_ci.high):
+        return {
+            "value": median,
+            "lower_value": float(median_ci.low),
+            "upper_value": float(median_ci.high),
+        }
+
+    return {"value": median}
+
+
+def compute_bmf_results(
+    console: Console,
+    parsed_args: argparse.Namespace,
+    exp_runs: list[dict[str, Any]],
+) -> dict[str, dict[str, dict[str, float]]]:
+    """Computes Bencher Metric Format (BMF) results across repeated runs.
+
+    Exports `latency` in nanoseconds (`real_time` when `--wall_time` is set or
+    the benchmark uses `/real_time`, `cpu_time` otherwise) alongside any extra
+    metrics selected by `--extra_metrics_filter`.
+    """
+    benchmark_names, selected_metrics = get_benchmark_names_and_metrics(
+        console, parsed_args, exp_runs, base_runs=[]
+    )
+    extra_metrics = [
+        m
+        for m in selected_metrics
+        if m not in ("cpu_time", "real_time", "iterations")
+    ]
+
+    samples: dict[str, dict[str, list[float]]] = {
+        name: defaultdict(list) for name in benchmark_names
+    }
+    for run in exp_runs:
+        for b in run["benchmarks"]:
+            name = b["name"]
+            if name not in samples:
+                continue
+
+            time_key = (
+                "real_time"
+                if (parsed_args.wall_time or "/real_time" in name)
+                else "cpu_time"
+            )
+            time_unit = b.get("time_unit", "ns")
+            if time_unit not in TIME_UNIT_TO_NS:
+                console.print(
+                    f"ERROR: Unsupported time_unit `{time_unit}` for `{name}`."
+                )
+                sys.exit(1)
+            samples[name]["latency"].append(
+                float(b[time_key]) * TIME_UNIT_TO_NS[time_unit]
+            )
+
+            for metric in extra_metrics:
+                if metric in b:
+                    samples[name][metric].append(float(b[metric]))
+
+    bmf: dict[str, dict[str, dict[str, float]]] = {}
+    for name in benchmark_names:
+        prefixed_name = f"{parsed_args.benchmark_prefix}{name}"
+        bmf[prefixed_name] = {
+            measure: compute_bmf_metric(parsed_args.alpha, vals)
+            for measure, vals in samples[name].items()
+            if vals
+        }
+    return bmf
+
+
+def write_structured_output(data: Any, output_file: Optional[Path]) -> None:
+    """Writes JSON-serialized output to `output_file` or `stdout`."""
+    serialized = json.dumps(data, indent=2, allow_nan=False) + "\n"
+    if output_file is not None:
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        output_file.write_text(serialized, encoding="utf-8")
+    else:
+        sys.stdout.write(serialized)
+
+
 def main() -> None:
     parsed_args = parse_args()
-    console = Console(theme=THEME)
+    use_stderr_console = (
+        parsed_args.output != "console" or parsed_args.output_file is not None
+    )
+    console = Console(theme=THEME, stderr=use_stderr_console)
     Quantity.set_prefs(spacer=" ", map_sf=Quantity.map_sf_to_greek)
 
     if parsed_args.base_benchmark and parsed_args.benchmark_comparable_re:
         console.print(
             "ERROR: Cannot mix a base benchmark binary with benchmark "
             "comparisons."
+        )
+        sys.exit(1)
+    if parsed_args.no_extra_metrics and parsed_args.extra_metrics_filter:
+        console.print(
+            "ERROR: Cannot combine `--no_extra_metrics` with "
+            "`--extra_metrics_filter`."
+        )
+        sys.exit(1)
+    if parsed_args.output == "console" and parsed_args.output_file is not None:
+        console.print(
+            "ERROR: `--output_file` requires `--output=json` or `--output=bmf`."
+        )
+        sys.exit(1)
+    if parsed_args.output == "bmf" and (
+        parsed_args.base_benchmark or parsed_args.benchmark_comparable_re
+    ):
+        console.print(
+            "ERROR: `--output=bmf` does not support `--base_benchmark` or "
+            "`--benchmark_comparable_re`."
         )
         sys.exit(1)
 
@@ -1117,13 +1269,21 @@ def main() -> None:
         console,
     )
 
-    # If JSON output is requested, just dump the data without further
-    # processing.
+    # If JSON output is requested, dump the raw run data without analysis.
     if parsed_args.output == "json":
-        console.log("Printing JSON results...")
-        console.print_json(json.dumps(exp_runs))
-        if has_baseline:
-            console.print_json(json.dumps(base_runs))
+        console.log("Writing JSON results...")
+        payload: Any = (
+            {"exp_runs": exp_runs, "base_runs": base_runs}
+            if has_baseline
+            else exp_runs
+        )
+        write_structured_output(payload, parsed_args.output_file)
+        return
+
+    if parsed_args.output == "bmf":
+        console.log("Writing Bencher Metric Format (BMF) results...")
+        bmf = compute_bmf_results(console, parsed_args, exp_runs)
+        write_structured_output(bmf, parsed_args.output_file)
         return
 
     print_run_context(console, num_runs, exp_runs, has_baseline)

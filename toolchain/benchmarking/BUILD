@@ -6,6 +6,7 @@
 # tolochain. Infrastructure libraries may be depended on by focused benchmarks
 # in various other parts of the toolchain.
 
+load("@rules_python//python:defs.bzl", "py_binary", "py_library", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
@@ -129,4 +130,27 @@ sh_test(
     # benchmarks aren't `Range()`-parameterized, so a dry run is already cheap.
     args = ["--benchmark_dry_run"],
     env = cc_env(),
+)
+
+py_library(
+    name = "bencher_suites",
+    srcs = ["bencher_suites.py"],
+)
+
+py_binary(
+    name = "run_bencher",
+    srcs = ["run_bencher.py"],
+    python_version = "PY3",
+    deps = [":bencher_suites"],
+)
+
+py_test(
+    name = "run_bencher_test",
+    size = "small",
+    srcs = ["run_bencher_test.py"],
+    python_version = "PY3",
+    deps = [
+        ":bencher_suites",
+        ":run_bencher",
+    ],
 )
