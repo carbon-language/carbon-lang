@@ -245,7 +245,7 @@ import Other library "other_fn_use";
 // CHECK:STDERR:
 fn UseF() { Other.F(); }
 
-// CHECK:STDOUT: --- other_fn.carbon
+// CHECK:STDOUT: --- other_fn.carbon ($other_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -265,7 +265,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_extern.carbon
+// CHECK:STDOUT: --- other_fn_extern.carbon ($other_fn_extern)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -282,7 +282,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_conflict.carbon
+// CHECK:STDOUT: --- other_fn_conflict.carbon ($other_fn_conflict)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -317,7 +317,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn2.carbon
+// CHECK:STDOUT: --- other_fn2.carbon ($other_fn2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -337,7 +337,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_use.carbon
+// CHECK:STDOUT: --- other_fn_use.carbon ($other_fn_use)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -370,7 +370,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_other_ns.carbon
+// CHECK:STDOUT: --- main_other_ns.carbon ($main_other_ns)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -379,7 +379,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_use_other.carbon
+// CHECK:STDOUT: --- main_use_other.carbon ($main_use_other)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -427,7 +427,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F2 [from "other_fn2.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
+// CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon ($fail_todo_main_use_other_extern)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -466,7 +466,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
+// CHECK:STDOUT: --- main_unused_other_ambiguous.carbon ($main_unused_other_ambiguous)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -482,7 +482,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon
+// CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon ($fail_main_use_other_ambiguous)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -521,7 +521,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
+// CHECK:STDOUT: --- fail_main_namespace_conflict.carbon ($fail_main_namespace_conflict)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -556,7 +556,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_reopen_other.carbon
+// CHECK:STDOUT: --- fail_main_reopen_other.carbon ($fail_main_reopen_other)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -588,7 +588,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon
+// CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon ($fail_main_reopen_other_nested)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -619,7 +619,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_add_to_other.carbon
+// CHECK:STDOUT: --- fail_main_add_to_other.carbon ($fail_main_add_to_other)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -647,7 +647,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_other_fn_use.carbon
+// CHECK:STDOUT: --- fail_use_other_fn_use.carbon ($fail_use_other_fn_use)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

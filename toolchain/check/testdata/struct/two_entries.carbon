@@ -18,7 +18,7 @@ let w: {.a: i32, .b: i32} = v;
 var x: {.a: i32, .b: i32} = {.a = 1, .b = 2};
 var y: {.a: i32, .b: i32} = x;
 
-// CHECK:STDOUT: --- two_entries.carbon
+// CHECK:STDOUT: --- two_entries.carbon ($two_entries)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

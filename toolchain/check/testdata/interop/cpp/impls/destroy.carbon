@@ -307,7 +307,7 @@ fn F() {
   var _: AdaptNoDestroy = Make();
 }
 
-// CHECK:STDOUT: --- destroy_destroyable.carbon
+// CHECK:STDOUT: --- destroy_destroyable.carbon ($destroy_destroyable)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -482,7 +482,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_destroy_protected_base_destructor.carbon
+// CHECK:STDOUT: --- fail_todo_destroy_protected_base_destructor.carbon ($fail_todo_destroy_protected_base_destructor)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -578,7 +578,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_destroy_private_base_destructor.carbon
+// CHECK:STDOUT: --- fail_destroy_private_base_destructor.carbon ($fail_destroy_private_base_destructor)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

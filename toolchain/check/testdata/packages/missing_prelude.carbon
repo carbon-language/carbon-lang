@@ -166,7 +166,7 @@ class Core {
 let n: type = i32;
 
 
-// CHECK:STDOUT: --- fail_missing_prelude.carbon
+// CHECK:STDOUT: --- fail_missing_prelude.carbon ($fail_missing_prelude)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -191,13 +191,13 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_empty.carbon
+// CHECK:STDOUT: --- prelude_empty.carbon ($prelude_empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_prelude_member.carbon
+// CHECK:STDOUT: --- fail_missing_prelude_member.carbon ($fail_missing_prelude_member)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -231,7 +231,7 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_fake_int.carbon
+// CHECK:STDOUT: --- prelude_fake_int.carbon ($prelude_fake_int)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -426,7 +426,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.b39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_fake_int.carbon
+// CHECK:STDOUT: --- fail_use_fake_int.carbon ($fail_use_fake_int)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -659,7 +659,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_use_in_prelude.carbon
+// CHECK:STDOUT: --- prelude_use_in_prelude.carbon ($prelude_use_in_prelude)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -760,7 +760,7 @@ let n: type = i32;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
+// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon ($fail_prelude_as_namespace)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -851,7 +851,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %N.loc28_31.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_class.carbon
+// CHECK:STDOUT: --- fail_prelude_as_class.carbon ($fail_prelude_as_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

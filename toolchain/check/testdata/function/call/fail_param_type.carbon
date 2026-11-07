@@ -33,7 +33,7 @@ fn F() {
   G(1.0);
 }
 
-// CHECK:STDOUT: --- fail_param_type.carbon
+// CHECK:STDOUT: --- fail_param_type.carbon ($fail_param_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

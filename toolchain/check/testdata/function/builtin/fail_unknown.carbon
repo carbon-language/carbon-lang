@@ -22,7 +22,7 @@
 // CHECK:STDERR:
 fn UnknownBuiltin() = "unknown.builtin.name";
 
-// CHECK:STDOUT: --- fail_unknown.carbon
+// CHECK:STDOUT: --- fail_unknown.carbon ($fail_unknown)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

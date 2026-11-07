@@ -201,7 +201,7 @@ fn F() -> Poison;
 // CHECK:STDERR:
 export Poison;
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon ($base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -233,7 +233,7 @@ export Poison;
 // CHECK:STDOUT:   .x = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon
+// CHECK:STDOUT: --- export.carbon ($export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -246,7 +246,7 @@ export Poison;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_copy.carbon
+// CHECK:STDOUT: --- export_copy.carbon ($export_copy)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -259,7 +259,7 @@ export Poison;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_export.carbon
+// CHECK:STDOUT: --- non_export.carbon ($non_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -272,7 +272,7 @@ export Poison;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.carbon
+// CHECK:STDOUT: --- export_export.carbon ($export_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -285,7 +285,7 @@ export Poison;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_then_export.carbon
+// CHECK:STDOUT: --- import_then_export.carbon ($import_then_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -298,13 +298,13 @@ export Poison;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_in_impl.carbon
+// CHECK:STDOUT: --- export_in_impl.carbon ($export_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon ($use_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -365,9 +365,9 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_export_in_impl.impl.carbon ($fail_export_in_impl.impl)
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.impl.carbon
+// CHECK:STDOUT: --- export_export.impl.carbon ($export_export.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -429,7 +429,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_export.carbon
+// CHECK:STDOUT: --- use_export_export.carbon ($use_export_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -490,7 +490,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_import_then_export.carbon
+// CHECK:STDOUT: --- use_import_then_export.carbon ($use_import_then_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -551,7 +551,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_import_when_export.carbon
+// CHECK:STDOUT: --- use_import_when_export.carbon ($use_import_when_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -612,7 +612,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_base_and_export.carbon
+// CHECK:STDOUT: --- use_base_and_export.carbon ($use_base_and_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -673,7 +673,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_and_base.carbon
+// CHECK:STDOUT: --- use_export_and_base.carbon ($use_export_and_base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -734,7 +734,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_copy.carbon
+// CHECK:STDOUT: --- use_export_copy.carbon ($use_export_copy)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -795,7 +795,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_non_export.carbon
+// CHECK:STDOUT: --- fail_use_non_export.carbon ($fail_use_non_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -807,7 +807,7 @@ export Poison;
 // CHECK:STDOUT:   %Local: <error> = alias_binding Local, %C.ref [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_non_export_then_base.carbon
+// CHECK:STDOUT: --- use_non_export_then_base.carbon ($use_non_export_then_base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -868,7 +868,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_use_non_export_then_base.carbon
+// CHECK:STDOUT: --- indirect_use_non_export_then_base.carbon ($indirect_use_non_export_then_base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -931,7 +931,7 @@ export Poison;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_poisoned.carbon
+// CHECK:STDOUT: --- fail_export_poisoned.carbon ($fail_export_poisoned)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

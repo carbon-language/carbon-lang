@@ -26,7 +26,7 @@ class A {
   }
 }
 
-// CHECK:STDOUT: --- self_in_class.carbon
+// CHECK:STDOUT: --- self_in_class.carbon ($self_in_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

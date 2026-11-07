@@ -37,7 +37,7 @@ fn F(x: C, y: C) -> C {
 }
 
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon ($a)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +148,7 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %return.patt.loc5_28.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon ($b)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -19,7 +19,8 @@ auto LowerToLLVM(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const SemIR::File& sem_ir, int total_ir_count,
-    const LowerToLLVMOptions& options) -> std::unique_ptr<llvm::Module> {
+    SemIR::GetInstNamerFn get_inst_namer, const LowerToLLVMOptions& options)
+    -> std::unique_ptr<llvm::Module> {
   Context context(
       &llvm_context, std::move(fs), options.want_debug_info,
       &tree_and_subtrees_getters,
@@ -27,13 +28,11 @@ auto LowerToLLVM(
       sem_ir.filename(), total_ir_count, options.opt_level,
       options.mangle_string_fingerprint, options.vlog_stream);
 
-  std::optional<SemIR::InstNamer> inst_namer;
+  const SemIR::InstNamer* inst_namer = nullptr;
   if (options.generate_inst_names) {
-    inst_namer.emplace(&sem_ir, total_ir_count);
+    inst_namer = &get_inst_namer();
   }
-  context
-      .GetFileContext(&sem_ir, inst_namer.has_value() ? &*inst_namer : nullptr)
-      .LowerDefinitions();
+  context.GetFileContext(&sem_ir, inst_namer).LowerDefinitions();
 
   std::unique_ptr<llvm::Module> module = std::move(context).Finalize();
 

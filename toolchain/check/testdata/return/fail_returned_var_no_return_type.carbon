@@ -59,7 +59,7 @@ fn ForgotReturnType() {
   return var;
 }
 
-// CHECK:STDOUT: --- fail_procedure_with_returned_var.carbon
+// CHECK:STDOUT: --- fail_procedure_with_returned_var.carbon ($fail_procedure_with_returned_var)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -133,7 +133,7 @@ fn ForgotReturnType() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc16(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_forgot_return_type.carbon
+// CHECK:STDOUT: --- fail_forgot_return_type.carbon ($fail_forgot_return_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

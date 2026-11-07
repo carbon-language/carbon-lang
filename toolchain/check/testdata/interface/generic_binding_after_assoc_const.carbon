@@ -20,7 +20,7 @@ interface I {
   fn G(generic T: type);
 }
 
-// CHECK:STDOUT: --- generic_binding_after_assoc_const.carbon
+// CHECK:STDOUT: --- generic_binding_after_assoc_const.carbon ($generic_binding_after_assoc_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

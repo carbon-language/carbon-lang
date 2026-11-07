@@ -33,7 +33,7 @@ fn F() {
   WalkAnimal(x);
 }
 
-// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon
+// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon ($fail_convert_type_erased_type_to_facet)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

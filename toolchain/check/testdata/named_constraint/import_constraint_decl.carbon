@@ -68,7 +68,7 @@ impl C as B;
 // This requires that B is complete.
 impl C as B {}
 
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon ($a.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//a, A, unloaded
@@ -82,7 +82,7 @@ impl C as B {}
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.impl.carbon
+// CHECK:STDOUT: --- b.impl.carbon ($b.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

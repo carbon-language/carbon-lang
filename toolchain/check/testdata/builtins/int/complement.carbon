@@ -67,7 +67,7 @@ fn F(a: Core.IntLiteral) -> Core.IntLiteral {
   return Complement(a);
 }
 
-// CHECK:STDOUT: --- int_complement.carbon
+// CHECK:STDOUT: --- int_complement.carbon ($int_complement)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

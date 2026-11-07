@@ -63,7 +63,7 @@ fn Deref(n: i32) {
   {}->foo;
 }
 
-// CHECK:STDOUT: --- fail_deref_not_pointer.carbon
+// CHECK:STDOUT: --- fail_deref_not_pointer.carbon ($fail_deref_not_pointer)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

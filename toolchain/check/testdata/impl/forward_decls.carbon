@@ -250,7 +250,7 @@ impl C as Y;
 impl C as X {}
 impl C as Y {}
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon ($empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -320,7 +320,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- method.carbon
+// CHECK:STDOUT: --- method.carbon ($method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -424,7 +424,7 @@ impl C as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- combine.carbon
+// CHECK:STDOUT: --- combine.carbon ($combine)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -520,7 +520,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_const.carbon
+// CHECK:STDOUT: --- associated_const.carbon ($associated_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -644,7 +644,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_const_compound_member_access.carbon
+// CHECK:STDOUT: --- associated_const_compound_member_access.carbon ($associated_const_compound_member_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -800,7 +800,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_const_of_facet.carbon
+// CHECK:STDOUT: --- associated_const_of_facet.carbon ($associated_const_of_facet)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -958,7 +958,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_unset_associated_const.carbon
+// CHECK:STDOUT: --- fail_unset_associated_const.carbon ($fail_unset_associated_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1067,7 +1067,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_associated_const_before_interface_definition.carbon
+// CHECK:STDOUT: --- fail_associated_const_before_interface_definition.carbon ($fail_associated_const_before_interface_definition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1177,7 +1177,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_const_of_parameterized.carbon
+// CHECK:STDOUT: --- associated_const_of_parameterized.carbon ($associated_const_of_parameterized)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1376,7 +1376,7 @@ impl C as Y {}
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8e0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- find_incomplete_impl.carbon
+// CHECK:STDOUT: --- find_incomplete_impl.carbon ($find_incomplete_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1548,7 +1548,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_two_interfaces.carbon
+// CHECK:STDOUT: --- fail_todo_two_interfaces.carbon ($fail_todo_two_interfaces)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1634,7 +1634,7 @@ impl C as Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self.653) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_never_assigned_associated_const.carbon
+// CHECK:STDOUT: --- fail_never_assigned_associated_const.carbon ($fail_never_assigned_associated_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1772,7 +1772,7 @@ impl C as Y {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- example_from_proposal_5168.carbon
+// CHECK:STDOUT: --- example_from_proposal_5168.carbon ($example_from_proposal_5168)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

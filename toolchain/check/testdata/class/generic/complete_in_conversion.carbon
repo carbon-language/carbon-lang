@@ -39,7 +39,7 @@ fn F(a: A(0)*) {
   let unused b: B* = a;
 }
 
-// CHECK:STDOUT: --- fail_derived_to_base.carbon
+// CHECK:STDOUT: --- fail_derived_to_base.carbon ($fail_derived_to_base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

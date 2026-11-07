@@ -16,7 +16,7 @@ let n: i32 = 1;
 
 fn F() -> i32 { return n; }
 
-// CHECK:STDOUT: --- global.carbon
+// CHECK:STDOUT: --- global.carbon ($global)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

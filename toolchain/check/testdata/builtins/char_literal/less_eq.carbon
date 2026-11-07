@@ -23,7 +23,7 @@ let b: bool = LessEq('a', 'b');
 let c: bool = LessEq('b', 'a');
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- less_eq.carbon
+// CHECK:STDOUT: --- less_eq.carbon ($less_eq)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -22,7 +22,7 @@ fn Main() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- int.carbon
+// CHECK:STDOUT: --- int.carbon ($int.3)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

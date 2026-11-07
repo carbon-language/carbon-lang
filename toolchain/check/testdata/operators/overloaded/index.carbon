@@ -119,7 +119,7 @@ fn F() {
 }
 
 
-// CHECK:STDOUT: --- fail_wrong_index_with.carbon
+// CHECK:STDOUT: --- fail_wrong_index_with.carbon ($fail_wrong_index_with)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -140,7 +140,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_index_with.carbon
+// CHECK:STDOUT: --- fail_missing_index_with.carbon ($fail_missing_index_with)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -15,7 +15,7 @@
 var x: {.a: i32, .b: (i32,)} = {.a = 1, .b = (2,)};
 var y: {.a: i32, .b: (i32,)} = x;
 
-// CHECK:STDOUT: --- tuple_as_element.carbon
+// CHECK:STDOUT: --- tuple_as_element.carbon ($tuple_as_element)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

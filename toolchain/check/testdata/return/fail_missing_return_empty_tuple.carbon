@@ -22,7 +22,7 @@ fn F() -> () {
 // CHECK:STDERR:
 }
 
-// CHECK:STDOUT: --- fail_missing_return_empty_tuple.carbon
+// CHECK:STDOUT: --- fail_missing_return_empty_tuple.carbon ($fail_missing_return_empty_tuple)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

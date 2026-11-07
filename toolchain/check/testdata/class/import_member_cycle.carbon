@@ -30,7 +30,7 @@ fn Run() {
   var unused a: Cycle*;
 }
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon ($a)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -71,7 +71,7 @@ fn Run() {
 // CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon ($b)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

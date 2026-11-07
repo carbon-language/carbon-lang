@@ -214,7 +214,7 @@ fn UseN(generic T: type, x: (const T).(J.N)());
 // CHECK:STDERR:
 fn UseN(generic T: type, x: bool);
 
-// CHECK:STDOUT: --- dependent_symbolic_instruction.carbon
+// CHECK:STDOUT: --- dependent_symbolic_instruction.carbon ($dependent_symbolic_instruction)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

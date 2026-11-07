@@ -228,7 +228,7 @@ import library "base";
 // CHECK:STDERR:
 private export C;
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon ($base)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -282,7 +282,7 @@ private export C;
 // CHECK:STDOUT:   .y = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon
+// CHECK:STDOUT: --- export.carbon ($export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -336,7 +336,7 @@ private export C;
 // CHECK:STDOUT:   .y = imports.%Main.import_ref.565
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- not_reexporting.carbon
+// CHECK:STDOUT: --- not_reexporting.carbon ($not_reexporting)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//export, C, unloaded
@@ -355,7 +355,7 @@ private export C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.carbon
+// CHECK:STDOUT: --- export_export.carbon ($export_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -409,13 +409,13 @@ private export C;
 // CHECK:STDOUT:   .y = imports.%Main.import_ref.5a3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_in_impl.carbon
+// CHECK:STDOUT: --- export_in_impl.carbon ($export_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon ($use_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -522,7 +522,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.impl.carbon
+// CHECK:STDOUT: --- export_export.impl.carbon ($export_export.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -630,7 +630,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_export.carbon
+// CHECK:STDOUT: --- use_export_export.carbon ($use_export_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -737,7 +737,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_ns.carbon
+// CHECK:STDOUT: --- fail_export_ns.carbon ($fail_export_ns)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -756,7 +756,7 @@ private export C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_decl.carbon
+// CHECK:STDOUT: --- fail_export_decl.carbon ($fail_export_decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -780,7 +780,7 @@ private export C;
 // CHECK:STDOUT:   .Self = constants.%Local
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_member.carbon
+// CHECK:STDOUT: --- fail_export_member.carbon ($fail_export_member)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -818,7 +818,7 @@ private export C;
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_both.carbon
+// CHECK:STDOUT: --- import_both.carbon ($import_both)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -925,7 +925,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_both_reversed.carbon
+// CHECK:STDOUT: --- import_both_reversed.carbon ($import_both_reversed)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1032,7 +1032,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_not_reexporting.carbon
+// CHECK:STDOUT: --- fail_use_not_reexporting.carbon ($fail_use_not_reexporting)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -1049,7 +1049,7 @@ private export C;
 // CHECK:STDOUT:   %NSLocal: <error> = alias_binding NSLocal, %NSC.ref [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeat_export.carbon
+// CHECK:STDOUT: --- repeat_export.carbon ($repeat_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1088,7 +1088,7 @@ private export C;
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_repeat_export.carbon
+// CHECK:STDOUT: --- use_repeat_export.carbon ($use_repeat_export)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1149,7 +1149,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT: --- fail_modifiers.carbon ($fail_modifiers)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

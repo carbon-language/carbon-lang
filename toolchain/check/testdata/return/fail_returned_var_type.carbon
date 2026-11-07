@@ -29,7 +29,7 @@ fn Mismatch() -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: --- fail_returned_var_type.carbon
+// CHECK:STDOUT: --- fail_returned_var_type.carbon ($fail_returned_var_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -24,7 +24,7 @@ fn F(unused b: bool) -> i32 {
   // Unreachable, no error on missing return.
 }
 
-// CHECK:STDOUT: --- code_after_return_value.carbon
+// CHECK:STDOUT: --- code_after_return_value.carbon ($code_after_return_value)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

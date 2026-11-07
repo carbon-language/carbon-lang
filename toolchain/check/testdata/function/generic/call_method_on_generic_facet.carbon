@@ -38,7 +38,7 @@ fn G() {
   CallGenericMethod(GenericParam, ImplsGeneric);
 }
 
-// CHECK:STDOUT: --- call_method_on_generic_facet.carbon
+// CHECK:STDOUT: --- call_method_on_generic_facet.carbon ($call_method_on_generic_facet)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

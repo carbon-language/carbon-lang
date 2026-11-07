@@ -57,7 +57,7 @@ fn Test() -> i32 {
 }
 
 
-// CHECK:STDOUT: --- class.carbon
+// CHECK:STDOUT: --- class.carbon ($class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -497,7 +497,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %specific_impl_fn.loc9_38.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- interface.carbon
+// CHECK:STDOUT: --- interface.carbon ($interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

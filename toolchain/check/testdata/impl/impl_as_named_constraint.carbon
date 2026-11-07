@@ -521,7 +521,7 @@ constraint J {
 // CHECK:STDERR:
 impl () as J {}
 
-// CHECK:STDOUT: --- fail_error_self_in_require.carbon
+// CHECK:STDOUT: --- fail_error_self_in_require.carbon ($fail_error_self_in_require)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -22,7 +22,7 @@ var x: type = i32;
 // CHECK:STDERR:
 fn Six() -> x { return 6; }
 
-// CHECK:STDOUT: --- fail_var_in_type.carbon
+// CHECK:STDOUT: --- fail_var_in_type.carbon ($fail_var_in_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

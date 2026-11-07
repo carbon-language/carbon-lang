@@ -32,7 +32,7 @@ impl AC as AI {}
 // CHECK:STDERR:
 impl AC as AI {}
 
-// CHECK:STDOUT: --- fail_alias.carbon
+// CHECK:STDOUT: --- fail_alias.carbon ($fail_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -33,7 +33,7 @@ var c_val: c = {.v = d_val.v};
 var b_val: b = {.v = c_val.v};
 var a_val: a = {.v = b_val.v};
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon ($a)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -77,7 +77,7 @@ var a_val: a = {.v = b_val.v};
 // CHECK:STDOUT:   .v = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon ($b)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

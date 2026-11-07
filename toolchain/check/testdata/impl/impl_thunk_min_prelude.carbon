@@ -104,7 +104,7 @@ fn Call() -> i32 {
   ;
 }
 
-// CHECK:STDOUT: --- thunk_literal_convert.carbon
+// CHECK:STDOUT: --- thunk_literal_convert.carbon ($thunk_literal_convert)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

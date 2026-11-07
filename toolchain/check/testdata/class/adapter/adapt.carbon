@@ -79,7 +79,7 @@ interface I {
   adapt i32;
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon ($basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -156,7 +156,7 @@ interface I {
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_extend.carbon
+// CHECK:STDOUT: --- fail_not_extend.carbon ($fail_not_extend)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -231,7 +231,7 @@ interface I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_misplaced.carbon
+// CHECK:STDOUT: --- fail_misplaced.carbon ($fail_misplaced)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

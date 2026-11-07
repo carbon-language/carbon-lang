@@ -37,7 +37,7 @@ fn Call(a: A*, b: B*, c: C*, d: D*) {
   (*d).F();
 }
 
-// CHECK:STDOUT: --- base_method_shadow.carbon
+// CHECK:STDOUT: --- base_method_shadow.carbon ($base_method_shadow)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

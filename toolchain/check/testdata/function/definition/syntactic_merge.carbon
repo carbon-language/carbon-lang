@@ -251,7 +251,7 @@ fn Foo(a: const C);
 // CHECK:STDERR:
 fn Foo(unused a: const (const C)) {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon ($basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -329,7 +329,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- spacing.carbon
+// CHECK:STDOUT: --- spacing.carbon ($spacing)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -380,7 +380,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_parens.carbon
+// CHECK:STDOUT: --- fail_parens.carbon ($fail_parens)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -435,7 +435,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_only_implicit_params.carbon
+// CHECK:STDOUT: --- fail_only_implicit_params.carbon ($fail_only_implicit_params)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -473,7 +473,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_identifier.carbon
+// CHECK:STDOUT: --- fail_raw_identifier.carbon ($fail_raw_identifier)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -528,7 +528,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon
+// CHECK:STDOUT: --- two_file.carbon ($two_file)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -584,7 +584,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Bar(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.impl.carbon
+// CHECK:STDOUT: --- two_file.impl.carbon ($two_file.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -652,7 +652,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_mismatch.carbon
+// CHECK:STDOUT: --- fail_name_mismatch.carbon ($fail_name_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -712,7 +712,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias.carbon
+// CHECK:STDOUT: --- fail_alias.carbon ($fail_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -770,7 +770,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduced_alias.carbon
+// CHECK:STDOUT: --- fail_deduced_alias.carbon ($fail_deduced_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -856,7 +856,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc20_16.2 => constants.%a.1bf9e8.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_alias_in_return.carbon
+// CHECK:STDOUT: --- todo_fail_alias_in_return.carbon ($todo_fail_alias_in_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -918,7 +918,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return %.loc8_26 to %return.param.loc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_two_file.carbon
+// CHECK:STDOUT: --- alias_two_file.carbon ($alias_two_file)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -958,7 +958,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo(%a.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon
+// CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon ($todo_fail_alias_two_file.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1010,7 +1010,7 @@ fn Foo(unused a: const (const C)) {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_repeat_const.carbon
+// CHECK:STDOUT: --- fail_repeat_const.carbon ($fail_repeat_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

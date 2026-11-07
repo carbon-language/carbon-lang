@@ -739,7 +739,7 @@ interface J {
 // that it does not resolve further.
 fn F(unused generic T: I & J where .I1 = .J1.I2) {}
 
-// CHECK:STDOUT: --- fail_cycle.carbon
+// CHECK:STDOUT: --- fail_cycle.carbon ($fail_cycle)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

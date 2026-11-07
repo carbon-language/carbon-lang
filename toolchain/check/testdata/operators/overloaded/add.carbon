@@ -39,7 +39,7 @@ fn TestAssign(a: C*, b: C) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add.carbon
+// CHECK:STDOUT: --- add.carbon ($add)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

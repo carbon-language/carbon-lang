@@ -54,7 +54,7 @@ class MyIntLiteral {
 // CHECK:STDERR:
 fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 
-// CHECK:STDOUT: --- adapt.carbon
+// CHECK:STDOUT: --- adapt.carbon ($adapt)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -263,7 +263,7 @@ fn Int(N: MyIntLiteral) -> type = "int.make_type_signed";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_bad_adapt.carbon
+// CHECK:STDOUT: --- fail_bad_adapt.carbon ($fail_bad_adapt)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

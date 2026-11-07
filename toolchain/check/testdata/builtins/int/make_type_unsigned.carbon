@@ -95,7 +95,7 @@ import library "types";
 // CHECK:STDERR:
 var m: UInt(1000000000);
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon ($use_types)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

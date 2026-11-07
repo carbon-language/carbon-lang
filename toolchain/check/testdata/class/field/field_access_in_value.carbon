@@ -26,7 +26,7 @@ fn Test() {
   var unused ck: i32 = c.k;
 }
 
-// CHECK:STDOUT: --- field_access_in_value.carbon
+// CHECK:STDOUT: --- field_access_in_value.carbon ($field_access_in_value)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -23,7 +23,7 @@ var a: array(i32, 1) = (12,);
 // CHECK:STDERR:
 var b: i32 = a[1];
 
-// CHECK:STDOUT: --- fail_array_out_of_bound_access.carbon
+// CHECK:STDOUT: --- fail_array_out_of_bound_access.carbon ($fail_array_out_of_bound_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

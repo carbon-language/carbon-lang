@@ -50,7 +50,7 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- convert.carbon
+// CHECK:STDOUT: --- convert.carbon ($convert)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -11,6 +11,7 @@
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
+#include "toolchain/sem_ir/inst_namer.h"
 
 namespace llvm {
 class LLVMContext;
@@ -96,6 +97,10 @@ class CompilationUnit {
   auto has_sem_ir() const -> bool { return sem_ir_.has_value(); }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
+  auto get_inst_namer() const -> SemIR::GetInstNamerFn {
+    return *inst_namer_getter_;
+  }
+
  private:
   // Do codegen. Returns true on success.
   auto RunCodeGenHelper() -> bool;
@@ -103,6 +108,8 @@ class CompilationUnit {
   // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
   // significant overhead. Avoid constructing it when unused.
   auto GetParseTreeAndSubtrees() const -> const Parse::TreeAndSubtrees&;
+
+  auto GetInstNamer() const -> SemIR::InstNamer&;
 
   // Wraps a call with log statements to indicate start and end. Typically logs
   // with the actual function name, but marks timings with the appropriate
@@ -160,6 +167,8 @@ class CompilationUnit {
   mutable std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
+  mutable std::optional<SemIR::InstNamer> inst_namer_;
+  std::optional<std::function<auto()->SemIR::InstNamer&>> inst_namer_getter_;
   llvm::LLVMContext* llvm_context_ = nullptr;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::Module> module_;
@@ -172,6 +181,8 @@ class MultiUnitCache {
  public:
   using IncludeInDumpsStore = FixedSizeValueStore<SemIR::CheckIRId, bool>;
   using TreeAndSubtreesGettersStore = Parse::GetTreeAndSubtreesStore;
+  using InstNamerGetterStore =
+      FixedSizeValueStore<SemIR::CheckIRId, SemIR::GetInstNamerFn>;
 
   // This relies on construction after `units` are all initialized, which is
   // reflected by the `ArrayRef` here.
@@ -229,6 +240,40 @@ class MultiUnitCache {
     return *tree_and_subtrees_getters_;
   }
 
+  auto short_file_names() -> const SemIR::ShortFileNameStore& {
+    if (!short_file_names_) {
+      short_file_names_.emplace(SemIR::ShortFileNameStore::MakeWithExplicitSize(
+          units_.size(), SemIR::InstNamer::Namespace::Name()));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        std::string short_name;
+        if (unit->has_source()) {
+          std::filesystem::path file_path(
+              std::string_view(unit->source().filename()));
+          short_name = file_path.stem();
+        }
+        short_file_names_->Set(
+            SemIR::CheckIRId(i),
+            compilation_namespace_.AllocateName(std::move(short_name)));
+      }
+    }
+    return *short_file_names_;
+  }
+
+  auto inst_namer_getters() -> const InstNamerGetterStore& {
+    if (!inst_namer_getters_) {
+      inst_namer_getters_.emplace(
+          InstNamerGetterStore::MakeWithExplicitSize(units_.size(), nullptr));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        if (unit->has_sem_ir()) {
+          inst_namer_getters_->Set(SemIR::CheckIRId(i), unit->get_inst_namer());
+        }
+      }
+    }
+    return *inst_namer_getters_;
+  }
+
+  auto total_ir_count() const -> int { return units_.size(); }
+
  private:
   const CompileOptions* options_;
 
@@ -240,6 +285,15 @@ class MultiUnitCache {
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
   std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
+
+  // A shared namespace for allocating shorthand names for files.
+  SemIR::InstNamer::Namespace compilation_namespace_;
+
+  // For each unit, the shorthand name for its file.
+  std::optional<SemIR::ShortFileNameStore> short_file_names_;
+
+  // For each unit, the `InstNamer` for naming its insts. Used cross-phase.
+  std::optional<InstNamerGetterStore> inst_namer_getters_;
 };
 
 // Helper class to compile C++ and Carbon input files. Used by the `build` and

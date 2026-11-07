@@ -38,7 +38,7 @@ fn H() {
   G(C);
 }
 
-// CHECK:STDOUT: --- library.carbon
+// CHECK:STDOUT: --- library.carbon ($library)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -127,7 +127,7 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- user.carbon
+// CHECK:STDOUT: --- user.carbon ($user)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

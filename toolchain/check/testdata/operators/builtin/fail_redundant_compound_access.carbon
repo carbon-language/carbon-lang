@@ -36,7 +36,7 @@ fn Main() {
   a = a.(F)();
 }
 
-// CHECK:STDOUT: --- fail_redundant_compound_access.carbon
+// CHECK:STDOUT: --- fail_redundant_compound_access.carbon ($fail_redundant_compound_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

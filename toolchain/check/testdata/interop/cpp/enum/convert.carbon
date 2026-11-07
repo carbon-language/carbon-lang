@@ -97,7 +97,7 @@ fn F() {
   Cpp.a as Cpp.DifferentSize;
 }
 
-// CHECK:STDOUT: --- convert_enum.carbon
+// CHECK:STDOUT: --- convert_enum.carbon ($convert_enum)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

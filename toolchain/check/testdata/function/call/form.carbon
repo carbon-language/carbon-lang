@@ -417,7 +417,7 @@ fn G() {
   let unused z: i32 = F(form(val i32), v);
 }
 
-// CHECK:STDOUT: --- ref_form_param.carbon
+// CHECK:STDOUT: --- ref_form_param.carbon ($ref_form_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -459,7 +459,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_form_param.carbon
+// CHECK:STDOUT: --- var_form_param.carbon ($var_form_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -550,7 +550,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc4(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_form_param.carbon
+// CHECK:STDOUT: --- val_form_param.carbon ($val_form_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -617,7 +617,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- type_component_needs_conversion.carbon
+// CHECK:STDOUT: --- type_component_needs_conversion.carbon ($type_component_needs_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -649,7 +649,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_return_form.carbon
+// CHECK:STDOUT: --- ref_return_form.carbon ($ref_return_form)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -691,7 +691,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_return_form.carbon
+// CHECK:STDOUT: --- var_return_form.carbon ($var_return_form)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -762,7 +762,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_return_form.carbon
+// CHECK:STDOUT: --- val_return_form.carbon ($val_return_form)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -804,7 +804,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_return_form_definition.carbon
+// CHECK:STDOUT: --- val_return_form_definition.carbon ($val_return_form_definition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -864,7 +864,7 @@ fn G() {
 // CHECK:STDOUT:   return %.loc5_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_return_class.carbon
+// CHECK:STDOUT: --- ref_return_class.carbon ($ref_return_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -899,7 +899,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_return_class.carbon
+// CHECK:STDOUT: --- val_return_class.carbon ($val_return_class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -934,7 +934,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_return_class_generic.carbon
+// CHECK:STDOUT: --- ref_return_class_generic.carbon ($ref_return_class_generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -991,7 +991,7 @@ fn G() {
 // CHECK:STDOUT:   %x.patt.loc9_13.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- form_generic_return.carbon
+// CHECK:STDOUT: --- form_generic_return.carbon ($form_generic_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

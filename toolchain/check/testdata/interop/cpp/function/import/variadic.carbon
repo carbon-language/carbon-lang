@@ -39,7 +39,7 @@ fn Call3() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- call_variadic.carbon
+// CHECK:STDOUT: --- call_variadic.carbon ($call_variadic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

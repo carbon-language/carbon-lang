@@ -35,7 +35,7 @@ fn Test() {
   &(&undeclared);
 }
 
-// CHECK:STDOUT: --- fail_address_of_error.carbon
+// CHECK:STDOUT: --- fail_address_of_error.carbon ($fail_address_of_error)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -23,7 +23,8 @@ class Formatter {
  public:
   // sem_ir and include_ir_in_dumps must be non-null.
   explicit Formatter(
-      const File* sem_ir, int total_ir_count,
+      const File* sem_ir, const SemIR::ShortFileNameStore& short_file_names,
+      const SemIR::GetInstNamersStore& inst_namers,
       Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
       const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
       bool use_dump_sem_ir_ranges);
@@ -345,7 +346,8 @@ class Formatter {
   FormatterChunks chunks_;
 
   const File* sem_ir_;
-  InstNamer inst_namer_;
+  InstNamer::Namespace::Name file_name_;
+  InstNamer& inst_namer_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 
   // For each CheckIRId, whether entities from it should be formatted.

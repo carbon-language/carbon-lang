@@ -315,7 +315,7 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- use_object_param_qualifiers.carbon
+// CHECK:STDOUT: --- use_object_param_qualifiers.carbon ($use_object_param_qualifiers)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -556,7 +556,7 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_object_param_qualifiers_overloaded.carbon
+// CHECK:STDOUT: --- use_object_param_qualifiers_overloaded.carbon ($use_object_param_qualifiers_overloaded)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -730,7 +730,7 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_explicit_object_param.carbon
+// CHECK:STDOUT: --- call_explicit_object_param.carbon ($call_explicit_object_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -808,7 +808,7 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_explicit_object_param_overloaded.carbon
+// CHECK:STDOUT: --- call_explicit_object_param_overloaded.carbon ($call_explicit_object_param_overloaded)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -43,7 +43,7 @@ fn G() {
   CallGenericMethod(WrongGenericParam, ImplsGeneric);
 }
 
-// CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon
+// CHECK:STDOUT: --- fail_convert_class_type_to_generic_facet_value.carbon ($fail_convert_class_type_to_generic_facet_value)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

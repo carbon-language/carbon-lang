@@ -565,7 +565,7 @@ alias A(U: type) = C;
 // there is no constraint against `.Self`.
 fn F(unused T: I where C == A(.Self)) {}
 
-// CHECK:STDOUT: --- success.carbon
+// CHECK:STDOUT: --- success.carbon ($success)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

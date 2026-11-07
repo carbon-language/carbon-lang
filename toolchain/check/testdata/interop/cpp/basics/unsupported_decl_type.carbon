@@ -40,7 +40,7 @@ fn F() -> i32 {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_todo_use_structured_binding.carbon
+// CHECK:STDOUT: --- fail_todo_use_structured_binding.carbon ($fail_todo_use_structured_binding)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

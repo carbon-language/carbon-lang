@@ -15,7 +15,7 @@
 var x: {.v: ()} = {.v = ()};
 var y: {.v: ()} = x;
 
-// CHECK:STDOUT: --- global_lookup.carbon
+// CHECK:STDOUT: --- global_lookup.carbon ($global_lookup)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -49,7 +49,7 @@ fn F(a: array({}, 3)) -> {} {
   return a[{.index = 3}.index];
 }
 
-// CHECK:STDOUT: --- function_param.carbon
+// CHECK:STDOUT: --- function_param.carbon ($function_param)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -229,7 +229,7 @@ fn F(a: array({}, 3)) -> {} {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- index_non_literal.carbon
+// CHECK:STDOUT: --- index_non_literal.carbon ($index_non_literal)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

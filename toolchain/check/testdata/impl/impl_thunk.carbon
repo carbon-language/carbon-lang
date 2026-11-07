@@ -380,7 +380,7 @@ impl () as I({}) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- struct_conversion.carbon
+// CHECK:STDOUT: --- struct_conversion.carbon ($struct_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -532,7 +532,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inheritance_conversion.carbon
+// CHECK:STDOUT: --- inheritance_conversion.carbon ($inheritance_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -644,7 +644,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inheritance_value_conversion.carbon
+// CHECK:STDOUT: --- inheritance_value_conversion.carbon ($inheritance_value_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -709,7 +709,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inheritance_value_conversion_pointer.carbon
+// CHECK:STDOUT: --- inheritance_value_conversion_pointer.carbon ($inheritance_value_conversion_pointer)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -821,7 +821,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon
+// CHECK:STDOUT: --- inheritance_value_conversion_pointer_addr.carbon ($inheritance_value_conversion_pointer_addr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -933,7 +933,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- inheritance_ref_conversion.carbon
+// CHECK:STDOUT: --- inheritance_ref_conversion.carbon ($inheritance_ref_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -997,7 +997,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- form_parameter.carbon
+// CHECK:STDOUT: --- form_parameter.carbon ($form_parameter)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1082,7 +1082,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon
+// CHECK:STDOUT: --- fail_inheritance_value_conversion_copy_return.carbon ($fail_inheritance_value_conversion_copy_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1201,7 +1201,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_function.carbon
+// CHECK:STDOUT: --- generic_function.carbon ($generic_function)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1402,7 +1402,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %specific_impl_fn.loc10_42.2 => constants.%specific_impl_fn.6b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_method.carbon
+// CHECK:STDOUT: --- generic_method.carbon ($generic_method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1617,7 +1617,7 @@ impl () as I({}) {
 // CHECK:STDOUT:   %specific_impl_fn.loc10_59.2 => constants.%specific_impl_fn.6b3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_interface.carbon
+// CHECK:STDOUT: --- generic_interface.carbon ($generic_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -108,7 +108,7 @@ fn F() -> Cpp.AbstractFinal {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_abstract_final.carbon
+// CHECK:STDOUT: --- use_abstract_final.carbon ($use_abstract_final)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

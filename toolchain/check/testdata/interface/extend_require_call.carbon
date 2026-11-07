@@ -22,7 +22,7 @@ interface K {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- extend_require_call.carbon
+// CHECK:STDOUT: --- extend_require_call.carbon ($extend_require_call)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -52,7 +52,7 @@ fn TestAddAssignNonRef(a: C, b: C) {
   a += b;
 }
 
-// CHECK:STDOUT: --- fail_assign_non_ref.carbon
+// CHECK:STDOUT: --- fail_assign_non_ref.carbon ($fail_assign_non_ref)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

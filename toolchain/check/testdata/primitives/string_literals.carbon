@@ -125,7 +125,7 @@ This string contains 256 characters. Among them are:
 ''';
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_small_string.carbon
+// CHECK:STDOUT: --- use_small_string.carbon ($use_small_string)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -156,7 +156,7 @@ This string contains 256 characters. Among them are:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_overfill_small_string.carbon
+// CHECK:STDOUT: --- fail_overfill_small_string.carbon ($fail_overfill_small_string)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

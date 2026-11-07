@@ -53,7 +53,7 @@ fn Make() -> A;
 var a: A = Make();
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- decl.carbon
+// CHECK:STDOUT: --- decl.carbon ($decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -100,7 +100,7 @@ var a: A = Make();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- simple_init.carbon
+// CHECK:STDOUT: --- simple_init.carbon ($simple_init)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -133,7 +133,7 @@ var a: A = Make();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- simple_init_with_fn.carbon
+// CHECK:STDOUT: --- simple_init_with_fn.carbon ($simple_init_with_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -167,7 +167,7 @@ var a: A = Make();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class_init.carbon
+// CHECK:STDOUT: --- class_init.carbon ($class_init)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -199,7 +199,7 @@ var a: A = Make();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class_init_from_fn.carbon
+// CHECK:STDOUT: --- class_init_from_fn.carbon ($class_init_from_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -73,7 +73,7 @@ fn F() {
   ({} as Point).Zero();
 }
 
-// CHECK:STDOUT: --- fail_extend_impl_file_scope.carbon
+// CHECK:STDOUT: --- fail_extend_impl_file_scope.carbon ($fail_extend_impl_file_scope)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -129,7 +129,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extend_impl_function_scope.carbon
+// CHECK:STDOUT: --- fail_extend_impl_function_scope.carbon ($fail_extend_impl_function_scope)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -194,7 +194,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extend_impl_self_interface.carbon
+// CHECK:STDOUT: --- fail_extend_impl_self_interface.carbon ($fail_extend_impl_self_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

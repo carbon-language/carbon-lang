@@ -53,7 +53,7 @@ fn ChosenBranchIsNonConstant(t: type) {
   var unused w: if false then i32 else t = 1;
 }
 
-// CHECK:STDOUT: --- fail_non_constant_condition.carbon
+// CHECK:STDOUT: --- fail_non_constant_condition.carbon ($fail_non_constant_condition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -132,7 +132,7 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non_constant_result.carbon
+// CHECK:STDOUT: --- fail_non_constant_result.carbon ($fail_non_constant_result)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

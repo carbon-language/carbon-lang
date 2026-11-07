@@ -14,7 +14,7 @@
 
 fn Foo(unused a: i32,) {}
 
-// CHECK:STDOUT: --- params_one_comma.carbon
+// CHECK:STDOUT: --- params_one_comma.carbon ($params_one_comma)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

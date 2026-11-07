@@ -18,7 +18,7 @@ fn F(unused a: i32) -> i32 {
   return a;
 }
 
-// CHECK:STDOUT: --- shadowed_decl.carbon
+// CHECK:STDOUT: --- shadowed_decl.carbon ($shadowed_decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

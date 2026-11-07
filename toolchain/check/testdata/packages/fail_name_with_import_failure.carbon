@@ -25,7 +25,7 @@ impl package Implicit;
 
 var a: () = A();
 
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon ($fail_implicit.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
