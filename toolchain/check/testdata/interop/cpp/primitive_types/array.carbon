@@ -69,15 +69,14 @@ fn F() -> array(C, 5)*;
 
 inline Cpp '''
 void G() {
-  // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+24]]:35
+  // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+23]]:35
   // CHECK:STDERR:        │ class C;
   // CHECK:STDERR:        ·       ┬
   // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
   // CHECK:STDERR:        ·                                   ┳
-  // CHECK:STDERR:        ·                                   ┗━━┫ error: use in C++ of incomplete Carbon
-  // CHECK:STDERR:        ·                                      ┃        type `C`
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: use of incomplete Carbon type `C`
   // CHECK:STDERR:        ·                                      ┃        [IncompleteTypeInCppUse]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:

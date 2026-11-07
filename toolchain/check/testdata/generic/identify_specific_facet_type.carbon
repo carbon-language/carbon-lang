@@ -106,7 +106,7 @@ interface CanFailToMonomorphize(N: Core.IntLiteral) {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │   F(-1, T);
   // CHECK:STDERR:        ·   ────┬───
-  // CHECK:STDERR:        ·       ╰──┤ while substituting this argument into the type of `_`
+  // CHECK:STDERR:        ·       ╰──┤ while substituting generic arguments into the type of `_`
   // CHECK:STDERR:        ·          │ [SubstitutingGenericParamType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -200,7 +200,7 @@ constraint S(N: Core.IntLiteral) {
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        │   F(-1, T);
 // CHECK:STDERR:        ·   ────┬───
-// CHECK:STDERR:        ·       ╰──┤ while substituting this argument into the type of `_`
+// CHECK:STDERR:        ·       ╰──┤ while substituting generic arguments into the type of `_`
 // CHECK:STDERR:        ·          │ [SubstitutingGenericParamType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

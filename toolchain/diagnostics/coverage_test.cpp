@@ -24,11 +24,9 @@ constexpr Kind UntestedKinds[] = {
     Kind::TestDiagnostic,
     Kind::TestDiagnosticOnScope,
 
-    // These state the problem for a type-completion failure on paths no test
-    // reaches: a built-in conversion witness whose operand type is incomplete,
-    // and a `.Self` facet type that can't be identified.
-    // TODO: Write tests that reach them.
-    Kind::IncompleteTypeInBuiltinConversion,
+    // This states the problem for a `.Self` facet type that can't be
+    // identified, on a path no test reaches.
+    // TODO: Write a test that reaches it.
     Kind::PeriodSelfUnidentifiedFacetType,
 
     // Diagnosing erroneous install conditions, but test environments are

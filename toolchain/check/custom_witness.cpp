@@ -870,15 +870,17 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, format);
 }
 
-// Requires `type_id`, one side of a built-in conversion, to be complete.
+// Requires `type_id`, the source or destination type of a built-in conversion,
+// to be complete.
 static auto RequireCompleteConversionType(Context& context, SemIR::LocId loc_id,
-                                          SemIR::TypeId type_id) -> bool {
+                                          SemIR::TypeId type_id, bool is_source)
+    -> bool {
   return RequireCompleteType(context, type_id, loc_id, [&] {
     CARBON_DIAGNOSTIC(IncompleteTypeInBuiltinConversion, Error,
-                      "built-in conversion involving incomplete type {0}",
-                      SemIR::TypeId);
+                      "built-in conversion {0:from|to} incomplete type {1}",
+                      Diagnostics::BoolAsSelect, SemIR::TypeId);
     return context.emitter().Build(loc_id, IncompleteTypeInBuiltinConversion,
-                                   type_id);
+                                   is_source, type_id);
   });
 }
 
@@ -907,8 +909,10 @@ static auto MakeIntFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  if (!RequireCompleteConversionType(context, loc_id, src_type_id) ||
-      !RequireCompleteConversionType(context, loc_id, dest_type_id)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id,
+                                     /*is_source=*/true) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id,
+                                     /*is_source=*/false)) {
     return std::nullopt;
   }
 
@@ -1004,8 +1008,10 @@ static auto MakeFloatFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  if (!RequireCompleteConversionType(context, loc_id, src_type_id) ||
-      !RequireCompleteConversionType(context, loc_id, dest_type_id)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id,
+                                     /*is_source=*/true) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id,
+                                     /*is_source=*/false)) {
     return std::nullopt;
   }
 

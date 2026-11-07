@@ -70,7 +70,7 @@ inline Cpp '''
 // CHECK:STDERR: ->     │ Carbon::IncompleteConcreteA incomplete_concrete_a;
 // CHECK:STDERR:        ·                                                  ┳
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-// CHECK:STDERR:        · ┃ error: use in C++ of incomplete Carbon type `IncompleteConcreteA`
+// CHECK:STDERR:        · ┃ error: use of incomplete Carbon type `IncompleteConcreteA`
 // CHECK:STDERR:        · ┃        [IncompleteTypeInCppUse]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

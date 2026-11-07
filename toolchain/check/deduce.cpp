@@ -551,8 +551,9 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           });
 
       {
-        // A diagnostic from substitution gets a label on this argument naming
-        // the parameter whose type was being formed from it.
+        // A diagnostic from substituting the generic arguments known so far
+        // into this parameter's type gets a label on the call or impl lookup
+        // being deduced for, naming the parameter.
         auto name_id = GetEntityNameForGenericBinding(context(), binding_id);
         Diagnostics::ContextScope diag_context(
             &context().emitter(), [&](auto& builder) {
@@ -561,7 +562,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
               }
               CARBON_DIAGNOSTIC_LABEL(
                   SubstitutingGenericParamType,
-                  "while substituting this argument into the type of `{0}`",
+                  "while substituting generic arguments into the type of `{0}`",
                   SemIR::NameId);
               builder.Attach(loc_id_, SubstitutingGenericParamType, name_id);
             });

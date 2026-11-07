@@ -451,8 +451,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
 
   if (!RequireCompleteType(*context_, class_type_id, GetCurrentCppLocId(), [&] {
         CARBON_DIAGNOSTIC(IncompleteTypeInCppUse, Error,
-                          "use in C++ of incomplete Carbon type {0}",
-                          SemIR::TypeId);
+                          "use of incomplete Carbon type {0}", SemIR::TypeId);
         return context_->emitter().Build(GetCurrentCppLocId(),
                                          IncompleteTypeInCppUse, class_type_id);
       })) {
