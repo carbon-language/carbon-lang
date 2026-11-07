@@ -34,9 +34,9 @@ enum class LineNumbers : int8_t {
 // Draws diagnostics for a terminal.
 //
 // A diagnostic renders as one frame holding a snippet of each file it points
-// into. The message's text is placed under the range that is wrong, which has a
-// heavy underline, and begins with the level word. Every label is placed under
-// the range it is attached to.
+// into. The message's text is placed under the range that is wrong and begins
+// with the level word. Every label is placed under the range it is attached to.
+// The message's ranges are underlined heavy and a label's light.
 //
 //          ╭─┤ foo.carbon:19:3
 //        1 │ fn Run0() {}

@@ -475,7 +475,7 @@ TEST(RendererTest, ARangeElsewhereOnTheLineDoesNotHostTheMessage) {
   EXPECT_THAT(Render(Plain(), diagnostic),
               Eq("       .-| foo.carbon:4:3\n"
                  "->   4 |   Run0(1);\n"
-                 "       :   ^    ---\n"
+                 "       :   ^    ^^^\n"
                  "       :   '--| error: bad call\n"
                  "       '----\n"
                  ""));
@@ -505,7 +505,7 @@ TEST(RendererTest, ARangeCoveringOthersIsRepairedRatherThanStacked) {
   // A range attached over the whole expression, with ranges attached to the
   // operands inside it, is the shape overlap actually arrives in. Nothing is in
   // a position to reject it, so it is drawn as one row: the covering range is
-  // the heavy underline and stays whole, and each operand shows as the tee
+  // the message's underline and stays whole, and each operand shows as the tee
   // where its label line leaves that underline -- which ASCII keeps as the
   // corner inside the `^` run, since the `^` would hide where the label line
   // left.
@@ -548,7 +548,7 @@ TEST(RendererTest, ALabelOnASingleColumnRangeDropsStraightDown) {
 
 TEST(RendererTest, OverlappingSpansStillShareOneRow) {
   // Ranges covering some of the same columns are still one underline row. The
-  // wider one here is the heavy underline, drawn last, so a range inside it
+  // wider one here is the message's underline, drawn last, so a range inside it
   // with no text of its own shows nothing.
   Diagnostic diagnostic = {
       .level = Level::Error,
@@ -564,11 +564,11 @@ TEST(RendererTest, OverlappingSpansStillShareOneRow) {
                  ""));
 }
 
-TEST(RendererTest, ARangeInsideTheHeavyUnderlineShowsAsItsTee) {
-  // The heavy underline is drawn last, so a narrower range inside it leaves it
-  // whole, with no stretch of it light or in a ramp color, and the range shows
-  // as the tee where its label line leaves the heavy underline. Over any other
-  // underline, the narrower range is drawn on top.
+TEST(RendererTest, ARangeInsideTheMessageUnderlineShowsAsItsTee) {
+  // The message's underline is drawn last, so a narrower range inside it leaves
+  // it whole, with no stretch of it light or in another of the theme's colors,
+  // and the range shows as the tee where its label line leaves the message's
+  // underline. Over any other underline, the narrower range is drawn on top.
   Terminal::Capabilities capabilities = {.charset = Terminal::Charset::Utf8};
   Diagnostic diagnostic = {.level = Level::Error,
                            .message = MakeMessage(At(4, 3, 7), "bad call"),
@@ -761,8 +761,8 @@ TEST(RendererTest, ALabelLineInPlaceOfAnUnderlineKeepsTheCaretUnderAscii) {
   // Where the message's underline is one column with an end pulled in to clear
   // the range beside it, there is no junction, so the label line is drawn down
   // that column in place of the underline. Its top cell is still part of the
-  // heavy underline, so under ASCII it is `^`, not the `|` of a light label
-  // line, and the rest of the label line is light like any label's.
+  // message's heavy underline, so under ASCII it is `^`, not the `|` of a light
+  // label line, and the rest of the label line is light like any label's.
   Diagnostic diagnostic = {.level = Level::Error,
                            .message = MakeMessage(At(4, 7, 1), "bad call"),
                            .labels = {MakeLabel(At(4, 8, 2), "operand")}};
@@ -888,18 +888,22 @@ TEST(RendererTest, AsciiDrawsAdjacentRangesWithoutTheGap) {
 
 TEST(RendererTest, ALabelDoesNotHostTheMessage) {
   // Only one of the message's own ranges is drawn in place of its location. A
-  // label covering the same code is a different underline, in the label color,
-  // and the message's own location is still underlined.
+  // label covering the same code is a different underline, light and in the
+  // label color, and the message's own location is still underlined, heavy and
+  // in the level's color.
   Diagnostic diagnostic = {.level = Level::Error,
                            .message = MakeMessage(At(4, 3, 1), "bad call"),
                            .labels = {MakeLabel(At(4, 3, 7), "")}};
-  // Rendered in color, since with none the two underlines are the same
-  // characters and the whole distinction is which color each is drawn in.
+  EXPECT_THAT(Render(Plain(), diagnostic),
+              Eq("       .-| foo.carbon:4:3\n"
+                 "->   4 |   Run0(1);\n"
+                 "       :   ^------\n"
+                 "       :   '--| error: bad call\n"
+                 "       '----\n"
+                 ""));
   Terminal::Capabilities capabilities = {.color_mode =
                                              Terminal::ColorMode::Ansi16};
   std::string rendered = Render(capabilities, diagnostic);
-  // The note's underline runs the width of its range in the note color, and
-  // the message's own column is drawn over it in the level's.
   EXPECT_THAT(rendered, HasSubstr("\x1b[96m"));
   EXPECT_THAT(rendered, HasSubstr("\x1b[91m"));
 }
@@ -1464,11 +1468,12 @@ TEST(RendererTest, RotateColorsEachRangeOnALine) {
       .message = WithRanges(MakeMessage(At(4, 3, 7), "bad call"),
                             {At(4, 3, 4), At(4, 8, 1)})};
   std::string rendered = Render(capabilities, diagnostic);
-  // The range hosting the message keeps the theme's center color, heavy and
-  // bold. The other problem range takes the ramp with the center left out, so
-  // it gets the dark end. Both are reds, so the color shows the theme first.
+  // The range drawn in place of the message's location keeps the theme's center
+  // color and bold. The other range that is part of the problem takes the
+  // theme's colors with the center left out, so it gets the darker shade. Both
+  // are reds, so the color shows the theme first.
   EXPECT_THAT(rendered, HasSubstr("\x1b[1m\x1b[91m^^^^"));
-  EXPECT_THAT(rendered, HasSubstr("\x1b[31m-"));
+  EXPECT_THAT(rendered, HasSubstr("\x1b[31m^"));
 }
 
 TEST(RendererTest, RotateStaysInsideAThemeWithOnlyNamedColors) {
@@ -2327,14 +2332,46 @@ TEST(RendererTest, ARangeOnAnotherLineDoesNotHostTheMessage) {
          "       :      '--| error: bad\n"
          "     2 |\n"
          "     3 | fn Main() {\n"
-         "       : -----------\n"
+         "       : ^^^^^^^^^^^\n"
          "       '----\n"
          ""));
 }
 
-TEST(RendererTest, RotateLeavesTheHeavyUnderlineTheLevelColor) {
+TEST(RendererTest, TheMessagesRangesAreHeavyOnEveryLine) {
+  // The message's ranges are part of the problem and a label's only explain it.
+  // Line weight shows which is which on every line, not only on the one the
+  // message is placed under, so that color is never the only thing that
+  // distinguishes them. A label with no text is still light.
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message =
+          WithRanges(MakeMessage(At(4, 8, 1), "bad argument"), {At(1, 8, 2)}),
+      .labels = {MakeLabel(At(1, 4, 4), "")}};
+  EXPECT_THAT(Render({.charset = Terminal::Charset::Utf8}, diagnostic),
+              Eq("       ╭─┤ foo.carbon:4:8\n"
+                 "     1 │ fn Run0() {}\n"
+                 "       ·    ───╴╺━\n"
+                 "       ┆\n"
+                 "->   4 │   Run0(1);\n"
+                 "       ·        ┳\n"
+                 "       ·        ┗━━┫ error: bad argument\n"
+                 "       ╰────\n"
+                 ""));
+  EXPECT_THAT(Render(Plain(), diagnostic),
+              Eq("       .-| foo.carbon:4:8\n"
+                 "     1 | fn Run0() {}\n"
+                 "       :    ----^^\n"
+                 "       :\n"
+                 "->   4 |   Run0(1);\n"
+                 "       :        ^\n"
+                 "       :        '--| error: bad argument\n"
+                 "       '----\n"
+                 ""));
+}
+
+TEST(RendererTest, RotateLeavesTheMessageUnderlineTheLevelColor) {
   // The level word, the `->` in the margin, the reported line's number, and
-  // the heavy underline identify the diagnostic, so they keep the level's
+  // the message's underline identify the diagnostic, so they keep the level's
   // center color. The other problem ranges take colors from the ramp with the
   // center left out, starting from the dark end.
   Terminal::Capabilities capabilities = {.color_mode =
@@ -2347,7 +2384,7 @@ TEST(RendererTest, RotateLeavesTheHeavyUnderlineTheLevelColor) {
   EXPECT_THAT(rendered, HasSubstr("\x1b[1m\x1b[38;2;255;114;97merror: "));
   EXPECT_THAT(rendered, HasSubstr("\x1b[38;2;255;114;97m->"));
   EXPECT_THAT(rendered, HasSubstr("\x1b[1m\x1b[38;2;255;114;97m^^"));
-  EXPECT_THAT(rendered, HasSubstr("\x1b[38;2;181;86;0m-"));
+  EXPECT_THAT(rendered, HasSubstr("\x1b[38;2;181;86;0m^"));
 }
 
 TEST(RendererTest, ARampRunsOutAndRepeats) {
@@ -2438,7 +2475,7 @@ TEST(RendererTest, ASpanOutsideASharedWindowIsClampedToIt) {
          "...xxxxxxxxxxxxxxxxFIRSTxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx."
          "..\n"
          "       :                    ^^^^^                                    "
-         "          -\n"
+         "          ^\n"
          "       :                      '--| error: bad\n"
          "       '----\n"
          ""));
@@ -2447,8 +2484,9 @@ TEST(RendererTest, ASpanOutsideASharedWindowIsClampedToIt) {
 TEST(RendererTest, ASpanCutOffTheLeftOfAWindowIsNotCarried) {
   // A span windowed out to the left is clamped rather than keeping its full
   // length and underlining the unrelated source that took its place at the
-  // window's start. The message's location, at the far-right span, focuses the
-  // shared window there; the length-40 label at column 11 falls off the left.
+  // window's start. The message's location, at the far-right span, places the
+  // shared window there; the length-40 range at column 11 is cut off at the
+  // left.
   std::string line(300, 'x');
   auto at = [&](int column, int length) {
     return Loc{.filename = "foo.carbon",
@@ -2461,7 +2499,7 @@ TEST(RendererTest, ASpanCutOffTheLeftOfAWindowIsNotCarried) {
   Diagnostic diagnostic = {.level = Level::Error,
                            .message = WithRanges(MakeMessage(at(252, 1), "bad"),
                                                  {at(250, 5), at(11, 40)})};
-  // The window shows the right span; the left label, cut off, is a one-column
+  // The window shows the right span; the left range, cut off, is a one-column
   // underline on the leading `...` rather than dragging its 40-column length
   // across the source that took its place.
   EXPECT_THAT(
@@ -2470,7 +2508,7 @@ TEST(RendererTest, ASpanCutOffTheLeftOfAWindowIsNotCarried) {
          "->   1 | "
          "...xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx."
          "..\n"
-         "       : -                  ^^^^^\n"
+         "       : ^                  ^^^^^\n"
          "       :                      '--| error: bad\n"
          "       '----\n"
          ""));
