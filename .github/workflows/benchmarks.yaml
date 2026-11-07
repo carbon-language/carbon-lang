@@ -1,0 +1,191 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Benchmarks
+
+on:
+  push:
+    branches: [trunk, action-test]
+  # Chain nightly benchmarks directly after `Nightly Release` finishes so there
+  # is only a single nightly cron schedule, no runner contention with the
+  # release build, and benchmarks run on the exact release tag commit.
+  # zizmor: ignore[dangerous-triggers] - {Nightly Release only runs on trunk}
+  workflow_run:
+    workflows: ['Nightly Release']
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Benchmark suite tier to execute'
+        required: false
+        default: 'nightly'
+        type: choice
+        options:
+          - continuous
+          - nightly
+
+permissions:
+  contents: read # For actions/checkout.
+
+# Coalesce rapid pushes on `trunk` without canceling an in-progress benchmark
+# run mid-measurement.
+concurrency:
+  group:
+    ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref ||
+    github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Benchmark (${{ matrix.tier }}, ${{ matrix.runner }})
+    if: |
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'trunk')
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-26']
+        tier:
+          - ${{ (github.event_name == 'workflow_run' && 'nightly') ||
+            (github.event_name == 'workflow_dispatch' && inputs.tier) ||
+            'continuous' }}
+        exclude:
+          - runner: 'macos-26'
+            tier: 'continuous'
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.bencher.dev:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            download.gnome.org:443
+            downloads.sourceforge.net:443
+            files.pythonhosted.org:443
+            formulae.brew.sh:443
+            github.com:443
+            go.dev:443
+            index.crates.io:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
+            releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            storage.googleapis.com:443
+            uploads.github.com:443
+            www.googleapis.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref:
+            ${{ github.event_name == 'workflow_run' &&
+            github.event.workflow_run.head_sha || '' }}
+          persist-credentials: false
+
+      - id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            has_code:
+              - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
+
+      - name: Set up remote cache access (read-write)
+        id: cache-setup
+        if:
+          github.event_name != 'push' || steps.filter.outputs.has_code == 'true'
+        shell: bash
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          echo "$REMOTE_CACHE_KEY" | base64 -d > "$HOME/remote_cache_key.json"
+          echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+              >> "$GITHUB_OUTPUT"
+
+      - uses: ./.github/actions/build-setup-common
+        if:
+          github.event_name != 'push' || steps.filter.outputs.has_code == 'true'
+        with:
+          matrix_runner: ${{ matrix.runner }}
+          remote_cache_upload:
+            ${{ steps.cache-setup.outputs.remote_cache_upload }}
+
+      - name: Run benchmarks
+        id: run-bencher
+        if:
+          github.event_name != 'push' || steps.filter.outputs.has_code == 'true'
+        shell: bash
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+        run: |
+          ./toolchain/benchmarking/run_bencher.py run \
+            --ci \
+            --tier="$BENCH_TIER" \
+            --output="$BMF_FILE" \
+            --github-output="$GITHUB_OUTPUT"
+
+      - name: Install Bencher CLI
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        uses: bencherdev/bencher@7de3c69a85380826613050826b4bce062be2f07d # v0.6.16
+
+      - name: Upload results to Bencher
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        shell: bash
+        env:
+          BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
+          BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          RUNNER: ${{ matrix.runner }}
+          TARGET_SHA:
+            ${{ github.event_name == 'workflow_run' &&
+            github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_run" ]]; then
+            bencher_branch="nightly"
+          elif [[ "$REF_NAME" == "trunk" && "$BENCH_TIER" == "nightly" ]]; then
+            bencher_branch="nightly"
+          else
+            bencher_branch="$REF_NAME"
+          fi
+
+          threshold_args=()
+          while IFS= read -r arg; do
+            threshold_args+=("$arg")
+          done < <(./toolchain/benchmarking/run_bencher.py threshold-args --mode=trunk)
+
+          bencher run \
+            --project carbon-lang \
+            --branch "$bencher_branch" \
+            --hash "$TARGET_SHA" \
+            --testbed "$RUNNER" \
+            --adapter json \
+            --file "$BMF_FILE" \
+            "${threshold_args[@]}"

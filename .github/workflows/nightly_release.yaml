@@ -119,8 +119,10 @@ jobs:
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SHA: ${{ github.sha }}
         run: |
           gh release create \
+            --target "$TARGET_SHA" \
             --title "Nightly build ${nightly_date}" \
             --generate-notes \
             --prerelease \
