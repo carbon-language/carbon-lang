@@ -1401,7 +1401,7 @@ class RowLayout {
   //
   // `message_part` is the message's own part, and `message_host` the extra
   // range drawn in its place, if any, in which case the message's location is
-  // not underlined and its text is placed under the host.
+  // not underlined and its text is placed under that range.
   auto AddLine(llvm::ArrayRef<PreparedPart*> line, PreparedPart* message_part,
                PreparedPart* message_host) -> void;
 

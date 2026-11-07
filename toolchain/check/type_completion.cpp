@@ -904,10 +904,10 @@ auto TypeCompleter::BuildInfo(SemIR::TypeId type_id, SemIR::Inst inst) const
 //
 // Completing a type can evaluate what it is built from, such as a specific's
 // definition or a builtin's constant, and import its definition from C++, and
-// each of those can emit a diagnostic of its own. A context scope labels those
-// with the type being completed and `loc_id`. The diagnoser's diagnostic is
-// built after the scope ends, so that it does not get that label: its message
-// already says what was being completed and where.
+// each of those can emit a diagnostic of its own. A context scope attaches a
+// label to those at `loc_id`, naming the type being completed. The diagnoser's
+// diagnostic is built after the scope ends, so that it does not get that label:
+// its message already says what was being completed and where.
 static auto CompleteType(Context& context, SemIR::TypeId type_id,
                          SemIR::LocId loc_id, Diagnoser diagnoser) -> bool {
   TypeCompleter completer(&context, loc_id);

@@ -67,8 +67,9 @@ using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 // the callee.
 using Diagnoser = llvm::function_ref<auto()->DiagnosticBuilder>;
 
-// A function that attaches labels to a diagnostic, for a caller that knows what
-// the code being checked looks like but not which diagnostic will come of it.
+// A function that attaches labels to a diagnostic that other code builds, for a
+// caller that can locate parts of the code being checked but does not build the
+// diagnostic itself.
 using DiagnosticLabelFn = llvm::function_ref<auto(DiagnosticBuilder&)->void>;
 
 // Attaches labels to every diagnostic emitted while it is in scope.

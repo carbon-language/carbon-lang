@@ -173,9 +173,9 @@ context.emitter()
 Labels are declared with `CARBON_DIAGNOSTIC_LABEL` where they are attached, and
 are not registered in `kind.def`; `check_diagnostics.py` checks that each one is
 attached and covered. A label explains the problem. Code that is part of the
-problem belongs to the message: its own location, and any further range added
-with `ExtraRange(loc)`, which has no text. Text not read together with the code
-it is attached to is not a label. See
+problem is covered by the message's ranges: its own location, and any further
+range added with `ExtraRange(loc)`, which has no text. Text not read together
+with the code it is attached to is not a label. See
 [diagnostics.md](../../../toolchain/docs/diagnostics.md) for which range to pick
 and when a label needs text.
 
@@ -203,7 +203,7 @@ and when a label needs text.
 
 -   `ContextScope`: RAII block scope that attaches a label to every diagnostic
     emitted within it, saying what was being done when it was emitted. It only
-    attaches a label; the message stays whatever the emitting code said:
+    attaches a label; the emitting code still builds the message:
 
     ```cpp
     Diagnostics::ContextScope diagnostic_context(

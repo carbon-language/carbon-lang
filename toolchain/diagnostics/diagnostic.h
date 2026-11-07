@@ -221,7 +221,7 @@ struct Message {
 // A range of source attached to a diagnostic to explain it, and optionally a
 // phrase saying what that range has to do with it.
 //
-// A label with no text attaches only its range.
+// A label's text can be empty, leaving only its range.
 struct Label {
   // Returns the label's text, which is empty when the label has none.
   auto Format() const -> std::string {

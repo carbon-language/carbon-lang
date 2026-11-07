@@ -174,9 +174,9 @@ problem covers, with no text:
 emitter.Build(loc, InvalidCode).ExtraRange(operand_loc).Emit();
 ```
 
-Anything a diagnostic has to say that isn't read against the code it names is
-not a label: it is the message, or a step of the path the message's location was
-reached by, declared with `CARBON_DIAGNOSTIC_LOCATION_INFO`.
+Text in a diagnostic that isn't read against the code it names is not a label:
+it is the message, or a step of the path the message's location was reached by,
+declared with `CARBON_DIAGNOSTIC_LOCATION_INFO`.
 
 Attach every label at a location that reaches source: one that converts to only
 a filename -- an invalid node, code the compiler generated -- leaves its words
@@ -244,13 +244,13 @@ currently implemented.
 
 Labels and location info are not registered. Each is declared where it is
 attached and nowhere else, so there is nothing for a registry to make unique
-and nothing that needs to name one from a distance. Each still has its own
-name, so `--include-diagnostic-kind` says which one produced a line and a test
-can match on it as it does on a kind.
+and no code elsewhere that needs to refer to one. Each still has its own name,
+so `--include-diagnostic-kind` shows which one produced a line and a test can
+match on it as it does on a kind.
 
 What the registry does for a diagnostic is done for those by
-`check_diagnostics.py`, which reads the declarations and the testdata directly
--- `label` below stands for either:
+`check_diagnostics.py`, which reads the declarations and the testdata directly.
+In the list below, `label` means either:
 
 -   Every declared label is attached somewhere. The compiler warns about most of
     these, but not about one declared in a header.

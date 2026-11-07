@@ -188,8 +188,8 @@ class Emitter {
   // error and producing the attached notes.
   //
   // This is called automatically before a `ContextScope` is entered or left,
-  // so that a pending diagnostic gets the labels that were in force when it
-  // was produced. Destruction does not flush; see the `Flush` test.
+  // so that a pending diagnostic gets the labels of the scopes that were active
+  // when it was produced. Destruction does not flush; see the `Flush` test.
   auto Flush() -> void {
     for (auto& flush_fn : flush_fns_) {
       flush_fn();

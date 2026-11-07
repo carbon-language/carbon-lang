@@ -484,7 +484,7 @@ TEST(RendererTest, ARangeElsewhereOnTheLineDoesNotHostTheMessage) {
 TEST(RendererTest, RepeatedSpansAreOneUnderline) {
   // Two labels attached to the same range draw the same underline in the same
   // columns, so they are one underline rather than two identical rows. A
-  // message with an extra range that a label is also attached to reaches this
+  // message with an extra range that a label is also attached to produces this
   // shape.
   Diagnostic diagnostic = {
       .level = Level::Error,
@@ -631,9 +631,10 @@ TEST(RendererTest, UnderlinesNeverHoldACornerOrACrossing) {
   auto render = [&](llvm::ArrayRef<Placed> ranges, Terminal::Charset charset,
                     bool message_owns_wordless) {
     Terminal::Capabilities capabilities = {.charset = charset};
-    // The message points past every range, so each underline comes from a range
-    // of its own or from a label. A wordless range is the message's or a
-    // label's by turns, which is what draws both themes' underlines.
+    // The message's location is past every range, so each underline comes from
+    // an extra range of the message or from a label. A range with no text is
+    // the message's in one pass and a label's in the other, so both themes'
+    // underlines are drawn.
     Message message = MakeMessage(at(26, 1), "m");
     llvm::SmallVector<Label> labels;
     for (const Placed& range : ranges) {

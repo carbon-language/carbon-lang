@@ -225,7 +225,7 @@ static auto GetNoteReasonLabel() -> const Diagnostics::LabelBase<std::string>& {
   return CppInteropParseNoteReason;
 }
 
-// Attaches a label with text for each change `info` suggests. `to_loc` maps a
+// Attaches a label with text for each of `info`'s fix-its. `to_loc` maps a
 // Clang range onto whatever locations the builder takes.
 template <typename BuilderT, typename ToLocT>
 static auto AttachFixIts(BuilderT& builder,
@@ -237,8 +237,8 @@ static auto AttachFixIts(BuilderT& builder,
 }
 
 // Adds the ranges Clang would underline for the leading diagnostic `info` to
-// the message, since they are part of the problem, and attaches the changes
-// `info` suggests.
+// the message, since they are part of the problem, and attaches `info`'s
+// fix-its.
 template <typename BuilderT, typename ToLocT>
 static auto AttachRangesAndFixIts(BuilderT& builder,
                                   const CppDiagnosticListener::Diagnostic& info,
@@ -251,7 +251,7 @@ static auto AttachRangesAndFixIts(BuilderT& builder,
 
 // Attaches `note_info`, a note trailing the diagnostic being built: its text
 // on the declaration it names, its reason half -- when it split into one --
-// on the source that half is about, its ranges, and the changes it suggests.
+// on the source that half is about, its ranges, and its fix-its.
 //
 // A note's ranges are attached as labels with no text.
 template <typename BuilderT, typename ToLocT>
