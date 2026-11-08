@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import json
+import os
 import unittest
 from typing import Any
 from unittest import mock
@@ -45,6 +46,7 @@ class TestCheckDependentPR(unittest.TestCase):
         open_deps: list[int],
         merged_deps: list[int] = None,
         first_commit: str = None,
+        ignored_deps: list[int] = None,
         comment_id: str = "comment_id",
     ) -> dict[str, str]:
         """Builds a boilerplate PR comment."""
@@ -54,6 +56,8 @@ class TestCheckDependentPR(unittest.TestCase):
         }
         if first_commit:
             state["first_commit"] = first_commit
+        if ignored_deps:
+            state["ignored"] = ignored_deps
         return {
             "id": comment_id,
             "body": f"<!-- check_dependent_pr {json.dumps(state)} -->",
@@ -563,6 +567,126 @@ class TestCheckDependentPR(unittest.TestCase):
         self.assertIn(
             "first: 1",
             check_dependent_pr._QUERY_MAX_MERGED_PR,
+        )
+
+    def test_process_pr_override(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID3,
+            commits=[_OID1, _OID3],
+            comments=[self._make_comment(open_deps=[1], first_commit=_OID3)],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={1: {_OID1}, 3: {_OID1, _OID3}},
+            pr_to_head={1: _OID1, 3: _OID3},
+            open_pr_numbers={1, 3},
+            label_id="label_dependent",
+            token="test_token",
+            override=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self.assertIn('"ignored": [1]', calls[2][1]["variable_values"]["body"])
+        self._assert_status(
+            _OID3, "success", "Dependency check overridden (ignoring #1)"
+        )
+
+        # Subsequent push keeps #1 ignored, while still catching new dep #2.
+        self.mock_post.reset_mock()
+        self.mock_client.reset_mock()
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID4,
+            commits=[_OID1, _OID2, _OID4],
+            comments=[self._make_comment(open_deps=[], ignored_deps=[1])],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={
+                1: {_OID1},
+                2: {_OID1, _OID2},
+                3: {_OID1, _OID2, _OID4},
+            },
+            pr_to_head={1: _OID1, 2: _OID2, 3: _OID4},
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        self._assert_status(
+            _OID4, "pending", "This PR has open dependencies: #2"
+        )
+
+    def test_process_pr_recheck(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID2],
+            comments=[self._make_comment(open_deps=[1], ignored_deps=[3])],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: {_OID1}, 2: {_OID2}, 3: {_OID3}},
+            pr_to_head={1: _OID1, 2: _OID2, 3: _OID3},
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+            recheck=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self.assertIn("updateIssueComment", calls[2][0][0])
+        self._assert_status(
+            _OID2, "success", "This PR has no open dependencies"
+        )
+
+    def test_process_pr_recheck_removes_label_without_comment(self) -> None:
+        # Adding `dependent` to an independent PR forces a re-check, which
+        # removes the label again without posting a comment.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID2],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={2: {_OID2}},
+            pr_to_head={2: _OID2},
+            open_pr_numbers={2},
+            label_id="label_dependent",
+            token="test_token",
+            recheck=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertEqual(len(calls), 2)
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self._assert_status(
+            _OID2, "success", "This PR has no open dependencies"
+        )
+
+    def test_set_commit_status_links_workflow_run(self) -> None:
+        with mock.patch.dict(
+            os.environ,
+            {
+                "GITHUB_SERVER_URL": "https://github.com",
+                "GITHUB_REPOSITORY": "carbon-language/carbon-lang",
+                "GITHUB_RUN_ID": "42",
+            },
+        ):
+            check_dependent_pr._set_commit_status(
+                _OID1, "success", "ok", "test_token", dry_run=False
+            )
+        _, kwargs = self.mock_post.call_args
+        self.assertEqual(
+            kwargs["json"]["target_url"],
+            "https://github.com/carbon-language/carbon-lang/actions/runs/42",
         )
 
 
