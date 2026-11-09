@@ -188,6 +188,12 @@ TEST(HashingTest, PairsAndTuples) {
   EXPECT_THAT(HashValue(std::tuple(1, 0)), Eq(hash_10));
   EXPECT_THAT(HashValue(std::tuple(1, 1)), Eq(hash_11));
 
+  // Exercise >32-byte tuple hashing (`HashRaw`'s large-object fallback).
+  EXPECT_THAT(HashValue(std::tuple(0, 0, 0, 0, 0)),
+              Eq(HashValue(std::tuple(0, 0, 0, 0, 0))));
+  EXPECT_THAT(HashValue(std::tuple(0, 0, 0, 0, 0)),
+              Ne(HashValue(std::tuple(0, 0, 0, 0, 1))));
+
   // Integers in tuples should also work.
   for (int i : {0, 1, 2, 3, 42, -1, -2, -3, -13}) {
     SCOPED_TRACE(llvm::formatv("Hashing: ({0}, {0}, {0})", i).str());
@@ -290,13 +296,19 @@ TEST(HashingTest, ArrayLike) {
 }
 
 TEST(HashingTest, HashAPInt) {
-  // The bit width should be hashed as well as the value.
+  // The bit width should be hashed as well as the value. Include >256-bit
+  // values (>32 bytes) with identical word arrays (`one_511` and `one_512`) so
+  // `HashSizedBytesLarge` is tested with a non-zero incoming buffer.
   llvm::APInt one_64(/*numBits=*/64, /*val=*/1);
   llvm::APInt two_64(/*numBits=*/64, /*val=*/2);
   llvm::APInt one_128(/*numBits=*/128, /*val=*/1);
   llvm::APInt two_128(/*numBits=*/128, /*val=*/2);
+  llvm::APInt one_511(/*numBits=*/511, /*val=*/1);
+  llvm::APInt one_512(/*numBits=*/512, /*val=*/1);
+  llvm::APInt two_512(/*numBits=*/512, /*val=*/2);
 
-  std::array array = {one_64, two_64, one_128, two_128};
+  std::array array = {one_64,  two_64,  one_128, two_128,
+                      one_511, one_512, two_512};
   for (int i : llvm::seq<int>(array.size())) {
     EXPECT_THAT(HashValue(array[i]), Eq(HashValue(array[i])));
 
