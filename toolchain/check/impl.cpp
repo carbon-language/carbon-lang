@@ -534,8 +534,6 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     // We don't want to leak `.Self` into the witness table, since it loses its
     // meaning outside of the impl declaration. Replace any use of `.Self` here
     // with the impl's self type.
-    //
-    // FIXME: Subst not needed here?
     rewrite_inst_id = context.constant_values().GetInstId(SubstPeriodSelf(
         context, loc_id, context.constant_values().Get(rewrite_inst_id),
         context.constant_values().Get(impl.self_id)));
