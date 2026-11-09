@@ -521,6 +521,131 @@ constraint J {
 // CHECK:STDERR:
 impl () as J {}
 
+// --- fail_named_constraint_requirement_not_set_for_equivalent.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+
+constraint N {
+  extend require impls Z where .Z1 = ();
+}
+
+// Did not set a value for `.Z1` but `N` provides a requirement for the value
+// of `.Z1`. We don't want multiple errors for the same thing.
+// CHECK:STDERR:        ╭─┤ fail_named_constraint_requirement_not_set_for_equivalent.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │   let Z1: type;
+// CHECK:STDERR:        ·       ────┬───
+// CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl () as Z where .Self impls N {}
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: associated constant Z1 not given a value in impl of interface Z
+// CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Self impls N {}
+
+fn F() {
+  // The constant value should be an error.
+  //@dump-sem-ir-begin
+  () as Z;
+  //@dump-sem-ir-end
+}
+
+// --- fail_named_constraint_requirement_not_equal.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+
+constraint N {
+  extend require impls Z where .Z1 = ();
+}
+
+// CHECK:STDERR:        ╭─┤ fail_named_constraint_requirement_not_equal.carbon:[[@LINE+9]]:1
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = {} and .Self impls N {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `Z where .Self impls N and .(Z.Z1) = {}` being
+// CHECK:STDERR:        ·    ┃        implemented requires that `().(Z.Z1)` equals `()`; found `{}` and
+// CHECK:STDERR:        ·    ┃        `()`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotEquivalent]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Z1 = {} and .Self impls N {}
+
+fn F() {
+  // The constant value should be an error.
+  //@dump-sem-ir-begin
+  () as Z;
+  //@dump-sem-ir-end
+}
+
+// --- fail_named_constraint_requirement_not_set_for_impls.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+interface Y {}
+
+constraint N {
+  extend require impls Z where .Z1 impls Y;
+}
+
+// Did not set a value for `.Z1` but `N` provides a requirement for the value
+// of `.Z1`. We don't want multiple errors for the same thing.
+// CHECK:STDERR:        ╭─┤ fail_named_constraint_requirement_not_set_for_impls.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │   let Z1: type;
+// CHECK:STDERR:        ·       ────┬───
+// CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl () as Z where .Self impls N {}
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: associated constant Z1 not given a value in impl of interface Z
+// CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Self impls N {}
+
+fn F() {
+  // The constant value should be an error.
+  //@dump-sem-ir-begin
+  () as Z;
+  //@dump-sem-ir-end
+}
+
+// --- fail_named_constraint_requirement_not_impld.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+interface Y {}
+
+constraint N {
+  extend require impls Z where .Z1 impls Y;
+}
+
+// CHECK:STDERR:        ╭─┤ fail_named_constraint_requirement_not_impld.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = {} and .Self impls N {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `Z where .Self impls N and .(Z.Z1) = {}` being
+// CHECK:STDERR:        ·    ┃        implemented requires that `{}` implements `Y`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Z1 = {} and .Self impls N {}
+
+fn F() {
+  // The constant value should be an error.
+  //@dump-sem-ir-begin
+  () as Z;
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -560,4 +685,76 @@ impl () as J {}
 // CHECK:STDOUT: specific @B(<error>) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(<error>, <error>) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_constraint_requirement_not_set_for_equivalent.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc29_4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_6: %Z.type = converted %.loc29_4, %Z.facet [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_constraint_requirement_not_equal.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_6: %Z.type = converted %.loc25_4, %Z.facet [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_constraint_requirement_not_set_for_impls.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc30_4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc30_6: %Z.type = converted %.loc30_4, %Z.facet [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_named_constraint_requirement_not_impld.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc25_4: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value constants.%empty_tuple.type, (<error>) [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_6: %Z.type = converted %.loc25_4, %Z.facet [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
