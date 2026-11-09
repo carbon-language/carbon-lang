@@ -375,6 +375,9 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   };
   for (auto lookup_scope : lookup_scopes) {
     auto scope_id = lookup_scope.name_scope_id;
+    if (!scope_id.has_value()) {
+      continue;
+    }
     result.scope_result =
         LookupNameInExactScope(*context_, GetCurrentCppLocId(), name_id,
                                scope_id, context_->name_scopes().Get(scope_id));
