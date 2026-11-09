@@ -122,11 +122,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class EnclosingA(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   fn MemberF[U: type](x: T, y: U);
-  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·                 ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
-  // CHECK:STDERR:        ·                    ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn MemberF[U: type](x: T, y: U);

@@ -300,7 +300,7 @@ static auto ExportClassSpecificToCpp(Context& context,
 
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
                           SemIR::NameScopeId name_scope_id,
-                          SemIR::SpecificId /*scope_specific_id*/)
+                          SemIR::SpecificId scope_specific_id)
     -> clang::DeclContext* {
   llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
 
@@ -340,8 +340,10 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     auto& name_scope = context.name_scopes().Get(name_scope_id);
 
-    auto const_inst_id =
-        context.constant_values().GetConstantInstId(name_scope.inst_id());
+    auto inst_id = name_scope.inst_id();
+    auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+    auto type_inst_id =
+        context.types().GetTypeInstId(context.insts().Get(inst_id).type_id());
     if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
       auto* identifier_info =
           GetClangIdentifierInfo(context, name_scope.name_id());
@@ -359,6 +361,24 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
       const auto& class_info = context.classes().Get(class_type->class_id);
       decl_context = ExportClassToCppInDeclContext(
           context, decl_context, class_info, class_type->specific_id);
+    } else if (auto param_class_type =
+                   context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                       type_inst_id)) {
+      // Require a specific so that the specialized class can be used for the
+      // decl context. The unspecialized template class is only a declaration,
+      // not a definition, and can't be used as a decl context.
+      CARBON_CHECK(scope_specific_id.has_value());
+
+      SemIR::ClassType class_type{
+          .type_id = SemIR::TypeType::TypeId,
+          .class_id = param_class_type->class_id,
+          .specific_id = scope_specific_id,
+      };
+      decl_context =
+          ExportClassSpecificToCpp(context, decl_context, loc_id, class_type);
+      if (!decl_context) {
+        return nullptr;
+      }
     } else {
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
