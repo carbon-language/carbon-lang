@@ -13,8 +13,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_value_disallowed.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+3]]:3-11: error: no return expression should be provided in this context [ReturnStatementDisallowExpr]
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-2]]:1-11: note: there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ╭─┤ fail_value_disallowed.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Main() {
+  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·      ╰──┤ there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return 0;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: no return expression should be provided in this context
+  // CHECK:STDERR:        ·          ┃        [ReturnStatementDisallowExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return 0;
 }

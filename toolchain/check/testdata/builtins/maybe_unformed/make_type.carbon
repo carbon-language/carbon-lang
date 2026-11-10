@@ -41,11 +41,21 @@ let u: type = Make(t);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-22: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoParam() -> type = "maybe_unformed.make_type";
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: invalid signature for builtin function "maybe_unformed.make_type"
+// CHECK:STDERR:        ·       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoParam() -> type = "maybe_unformed.make_type";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-44: error: invalid signature for builtin function "maybe_unformed.make_type" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: invalid signature for builtin function "maybe_unformed.make_type"
+// CHECK:STDERR:        ·       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 
@@ -115,16 +125,12 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_16: type = converted @__global_init.%.loc7, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %.loc7_8: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %t: type = wrapper_binding t, %.loc7_16
+// CHECK:STDOUT:   %.loc7: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %t: type = wrapper_binding t, @__global_init.%.loc7_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt.81f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer @__global_init.%Make.call
-// CHECK:STDOUT:   %.loc8_21.2: type = converted @__global_init.%Make.call, %.loc8_21.1
-// CHECK:STDOUT:   %.loc8_8: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %u: type = wrapper_binding u, %.loc8_21.2
+// CHECK:STDOUT:   %.loc8: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %u.patt: %pattern_type = value_binding_pattern u [concrete = constants.%u.patt]
 // CHECK:STDOUT:   }
@@ -132,10 +138,15 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_16.2: type = converted %.loc7_16.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, imports.%Main.Make [concrete = constants.%Make]
-// CHECK:STDOUT:   %t.ref: type = name_ref t, file.%t
+// CHECK:STDOUT:   %t.global_ref: type = global_ref file.%t
+// CHECK:STDOUT:   %t.ref: type = name_ref t, %t.global_ref
 // CHECK:STDOUT:   %Make.call: init type = call %Make.ref(%t.ref)
+// CHECK:STDOUT:   %.loc8_21.1: type = value_of_initializer %Make.call
+// CHECK:STDOUT:   %.loc8_21.2: type = converted %Make.call, %.loc8_21.1
+// CHECK:STDOUT:   %u: type = wrapper_binding u, %.loc8_21.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

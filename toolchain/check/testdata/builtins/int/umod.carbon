@@ -50,11 +50,19 @@ fn Mod(a: i32, b: i32) -> i32 = "int.umod";
 
 // Remainder of division by zero is not defined.
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╭─┤ fail_div_by_zero.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let a: i32 = Mod(1, 0);
+// CHECK:STDERR:        ·              ━━━━┳━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: i32 = Mod(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╭─┤ fail_div_by_zero.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let b: i32 = Mod(0, 0);
+// CHECK:STDERR:        ·              ━━━━┳━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = Mod(0, 0);
 

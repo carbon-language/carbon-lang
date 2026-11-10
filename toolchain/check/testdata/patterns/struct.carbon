@@ -135,7 +135,12 @@ let {a: i32, .b = c: bool} = {.b = true, .a = 1};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_underscore.carbon:[[@LINE+2]]:19: error: semantics TODO: `Struct pattern underscore field` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_underscore.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ let {.a = x: i32, _} = {.a = 1, .b = ()};
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: semantics TODO: `Struct pattern underscore field`
+// CHECK:STDERR:        ·                      ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: i32, _} = {.a = 1, .b = ()};
 let {.a = y: i32, _,} = {.a = 1, .b = ()};
@@ -146,7 +151,12 @@ let {.a = y: i32, _,} = {.a = 1, .b = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_no_matching_field.carbon:[[@LINE+2]]:20-28: error: struct `{.a: ()}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_no_matching_field.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ let {.a = x: ()} = {.b = ()};
+// CHECK:STDERR:        ·                    ━━━━┳━━━━
+// CHECK:STDERR:        ·                        ┗━━┫ error: struct `{.a: ()}` has no field named `b`
+// CHECK:STDERR:        ·                           ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.b = ()};
 //@dump-sem-ir-end
@@ -156,7 +166,14 @@ let {.a = x: ()} = {.b = ()};
 library "[[@TEST_NAME]]";
 var s: {.a: (), .b: ()} = {.a = (), .b = ()};
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_no_matching_field_ref.carbon:[[@LINE+2]]:20: error: cannot convert from struct type `{.a: (), .b: ()}` to `{.c: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ╭─┤ fail_no_matching_field_ref.carbon:[[@LINE+9]]:20
+// CHECK:STDERR: ->     │ let {.c = x: ()} = s;
+// CHECK:STDERR:        ·                    ┳
+// CHECK:STDERR:        ·                    ┗━━┫ error: cannot convert from struct type
+// CHECK:STDERR:        ·                       ┃        `{.a: (), .b: ()}` to `{.c: ()}`: unexpected
+// CHECK:STDERR:        ·                       ┃        field `a` in source type
+// CHECK:STDERR:        ·                       ┃        [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.c = x: ()} = s;
 //@dump-sem-ir-end
@@ -167,7 +184,12 @@ let {.c = x: ()} = s;
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_unhandled_field.carbon:[[@LINE+2]]:20-39: error: struct `{.a: ()}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_unhandled_field.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = (), .b = true};
+// CHECK:STDERR:        ·                    ━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: struct `{.a: ()}` has no field named `b`
+// CHECK:STDERR:        ·                                ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = (), .b = true};
 //@dump-sem-ir-end
@@ -177,8 +199,13 @@ let {.a = x: ()} = {.a = (), .b = true};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+3]]:19: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
-// CHECK:STDERR: fail_duplicate_field_name.carbon:[[@LINE+2]]:7: note: field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_field_name.carbon:[[@LINE+8]]:19
+// CHECK:STDERR: ->     │ let {.a = b: (), .a = c: ()} = {.a = ()};
+// CHECK:STDERR:        ·       ┬           ┳
+// CHECK:STDERR:        ·       │           ┗━━┫ error: duplicated field name `a` in struct pattern
+// CHECK:STDERR:        ·       │              ┃        [StructNameDuplicate]
+// CHECK:STDERR:        ·       ╰────────────────┤ field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = b: (), .a = c: ()} = {.a = ()};
 //@dump-sem-ir-end
@@ -188,11 +215,21 @@ let {.a = b: (), .a = c: ()} = {.a = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+6]]:13: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+5]]:6-10: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+16]]:13
+// CHECK:STDERR: ->     │ let {a: (), a: ()} = {.a = ()};
+// CHECK:STDERR:        ·      ──┬──  ┳
+// CHECK:STDERR:        ·        │    ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·        │       ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ·        ╰─────────┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+3]]:13: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
-// CHECK:STDERR: fail_duplicate_field_name_shorthand.carbon:[[@LINE+2]]:6: note: field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ let {a: (), a: ()} = {.a = ()};
+// CHECK:STDERR:        ·      ┬      ┳
+// CHECK:STDERR:        ·      │      ┗━━┫ error: duplicated field name `a` in struct pattern
+// CHECK:STDERR:        ·      │         ┃        [StructNameDuplicate]
+// CHECK:STDERR:        ·      ╰───────────┤ field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {a: (), a: ()} = {.a = ()};
 //@dump-sem-ir-end
@@ -202,8 +239,13 @@ let {a: (), a: ()} = {.a = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+3]]:18: error: duplicated field name `a` in struct pattern [StructNameDuplicate]
-// CHECK:STDERR: fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+2]]:7: note: field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_mixed_syntax.carbon:[[@LINE+8]]:18
+// CHECK:STDERR: ->     │ let {.a = b: (), a: ()} = {.a = ()};
+// CHECK:STDERR:        ·       ┬          ┳
+// CHECK:STDERR:        ·       │          ┗━━┫ error: duplicated field name `a` in struct pattern
+// CHECK:STDERR:        ·       │             ┃        [StructNameDuplicate]
+// CHECK:STDERR:        ·       ╰───────────────┤ field with the same name here [StructNamePrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = b: (), a: ()} = {.a = ()};
 //@dump-sem-ir-end
@@ -212,31 +254,50 @@ let {.a = b: (), a: ()} = {.a = ()};
 
 library "[[@TEST_NAME]]";
 
-//@dump-sem-ir-begin
-class C{
-    // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+2]]:9-20: error: found struct pattern in class member var declaration [FieldWithStructPattern]
-    // CHECK:STDERR:
-    var {.a = x: ()};
+class C {
+  // CHECK:STDERR:        ╭─┤ fail_in_class_var.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var {.a = x: ()};
+  // CHECK:STDERR:        ·       ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: struct pattern in field declaration
+  // CHECK:STDERR:        ·                ┃        [FieldWithStructPattern]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  var {.a = x: ()};
 }
-//@dump-sem-ir-end
 
-// --- fail_in_class_let.carbon
+// --- in_static_class_var.carbon
 
 library "[[@TEST_NAME]]";
-//@dump-sem-ir-begin
-class C{
-    // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+2]]:9-20: error: found struct pattern in class member let declaration [FieldWithStructPattern]
-    // CHECK:STDERR:
-    let {.a = x: ()} = {.a = ()};
+
+class C {
+  //@dump-sem-ir-begin
+  static var {.a = x: ()};
+  //@dump-sem-ir-end
 }
-//@dump-sem-ir-end
+
+// --- in_class_let.carbon
+
+library "[[@TEST_NAME]]";
+class C {
+  //@dump-sem-ir-begin
+  let {.a = x: ()} = {.a = ()};
+  //@dump-sem-ir-end
+}
 
 // --- fail_incorrect_field_type.carbon
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_incorrect_field_type.carbon:[[@LINE+3]]:20-28: error: cannot implicitly convert expression of type `{}` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_incorrect_field_type.carbon:[[@LINE+2]]:20-28: note: type `{}` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+11]]:20
+// CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = {}};
+// CHECK:STDERR:        ·                    ┳━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `{}`
+// CHECK:STDERR:        ·                    │  ┃        to `()`
+// CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                    ╰────┤ type `{}` does not implement interface
+// CHECK:STDERR:        ·                         │ `Core.ImplicitAs(())`
+// CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = {}};
 //@dump-sem-ir-end
@@ -245,8 +306,16 @@ let {.a = x: ()} = {.a = {}};
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_incorrect_scrutinee_type.carbon:[[@LINE+3]]:5-16: error: cannot implicitly convert expression of type `((), ())` to `{.a: ()}` [ConversionFailure]
-// CHECK:STDERR: fail_incorrect_scrutinee_type.carbon:[[@LINE+2]]:5-16: note: type `((), ())` does not implement interface `Core.ImplicitAs({.a: ()})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+11]]:5
+// CHECK:STDERR: ->     │ let {.a = x: ()} = ((), ());
+// CHECK:STDERR:        ·     ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `((), ())` to
+// CHECK:STDERR:        ·     │  ┃        `{.a: ()}`
+// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·     ╰────┤ type `((), ())` does not implement interface
+// CHECK:STDERR:        ·          │ `Core.ImplicitAs({.a: ()})`
+// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = ((), ());
 //@dump-sem-ir-end
@@ -262,16 +331,16 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_6.1: %empty_struct_type = converted @__global_init.%.loc5, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %.loc5_6.2: %pattern_type = struct_pattern () [concrete = constants.%.931]
+// CHECK:STDOUT:     %.loc5: %pattern_type = struct_pattern () [concrete = constants.%.931]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_6: %empty_struct_type = converted %.loc5_11, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,26 +359,26 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_28: %empty_tuple.type = converted @__global_init.%.loc5_27, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.loc5_28) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_16.1: %struct_type.a = converted @__global_init.%.loc5_28, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_16.2: %empty_tuple.type = struct_access %.loc5_16.1, element0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_15.1: type = splice_block %.loc5_15.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_15.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_15.3: type = converted %.loc5_15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc5_16.2
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, @__global_init.%.loc5_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %.loc5_16.3: %pattern_type.e85 = struct_pattern (%b.patt) [concrete = constants.%.140]
+// CHECK:STDOUT:     %.loc5_16: %pattern_type.e85 = struct_pattern (%b.patt) [concrete = constants.%.140]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc5_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_28: %struct_type.a = struct_literal (%.loc5_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_28.1: %struct_type.a = struct_literal (%.loc5_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_28.2: %empty_tuple.type = converted %.loc5_27, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.loc5_28.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_16.1: %struct_type.a = converted %.loc5_28.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_16.2: %empty_tuple.type = struct_access %.loc5_16.1, element0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,25 +422,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_53.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_53.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_53.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_53.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_53.2: %i32 = converted @__global_init.%int_1, %.loc5_53.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %struct: %struct_type.a.c.11f = struct_value (%.loc5_53.2, @__global_init.%true) [concrete = constants.%struct.78d]
-// CHECK:STDOUT:   %.loc5_31.1: %struct_type.a.c.11f = converted @__global_init.%.loc5, %struct [concrete = constants.%struct.78d]
-// CHECK:STDOUT:   %.loc5_31.2: %i32 = struct_access %.loc5_31.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_31.3: bool = struct_access %.loc5_31.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc5_31.2
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, @__global_init.%.loc5_31.2
 // CHECK:STDOUT:   %.loc5_27: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %d: bool = wrapper_binding d, %.loc5_31.3
+// CHECK:STDOUT:   %d: bool = wrapper_binding d, @__global_init.%.loc5_31.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %d.patt: %pattern_type.831 = value_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %.loc5_31.4: %pattern_type.e6b = struct_pattern (%b.patt, %d.patt) [concrete = constants.%.d0e]
+// CHECK:STDOUT:     %.loc5_31: %pattern_type.e6b = struct_pattern (%b.patt, %d.patt) [concrete = constants.%.d0e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,7 +437,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc5: %struct_type.a.c.bbc = struct_literal (%int_1, %true) [concrete = constants.%struct.7e6]
+// CHECK:STDOUT:   %.loc5_53.1: %struct_type.a.c.bbc = struct_literal (%int_1, %true) [concrete = constants.%struct.7e6]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_53.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_53.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_53.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_53.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_53.3: %i32 = converted %int_1, %.loc5_53.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %struct: %struct_type.a.c.11f = struct_value (%.loc5_53.3, %true) [concrete = constants.%struct.78d]
+// CHECK:STDOUT:   %.loc5_31.1: %struct_type.a.c.11f = converted %.loc5_53.1, %struct [concrete = constants.%struct.78d]
+// CHECK:STDOUT:   %.loc5_31.2: %i32 = struct_access %.loc5_31.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_31.3: bool = struct_access %.loc5_31.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -398,26 +467,26 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_23: %empty_tuple.type = converted @__global_init.%.loc5_22, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.loc5_23) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_11.1: %struct_type.a = converted @__global_init.%.loc5_23, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_11.2: %empty_tuple.type = struct_access %.loc5_11.1, element0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc5_11.2
+// CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, @__global_init.%.loc5_11.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.cb1 = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %.loc5_11.3: %pattern_type.e85 = struct_pattern (%a.patt) [concrete = constants.%.e73]
+// CHECK:STDOUT:     %.loc5_11: %pattern_type.e85 = struct_pattern (%a.patt) [concrete = constants.%.e73]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc5_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_23: %struct_type.a = struct_literal (%.loc5_22) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_23.1: %struct_type.a = struct_literal (%.loc5_22) [concrete = constants.%struct]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_23.2: %empty_tuple.type = converted %.loc5_22, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.loc5_23.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_11.1: %struct_type.a = converted %.loc5_23.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_11.2: %empty_tuple.type = struct_access %.loc5_11.1, element0 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -461,25 +530,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_43.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_43.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_43.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_43.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_43.2: %i32 = converted @__global_init.%int_1, %.loc5_43.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %struct: %struct_type.a.b.214 = struct_value (%.loc5_43.2, @__global_init.%true) [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_21.1: %struct_type.a.b.214 = converted @__global_init.%.loc5, %struct [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_21.2: %i32 = struct_access %.loc5_21.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_21.3: bool = struct_access %.loc5_21.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc5_21.2
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, @__global_init.%.loc5_21.2
 // CHECK:STDOUT:   %.loc5_17: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc5_21.3
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc5_21.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %.loc5_21.4: %pattern_type.269 = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.4eb]
+// CHECK:STDOUT:     %.loc5_21: %pattern_type.269 = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.4eb]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -487,7 +545,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc5: %struct_type.a.b.f6e = struct_literal (%int_1, %true) [concrete = constants.%struct.1e1]
+// CHECK:STDOUT:   %.loc5_43.1: %struct_type.a.b.f6e = struct_literal (%int_1, %true) [concrete = constants.%struct.1e1]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_43.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_43.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_43.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_43.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_43.3: %i32 = converted %int_1, %.loc5_43.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %struct: %struct_type.a.b.214 = struct_value (%.loc5_43.3, %true) [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_21.1: %struct_type.a.b.214 = converted %.loc5_43.1, %struct [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_21.2: %i32 = struct_access %.loc5_21.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_21.3: bool = struct_access %.loc5_21.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -507,28 +576,20 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %empty_tuple.loc5_34: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_44.1: %empty_tuple.type = converted @__global_init.%.loc5_34, %empty_tuple.loc5_34 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %empty_tuple.loc5_43: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_44.2: %empty_tuple.type = converted @__global_init.%.loc5_43, %empty_tuple.loc5_43 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %struct: %struct_type.a.c = struct_value (%.loc5_44.1, %.loc5_44.2) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_23.1: %struct_type.a.c = converted @__global_init.%.loc5_44, %struct [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc5_23.2: %empty_tuple.type = struct_access %.loc5_23.1, element0 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_23.3: %empty_tuple.type = struct_access %.loc5_23.1, element1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_15.1: type = splice_block %.loc5_15.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_15.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_15.3: type = converted %.loc5_15.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, %.loc5_23.2
+// CHECK:STDOUT:   %b: %empty_tuple.type = wrapper_binding b, @__global_init.%.loc5_23.2
 // CHECK:STDOUT:   %.loc5_22.1: type = splice_block %.loc5_22.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_22.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_22.3: type = converted %.loc5_22.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %empty_tuple.type = wrapper_binding c, %.loc5_23.3
+// CHECK:STDOUT:   %c: %empty_tuple.type = wrapper_binding c, @__global_init.%.loc5_23.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.cb1 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %c.patt: %pattern_type.cb1 = value_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %.loc5_23.4: %pattern_type.f10 = struct_pattern (%b.patt, %c.patt) [concrete = constants.%.fcd]
+// CHECK:STDOUT:     %.loc5_23: %pattern_type.f10 = struct_pattern (%b.patt, %c.patt) [concrete = constants.%.fcd]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -536,7 +597,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc5_34: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc5_43: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc5_44: %struct_type.a.c = struct_literal (%.loc5_34, %.loc5_43) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_44.1: %struct_type.a.c = struct_literal (%.loc5_34, %.loc5_43) [concrete = constants.%struct]
+// CHECK:STDOUT:   %empty_tuple.loc5_34: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.2: %empty_tuple.type = converted %.loc5_34, %empty_tuple.loc5_34 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc5_43: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_44.3: %empty_tuple.type = converted %.loc5_43, %empty_tuple.loc5_43 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %struct: %struct_type.a.c = struct_value (%.loc5_44.2, %.loc5_44.3) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_23.1: %struct_type.a.c = converted %.loc5_44.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_23.2: %empty_tuple.type = struct_access %.loc5_23.1, element0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_23.3: %empty_tuple.type = struct_access %.loc5_23.1, element1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -605,40 +674,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0.loc5_90: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_90.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0.loc5_90 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc5_90: <specific function> = specific_function %impl.elem0.loc5_90, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_90.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn.loc5_90 [concrete = constants.%bound_method.3bd]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_90.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_90.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_90.2: %i32 = converted @__global_init.%int_1, %.loc5_90.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %impl.elem0.loc5_89: %.f72 = impl_witness_access constants.%ImplicitAs.impl_witness.409, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b]
-// CHECK:STDOUT:   %bound_method.loc5_89.1: <bound method> = bound_method @__global_init.%float, %impl.elem0.loc5_89 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc5_89: <specific function> = specific_function %impl.elem0.loc5_89, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_89.2: <bound method> = bound_method @__global_init.%float, %specific_fn.loc5_89 [concrete = constants.%bound_method.6df]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f32.3bc = call %bound_method.loc5_89.2(@__global_init.%float) [concrete = constants.%float.b6c]
-// CHECK:STDOUT:   %.loc5_89.1: %f32.3bc = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.b6c]
-// CHECK:STDOUT:   %.loc5_89.2: %f32.3bc = converted @__global_init.%float, %.loc5_89.1 [concrete = constants.%float.b6c]
-// CHECK:STDOUT:   %struct.loc5_89: %struct_type.i.j.e5d = struct_value (%.loc5_89.2, @__global_init.%true) [concrete = constants.%struct.3be]
-// CHECK:STDOUT:   %.loc5_90.3: %struct_type.i.j.e5d = converted @__global_init.%.loc5_89, %struct.loc5_89 [concrete = constants.%struct.3be]
-// CHECK:STDOUT:   %struct.loc5_90: %struct_type.a.b.5f4 = struct_value (%.loc5_90.2, %.loc5_90.3) [concrete = constants.%struct.431]
-// CHECK:STDOUT:   %.loc5_51.1: %struct_type.a.b.5f4 = converted @__global_init.%.loc5_90, %struct.loc5_90 [concrete = constants.%struct.431]
-// CHECK:STDOUT:   %.loc5_51.2: %i32 = struct_access %.loc5_51.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_51.3: %struct_type.i.j.e5d = struct_access %.loc5_51.1, element1 [concrete = constants.%struct.3be]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc5_51.2
-// CHECK:STDOUT:   %.loc5_51.4: %f32.3bc = struct_access %.loc5_51.3, element0 [concrete = constants.%float.b6c]
-// CHECK:STDOUT:   %.loc5_51.5: bool = struct_access %.loc5_51.3, element1 [concrete = constants.%true]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, @__global_init.%.loc5_51.2
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
-// CHECK:STDOUT:   %m: %f32.3bc = wrapper_binding m, %.loc5_51.4
+// CHECK:STDOUT:   %m: %f32.3bc = wrapper_binding m, @__global_init.%.loc5_51.4
 // CHECK:STDOUT:   %.loc5_46: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %n: bool = wrapper_binding n, %.loc5_51.5
+// CHECK:STDOUT:   %n: bool = wrapper_binding n, @__global_init.%.loc5_51.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %m.patt: %pattern_type.239 = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:     %n.patt: %pattern_type.831 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %.loc5_50: %pattern_type.0af = struct_pattern (%m.patt, %n.patt) [concrete = constants.%.5ed]
-// CHECK:STDOUT:     %.loc5_51.6: %pattern_type.04b = struct_pattern (%x.patt, %.loc5_50) [concrete = constants.%.cc7]
+// CHECK:STDOUT:     %.loc5_51: %pattern_type.04b = struct_pattern (%x.patt, %.loc5_50) [concrete = constants.%.cc7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -647,8 +694,30 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 20e-1 [concrete = constants.%float.cce]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc5_89: %struct_type.i.j.e80 = struct_literal (%float, %true) [concrete = constants.%struct.050]
-// CHECK:STDOUT:   %.loc5_90: %struct_type.a.b.1a6 = struct_literal (%int_1, %.loc5_89) [concrete = constants.%struct.293]
+// CHECK:STDOUT:   %.loc5_89.1: %struct_type.i.j.e80 = struct_literal (%float, %true) [concrete = constants.%struct.050]
+// CHECK:STDOUT:   %.loc5_90.1: %struct_type.a.b.1a6 = struct_literal (%int_1, %.loc5_89.1) [concrete = constants.%struct.293]
+// CHECK:STDOUT:   %impl.elem0.loc5_90: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_90.1: <bound method> = bound_method %int_1, %impl.elem0.loc5_90 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc5_90: <specific function> = specific_function %impl.elem0.loc5_90, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_90.2: <bound method> = bound_method %int_1, %specific_fn.loc5_90 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_90.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_90.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_90.3: %i32 = converted %int_1, %.loc5_90.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %impl.elem0.loc5_89: %.f72 = impl_witness_access constants.%ImplicitAs.impl_witness.409, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b]
+// CHECK:STDOUT:   %bound_method.loc5_89.1: <bound method> = bound_method %float, %impl.elem0.loc5_89 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc5_89: <specific function> = specific_function %impl.elem0.loc5_89, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_89.2: <bound method> = bound_method %float, %specific_fn.loc5_89 [concrete = constants.%bound_method.6df]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f32.3bc = call %bound_method.loc5_89.2(%float) [concrete = constants.%float.b6c]
+// CHECK:STDOUT:   %.loc5_89.2: %f32.3bc = value_of_initializer %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.b6c]
+// CHECK:STDOUT:   %.loc5_89.3: %f32.3bc = converted %float, %.loc5_89.2 [concrete = constants.%float.b6c]
+// CHECK:STDOUT:   %struct.loc5_89: %struct_type.i.j.e5d = struct_value (%.loc5_89.3, %true) [concrete = constants.%struct.3be]
+// CHECK:STDOUT:   %.loc5_90.4: %struct_type.i.j.e5d = converted %.loc5_89.1, %struct.loc5_89 [concrete = constants.%struct.3be]
+// CHECK:STDOUT:   %struct.loc5_90: %struct_type.a.b.5f4 = struct_value (%.loc5_90.3, %.loc5_90.4) [concrete = constants.%struct.431]
+// CHECK:STDOUT:   %.loc5_51.1: %struct_type.a.b.5f4 = converted %.loc5_90.1, %struct.loc5_90 [concrete = constants.%struct.431]
+// CHECK:STDOUT:   %.loc5_51.2: %i32 = struct_access %.loc5_51.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_51.3: %struct_type.i.j.e5d = struct_access %.loc5_51.1, element1 [concrete = constants.%struct.3be]
+// CHECK:STDOUT:   %.loc5_51.4: %f32.3bc = struct_access %.loc5_51.3, element0 [concrete = constants.%float.b6c]
+// CHECK:STDOUT:   %.loc5_51.5: bool = struct_access %.loc5_51.3, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -670,15 +739,8 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_37.1: ref %struct_type.a.b = temporary @__global_init.%.loc7, @__global_init.%F.call
-// CHECK:STDOUT:   %.loc7_37.2: ref %i32 = struct_access %.loc7_37.1, element0
-// CHECK:STDOUT:   %.loc7_37.3: ref bool = struct_access %.loc7_37.1, element1
-// CHECK:STDOUT:   %.loc7_37.4: %i32 = acquire_value %.loc7_37.2
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc7_37.4
-// CHECK:STDOUT:   %.loc7_37.5: bool = acquire_value %.loc7_37.3
 // CHECK:STDOUT:   %.loc7_27: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %y: bool = wrapper_binding y, %.loc7_37.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %y.patt: %pattern_type.831 = value_binding_pattern y [concrete = constants.%y.patt]
@@ -689,8 +751,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc7: ref %struct_type.a.b = temporary_storage
-// CHECK:STDOUT:   %F.call: init %struct_type.a.b to %.loc7 = call %F.ref()
+// CHECK:STDOUT:   %.loc7_37.1: ref %struct_type.a.b = temporary_storage
+// CHECK:STDOUT:   %F.call: init %struct_type.a.b to %.loc7_37.1 = call %F.ref()
+// CHECK:STDOUT:   %.loc7_37.2: ref %struct_type.a.b = temporary %.loc7_37.1, %F.call
+// CHECK:STDOUT:   %.loc7_37.3: ref %i32 = struct_access %.loc7_37.2, element0
+// CHECK:STDOUT:   %.loc7_37.4: ref bool = struct_access %.loc7_37.2, element1
+// CHECK:STDOUT:   %.loc7_37.5: %i32 = acquire_value %.loc7_37.3
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc7_37.5
+// CHECK:STDOUT:   %.loc7_37.6: bool = acquire_value %.loc7_37.4
+// CHECK:STDOUT:   %y: bool = wrapper_binding y, %.loc7_37.6
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -712,15 +781,8 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_27.1: ref %struct_type.a.b = temporary @__global_init.%.loc7, @__global_init.%F.call
-// CHECK:STDOUT:   %.loc7_27.2: ref %i32 = struct_access %.loc7_27.1, element0
-// CHECK:STDOUT:   %.loc7_27.3: ref bool = struct_access %.loc7_27.1, element1
-// CHECK:STDOUT:   %.loc7_27.4: %i32 = acquire_value %.loc7_27.2
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc7_27.4
-// CHECK:STDOUT:   %.loc7_27.5: bool = acquire_value %.loc7_27.3
 // CHECK:STDOUT:   %.loc7_17: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc7_27.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
@@ -731,8 +793,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc7: ref %struct_type.a.b = temporary_storage
-// CHECK:STDOUT:   %F.call: init %struct_type.a.b to %.loc7 = call %F.ref()
+// CHECK:STDOUT:   %.loc7_27.1: ref %struct_type.a.b = temporary_storage
+// CHECK:STDOUT:   %F.call: init %struct_type.a.b to %.loc7_27.1 = call %F.ref()
+// CHECK:STDOUT:   %.loc7_27.2: ref %struct_type.a.b = temporary %.loc7_27.1, %F.call
+// CHECK:STDOUT:   %.loc7_27.3: ref %i32 = struct_access %.loc7_27.2, element0
+// CHECK:STDOUT:   %.loc7_27.4: ref bool = struct_access %.loc7_27.2, element1
+// CHECK:STDOUT:   %.loc7_27.5: %i32 = acquire_value %.loc7_27.3
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc7_27.5
+// CHECK:STDOUT:   %.loc7_27.6: bool = acquire_value %.loc7_27.4
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc7_27.6
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -754,14 +823,8 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_35.1: ref %i32 = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.872]
-// CHECK:STDOUT:   %.loc7_35.2: ref bool = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.d8b]
-// CHECK:STDOUT:   %.loc7_35.3: %i32 = acquire_value %.loc7_35.1
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc7_35.3
-// CHECK:STDOUT:   %.loc7_35.4: bool = acquire_value %.loc7_35.2
 // CHECK:STDOUT:   %.loc7_27: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %y: bool = wrapper_binding y, %.loc7_35.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %y.patt: %pattern_type.831 = value_binding_pattern y [concrete = constants.%y.patt]
@@ -773,6 +836,12 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %s.ref: ref %struct_type.a.b.214 = name_ref s, file.%s [concrete = file.%s.var]
+// CHECK:STDOUT:   %.loc7_35.1: ref %i32 = struct_access %s.ref, element0 [concrete = constants.%.872]
+// CHECK:STDOUT:   %.loc7_35.2: ref bool = struct_access %s.ref, element1 [concrete = constants.%.d8b]
+// CHECK:STDOUT:   %.loc7_35.3: %i32 = acquire_value %.loc7_35.1
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %.loc7_35.3
+// CHECK:STDOUT:   %.loc7_35.4: bool = acquire_value %.loc7_35.2
+// CHECK:STDOUT:   %y: bool = wrapper_binding y, %.loc7_35.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -794,14 +863,8 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_25.1: ref %i32 = struct_access @__global_init.%s.ref, element0 [concrete = constants.%.872]
-// CHECK:STDOUT:   %.loc7_25.2: ref bool = struct_access @__global_init.%s.ref, element1 [concrete = constants.%.d8b]
-// CHECK:STDOUT:   %.loc7_25.3: %i32 = acquire_value %.loc7_25.1
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc7_25.3
-// CHECK:STDOUT:   %.loc7_25.4: bool = acquire_value %.loc7_25.2
 // CHECK:STDOUT:   %.loc7_17: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc7_25.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
@@ -813,6 +876,12 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %s.ref: ref %struct_type.a.b.214 = name_ref s, file.%s [concrete = file.%s.var]
+// CHECK:STDOUT:   %.loc7_25.1: ref %i32 = struct_access %s.ref, element0 [concrete = constants.%.872]
+// CHECK:STDOUT:   %.loc7_25.2: ref bool = struct_access %s.ref, element1 [concrete = constants.%.d8b]
+// CHECK:STDOUT:   %.loc7_25.3: %i32 = acquire_value %.loc7_25.1
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc7_25.3
+// CHECK:STDOUT:   %.loc7_25.4: bool = acquire_value %.loc7_25.2
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc7_25.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -856,25 +925,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_53.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_53.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_53.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_53.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_53.2: %i32 = converted @__global_init.%int_1, %.loc5_53.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %struct: %struct_type.a.c = struct_value (%.loc5_53.2, @__global_init.%true) [concrete = constants.%struct.78d]
-// CHECK:STDOUT:   %.loc5_31.1: %struct_type.a.c = converted @__global_init.%.loc5, %struct [concrete = constants.%struct.78d]
-// CHECK:STDOUT:   %.loc5_31.2: %i32 = struct_access %.loc5_31.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_31.3: bool = struct_access %.loc5_31.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc5_31.2
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, @__global_init.%.loc5_31.2
 // CHECK:STDOUT:   %.loc5_27: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %d: bool = wrapper_binding d, %.loc5_31.3
+// CHECK:STDOUT:   %d: bool = wrapper_binding d, @__global_init.%.loc5_31.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %d.patt: %pattern_type.831 = value_binding_pattern d [concrete = constants.%d.patt]
-// CHECK:STDOUT:     %.loc5_31.4: %pattern_type.e6b = struct_pattern (%b.patt, %d.patt) [concrete = constants.%.d0e]
+// CHECK:STDOUT:     %.loc5_31: %pattern_type.e6b = struct_pattern (%b.patt, %d.patt) [concrete = constants.%.d0e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -882,7 +940,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc5: %struct_type.c.a = struct_literal (%true, %int_1) [concrete = constants.%struct.da6]
+// CHECK:STDOUT:   %.loc5_53.1: %struct_type.c.a = struct_literal (%true, %int_1) [concrete = constants.%struct.da6]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_53.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_53.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_53.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_53.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_53.3: %i32 = converted %int_1, %.loc5_53.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %struct: %struct_type.a.c = struct_value (%.loc5_53.3, %true) [concrete = constants.%struct.78d]
+// CHECK:STDOUT:   %.loc5_31.1: %struct_type.a.c = converted %.loc5_53.1, %struct [concrete = constants.%struct.78d]
+// CHECK:STDOUT:   %.loc5_31.2: %i32 = struct_access %.loc5_31.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_31.3: bool = struct_access %.loc5_31.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -926,25 +995,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_43.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_43.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_43.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_43.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_43.2: %i32 = converted @__global_init.%int_1, %.loc5_43.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %struct: %struct_type.a.b = struct_value (%.loc5_43.2, @__global_init.%true) [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_21.1: %struct_type.a.b = converted @__global_init.%.loc5, %struct [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_21.2: %i32 = struct_access %.loc5_21.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_21.3: bool = struct_access %.loc5_21.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc5_21.2
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, @__global_init.%.loc5_21.2
 // CHECK:STDOUT:   %.loc5_17: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc5_21.3
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc5_21.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %.loc5_21.4: %pattern_type.269 = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.4eb]
+// CHECK:STDOUT:     %.loc5_21: %pattern_type.269 = struct_pattern (%a.patt, %b.patt) [concrete = constants.%.4eb]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -952,7 +1010,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc5: %struct_type.b.a = struct_literal (%true, %int_1) [concrete = constants.%struct.a63]
+// CHECK:STDOUT:   %.loc5_43.1: %struct_type.b.a = struct_literal (%true, %int_1) [concrete = constants.%struct.a63]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_43.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_43.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_43.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_43.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_43.3: %i32 = converted %int_1, %.loc5_43.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %struct: %struct_type.a.b = struct_value (%.loc5_43.3, %true) [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_21.1: %struct_type.a.b = converted %.loc5_43.1, %struct [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_21.2: %i32 = struct_access %.loc5_21.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_21.3: bool = struct_access %.loc5_21.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -996,25 +1065,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc5_48.1: <bound method> = bound_method @__global_init.%int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc5_48.2: <bound method> = bound_method @__global_init.%int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_48.2(@__global_init.%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_48.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_48.2: %i32 = converted @__global_init.%int_1, %.loc5_48.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %struct: %struct_type.a.b = struct_value (%.loc5_48.2, @__global_init.%true) [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_26.1: %struct_type.a.b = converted @__global_init.%.loc5, %struct [concrete = constants.%struct.75c]
-// CHECK:STDOUT:   %.loc5_26.2: %i32 = struct_access %.loc5_26.1, element0 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc5_26.3: bool = struct_access %.loc5_26.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc5_26.2
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, @__global_init.%.loc5_26.2
 // CHECK:STDOUT:   %.loc5_22: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %c: bool = wrapper_binding c, %.loc5_26.3
+// CHECK:STDOUT:   %c: bool = wrapper_binding c, @__global_init.%.loc5_26.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete = constants.%c.patt]
-// CHECK:STDOUT:     %.loc5_26.4: %pattern_type.269 = struct_pattern (%a.patt, %c.patt) [concrete = constants.%.3b7]
+// CHECK:STDOUT:     %.loc5_26: %pattern_type.269 = struct_pattern (%a.patt, %c.patt) [concrete = constants.%.3b7]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1022,7 +1080,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc5: %struct_type.b.a = struct_literal (%true, %int_1) [concrete = constants.%struct.a63]
+// CHECK:STDOUT:   %.loc5_48.1: %struct_type.b.a = struct_literal (%true, %int_1) [concrete = constants.%struct.a63]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_48.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_48.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_48.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_48.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_48.3: %i32 = converted %int_1, %.loc5_48.2 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %struct: %struct_type.a.b = struct_value (%.loc5_48.3, %true) [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_26.1: %struct_type.a.b = converted %.loc5_48.1, %struct [concrete = constants.%struct.75c]
+// CHECK:STDOUT:   %.loc5_26.2: %i32 = struct_access %.loc5_26.1, element0 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc5_26.3: bool = struct_access %.loc5_26.1, element1 [concrete = constants.%true]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1046,14 +1115,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_28: %struct_type.b = struct_literal (%.loc7_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc12_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_28: %struct_type.b = struct_literal (%.loc12_27) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1073,7 +1142,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7: %pattern_type.810 = struct_pattern (%x.patt) [concrete = constants.%.9cb]
+// CHECK:STDOUT:     %.loc14: %pattern_type.810 = struct_pattern (%x.patt) [concrete = constants.%.9cb]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1103,15 +1172,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc7_39: %struct_type.a.b = struct_literal (%.loc7_27, %true) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc12_39: %struct_type.a.b = struct_literal (%.loc12_27, %true) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1137,8 +1206,8 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_40: %struct_type.a = struct_literal (%.loc8_39) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc13_39: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc13_40: %struct_type.a = struct_literal (%.loc13_39) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1156,15 +1225,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt.loc11_7: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.patt.loc11_14: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt.loc21_7: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt.loc21_14: %pattern_type = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_29: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc11_30: %struct_type.a = struct_literal (%.loc11_29) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc21_29: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc21_30: %struct_type.a = struct_literal (%.loc21_29) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1190,39 +1259,114 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_34: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_35: %struct_type.a = struct_literal (%.loc8_34) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc13_34: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc13_35: %struct_type.a = struct_literal (%.loc13_34) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_class_var.carbon
+// CHECK:STDOUT: --- in_static_class_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.cb1 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.e85: type = pattern_type %struct_type.a [concrete]
+// CHECK:STDOUT:   %.f83: %pattern_type.e85 = struct_pattern (%x.patt) [concrete]
+// CHECK:STDOUT:   %.var_patt: %pattern_type.e85 = var_pattern %.f83 [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.037: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%struct_type.a) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %struct_type.a, (%DefaultOrUnformed.impl_witness.037) [concrete]
+// CHECK:STDOUT:   %.616: ref %empty_tuple.type = struct_access @C.%.var, element0 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:   %.var: ref %struct_type.a = var_storage %.var_patt [concrete]
+// CHECK:STDOUT:   %.loc6_24.1: type = splice_block %.loc6_24.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc6_24.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc6_24.3: type = converted %.loc6_24.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: ref %empty_tuple.type = wrapper_binding x, @__global_init.%.loc6_10 [concrete = constants.%.616]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %.loc6_25: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.f83]
+// CHECK:STDOUT:     %.var_patt: %pattern_type.e85 = var_pattern %.loc6_25 [concrete = constants.%.var_patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc8_16
+// CHECK:STDOUT:   .x = %x
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_class_let.carbon
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%struct_type.a, (constants.%DefaultOrUnformed.impl_witness.037) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc6_26.1: %DefaultOrUnformed.type = converted constants.%struct_type.a, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc6_26.1 [concrete = constants.%struct_type.a]
+// CHECK:STDOUT:   %.loc6_26.2: type = converted %.loc6_26.1, %as_type [concrete = constants.%struct_type.a]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %struct_type.a = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   assign @C.%.var, %T.as.DefaultOrUnformed.impl.Op.call
+// CHECK:STDOUT:   %.loc6_10: ref %empty_tuple.type = struct_access @C.%.var, element0 [concrete = constants.%.616]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- in_class_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %pattern_type.e85: type = pattern_type %struct_type.a [concrete]
+// CHECK:STDOUT:   %.972: %pattern_type.e85 = struct_pattern (%x.patt) [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   complete_type_witness = invalid
+// CHECK:STDOUT:   %.loc5_17.1: type = splice_block %.loc5_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc5_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_17.3: type = converted %.loc5_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %x: %empty_tuple.type = wrapper_binding x, @__global_init.%.loc5_18.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %.loc5_18: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.972]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = <unexpected>.inst{{[0-9A-F]+}}.loc7_16
+// CHECK:STDOUT:   .x = %x
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc5_29: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_30.1: %struct_type.a = struct_literal (%.loc5_29) [concrete = constants.%struct]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc5_30.2: %empty_tuple.type = converted %.loc5_29, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %struct: %struct_type.a = struct_value (%.loc5_30.2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_18.1: %struct_type.a = converted %.loc5_30.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc5_18.2: %empty_tuple.type = struct_access %.loc5_18.1, element0 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_incorrect_field_type.carbon
@@ -1242,17 +1386,17 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_28: %empty_tuple.type = converted @__global_init.%.loc7_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7_16: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc15: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc7_28: %struct_type.a.225 = struct_literal (%.loc7_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc15_28.1: %struct_type.a.225 = struct_literal (%.loc15_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc15_28.2: %empty_tuple.type = converted %.loc15_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1272,18 +1416,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_16.1: %struct_type.a = converted @__global_init.%.loc7_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc7_16.2: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc15: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_27: %tuple.type = tuple_literal (%.loc7_22, %.loc7_26) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc15_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc15_27: %tuple.type = tuple_literal (%.loc15_22, %.loc15_26) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc15_16: %struct_type.a = converted %.loc15_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

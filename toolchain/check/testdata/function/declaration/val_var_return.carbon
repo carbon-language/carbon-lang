@@ -67,8 +67,17 @@ fn F() -> var i32 {
 library "[[@TEST_NAME]]";
 
 fn F() -> val i32 {
-  // CHECK:STDERR: fail_val_return_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR: fail_val_return_returned_var.carbon:[[@LINE-2]]:11-17: note: return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ╭─┤ fail_val_return_returned_var.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F() -> val i32 {
+  // CHECK:STDERR:        ·           ───┬───
+  // CHECK:STDERR:        ·              ╰──┤ return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var v: i32 = 1;
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `returned var` declaration in function with non-initializing
+  // CHECK:STDERR:        ·      ┃        return form
+  // CHECK:STDERR:        ·      ┃        [ReturnedVarNotInit]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;

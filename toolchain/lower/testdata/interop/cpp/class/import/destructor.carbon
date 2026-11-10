@@ -233,8 +233,8 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: attributes #5 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!35}
-// CHECK:STDOUT: !llvm.module.flags = !{!126, !127, !128, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!131}
+// CHECK:STDOUT: !llvm.module.flags = !{!126, !127, !128, !129, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!132}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -311,10 +311,11 @@ fn DestroyAIndirectly() {
 // CHECK:STDOUT: !123 = !{!122, !122, i64 0}
 // CHECK:STDOUT: !124 = !{!"p1 _ZTS10Nontrivial", !119, i64 0}
 // CHECK:STDOUT: !125 = !{!124, !124, i64 0}
-// CHECK:STDOUT: !126 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !127 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !128 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !129 = !{!"int", !118, i64 0}
-// CHECK:STDOUT: !130 = !{!"__libc_errno", !129, i64 0}
-// CHECK:STDOUT: !131 = !{!130, !129, i64 0}
+// CHECK:STDOUT: !126 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !127 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !128 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !129 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !130 = !{!"int", !118, i64 0}
+// CHECK:STDOUT: !131 = !{!"__libc_errno", !130, i64 0}
+// CHECK:STDOUT: !132 = !{!131, !130, i64 0}
 // CHECK:STDOUT:

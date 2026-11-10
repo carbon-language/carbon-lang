@@ -49,8 +49,16 @@ fn F(ref x: i32);
 
 fn G() {
   let y: i32 = 0;
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE+3]]:5-9: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_ref_not_durable_ref.carbon:[[@LINE-5]]:6-15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_ref_not_durable_ref.carbon:[[@LINE+11]]:5
+  // CHECK:STDERR:        │ fn F(ref x: i32);
+  // CHECK:STDERR:        ·      ─────┬────
+  // CHECK:STDERR:        ·           ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(ref y);
+  // CHECK:STDERR:        ·     ━━┳━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: value expression passed to reference parameter
+  // CHECK:STDERR:        ·          ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(ref y);
 }
@@ -63,8 +71,16 @@ fn F(ref x: i32);
 
 fn G() {
   var y: i32 = 0;
-  // CHECK:STDERR: fail_missing_ref.carbon:[[@LINE+3]]:5: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
-  // CHECK:STDERR: fail_missing_ref.carbon:[[@LINE-5]]:6-15: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_missing_ref.carbon:[[@LINE+11]]:5
+  // CHECK:STDERR:        │ fn F(ref x: i32);
+  // CHECK:STDERR:        ·      ─────┬────
+  // CHECK:STDERR:        ·           ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(y);
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: argument to `ref` parameter not marked with `ref`
+  // CHECK:STDERR:        ·        ┃        [RefParamNoRefTag]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(y);
 }
@@ -78,11 +94,25 @@ fn F(x: i32);
 fn G() {
   var y: i32 = 0;
 
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+2]]:27-31: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+  // CHECK:STDERR:        ╭─┤ fail_unnecessary_ref.carbon:[[@LINE+8]]:27
+  // CHECK:STDERR: ->     │   var unused z: (i32,) = (ref y,);
+  // CHECK:STDERR:        ·                           ┳━━━━
+  // CHECK:STDERR:        ·                           ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·                              ┃        parameter
+  // CHECK:STDERR:        ·                              ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused z: (i32,) = (ref y,);
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+3]]:5-9: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE-9]]:6-11: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_unnecessary_ref.carbon:[[@LINE+11]]:5
+  // CHECK:STDERR:        │ fn F(x: i32);
+  // CHECK:STDERR:        ·      ───┬──
+  // CHECK:STDERR:        ·         ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(ref y);
+  // CHECK:STDERR:        ·     ━━┳━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `ref` tag is not an argument to a `ref` parameter
+  // CHECK:STDERR:        ·          ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(ref y);
 }

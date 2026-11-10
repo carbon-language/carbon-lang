@@ -229,8 +229,8 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!65}
+// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !64, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!66}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -278,11 +278,12 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: !58 = !{i64 0, i64 4, !57}
 // CHECK:STDOUT: !59 = !{!52, !52, i64 0}
 // CHECK:STDOUT: !60 = !{!56, !55, i64 0}
-// CHECK:STDOUT: !61 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !62 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !63 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !64 = !{!"__libc_errno", !55, i64 0}
-// CHECK:STDOUT: !65 = !{!64, !55, i64 0}
+// CHECK:STDOUT: !61 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !62 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !63 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !64 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !65 = !{!"__libc_errno", !55, i64 0}
+// CHECK:STDOUT: !66 = !{!65, !55, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ordered_with.carbon'
@@ -301,10 +302,10 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: $_Zge8OrderedAS_ = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !68 {
+// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !69 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y), !dbg !75
-// CHECK:STDOUT:   ret void, !dbg !76
+// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y), !dbg !76
+// CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -315,13 +316,13 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !118
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
 // CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
@@ -341,13 +342,13 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !118
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
 // CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
@@ -367,13 +368,13 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !118
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
 // CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
@@ -393,13 +394,13 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !118
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !118
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
 // CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
@@ -412,53 +413,53 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !78 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !82
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !82
-// CHECK:STDOUT:   call void @_Zlt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !82
-// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !82
-// CHECK:STDOUT:   ret i1 %0, !dbg !82
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !83
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !83
+// CHECK:STDOUT:   call void @_Zlt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !83
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !83
+// CHECK:STDOUT:   ret i1 %0, !dbg !83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !84 {
+// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !85 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !88
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !88
-// CHECK:STDOUT:   call void @_Zle8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !88
-// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !88
-// CHECK:STDOUT:   ret i1 %0, !dbg !88
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !89
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !89
+// CHECK:STDOUT:   call void @_Zle8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !89
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !89
+// CHECK:STDOUT:   ret i1 %0, !dbg !89
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !90 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !91 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !94
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !94
-// CHECK:STDOUT:   call void @_Zgt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !94
-// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !94
-// CHECK:STDOUT:   ret i1 %0, !dbg !94
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !95
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !95
+// CHECK:STDOUT:   call void @_Zgt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !95
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !95
+// CHECK:STDOUT:   ret i1 %0, !dbg !95
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !96 {
+// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !97 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !100
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !100
-// CHECK:STDOUT:   call void @_Zge8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !100
-// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !100
-// CHECK:STDOUT:   ret i1 %0, !dbg !100
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !101
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !101
+// CHECK:STDOUT:   call void @_Zge8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !101
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !101
+// CHECK:STDOUT:   ret i1 %0, !dbg !101
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y) #0 !dbg !102 {
+// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y) #0 !dbg !103 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !107
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !109
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !111
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !113
-// CHECK:STDOUT:   ret void, !dbg !115
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !108
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !110
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !112
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !114
+// CHECK:STDOUT:   ret void, !dbg !116
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -474,9 +475,9 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
 // CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !120
+// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !121
 // CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !120
+// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !121
 // CHECK:STDOUT:   %cmp = icmp slt i32 %0, %1
 // CHECK:STDOUT:   ret i1 %cmp
 // CHECK:STDOUT: }
@@ -559,9 +560,9 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!67}
-// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!65}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!68}
+// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !64, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!66}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -580,50 +581,51 @@ fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
 // CHECK:STDOUT: !57 = !{!55, !55, i64 0}
 // CHECK:STDOUT: !58 = !{i64 0, i64 4, !57}
 // CHECK:STDOUT: !59 = !{!52, !52, i64 0}
-// CHECK:STDOUT: !61 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !62 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !63 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !64 = !{!"__libc_errno", !55, i64 0}
-// CHECK:STDOUT: !65 = !{!64, !55, i64 0}
-// CHECK:STDOUT: !66 = !DIFile(filename: "ordered_with.carbon", directory: "")
-// CHECK:STDOUT: !67 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !66, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !66, line: 33, type: !9, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !77)
-// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !7)
-// CHECK:STDOUT: !70 = !DILocalVariable(arg: 2, scope: !68, type: !7)
-// CHECK:STDOUT: !75 = !DILocation(line: 34, column: 3, scope: !68)
-// CHECK:STDOUT: !76 = !DILocation(line: 33, column: 1, scope: !68)
-// CHECK:STDOUT: !77 = !{!69, !70}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !83)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !7)
-// CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !7)
-// CHECK:STDOUT: !82 = !DILocation(line: 8, column: 15, scope: !78)
-// CHECK:STDOUT: !83 = !{!79, !80}
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !89)
-// CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !7)
-// CHECK:STDOUT: !86 = !DILocalVariable(arg: 2, scope: !84, type: !7)
-// CHECK:STDOUT: !88 = !DILocation(line: 16, column: 15, scope: !84)
-// CHECK:STDOUT: !89 = !{!85, !86}
-// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !95)
-// CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !90, type: !7)
-// CHECK:STDOUT: !92 = !DILocalVariable(arg: 2, scope: !90, type: !7)
-// CHECK:STDOUT: !94 = !DILocation(line: 12, column: 15, scope: !90)
-// CHECK:STDOUT: !95 = !{!91, !92}
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !66, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !101)
-// CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !7)
-// CHECK:STDOUT: !98 = !DILocalVariable(arg: 2, scope: !96, type: !7)
-// CHECK:STDOUT: !100 = !DILocation(line: 20, column: 15, scope: !96)
-// CHECK:STDOUT: !101 = !{!97, !98}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.b948edeb3216062b", scope: null, file: !66, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !116)
-// CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !7)
-// CHECK:STDOUT: !104 = !DILocalVariable(arg: 2, scope: !102, type: !7)
-// CHECK:STDOUT: !107 = !DILocation(line: 27, column: 3, scope: !102)
-// CHECK:STDOUT: !109 = !DILocation(line: 28, column: 3, scope: !102)
-// CHECK:STDOUT: !111 = !DILocation(line: 29, column: 3, scope: !102)
-// CHECK:STDOUT: !113 = !DILocation(line: 30, column: 3, scope: !102)
-// CHECK:STDOUT: !115 = !DILocation(line: 26, column: 1, scope: !102)
-// CHECK:STDOUT: !116 = !{!103, !104}
-// CHECK:STDOUT: !117 = !{!"p1 _ZTS8OrderedA", !49, i64 0}
-// CHECK:STDOUT: !118 = !{!117, !117, i64 0}
-// CHECK:STDOUT: !119 = !{!"_ZTS8OrderedA", !55, i64 0}
-// CHECK:STDOUT: !120 = !{!119, !55, i64 0}
+// CHECK:STDOUT: !61 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !62 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !63 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !64 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !65 = !{!"__libc_errno", !55, i64 0}
+// CHECK:STDOUT: !66 = !{!65, !55, i64 0}
+// CHECK:STDOUT: !67 = !DIFile(filename: "ordered_with.carbon", directory: "")
+// CHECK:STDOUT: !68 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !67, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !67, line: 33, type: !9, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !78)
+// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !7)
+// CHECK:STDOUT: !71 = !DILocalVariable(arg: 2, scope: !69, type: !7)
+// CHECK:STDOUT: !76 = !DILocation(line: 34, column: 3, scope: !69)
+// CHECK:STDOUT: !77 = !DILocation(line: 33, column: 1, scope: !69)
+// CHECK:STDOUT: !78 = !{!70, !71}
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !84)
+// CHECK:STDOUT: !80 = !DILocalVariable(arg: 1, scope: !79, type: !7)
+// CHECK:STDOUT: !81 = !DILocalVariable(arg: 2, scope: !79, type: !7)
+// CHECK:STDOUT: !83 = !DILocation(line: 8, column: 15, scope: !79)
+// CHECK:STDOUT: !84 = !{!80, !81}
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !90)
+// CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !7)
+// CHECK:STDOUT: !87 = !DILocalVariable(arg: 2, scope: !85, type: !7)
+// CHECK:STDOUT: !89 = !DILocation(line: 16, column: 15, scope: !85)
+// CHECK:STDOUT: !90 = !{!86, !87}
+// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !96)
+// CHECK:STDOUT: !92 = !DILocalVariable(arg: 1, scope: !91, type: !7)
+// CHECK:STDOUT: !93 = !DILocalVariable(arg: 2, scope: !91, type: !7)
+// CHECK:STDOUT: !95 = !DILocation(line: 12, column: 15, scope: !91)
+// CHECK:STDOUT: !96 = !{!92, !93}
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !102)
+// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !7)
+// CHECK:STDOUT: !99 = !DILocalVariable(arg: 2, scope: !97, type: !7)
+// CHECK:STDOUT: !101 = !DILocation(line: 20, column: 15, scope: !97)
+// CHECK:STDOUT: !102 = !{!98, !99}
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.b948edeb3216062b", scope: null, file: !67, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !117)
+// CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !7)
+// CHECK:STDOUT: !105 = !DILocalVariable(arg: 2, scope: !103, type: !7)
+// CHECK:STDOUT: !108 = !DILocation(line: 27, column: 3, scope: !103)
+// CHECK:STDOUT: !110 = !DILocation(line: 28, column: 3, scope: !103)
+// CHECK:STDOUT: !112 = !DILocation(line: 29, column: 3, scope: !103)
+// CHECK:STDOUT: !114 = !DILocation(line: 30, column: 3, scope: !103)
+// CHECK:STDOUT: !116 = !DILocation(line: 26, column: 1, scope: !103)
+// CHECK:STDOUT: !117 = !{!104, !105}
+// CHECK:STDOUT: !118 = !{!"p1 _ZTS8OrderedA", !49, i64 0}
+// CHECK:STDOUT: !119 = !{!118, !118, i64 0}
+// CHECK:STDOUT: !120 = !{!"_ZTS8OrderedA", !55, i64 0}
+// CHECK:STDOUT: !121 = !{!120, !55, i64 0}
 // CHECK:STDOUT:

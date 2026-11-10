@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_let_struct_identifier_only.carbon
 
-// CHECK:STDERR: fail_let_struct_identifier_only.carbon:[[@LINE+2]]:7: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR:        ╭─┤ fail_let_struct_identifier_only.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ let {s};
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: expected `:` or `:?` in binding pattern
+// CHECK:STDERR:        ·          ┃        [ExpectedBindingPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {s};
 

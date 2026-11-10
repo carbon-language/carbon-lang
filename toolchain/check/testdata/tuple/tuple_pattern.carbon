@@ -72,7 +72,12 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+2]]:20: error: found tuple pattern in class `var` decl [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╭─┤ fail_in_class.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var (x: {}, y: {});
+  // CHECK:STDERR:        ·       ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: tuple pattern in field declaration
+  // CHECK:STDERR:        ·                 ┃        [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var (x: {}, y: {});
 }
@@ -81,11 +86,21 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 1 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ let (x: {}, y: {}) = ({},);
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 1
+// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (x: {}, y: {}) = ({},);
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ let (a: {}, b: {}) = ({}, {}, {});
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 3
+// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (a: {}, b: {}) = ({}, {}, {});
 
@@ -593,20 +608,16 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %empty_struct.loc5_24: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_24: %empty_struct_type = converted @__global_init.%.loc5_24, %empty_struct.loc5_24 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_10.1: type = splice_block %.loc5_10.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc5_10.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_10.3: type = converted %.loc5_10.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: %empty_struct_type = wrapper_binding x, %.loc5_24
-// CHECK:STDOUT:   %empty_struct.loc5_28: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_28: %empty_struct_type = converted @__global_init.%.loc5_28, %empty_struct.loc5_28 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %x: %empty_struct_type = wrapper_binding x, @__global_init.%.loc5_24.2
 // CHECK:STDOUT:   %.loc5_17.1: type = splice_block %.loc5_17.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc5_17.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_17.3: type = converted %.loc5_17.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: %empty_struct_type = wrapper_binding y, %.loc5_28
+// CHECK:STDOUT:   %y: %empty_struct_type = wrapper_binding y, @__global_init.%.loc5_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.a96 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %y.patt: %pattern_type.a96 = value_binding_pattern y [concrete = constants.%y.patt]
@@ -616,9 +627,13 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5_24: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_28: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc5_29: %tuple.type = tuple_literal (%.loc5_24, %.loc5_28) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc5_24.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_28.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_29: %tuple.type = tuple_literal (%.loc5_24.1, %.loc5_28.1) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %empty_struct.loc5_24: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_24.2: %empty_struct_type = converted %.loc5_24.1, %empty_struct.loc5_24 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %empty_struct.loc5_28: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc5_28.2: %empty_struct_type = converted %.loc5_28.1, %empty_struct.loc5_28 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

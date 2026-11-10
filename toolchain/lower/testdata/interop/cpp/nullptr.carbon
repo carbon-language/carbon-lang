@@ -191,8 +191,8 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!89, !90, !91, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!94}
+// CHECK:STDOUT: !llvm.module.flags = !{!89, !90, !91, !92, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!95}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -256,10 +256,11 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !86 = !{!"p1 std::nullptr_t", !85, i64 0}
 // CHECK:STDOUT: !87 = !{!86, !86, i64 0}
 // CHECK:STDOUT: !88 = !{!84, !84, i64 0}
-// CHECK:STDOUT: !89 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !90 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !91 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !92 = !{!"int", !83, i64 0}
-// CHECK:STDOUT: !93 = !{!"__libc_errno", !92, i64 0}
-// CHECK:STDOUT: !94 = !{!93, !92, i64 0}
+// CHECK:STDOUT: !89 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !90 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !91 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !92 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !93 = !{!"int", !83, i64 0}
+// CHECK:STDOUT: !94 = !{!"__libc_errno", !93, i64 0}
+// CHECK:STDOUT: !95 = !{!94, !93, i64 0}
 // CHECK:STDOUT:

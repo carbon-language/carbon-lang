@@ -135,8 +135,8 @@ fn Test() {
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!56, !57, !58, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!63}
+// CHECK:STDOUT: !llvm.module.flags = !{!56, !57, !58, !59, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!64}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -180,12 +180,13 @@ fn Test() {
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !6)
 // CHECK:STDOUT: !54 = !DILocation(line: 36, column: 1, scope: !49)
 // CHECK:STDOUT: !55 = !{!50}
-// CHECK:STDOUT: !56 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !57 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !58 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !59 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !60 = !{!"omnipotent char", !59, i64 0}
-// CHECK:STDOUT: !61 = !{!"int", !60, i64 0}
-// CHECK:STDOUT: !62 = !{!"__libc_errno", !61, i64 0}
-// CHECK:STDOUT: !63 = !{!62, !61, i64 0}
+// CHECK:STDOUT: !56 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !57 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !58 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !59 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !60 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !61 = !{!"omnipotent char", !60, i64 0}
+// CHECK:STDOUT: !62 = !{!"int", !61, i64 0}
+// CHECK:STDOUT: !63 = !{!"__libc_errno", !62, i64 0}
+// CHECK:STDOUT: !64 = !{!63, !62, i64 0}
 // CHECK:STDOUT:

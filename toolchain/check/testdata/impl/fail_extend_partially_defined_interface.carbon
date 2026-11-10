@@ -14,8 +14,17 @@
 
 interface I {
   class C {
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE+3]]:5-21: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
-    // CHECK:STDERR: fail_extend_partially_defined_interface.carbon:[[@LINE-3]]:1-13: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_extend_partially_defined_interface.carbon:[[@LINE+12]]:5
+    // CHECK:STDERR:        │ interface I {
+    // CHECK:STDERR:        · ──────┬──────
+    // CHECK:STDERR:        ·       ╰──┤ interface is currently being defined
+    // CHECK:STDERR:        ·          │ [InterfaceIncompleteWithinDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     extend impl as I;
+    // CHECK:STDERR:        ·     ━━━━━━━━┳━━━━━━━━
+    // CHECK:STDERR:        ·             ┗━━┫ error: `extend impl as` incomplete facet type `I`
+    // CHECK:STDERR:        ·                ┃        [ExtendImplAsIncomplete]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     extend impl as I;
   }
@@ -61,8 +70,8 @@ interface I {
 // CHECK:STDOUT: generic impl @C.as.I.impl(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%Self) [symbolic = %C (constants.%C)]
-// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness %C, @I [symbolic = %.loc20 (constants.%.af5)]
-// CHECK:STDOUT:   %I.impl_witness.loc20_21.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc20_21.2 (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness %C, @I [symbolic = %.loc29 (constants.%.af5)]
+// CHECK:STDOUT:   %I.impl_witness.loc29_21.2: <witness> = impl_witness %I.impl_witness_table, @C.as.I.impl(%Self) [symbolic = %I.impl_witness.loc29_21.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %Self.ref as %I.ref;
 // CHECK:STDOUT: }
@@ -75,7 +84,7 @@ interface I {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%C [symbolic = %C (constants.%C)]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc20: <witness> = impl_self_witness @C.as.I.impl.%Self.ref, @I [symbolic = @C.as.I.impl.%.loc20 (constants.%.af5)]
+// CHECK:STDOUT:     %.loc29: <witness> = impl_self_witness @C.as.I.impl.%Self.ref, @I [symbolic = @C.as.I.impl.%.loc29 (constants.%.af5)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -93,7 +102,7 @@ interface I {
 // CHECK:STDOUT: specific @C.as.I.impl(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %C => constants.%C
-// CHECK:STDOUT:   %.loc20 => constants.%.af5
-// CHECK:STDOUT:   %I.impl_witness.loc20_21.2 => constants.%I.impl_witness
+// CHECK:STDOUT:   %.loc29 => constants.%.af5
+// CHECK:STDOUT:   %I.impl_witness.loc29_21.2 => constants.%I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

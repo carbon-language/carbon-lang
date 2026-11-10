@@ -13,8 +13,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_storage_is_literal.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+3]]:17: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_storage_is_literal.carbon:[[@LINE+2]]:17: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_storage_is_literal.carbon:[[@LINE+11]]:17
+  // CHECK:STDERR: ->     │   var unused x: 1 = 1;
+  // CHECK:STDERR:        ·                 ┳
+  // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
+  // CHECK:STDERR:        ·                 │  ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·                 ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
+  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: 1 = 1;
 }
@@ -55,11 +63,11 @@ fn Main() {
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.var: ref <error> = var_storage %x.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %int_1.loc19_21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc27_21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign %x.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %int_1.loc19_17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:     %.loc19: type = converted %int_1.loc19_17, <error> [concrete = <error>]
+// CHECK:STDOUT:     %int_1.loc27_17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:     %.loc27: type = converted %int_1.loc27_17, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: <error> = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

@@ -14,8 +14,17 @@
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE+3]]:25-42: error: redeclaration differs at parameter 2 [RedeclParamDiffers]
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE-2]]:18-28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_defaults_different_values_redecl.carbon:[[@LINE+12]]:25
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 10);
+// CHECK:STDERR:        ·                  ─────┬─────
+// CHECK:STDERR:        ·                       ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                          │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused x: i32 = 0, unused y: i32 = 22) { }
+// CHECK:STDERR:        ·                         ━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: redeclaration differs at parameter 2
+// CHECK:STDERR:        ·                                    ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
@@ -27,8 +36,18 @@ fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
 // --- fail_imported_default_presence_mismatch.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+3]]:13-18: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: imported_default_presence_mismatch.carbon:3:6-15: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+13]]:13
+// CHECK:STDERR: ->     │ fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
+// CHECK:STDERR:        ·             ━━━┳━━
+// CHECK:STDERR:        ·                ┗━━┫ error: redeclaration differs at parameter 1
+// CHECK:STDERR:        ·                   ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ imported_default_presence_mismatch.carbon
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
+// CHECK:STDERR:        ·      ─────┬────
+// CHECK:STDERR:        ·           ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·              │ [RedeclParamPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
 
@@ -40,8 +59,18 @@ fn F(x: i32 = 0, y: i32 = 10);
 // --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+3]]:25-42: error: redeclaration differs at parameter 2 [RedeclParamDiffers]
-// CHECK:STDERR: imported_defaults_different_values.carbon:3:18-28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_imported_defaults_different_values.impl.carbon:[[@LINE+13]]:25
+// CHECK:STDERR: ->     │ fn F(unused x: i32 = 0, unused y: i32 = 22) { }
+// CHECK:STDERR:        ·                         ━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: redeclaration differs at parameter 2
+// CHECK:STDERR:        ·                                    ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ imported_defaults_different_values.carbon
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 10);
+// CHECK:STDERR:        ·                  ─────┬─────
+// CHECK:STDERR:        ·                       ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                          │ [RedeclParamPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 

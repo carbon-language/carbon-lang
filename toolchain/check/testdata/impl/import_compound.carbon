@@ -46,8 +46,16 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn NonInstanceCallImportFail(n: {.i: ()}) {
-  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert non-type value of type `{.i: ()}` into type implementing `NonInstance` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+2]]:3-19: note: type `{.i: ()}` does not implement interface `Core.ImplicitAs(NonInstance)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_import_non-instance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   n.(NonInstance.F)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.i: ()}` into
+  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n.(NonInstance.F)();
 }
@@ -58,8 +66,16 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn NonInstanceCallIndirectImport(p: {.i: ()}*) {
-  // CHECK:STDERR: fail_import_non-instance_indirect.carbon:[[@LINE+3]]:3-20: error: cannot implicitly convert non-type value of type `{.i: ()}` into type implementing `NonInstance` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_import_non-instance_indirect.carbon:[[@LINE+2]]:3-20: note: type `{.i: ()}` does not implement interface `Core.ImplicitAs(NonInstance)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_import_non-instance_indirect.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   p->(NonInstance.F)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.i: ()}` into
+  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(NonInstance.F)();
 }
@@ -83,7 +99,13 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn InstanceCallImportFail() {
-  // CHECK:STDERR: fail_import_instance.carbon:[[@LINE+2]]:3-23: error: cannot access member of interface `Instance` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_import_instance.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   {.i: ()}.(Instance.G)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Instance` in type `type` that
+  // CHECK:STDERR:        ·      ┃        does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.i: ()}.(Instance.G)();
 }
@@ -487,7 +509,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.i = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.12d [concrete = constants.%assoc0.dae]
-// CHECK:STDOUT:   %.loc9: %NonInstance.type = converted %n.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17: %NonInstance.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -581,8 +603,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.12d [concrete = constants.%assoc0.dae]
-// CHECK:STDOUT:   %.loc9_4.1: ref %struct_type.i = deref %p.ref
-// CHECK:STDOUT:   %.loc9_4.2: %NonInstance.type = converted %.loc9_4.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_4.1: ref %struct_type.i = deref %p.ref
+// CHECK:STDOUT:   %.loc17_4.2: %NonInstance.type = converted %.loc17_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -835,8 +857,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InstanceCallImportFail() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc8_9.2: type = converted %.loc8_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc14_9.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc14_9.2: type = converted %.loc14_9.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Instance.ref: type = name_ref Instance, imports.%Main.Instance [concrete = constants.%Instance.type]
 // CHECK:STDOUT:   %G.ref: %Instance.assoc_type = name_ref G, imports.%Main.import_ref.437 [concrete = constants.%assoc0]

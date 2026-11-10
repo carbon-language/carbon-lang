@@ -40,24 +40,18 @@ let c: bool = GreaterEq('a', 'b');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc21_33.1: bool = value_of_initializer @__global_init.%GreaterEq.call.loc21 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_33.2: bool = converted @__global_init.%GreaterEq.call.loc21, %.loc21_33.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_33.2
+// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, @__global_init.%.loc21_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_33.1: bool = value_of_initializer @__global_init.%GreaterEq.call.loc22 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc22_33.2: bool = converted @__global_init.%GreaterEq.call.loc22, %.loc22_33.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_33.2
+// CHECK:STDOUT:   %.loc22: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc22_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23_33.1: bool = value_of_initializer @__global_init.%GreaterEq.call.loc23 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc23_33.2: bool = converted @__global_init.%GreaterEq.call.loc23, %.loc23_33.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc23_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %c: bool = wrapper_binding c, %.loc23_33.2
+// CHECK:STDOUT:   %.loc23: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c: bool = wrapper_binding c, @__global_init.%.loc23_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -69,14 +63,20 @@ let c: bool = GreaterEq('a', 'b');
 // CHECK:STDOUT:   %.loc21_25: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc21_30: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %GreaterEq.call.loc21: init bool = call %GreaterEq.ref.loc21(%.loc21_25, %.loc21_30) [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_33.1: bool = value_of_initializer %GreaterEq.call.loc21 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_33.2: bool = converted %GreaterEq.call.loc21, %.loc21_33.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %GreaterEq.ref.loc22: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc22_25: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc22_30: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %GreaterEq.call.loc22: init bool = call %GreaterEq.ref.loc22(%.loc22_25, %.loc22_30) [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc22_33.1: bool = value_of_initializer %GreaterEq.call.loc22 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc22_33.2: bool = converted %GreaterEq.call.loc22, %.loc22_33.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %GreaterEq.ref.loc23: %GreaterEq.type = name_ref GreaterEq, file.%GreaterEq.decl [concrete = constants.%GreaterEq]
 // CHECK:STDOUT:   %.loc23_25: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc23_30: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %GreaterEq.call.loc23: init bool = call %GreaterEq.ref.loc23(%.loc23_25, %.loc23_30) [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc23_33.1: bool = value_of_initializer %GreaterEq.call.loc23 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc23_33.2: bool = converted %GreaterEq.call.loc23, %.loc23_33.1 [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

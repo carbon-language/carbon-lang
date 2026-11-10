@@ -50,7 +50,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:8-10: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var c: Def = {};
+// CHECK:STDERR:        ·        ━┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: Def = {};
 
@@ -60,7 +64,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:8-15: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var c: Test.Def = {};
+// CHECK:STDERR:        ·        ━━━━┳━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: member name `Def` not found in `Test`
+// CHECK:STDERR:        ·               ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: Test.Def = {};
 
@@ -76,7 +85,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+2]]:8-21: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward_with_def.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var c: ForwardWithDef = {};
+// CHECK:STDERR:        ·        ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: ForwardWithDef = {};
 
@@ -86,7 +99,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+2]]:8-26: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_forward_with_def.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var c: Test.ForwardWithDef = {};
+// CHECK:STDERR:        ·        ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: member name `ForwardWithDef` not found in `Test`
+// CHECK:STDERR:        ·                    ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: Test.ForwardWithDef = {};
 
@@ -104,7 +122,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+2]]:16-22: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ fn F(unused c: Forward*) {}
+// CHECK:STDERR:        ·                ━━━┳━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused c: Forward*) {}
 
@@ -114,7 +136,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+2]]:16-27: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_forward.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ fn F(unused c: Test.Forward*) {}
+// CHECK:STDERR:        ·                ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: member name `Forward` not found in `Test`
+// CHECK:STDERR:        ·                         ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused c: Test.Forward*) {}
 

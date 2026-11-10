@@ -41,22 +41,54 @@ alias IntLiteral = MakeIntLiteral();
 fn AddCharInt(c: CharLiteral, n: IntLiteral) -> CharLiteral = "char_literal.add";
 fn Negate(n: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-54: error: character arithmetic result 4503599627370593 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 4503599627370593 is
+// CHECK:STDERR:        ·                         ┃        not a valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddCharInt('a', 0x10000000000000);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+5]]:5: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE-3]]:5-18: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+19]]:5
+// CHECK:STDERR:        │ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
+// CHECK:STDERR:        ·     ───────┬──────
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
+// CHECK:STDERR:        ·     ┳
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-48: error: character arithmetic result 1114112 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 1114112 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-46: error: character arithmetic result 55296 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = AddCharInt('\u{D7FF}', 1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 55296 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = AddCharInt('\u{D7FF}', 1);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-48: error: character arithmetic result -1 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let c: CharLiteral = AddCharInt('a', Negate(98));
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result -1 is not a valid
+// CHECK:STDERR:        ·                         ┃        Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: CharLiteral = AddCharInt('a', Negate(98));
 
@@ -80,24 +112,18 @@ let c: CharLiteral = AddCharInt('a', Negate(98));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc12 [concrete = constants.%.711]
-// CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc12, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %CharLiteral.ref.loc12: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc12_39.2
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, @__global_init.%.loc12_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_44.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc15 [concrete = constants.%.ae7]
-// CHECK:STDOUT:   %.loc15_44.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc15, %.loc15_44.1 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, %.loc15_44.2
+// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, @__global_init.%.loc15_44.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_44.1: Core.CharLiteral = value_of_initializer @__global_init.%AddCharInt.call.loc16 [concrete = constants.%.a8b]
-// CHECK:STDOUT:   %.loc16_44.2: Core.CharLiteral = converted @__global_init.%AddCharInt.call.loc16, %.loc16_44.1 [concrete = constants.%.a8b]
 // CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, %.loc16_44.2
+// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, @__global_init.%.loc16_44.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt.c30]
 // CHECK:STDOUT:   }
@@ -106,17 +132,23 @@ let c: CharLiteral = AddCharInt('a', Negate(98));
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %AddCharInt.ref.loc12: %AddCharInt.type = name_ref AddCharInt, file.%AddCharInt.decl [concrete = constants.%AddCharInt]
-// CHECK:STDOUT:   %.loc12: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %.loc12_33: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %AddCharInt.call.loc12: init Core.CharLiteral = call %AddCharInt.ref.loc12(%.loc12, %int_1.loc12) [concrete = constants.%.711]
+// CHECK:STDOUT:   %AddCharInt.call.loc12: init Core.CharLiteral = call %AddCharInt.ref.loc12(%.loc12_33, %int_1.loc12) [concrete = constants.%.711]
+// CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer %AddCharInt.call.loc12 [concrete = constants.%.711]
+// CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted %AddCharInt.call.loc12, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %AddCharInt.ref.loc15: %AddCharInt.type = name_ref AddCharInt, file.%AddCharInt.decl [concrete = constants.%AddCharInt]
-// CHECK:STDOUT:   %.loc15: Core.CharLiteral = char_value U+007F [concrete = constants.%.e28]
+// CHECK:STDOUT:   %.loc15_33: Core.CharLiteral = char_value U+007F [concrete = constants.%.e28]
 // CHECK:STDOUT:   %int_1.loc15: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %AddCharInt.call.loc15: init Core.CharLiteral = call %AddCharInt.ref.loc15(%.loc15, %int_1.loc15) [concrete = constants.%.ae7]
+// CHECK:STDOUT:   %AddCharInt.call.loc15: init Core.CharLiteral = call %AddCharInt.ref.loc15(%.loc15_33, %int_1.loc15) [concrete = constants.%.ae7]
+// CHECK:STDOUT:   %.loc15_44.1: Core.CharLiteral = value_of_initializer %AddCharInt.call.loc15 [concrete = constants.%.ae7]
+// CHECK:STDOUT:   %.loc15_44.2: Core.CharLiteral = converted %AddCharInt.call.loc15, %.loc15_44.1 [concrete = constants.%.ae7]
 // CHECK:STDOUT:   %AddCharInt.ref.loc16: %AddCharInt.type = name_ref AddCharInt, file.%AddCharInt.decl [concrete = constants.%AddCharInt]
-// CHECK:STDOUT:   %.loc16: Core.CharLiteral = char_value U+00FF [concrete = constants.%.ad8]
+// CHECK:STDOUT:   %.loc16_33: Core.CharLiteral = char_value U+00FF [concrete = constants.%.ad8]
 // CHECK:STDOUT:   %int_1.loc16: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %AddCharInt.call.loc16: init Core.CharLiteral = call %AddCharInt.ref.loc16(%.loc16, %int_1.loc16) [concrete = constants.%.a8b]
+// CHECK:STDOUT:   %AddCharInt.call.loc16: init Core.CharLiteral = call %AddCharInt.ref.loc16(%.loc16_33, %int_1.loc16) [concrete = constants.%.a8b]
+// CHECK:STDOUT:   %.loc16_44.1: Core.CharLiteral = value_of_initializer %AddCharInt.call.loc16 [concrete = constants.%.a8b]
+// CHECK:STDOUT:   %.loc16_44.2: Core.CharLiteral = converted %AddCharInt.call.loc16, %.loc16_44.1 [concrete = constants.%.a8b]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
