@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/custom_witness/destroy/types.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/custom_witness/nodestroy.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destroy/types.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/nodestroy.carbon
 
 // --- fail_nodestroy_incomplete_type.carbon
 
@@ -26,4 +26,14 @@ fn Test() {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Incomplete as Core.Destroy;
+
+  // CHECK:STDERR:        ╭─┤ fail_nodestroy_incomplete_type.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Incomplete as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Incomplete` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  Incomplete as Core.TrivialDestroy;
 }
