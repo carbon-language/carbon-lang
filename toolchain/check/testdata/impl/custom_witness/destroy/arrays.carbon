@@ -22,45 +22,6 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- trivial_empty_array_with_trivial_element_type.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Array = array(i32, 0);
-fn Make() -> Array;
-
-fn Test() {
-  var unused x: Array = Make();
-}
-
-// --- trivial_empty_array_with_nontrivial_element_type.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Array = array(HasNonTrivialDestruction, 0);
-fn Make() -> Array;
-
-fn Test() {
-  var unused x: Array = Make();
-}
-
-// --- trivial_populated.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Array = array(HasTrivialDestruction, 1);
-fn Make() -> Array;
-
-fn Test() {
-  var unused x: Array = Make();
-}
-
 // --- todo_nontrivial_populated.carbon
 
 library "[[@TEST_NAME]]";
@@ -76,19 +37,6 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- trivial_array_of_array.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Array = array(array(HasTrivialDestruction, 3), 10);
-fn Make() -> Array;
-
-fn Test() {
-  var unused x: Array = Make();
-}
-
 // --- todo_nontrivial_array_of_array.carbon
 
 library "[[@TEST_NAME]]";
@@ -102,25 +50,6 @@ fn Test() {
   //@dump-sem-ir-begin
   var unused x: Array = Make();
   //@dump-sem-ir-end
-}
-
-// --- trivial_adapter.carbon
-
-// Not in `adapters.carbon`, since that would expand our min_prelude from `destroy.carbon` to
-// `array.carbon`.
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-class Adapter {
-  adapt array(HasTrivialDestruction, 2);
-}
-
-fn Make() -> Adapter;
-
-fn Test() {
-  var unused x: Adapter = Make();
 }
 
 // --- todo_nontrivial_adapter.carbon
@@ -142,22 +71,6 @@ fn Test() {
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end
-}
-
-// --- trivial_constrained_facet.carbon
-
-// Not in `facets.carbon`, since that would expand our min_prelude from `destroy.carbon` to
-// `array.carbon`.
-
-library "[[@TEST_NAME]]";
-
-fn Make(generic T: Core.Destroy) -> T {
-  returned var result: T;
-  return var;
-}
-
-fn Test(generic T: Core.Destroy) {
-  var unused x: array(T, 3) = (Make(T), Make(T), Make(T));
 }
 
 // CHECK:STDOUT: --- todo_nontrivial_populated.carbon

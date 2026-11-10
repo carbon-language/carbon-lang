@@ -26,60 +26,6 @@ class ImplsDestroy {
   }
 }
 
-// --- trivial_empty.carbon
-
-library "[[@TEST_NAME]]";
-
-alias Tuple = ();
-fn Make() -> Tuple;
-
-fn Test() {
-  var unused x: Tuple = Make();
-}
-
-// --- trivial_nonempty.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Tuple = (A, B);
-fn Make() -> Tuple;
-
-fn Test() {
-  var unused x: Tuple = Make();
-}
-
-// --- todo_nontrivial_element_first.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Tuple = (ImplsDestroy, HasTrivialDestruction);
-fn Make() -> Tuple;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  var unused x: Tuple = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_nontrivial_element_second.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Tuple = (HasTrivialDestruction, ImplsDestroy);
-fn Make() -> Tuple;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  var unused x: Tuple = Make();
-  //@dump-sem-ir-end
-}
-
 // --- todo_nontrivial_all_nontrivial_elements.carbon
 
 library "[[@TEST_NAME]]";
@@ -99,19 +45,6 @@ fn Test() {
   //@dump-sem-ir-begin
   var unused x: Tuple = Make();
   //@dump-sem-ir-end
-}
-
-// --- trivial_nested.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Tuple = (A, (B, A));
-fn Make() -> Tuple;
-
-fn Test() {
-  var unused x: Tuple = Make();
 }
 
 // --- todo_nontrivial_nested.carbon

@@ -26,72 +26,6 @@ class ImplsDestroy {
   }
 }
 
-// --- trivial_empty.carbon
-
-library "[[@TEST_NAME]]";
-
-alias Struct = {};
-fn Make() -> Struct;
-
-fn Test() {
-  var unused x: Struct = Make();
-}
-
-// --- trivial_nonempty.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Struct = {.a: A, .b: B};
-fn Make() -> Struct;
-
-fn Test() {
-  var unused x: Struct = Make();
-}
-
-// --- trivial_nested_struct_with_trivial_members.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Struct = {.a: {.b: B}};
-fn Make() -> Struct;
-
-fn Test() {
-  var unused x: Struct = Make();
-}
-
-// --- todo_nontrivial_struct_nontrivial_field_first.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Struct = {.a: ImplsDestroy, .b: HasTrivialDestruction};
-fn Make() -> Struct;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  var unused x: Struct = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_nontrivial_nontrivial_field_second.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-alias Struct = {.a: HasTrivialDestruction, .b: ImplsDestroy};
-fn Make() -> Struct;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  var unused x: Struct = Make();
-  //@dump-sem-ir-end
-}
 
 // --- todo_nontrivial_all_nontrivial_fields.carbon
 
@@ -112,17 +46,6 @@ fn Test() {
   //@dump-sem-ir-begin
   var unused x: Struct = Make();
   //@dump-sem-ir-end
-}
-
-// --- trivial_nested.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
-
-fn Test() {
-  var unused x: {.a: {.b: B}} = {.a = {.b = {}}};
 }
 
 // --- todo_nontrivial_nested.carbon

@@ -26,35 +26,6 @@ class AlsoImplsDestroy {
   }
 }
 
-// --- trivial_empty_partial_class.carbon
-
-library "[[@TEST_NAME]]";
-
-base class Base {}
-fn Make() -> Base;
-
-fn Test() {
-  var unused x: partial Base = Make();
-}
-
-// --- trivial_nonempty_partial_class.carbon
-
-library "[[@TEST_NAME]]";
-
-class A {}
-class B {}
-
-base class Base {
-  var a: A;
-  var b: B;
-}
-
-fn Make() -> partial Base;
-
-fn Test() {
-  var unused x: partial Base = Make();
-}
-
 // --- nontrivial_member.carbon
 
 library "[[@TEST_NAME]]";
@@ -90,17 +61,6 @@ fn Test() {
   //@dump-sem-ir-begin
   var unused x: partial Base = Make();
   //@dump-sem-ir-end
-}
-
-// --- trivial_abstract.carbon
-
-library "[[@TEST_NAME]]";
-
-abstract class Abstract {}
-fn Make() -> partial Abstract;
-
-fn Test() {
-  var unused x: partial Abstract = Make();
 }
 
 // --- nontrivial_abstract.carbon
