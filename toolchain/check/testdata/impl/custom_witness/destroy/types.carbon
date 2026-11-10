@@ -17,5 +17,13 @@ library "[[@TEST_NAME]]";
 class Incomplete;
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nodestroy_incomplete_type.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Incomplete as Core.Destroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Incomplete` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Incomplete as Core.Destroy;
 }
