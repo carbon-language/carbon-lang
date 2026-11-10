@@ -502,7 +502,8 @@ class SourceBlock {
   [[clang::always_inline]] static auto Load(const char* text,
                                             ssize_t size = Size)
       -> SourceBlock {
-    CARBON_DCHECK(size > 0 && size <= Size);
+    CARBON_DCHECK(size > 0);
+    CARBON_DCHECK(size <= Size);
     SourceBlock b;
     std::memcpy(b.bytes, text, size);
     return b;
@@ -745,8 +746,8 @@ auto Lexer::ScanIdentifier(llvm::StringRef source_text, ssize_t position) const
   // shifted down to that bit, covers at least the next 57 bytes, and so finds
   // the end of all keywords and nearly all identifiers. The sentinel bits past
   // the end of the source text end any identifier there without a bounds check.
-  CARBON_DCHECK(position >= 0 &&
-                position < static_cast<ssize_t>(source_text.size()));
+  CARBON_DCHECK(position >= 0);
+  CARBON_DCHECK(position < static_cast<ssize_t>(source_text.size()));
   CARBON_DCHECK(
       IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
   CARBON_DCHECK(id_end_bitmap_bytes_ != nullptr);
