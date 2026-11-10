@@ -65,6 +65,15 @@ fn G() {
   F(type, X);
 }
 
+// --- ref_self_type.carbon
+library "[[@TEST_NAME]]";
+
+class C {};
+class D(template T: type) {
+  fn F(ref self) -> C* { return &self.c; }
+  var c: C;
+}
+
 // --- fail_non_constant_type_argument.carbon
 library "[[@TEST_NAME]]";
 

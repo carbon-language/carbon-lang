@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -264,29 +265,57 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
-    -> bool {
-  auto value_id = context.node_stack().PopExpr();
+static auto PerformAddrOfAction(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId value_id) -> SemIR::InstId {
   auto type_id = context.insts().Get(value_id).type_id();
+
   // Only durable reference expressions can have their address taken.
   switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::Error:
       break;
     default:
+      // TODO: This diagnostic should be located on the actual `&` token for the
+      // address_of operation, but the location of the parse tree node is the
+      // location of the lvalue argument, so the location of the diagnostic
+      // is necessarily there. There seems to be no way to encode the location
+      // of a single token in anything but a diagnostic location, so that is
+      // where this diagnostic is issued. Restore the location of the token.
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             AddrOfNonRef);
-      value_id = SemIR::ErrorInst::InstId;
-      break;
+      context.emitter().Emit(loc_id, AddrOfNonRef);
+      return SemIR::ErrorInst::InstId;
   }
+
   // TODO: Preserve spelling of type of operand where possible.
   auto type_inst_id = context.types().GetTypeInstId(type_id);
-  AddInstAndPush<SemIR::AddrOf>(
-      context, node_id,
+  return AddInst<SemIR::AddrOf>(
+      context, loc_id,
       SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),
                     .lvalue_id = value_id});
+}
+
+// This actually does the thing, so the assumption is that the types are
+// concrete now?
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AddrOfAction action) -> SemIR::InstId {
+  return PerformAddrOfAction(context, loc_id, action.lvalue_id);
+}
+
+auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
+    -> bool {
+  auto value_id = context.node_stack().PopExpr();
+  auto type_id = context.insts().Get(value_id).type_id();
+  auto type_inst_id = context.types().GetTypeInstId(type_id);
+  auto pointer_type_id = GetPointerType(context, type_inst_id);
+  auto loc_id = SemIR::LocId(node_id);
+  auto inst_id = AddActionSpliceIfDependent<SemIR::AddrOfAction>(
+      context, loc_id, context.types().GetTypeInstId(pointer_type_id),
+      {.type_id = SemIR::InstType::TypeId, .lvalue_id = value_id});
+  if (!inst_id.has_value()) {
+    inst_id = PerformAddrOfAction(context, loc_id, value_id);
+  }
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 
