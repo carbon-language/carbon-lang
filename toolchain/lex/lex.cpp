@@ -109,22 +109,21 @@ class [[clang::internal_linkage]] Lexer {
         token_emitter_(&consumer_, &buffer_) {}
 
   // Find all line endings, create the line data structures, and populate the
-  // dense identifier-ending byte bitmap.
+  // identifier-ending-byte bitmap.
   //
   // Explicitly kept out-of-line because this is a significant loop that is
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
-  // Scans the full 64-byte blocks of `source_text` for `'\n'` and
-  // identifier-ending bytes, appends the completed `LineInfo`s to
-  // `buffer_.line_infos_`, populates full-block words of `id_end_bitmap_`, and
-  // advances `start` and `search_start` to the start of the in-progress line
-  // and the start of the remaining `< 64`-byte tail respectively.
-  auto MakeLinesFromBlocks(llvm::StringRef source_text, ssize_t& start,
-                           ssize_t& search_start) -> void;
 
-  // Scans the identifier starting at `position` (`source_text[position]` must
-  // satisfy `IsIdStartByteTable`) using `id_end_bitmap_`.
+  // Returns the text of the identifier starting at `position`: the byte there,
+  // which must be in `IsIdStartByteTable`, and the run of bytes in
+  // `IsIdByteTable` that follows it. Uses `id_end_bitmap_`, so must be called
+  // after `MakeLines`.
+  //
+  // TODO: This doesn't implement Carbon's design for Unicode characters in
+  // identifiers, and instead treats all non-ASCII characters as
+  // non-identifier characters.
   [[clang::always_inline]] auto ScanIdentifier(llvm::StringRef source_text,
                                                ssize_t position) const
       -> llvm::StringRef;
@@ -274,10 +273,6 @@ class [[clang::internal_linkage]] Lexer {
   // whitespace for the next lexed token. Reset after each token lexed.
   bool has_leading_space_ = false;
 
-  // Byte pointer to `id_end_bitmap_.data()`, kept adjacent to hot per-token
-  // fields for compact addressing and cache locality.
-  const uint8_t* id_end_bitmap_bytes_ = nullptr;
-
   llvm::SmallVector<TokenIndex> open_groups_;
   bool has_mismatched_brackets_ = false;
 
@@ -287,11 +282,23 @@ class [[clang::internal_linkage]] Lexer {
 
   TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
 
-  // Dense 1-bit-per-byte bitmap built during `MakeLines`: bit `i` is `1` if
-  // `source_text[i]` is not in `IsIdByteTable` (`[0-9A-Za-z_]`), followed by
-  // trailing `1` sentinel bits at `>= source_text.size()`. The words are stored
-  // little-endian on every target, so bit `i` is bit `i % 8` of byte `i / 8`.
-  llvm::SmallVector<uint64_t, 256> id_end_bitmap_;
+  // A 1-bit-per-byte bitmap built during `MakeLines` tracking whether the
+  // corresponding byte would potentially end an identifier.
+  //
+  // Each bit `i` is `1` if `source_text[i]` is not in `IsIdByteTable`. This
+  // intentionally includes every non-ASCII byte, to keep scanning ASCII
+  // identifiers fast. Supporting Unicode identifiers will require treating a
+  // non-ASCII byte that stops a scan as a possible part of the identifier,
+  // rather than its end.
+  //
+  // The bitmap is then padded out with `1` bits through a complete sentinel
+  // `uint64_t`. This lets code scanning these bits always read a full 64 bits,
+  // even when starting at the bit for the last byte of the source text, and
+  // ensures any scan for a `1` bit stops by the end of the source text.
+  //
+  // Bit `i` is bit `i % 8` of byte `i / 8`, so 64 bits of the bitmap can be
+  // read as a little-endian `uint64_t` starting at any byte.
+  llvm::SmallVector<uint8_t, 2048> id_end_bitmap_;
 };
 
 #if CARBON_USE_SIMD
@@ -404,14 +411,14 @@ namespace {
 // Forced to 16-byte alignment to ensure we can load it easily in SIMD code.
 struct alignas(16) NibbleLUT {
 #if __AVX2__
-  // Loads the LUT into both 128-bit lanes, as `vpshufb` looks up the bytes in
-  // each lane separately.
+  // Loads the LUT into both 128-bit lanes, as `_mm256_shuffle_epi8` looks up
+  // the bytes in each lane separately.
   [[clang::always_inline]] auto Load() const -> __m256i {
     return _mm256_broadcastsi128_si256(
         _mm_load_si128(reinterpret_cast<const __m128i*>(this)));
   }
 #elif __SSSE3__
-  auto Load() const -> __m128i {
+  [[clang::always_inline]] auto Load() const -> __m128i {
     return _mm_load_si128(reinterpret_cast<const __m128i*>(this));
   }
 #elif __ARM_NEON
@@ -420,23 +427,25 @@ struct alignas(16) NibbleLUT {
   }
 #endif
 
-  uint8_t nibble_0;
-  uint8_t nibble_1;
-  uint8_t nibble_2;
-  uint8_t nibble_3;
-  uint8_t nibble_4;
-  uint8_t nibble_5;
-  uint8_t nibble_6;
-  uint8_t nibble_7;
-  uint8_t nibble_8;
-  uint8_t nibble_9;
-  uint8_t nibble_a;
-  uint8_t nibble_b;
-  uint8_t nibble_c;
-  uint8_t nibble_d;
-  uint8_t nibble_e;
-  uint8_t nibble_f;
+  uint8_t nibble_0 [[clang::require_explicit_initialization]];
+  uint8_t nibble_1 [[clang::require_explicit_initialization]];
+  uint8_t nibble_2 [[clang::require_explicit_initialization]];
+  uint8_t nibble_3 [[clang::require_explicit_initialization]];
+  uint8_t nibble_4 [[clang::require_explicit_initialization]];
+  uint8_t nibble_5 [[clang::require_explicit_initialization]];
+  uint8_t nibble_6 [[clang::require_explicit_initialization]];
+  uint8_t nibble_7 [[clang::require_explicit_initialization]];
+  uint8_t nibble_8 [[clang::require_explicit_initialization]];
+  uint8_t nibble_9 [[clang::require_explicit_initialization]];
+  uint8_t nibble_a [[clang::require_explicit_initialization]];
+  uint8_t nibble_b [[clang::require_explicit_initialization]];
+  uint8_t nibble_c [[clang::require_explicit_initialization]];
+  uint8_t nibble_d [[clang::require_explicit_initialization]];
+  uint8_t nibble_e [[clang::require_explicit_initialization]];
+  uint8_t nibble_f [[clang::require_explicit_initialization]];
 };
+// `Load` reads the LUT as a 128-bit vector.
+static_assert(sizeof(NibbleLUT) == 128 / 8);
 }  // namespace
 
 static constexpr NibbleLUT HighLUT = {
@@ -458,22 +467,22 @@ static constexpr NibbleLUT HighLUT = {
     .nibble_f = 0b0000'0000,
 };
 static constexpr NibbleLUT LowLUT = {
-    .nibble_0 = 0b1000'1010,
-    .nibble_1 = 0b1000'1110,
-    .nibble_2 = 0b1000'1110,
-    .nibble_3 = 0b1000'1110,
-    .nibble_4 = 0b1000'1110,
-    .nibble_5 = 0b1000'1110,
-    .nibble_6 = 0b1000'1110,
-    .nibble_7 = 0b1000'1110,
-    .nibble_8 = 0b1000'1110,
-    .nibble_9 = 0b1000'1110,
-    .nibble_a = 0b1000'1100,
-    .nibble_b = 0b1000'0100,
-    .nibble_c = 0b1000'0100,
-    .nibble_d = 0b1000'0100,
-    .nibble_e = 0b1000'0100,
-    .nibble_f = 0b1000'0101,
+    .nibble_0 = 0b0000'1010,
+    .nibble_1 = 0b0000'1110,
+    .nibble_2 = 0b0000'1110,
+    .nibble_3 = 0b0000'1110,
+    .nibble_4 = 0b0000'1110,
+    .nibble_5 = 0b0000'1110,
+    .nibble_6 = 0b0000'1110,
+    .nibble_7 = 0b0000'1110,
+    .nibble_8 = 0b0000'1110,
+    .nibble_9 = 0b0000'1110,
+    .nibble_a = 0b0000'1100,
+    .nibble_b = 0b0000'0100,
+    .nibble_c = 0b0000'0100,
+    .nibble_d = 0b0000'0100,
+    .nibble_e = 0b0000'0100,
+    .nibble_f = 0b0000'0101,
 };
 #endif  // CARBON_USE_BLOCK_SIMD
 
@@ -487,30 +496,41 @@ class SourceBlock {
  public:
   static constexpr ssize_t Size = 64;
 
+#if CARBON_USE_BLOCK_SIMD
+  // Whether to cross-check the SIMD classification against the portable one.
+#if !defined(NDEBUG)
+  static constexpr bool DebugSimd = true;
+#else
+  static constexpr bool DebugSimd = false;
+#endif
+#endif
+
+  // The classification of the bytes of a block. Bit `i` of each mask is for
+  // byte `i` of the block, so the lowest bit is for the first byte and the
+  // highest bit is for the last byte.
   struct BlockMasks {
-    uint64_t newlines;
-    uint64_t id_ends;
-    int newline_count;
+    // Bits set for the newline bytes.
+    uint64_t newlines [[clang::require_explicit_initialization]];
+    // Bits set for the bytes that can't continue an identifier, and so end any
+    // identifier before them.
+    uint64_t id_ends [[clang::require_explicit_initialization]];
+    // The number of newlines, which is the number of bits set in `newlines`.
+    int newline_count [[clang::require_explicit_initialization]];
 
     auto operator==(const BlockMasks&) const -> bool = default;
   };
 
-  // Loads `size` bytes of source text from `text`. Only the final block of the
-  // source text can be smaller than `Size`, and it is padded with zero bytes.
-  // These are neither newlines nor identifier bytes, so they end any identifier
-  // at the end of the source text.
-  [[clang::always_inline]] static auto Load(const char* text,
-                                            ssize_t size = Size)
+  // Loads a block from the first `Size` bytes of `text`, which must have at
+  // least that many bytes.
+  [[clang::always_inline]] static auto Load(llvm::StringRef text)
       -> SourceBlock {
-    CARBON_DCHECK(size > 0);
-    CARBON_DCHECK(size <= Size);
-    SourceBlock b;
-    std::memcpy(b.bytes, text, size);
-    return b;
+    CARBON_DCHECK(static_cast<ssize_t>(text.size()) >= Size);
+    SourceBlock block;
+    std::memcpy(block.bytes_, text.data(), Size);
+    return block;
   }
 
-  // Classifies all 64 bytes into `{newlines, id_ends, newline_count}`, where
-  // `id_ends` has bit `i` set iff `!IsIdByteTable[bytes[i]]`.
+  // Classifies the bytes of the block.
   [[clang::always_inline]] auto Classify() const -> BlockMasks {
 #if CARBON_USE_BLOCK_SIMD
     BlockMasks simd_result = SimdClassify();
@@ -526,16 +546,16 @@ class SourceBlock {
  private:
   // The bytes of the block, which the SIMD classification reads as vectors.
   union {
-    uint8_t bytes[Size] = {};
+    uint8_t bytes_[Size] = {};
 #if CARBON_USE_BLOCK_SIMD
 #if __AVX2__
-    __m256i vec[2];
+    __m256i vec_[2];
 #elif __SSSE3__
-    __m128i vec[4];
+    __m128i vec_[4];
 #elif __ARM_NEON
-    uint8x16_t vec[4];
+    uint8x16_t vec_[4];
 #endif
-    static_assert(sizeof(vec) == Size);
+    static_assert(sizeof(vec_) == Size);
 #endif
   };
 
@@ -545,8 +565,8 @@ class SourceBlock {
     for (ssize_t i = 0; i < Size; ++i) {
       // Shift in each bit rather than branching, as identifier and
       // non-identifier bytes are interleaved unpredictably.
-      newlines |= static_cast<uint64_t>(bytes[i] == '\n') << i;
-      id_ends |= static_cast<uint64_t>(!IsIdByteTable[bytes[i]]) << i;
+      newlines |= uint64_t{bytes_[i] == '\n'} << i;
+      id_ends |= uint64_t{!IsIdByteTable[bytes_[i]]} << i;
     }
     return {.newlines = newlines,
             .id_ends = id_ends,
@@ -554,14 +574,17 @@ class SourceBlock {
   }
 
 #if CARBON_USE_BLOCK_SIMD
-  // Whether to cross-check the SIMD classification against the portable one.
-#if !defined(NDEBUG)
-  static constexpr bool DebugSimd = true;
-#else
-  static constexpr bool DebugSimd = false;
-#endif
-
 #if __AVX2__
+  // Returns a mask of the newline bytes in `input`.
+  [[clang::always_inline]] static auto Avx2MatchNewlines(__m256i input)
+      -> uint32_t {
+    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
+    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
+    // into a 32-bit `int` mask.
+    return static_cast<uint32_t>(
+        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n'))));
+  }
+
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
   [[clang::always_inline]] static auto Avx2MatchIdEnds(__m256i input)
       -> uint32_t {
@@ -569,9 +592,10 @@ class SourceBlock {
     const __m256i low_lut = LowLUT.Load();
 
     // Do two LUT lookups and mask the results together to get the results for
-    // both low and high nibbles. Note that we don't need to mask out the high
-    // bit of input here because `vpshufb` produces a zero byte for any input
-    // byte with the high bit set, which classifies it as a non-ID byte.
+    // both low and high nibbles. `_mm256_shuffle_epi8` only uses the low nibble
+    // of each input byte as an index, so the low nibble lookup doesn't need to
+    // mask the input. It also produces a zero byte for any input byte with the
+    // high bit set, which classifies those bytes as non-ID bytes.
     __m256i low_mask = _mm256_shuffle_epi8(low_lut, input);
     // Note that the input needs to be masked to only include the high nibble or
     // we could end up with bit7 set forcing the result to a zero byte.
@@ -585,6 +609,16 @@ class SourceBlock {
     return static_cast<uint32_t>(_mm256_movemask_epi8(id_end_mask_vec));
   }
 #elif __SSSE3__
+  // Returns a mask of the newline bytes in `input`.
+  [[clang::always_inline]] static auto SseMatchNewlines(__m128i input)
+      -> uint32_t {
+    // `_mm_cmpeq_epi8` compares 16 bytes in parallel (`0xFF` if equal, `0x00`
+    // otherwise), and `_mm_movemask_epi8` packs bit 7 of each byte into the low
+    // 16 bits of an `int` mask.
+    return static_cast<uint32_t>(
+        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n'))));
+  }
+
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
   [[clang::always_inline]] static auto SseMatchIdEnds(__m128i input)
       -> uint32_t {
@@ -592,9 +626,10 @@ class SourceBlock {
     const __m128i low_lut = LowLUT.Load();
 
     // Do two LUT lookups and mask the results together to get the results for
-    // both low and high nibbles. Note that we don't need to mask out the high
-    // bit of input here because `pshufb` produces a zero byte for any input
-    // byte with the high bit set, which classifies it as a non-ID byte.
+    // both low and high nibbles. `_mm_shuffle_epi8` only uses the low nibble of
+    // each input byte as an index, so the low nibble lookup doesn't need to
+    // mask the input. It also produces a zero byte for any input byte with the
+    // high bit set, which classifies those bytes as non-ID bytes.
     __m128i low_mask = _mm_shuffle_epi8(low_lut, input);
     // Note that the input needs to be masked to only include the high nibble or
     // we could end up with bit7 set forcing the result to a zero byte.
@@ -614,19 +649,20 @@ class SourceBlock {
     return vreinterpretq_u8_u64(vdupq_n_u64(0x8040201008040201ULL));
   }
 
-  // Neon has no equivalent of `vpmovmskb` to gather one bit from each byte into
-  // a mask. Instead, this starts from the four 16-byte vectors of a 64-byte
-  // block, with each byte either all ones or all zeros, and masks each byte
-  // down to its bit from `NeonBitWeights`. Two rounds of pairwise byte
-  // additions (`vpaddq_u8`) then sum each run of four adjacent bytes into one
-  // byte, which can't carry as the bits are distinct. Each of the 16 resulting
-  // bytes holds half of a byte of the 64-bit mask, in order, so a final
-  // `vpaddq_u8` of adjacent bytes produces the mask itself.
+  // Starts reducing the four 16-byte vectors of a 64-byte block, each byte of
+  // which is either all ones or all zeros, to a 64-bit mask of its all-ones
+  // bytes. Returns a vector whose 16 bytes each hold four bits of the mask, in
+  // order, so that a `vpaddq_u8` of its adjacent bytes produces the mask.
   [[clang::always_inline]] static auto NeonReduceQuarter(uint8x16_t v0,
                                                          uint8x16_t v1,
                                                          uint8x16_t v2,
                                                          uint8x16_t v3)
       -> uint8x16_t {
+    // Neon has no equivalent of `_mm_movemask_epi8` to gather one bit from each
+    // byte into a mask. Instead, mask each byte down to its bit from
+    // `NeonBitWeights`, and then use two rounds of pairwise byte additions to
+    // sum each run of four adjacent bytes into one byte. The additions can't
+    // carry, as the bits being added are distinct.
     const uint8x16_t weights = NeonBitWeights();
     return vpaddq_u8(vpaddq_u8(vandq_u8(v0, weights), vandq_u8(v1, weights)),
                      vpaddq_u8(vandq_u8(v2, weights), vandq_u8(v3, weights)));
@@ -640,10 +676,9 @@ class SourceBlock {
     const uint8x16_t low_lut = LowLUT.Load();
 
     // Do two LUT lookups and mask the results together to get the results for
-    // both low and high nibbles. Unlike `vpshufb`, `tbl` only produces a zero
-    // byte for indices past the end of the LUT, so the input needs to be masked
-    // to only include the low nibble, and a high bit in the input instead
-    // selects a high nibble LUT entry with no bits set.
+    // both low and high nibbles. Unlike `_mm_shuffle_epi8` on x86, `vqtbl1q_u8`
+    // only produces a zero byte for indices past the end of the LUT, so the
+    // input needs to be masked to only include the low nibble.
     uint8x16_t low_mask =
         vqtbl1q_u8(low_lut, vandq_u8(input, vdupq_n_u8(0x0f)));
     uint8x16_t high_mask = vqtbl1q_u8(high_lut, vshrq_n_u8(input, 4));
@@ -656,61 +691,56 @@ class SourceBlock {
 
   [[clang::always_inline]] auto SimdClassify() const -> BlockMasks {
 #if __AVX2__
-    // Broadcast `'\n'` to all 32 byte lanes of a 256-bit register.
-    const __m256i newline = _mm256_set1_epi8('\n');
-    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
-    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
-    // into a 32-bit `int` mask. Cast to `uint32_t` before widening to
-    // `uint64_t` so bit 31 is zero-extended rather than sign-extended.
-    uint64_t newlines =
-        static_cast<uint32_t>(
-            _mm256_movemask_epi8(_mm256_cmpeq_epi8(vec[0], newline))) |
-        (static_cast<uint64_t>(static_cast<uint32_t>(
-             _mm256_movemask_epi8(_mm256_cmpeq_epi8(vec[1], newline))))
-         << 32);
-    uint64_t id_ends = Avx2MatchIdEnds(vec[0]) |
-                       (static_cast<uint64_t>(Avx2MatchIdEnds(vec[1])) << 32);
+    // Each 32-byte vector provides 32 bits of each mask.
+    uint64_t newlines = Avx2MatchNewlines(vec_[0]) |
+                        (uint64_t{Avx2MatchNewlines(vec_[1])} << 32);
+    uint64_t id_ends =
+        Avx2MatchIdEnds(vec_[0]) | (uint64_t{Avx2MatchIdEnds(vec_[1])} << 32);
     return {.newlines = newlines,
             .id_ends = id_ends,
             .newline_count = std::popcount(newlines)};
 #elif __SSSE3__
-    // Broadcast `'\n'` to all 16 byte lanes of a 128-bit register.
-    const __m128i newline = _mm_set1_epi8('\n');
-    // Each 16-byte vector provides 16 bits of each mask. `_mm_movemask_epi8`
-    // packs bit 7 of each byte into the low 16 bits of an `int`.
+    // Each 16-byte vector provides 16 bits of each mask.
     uint64_t newlines = 0;
     uint64_t id_ends = 0;
     for (int i = 0; i < 4; ++i) {
-      newlines |= static_cast<uint64_t>(
-                      _mm_movemask_epi8(_mm_cmpeq_epi8(vec[i], newline)))
-                  << (16 * i);
-      id_ends |= static_cast<uint64_t>(SseMatchIdEnds(vec[i])) << (16 * i);
+      newlines |= uint64_t{SseMatchNewlines(vec_[i])} << (16 * i);
+      id_ends |= uint64_t{SseMatchIdEnds(vec_[i])} << (16 * i);
     }
     return {.newlines = newlines,
             .id_ends = id_ends,
             .newline_count = std::popcount(newlines)};
 #elif __ARM_NEON
+    // Unlike x86, Neon has no instruction to build a mask from each vector, and
+    // moving data from the vector registers to the general-purpose registers is
+    // slow. Instead, this classifies each byte of the four 16-byte vectors as
+    // all ones or all zeros, and only reduces those to the two 64-bit masks at
+    // the end, which then leave the vector registers together. `vceqq_u8`
+    // compares 16 bytes in parallel (`0xFF` if equal, `0x00` otherwise).
     const uint8x16_t newline = vdupq_n_u8('\n');
-    uint8x16_t eq0 = vceqq_u8(vec[0], newline);
-    uint8x16_t eq1 = vceqq_u8(vec[1], newline);
-    uint8x16_t eq2 = vceqq_u8(vec[2], newline);
-    uint8x16_t eq3 = vceqq_u8(vec[3], newline);
+    uint8x16_t nl0 = vceqq_u8(vec_[0], newline);
+    uint8x16_t nl1 = vceqq_u8(vec_[1], newline);
+    uint8x16_t nl2 = vceqq_u8(vec_[2], newline);
+    uint8x16_t nl3 = vceqq_u8(vec_[3], newline);
     // Count the newlines in the vector registers, in parallel with building
-    // their mask, rather than moving the mask back from a general-purpose
-    // register for `cnt` as `std::popcount` would. Each matching byte is `0xFF`
-    // (`-1` as `int8_t`), so summing all four vectors gives `[-4, 0]` in each
-    // lane, and then summing the lanes gives the negated count in `[-64, 0]`.
-    uint8x16_t neg_sum = vaddq_u8(vaddq_u8(eq0, eq1), vaddq_u8(eq2, eq3));
+    // their mask, rather than with `std::popcount`, which on Arm would move the
+    // mask from a general-purpose register back to a vector register. Each
+    // matching byte is `0xFF` (`-1` as `int8_t`), so the sum of all bytes is
+    // the negated count.
+    uint8x16_t neg_sum = vaddq_u8(vaddq_u8(nl0, nl1), vaddq_u8(nl2, nl3));
     int count = -vaddvq_s8(vreinterpretq_s8_u8(neg_sum));
 
-    uint8x16_t end0 = NeonMatchIdEnds(vec[0]);
-    uint8x16_t end1 = NeonMatchIdEnds(vec[1]);
-    uint8x16_t end2 = NeonMatchIdEnds(vec[2]);
-    uint8x16_t end3 = NeonMatchIdEnds(vec[3]);
+    // `NeonMatchIdEnds` classifies the bytes that aren't identifier bytes in
+    // the same way.
+    uint8x16_t end0 = NeonMatchIdEnds(vec_[0]);
+    uint8x16_t end1 = NeonMatchIdEnds(vec_[1]);
+    uint8x16_t end2 = NeonMatchIdEnds(vec_[2]);
+    uint8x16_t end3 = NeonMatchIdEnds(vec_[3]);
 
-    // Reduce both 64-byte masks down to 16-byte quarter-sums and share the
-    // final `vpaddq_u8` so lane 0 holds `newlines` and lane 1 holds `id_ends`.
-    uint8x16_t q_nl = NeonReduceQuarter(eq0, eq1, eq2, eq3);
+    // Reduce both sets of four vectors to quarter-sums, and then share the
+    // final `vpaddq_u8` that produces both masks, so lane 0 holds `newlines`
+    // and lane 1 holds `id_ends`.
+    uint8x16_t q_nl = NeonReduceQuarter(nl0, nl1, nl2, nl3);
     uint8x16_t q_end = NeonReduceQuarter(end0, end1, end2, end3);
     uint64x2_t masks = vreinterpretq_u64_u8(vpaddq_u8(q_nl, q_end));
     return {.newlines = vgetq_lane_u64(masks, 0),
@@ -723,53 +753,48 @@ class SourceBlock {
 
 }  // namespace
 
-// Scans the provided text and returns the prefix `StringRef` of contiguous
-// identifier characters, starting from the identifier start character at
-// `position`.
-//
-// This is a performance sensitive function. When modifying, the identifier
-// lexing benchmarks should be checked for regressions.
-//
-// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
-//
-// TODO: Currently, this code does not implement Carbon's design for Unicode
-// characters in identifiers. It does work on UTF-8 code unit sequences, but
-// currently considers non-ASCII characters to be non-identifier characters.
-// Because non-ASCII bytes end an identifier in `id_end_bitmap_`, Unicode
-// handling can be added by checking whether the byte ending an identifier is
-// non-ASCII, without slowing down the scan of ASCII identifiers.
 auto Lexer::ScanIdentifier(llvm::StringRef source_text, ssize_t position) const
     -> llvm::StringRef {
-  // `id_end_bitmap_` has a bit set for each byte that ends an identifier, so
-  // the identifier extends from `position` to the next set bit after it. An
-  // 8-byte load of the bitmap from the byte holding the bit for `position + 1`,
-  // shifted down to that bit, covers at least the next 57 bytes, and so finds
-  // the end of all keywords and nearly all identifiers. The sentinel bits past
-  // the end of the source text end any identifier there without a bounds check.
+  // This is performance sensitive, so check the identifier lexing benchmarks
+  // for regressions when modifying it.
   CARBON_DCHECK(position >= 0);
   CARBON_DCHECK(position < static_cast<ssize_t>(source_text.size()));
   CARBON_DCHECK(
       IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
-  CARBON_DCHECK(id_end_bitmap_bytes_ != nullptr);
 
-  const size_t p = static_cast<size_t>(position) + 1;
-  size_t offset = p / 8;
-  uint64_t word =
-      llvm::support::endian::read64le(id_end_bitmap_bytes_ + offset) >> (p % 8);
-  size_t len;
-  if (LLVM_LIKELY(word != 0)) {
-    len = 1 + std::countr_zero(word);
+  // The identifier ends at the first byte after its start byte whose bit is set
+  // in `id_end_bitmap_`. The start byte is skipped rather than scanned because
+  // it may be `$`, which can start an identifier but not continue one, and so
+  // has its bit set.
+  const size_t scan_start = static_cast<size_t>(position) + 1;
+
+  // Load 8 bytes of the bitmap starting at the byte holding the bit for
+  // `scan_start`, and shift that bit down to bit 0. This leaves bits for at
+  // least the 57 bytes starting at `scan_start`, which is enough to find the
+  // end of all keywords and nearly all identifiers.
+  const uint8_t* bitmap = id_end_bitmap_.data();
+  size_t bitmap_offset = scan_start / 8;
+  CARBON_DCHECK(bitmap_offset + sizeof(uint64_t) <= id_end_bitmap_.size());
+  uint64_t bits = llvm::support::endian::read64le(bitmap + bitmap_offset) >>
+                  (scan_start % 8);
+  size_t length;
+  if (LLVM_LIKELY(bits != 0)) {
+    // The start byte, and the bytes before the first set bit.
+    length = 1 + std::countr_zero(bits);
   } else {
-    // None of the loaded bits are set, so continue loading the following bytes
-    // of the bitmap a word at a time.
+    // Otherwise, keep loading 8 bytes at a time, starting where the previous
+    // load ended. This always stops by the end of the source text, because the
+    // bits from there on are set.
     do {
-      offset += sizeof(uint64_t);
-      word = llvm::support::endian::read64le(id_end_bitmap_bytes_ + offset);
-    } while (word == 0);
-    len = offset * 8 + std::countr_zero(word) - static_cast<size_t>(position);
+      bitmap_offset += sizeof(uint64_t);
+      bits = llvm::support::endian::read64le(bitmap + bitmap_offset);
+    } while (bits == 0);
+    length = bitmap_offset * 8 + std::countr_zero(bits) -
+             static_cast<size_t>(position);
   }
 
-  return llvm::StringRef(source_text.data() + position, len);
+  CARBON_DCHECK(static_cast<size_t>(position) + length <= source_text.size());
+  return llvm::StringRef(source_text.data() + position, length);
 }
 
 // We use a collection of static member functions for table-based dispatch to
@@ -1103,12 +1128,39 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   return std::move(buffer_);
 }
 
-auto Lexer::MakeLinesFromBlocks(llvm::StringRef source_text, ssize_t& start,
-                                ssize_t& search_start) -> void {
-  const char* const text = source_text.data();
-  const ssize_t size = source_text.size();
+// Clears the lowest set bit of `mask`.
+[[clang::always_inline]] static auto ClearLowestSetBit(uint64_t& mask) -> void {
+  mask &= mask - 1;
+}
+
+auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
+  // We scan the source a 64-byte `SourceBlock` at a time, finding both the
+  // newlines and the bytes that end identifiers with SIMD where available. The
+  // scanning loop also uses carefully selected variables and the `ssize_t` type
+  // for performance and code size.
+  //
+  // Note that searching for `'\n'` here works equally well for LF and CR+LF
+  // line endings. Either way, it finds the end of the line and the start of the
+  // next line. The lexer below will find the CR byte and peek to see the
+  // following LF and jump to the next line correctly. However, this approach
+  // does *not* support plain CR or LF+CR line endings. Nor does it support
+  // vertical tab or other vertical whitespace.
+  //
+  // TODO: Eventually, we should extend this to have correct fallback support
+  // for handling CR, LF+CR, vertical tab, and other esoteric vertical
+  // whitespace as line endings. Notably, including *mixtures* of them. This
+  // will likely be somewhat tricky, although `SourceBlock` provides a natural
+  // place to detect their absence.
   constexpr ssize_t BlockSize = SourceBlock::Size;
   constexpr int DecodedPerStep = 4;
+  const ssize_t size = source_text.size();
+  const ssize_t num_blocks = (size + BlockSize - 1) / BlockSize;
+
+  // Allocate 64 bits of `id_end_bitmap_` for each block, including any final
+  // partial block, and a 64-bit sentinel. `ScanIdentifier` loads 8 bytes of the
+  // bitmap starting at the byte holding the bit for any position up to `size`,
+  // and the sentinel keeps those loads in bounds.
+  id_end_bitmap_.resize_for_overwrite((num_blocks + 1) * sizeof(uint64_t));
 
   // Buffer the 32-bit byte offset following each `'\n'` (`int32_t` matches
   // `LineInfo::start` under Carbon's `< 2 GiB` source limit) in a contiguous
@@ -1129,9 +1181,19 @@ auto Lexer::MakeLinesFromBlocks(llvm::StringRef source_text, ssize_t& start,
   llvm::SmallVector<int32_t, 0> line_starts;
   line_starts.resize_for_overwrite(size / 16 + 2 * BlockSize);
   int32_t* line_starts_end = line_starts.data();
-  uint64_t* id_end_out = id_end_bitmap_.data();
 
-  for (; search_start + BlockSize <= size; search_start += BlockSize) {
+  // Any final partial block is scanned from a copy padded with zero bytes.
+  // These are neither newlines nor identifier bytes, so they end any identifier
+  // at the end of the source text.
+  const ssize_t full_blocks_size = size - size % BlockSize;
+  char padded_final_block[BlockSize] = {};
+  if (full_blocks_size < size) {
+    std::memcpy(padded_final_block, source_text.data() + full_blocks_size,
+                size - full_blocks_size);
+  }
+
+  uint8_t* id_end_out = id_end_bitmap_.data();
+  for (ssize_t block_start = 0; block_start < size; block_start += BlockSize) {
     if (LLVM_UNLIKELY(line_starts_end + BlockSize >
                       line_starts.data() + line_starts.size())) {
       ssize_t count = line_starts_end - line_starts.data();
@@ -1139,105 +1201,56 @@ auto Lexer::MakeLinesFromBlocks(llvm::StringRef source_text, ssize_t& start,
       line_starts_end = line_starts.data() + count;
     }
 
-    auto [mask, id_ends, nl_count] =
-        SourceBlock::Load(text + search_start).Classify();
-    llvm::support::endian::write64le(id_end_out++, id_ends);
+    SourceBlock::BlockMasks masks =
+        SourceBlock::Load(block_start < full_blocks_size
+                              ? source_text.substr(block_start)
+                              : llvm::StringRef(padded_final_block, BlockSize))
+            .Classify();
+    llvm::support::endian::write64le(id_end_out, masks.id_ends);
+    id_end_out += sizeof(uint64_t);
 
-    // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a `while (mask)`
-    // loop with `#pragma clang loop unroll_count(4)` would emit a
-    // data-dependent exit branch on every bit, suffering branch mispredictions
-    // as newline counts vary from block to block. Instead, advance
-    // `line_starts_end` by `nl_count` up front and use
+    // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a
+    // `while (newlines)` loop with `#pragma clang loop unroll_count(4)` would
+    // emit a data-dependent exit branch on every bit, suffering branch
+    // mispredictions as newline counts vary from block to block. Instead,
+    // advance `line_starts_end` by `newline_count` up front and use
     // `#pragma clang loop unroll(full)` to unroll 4 unconditional steps of
-    // `std::countr_zero` (byte index of lowest set bit) + `mask &= mask - 1`
-    // (clear lowest set bit). Any extra writes when fewer than 4 bits are set
-    // land harmlessly in the `BlockSize` slack past `line_starts_end` and are
-    // overwritten by the next block; blocks with > 4 newlines repeat the 4-wide
-    // body (at most `64 / 4 = 16` iterations).
-    int32_t base = search_start + 1;
+    // `std::countr_zero` (byte index of lowest set bit) and
+    // `ClearLowestSetBit`. Any extra writes when fewer than 4 bits are set land
+    // harmlessly in the `BlockSize` slack past `line_starts_end` and are
+    // overwritten by the next block; blocks with > 4 newlines repeat the
+    // unrolled loop (at most `64 / 4 = 16` times).
+    int32_t base = block_start + 1;
     int32_t* out = line_starts_end;
-    line_starts_end += nl_count;
+    line_starts_end += masks.newline_count;
+    uint64_t newlines = masks.newlines;
     do {
 #pragma clang loop unroll(full)
       for (int i = 0; i < DecodedPerStep; ++i) {
-        out[i] = base + std::countr_zero(mask);
-        mask &= mask - 1;
+        out[i] = base + std::countr_zero(newlines);
+        ClearLowestSetBit(newlines);
       }
       out += DecodedPerStep;
-    } while (LLVM_UNLIKELY(mask != 0));
+    } while (LLVM_UNLIKELY(newlines != 0));
   }
 
-  // Reserve room for all lines ended in the full blocks plus the final line and
-  // potential trailing blank line added in `MakeLines`.
+  // Set all the bits of the sentinel, which follows the bits for the last
+  // block. Together with the bits for the zero padding bytes of any final
+  // partial block, this sets every bit at or past the end of the source text,
+  // so scanning for the end of an identifier stops at the end of the source
+  // text.
+  llvm::support::endian::write64le(id_end_out, ~uint64_t{0});
+
+  // The first line starts at the start of the file, and each newline starts
+  // another line.
   buffer_.line_infos_.Reserve((line_starts_end - line_starts.data()) + 2);
+  int32_t start = 0;
+  buffer_.line_infos_.Add(LineInfo(start));
   for (const int32_t* next_start = line_starts.data();
        next_start != line_starts_end; ++next_start) {
-    buffer_.line_infos_.Add(LineInfo(start));
     start = *next_start;
+    buffer_.line_infos_.Add(LineInfo(start));
   }
-}
-
-auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
-  if (source_text.empty()) {
-    // Construct a single line for empty input.
-    buffer_.line_infos_.Add(LineInfo(0));
-    line_index_ = LineIndex(0);
-    return;
-  }
-
-  // We scan the source a 64-byte `SourceBlock` at a time, finding both the
-  // newlines and the bytes that end identifiers with SIMD where available. The
-  // scanning loop also uses carefully selected variables and the `ssize_t` type
-  // for performance and code size.
-  //
-  // Note that searching for `'\n'` here works equally well for LF and CR+LF
-  // line endings. Either way, it finds the end of the line and the start of the
-  // next line. The lexer below will find the CR byte and peek to see the
-  // following LF and jump to the next line correctly. However, this approach
-  // does *not* support plain CR or LF+CR line endings. Nor does it support
-  // vertical tab or other vertical whitespace.
-  //
-  // TODO: Eventually, we should extend this to have correct fallback support
-  // for handling CR, LF+CR, vertical tab, and other esoteric vertical
-  // whitespace as line endings. Notably, including *mixtures* of them. This
-  // will likely be somewhat tricky, although `SourceBlock` provides a natural
-  // place to detect their absence.
-  const char* const text = source_text.data();
-  const ssize_t size = source_text.size();
-  const size_t num_blocks =
-      (static_cast<size_t>(size) + SourceBlock::Size - 1) / SourceBlock::Size;
-  // Allocate one 64-bit word per 64-byte block, including any partial block at
-  // the end, and an all-ones sentinel word so unaligned 8-byte loads at byte
-  // offsets up to `size / 8` stay in bounds and terminate at EOF.
-  id_end_bitmap_.resize_for_overwrite(num_blocks + 1);
-  id_end_bitmap_bytes_ =
-      reinterpret_cast<const uint8_t*>(id_end_bitmap_.data());
-
-  // `start` is the byte offset of the line currently being scanned, while
-  // `search_start` is where newline scanning resumes. Separating them lets
-  // `MakeLinesFromBlocks` advance `search_start` to the end of the last full
-  // 64-byte block so the partial block only scans the `< 64` remaining bytes
-  // even when a line straddles the boundary.
-  ssize_t start = 0;
-  ssize_t search_start = 0;
-  MakeLinesFromBlocks(source_text, start, search_start);
-
-  // Scan any `< 64`-byte partial block at the end in the same way, which
-  // `SourceBlock::Load` pads to a full block.
-  if (search_start < size) {
-    SourceBlock::BlockMasks masks =
-        SourceBlock::Load(text + search_start, size - search_start).Classify();
-    llvm::support::endian::write64le(
-        &id_end_bitmap_[search_start / SourceBlock::Size], masks.id_ends);
-    for (uint64_t mask = masks.newlines; mask != 0; mask &= mask - 1) {
-      buffer_.line_infos_.Add(LineInfo(start));
-      start = search_start + std::countr_zero(mask) + 1;
-    }
-  }
-  id_end_bitmap_[num_blocks] = ~uint64_t{0};
-
-  // The last line ends at the end of the file.
-  buffer_.line_infos_.Add(LineInfo(start));
 
   // If the last line wasn't empty, the file ends with an unterminated line.
   // Add an extra blank line so that we never need to handle the special case
