@@ -248,7 +248,7 @@ fn F() {
   CC(DD(EE)) as Z;
 }
 
-// CHECK:STDOUT: --- deduce_explicit.carbon ($deduce_explicit)
+// CHECK:STDOUT: --- deduce_explicit.carbon = $deduce_explicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -462,7 +462,7 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_57.2 => constants.%ExplicitGenericParam.specific_fn.085
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon ($fail_deduce_explicit_non_constant)
+// CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon = $fail_deduce_explicit_non_constant
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -604,7 +604,7 @@ fn F() {
 // CHECK:STDOUT:   %T.loc6_43.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_vs_deduced.carbon ($explicit_vs_deduced)
+// CHECK:STDOUT: --- explicit_vs_deduced.carbon = $explicit_vs_deduced
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -810,7 +810,7 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.fbd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_implicit.carbon ($deduce_implicit)
+// CHECK:STDOUT: --- deduce_implicit.carbon = $deduce_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -979,7 +979,7 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_55.2 => constants.%ImplicitGenericParam.specific_fn.056
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_tuple.carbon ($deduce_nested_tuple)
+// CHECK:STDOUT: --- deduce_nested_tuple.carbon = $deduce_nested_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1136,7 +1136,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.469
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_struct.carbon ($deduce_nested_struct)
+// CHECK:STDOUT: --- deduce_nested_struct.carbon = $deduce_nested_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1286,7 +1286,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.c76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon ($fail_deduce_bigger_struct)
+// CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon = $fail_deduce_bigger_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1386,7 +1386,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_36.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_smaller_struct.carbon ($fail_deduce_smaller_struct)
+// CHECK:STDOUT: --- fail_deduce_smaller_struct.carbon = $fail_deduce_smaller_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1487,7 +1487,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_38.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_struct_wrong_name.carbon ($fail_deduce_struct_wrong_name)
+// CHECK:STDOUT: --- fail_deduce_struct_wrong_name.carbon = $fail_deduce_struct_wrong_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1586,7 +1586,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_42.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduce_struct_wrong_order.carbon ($fail_todo_deduce_struct_wrong_order)
+// CHECK:STDOUT: --- fail_todo_deduce_struct_wrong_order.carbon = $fail_todo_deduce_struct_wrong_order
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1685,7 +1685,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_43.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_incomplete.carbon ($fail_deduce_incomplete)
+// CHECK:STDOUT: --- fail_deduce_incomplete.carbon = $fail_deduce_incomplete
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1789,7 +1789,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc6_49.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_inconsistent.carbon ($fail_deduce_inconsistent)
+// CHECK:STDOUT: --- fail_deduce_inconsistent.carbon = $fail_deduce_inconsistent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1894,7 +1894,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc4_46.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_generic_class.carbon ($deduce_nested_generic_class)
+// CHECK:STDOUT: --- deduce_nested_generic_class.carbon = $deduce_nested_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

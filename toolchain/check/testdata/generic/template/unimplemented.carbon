@@ -51,7 +51,7 @@ fn F(template c: C) {
   *c.n;
 }
 
-// CHECK:STDOUT: --- fail_todo_unimplemented_operator.carbon ($fail_todo_unimplemented_operator)
+// CHECK:STDOUT: --- fail_todo_unimplemented_operator.carbon = $fail_todo_unimplemented_operator
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -135,7 +135,7 @@ fn F(template c: C) {
 // CHECK:STDOUT:   %x.patt.loc6_25.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_unimplemented_value.carbon ($fail_todo_unimplemented_value)
+// CHECK:STDOUT: --- fail_todo_unimplemented_value.carbon = $fail_todo_unimplemented_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -29,7 +29,7 @@ fn F(c: C) -> i32 {
 }
 
 
-// CHECK:STDOUT: --- instance_method.carbon ($instance_method)
+// CHECK:STDOUT: --- instance_method.carbon = $instance_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

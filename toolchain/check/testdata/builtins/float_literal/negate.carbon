@@ -28,7 +28,7 @@ let v5: Core.FloatLiteral = Negate(0.0);
 let v6: Core.FloatLiteral = Negate(Negate(0.0));
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- negate.carbon ($negate)
+// CHECK:STDOUT: --- negate.carbon = $negate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

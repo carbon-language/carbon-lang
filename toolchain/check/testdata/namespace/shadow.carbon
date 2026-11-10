@@ -31,7 +31,7 @@ fn N.M.B() -> i32 {
   return 0;
 }
 
-// CHECK:STDOUT: --- shadow.carbon ($shadow)
+// CHECK:STDOUT: --- shadow.carbon = $shadow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

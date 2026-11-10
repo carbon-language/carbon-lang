@@ -57,7 +57,7 @@ fn F() {
   C.static_field = 123;
 }
 
-// CHECK:STDOUT: --- static_field.carbon ($static_field)
+// CHECK:STDOUT: --- static_field.carbon = $static_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

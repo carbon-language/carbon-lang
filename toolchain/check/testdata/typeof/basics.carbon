@@ -134,7 +134,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var x: typeof(undeclared);
 
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -169,7 +169,7 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- type_of_type.carbon ($type_of_type)
+// CHECK:STDOUT: --- type_of_type.carbon = $type_of_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -194,7 +194,7 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- not_evaluated.carbon ($not_evaluated)
+// CHECK:STDOUT: --- not_evaluated.carbon = $not_evaluated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -256,7 +256,7 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_3.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- control_flow.carbon ($control_flow)
+// CHECK:STDOUT: --- control_flow.carbon = $control_flow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -288,7 +288,7 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- member_access.carbon ($member_access)
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -308,7 +308,7 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic.carbon ($generic)
+// CHECK:STDOUT: --- generic.carbon = $generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

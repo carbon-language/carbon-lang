@@ -478,7 +478,7 @@ fn Test(missing_less: Cpp.MissingLess,
   OrderedWith(less_non_const, less_non_const);
 }
 
-// CHECK:STDOUT: --- returns_bool.carbon ($returns_bool)
+// CHECK:STDOUT: --- returns_bool.carbon = $returns_bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -721,7 +721,7 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %specific_impl_fn.loc18_5.2 => constants.%Ordered.GreaterOrEquivalent
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_type_ordering.carbon ($cross_type_ordering)
+// CHECK:STDOUT: --- cross_type_ordering.carbon = $cross_type_ordering
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

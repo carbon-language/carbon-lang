@@ -198,7 +198,7 @@ class MultiUnitCache {
     if (!include_in_dumps_) {
       include_in_dumps_.emplace(
           IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
-      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      for (auto [i, unit] : llvm::enumerate(units_)) {
         // If this is first accessed after lexing is complete, we need to apply
         // per-file includes. Otherwise, this is based only on the exclude
         // option.
@@ -219,7 +219,7 @@ class MultiUnitCache {
       tree_and_subtrees_getters_.emplace(
           TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
                                                             nullptr));
-      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      for (auto [i, unit] : llvm::enumerate(units_)) {
         if (unit->has_source()) {
           tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
                                           unit->get_trees_and_subtrees());
@@ -231,18 +231,24 @@ class MultiUnitCache {
 
   auto short_file_names() -> const SemIR::ShortFileNameStore& {
     if (!short_file_names_) {
-      short_file_names_.emplace(SemIR::ShortFileNameStore::MakeWithExplicitSize(
-          units_.size(), SemIR::InstNamer::Namespace::Name()));
-      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      SemIR::InstNamer::Namespace compilation_namespace;
+      llvm::SmallVector<SemIR::InstNamer::Namespace::Name> namespace_names;
+      namespace_names.reserve(units_.size());
+      for (auto [i, unit] : llvm::enumerate(units_)) {
         std::string short_name;
         if (unit->has_source()) {
           std::filesystem::path file_path(
               std::string_view(unit->source().filename()));
           short_name = file_path.stem();
         }
-        short_file_names_->Set(
-            SemIR::CheckIRId(i),
-            compilation_namespace_.AllocateName(std::move(short_name)));
+        namespace_names.push_back(
+            compilation_namespace.AllocateName(std::move(short_name)));
+      }
+      short_file_names_.emplace(
+          SemIR::ShortFileNameStore::MakeWithExplicitSize(units_.size(), ""));
+      for (auto [i, name] : llvm::enumerate(namespace_names)) {
+        short_file_names_->Set(SemIR::CheckIRId(i),
+                               std::string(name.GetFullName()));
       }
     }
     return *short_file_names_;
@@ -259,9 +265,6 @@ class MultiUnitCache {
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
   std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
-
-  // A shared namespace for allocating shorthand names for files.
-  SemIR::InstNamer::Namespace compilation_namespace_;
 
   // For each unit, the shorthand name for its file.
   std::optional<SemIR::ShortFileNameStore> short_file_names_;

@@ -48,11 +48,11 @@ fn F(a: i32) -> i32 {
   return x;
 }
 
-// CHECK:STDOUT: --- fail_todo_type.carbon ($fail_todo_type)
+// CHECK:STDOUT: --- fail_todo_type.carbon = $fail_todo_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_assignment.carbon ($fail_todo_assignment)
+// CHECK:STDOUT: --- fail_todo_assignment.carbon = $fail_todo_assignment
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

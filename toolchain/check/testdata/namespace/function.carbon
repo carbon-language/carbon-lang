@@ -25,7 +25,7 @@ fn Bar() {
   Foo.Baz();
 }
 
-// CHECK:STDOUT: --- function.carbon ($function)
+// CHECK:STDOUT: --- function.carbon = $function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

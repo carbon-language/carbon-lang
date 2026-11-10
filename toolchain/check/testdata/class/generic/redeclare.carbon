@@ -121,7 +121,7 @@ class E(T: type);
 // CHECK:STDERR:
 class E(U: type) {}
 
-// CHECK:STDOUT: --- valid.carbon ($valid)
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -189,7 +189,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %T.loc4_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_param_list.carbon ($fail_mismatch_param_list)
+// CHECK:STDOUT: --- fail_mismatch_param_list.carbon = $fail_mismatch_param_list
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -252,7 +252,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %T.loc16_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon ($fail_mismatch_implicit_param_list)
+// CHECK:STDOUT: --- fail_mismatch_implicit_param_list.carbon = $fail_mismatch_implicit_param_list
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -363,7 +363,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %N.loc19_19.1 => constants.%N.bd9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_param_count.carbon ($fail_mismatch_param_count)
+// CHECK:STDOUT: --- fail_mismatch_param_count.carbon = $fail_mismatch_param_count
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -469,7 +469,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %U.loc19_19.1 => constants.%U
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_param_type.carbon ($fail_mismatch_param_type)
+// CHECK:STDOUT: --- fail_mismatch_param_type.carbon = $fail_mismatch_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -565,7 +565,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %T.loc20_10.1 => constants.%T.37f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_param_name.carbon ($fail_mismatch_param_name)
+// CHECK:STDOUT: --- fail_mismatch_param_name.carbon = $fail_mismatch_param_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -16,7 +16,7 @@ interface Empty {}
 
 fn F(unused e: Empty) {}
 
-// CHECK:STDOUT: --- as_type.carbon ($as_type)
+// CHECK:STDOUT: --- as_type.carbon = $as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

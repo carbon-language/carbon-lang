@@ -133,7 +133,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
   return (a as C).n;
 }
 
-// CHECK:STDOUT: --- adapt_specific_type.carbon ($adapt_specific_type)
+// CHECK:STDOUT: --- adapt_specific_type.carbon = $adapt_specific_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -302,7 +302,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_adapt_specific_type.carbon ($import_adapt_specific_type)
+// CHECK:STDOUT: --- import_adapt_specific_type.carbon = $import_adapt_specific_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -462,7 +462,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_extend_adapt_specific_type.carbon ($fail_todo_extend_adapt_specific_type)
+// CHECK:STDOUT: --- fail_todo_extend_adapt_specific_type.carbon = $fail_todo_extend_adapt_specific_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -612,7 +612,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_adapt_specific_type_library.carbon ($extend_adapt_specific_type_library)
+// CHECK:STDOUT: --- extend_adapt_specific_type_library.carbon = $extend_adapt_specific_type_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -724,7 +724,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc9_1.2 => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_extend_adapt_specific_type.carbon ($fail_todo_import_extend_adapt_specific_type)
+// CHECK:STDOUT: --- fail_todo_import_extend_adapt_specific_type.carbon = $fail_todo_import_extend_adapt_specific_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -862,7 +862,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt_generic_type.carbon ($adapt_generic_type)
+// CHECK:STDOUT: --- adapt_generic_type.carbon = $adapt_generic_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1002,7 +1002,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.d6c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_adapt_generic_type.carbon ($import_adapt_generic_type)
+// CHECK:STDOUT: --- import_adapt_generic_type.carbon = $import_adapt_generic_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

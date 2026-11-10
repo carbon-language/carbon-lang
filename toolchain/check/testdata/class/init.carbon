@@ -25,7 +25,7 @@ fn MakeReorder(n: i32, next: Class*) -> Class {
   return {.next = next, .n = n};
 }
 
-// CHECK:STDOUT: --- init.carbon ($init)
+// CHECK:STDOUT: --- init.carbon = $init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

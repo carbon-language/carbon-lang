@@ -418,7 +418,7 @@ var test_char: char = ();
 // CHECK:STDERR:
 var test_str: str = ();
 
-// CHECK:STDOUT: --- iN.carbon ($iN)
+// CHECK:STDOUT: --- iN.carbon = $iN
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -525,7 +525,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- uN.carbon ($uN)
+// CHECK:STDOUT: --- uN.carbon = $uN
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -632,7 +632,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fN.carbon ($fN)
+// CHECK:STDOUT: --- fN.carbon = $fN
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -739,7 +739,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- char.carbon ($char.2)
+// CHECK:STDOUT: --- char.carbon = $char.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -782,7 +782,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- string.carbon ($string.2)
+// CHECK:STDOUT: --- string.carbon = $string.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -815,7 +815,7 @@ var test_str: str = ();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- type.carbon ($type)
+// CHECK:STDOUT: --- type.carbon = $type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -28,7 +28,7 @@ fn F(unused a: i32) -> i32 {
   return x;
 }
 
-// CHECK:STDOUT: --- fail_generic.carbon ($fail_generic)
+// CHECK:STDOUT: --- fail_generic.carbon = $fail_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

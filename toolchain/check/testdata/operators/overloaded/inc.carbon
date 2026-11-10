@@ -29,7 +29,7 @@ fn TestOp() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- inc.carbon ($inc)
+// CHECK:STDOUT: --- inc.carbon = $inc
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

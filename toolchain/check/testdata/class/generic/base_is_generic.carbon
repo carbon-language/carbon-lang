@@ -93,7 +93,7 @@ fn H() {
   let unused j: i32 = C(i32).G();
 }
 
-// CHECK:STDOUT: --- extend_generic_base.carbon ($extend_generic_base)
+// CHECK:STDOUT: --- extend_generic_base.carbon = $extend_generic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -284,7 +284,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.38f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import.carbon ($import)
+// CHECK:STDOUT: --- import.carbon = $import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -465,7 +465,7 @@ fn H() {
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.38f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_extend_symbolic_base.carbon ($fail_todo_extend_symbolic_base)
+// CHECK:STDOUT: --- fail_todo_extend_symbolic_base.carbon = $fail_todo_extend_symbolic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -574,7 +574,7 @@ fn H() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_generic_symbolic_base.carbon ($extend_generic_symbolic_base)
+// CHECK:STDOUT: --- extend_generic_symbolic_base.carbon = $extend_generic_symbolic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -843,7 +843,7 @@ fn H() {
 // CHECK:STDOUT:   %X.G.specific_fn.loc5_24.2 => constants.%X.G.specific_fn.180
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_extend_generic_symbolic_base.carbon ($import_extend_generic_symbolic_base)
+// CHECK:STDOUT: --- import_extend_generic_symbolic_base.carbon = $import_extend_generic_symbolic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

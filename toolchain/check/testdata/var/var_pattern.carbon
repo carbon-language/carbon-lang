@@ -197,7 +197,7 @@ fn Call() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -271,7 +271,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_in_tuple.carbon ($var_in_tuple)
+// CHECK:STDOUT: --- var_in_tuple.carbon = $var_in_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -361,7 +361,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_in_var.carbon ($tuple_in_var)
+// CHECK:STDOUT: --- tuple_in_var.carbon = $tuple_in_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -489,7 +489,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_in_let_var.carbon ($tuple_in_let_var)
+// CHECK:STDOUT: --- tuple_in_let_var.carbon = $tuple_in_let_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -617,7 +617,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- function.carbon ($function)
+// CHECK:STDOUT: --- function.carbon = $function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -735,7 +735,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc4(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_function.carbon ($public_function)
+// CHECK:STDOUT: --- public_function.carbon = $public_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -786,7 +786,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_function.impl.carbon ($public_function.impl)
+// CHECK:STDOUT: --- public_function.impl.carbon = $public_function.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -842,7 +842,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_public_function.carbon ($use_public_function)
+// CHECK:STDOUT: --- use_public_function.carbon = $use_public_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -924,15 +924,15 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.2(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nested.carbon ($fail_nested)
+// CHECK:STDOUT: --- fail_nested.carbon = $fail_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_compile_time.carbon ($fail_compile_time)
+// CHECK:STDOUT: --- fail_compile_time.carbon = $fail_compile_time
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @f();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.carbon ($fail_implicit)
+// CHECK:STDOUT: --- fail_implicit.carbon = $fail_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -964,7 +964,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_self.carbon ($var_self)
+// CHECK:STDOUT: --- var_self.carbon = $var_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1016,7 +1016,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F(%self.param.loc5_8: ref %C, %self.param.loc5_12: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_match.carbon ($nested_match)
+// CHECK:STDOUT: --- nested_match.carbon = $nested_match
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1150,7 +1150,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_param_from_init.carbon ($var_param_from_init)
+// CHECK:STDOUT: --- var_param_from_init.carbon = $var_param_from_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1216,7 +1216,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_12.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_param_from_int_literal.carbon ($var_param_from_int_literal)
+// CHECK:STDOUT: --- var_param_from_int_literal.carbon = $var_param_from_int_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

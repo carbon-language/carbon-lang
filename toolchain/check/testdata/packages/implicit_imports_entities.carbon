@@ -176,7 +176,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 import Other library "o1";
 
-// CHECK:STDOUT: --- c1.carbon ($c1)
+// CHECK:STDOUT: --- c1.carbon = $c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -200,7 +200,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%C1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c2.carbon ($c2)
+// CHECK:STDOUT: --- c2.carbon = $c2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -224,7 +224,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%C2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ns.carbon ($ns)
+// CHECK:STDOUT: --- ns.carbon = $ns
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -251,7 +251,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- o1.carbon ($o1)
+// CHECK:STDOUT: --- o1.carbon = $o1
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -275,7 +275,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%O1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- o2.carbon ($o2)
+// CHECK:STDOUT: --- o2.carbon = $o2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -299,7 +299,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%O2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- local_other.carbon ($local_other)
+// CHECK:STDOUT: --- local_other.carbon = $local_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -323,7 +323,7 @@ import Other library "o1";
 // CHECK:STDOUT:   .Self = constants.%Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mix_current_package.carbon ($mix_current_package)
+// CHECK:STDOUT: --- mix_current_package.carbon = $mix_current_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C1 = import_ref Main//c1, C1, unloaded
@@ -336,7 +336,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mix_current_package.impl.carbon ($mix_current_package.impl)
+// CHECK:STDOUT: --- mix_current_package.impl.carbon = $mix_current_package.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -416,7 +416,7 @@ import Other library "o1";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dup_c1.carbon ($dup_c1)
+// CHECK:STDOUT: --- dup_c1.carbon = $dup_c1
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C1 = import_ref Main//c1, C1, unloaded
@@ -429,7 +429,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dup_c1.impl.carbon ($dup_c1.impl)
+// CHECK:STDOUT: --- dup_c1.impl.carbon = $dup_c1.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -481,7 +481,7 @@ import Other library "o1";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_ns.carbon ($use_ns)
+// CHECK:STDOUT: --- use_ns.carbon = $use_ns
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.NS: <namespace> = import_ref Main//ns, NS, loaded
@@ -498,7 +498,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_ns.impl.carbon ($use_ns.impl)
+// CHECK:STDOUT: --- use_ns.impl.carbon = $use_ns.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -557,7 +557,7 @@ import Other library "o1";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mix_other.carbon ($mix_other)
+// CHECK:STDOUT: --- mix_other.carbon = $mix_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -572,7 +572,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mix_other.impl.carbon ($mix_other.impl)
+// CHECK:STDOUT: --- mix_other.impl.carbon = $mix_other.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -664,7 +664,7 @@ import Other library "o1";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dup_o1.carbon ($dup_o1)
+// CHECK:STDOUT: --- dup_o1.carbon = $dup_o1
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -679,7 +679,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dup_o1.impl.carbon ($dup_o1.impl)
+// CHECK:STDOUT: --- dup_o1.impl.carbon = $dup_o1.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -739,7 +739,7 @@ import Other library "o1";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_conflict.carbon ($import_conflict)
+// CHECK:STDOUT: --- import_conflict.carbon = $import_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -754,7 +754,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_conflict.impl.carbon ($fail_import_conflict.impl)
+// CHECK:STDOUT: --- fail_import_conflict.impl.carbon = $fail_import_conflict.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -771,7 +771,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_conflict_reverse.carbon ($import_conflict_reverse)
+// CHECK:STDOUT: --- import_conflict_reverse.carbon = $import_conflict_reverse
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Other = import_ref Main//local_other, Other, unloaded
@@ -784,7 +784,7 @@ import Other library "o1";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon ($fail_import_conflict_reverse.impl)
+// CHECK:STDOUT: --- fail_import_conflict_reverse.impl.carbon = $fail_import_conflict_reverse.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {

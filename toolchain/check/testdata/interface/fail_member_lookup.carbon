@@ -58,7 +58,7 @@ interface Different {}
 // CHECK:STDERR:
 fn G(generic U: Different) -> U.(Interface.T);
 
-// CHECK:STDOUT: --- fail_member_lookup.carbon ($fail_member_lookup)
+// CHECK:STDOUT: --- fail_member_lookup.carbon = $fail_member_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

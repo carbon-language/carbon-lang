@@ -93,7 +93,7 @@ fn Main() {
   Run2(0);
 }
 
-// CHECK:STDOUT: --- fail_param_count.carbon ($fail_param_count)
+// CHECK:STDOUT: --- fail_param_count.carbon = $fail_param_count
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

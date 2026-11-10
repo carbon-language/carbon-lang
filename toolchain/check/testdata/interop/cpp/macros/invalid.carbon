@@ -47,7 +47,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_macro_with_error.carbon ($fail_macro_with_error)
+// CHECK:STDOUT: --- fail_macro_with_error.carbon = $fail_macro_with_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {

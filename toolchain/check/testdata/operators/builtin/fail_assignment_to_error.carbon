@@ -29,7 +29,7 @@ fn Main() {
   *also_undeclared = 42;
 }
 
-// CHECK:STDOUT: --- fail_assignment_to_error.carbon ($fail_assignment_to_error)
+// CHECK:STDOUT: --- fail_assignment_to_error.carbon = $fail_assignment_to_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

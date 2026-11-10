@@ -184,7 +184,7 @@ void CallUnsupportedF() {
 }
 ''';
 
-// CHECK:STDOUT: --- generic_facet.carbon ($generic_facet)
+// CHECK:STDOUT: --- generic_facet.carbon = $generic_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -527,7 +527,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %C.val => constants.%C.val.b0d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_type_impls_interface.carbon ($generic_type_impls_interface)
+// CHECK:STDOUT: --- generic_type_impls_interface.carbon = $generic_type_impls_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

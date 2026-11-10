@@ -45,7 +45,7 @@ fn F() {
   G({} as C);
 }
 
-// CHECK:STDOUT: --- call_combined_impl_witness.carbon ($call_combined_impl_witness)
+// CHECK:STDOUT: --- call_combined_impl_witness.carbon = $call_combined_impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

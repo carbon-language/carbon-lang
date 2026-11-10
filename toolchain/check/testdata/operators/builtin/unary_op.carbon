@@ -24,7 +24,7 @@ fn Constant() {
   var unused b: if not false then bool else () = true;
 }
 
-// CHECK:STDOUT: --- unary_op.carbon ($unary_op)
+// CHECK:STDOUT: --- unary_op.carbon = $unary_op
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

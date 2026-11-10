@@ -104,7 +104,7 @@ import library "f";
 
 var x: () = D.C.F();
 
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -137,7 +137,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//a, C, unloaded
@@ -150,7 +150,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon ($c)
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +182,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.439
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- d.carbon ($d)
+// CHECK:STDOUT: --- d.carbon = $d
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//c, C, unloaded
@@ -195,7 +195,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- e.carbon ($e)
+// CHECK:STDOUT: --- e.carbon = $e
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -241,7 +241,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   .F = imports.%Main.import_ref.be7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- f.carbon ($f)
+// CHECK:STDOUT: --- f.carbon = $f
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.D = import_ref Main//e, D, unloaded
@@ -254,7 +254,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_b.carbon ($use_b)
+// CHECK:STDOUT: --- use_b.carbon = $use_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -314,7 +314,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_c.carbon ($use_c)
+// CHECK:STDOUT: --- use_c.carbon = $use_c
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -374,7 +374,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_d.carbon ($use_d)
+// CHECK:STDOUT: --- use_d.carbon = $use_d
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +434,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_e.carbon ($use_e)
+// CHECK:STDOUT: --- use_e.carbon = $use_e
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -507,7 +507,7 @@ var x: () = D.C.F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_f.carbon ($use_f)
+// CHECK:STDOUT: --- use_f.carbon = $use_f
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

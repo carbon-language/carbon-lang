@@ -59,7 +59,7 @@ fn NoParam() -> type = "maybe_unformed.make_type";
 // CHECK:STDERR:
 fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 
-// CHECK:STDOUT: --- use_types.carbon ($use_types)
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -107,7 +107,7 @@ fn ColonBangParam(generic T: type) -> type = "maybe_unformed.make_type";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- runtime_call.carbon ($runtime_call)
+// CHECK:STDOUT: --- runtime_call.carbon = $runtime_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

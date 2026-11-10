@@ -104,7 +104,7 @@ class Outer(T: type) {
   }
 }
 
-// CHECK:STDOUT: --- call.carbon ($call)
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -316,7 +316,7 @@ class Outer(T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_too_few.carbon ($fail_too_few)
+// CHECK:STDOUT: --- fail_too_few.carbon = $fail_too_few
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -413,7 +413,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_too_many.carbon ($fail_too_many)
+// CHECK:STDOUT: --- fail_too_many.carbon = $fail_too_many
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -514,7 +514,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_conversion.carbon ($fail_no_conversion)
+// CHECK:STDOUT: --- fail_no_conversion.carbon = $fail_no_conversion
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -618,7 +618,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_in_nested_return_type.carbon ($call_in_nested_return_type)
+// CHECK:STDOUT: --- call_in_nested_return_type.carbon = $call_in_nested_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

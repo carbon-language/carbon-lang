@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 var x: {.a: {}} = {.b = {}};
 
-// CHECK:STDOUT: --- fail_assign_nested.carbon ($fail_assign_nested)
+// CHECK:STDOUT: --- fail_assign_nested.carbon = $fail_assign_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

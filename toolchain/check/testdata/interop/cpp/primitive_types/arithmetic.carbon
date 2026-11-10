@@ -122,7 +122,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- supported_types.carbon ($supported_types)
+// CHECK:STDOUT: --- supported_types.carbon = $supported_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -479,7 +479,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_unsupported_types.carbon ($fail_todo_unsupported_types)
+// CHECK:STDOUT: --- fail_todo_unsupported_types.carbon = $fail_todo_unsupported_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -534,7 +534,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- override_builtin.carbon ($override_builtin)
+// CHECK:STDOUT: --- override_builtin.carbon = $override_builtin
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

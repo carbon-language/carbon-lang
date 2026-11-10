@@ -27,7 +27,7 @@ fn G() -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: --- returned_var.carbon ($returned_var)
+// CHECK:STDOUT: --- returned_var.carbon = $returned_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

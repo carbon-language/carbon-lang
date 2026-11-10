@@ -69,7 +69,7 @@ fn MyF() {
   var unused e: Cpp.UnsizedEnum;
 }
 
-// CHECK:STDOUT: --- import_declaration.carbon ($import_declaration)
+// CHECK:STDOUT: --- import_declaration.carbon = $import_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

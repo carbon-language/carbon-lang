@@ -88,7 +88,7 @@ class AdaptWithBaseAndFields {
   adapt {};
 }
 
-// CHECK:STDOUT: --- fail_adapt_with_base.carbon ($fail_adapt_with_base)
+// CHECK:STDOUT: --- fail_adapt_with_base.carbon = $fail_adapt_with_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -145,7 +145,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   extend %Base.ref
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_with_fields.carbon ($fail_adapt_with_fields)
+// CHECK:STDOUT: --- fail_adapt_with_fields.carbon = $fail_adapt_with_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -213,7 +213,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   .c = %field_decl.loc31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon ($fail_adapt_with_base_and_fields)
+// CHECK:STDOUT: --- fail_adapt_with_base_and_fields.carbon = $fail_adapt_with_base_and_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -75,7 +75,7 @@ package CycleChild;
 // CHECK:STDERR:
 import B;
 
-// CHECK:STDOUT: --- fail_a.carbon ($fail_a)
+// CHECK:STDOUT: --- fail_a.carbon = $fail_a
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [concrete] {
@@ -90,7 +90,7 @@ import B;
 // CHECK:STDOUT:   %B.import = import B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon ($fail_b)
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %C: <namespace> = namespace file.%C.import, [concrete] {
@@ -105,7 +105,7 @@ import B;
 // CHECK:STDOUT:   %C.import = import C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_c.carbon ($fail_c)
+// CHECK:STDOUT: --- fail_c.carbon = $fail_c
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [concrete] {
@@ -120,7 +120,7 @@ import B;
 // CHECK:STDOUT:   %A.import = import A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_c.impl.carbon ($fail_c.impl)
+// CHECK:STDOUT: --- fail_c.impl.carbon = $fail_c.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -129,7 +129,7 @@ import B;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cycle_child.carbon ($fail_cycle_child)
+// CHECK:STDOUT: --- fail_cycle_child.carbon = $fail_cycle_child
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [concrete] {

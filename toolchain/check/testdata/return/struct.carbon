@@ -16,7 +16,7 @@ fn Main() -> {.a: i32} {
   return {.a = 3};
 }
 
-// CHECK:STDOUT: --- struct.carbon ($struct)
+// CHECK:STDOUT: --- struct.carbon = $struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

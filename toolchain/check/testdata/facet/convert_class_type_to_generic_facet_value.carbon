@@ -62,7 +62,7 @@ fn G() {
   CallGenericMethod(ImplsGeneric, {} as GenericParam);
 }
 
-// CHECK:STDOUT: --- generic_facet_type.carbon ($generic_facet_type)
+// CHECK:STDOUT: --- generic_facet_type.carbon = $generic_facet_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -417,7 +417,7 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn.loc22_3.2 => constants.%CallGenericMethod.specific_fn.c3c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_facet_type_from_implicit_param.carbon ($generic_facet_type_from_implicit_param)
+// CHECK:STDOUT: --- generic_facet_type_from_implicit_param.carbon = $generic_facet_type_from_implicit_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

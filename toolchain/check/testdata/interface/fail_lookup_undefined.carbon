@@ -67,7 +67,7 @@ interface BeingDefined {
   fn BeingDefined.I();
 }
 
-// CHECK:STDOUT: --- fail_lookup_undefined.carbon ($fail_lookup_undefined)
+// CHECK:STDOUT: --- fail_lookup_undefined.carbon = $fail_lookup_undefined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

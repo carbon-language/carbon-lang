@@ -320,7 +320,7 @@ library "[[@TEST_NAME]]";
 let {.a = x: ()} = ((), ());
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- empty.carbon ($empty)
+// CHECK:STDOUT: --- empty.carbon = $empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -344,7 +344,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal.carbon ($literal)
+// CHECK:STDOUT: --- literal.carbon = $literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -382,7 +382,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_two_fields.carbon ($literal_two_fields)
+// CHECK:STDOUT: --- literal_two_fields.carbon = $literal_two_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +452,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_shorthand.carbon ($literal_shorthand)
+// CHECK:STDOUT: --- literal_shorthand.carbon = $literal_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -490,7 +490,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_shorthand_two_fields.carbon ($literal_shorthand_two_fields)
+// CHECK:STDOUT: --- literal_shorthand_two_fields.carbon = $literal_shorthand_two_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -560,7 +560,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_mixed_syntax.carbon ($literal_mixed_syntax)
+// CHECK:STDOUT: --- literal_mixed_syntax.carbon = $literal_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -609,7 +609,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon ($nested)
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -721,7 +721,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_expr.carbon ($init_expr)
+// CHECK:STDOUT: --- init_expr.carbon = $init_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -763,7 +763,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_expr_shorthand.carbon ($init_expr_shorthand)
+// CHECK:STDOUT: --- init_expr_shorthand.carbon = $init_expr_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -805,7 +805,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_expr.carbon ($ref_expr)
+// CHECK:STDOUT: --- ref_expr.carbon = $ref_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -845,7 +845,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_expr_shorthand.carbon ($ref_expr_shorthand)
+// CHECK:STDOUT: --- ref_expr_shorthand.carbon = $ref_expr_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -885,7 +885,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered.carbon ($unordered)
+// CHECK:STDOUT: --- unordered.carbon = $unordered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -955,7 +955,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered_shorthand.carbon ($unordered_shorthand)
+// CHECK:STDOUT: --- unordered_shorthand.carbon = $unordered_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1025,7 +1025,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered_mixed_syntax.carbon ($unordered_mixed_syntax)
+// CHECK:STDOUT: --- unordered_mixed_syntax.carbon = $unordered_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1095,9 +1095,9 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_underscore.carbon ($fail_todo_underscore)
+// CHECK:STDOUT: --- fail_todo_underscore.carbon = $fail_todo_underscore
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_matching_field.carbon ($fail_no_matching_field)
+// CHECK:STDOUT: --- fail_no_matching_field.carbon = $fail_no_matching_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1126,7 +1126,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_matching_field_ref.carbon ($fail_no_matching_field_ref)
+// CHECK:STDOUT: --- fail_no_matching_field_ref.carbon = $fail_no_matching_field_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1153,7 +1153,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_unhandled_field.carbon ($fail_unhandled_field)
+// CHECK:STDOUT: --- fail_unhandled_field.carbon = $fail_unhandled_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1184,7 +1184,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name.carbon ($fail_duplicate_field_name)
+// CHECK:STDOUT: --- fail_duplicate_field_name.carbon = $fail_duplicate_field_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1211,7 +1211,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name_shorthand.carbon ($fail_duplicate_field_name_shorthand)
+// CHECK:STDOUT: --- fail_duplicate_field_name_shorthand.carbon = $fail_duplicate_field_name_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1237,7 +1237,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name_mixed_syntax.carbon ($fail_duplicate_field_name_mixed_syntax)
+// CHECK:STDOUT: --- fail_duplicate_field_name_mixed_syntax.carbon = $fail_duplicate_field_name_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1264,7 +1264,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_static_class_var.carbon ($in_static_class_var)
+// CHECK:STDOUT: --- in_static_class_var.carbon = $in_static_class_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1324,7 +1324,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_class_let.carbon ($in_class_let)
+// CHECK:STDOUT: --- in_class_let.carbon = $in_class_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1369,7 +1369,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incorrect_field_type.carbon ($fail_incorrect_field_type)
+// CHECK:STDOUT: --- fail_incorrect_field_type.carbon = $fail_incorrect_field_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1400,7 +1400,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incorrect_scrutinee_type.carbon ($fail_incorrect_scrutinee_type)
+// CHECK:STDOUT: --- fail_incorrect_scrutinee_type.carbon = $fail_incorrect_scrutinee_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

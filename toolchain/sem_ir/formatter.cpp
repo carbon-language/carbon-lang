@@ -59,7 +59,7 @@ Formatter::Formatter(
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
-      file_name_(short_file_names.Get(sem_ir_->check_ir_id())),
+      short_file_names_(short_file_names),
       inst_namer_(sem_ir_, total_ir_count),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
@@ -99,8 +99,8 @@ Formatter::Formatter(
 }
 
 auto Formatter::Format() -> void {
-  out() << "--- " << sem_ir_->filename() << " ($" << file_name_.GetFullName()
-        << ")" << "\n";
+  out() << "--- " << sem_ir_->filename() << " = $"
+        << short_file_names_.Get(sem_ir_->check_ir_id()) << "\n";
 
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
     FormatTopLevelScope(scope_id, insts);

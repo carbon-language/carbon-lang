@@ -121,7 +121,7 @@ fn PassPartialB(b: partial B) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -604,7 +604,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- qualified.carbon ($qualified)
+// CHECK:STDOUT: --- qualified.carbon = $qualified
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -645,7 +645,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- const_qualified_non_ptr.carbon ($const_qualified_non_ptr)
+// CHECK:STDOUT: --- const_qualified_non_ptr.carbon = $const_qualified_non_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -681,7 +681,7 @@ fn PassPartialB(b: partial B) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- partial_qualified_non_ptr.carbon ($partial_qualified_non_ptr)
+// CHECK:STDOUT: --- partial_qualified_non_ptr.carbon = $partial_qualified_non_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

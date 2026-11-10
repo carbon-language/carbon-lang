@@ -48,7 +48,7 @@ class C(T: Core.Copy) {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- member_inline.carbon ($member_inline)
+// CHECK:STDOUT: --- member_inline.carbon = $member_inline
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -298,7 +298,7 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:   %return.patt.loc10_14.2 => constants.%return.patt.f44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_member_inline_missing_self_dot.carbon ($fail_member_inline_missing_self_dot)
+// CHECK:STDOUT: --- fail_member_inline_missing_self_dot.carbon = $fail_member_inline_missing_self_dot
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

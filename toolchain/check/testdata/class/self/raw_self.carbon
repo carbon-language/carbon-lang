@@ -27,7 +27,7 @@ fn Class.G(self, r#self: i32) -> (i32, i32) {
 }
 
 
-// CHECK:STDOUT: --- raw_self.carbon ($raw_self)
+// CHECK:STDOUT: --- raw_self.carbon = $raw_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

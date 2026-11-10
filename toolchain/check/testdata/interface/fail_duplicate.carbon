@@ -89,7 +89,7 @@ class Class;
 interface Class { }
 
 
-// CHECK:STDOUT: --- fail_redefine_without_dependents.carbon ($fail_redefine_without_dependents)
+// CHECK:STDOUT: --- fail_redefine_without_dependents.carbon = $fail_redefine_without_dependents
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +148,7 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.3ce02d.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redefine_with_dependents.carbon ($fail_redefine_with_dependents)
+// CHECK:STDOUT: --- fail_redefine_with_dependents.carbon = $fail_redefine_with_dependents
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -234,7 +234,7 @@ interface Class { }
 // CHECK:STDOUT:   %self.patt.loc17_8.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon ($fail_name_conflict_with_fn)
+// CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon = $fail_name_conflict_with_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -255,7 +255,7 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Function.loc4();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_conflict_with_class.carbon ($fail_name_conflict_with_class)
+// CHECK:STDOUT: --- fail_name_conflict_with_class.carbon = $fail_name_conflict_with_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -30,7 +30,7 @@ fn PartialConstant(x: bool) {
   var unused a: if false and x then bool else () = ();
 }
 
-// CHECK:STDOUT: --- and.carbon ($and)
+// CHECK:STDOUT: --- and.carbon = $and
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -29,7 +29,7 @@ impl library "[[@TEST_NAME]]";
 
 fn F(generic _: N) {}
 
-// CHECK:STDOUT: --- import.carbon ($import)
+// CHECK:STDOUT: --- import.carbon = $import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -144,7 +144,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type.138
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import.impl.carbon ($import.impl)
+// CHECK:STDOUT: --- import.impl.carbon = $import.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

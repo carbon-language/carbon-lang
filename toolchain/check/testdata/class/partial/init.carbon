@@ -29,7 +29,7 @@ class Derived {
   }
 }
 
-// CHECK:STDOUT: --- base.carbon ($base)
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -150,7 +150,7 @@ impl C as I {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_runtime_generic_param.carbon ($fail_runtime_generic_param)
+// CHECK:STDOUT: --- fail_runtime_generic_param.carbon = $fail_runtime_generic_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -177,7 +177,7 @@ impl C as I {
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error_in_import.carbon ($fail_nonfinal_lookup_impl_witness_error_in_import)
+// CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error_in_import.carbon = $fail_nonfinal_lookup_impl_witness_error_in_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -234,7 +234,7 @@ impl C as I {
 // CHECK:STDOUT:   %T.loc15_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error.carbon ($fail_nonfinal_lookup_impl_witness_error)
+// CHECK:STDOUT: --- fail_nonfinal_lookup_impl_witness_error.carbon = $fail_nonfinal_lookup_impl_witness_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -301,7 +301,7 @@ impl C as I {
 // CHECK:STDOUT:   %F.specific_fn.loc21_3.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_final_lookup_impl_witness_error.carbon ($fail_final_lookup_impl_witness_error)
+// CHECK:STDOUT: --- fail_final_lookup_impl_witness_error.carbon = $fail_final_lookup_impl_witness_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -326,7 +326,7 @@ impl C as I {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon ($fail_invalid_fn_syntax_in_impl)
+// CHECK:STDOUT: --- fail_invalid_fn_syntax_in_impl.carbon = $fail_invalid_fn_syntax_in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @<null name>: <unexpected>.inst{{[0-9A-F]+}}.loc9_6 as <unexpected>.inst{{[0-9A-F]+}}.loc9_11;
 // CHECK:STDOUT:

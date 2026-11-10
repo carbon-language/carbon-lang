@@ -191,7 +191,7 @@ fn G() -> i32 {
   return Cpp.X(i32, i32).n(1, 2);
 }
 
-// CHECK:STDOUT: --- valid.carbon ($valid)
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -222,7 +222,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dependent.carbon ($dependent)
+// CHECK:STDOUT: --- dependent.carbon = $dependent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

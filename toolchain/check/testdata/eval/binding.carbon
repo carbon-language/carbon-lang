@@ -74,7 +74,7 @@ eval fn G() -> i32 {
 
 let n: array(i32, G()) = (1, 2, 3);
 
-// CHECK:STDOUT: --- local.carbon ($local)
+// CHECK:STDOUT: --- local.carbon = $local
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

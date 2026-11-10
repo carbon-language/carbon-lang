@@ -30,7 +30,7 @@ fn Main() {
   *(if true then p else &a) = 10;
 }
 
-// CHECK:STDOUT: --- assignment.carbon ($assignment)
+// CHECK:STDOUT: --- assignment.carbon = $assignment
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

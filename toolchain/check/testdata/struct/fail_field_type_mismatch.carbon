@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1.0};
 
-// CHECK:STDOUT: --- fail_field_type_mismatch.carbon ($fail_field_type_mismatch)
+// CHECK:STDOUT: --- fail_field_type_mismatch.carbon = $fail_field_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

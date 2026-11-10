@@ -34,7 +34,7 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 }
 
 
-// CHECK:STDOUT: --- method_deduce.carbon ($method_deduce)
+// CHECK:STDOUT: --- method_deduce.carbon = $method_deduce
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

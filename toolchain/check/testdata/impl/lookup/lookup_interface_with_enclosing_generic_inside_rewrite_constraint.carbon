@@ -100,7 +100,7 @@ fn F() {
   Outer(() as (Z1 & Z2)).G(Outer(() as (Z1 & Z2)).C);
 }
 
-// CHECK:STDOUT: --- lookup_interface_with_encenclosing_specific_is_concrete_type.carbon ($lookup_interface_with_encenclosing_specific_is_concrete_type)
+// CHECK:STDOUT: --- lookup_interface_with_encenclosing_specific_is_concrete_type.carbon = $lookup_interface_with_encenclosing_specific_is_concrete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +434,7 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- enclosing_specific_is_facet_value.carbon ($enclosing_specific_is_facet_value)
+// CHECK:STDOUT: --- enclosing_specific_is_facet_value.carbon = $enclosing_specific_is_facet_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

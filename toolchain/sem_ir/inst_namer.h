@@ -315,8 +315,7 @@ class InstNamer {
 };
 
 // Value store of short names for Carbon source files.
-using ShortFileNameStore =
-    FixedSizeValueStore<SemIR::CheckIRId, SemIR::InstNamer::Namespace::Name>;
+using ShortFileNameStore = FixedSizeValueStore<SemIR::CheckIRId, std::string>;
 
 }  // namespace Carbon::SemIR
 

@@ -52,7 +52,7 @@ class X(U: type) {
 }
 
 
-// CHECK:STDOUT: --- extend_impl_generic_interface.carbon ($extend_impl_generic_interface)
+// CHECK:STDOUT: --- extend_impl_generic_interface.carbon = $extend_impl_generic_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -486,7 +486,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %assoc0.loc5_14.2 => constants.%assoc0.f78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_impl_generic_class.carbon ($extend_impl_generic_class)
+// CHECK:STDOUT: --- extend_impl_generic_class.carbon = $extend_impl_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

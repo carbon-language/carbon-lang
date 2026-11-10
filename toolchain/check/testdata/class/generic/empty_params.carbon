@@ -14,7 +14,7 @@
 
 class C[]();
 
-// CHECK:STDOUT: --- empty_params.carbon ($empty_params)
+// CHECK:STDOUT: --- empty_params.carbon = $empty_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

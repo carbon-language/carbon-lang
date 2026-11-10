@@ -105,7 +105,7 @@ let c: Core.IntLiteral = DivLit(1, 0);
 // CHECK:STDERR:
 let d: Core.IntLiteral = DivLit(0, 0);
 
-// CHECK:STDOUT: --- int_div.carbon ($int_div)
+// CHECK:STDOUT: --- int_div.carbon = $int_div
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

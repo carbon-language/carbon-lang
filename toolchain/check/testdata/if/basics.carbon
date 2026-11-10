@@ -118,7 +118,7 @@ fn VarScope(b: bool) -> bool {
   return n;
 }
 
-// CHECK:STDOUT: --- else.carbon ($else)
+// CHECK:STDOUT: --- else.carbon = $else
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -168,7 +168,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_else.carbon ($no_else)
+// CHECK:STDOUT: --- no_else.carbon = $no_else
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -211,7 +211,7 @@ fn VarScope(b: bool) -> bool {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unreachable_fallthrough.carbon ($unreachable_fallthrough)
+// CHECK:STDOUT: --- unreachable_fallthrough.carbon = $unreachable_fallthrough
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

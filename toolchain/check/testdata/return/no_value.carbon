@@ -16,7 +16,7 @@ fn Main() {
   return;
 }
 
-// CHECK:STDOUT: --- no_value.carbon ($no_value)
+// CHECK:STDOUT: --- no_value.carbon = $no_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

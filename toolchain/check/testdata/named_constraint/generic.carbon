@@ -97,7 +97,7 @@ constraint Generic(T: type) {}
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 
-// CHECK:STDOUT: --- generic.carbon ($generic)
+// CHECK:STDOUT: --- generic.carbon = $generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

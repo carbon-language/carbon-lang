@@ -27,7 +27,7 @@ impl forall [T: type] T as I where .U = C {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- name_lookup_into_impl_as_target.carbon ($name_lookup_into_impl_as_target)
+// CHECK:STDOUT: --- name_lookup_into_impl_as_target.carbon = $name_lookup_into_impl_as_target
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

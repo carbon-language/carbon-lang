@@ -120,7 +120,7 @@ fn Test(n: Core.IntLiteral) {
   LessEq(n, n);
 }
 
-// CHECK:STDOUT: --- int_less_eq.carbon ($int_less_eq)
+// CHECK:STDOUT: --- int_less_eq.carbon = $int_less_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

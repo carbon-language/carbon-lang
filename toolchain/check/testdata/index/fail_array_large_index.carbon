@@ -34,7 +34,7 @@ var b: i32 = a[1];
 // CHECK:STDERR:
 var c: i32 = a[0x7FFF_FFFF];
 
-// CHECK:STDOUT: --- fail_array_large_index.carbon ($fail_array_large_index)
+// CHECK:STDOUT: --- fail_array_large_index.carbon = $fail_array_large_index
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

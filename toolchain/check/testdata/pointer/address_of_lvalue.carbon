@@ -24,7 +24,7 @@ fn F() {
   var unused t1: i32* = &t.1;
 }
 
-// CHECK:STDOUT: --- address_of_lvalue.carbon ($address_of_lvalue)
+// CHECK:STDOUT: --- address_of_lvalue.carbon = $address_of_lvalue
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

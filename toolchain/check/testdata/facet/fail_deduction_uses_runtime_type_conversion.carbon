@@ -46,7 +46,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 }
 
 
-// CHECK:STDOUT: --- fail_deduction_uses_runtime_type_conversion.carbon ($fail_deduction_uses_runtime_type_conversion)
+// CHECK:STDOUT: --- fail_deduction_uses_runtime_type_conversion.carbon = $fail_deduction_uses_runtime_type_conversion
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

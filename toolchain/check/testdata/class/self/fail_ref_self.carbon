@@ -38,7 +38,7 @@ fn F(c: Class, p: Class*) {
   Make().F();
 }
 
-// CHECK:STDOUT: --- fail_ref_self.carbon ($fail_ref_self)
+// CHECK:STDOUT: --- fail_ref_self.carbon = $fail_ref_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

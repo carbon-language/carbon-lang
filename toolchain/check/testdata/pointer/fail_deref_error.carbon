@@ -27,7 +27,7 @@ let n: i32 = *undeclared;
 // CHECK:STDERR:
 let n2: i32 = undeclared->foo;
 
-// CHECK:STDOUT: --- fail_deref_error.carbon ($fail_deref_error)
+// CHECK:STDOUT: --- fail_deref_error.carbon = $fail_deref_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

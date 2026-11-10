@@ -125,7 +125,7 @@ fn Test(n: Core.IntLiteral) {
   Eq(n, n);
 }
 
-// CHECK:STDOUT: --- int_eq.carbon ($int_eq)
+// CHECK:STDOUT: --- int_eq.carbon = $int_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

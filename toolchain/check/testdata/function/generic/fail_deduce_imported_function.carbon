@@ -55,7 +55,7 @@ fn B() {
   Lib.A({.b = {}});
 }
 
-// CHECK:STDOUT: --- lib.carbon ($lib)
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -143,7 +143,7 @@ fn B() {
 // CHECK:STDOUT:   %x.patt.loc4_20.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_imported_function.carbon ($fail_deduce_imported_function)
+// CHECK:STDOUT: --- fail_deduce_imported_function.carbon = $fail_deduce_imported_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

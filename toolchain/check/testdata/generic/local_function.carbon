@@ -49,7 +49,7 @@ fn CallEnclosingTemplate() -> i32 {
   return EnclosingTemplate(S);
 }
 
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -133,7 +133,7 @@ fn CallEnclosingTemplate() -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_enclosing_local.carbon ($use_enclosing_local)
+// CHECK:STDOUT: --- use_enclosing_local.carbon = $use_enclosing_local
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

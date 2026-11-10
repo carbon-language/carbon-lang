@@ -72,7 +72,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, {});
 
-// CHECK:STDOUT: --- valid.carbon ($valid)
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -120,7 +120,7 @@ var x: Cpp.TwoTypes(Cpp.A, {});
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- char.carbon ($char.2)
+// CHECK:STDOUT: --- char.carbon = $char.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -60,7 +60,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
   var unused d: if x or true then bool else ();
 }
 
-// CHECK:STDOUT: --- fail_non_constant_result.carbon ($fail_non_constant_result)
+// CHECK:STDOUT: --- fail_non_constant_result.carbon = $fail_non_constant_result
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +182,7 @@ fn KnownValueButNonConstantCondition(x: bool) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_despite_known_result.carbon ($fail_despite_known_result)
+// CHECK:STDOUT: --- fail_despite_known_result.carbon = $fail_despite_known_result
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

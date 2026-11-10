@@ -56,7 +56,7 @@ var b: i32 = b_ref;
 var c: i32 = c_ref;
 var d: i32 = d_ref;
 
-// CHECK:STDOUT: --- fail_implicit.carbon ($fail_implicit)
+// CHECK:STDOUT: --- fail_implicit.carbon = $fail_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -127,7 +127,7 @@ var d: i32 = d_ref;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon ($implicit.impl)
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

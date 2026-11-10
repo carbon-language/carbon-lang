@@ -169,7 +169,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 let e: f64 = 5.0e39999999999999999993;
 
-// CHECK:STDOUT: --- literal_values.carbon ($literal_values)
+// CHECK:STDOUT: --- literal_values.carbon = $literal_values
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %int_8.b85: Core.IntLiteral = int_value 8 [concrete]

@@ -58,7 +58,7 @@ var c: i32 = {.a = 1, .b = 2}[0];
 // CHECK:STDERR:
 var d: i32 = {.a: i32, .b: i32}[0];
 
-// CHECK:STDOUT: --- fail_invalid_base.carbon ($fail_invalid_base)
+// CHECK:STDOUT: --- fail_invalid_base.carbon = $fail_invalid_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -95,7 +95,7 @@ class Class {
 
 var C: Class = {};
 
-// CHECK:STDOUT: --- field_initializer.carbon ($field_initializer)
+// CHECK:STDOUT: --- field_initializer.carbon = $field_initializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

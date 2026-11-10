@@ -18,7 +18,7 @@ impl i32 as I;
 
 impl i32 as I {}
 
-// CHECK:STDOUT: --- declaration.carbon ($declaration)
+// CHECK:STDOUT: --- declaration.carbon = $declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

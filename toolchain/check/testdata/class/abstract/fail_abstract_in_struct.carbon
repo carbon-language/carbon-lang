@@ -146,7 +146,7 @@ import library "lib";
 // CHECK:STDERR:
 var v5: {.m: Abstract};
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon ($fail_abstract_field)
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -188,7 +188,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon ($fail_abstract_var)
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -230,7 +230,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon ($abstract_let)
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -288,7 +288,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_twice.carbon ($fail_abstract_twice)
+// CHECK:STDOUT: --- fail_abstract_twice.carbon = $fail_abstract_twice
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -342,7 +342,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_first.carbon ($fail_abstract_first)
+// CHECK:STDOUT: --- fail_abstract_first.carbon = $fail_abstract_first
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -388,7 +388,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_second.carbon ($fail_abstract_second)
+// CHECK:STDOUT: --- fail_abstract_second.carbon = $fail_abstract_second
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +434,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lib.carbon ($lib)
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -458,7 +458,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon ($fail_import)
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -20,7 +20,7 @@ class Class {
 
 fn Class.F(unused self, unused b: ()) {}
 
-// CHECK:STDOUT: --- redeclaration.carbon ($redeclaration)
+// CHECK:STDOUT: --- redeclaration.carbon = $redeclaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

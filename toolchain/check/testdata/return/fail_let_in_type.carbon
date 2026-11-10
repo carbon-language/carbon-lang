@@ -61,7 +61,7 @@ let template z: type = i32;
 // CHECK:STDERR:
 fn FirstPerfectNumber() -> z { return 6; }
 
-// CHECK:STDOUT: --- fail_let_in_type.carbon ($fail_let_in_type)
+// CHECK:STDOUT: --- fail_let_in_type.carbon = $fail_let_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

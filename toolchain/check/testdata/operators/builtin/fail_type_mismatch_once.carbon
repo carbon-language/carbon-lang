@@ -27,7 +27,7 @@ fn Main() -> i32 {
   return {} + 3.4 + 12;
 }
 
-// CHECK:STDOUT: --- fail_type_mismatch_once.carbon ($fail_type_mismatch_once)
+// CHECK:STDOUT: --- fail_type_mismatch_once.carbon = $fail_type_mismatch_once
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

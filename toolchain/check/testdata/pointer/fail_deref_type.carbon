@@ -31,7 +31,7 @@ var p: *i32;
 // CHECK:STDERR:
 var p2: i32->foo;
 
-// CHECK:STDOUT: --- fail_deref_type.carbon ($fail_deref_type)
+// CHECK:STDOUT: --- fail_deref_type.carbon = $fail_deref_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

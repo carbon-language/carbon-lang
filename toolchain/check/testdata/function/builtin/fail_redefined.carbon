@@ -51,7 +51,7 @@ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
 
-// CHECK:STDOUT: --- fail_redefined.carbon ($fail_redefined)
+// CHECK:STDOUT: --- fail_redefined.carbon = $fail_redefined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

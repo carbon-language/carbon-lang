@@ -31,7 +31,7 @@ fn F() {
   A->foo;
 }
 
-// CHECK:STDOUT: --- fail_deref_namespace.carbon ($fail_deref_namespace)
+// CHECK:STDOUT: --- fail_deref_namespace.carbon = $fail_deref_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -33,7 +33,7 @@ fn Feed[T: Eats](unused e: T) {}
 // CHECK:STDERR:
 fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 
-// CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon ($fail_convert_facet_value_to_missing_impl)
+// CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon = $fail_convert_facet_value_to_missing_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

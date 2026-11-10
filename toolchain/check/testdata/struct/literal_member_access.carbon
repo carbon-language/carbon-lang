@@ -18,7 +18,7 @@ fn F() -> i32 {
   return {.a = 1, .b = G(), .c = 3}.b.y;
 }
 
-// CHECK:STDOUT: --- literal_member_access.carbon ($literal_member_access)
+// CHECK:STDOUT: --- literal_member_access.carbon = $literal_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

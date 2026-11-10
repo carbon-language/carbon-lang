@@ -79,7 +79,7 @@ fn Main() {
   (if true then a else a) = 10;
 }
 
-// CHECK:STDOUT: --- fail_assignment_to_non_assignable.carbon ($fail_assignment_to_non_assignable)
+// CHECK:STDOUT: --- fail_assignment_to_non_assignable.carbon = $fail_assignment_to_non_assignable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

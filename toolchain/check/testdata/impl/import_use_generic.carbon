@@ -69,7 +69,7 @@ fn G() -> c.(I.F)() {}
 // CHECK:STDERR:
 fn H() -> C({}).(I.F)() {}
 
-// CHECK:STDOUT: --- import_generic.carbon ($import_generic)
+// CHECK:STDOUT: --- import_generic.carbon = $import_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -232,7 +232,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_in_fn_decl.carbon ($fail_use_in_fn_decl)
+// CHECK:STDOUT: --- fail_use_in_fn_decl.carbon = $fail_use_in_fn_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

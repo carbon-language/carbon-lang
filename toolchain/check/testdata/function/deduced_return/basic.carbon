@@ -138,7 +138,7 @@ fn G() -> i32 {
   return F(false);
 }
 
-// CHECK:STDOUT: --- single_return.carbon ($single_return)
+// CHECK:STDOUT: --- single_return.carbon = $single_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -238,7 +238,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_place.carbon ($in_place)
+// CHECK:STDOUT: --- in_place.carbon = $in_place
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -340,7 +340,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %F.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lambda.carbon ($lambda)
+// CHECK:STDOUT: --- lambda.carbon = $lambda
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
