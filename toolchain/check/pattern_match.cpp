@@ -693,9 +693,63 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       auto storage_id =
           context_.full_pattern_stack().GetLocalVarStorage(entry.pattern_id);
       if (scrutinee_id.has_value()) {
+        auto storage_type_id = scrutinee_type_id;
+        auto init_type_id = context_.insts().Get(scrutinee_id).type_id();
         if (scrutinee_type_id == SemIR::AutoType::TypeId) {
+          storage_type_id = init_type_id;
+        } else if (auto pattern_tuple =
+                       context_.types().TryGetAs<SemIR::TupleType>(
+                           scrutinee_type_id)) {
+          // Replaces each `auto` in the tuple pattern.
+          // NOLINTNEXTLINE(misc-no-recursion)
+          auto deduce = [&](auto& deduce, SemIR::TypeId pattern_type,
+                            SemIR::TypeId init_type) -> SemIR::TypeId {
+            if (pattern_type == SemIR::AutoType::TypeId) {
+              return init_type;
+            }
+            auto tuple =
+                context_.types().TryGetAs<SemIR::TupleType>(pattern_type);
+            if (!tuple) {
+              return pattern_type;
+            }
+            llvm::SmallVector<SemIR::InstId> elements(
+                context_.inst_blocks().Get(tuple->type_elements_id));
+            auto init_tuple =
+                context_.types().TryGetAsIfValid<SemIR::TupleType>(init_type);
+            auto init_elements =
+                init_tuple
+                    ? context_.inst_blocks().Get(init_tuple->type_elements_id)
+                    : llvm::ArrayRef<SemIR::InstId>();
+            bool init_size_matches = init_elements.size() == elements.size();
+            bool changed = false;
+            for (size_t i = 0; i < elements.size(); ++i) {
+              auto elem_type =
+                  context_.types().GetTypeIdForTypeInstId(elements[i]);
+              auto deduced = deduce(
+                  deduce, elem_type,
+                  init_size_matches ? context_.types().GetTypeIdForTypeInstId(
+                                          init_elements[i])
+                                    : SemIR::TypeId::None);
+              if (!deduced.has_value()) {
+                return SemIR::TypeId::None;
+              }
+              if (deduced != elem_type) {
+                elements[i] = context_.types().GetTypeInstId(deduced);
+                changed = true;
+              }
+            }
+            return changed ? GetTupleType(context_, elements) : pattern_type;
+          };
+          storage_type_id = deduce(deduce, scrutinee_type_id, init_type_id);
+          if (!storage_type_id.has_value()) {
+            // The tuple pattern or its subpatterns contain an auto-typed
+            // element, but the pattern and initializer are mismatched.
+            storage_type_id = init_type_id;
+          }
+        }
+        if (storage_type_id != scrutinee_type_id) {
           auto storage = context_.insts().GetAs<SemIR::VarStorage>(storage_id);
-          storage.type_id = context_.insts().Get(scrutinee_id).type_id();
+          storage.type_id = storage_type_id;
           ReplaceInstBeforeConstantUse(context_, storage_id, storage);
         }
 
@@ -796,6 +850,36 @@ auto MatchContext::DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
 
   auto tuple_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
                                                   specific_id_stack_.back());
+  if (auto scrutinee_tuple = context_.types().TryGetAs<SemIR::TupleType>(
+          scrutinee.inst.type_id())) {
+    auto pattern_elements =
+        context_.inst_blocks().Get(context_.types()
+                                       .GetAs<SemIR::TupleType>(tuple_type_id)
+                                       .type_elements_id);
+    if (pattern_elements.size() ==
+        context_.inst_blocks().Get(scrutinee_tuple->type_elements_id).size()) {
+      // NOLINTNEXTLINE(misc-no-recursion)
+      auto contains_auto = [&](auto& self,
+                               llvm::ArrayRef<SemIR::InstId> elements) -> bool {
+        for (auto element_id : elements) {
+          if (element_id == SemIR::AutoType::TypeInstId) {
+            return true;
+          }
+          auto type_id = context_.types().GetTypeIdForTypeInstId(element_id);
+          if (auto tuple_type =
+                  context_.types().TryGetAs<SemIR::TupleType>(type_id);
+              tuple_type && self(self, context_.inst_blocks().Get(
+                                           tuple_type->type_elements_id))) {
+            return true;
+          }
+        }
+        return false;
+      };
+      if (contains_auto(contains_auto, pattern_elements)) {
+        tuple_type_id = scrutinee.inst.type_id();
+      }
+    }
+  }
   auto converted_scrutinee_id = ConvertToValueOrRefOfType(
       context_, SemIR::LocId(entry.pattern_id), scrutinee_id, tuple_type_id);
   if (auto scrutinee_value = context_.insts().TryGetAs<SemIR::TupleValue>(
