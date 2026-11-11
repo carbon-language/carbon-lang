@@ -141,6 +141,14 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
       if (InStaticClassScopeVar(context)) {
         // Handle static class fields the same as NameBindingDecls.
         pattern_id = add_local_var();
+      } else if (!context.insts().Is<SemIR::FieldDecl>(subpattern_id)) {
+        // An expression pattern doesn't declare a field. Tuple and struct
+        // patterns are diagnosed when they are formed.
+        CARBON_DIAGNOSTIC(FieldWithExprPattern, Error,
+                          "expression pattern in field declaration");
+        context.emitter().Emit(SemIR::LocId(subpattern_id),
+                               FieldWithExprPattern);
+        pattern_id = SemIR::ErrorInst::InstId;
       } else {
         // For non-static class fields, a `FieldDecl` was created in
         // `AddBindingPattern`. Use that as the `pattern_id` so that

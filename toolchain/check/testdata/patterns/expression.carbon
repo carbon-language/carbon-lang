@@ -69,6 +69,41 @@ let a: () = ();
 // CHECK:STDERR:
 let (a) = ();
 
+// --- fail_in_class_var.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  //@dump-sem-ir-begin
+  // CHECK:STDERR:        ╭─┤ fail_in_class_var.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   var (true);
+  // CHECK:STDERR:        ·        ━━┳━
+  // CHECK:STDERR:        ·          ┗━━┫ error: expression pattern in field declaration
+  // CHECK:STDERR:        ·             ┃        [FieldWithExprPattern]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  var (true);
+  //@dump-sem-ir-end
+}
+
+// --- fail_in_class_var_after_field.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  var a: ();
+  //@dump-sem-ir-begin
+  // CHECK:STDERR:        ╭─┤ fail_in_class_var_after_field.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   var (true);
+  // CHECK:STDERR:        ·        ━━┳━
+  // CHECK:STDERR:        ·          ┗━━┫ error: expression pattern in field declaration
+  // CHECK:STDERR:        ·             ┃        [FieldWithExprPattern]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  var (true);
+  //@dump-sem-ir-end
+}
+
 // --- fail_todo_control_flow.carbon
 
 library "[[@TEST_NAME]]";
@@ -96,6 +131,37 @@ fn F() {
   //@dump-sem-ir-end
 }
 
+// CHECK:STDOUT: --- fail_in_class_var.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_in_class_var_after_field.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @C {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%C
+// CHECK:STDOUT:   .a = %field_decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_control_flow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -105,7 +171,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %.108: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc23_26, @F.%expr_patt.loc23_43) [concrete]
+// CHECK:STDOUT:   %.15a: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc23_26, @F.%expr_patt.loc23_43) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%true, %true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -144,7 +210,7 @@ fn F() {
 // CHECK:STDOUT:       %.loc23_43: bool = block_arg !.loc23 [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc23_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc23_26, %expr_patt.loc23_43) [concrete = constants.%.108]
+// CHECK:STDOUT:     %.loc23_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc23_26, %expr_patt.loc23_43) [concrete = constants.%.15a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
