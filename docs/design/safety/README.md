@@ -405,8 +405,8 @@ prevent deadlocks:
     across threads. Accessing a `shared` place is restricted to operations
     defined to work on `shared` places: unguarded data is deeply read-only,
     types with safe interior mutability (such as atomics and mutexes) opt into
-    `shared` operations, and `guarded` variables can be read or mutated while
-    their guarding lock is held.
+    `shared` operations, and `guarded` variables can only be read or mutated
+    while their guarding lock is held.
 -   Safety effects on function signatures update which places are `shared`
     across threads and which locks have been acquired or released.
 
