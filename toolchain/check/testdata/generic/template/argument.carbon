@@ -65,14 +65,39 @@ fn G() {
   F(type, X);
 }
 
-// --- ref_self_type.carbon
+// --- addr_of_dependent_type.carbon
 library "[[@TEST_NAME]]";
 
 class C {};
 class D(template T: type) {
-  fn F(ref self) -> C* { return &self.c; }
+  fn F(self) -> C* { return &self.c; }
   var c: C;
 }
+
+let d: D(C) = {.c = {} as C};
+
+// --- fail_addr_of_non_addressable_dependent_type.carbon
+library "[[@TEST_NAME]]";
+
+class C {};
+class D(template T: type) {
+  let c: type* = &D(T);
+}
+
+// CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+13]]:8
+// CHECK:STDERR:        │   let c: type* = &D(T);
+// CHECK:STDERR:        ·                  ──┬──
+// CHECK:STDERR:        ·                    ╰──┤ cannot take the address of non-reference expression
+// CHECK:STDERR:        ·                       │ [AddrOfNonRef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let c: D(C) = {} as D(C);
+// CHECK:STDERR:        ·        ┳━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `D(C)` in name binding
+// CHECK:STDERR:        ·           ┃        declaration
+// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let c: D(C) = {} as D(C);
 
 // --- fail_non_constant_type_argument.carbon
 library "[[@TEST_NAME]]";

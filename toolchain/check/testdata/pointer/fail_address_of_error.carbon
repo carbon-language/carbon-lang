@@ -65,8 +65,9 @@ fn Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc22: <error> = name_ref undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:   %addr.loc22: <error> = addr_of %undeclared.ref.loc22 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc35: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc35: <error> = addr_of %undeclared.ref.loc35 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc36: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc36_5: <error> = addr_of %undeclared.ref.loc36 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc36_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
