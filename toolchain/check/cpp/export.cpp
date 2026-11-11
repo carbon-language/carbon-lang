@@ -339,31 +339,15 @@ static auto GetExistingExportedClassSpecific(Context& context,
 // decl.  Otherwise, creates a new C++ class template specialization and
 // returns it. Returns nullptr if the class could not be exported and an error
 // was diagnosed.
-//
-// If `decl_context` is null, `ExportNameScopeToCpp` will called to map the
-// parent scope into a `DeclContext`.
-static auto ExportClassSpecificToCpp(Context& context,
-                                     clang::DeclContext* /*decl_context*/,
-                                     SemIR::LocId loc_id,
-                                     SemIR::ClassType class_type)
+static auto ExportClassSpecificToCpp(
+    Context& context, clang::ClassTemplateDecl* class_template_decl,
+    SemIR::LocId loc_id, SemIR::ClassType class_type)
     -> clang::ClassTemplateSpecializationDecl* {
   CARBON_CHECK(class_type.specific_id.has_value());
 
   // Use existing export if possible.
   if (auto* decl = GetExistingExportedClassSpecific(context, class_type)) {
     return decl;
-  }
-
-  // Ensure the parameterized class is exported, and get its
-  // `ClassTemplateDecl`.
-  auto param_class_type_id = GetParameterizedClassType(
-      context, class_type.class_id, SemIR::SpecificId::None);
-  auto param_class_type =
-      context.types().GetAs<SemIR::ParameterizedClassType>(param_class_type_id);
-  auto* class_template_decl =
-      ExportParameterizedClassToCpp(context, param_class_type);
-  if (!class_template_decl) {
-    return nullptr;
   }
 
   llvm::SmallVector<clang::TemplateArgument> template_args;
@@ -474,8 +458,16 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
           .class_id = param_class_type->class_id,
           .specific_id = scope_specific_id,
       };
-      decl_context =
-          ExportClassSpecificToCpp(context, decl_context, loc_id, class_type);
+      decl_context = GetExistingExportedClassSpecific(context, class_type);
+      if (!decl_context) {
+        auto* class_template_decl = ExportParameterizedClassToCppInDeclContext(
+            context, decl_context, class_type.class_id);
+        if (!class_template_decl) {
+          return nullptr;
+        }
+        decl_context = ExportClassSpecificToCpp(context, class_template_decl,
+                                                loc_id, class_type);
+      }
       if (!decl_context) {
         return nullptr;
       }
@@ -517,7 +509,17 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
   SemIR::LocId loc_id(class_info.first_decl_id());
 
   if (class_type.specific_id.has_value()) {
-    return ExportClassSpecificToCpp(context, /*decl_context=*/nullptr, loc_id,
+    SemIR::ParameterizedClassType param_class_type{
+        .type_id = SemIR::TypeType::TypeId,
+        .class_id = class_type.class_id,
+        .enclosing_specific_id = SemIR::SpecificId::None,
+    };
+    auto* class_template_decl =
+        ExportParameterizedClassToCpp(context, param_class_type);
+    if (!class_template_decl) {
+      return nullptr;
+    }
+    return ExportClassSpecificToCpp(context, class_template_decl, loc_id,
                                     class_type);
   }
 
