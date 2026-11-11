@@ -244,13 +244,15 @@ let x: auto = I.T;
 
 interface J {
   // Is this valid?
-  // CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+2]]:13: error: alias refers to a runtime value [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   alias U = x;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: alias refers to a runtime value
+  // CHECK:STDERR:        ·                ┃        [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias U = x;
   // type of U is an assoc entity type, but value is not constant.
-  // CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+3]]:13: error: cannot implicitly convert non-type value of type `<associated entity in I>` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+2]]:13: note: type `<associated entity in I>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:
   fn F() -> U;
 }
 
