@@ -4,6 +4,7 @@
 
 #include "toolchain/check/identified_facet_type.h"
 
+#include "common/set.h"
 #include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
@@ -46,13 +47,6 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
 }
 
 // Canonically ordered by the numerical ids.
-static auto RewriteLess(const IdentifiedFacetType::Rewrite& lhs,
-                        const IdentifiedFacetType::Rewrite& rhs) -> bool {
-  return std::tuple(lhs.lhs.RawValue().index, lhs.rhs.RawValue().index) <
-         std::tuple(rhs.lhs.RawValue().index, rhs.rhs.RawValue().index);
-}
-
-// Canonically ordered by the numerical ids.
 static auto EquivalentLess(const IdentifiedFacetType::Equivalent& lhs,
                            const IdentifiedFacetType::Equivalent& rhs) -> bool {
   return std::tuple(lhs.lhs.RawValue().index, lhs.rhs.RawValue().index) <
@@ -84,8 +78,21 @@ IdentifiedFacetType::IdentifiedFacetType(
       extend_impls_,
       llvm::map_range(extends, [](RequiredImpl req) { return req.interface; }));
 
-  rewrites_.assign(rewrites);
-  SortAndDeduplicate(rewrites_, RewriteLess);
+  // Keep rewrites in the same order they are found during identify, but drop
+  // duplicates.
+  //
+  // TODO: We want to perform rewrite constraint resolution here instead of when
+  // we evaluate WhereExpr. That is a more complicated deduping operation and
+  // would replace this.
+  Set<Rewrite> rewrites_added;
+  rewrites_added.GrowForInsertCount(rewrites.size());
+  rewrites_.reserve(rewrites.size());
+  for (auto r : rewrites) {
+    if (rewrites_added.Insert(r).is_inserted()) {
+      rewrites_.push_back(r);
+    }
+  }
+
   equivalents_.assign(equivalents);
   SortAndDeduplicate(equivalents_, EquivalentLess);
 }
