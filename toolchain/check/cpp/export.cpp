@@ -194,97 +194,6 @@ auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
   return decl_context;
 }
 
-auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
-                          SemIR::NameScopeId name_scope_id,
-                          SemIR::SpecificId /*scope_specific_id*/)
-    -> clang::DeclContext* {
-  llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
-
-  // Walk through the parent scopes, looking for one that's already mapped into
-  // C++. We already mapped the package scope to ::Carbon::<PackageName>, so we
-  // must find one.
-  clang::DeclContext* decl_context = nullptr;
-  while (true) {
-    // If this name scope was produced by importing a C++ declaration or has
-    // already been exported to C++, return the corresponding Clang declaration.
-    if (auto* existing_decl_context =
-            GetClangDeclContextForScope(context, name_scope_id)) {
-      decl_context = existing_decl_context;
-      break;
-    }
-
-    // Otherwise, continue to the parent and create a scope for it first.
-    name_scope_ids_to_create.push_back(name_scope_id);
-    const auto& name_scope = context.name_scopes().Get(name_scope_id);
-    if (name_scope.is_imported_package()) {
-      // Imported packages are exported as sub-namespaces of `::Carbon`, not of
-      // the current package's sub-namespace.
-      decl_context = context.cpp_context()->domain().carbon_namespace();
-      break;
-    }
-    name_scope_id = name_scope.parent_scope_id();
-
-    // TODO: What should happen if there's an intervening function scope?
-    CARBON_CHECK(
-        name_scope_id.has_value(),
-        "Reached the top level without finding a scope mapped into C++");
-  }
-
-  // Create the name scopes in order, starting from the outermost one.
-  while (!name_scope_ids_to_create.empty()) {
-    name_scope_id = name_scope_ids_to_create.pop_back_val();
-
-    auto& name_scope = context.name_scopes().Get(name_scope_id);
-
-    auto const_inst_id =
-        context.constant_values().GetConstantInstId(name_scope.inst_id());
-    if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
-      auto* identifier_info =
-          GetClangIdentifierInfo(context, name_scope.name_id());
-      if (!identifier_info) {
-        // TODO: Handle keyword package names like `Cpp` and `Core`. These can
-        // be named from C++ via an alias.
-        context.TODO(loc_id, "interop with non-identifier package name");
-        return nullptr;
-      }
-
-      decl_context =
-          ExportNamespaceToCpp(context, decl_context, identifier_info);
-    } else if (auto class_type =
-                   context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
-      const auto& class_info = context.classes().Get(class_type->class_id);
-      decl_context = ExportClassToCppInDeclContext(
-          context, decl_context, class_info, class_type->specific_id);
-    } else {
-      context.TODO(loc_id, "non-class non-namespace name scope");
-      return nullptr;
-    }
-
-    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
-        cast<clang::Decl>(decl_context));
-    auto clang_decl_id = context.clang_decls().Add(
-        {.key = key, .inst_id = name_scope.inst_id()});
-    name_scope.set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
-
-    // Complete the type here to avoid hitting a clang assert later when
-    // adding methods.
-    if (auto* record_decl =
-            llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
-      context.ast_context().getExternalSource()->CompleteType(record_decl);
-    }
-  }
-
-  if (auto* record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
-    // We can't use a class as a name scope until it's complete, so we need to
-    // ensure it's complete here.
-    context.clang_sema().RequireCompleteType(
-        GetCppLocation(context, loc_id),
-        context.ast_context().getCanonicalTagType(record_decl),
-        clang::diag::err_incomplete_member_access);
-  }
-  return decl_context;
-}
-
 static auto GetClassTypeInstId(Context& context, SemIR::ClassId class_id,
                                SemIR::SpecificId specific_id)
     -> SemIR::TypeInstId {
@@ -382,6 +291,97 @@ static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
 
   return CreateClassTemplateSpecializationDecl(
       context, class_template_decl, template_args, class_type_inst_id);
+}
+
+auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
+                          SemIR::NameScopeId name_scope_id,
+                          SemIR::SpecificId /*scope_specific_id*/)
+    -> clang::DeclContext* {
+  llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
+
+  // Walk through the parent scopes, looking for one that's already mapped into
+  // C++. We already mapped the package scope to ::Carbon::<PackageName>, so we
+  // must find one.
+  clang::DeclContext* decl_context = nullptr;
+  while (true) {
+    // If this name scope was produced by importing a C++ declaration or has
+    // already been exported to C++, return the corresponding Clang declaration.
+    if (auto* existing_decl_context =
+            GetClangDeclContextForScope(context, name_scope_id)) {
+      decl_context = existing_decl_context;
+      break;
+    }
+
+    // Otherwise, continue to the parent and create a scope for it first.
+    name_scope_ids_to_create.push_back(name_scope_id);
+    const auto& name_scope = context.name_scopes().Get(name_scope_id);
+    if (name_scope.is_imported_package()) {
+      // Imported packages are exported as sub-namespaces of `::Carbon`, not of
+      // the current package's sub-namespace.
+      decl_context = context.cpp_context()->domain().carbon_namespace();
+      break;
+    }
+    name_scope_id = name_scope.parent_scope_id();
+
+    // TODO: What should happen if there's an intervening function scope?
+    CARBON_CHECK(
+        name_scope_id.has_value(),
+        "Reached the top level without finding a scope mapped into C++");
+  }
+
+  // Create the name scopes in order, starting from the outermost one.
+  while (!name_scope_ids_to_create.empty()) {
+    name_scope_id = name_scope_ids_to_create.pop_back_val();
+
+    auto& name_scope = context.name_scopes().Get(name_scope_id);
+
+    auto const_inst_id =
+        context.constant_values().GetConstantInstId(name_scope.inst_id());
+    if (context.insts().Is<SemIR::Namespace>(const_inst_id)) {
+      auto* identifier_info =
+          GetClangIdentifierInfo(context, name_scope.name_id());
+      if (!identifier_info) {
+        // TODO: Handle keyword package names like `Cpp` and `Core`. These can
+        // be named from C++ via an alias.
+        context.TODO(loc_id, "interop with non-identifier package name");
+        return nullptr;
+      }
+
+      decl_context =
+          ExportNamespaceToCpp(context, decl_context, identifier_info);
+    } else if (auto class_type =
+                   context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
+      const auto& class_info = context.classes().Get(class_type->class_id);
+      decl_context = ExportClassToCppInDeclContext(
+          context, decl_context, class_info, class_type->specific_id);
+    } else {
+      context.TODO(loc_id, "non-class non-namespace name scope");
+      return nullptr;
+    }
+
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+        cast<clang::Decl>(decl_context));
+    auto clang_decl_id = context.clang_decls().Add(
+        {.key = key, .inst_id = name_scope.inst_id()});
+    name_scope.set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+
+    // Complete the type here to avoid hitting a clang assert later when
+    // adding methods.
+    if (auto* record_decl =
+            llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
+      context.ast_context().getExternalSource()->CompleteType(record_decl);
+    }
+  }
+
+  if (auto* record_decl = llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
+    // We can't use a class as a name scope until it's complete, so we need to
+    // ensure it's complete here.
+    context.clang_sema().RequireCompleteType(
+        GetCppLocation(context, loc_id),
+        context.ast_context().getCanonicalTagType(record_decl),
+        clang::diag::err_incomplete_member_access);
+  }
+  return decl_context;
 }
 
 auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
