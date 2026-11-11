@@ -514,8 +514,8 @@ constraint J {
 // CHECK:STDERR:        ╭─┤ fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ impl () as J {}
 // CHECK:STDERR:        ·            ┳
-// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `{}` that is different
-// CHECK:STDERR:        ·               ┃        from previously given value `()`
+// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `()` that is different
+// CHECK:STDERR:        ·               ┃        from previously given value `{}`
 // CHECK:STDERR:        ·               ┃        [AssociatedConstantGivenDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
