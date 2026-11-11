@@ -156,7 +156,7 @@ impl C as I {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -165,7 +165,7 @@ impl C as I {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [symbolic_self = constants.%.b7f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.I.impl: %C.ref as %I.ref {

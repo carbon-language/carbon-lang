@@ -71,9 +71,9 @@ class E {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [concrete]
+// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [symbolic_self]
 // CHECK:STDOUT:   %E: type = class_type @E [concrete]
-// CHECK:STDOUT:   %.e0d: <witness> = impl_self_witness %E, @I [concrete]
+// CHECK:STDOUT:   %.e0d: <witness> = impl_self_witness %E, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.d51: <witness> = impl_witness @E.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %E, (%I.impl_witness.d51) [concrete]
 // CHECK:STDOUT: }
@@ -150,7 +150,7 @@ class E {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc38: <witness> = impl_self_witness @D.as.I.impl.%D.ref, @I [concrete = constants.%.393]
+// CHECK:STDOUT:   %.loc38: <witness> = impl_self_witness @D.as.I.impl.%D.ref, @I [symbolic_self = constants.%.393]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -166,7 +166,7 @@ class E {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%E [concrete = constants.%E]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc57: <witness> = impl_self_witness @E.as.I.impl.%Self.ref, @I [concrete = constants.%.e0d]
+// CHECK:STDOUT:   %.loc57: <witness> = impl_self_witness @E.as.I.impl.%Self.ref, @I [symbolic_self = constants.%.e0d]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

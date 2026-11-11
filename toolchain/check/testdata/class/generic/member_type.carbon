@@ -554,7 +554,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Outer.7d3: type = class_type @Outer, @Outer(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.type.b91: type = facet_type <@Inner, @Inner(%i32)> [concrete]
 // CHECK:STDOUT:   %C.785: type = class_type @C, @C(%i32) [concrete]
-// CHECK:STDOUT:   %.79a: <witness> = impl_self_witness %D, @Inner, @Inner(%i32) [concrete]
+// CHECK:STDOUT:   %.79a: <witness> = impl_self_witness %D, @Inner, @Inner(%i32) [symbolic_self]
 // CHECK:STDOUT:   %Inner.impl_witness.639: <witness> = impl_witness @D.as.Inner.impl.%Inner.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.77b: %Inner.type.b91 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.type.233: type = fn_type @Inner.WithSelf.F, @Inner.WithSelf(%i32, %Self.6a1) [symbolic]
@@ -582,7 +582,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.e4b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C.785 = struct_value () [concrete]
-// CHECK:STDOUT:   %.1b6: <witness> = impl_self_witness %C.785, @Inner, @Inner(%i32) [concrete]
+// CHECK:STDOUT:   %.1b6: <witness> = impl_self_witness %C.785, @Inner, @Inner(%i32) [symbolic_self]
 // CHECK:STDOUT:   %Inner.impl_witness.728: <witness> = impl_witness @C.as.Inner.impl.%Inner.impl_witness_table, @C.as.Inner.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.facet.e46: %Inner.type.b91 = facet_value %C.785, (%Inner.impl_witness.728) [concrete]
 // CHECK:STDOUT:   %Inner.WithSelf.F.type.a68: type = fn_type @Inner.WithSelf.F, @Inner.WithSelf(%i32, %Inner.facet.e46) [concrete]
@@ -820,7 +820,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %.loc17: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%i32) [concrete = constants.%Inner.type.b91]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc17 [concrete = constants.%Inner.type.b91]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @D.as.Inner.impl.%Self.ref, @Inner, @Inner(constants.%i32) [concrete = constants.%.79a]
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @D.as.Inner.impl.%Self.ref, @Inner, @Inner(constants.%i32) [symbolic_self = constants.%.79a]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

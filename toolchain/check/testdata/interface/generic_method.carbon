@@ -121,7 +121,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %Y: type = class_type @Y [concrete]
 // CHECK:STDOUT:   %Z: type = class_type @Z [concrete]
 // CHECK:STDOUT:   %A.type.e51: type = facet_type <@A, @A(%X)> [concrete]
-// CHECK:STDOUT:   %.276: <witness> = impl_self_witness %Y, @A, @A(%X) [concrete]
+// CHECK:STDOUT:   %.276: <witness> = impl_self_witness %Y, @A, @A(%X) [symbolic_self]
 // CHECK:STDOUT:   %A.impl_witness: <witness> = impl_witness @Y.as.A.impl.%A.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.134: %A.type.e51 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A.WithSelf.F.type.457: type = fn_type @A.WithSelf.F, @A.WithSelf(%X, %Self.5d3) [symbolic]
@@ -342,7 +342,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %A.type: type = facet_type <@A, @A(constants.%X)> [concrete = constants.%A.type.e51]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: <witness> = impl_self_witness @Y.as.A.impl.%Y.ref, @A, @A(constants.%X) [concrete = constants.%.276]
+// CHECK:STDOUT:   %.loc13: <witness> = impl_self_witness @Y.as.A.impl.%Y.ref, @A, @A(constants.%X) [symbolic_self = constants.%.276]
 // CHECK:STDOUT:   %Call.decl: %Call.type = fn_decl @Call [concrete = constants.%Call] {} {}
 // CHECK:STDOUT:   %CallGeneric.decl: %CallGeneric.type = fn_decl @CallGeneric [concrete = constants.%CallGeneric] {
 // CHECK:STDOUT:     %T.patt.loc26_25.1: %pattern_type.c6b = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_25.2 (constants.%T.patt.0e0)]
@@ -1017,7 +1017,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %tuple.71f: %tuple.type.693 = tuple_value (%Y1, %Y2) [concrete]
 // CHECK:STDOUT:   %tuple.type.59f: type = tuple_type (%Y1, %Y2) [concrete]
 // CHECK:STDOUT:   %A.type.e51: type = facet_type <@A, @A(%X)> [concrete]
-// CHECK:STDOUT:   %.5e8: <witness> = impl_self_witness %tuple.type.59f, @A, @A(%X) [concrete]
+// CHECK:STDOUT:   %.5e8: <witness> = impl_self_witness %tuple.type.59f, @A, @A(%X) [symbolic_self]
 // CHECK:STDOUT:   %A.impl_witness.84c: <witness> = impl_witness @tuple.type.as.A.impl.%A.impl_witness_table, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
 // CHECK:STDOUT:   %A.facet.9d8: %A.type.e51 = facet_value %tuple.type.59f, (%A.impl_witness.84c) [concrete]
 // CHECK:STDOUT:   %Self.134: %A.type.e51 = symbolic_binding Self, 1 [symbolic]

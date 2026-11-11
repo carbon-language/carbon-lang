@@ -1087,7 +1087,7 @@ struct ImplDecl {
 struct ImplSelfWitness {
   static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_self_witness",
-       .constant_kind = InstConstantKind::Conditional,
+       .constant_kind = InstConstantKind::SymbolicOnly,
        .is_lowered = false});
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
@@ -1108,7 +1108,7 @@ struct IdentifiedWitness {
   static constexpr auto Kind =
       InstKind::IdentifiedWitness.Define<Parse::NodeId>(
           {.ir_name = "identified_witness",
-           .constant_kind = InstConstantKind::Always,
+           .constant_kind = InstConstantKind::SymbolicOnly,
            .is_lowered = false});
 
   // Always the type of the builtin `WitnessType` singleton instruction.

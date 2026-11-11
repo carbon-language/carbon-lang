@@ -121,7 +121,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:   %I.type.aaf: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
 // CHECK:STDOUT:   %I.assoc_type.e84: type = assoc_entity_type @I, @I(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %assoc0.65d: %I.assoc_type.e84 = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %.d21: <witness> = impl_self_witness %A.e9e, @I, @I(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %.d21: <witness> = impl_self_witness %A.e9e, @I, @I(%empty_struct_type) [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.885: <witness> = impl_witness @A.as.I.impl.%I.impl_witness_table, @A.as.I.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.facet.41d: %I.type.aaf = facet_value %A.e9e, (%I.impl_witness.885) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.29f: type = fn_type @I.WithSelf.F, @I.WithSelf(%empty_struct_type, %I.facet.41d) [concrete]

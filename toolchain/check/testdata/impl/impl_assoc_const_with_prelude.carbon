@@ -112,7 +112,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self.f73, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.fcf: %struct_type.a.b.36f = impl_witness_access %.00f, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type.604: type = facet_type <@I where %impl.elem0.fcf = %struct.8fa> [concrete]
-// CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
+// CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @empty_tuple.type.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet.e73: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -238,7 +238,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:       %rewrite.loc6_57.2 = requirement_rewrite %impl.elem0.subst.loc6_54.2, %.loc6_95.3 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: <witness> = impl_self_witness @empty_tuple.type.as.I.impl.%.loc6_7.2, @I [concrete = constants.%.2ef]
+// CHECK:STDOUT:   %.loc6: <witness> = impl_self_witness @empty_tuple.type.as.I.impl.%.loc6_7.2, @I [symbolic_self = constants.%.2ef]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
