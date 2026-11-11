@@ -734,7 +734,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:53
   // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:        ·                                                     ┳
+  // CHECK:STDERR:        ·                                                     ┳━━━━━━━━
   // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot take the
   // CHECK:STDERR:        ·                                                        ┃        address of
   // CHECK:STDERR:        ·                                                        ┃        non-reference
