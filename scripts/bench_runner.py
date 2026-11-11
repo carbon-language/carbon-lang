@@ -86,6 +86,20 @@ from rich.text import Text
 from rich.theme import Theme
 
 
+def _parse_positive_int(arg: str) -> int:
+    value = int(arg)
+    if value < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return value
+
+
+def _parse_open_unit_float(arg: str) -> float:
+    value = float(arg)
+    if not (0.0 < value < 1.0):
+        raise argparse.ArgumentTypeError("must be strictly between 0 and 1")
+    return value
+
+
 def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     """Parsers command-line arguments and flags."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -165,7 +179,7 @@ binary.
         "--runs",
         default=10,
         metavar="N",
-        type=int,
+        type=_parse_positive_int,
         help="Number of runs of the benchmark",
     )
     parser.add_argument(
@@ -194,7 +208,7 @@ binary.
         "--alpha",
         default=0.05,
         metavar="𝛂",
-        type=float,
+        type=_parse_open_unit_float,
         help="""
 Threshold for P-values to be considered statistically significant. Also used to
 compute the confidence intervals for individual metrics.
@@ -210,10 +224,6 @@ Bencher Metric Format medians and confidence intervals.
 """.strip(),
     )
     parsed = parser.parse_args(args=args)
-    if parsed.runs < 1:
-        parser.error("`--runs` must be at least 1.")
-    if not (0.0 < parsed.alpha < 1.0):
-        parser.error("`--alpha` must be strictly between 0 and 1.")
     if parsed.base_benchmark and parsed.benchmark_comparable_re:
         parser.error(
             "Cannot mix `--base_benchmark` with `--benchmark_comparable_re`."
@@ -743,7 +753,10 @@ def run_benchmark_binary(
     """Runs a benchmark binary multiple times and collects results.
 
     The results are parsed out of the JSON output from each run, and returned as
-    a list of dictionaries. Each dictionary represents one run.
+    a list of dictionaries. Each dictionary represents one run, containing
+    top-level `"context"` and `"benchmarks"` (`list[dict[str, Any]]`) fields per
+    Google Benchmark's JSON format:
+    https://github.com/google/benchmark/blob/main/docs/user_guide.md#output-formats
 
     This will log the command being run, show a progress bar for each run
     performed, and then log de-duplicated `stderr` output from the runs.
@@ -829,13 +842,21 @@ def print_run_context(
     )
 
 
-def is_iteration_benchmark(console: Console, b: dict[str, Any]) -> bool:
-    """Returns true for normal iteration entries, exiting on errors."""
-    if b.get("error_occurred"):
-        msg = b.get("error_message", "unknown error")
-        console.print(f"ERROR: Benchmark `{b['name']}` failed: {msg}")
+def is_iteration_benchmark(console: Console, benchmark: dict[str, Any]) -> bool:
+    """Returns true for normal iteration entries, exiting on errors.
+
+    Args:
+        console: The rich console to print error messages to.
+        benchmark: A single benchmark result object from a run's `"benchmarks"`
+            array in Google Benchmark's JSON output.
+    """
+    if benchmark.get("error_occurred"):
+        msg = benchmark.get("error_message", "unknown error")
+        console.print(f"ERROR: Benchmark `{benchmark['name']}` failed: {msg}")
         sys.exit(1)
-    return b.get("run_type") != "aggregate" and not b.get("skipped")
+    return benchmark.get("run_type") != "aggregate" and not benchmark.get(
+        "skipped"
+    )
 
 
 def get_benchmark_names_and_metrics(
@@ -875,8 +896,11 @@ def get_benchmark_names_and_metrics(
     )
 
     # We only need to inspect the first run to find all benchmark and metric
-    # names. We combine benchmarks from both experiment and baseline runs to get
-    # a complete set.
+    # names. Each run dictionary has `"context"` and `"benchmarks"` (a list of
+    # per-benchmark result dictionaries; see
+    # https://github.com/google/benchmark/blob/main/docs/user_guide.md#output-formats).
+    # We combine benchmarks from both experiment and baseline runs to get a
+    # complete set.
     one_run_benchmarks = list(exp_runs[0]["benchmarks"])
     if parsed_args.base_benchmark:
         one_run_benchmarks += base_runs[0]["benchmarks"]
@@ -1164,7 +1188,8 @@ def compute_bmf_results(
 
     Exports `latency` in nanoseconds (`real_time` when `--wall_time` is set or
     the benchmark name includes a `/real_time` segment, `cpu_time` otherwise)
-    alongside any enabled extra metrics.
+    alongside any enabled extra metrics, formatted per the BMF specification:
+    https://bencher.dev/docs/reference/bencher-metric-format/
     """
     benchmark_names, selected_metrics = get_benchmark_names_and_metrics(
         console, parsed_args, exp_runs, base_runs=[]

@@ -12,21 +12,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
-# Bencher unit string enabling automatic `B`..`PB` scaling in plots and tables.
-BYTES_UNITS = "bytes (B)"
-
-# Deterministic memory counters reported by `prelude_benchmark`.
-PRELUDE_MEM_METRICS: tuple[str, ...] = (
-    "MemTotal",
-    "MemSemIR",
-    "MemSemIRInsts",
-    "MemSemIRConstantValues",
-    "MemSemIRInstBlocks",
-)
-
-# Project-wide Bencher unit strings for every opted-in custom measure.
-MEASURE_UNITS: dict[str, str] = {m: BYTES_UNITS for m in PRELUDE_MEM_METRICS}
-
 
 class Tier(Enum):
     CONTINUOUS = "continuous"
@@ -77,11 +62,11 @@ class SuiteSpec:
 
     def filter_for_tier(self, tier: Tier) -> str:
         """Returns the `--benchmark_filter` regex for `tier`."""
-        return (
-            self.nightly_filter
-            if tier == Tier.NIGHTLY
-            else self.continuous_filter
-        )
+        match tier:
+            case Tier.CONTINUOUS:
+                return self.continuous_filter
+            case Tier.NIGHTLY:
+                return self.nightly_filter
 
     def extra_metrics_regex(self) -> Optional[str]:
         """Returns an anchored regex matching `extra_metrics`, or `None`."""
@@ -120,6 +105,21 @@ class ThresholdSpec:
             str(self.upper_boundary),
         ]
 
+
+# Bencher unit string enabling automatic `B`..`PB` scaling in plots and tables.
+BYTES_UNITS = "bytes (B)"
+
+# Deterministic memory counters reported by `prelude_benchmark`.
+PRELUDE_MEM_METRICS: tuple[str, ...] = (
+    "MemTotal",
+    "MemSemIR",
+    "MemSemIRInsts",
+    "MemSemIRConstantValues",
+    "MemSemIRInstBlocks",
+)
+
+# Project-wide Bencher unit strings for every opted-in custom measure.
+MEASURE_UNITS: dict[str, str] = {m: BYTES_UNITS for m in PRELUDE_MEM_METRICS}
 
 SUITES: tuple[SuiteSpec, ...] = (
     SuiteSpec(

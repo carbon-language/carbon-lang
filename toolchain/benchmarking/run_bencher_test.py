@@ -230,7 +230,9 @@ class RunBencherTest(unittest.TestCase):
             out_path = Path(tmp) / "bmf.json"
             gh_out = Path(tmp) / "github_output"
             mock_run.side_effect = [
+                # 1. `scripts/run_bazel.py build -c opt ...` for all suites.
                 subprocess.CompletedProcess(args=[], returncode=0),
+                # 2. `scripts/bench_runner.py` for `prelude_benchmark`.
                 subprocess.CompletedProcess(
                     args=[],
                     returncode=0,
@@ -238,6 +240,7 @@ class RunBencherTest(unittest.TestCase):
                         {"BM_PreludeCompile/Nothing": {"latency": {"value": 1}}}
                     ),
                 ),
+                # 3. `scripts/bench_runner.py` for `compile_benchmark`.
                 subprocess.CompletedProcess(
                     args=[],
                     returncode=0,
@@ -298,31 +301,54 @@ class RunBencherTest(unittest.TestCase):
             ],
         ]
         with mock.patch("subprocess.run") as mock_run:
+            # `bencher measure list` returns all measures already synced; no
+            # `bencher measure update` calls are made.
             mock_run.return_value = subprocess.CompletedProcess(
                 args=[], returncode=0, stdout=json.dumps(all_synced)
             )
             self.assertEqual(run_bencher.sync_measure_units("carbon-lang"), [])
             self.assertEqual(mock_run.call_count, 1)
 
-        partial_unsynced = [
+        page_1 = [
+            {"uuid": "u-lat", "name": "Latency", "units": "nanoseconds (ns)"},
+            {"uuid": "uuid-semir", "name": "MemSemIR", "units": BYTES_UNITS},
+        ]
+        page_2 = [
             {
                 "uuid": "uuid-total",
                 "name": "MemTotal",
                 "units": "Measure (units)",
             },
-            {"uuid": "uuid-semir", "name": "MemSemIR", "units": BYTES_UNITS},
         ]
-        with mock.patch("subprocess.run") as mock_run:
+        with (
+            mock.patch.object(run_bencher, "_MEASURE_PAGE_SIZE", 2),
+            mock.patch("subprocess.run") as mock_run,
+        ):
             mock_run.side_effect = [
+                # 1. `bencher measure list --per-page 2 --page 1` (full page).
                 subprocess.CompletedProcess(
-                    args=[], returncode=0, stdout=json.dumps(partial_unsynced)
+                    args=[], returncode=0, stdout=json.dumps(page_1)
                 ),
+                # 2. `bencher measure list --per-page 2 --page 2` (final page).
+                subprocess.CompletedProcess(
+                    args=[], returncode=0, stdout=json.dumps(page_2)
+                ),
+                # 3. `bencher measure update` for `MemTotal` (only measure with
+                # mismatched units).
                 subprocess.CompletedProcess(args=[], returncode=0, stdout=""),
             ]
             updated = run_bencher.sync_measure_units("carbon-lang")
             self.assertEqual(updated, [("MemTotal", BYTES_UNITS)])
-            self.assertEqual(mock_run.call_count, 2)
-            self.assertIn("uuid-total", mock_run.call_args_list[1].args[0])
+            self.assertEqual(mock_run.call_count, 3)
+            self.assertEqual(
+                mock_run.call_args_list[0].args[0][-4:],
+                ["--per-page", "2", "--page", "1"],
+            )
+            self.assertEqual(
+                mock_run.call_args_list[1].args[0][-4:],
+                ["--per-page", "2", "--page", "2"],
+            )
+            self.assertIn("uuid-total", mock_run.call_args_list[2].args[0])
 
 
 if __name__ == "__main__":
