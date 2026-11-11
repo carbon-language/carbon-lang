@@ -50,8 +50,9 @@ auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
 // If the name scope has already been exported, returns the existing context.
 // Otherwise, creates a new C++ declaration context and returns it. Returns
 // nullptr if the name scope could not be exported and an error was diagnosed.
-auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
-                          SemIR::NameScopeId name_scope_id)
+auto ExportNameScopeToCpp(
+    Context& context, SemIR::LocId loc_id, SemIR::NameScopeId name_scope_id,
+    SemIR::SpecificId scope_specific_id = SemIR::SpecificId::None)
     -> clang::DeclContext*;
 
 // Exports a Carbon class into C++ as a class, or returns the C++ tag type that
@@ -108,7 +109,8 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 // `clang::FunctionTemplateDecl` that can be used to call the given function.
 // Returns null if an error was diagnosed.
 auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                              SemIR::FunctionId function_id)
+                              SemIR::FunctionId function_id,
+                              SemIR::SpecificId scope_specific_id)
     -> clang::NamedDecl*;
 
 // Exports the necessary declarations to permit conversion from the given

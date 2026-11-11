@@ -195,7 +195,8 @@ auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
 }
 
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
-                          SemIR::NameScopeId name_scope_id)
+                          SemIR::NameScopeId name_scope_id,
+                          SemIR::SpecificId /*scope_specific_id*/)
     -> clang::DeclContext* {
   llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
 
@@ -908,13 +909,14 @@ static auto MapToCppThunkParamType(Context& context, SemIR::TypeId type_id)
 // name scope if necessary. Returns `nullopt` if an error was diagnosed.
 static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
                               SemIR::FunctionId callee_function_id,
-                              SemIR::SpecificId callee_specific_id)
+                              SemIR::SpecificId callee_specific_id,
+                              SemIR::SpecificId scope_specific_id)
     -> std::optional<FunctionInfo> {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
 
   // Map the parent scope into the C++ AST.
-  auto* decl_context =
-      ExportNameScopeToCpp(context, loc_id, callee.parent_scope_id);
+  auto* decl_context = ExportNameScopeToCpp(
+      context, loc_id, callee.parent_scope_id, scope_specific_id);
   if (!decl_context) {
     return std::nullopt;
   }
@@ -1869,7 +1871,8 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
 // Exports the given function to C++ and returns the exported `NamedDecl`,
 // or `nullptr` if an error was diagnosed.
 static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                                SemIR::FunctionId callee_function_id)
+                                SemIR::FunctionId callee_function_id,
+                                SemIR::SpecificId scope_specific_id)
     -> clang::NamedDecl* {
   if (context.functions()
           .Get(callee_function_id)
@@ -1879,8 +1882,9 @@ static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  auto target = BuildFunctionInfo(context, loc_id, callee_function_id,
-                                  SemIR::SpecificId::None);
+  auto target = BuildFunctionInfo(
+      context, loc_id, callee_function_id,
+      /*callee_specific_id=*/SemIR::SpecificId::None, scope_specific_id);
   if (!target) {
     return nullptr;
   }
@@ -1897,7 +1901,8 @@ static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
 }
 
 auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                              SemIR::FunctionId function_id)
+                              SemIR::FunctionId function_id,
+                              SemIR::SpecificId scope_specific_id)
     -> clang::NamedDecl* {
   SemIR::Function& function = context.functions().Get(function_id);
   if (auto clang_decl_id =
@@ -1907,7 +1912,8 @@ auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
         context.clang_decls().Get(clang_decl_id).decl());
   }
 
-  auto* named_decl = ExportFunctionToCpp(context, loc_id, function_id);
+  auto* named_decl =
+      ExportFunctionToCpp(context, loc_id, function_id, scope_specific_id);
   if (!named_decl) {
     return nullptr;
   }
@@ -1945,8 +1951,9 @@ auto ExportFunctionToCppPointerConversion(
         "can't convert generic function specific to a C++ function pointer");
     return false;
   }
-  auto* src_clang_decl = GetOrExportFunctionToCpp(context, SemIR::LocId(src_id),
-                                                  src_type.function_id);
+  auto* src_clang_decl = GetOrExportFunctionToCpp(
+      context, SemIR::LocId(src_id), src_type.function_id,
+      /*scope_specific_id=*/SemIR::SpecificId::None);
   if (src_clang_decl == nullptr) {
     return false;
   }
