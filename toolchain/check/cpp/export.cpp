@@ -1898,6 +1898,12 @@ static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
+  if (scope_specific_id.has_value()) {
+    context.TODO(loc_id,
+                 "support exporting member functions of parameterized classes");
+    return nullptr;
+  }
+
   if (target->function.generic_id.has_value()) {
     if (target->export_as_constructor || target->self_param.has_value()) {
       context.TODO(loc_id, "support exporting generic member functions");
