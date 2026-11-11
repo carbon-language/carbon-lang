@@ -155,7 +155,7 @@ eval fn LookupWithType(template T: type) -> type {
 
 impl () as I where .X = () and .Y = LookupWithType(.Self) {}
 
-// --- fail_todo_symbolic_facet_in_identify_with_branch.carbon
+// --- symbolic_facet_in_identify_with_branch.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -166,10 +166,6 @@ interface I {
 eval fn LookupWithType(generic T: I) -> type {
   // We received a facet of type `I` which has a witness pointing to the
   // impl below.
-  //
-  // TODO: The constant id .X happens to be a lower id value than .Cond, so
-  // we try to save its RHS into the witness table first. But it depends on
-  // .Cond which is not set it.
   if (T.(I.Cond)) {
     return ();
   } else {
@@ -177,21 +173,9 @@ eval fn LookupWithType(generic T: I) -> type {
   }
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_symbolic_facet_in_identify_with_branch.carbon:[[@LINE+12]]:1
-// CHECK:STDERR:        │   if (T.(I.Cond)) {
-// CHECK:STDERR:        ·       ─────┬────
-// CHECK:STDERR:        ·            ╰──┤ accessing member from impl before it has a defined value
-// CHECK:STDERR:        ·               │ [ImplAccessMemberBeforeSet]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
-// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `LookupWithType(() as I)`
-// CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
 
-// --- fail_todo_template_facet_in_identify_with_branch.carbon
+// --- template_facet_in_identify_with_branch.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -202,10 +186,6 @@ interface I {
 eval fn LookupWithType(template T: I) -> type {
   // We received a facet of type `I` which has a witness pointing to the
   // impl below.
-  //
-  // TODO: The constant id .X happens to be a lower id value than .Cond, so
-  // we try to save its RHS into the witness table first. But it depends on
-  // .Cond which is not set it.
   if (T.(I.Cond)) {
     return ();
   } else {
@@ -213,16 +193,43 @@ eval fn LookupWithType(template T: I) -> type {
   }
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_template_facet_in_identify_with_branch.carbon:[[@LINE+12]]:1
-// CHECK:STDERR:        │   if (T.(I.Cond)) {
-// CHECK:STDERR:        ·       ─────┬────
-// CHECK:STDERR:        ·            ╰──┤ accessing member from impl before it has a defined value
-// CHECK:STDERR:        ·               │ [ImplAccessMemberBeforeSet]
+impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
+
+// --- fail_todo_template_facet_with_wrong_order_ids_for_rewrites.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let A: type;
+  let B: type;
+}
+
+eval fn LookupWithType(template T: I) -> type {
+  return T.(I.A);
+}
+
+// This makes the canonical instruction `.Self.(I.B)` have a lower id index
+// than `.Self.(I.A)` which then messes up the order of the rewrites in
+// the DeclaredFacetType. Then we try to set `.B` in the witness table below
+// before `.A` and we fail the evaluation of LookupWithType.
+//
+// TODO: If we preserved the order of rewrites in the declared facet type then
+// this would work though it may pose canonicalization challenges. If we do
+// rewrite constraint resolution in identify then could we reorder constraints
+// in the IdentifiedFacetType so that dependencies come first, and defer any
+// RHS with an eval fn call to be assumed dependent on everything without a
+// call?
+impl {} as I where .B = () and .A = () {}
+
+// CHECK:STDERR:        ╭─┤ fail_todo_template_facet_with_wrong_order_ids_for_rewrites.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │   return T.(I.A);
+// CHECK:STDERR:        ·          ───┬───
+// CHECK:STDERR:        ·             ╰──┤ accessing member from impl before it has a defined value
+// CHECK:STDERR:        ·                │ [ImplAccessMemberBeforeSet]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
-// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR: ->     │ impl () as I where .A = () and .B = LookupWithType(.Self) {}
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `LookupWithType(() as I)`
 // CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
+impl () as I where .A = () and .B = LookupWithType(.Self) {}
