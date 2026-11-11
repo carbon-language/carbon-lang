@@ -815,19 +815,24 @@ CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-// Verify the keyword invariant relied upon by the type literal dispatchers
-// below: no keyword starts with a sized type literal prefix (`[iuf][1-9]`).
-static_assert([] {
-#define CARBON_KEYWORD_TOKEN(Name, Spelling)                            \
-  if (((Spelling)[0] == 'i' || (Spelling)[0] == 'u' ||                  \
-       (Spelling)[0] == 'f') &&                                         \
-      std::string_view(Spelling).size() >= 2 && (Spelling)[1] >= '1' && \
-      (Spelling)[1] <= '9') {                                           \
-    return false;                                                       \
-  }
+// Returns whether `spelling` starts with a sized type literal prefix,
+// `[iuf][1-9]`.
+static constexpr auto StartsWithSizedTypeLiteralPrefix(
+    std::string_view spelling) -> bool {
+  return spelling.size() >= 2 &&
+         (spelling[0] == 'i' || spelling[0] == 'u' || spelling[0] == 'f') &&
+         spelling[1] >= '1' && spelling[1] <= '9';
+}
+
+// The type literal dispatchers below rely on no keyword starting with a sized
+// type literal prefix.
+#define CARBON_KEYWORD_TOKEN(Name, Spelling)                                  \
+  static_assert(!StartsWithSizedTypeLiteralPrefix(Spelling),                  \
+                "Keyword `" Spelling                                          \
+                "` starts with `[iuf][1-9]`, which "                          \
+                "`DispatchLexTypeLiteralOrKeywordOrIdentifier` assumes only " \
+                "type literals and identifiers do.");
 #include "toolchain/lex/token_kind.def"
-  return true;
-}());
 
 // Lexes a keyword or identifier starting with an identifier start byte that
 // doesn't have a more specific dispatch function below. The dispatch functions
@@ -1068,11 +1073,15 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // symbol.
   table['/'] = &DispatchLexCommentOrSlash;
 
-  // We dispatch all non-ASCII UTF-8 characters to the error handler, as
-  // whitespace characters are handled below and the only remaining valid
-  // Unicode characters would be part of an identifier.
+  // Dispatch the bytes that can start an identifier to identifier lexing. A few
+  // of these can also start other tokens, and get more specific dispatch below.
   //
-  // TODO: Need to add support for Unicode lexing.
+  // The bytes of non-ASCII UTF-8 characters are left dispatching to the error
+  // handler from the base case above, as identifiers don't yet support them.
+  //
+  // TODO: Once identifiers support Unicode characters, the bytes that can
+  // start the UTF-8 encoding of one will need to dispatch to identifier
+  // lexing.
   for (int i = 0; i < 256; ++i) {
     if (IsIdStartByteTable[i]) {
       table[i] = &DispatchLexKeywordOrIdentifier;
