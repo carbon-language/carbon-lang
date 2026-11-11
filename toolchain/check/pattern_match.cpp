@@ -859,7 +859,7 @@ auto MatchContext::DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
     if (pattern_elements.size() ==
         context_.inst_blocks().Get(scrutinee_tuple->type_elements_id).size()) {
       // NOLINTNEXTLINE(misc-no-recursion)
-      auto contains_auto = [&](auto& self,
+      auto contains_auto = [&](auto& contains_auto,
                                llvm::ArrayRef<SemIR::InstId> elements) -> bool {
         for (auto element_id : elements) {
           if (element_id == SemIR::AutoType::TypeInstId) {
@@ -868,8 +868,9 @@ auto MatchContext::DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
           auto type_id = context_.types().GetTypeIdForTypeInstId(element_id);
           if (auto tuple_type =
                   context_.types().TryGetAs<SemIR::TupleType>(type_id);
-              tuple_type && self(self, context_.inst_blocks().Get(
-                                           tuple_type->type_elements_id))) {
+              tuple_type &&
+              contains_auto(contains_auto, context_.inst_blocks().Get(
+                                               tuple_type->type_elements_id))) {
             return true;
           }
         }
