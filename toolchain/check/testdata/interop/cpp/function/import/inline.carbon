@@ -37,7 +37,18 @@ fn MyF() {
 // --- without_definition.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./without_definition.h:[[@LINE+1]]:13: warning: inline function 'inline_without_def' is not defined [CppInteropParseWarning]
+// CHECK:STDERR:        ╭─┤ ./without_definition.h:[[@LINE+12]]:13
+// CHECK:STDERR: ->     │ inline void inline_without_def();
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ warning: inline function 'inline_without_def' is not defined
+// CHECK:STDERR:        ·                ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ todo_fail_import_without_definition.carbon
+// CHECK:STDERR:        │   Cpp.inline_without_def();
+// CHECK:STDERR:        ·                          ┬
+// CHECK:STDERR:        ·                          ╰──┤ used here [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 inline void inline_without_def();
 
 // --- todo_fail_import_without_definition.carbon
@@ -48,8 +59,6 @@ import Cpp library "without_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+2]]:26: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:
   Cpp.inline_without_def();
 
   // Don't error on repeated calls.
@@ -131,12 +140,12 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %inline_without_def.ref.loc10: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
-// CHECK:STDOUT:   %inline_without_def.call.loc10: init %empty_tuple.type = call imports.%inline_without_def.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %inline_without_def.ref.loc13: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
-// CHECK:STDOUT:   %inline_without_def.call.loc13: init %empty_tuple.type = call imports.%inline_without_def.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %inline_without_def.ref.loc8: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc8: init %empty_tuple.type = call imports.%inline_without_def.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %inline_without_def.ref.loc11: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc11: init %empty_tuple.type = call imports.%inline_without_def.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,11 +169,11 @@ fn MyF() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.fc6: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet.fc6) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet.fc6 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.5d8: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.3bd: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.5d8 [concrete]
@@ -180,11 +189,11 @@ fn MyF() {
 // CHECK:STDOUT:   %ThunkOnArg__carbon_thunk: %ThunkOnArg__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.887: type = facet_type <@ImplicitAs, @ImplicitAs(%i16)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.610: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.b42: %ImplicitAs.type.887 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.610) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.14b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i16, %ImplicitAs.facet.b42) [concrete]
 // CHECK:STDOUT:   %.425: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.14b, %ImplicitAs.facet.b42 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_16) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d9f: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.91f: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.f03: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn.91f [concrete]
@@ -193,11 +202,11 @@ fn MyF() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.21d: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.6f7: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5fe: %Int.as.Copy.impl.Op.type.6f7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i16, (%Copy.impl_witness.21d) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.64d: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.376: type = fn_type_with_self_type %Copy.WithSelf.Op.type.64d, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.6f7: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_16) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5fe: %Int.as.Copy.impl.Op.type.6f7 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.6e1, %Int.as.Copy.impl.Op.5fe [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.5fe, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.96e: <bound method> = bound_method %int_1.6e1, %Int.as.Copy.impl.Op.specific_fn [concrete]

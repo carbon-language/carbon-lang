@@ -152,31 +152,96 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
         returns_partial_ordering: Cpp.ReturnsPartialOrdering,
         cross_type_lhs: Cpp.CrossTypeLhs,
         cross_type_rhs: Cpp.CrossTypeRhs) {
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+3]]:3-56: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-23]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(default_spaceship_only, default_spaceship_only);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator!= using operator== is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(default_spaceship_only, default_spaceship_only);
 
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+3]]:3-61: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-21]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(default_spaceship_only, default_spaceship_only);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(default_spaceship_only, default_spaceship_only);
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+3]]:3-63: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-25]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(returns_strong_ordering, returns_strong_ordering);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(returns_strong_ordering, returns_strong_ordering);
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+3]]:3-65: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-29]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(returns_partial_ordering, returns_partial_ordering);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(returns_partial_ordering, returns_partial_ordering);
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+3]]:3-45: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-33]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(cross_type_lhs, cross_type_rhs);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(cross_type_lhs, cross_type_rhs);
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE+5]]:3-45: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-37]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+20]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(cross_type_rhs, cross_type_lhs);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_spaceship_rewrites.carbon:[[@LINE-28]]:9-54: warning: binding `returns_weak_ordering` unused [UnusedBinding]
+  // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE-88]]:9
+  // CHECK:STDERR: ->     │         returns_weak_ordering: Cpp.ReturnsWeakOrdering,
+  // CHECK:STDERR:        ·         ━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                             ┗━━┫ warning: binding `returns_weak_ordering` unused
+  // CHECK:STDERR:        ·                                ┃          [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(cross_type_rhs, cross_type_lhs);
 }
@@ -190,8 +255,18 @@ import Cpp library "three_way_comparable_types.h";
 fn EqWith[U: type, T: Core.EqWith(U)](unused x: T, unused y: U) {}
 
 fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-58: error: cannot convert type `Cpp.ReturnsStrongOrdering` into type implementing `Core.EqWith(Cpp.ReturnsStrongOrdering)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-4]]:1-65: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](unused x: T, unused y: U) {}
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(returns_strong_ordering, returns_strong_ordering);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.ReturnsStrongOrdering` into type
+  // CHECK:STDERR:        ·      ┃        implementing `Core.EqWith(Cpp.ReturnsStrongOrdering)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(returns_strong_ordering, returns_strong_ordering);
 }

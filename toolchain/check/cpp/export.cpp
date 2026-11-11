@@ -13,6 +13,7 @@
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/context.h"
 #include "toolchain/check/cpp/import.h"
@@ -684,8 +685,8 @@ auto ExportAllFieldsToCpp(Context& context,
 
   for (const auto& struct_field : class_info.GetStructTypeFields(
            context.sem_ir(), class_type.specific_id)) {
-    auto class_field = LookupClassFieldByStructField(context.sem_ir(),
-                                                     class_scope, struct_field);
+    auto class_field =
+        LookupClassFieldByStructField(context, class_scope, struct_field);
     if (!class_field) {
       continue;
     }
@@ -744,9 +745,12 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
       GetClassTypeInstId(context, class_type.class_id, specific_id);
   ExportAllFieldsToCpp(context, class_type_inst_id);
 
-  // Get the exported `clang::FieldDecl`.
-  if (const auto* clang_decl =
-          context.clang_decls().Lookup(field_inst_id, specific_id)) {
+  // Get the exported `clang::FieldDecl`. Exported fields are keyed by the
+  // `FieldDecl` instruction, but `field_inst_id` is an import ref if the field
+  // was imported, so look up the instruction it resolves to.
+  if (const auto* clang_decl = context.clang_decls().Lookup(
+          context.constant_values().GetConstantInstId(field_inst_id),
+          specific_id)) {
     if (!clang_decl->decl()->isInvalidDecl()) {
       return cast<clang::FieldDecl>(clang_decl->decl());
     }

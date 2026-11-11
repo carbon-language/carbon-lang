@@ -31,21 +31,56 @@ class Circle {
 fn Run() {
 //@dump-sem-ir-begin
   let circle: Circle = Circle.Make();
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:28-40: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-18]]:15-25: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:28
+  // CHECK:STDERR:        │   private var radius: i32;
+  // CHECK:STDERR:        ·               ─────┬─────
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused radius: i32 = circle.radius;
+  // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                            ┗━━┫ error: cannot access private member `radius` of
+  // CHECK:STDERR:        ·                               ┃        type `Circle`
+  // CHECK:STDERR:        ·                               ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused radius: i32 = circle.radius;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-15: error: cannot access private member `radius` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-22]]:15-25: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   private var radius: i32;
+  // CHECK:STDERR:        ·               ─────┬─────
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.radius = 5;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR:        ·            ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   circle.radius = 5;
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-31: error: cannot access private member `SOME_INTERNAL_CONSTANT` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-25]]:15-41: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   private let SOME_INTERNAL_CONSTANT: i32 = 5;
+  // CHECK:STDERR:        ·               ─────────────┬─────────────
+  // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.SOME_INTERNAL_CONSTANT;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access private member `SOME_INTERNAL_CONSTANT` of type
+  // CHECK:STDERR:        ·      ┃        `Circle`
+  // CHECK:STDERR:        ·      ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   circle.SOME_INTERNAL_CONSTANT;
 
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE+3]]:3-29: error: cannot access private member `SomeInternalFunction` of type `Circle` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_private_field_access.carbon:[[@LINE-28]]:3-44: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   private fn SomeInternalFunction() -> i32 {
+  // CHECK:STDERR:        ·   ─────────────────────┬────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.SomeInternalFunction();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access private member `SomeInternalFunction` of type
+  // CHECK:STDERR:        ·      ┃        `Circle`
+  // CHECK:STDERR:        ·      ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   circle.SomeInternalFunction();
 //@dump-sem-ir-end
@@ -60,8 +95,16 @@ class A {
 
 fn Run() {
 //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE+3]]:23-25: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_protected_field_access.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_protected_field_access.carbon:[[@LINE+11]]:23
+  // CHECK:STDERR:        │   protected var x: i32;
+  // CHECK:STDERR:        ·                 ───┬──
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused x: i32 = A.x;
+  // CHECK:STDERR:        ·                       ┳━━
+  // CHECK:STDERR:        ·                       ┗━━┫ error: cannot access protected member `x` of type `A`
+  // CHECK:STDERR:        ·                          ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused x: i32 = A.x;
 //@dump-sem-ir-end
@@ -137,12 +180,28 @@ class A {
 }
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+3]]:14-16: error: cannot access protected member `x` of type `A` [ClassInvalidMemberAccess]
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-6]]:17-22: note: declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        │   protected let x: i32 = 5;
+// CHECK:STDERR:        ·                 ───┬──
+// CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let x: i32 = A.x;
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: cannot access protected member `x` of type `A`
+// CHECK:STDERR:        ·                  ┃        [ClassInvalidMemberAccess]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: i32 = A.x;
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE+3]]:14-16: error: cannot access private member `y` of type `A` [ClassInvalidMemberAccess]
-// CHECK:STDERR: fail_global_access.carbon:[[@LINE-9]]:15-20: note: declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        │   private let y: i32 = 5;
+// CHECK:STDERR:        ·               ───┬──
+// CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let y: i32 = A.y;
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: cannot access private member `y` of type `A`
+// CHECK:STDERR:        ·                  ┃        [ClassInvalidMemberAccess]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let y: i32 = A.y;
 //@dump-sem-ir-end
@@ -175,11 +234,11 @@ class A {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.ab2: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -261,20 +320,20 @@ class A {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete = constants.%circle.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %circle.ref.loc24: %Circle = name_ref circle, %circle
-// CHECK:STDOUT:   %radius.ref.loc24: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %circle.ref.loc33: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc33: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %radius: %i32 = wrapper_binding radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %radius.patt: %pattern_type.d94 = value_binding_pattern radius [concrete = constants.%radius.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %circle.ref.loc28: %Circle = name_ref circle, %circle
-// CHECK:STDOUT:   %radius.ref.loc28: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %circle.ref.loc45: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc45: <error> = name_ref radius, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:   assign %radius.ref.loc28, <error>
-// CHECK:STDOUT:   %circle.ref.loc32: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   assign %radius.ref.loc45, <error>
+// CHECK:STDOUT:   %circle.ref.loc58: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %circle.ref.loc37: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %circle.ref.loc72: %Circle = name_ref circle, %circle
 // CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Destroy.facet.loc20_36.1: %Destroy.type = facet_value constants.%Circle, (constants.%DestroyImpl.impl_witness.60b, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.4b3]
 // CHECK:STDOUT:   %.loc20_36.4: %Destroy.type = converted constants.%Circle, %Destroy.facet.loc20_36.1 [concrete = constants.%Destroy.facet.4b3]
@@ -310,6 +369,11 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_36.1)
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_field_access.carbon
@@ -350,11 +414,11 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -412,11 +476,11 @@ class A {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -460,7 +524,6 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, @__global_init.%x.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
@@ -468,8 +531,11 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, @A.%x
+// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref @A.%x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.global_ref
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %x.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -486,12 +552,12 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %y: %i32 = wrapper_binding y, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.d94 = value_binding_pattern y [concrete = constants.%y.patt.cd5]
@@ -500,9 +566,10 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %A.ref.loc20: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc32: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

@@ -13,7 +13,7 @@ runs:
   steps:
     # Setup Python and related tools with uv.
     - name: Set up uv and Python
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
         enable-cache: true
         version: '0.11.15'
@@ -135,8 +135,9 @@ runs:
         # more reliably succeed without retrying "permanent" errors.
         #
         # Disable lockfile updates, because some actions want to see
-        # differences.
-        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
-          mod --lockfile_mode=off deps
+        # differences. This avoids `bazel mod deps`, which evaluates every
+        # module extension; without the lockfile, that includes expensive ones
+        # that builds don't use, like the Rust crates newer protobuf versions
+        # depend on.
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
           cquery --lockfile_mode=off //... | wc -l

@@ -196,14 +196,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr noundef nonnull align 1 %_) #6 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr noundef nonnull align 1 %_) #6 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.6662a1ffb773360a(ptr %_), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr noundef nonnull align 1 %_) #6 !dbg !46 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr noundef nonnull align 1 %_) #6 !dbg !46 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.d53b17eed3ce903c(ptr %_), !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !48
@@ -255,8 +255,8 @@ fn Run() {
 // CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!15}
-// CHECK:STDOUT: !llvm.module.flags = !{!86, !87, !88, !4, !5}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!91}
+// CHECK:STDOUT: !llvm.module.flags = !{!86, !87, !88, !89, !4, !5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!92}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !4 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !5 = !{i32 2, !"Debug Info Version", i32 3}
@@ -321,10 +321,11 @@ fn Run() {
 // CHECK:STDOUT: !83 = !{!82, !82, i64 0}
 // CHECK:STDOUT: !84 = !{!"p1 _ZTSN6Carbon4Main1BE", !81, i64 0}
 // CHECK:STDOUT: !85 = !{!84, !84, i64 0}
-// CHECK:STDOUT: !86 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !87 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !88 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !89 = !{!"int", !80, i64 0}
-// CHECK:STDOUT: !90 = !{!"__libc_errno", !89, i64 0}
-// CHECK:STDOUT: !91 = !{!90, !89, i64 0}
+// CHECK:STDOUT: !86 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !87 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !88 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !89 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !90 = !{!"int", !80, i64 0}
+// CHECK:STDOUT: !91 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !92 = !{!91, !90, i64 0}
 // CHECK:STDOUT:

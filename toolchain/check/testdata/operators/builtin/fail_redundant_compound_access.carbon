@@ -16,10 +16,22 @@ fn F() -> i32 { return 0; }
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+2]]:7-11: error: member name of type `i32` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╭─┤ fail_redundant_compound_access.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR: ->     │   a = a.(a);
+  // CHECK:STDERR:        ·       ┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: member name of type `i32` in compound member access is not an
+  // CHECK:STDERR:        ·          ┃        instance member or an interface member
+  // CHECK:STDERR:        ·          ┃        [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = a.(a);
-  // CHECK:STDERR: fail_redundant_compound_access.carbon:[[@LINE+2]]:7-11: error: member name of type `<type of F>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╭─┤ fail_redundant_compound_access.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR: ->     │   a = a.(F)();
+  // CHECK:STDERR:        ·       ┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: member name of type `<type of F>` in compound member access is
+  // CHECK:STDERR:        ·          ┃        not an instance member or an interface member
+  // CHECK:STDERR:        ·          ┃        [CompoundMemberAccessDoesNotUseBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = a.(F)();
 }
@@ -48,11 +60,11 @@ fn Main() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.762: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.036: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -69,11 +81,11 @@ fn Main() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
@@ -160,21 +172,21 @@ fn Main() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.d94 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.ref.loc21_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc21_7: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc21_10: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %.loc21: %i32 = acquire_value %a.ref.loc21_10
-// CHECK:STDOUT:   %impl.elem0.loc21: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc21_10.1: <bound method> = bound_method %.loc21, %impl.elem0.loc21
-// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc21_10.2: <bound method> = bound_method %.loc21, %specific_fn.loc21
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_10.2(%.loc21)
-// CHECK:STDOUT:   assign %a.ref.loc21_3, %Int.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %a.ref.loc24_3: ref %i32 = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc24_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc27_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc27_7: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc27_10: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %.loc27: %i32 = acquire_value %a.ref.loc27_10
+// CHECK:STDOUT:   %impl.elem0.loc27: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc27_10.1: <bound method> = bound_method %.loc27, %impl.elem0.loc27
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc27_10.2: <bound method> = bound_method %.loc27, %specific_fn.loc27
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc27_10.2(%.loc27)
+// CHECK:STDOUT:   assign %a.ref.loc27_3, %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %a.ref.loc36_3: ref %i32 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc36_7: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
-// CHECK:STDOUT:   assign %a.ref.loc24_3, %F.call
+// CHECK:STDOUT:   assign %a.ref.loc36_3, %F.call
 // CHECK:STDOUT:   %Destroy.facet.loc18_3.1: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %.loc18_3.2: %Destroy.type = converted constants.%i32, %Destroy.facet.loc18_3.1 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %Destroy.facet.loc18_3.2: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]

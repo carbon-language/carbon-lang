@@ -155,10 +155,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
 // CHECK:STDOUT:   %Y.val: %Y = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20faaa.1: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f125b3.1: %ptr.as.Copy.impl.Op.type.20faaa.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.1da: <witness> = lookup_impl_witness %ptr.e8f8f9.1, @Copy [symbolic]
-// CHECK:STDOUT:   %.66e: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.67d) [symbolic]
 // CHECK:STDOUT:   %Copy.facet.302: %Copy.type = facet_value %ptr.e8f8f9.1, (%Copy.lookup_impl_witness.1da) [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e38: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.302) [symbolic]
 // CHECK:STDOUT:   %.3f816: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e38, %Copy.facet.302 [symbolic]
@@ -173,9 +172,9 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.f08: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%Z) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Z, (%DefaultOrUnformed.impl_witness.f08) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.f93: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Z) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.2e7: %T.as.DefaultOrUnformed.impl.Op.type.f93 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Z, (%DefaultOrUnformed.impl_witness.f08) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.2e7, @T.as.DefaultOrUnformed.impl.Op(%Z) [concrete]
 // CHECK:STDOUT:   %.b17: type = fn_type_with_self_type %A.WithSelf.F.type.b6e, %A.facet.091 [concrete]
 // CHECK:STDOUT:   %ptr.415: type = ptr_type %Z [concrete]
@@ -210,7 +209,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ceb: %SubobjectDestroy.type = facet_value %ptr.415, (%custom_witness.b80ef6.4) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.011: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ceb) [concrete]
-// CHECK:STDOUT:   %complete_type.458: <witness> = complete_type_witness %ptr.415 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.95d: %Destroy.type = facet_value %ptr.415, (%DestroyImpl.impl_witness.011, %custom_witness.b80ef6.4) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3fb: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.95d) [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
@@ -226,8 +224,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %custom_witness.b80ef6.5: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.5), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.c56: %SubobjectDestroy.type = facet_value %tuple.type.2cd, (%custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.289: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c56) [concrete]
-// CHECK:STDOUT:   %complete_type.dec: <witness> = complete_type_witness %tuple.type.2cd [concrete]
-// CHECK:STDOUT:   %.db9: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c56) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.079: %Destroy.type = facet_value %tuple.type.2cd, (%DestroyImpl.impl_witness.289, %custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.7c9: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.079) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.6: type = fn_type @SubobjectDestroy.WithSelf.Op.loc22 [concrete]
@@ -272,22 +268,21 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.d1b: <witness> = require_complete_type %tuple.type.d80 [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.ec9: <witness> = lookup_impl_witness %tuple.type.d80, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.a22: <witness> = lookup_impl_witness %tuple.type.d80, @SubobjectDestroy [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.2b2: %SubobjectDestroy.type = facet_value %tuple.type.d80, (%SubobjectDestroy.lookup_impl_witness.a22) [symbolic]
-// CHECK:STDOUT:   %.d3f: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.2b2) [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.ae3: %Destroy.type = facet_value %tuple.type.d80, (%DestroyImpl.lookup_impl_witness.ec9, %SubobjectDestroy.lookup_impl_witness.a22) [symbolic]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.e0e: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.ae3) [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value: %facet_type.e51 = facet_value %Y, (%A.impl_witness, %DestroyImpl.impl_witness.a90, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric, @CallGeneric(%facet_value) [concrete]
+// CHECK:STDOUT:   %complete_type.458: <witness> = complete_type_witness %ptr.415 [concrete]
+// CHECK:STDOUT:   %complete_type.dec: <witness> = complete_type_witness %tuple.type.2cd [concrete]
 // CHECK:STDOUT:   %tuple.type.2c5: type = tuple_type (%empty_struct_type, %empty_struct_type, %ptr.415) [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.99b: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Z) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.a7d: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Z) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.341: %ptr.as.Copy.impl.Op.type.a7d = struct_value () [concrete]
-// CHECK:STDOUT:   %.b44: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%Z) [concrete]
 // CHECK:STDOUT:   %Copy.facet.67f: %Copy.type = facet_value %ptr.415, (%Copy.impl_witness.99b) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e8f: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.67f) [concrete]
 // CHECK:STDOUT:   %.cf9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e8f, %Copy.facet.67f [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.a7d: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Z) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.341: %ptr.as.Copy.impl.Op.type.a7d = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.341, @ptr.as.Copy.impl.Op(%Z) [concrete]
 // CHECK:STDOUT:   %tuple.67a: %tuple.type.924 = tuple_value (%X, %A.facet.091, %ptr.415) [concrete]
 // CHECK:STDOUT: }
@@ -303,7 +298,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.06a: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20faaa.1) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f125b3.1)]
+// CHECK:STDOUT:   %Core.import_ref.06a: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.06a), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
@@ -534,12 +529,11 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.loc16_26: <witness> = require_complete_type %ptr.loc16_29.1 [symbolic = %require_complete.loc16_26 (constants.%require_complete.ef162c.1)]
 // CHECK:STDOUT:   %require_complete.loc16_32: <witness> = require_complete_type %tuple.type.loc16 [symbolic = %require_complete.loc16_32 (constants.%require_complete.44f)]
 // CHECK:STDOUT:   %tuple.type.loc17: type = tuple_type (constants.%empty_struct_type, constants.%empty_struct_type, %ptr.loc16_29.1) [symbolic = %tuple.type.loc17 (constants.%tuple.type.dd2)]
-// CHECK:STDOUT:   %.loc17_21.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%U.loc16_17.1) [symbolic = %.loc17_21.3 (constants.%.66e)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc16_29.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.1da)]
 // CHECK:STDOUT:   %Copy.facet.loc17_21.3: %Copy.type = facet_value %ptr.loc16_29.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc17_21.3 (constants.%Copy.facet.302)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc17_21.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e38)]
-// CHECK:STDOUT:   %.loc17_21.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc17_21.3 [symbolic = %.loc17_21.4 (constants.%.3f816)]
-// CHECK:STDOUT:   %impl.elem0.loc17_21.2: @Y.as.A.impl.F.%.loc17_21.4 (%.3f816) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc17_21.2 (constants.%impl.elem0.24a)]
+// CHECK:STDOUT:   %.loc17_21.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc17_21.3 [symbolic = %.loc17_21.3 (constants.%.3f816)]
+// CHECK:STDOUT:   %impl.elem0.loc17_21.2: @Y.as.A.impl.F.%.loc17_21.3 (%.3f816) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc17_21.2 (constants.%impl.elem0.24a)]
 // CHECK:STDOUT:   %specific_impl_fn.loc17_21.2: <specific function> = specific_impl_function %impl.elem0.loc17_21.2, @Copy.WithSelf.Op(%Copy.facet.loc17_21.3) [symbolic = %specific_impl_fn.loc17_21.2 (constants.%specific_impl_fn.6b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%u.param: @Y.as.A.impl.F.%ptr.loc16_29.1 (%ptr.e8f8f9.1)) -> out %return.param: @Y.as.A.impl.F.%tuple.type.loc16 (%tuple.type.316) {
@@ -554,7 +548,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:     %tuple.elem1: ref %Y = tuple_access %return.param, element1
 // CHECK:STDOUT:     %.loc17_18.2: init %Y to %tuple.elem1 = class_init () [concrete = constants.%Y.val]
 // CHECK:STDOUT:     %.loc17_22.3: init %Y = converted %.loc17_18.1, %.loc17_18.2 [concrete = constants.%Y.val]
-// CHECK:STDOUT:     %impl.elem0.loc17_21.1: @Y.as.A.impl.F.%.loc17_21.4 (%.3f816) = impl_witness_access constants.%Copy.lookup_impl_witness.1da, element0 [symbolic = %impl.elem0.loc17_21.2 (constants.%impl.elem0.24a)]
+// CHECK:STDOUT:     %impl.elem0.loc17_21.1: @Y.as.A.impl.F.%.loc17_21.3 (%.3f816) = impl_witness_access constants.%Copy.lookup_impl_witness.1da, element0 [symbolic = %impl.elem0.loc17_21.2 (constants.%impl.elem0.24a)]
 // CHECK:STDOUT:     %bound_method.loc17_21.1: <bound method> = bound_method %u.ref, %impl.elem0.loc17_21.1
 // CHECK:STDOUT:     %Copy.facet.loc17_21.1: %Copy.type = facet_value constants.%ptr.e8f8f9.1, (constants.%Copy.lookup_impl_witness.1da) [symbolic = %Copy.facet.loc17_21.3 (constants.%Copy.facet.302)]
 // CHECK:STDOUT:     %.loc17_21.1: %Copy.type = converted constants.%ptr.e8f8f9.1, %Copy.facet.loc17_21.1 [symbolic = %Copy.facet.loc17_21.3 (constants.%Copy.facet.302)]
@@ -674,10 +668,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @A.WithSelf.F(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn.bf9)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.as_type.loc28_4.2, constants.%ptr.415) [symbolic = %tuple.type (constants.%tuple.type.d80)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.d1b)]
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.a22)]
-// CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %tuple.type, (%SubobjectDestroy.lookup_impl_witness) [symbolic = %SubobjectDestroy.facet (constants.%SubobjectDestroy.facet.2b2)]
-// CHECK:STDOUT:   %.loc28_12.5: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet) [symbolic = %.loc28_12.5 (constants.%.d3f)]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.ec9)]
+// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.a22)]
 // CHECK:STDOUT:   %Destroy.facet.loc28_12.3: %Destroy.type = facet_value %tuple.type, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc28_12.3 (constants.%Destroy.facet.ae3)]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(%Destroy.facet.loc28_12.3) [symbolic = %SelfDestruct.specific_fn.3 (constants.%SelfDestruct.specific_fn.e0e)]
 // CHECK:STDOUT:
@@ -849,11 +841,10 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.loc16_26 => constants.%complete_type.458
 // CHECK:STDOUT:   %require_complete.loc16_32 => constants.%complete_type.dec
 // CHECK:STDOUT:   %tuple.type.loc17 => constants.%tuple.type.2c5
-// CHECK:STDOUT:   %.loc17_21.3 => constants.%.b44
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.99b
 // CHECK:STDOUT:   %Copy.facet.loc17_21.3 => constants.%Copy.facet.67f
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.e8f
-// CHECK:STDOUT:   %.loc17_21.4 => constants.%.cf9
+// CHECK:STDOUT:   %.loc17_21.3 => constants.%.cf9
 // CHECK:STDOUT:   %impl.elem0.loc17_21.2 => constants.%ptr.as.Copy.impl.Op.341
 // CHECK:STDOUT:   %specific_impl_fn.loc17_21.2 => constants.%ptr.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
@@ -919,10 +910,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2 => constants.%Y.as.A.impl.F.specific_fn
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.2cd
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.dec
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%custom_witness.b80ef6.5
-// CHECK:STDOUT:   %SubobjectDestroy.facet => constants.%SubobjectDestroy.facet.c56
-// CHECK:STDOUT:   %.loc28_12.5 => constants.%.db9
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness => constants.%DestroyImpl.impl_witness.289
+// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%custom_witness.b80ef6.5
 // CHECK:STDOUT:   %Destroy.facet.loc28_12.3 => constants.%Destroy.facet.079
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3 => constants.%SelfDestruct.specific_fn.7c9
 // CHECK:STDOUT: }
@@ -1030,18 +1019,18 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %A.type.e51: type = facet_type <@A, @A(%X)> [concrete]
 // CHECK:STDOUT:   %.5e8: <witness> = impl_self_witness %tuple.type.59f, @A, @A(%X) [concrete]
 // CHECK:STDOUT:   %A.impl_witness.84c: <witness> = impl_witness @tuple.type.as.A.impl.%A.impl_witness_table, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
+// CHECK:STDOUT:   %A.facet.9d8: %A.type.e51 = facet_value %tuple.type.59f, (%A.impl_witness.84c) [concrete]
 // CHECK:STDOUT:   %Self.134: %A.type.e51 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %A.WithSelf.F.type.457: type = fn_type @A.WithSelf.F, @A.WithSelf(%X, %Self.5d3) [symbolic]
 // CHECK:STDOUT:   %A.WithSelf.F.f8c: %A.WithSelf.F.type.457 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.assoc_type.7e3: type = assoc_entity_type @A, @A(%X) [concrete]
 // CHECK:STDOUT:   %assoc0.299: %A.assoc_type.7e3 = assoc_entity element0, @A.WithSelf.%A.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %complete_type.3a8: <witness> = complete_type_witness %A.type.e51 [concrete]
-// CHECK:STDOUT:   %tuple.type.as.A.impl.F.type.72d: type = fn_type @tuple.type.as.A.impl.F, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
-// CHECK:STDOUT:   %tuple.type.as.A.impl.F.a00: %tuple.type.as.A.impl.F.type.72d = struct_value () [concrete]
-// CHECK:STDOUT:   %A.facet.9d8: %A.type.e51 = facet_value %tuple.type.59f, (%A.impl_witness.84c) [concrete]
 // CHECK:STDOUT:   %A.WithSelf.F.type.338: type = fn_type @A.WithSelf.F, @A.WithSelf(%X, %A.facet.9d8) [concrete]
 // CHECK:STDOUT:   %A.WithSelf.F.fc4: %A.WithSelf.F.type.338 = struct_value () [concrete]
 // CHECK:STDOUT:   %.160: type = fn_type_with_self_type %A.WithSelf.F.type.338, %A.facet.9d8 [concrete]
+// CHECK:STDOUT:   %complete_type.3a8: <witness> = complete_type_witness %A.type.e51 [concrete]
+// CHECK:STDOUT:   %tuple.type.as.A.impl.F.type.72d: type = fn_type @tuple.type.as.A.impl.F, @tuple.type.as.A.impl(%Y1, %Y2, %X) [concrete]
+// CHECK:STDOUT:   %tuple.type.as.A.impl.F.a00: %tuple.type.as.A.impl.F.type.72d = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.34e: type = pattern_type %Z [concrete]
 // CHECK:STDOUT:   %u.param_patt.a3e: %pattern_type.34e = value_param_pattern [concrete]
@@ -1105,8 +1094,6 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %custom_witness.b80ef6.7: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.7), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.392: %SubobjectDestroy.type = facet_value %tuple.type.d40, (%custom_witness.b80ef6.7) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.bff: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.392) [concrete]
-// CHECK:STDOUT:   %complete_type.8f6: <witness> = complete_type_witness %tuple.type.d40 [concrete]
-// CHECK:STDOUT:   %.ee1: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.392) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.40b: %Destroy.type = facet_value %tuple.type.d40, (%DestroyImpl.impl_witness.bff, %custom_witness.b80ef6.7) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3da: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.40b) [concrete]
 // CHECK:STDOUT:   %BitAndWith.type.a06: type = generic_interface_type @BitAndWith [concrete]
@@ -1145,14 +1132,13 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %require_complete.0eb: <witness> = require_complete_type %tuple.type.93b [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.f6e: <witness> = lookup_impl_witness %tuple.type.93b, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.a22: <witness> = lookup_impl_witness %tuple.type.93b, @SubobjectDestroy [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.ef4: %SubobjectDestroy.type = facet_value %tuple.type.93b, (%SubobjectDestroy.lookup_impl_witness.a22) [symbolic]
-// CHECK:STDOUT:   %.463: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ef4) [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.b56: %Destroy.type = facet_value %tuple.type.93b, (%DestroyImpl.lookup_impl_witness.f6e, %SubobjectDestroy.lookup_impl_witness.a22) [symbolic]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.ba5: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.b56) [symbolic]
 // CHECK:STDOUT:   %CallIndirect.type: type = fn_type @CallIndirect [concrete]
 // CHECK:STDOUT:   %CallIndirect: %CallIndirect.type = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_value: %facet_type.e51 = facet_value %tuple.type.59f, (%A.impl_witness.84c, %DestroyImpl.impl_witness.55e, %custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %CallGeneric.specific_fn: <specific function> = specific_function %CallGeneric, @CallGeneric(%facet_value) [concrete]
+// CHECK:STDOUT:   %complete_type.8f6: <witness> = complete_type_witness %tuple.type.d40 [concrete]
 // CHECK:STDOUT:   %tuple.571: %tuple.type.924 = tuple_value (%X, %A.facet.9d8, %Z) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1577,10 +1563,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2: <specific function> = specific_impl_function %impl.elem0.loc28_4.2, @A.WithSelf.F(constants.%X, %A.facet, constants.%Z) [symbolic = %specific_impl_fn.loc28_4.2 (constants.%specific_impl_fn.bf9)]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (constants.%X, %T.as_type.loc28_4.2, constants.%Z) [symbolic = %tuple.type (constants.%tuple.type.93b)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %tuple.type [symbolic = %require_complete (constants.%require_complete.0eb)]
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.a22)]
-// CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %tuple.type, (%SubobjectDestroy.lookup_impl_witness) [symbolic = %SubobjectDestroy.facet (constants.%SubobjectDestroy.facet.ef4)]
-// CHECK:STDOUT:   %.loc28_12.5: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet) [symbolic = %.loc28_12.5 (constants.%.463)]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.f6e)]
+// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %tuple.type, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.a22)]
 // CHECK:STDOUT:   %Destroy.facet.loc28_12.3: %Destroy.type = facet_value %tuple.type, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc28_12.3 (constants.%Destroy.facet.b56)]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(%Destroy.facet.loc28_12.3) [symbolic = %SelfDestruct.specific_fn.3 (constants.%SelfDestruct.specific_fn.ba5)]
 // CHECK:STDOUT:
@@ -1891,10 +1875,8 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %specific_impl_fn.loc28_4.2 => constants.%tuple.type.as.A.impl.F.specific_fn.dac
 // CHECK:STDOUT:   %tuple.type => constants.%tuple.type.d40
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.8f6
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%custom_witness.b80ef6.7
-// CHECK:STDOUT:   %SubobjectDestroy.facet => constants.%SubobjectDestroy.facet.392
-// CHECK:STDOUT:   %.loc28_12.5 => constants.%.ee1
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness => constants.%DestroyImpl.impl_witness.bff
+// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%custom_witness.b80ef6.7
 // CHECK:STDOUT:   %Destroy.facet.loc28_12.3 => constants.%Destroy.facet.40b
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.3 => constants.%SelfDestruct.specific_fn.3da
 // CHECK:STDOUT: }

@@ -51,12 +51,28 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+3]]:1-8: error: redeclaration of `fn A` is redundant [RedeclRedundant]
-// CHECK:STDERR: fns.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_def_ownership.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn A() {};
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclaration of `fn A` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fns.carbon
+// CHECK:STDERR:        │ fn A() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+3]]:1-20: error: redeclaration of `fn B` is redundant [RedeclRedundant]
-// CHECK:STDERR: fns.carbon:5:1-21: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_def_ownership.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn B(b: i32) -> i32;
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: redeclaration of `fn B` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fns.carbon
+// CHECK:STDERR:        │ fn B(b: i32) -> i32 { return b; }
+// CHECK:STDERR:        · ──────────┬──────────
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
 
@@ -66,13 +82,31 @@ library "[[@TEST_NAME]]";
 
 import library "extern";
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+3]]:1-7: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl_then_def.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn A();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR:        ·       ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern.carbon
+// CHECK:STDERR:        │ extern fn A();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A();
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl_then_def.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn A() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern.carbon
+// CHECK:STDERR:        │ extern fn A();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {}
 
@@ -82,8 +116,17 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+3]]:1-14: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fns.carbon:7:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_mix_extern_decl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern fn D();
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `fn D` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fns.carbon
+// CHECK:STDERR:        │ fn D();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn D();
 
@@ -112,11 +155,11 @@ fn D() {}
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.f7a: %tuple.type.135 = tuple_value (%i32) [concrete]
@@ -283,11 +326,11 @@ fn D() {}
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -408,7 +451,7 @@ fn D() {}
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc9 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc17 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
@@ -441,12 +484,12 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc9 [concrete = constants.%A.921eb9.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc17 [concrete = constants.%A.921eb9.2] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
-// CHECK:STDOUT:     %i32.loc13_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_17 [concrete = constants.%.0b3]
+// CHECK:STDOUT:     %i32.loc29_17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc29: Core.Form = init_form %i32.loc29_17 [concrete = constants.%.0b3]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc13_9: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc29_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -455,7 +498,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc9() {
+// CHECK:STDOUT: fn @A.loc17() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -479,13 +522,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc9
+// CHECK:STDOUT:     .A = %A.decl.loc18
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %A.decl.loc9: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc14: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc18: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc32: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A() [from "extern.carbon"] {
@@ -516,13 +559,13 @@ fn D() {}
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .D = %D.decl.loc9
+// CHECK:STDOUT:     .D = %D.decl.loc18
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %D.decl.loc9: %D.type = fn_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc11: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc18: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc20: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() [from "fns.carbon"] {

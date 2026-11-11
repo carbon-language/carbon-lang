@@ -45,8 +45,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!1, !30}
-// CHECK:STDOUT: !llvm.module.flags = !{!14, !15, !36, !37, !38}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!43}
+// CHECK:STDOUT: !llvm.module.flags = !{!14, !15, !36, !37, !38, !39}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!44}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !DIFile(filename: "<carbon Cpp imports>", directory: "", checksumkind: CSK_MD5, checksum: "9eecb7db59d16c80417c72d1e1f4fbf1")
 // CHECK:STDOUT: !1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus_14, file: !0, isOptimized: true, runtimeVersion: 0, emissionKind: FullDebug, splitDebugInlining: false, nameTableKind: None)
@@ -62,12 +62,13 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !2, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !30)
 // CHECK:STDOUT: !34 = !DILocation(line: 22, column: 10, scope: !31)
 // CHECK:STDOUT: !35 = !DILocation(line: 22, column: 3, scope: !31)
-// CHECK:STDOUT: !36 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !37 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !38 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !39 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !40 = !{!"omnipotent char", !39, i64 0}
-// CHECK:STDOUT: !41 = !{!"int", !40, i64 0}
-// CHECK:STDOUT: !42 = !{!"__libc_errno", !41, i64 0}
-// CHECK:STDOUT: !43 = !{!42, !41, i64 0}
+// CHECK:STDOUT: !36 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !37 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !38 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !39 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !40 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !41 = !{!"omnipotent char", !40, i64 0}
+// CHECK:STDOUT: !42 = !{!"int", !41, i64 0}
+// CHECK:STDOUT: !43 = !{!"__libc_errno", !42, i64 0}
+// CHECK:STDOUT: !44 = !{!43, !42, i64 0}
 // CHECK:STDOUT:

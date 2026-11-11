@@ -35,7 +35,11 @@ library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 class C(T: Core.Copy) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+2]]:5-8: error: expression cannot be used as a value [UseOfNonExprAsValue]
+    // CHECK:STDERR:        ╭─┤ fail_member_inline_missing_self_dot.carbon:[[@LINE+6]]:5
+    // CHECK:STDERR: ->     │     data;
+    // CHECK:STDERR:        ·     ━━┳━
+    // CHECK:STDERR:        ·       ┗━━┫ error: expression cannot be used as a value [UseOfNonExprAsValue]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     data;
   }
@@ -349,9 +353,9 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.F.decl: @C.%C.F.type (%C.F.type) = fn_decl @C.F [symbolic = @C.%C.F (constants.%C.F)] {} {}
-// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem) = field_decl data, element0, %.loc11_14.2 in [concrete] {
-// CHECK:STDOUT:       %.loc11_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem) = field_decl data, element0, %.loc15_14.2 in [concrete] {
+// CHECK:STDOUT:       %.loc15_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc15_14.2: type = converted %.loc15_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -371,8 +375,8 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc9: @C.F.%C.elem (%C.elem) = specific_constant @C.%field_decl, @C(constants.%T) [concrete = @C.%field_decl]
-// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, %.loc9 [concrete = @C.%field_decl]
+// CHECK:STDOUT:     %.loc13: @C.F.%C.elem (%C.elem) = specific_constant @C.%field_decl, @C(constants.%T) [concrete = @C.%field_decl]
+// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, %.loc13 [concrete = @C.%field_decl]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

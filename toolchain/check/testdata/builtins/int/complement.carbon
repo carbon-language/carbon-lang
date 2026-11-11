@@ -52,8 +52,17 @@ library "[[@TEST_NAME]]";
 fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
 fn F(a: Core.IntLiteral) -> Core.IntLiteral {
-  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+3]]:10-22: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-4]]:1-54: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_literal_runtime.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        │ fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
+  // CHECK:STDERR:        · ───────────────────────────┬──────────────────────────
+  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return Complement(a);
+  // CHECK:STDERR:        ·          ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·                   ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return Complement(a);
 }

@@ -56,7 +56,7 @@ void f() {
 // CHECK:STDOUT: declare ptr @_CGet.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGet__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #1 !dbg !12 {
+// CHECK:STDOUT: define linkonce_odr void @_CGet__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Get.call = call ptr @_CGet.Main(), !dbg !14
 // CHECK:STDOUT:   store ptr %Get.call, ptr %_, align 8, !dbg !14
@@ -116,8 +116,8 @@ void f() {
 // CHECK:STDOUT: attributes #4 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!52, !53, !54, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!56}
+// CHECK:STDOUT: !llvm.module.flags = !{!52, !53, !54, !55, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!57}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -160,9 +160,10 @@ void f() {
 // CHECK:STDOUT: !47 = !{!"int", !46, i64 0}
 // CHECK:STDOUT: !48 = !{!"_ZTSN6Carbon4Main1AE", !47, i64 0}
 // CHECK:STDOUT: !49 = !{!48, !47, i64 0}
-// CHECK:STDOUT: !52 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !53 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !54 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !55 = !{!"__libc_errno", !47, i64 0}
-// CHECK:STDOUT: !56 = !{!55, !47, i64 0}
+// CHECK:STDOUT: !52 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !53 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !54 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !55 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !56 = !{!"__libc_errno", !47, i64 0}
+// CHECK:STDOUT: !57 = !{!56, !47, i64 0}
 // CHECK:STDOUT:

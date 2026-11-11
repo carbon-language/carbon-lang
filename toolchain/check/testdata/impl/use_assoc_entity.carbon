@@ -268,19 +268,48 @@ class A {}
 
 // TODO: Make sure this behaves reasonably once we support `where` declarations.
 
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:1-13: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-9]]:7-13: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+22]]:1
+// CHECK:STDERR:        │   let T: type;
+// CHECK:STDERR:        ·       ───┬───
+// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl A as J {
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface J
+// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+3]]:1-13: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7-13: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │   let U: type;
+// CHECK:STDERR:        ·       ───┬───
+// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl A as J {
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: associated constant U not given a value in impl of interface J
+// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3-7: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   where .U = T;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+2]]:3-7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   where .U = T;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where .U = T;
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+2]]:3-7: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   where .T = ();
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where .T = ();
 }
@@ -318,7 +347,12 @@ impl A as J {
   // definition of `G()` until the enclosing `impl` is complete.
   // TODO: Diagnose this better.
   eval fn G() -> type { return A; }
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_after_decl.carbon:[[@LINE+2]]:13-15: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╭─┤ fail_associated_fn_use_in_decl_after_decl.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   fn F() -> G();
+  // CHECK:STDERR:        ·             ━┳━
+  // CHECK:STDERR:        ·              ┗━━┫ error: cannot evaluate type expression
+  // CHECK:STDERR:        ·                 ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> G();
 }
@@ -334,7 +368,12 @@ interface J {
 class A {}
 
 impl A as J {
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+2]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╭─┤ fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   fn F() -> G();
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> G();
   eval fn G() -> type { return A; }
@@ -345,11 +384,30 @@ library "[[@TEST_NAME]]";
 
 interface J2 {
   let U2: type;
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+6]]:17-20: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-3]]:1-14: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_todo_self_period_associated_type.carbon:[[@LINE+25]]:17
+  // CHECK:STDERR:        │ interface J2 {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·           │ [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F(self, z: Self.U2) -> Self.U2;
+  // CHECK:STDERR:        ·                 ━━┳━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: member access into facet of incomplete type `J2`
+  // CHECK:STDERR:        ·                      ┃        [IncompleteTypeInMemberAccessOfFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+3]]:29-32: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-6]]:1-14: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_todo_self_period_associated_type.carbon:[[@LINE+13]]:29
+  // CHECK:STDERR:        │ interface J2 {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·           │ [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F(self, z: Self.U2) -> Self.U2;
+  // CHECK:STDERR:        ·                             ┳━━━
+  // CHECK:STDERR:        ·                             ┗━━┫ error: member access into facet of incomplete
+  // CHECK:STDERR:        ·                                ┃        type `J2`
+  // CHECK:STDERR:        ·                                ┃        [IncompleteTypeInMemberAccessOfFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F(self, z: Self.U2) -> Self.U2;
 }
@@ -376,12 +434,33 @@ interface K {
 }
 
 impl () as K where .V = {.a: ()} {
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3-46: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+6]]:21-31: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-6]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+28]]:3
+  // CHECK:STDERR:        │   fn F(self, v: V) -> V;
+  // CHECK:STDERR:        ·   ───────────┬──────────
+  // CHECK:STDERR:        ·              ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                 │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert from struct type `{.a: ()}` to
+  // CHECK:STDERR:        ·                     │  ┃        `{.x: ()}`: unexpected field `a` in source type
+  // CHECK:STDERR:        ·                     │  ┃        [StructInitUnexpectedFieldInConversion]
+  // CHECK:STDERR:        ·                     ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                          │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:3-46: error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`: unexpected field `x` in source type [StructInitUnexpectedFieldInConversion]
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-9]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │   fn F(self, v: V) -> V;
+  // CHECK:STDERR:        ·   ───────────┬──────────
+  // CHECK:STDERR:        ·              ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                 │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`:
+  // CHECK:STDERR:        ·      ┃        unexpected field `x` in source type
+  // CHECK:STDERR:        ·      ┃        [StructInitUnexpectedFieldInConversion]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
 }
@@ -501,11 +580,11 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.type.629: type = fn_type @Int.as.Negate.impl.Op, @Int.as.Negate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.415: %Int.as.Negate.impl.Op.type.629 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Negate.impl_witness.c97: <witness> = impl_witness imports.%Negate.impl_witness_table, @Int.as.Negate.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Negate.impl.Op.type.b54: type = fn_type @Int.as.Negate.impl.Op, @Int.as.Negate.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Negate.impl.Op.c54: %Int.as.Negate.impl.Op.type.b54 = struct_value () [concrete]
 // CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %i32, (%Negate.impl_witness.c97) [concrete]
 // CHECK:STDOUT:   %Negate.WithSelf.Op.type.c48: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
 // CHECK:STDOUT:   %.200: type = fn_type_with_self_type %Negate.WithSelf.Op.type.c48, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Negate.impl.Op.type.b54: type = fn_type @Int.as.Negate.impl.Op, @Int.as.Negate.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Negate.impl.Op.c54: %Int.as.Negate.impl.Op.type.b54 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Negate.impl.Op.c54, @Int.as.Negate.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %.42a: type = fn_type_with_self_type %J.WithSelf.F.type.42a, %J.facet.77b [concrete]
 // CHECK:STDOUT:   %int_40.f80: Core.IntLiteral = int_value 40 [concrete]
@@ -514,11 +593,11 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_40.f80, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_40.f80, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -814,11 +893,11 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.a55: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -1009,11 +1088,11 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

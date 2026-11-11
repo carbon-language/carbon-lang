@@ -42,16 +42,24 @@ fn F() {
 
 fn F() {
   ...
-// CHECK:STDERR: fail_missing_statement.carbon:[[@LINE+2]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_missing_statement.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
 // --- fail_missing_semi.carbon
 
 fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_missing_semi.carbon:[[@LINE+6]]:10
+  // CHECK:STDERR: ->     │   ... G()
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   ... G()
-// CHECK:STDERR: fail_missing_semi.carbon:[[@LINE+2]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
-// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: expr_statement.carbon

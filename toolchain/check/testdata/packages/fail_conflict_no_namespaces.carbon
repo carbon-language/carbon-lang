@@ -22,16 +22,25 @@ fn Foo();
 
 package Example library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_conflict.carbon [InImport]
+// CHECK:STDERR:        ├─┤ var.carbon:[[@LINE+12]]:5
+// CHECK:STDERR: ->     │ var Foo: i32;
+// CHECK:STDERR:        ·     ━━━━┳━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: duplicate name `Foo` being declared in the same scope
+// CHECK:STDERR:        ·            ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fn.carbon
+// CHECK:STDERR:        │ fn Foo();
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 var Foo: i32;
 
 // --- fail_conflict.carbon
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: var.carbon:4:5-12: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn.carbon:4:1-9: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:
 import library "fn";
 import library "var";
 
@@ -77,9 +86,9 @@ import library "var";
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.29f: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.29f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.334: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.720: %T.as.DefaultOrUnformed.impl.Op.type.334 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.29f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.720, @T.as.DefaultOrUnformed.impl.Op(%i32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -114,9 +123,9 @@ import library "var";
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.29f) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc4_13.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc4_13.1 [concrete = constants.%i32]
-// CHECK:STDOUT:   %.loc4_13.2: type = converted %.loc4_13.1, %as_type [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc17_13.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc17_13.1 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc17_13.2: type = converted %.loc17_13.1, %as_type [concrete = constants.%i32]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.720, @T.as.DefaultOrUnformed.impl.Op(constants.%i32) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%Foo.var, %T.as.DefaultOrUnformed.impl.Op.call

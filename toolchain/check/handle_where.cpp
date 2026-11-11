@@ -143,7 +143,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     for (const auto& rewrite : base_declared_facet_type.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
         auto const_id = context.constant_values().Get(
-            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+            GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
+                                                    rewrite.lhs_id));
         auto frozen_const_id = FreezePeriodSelf(context, const_id);
         context.where_stack().back().rewrites.Insert(frozen_const_id,
                                                      rewrite.rhs_id);
@@ -209,6 +210,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     }
   }
 
+  StartGenericDecl(context);
   return true;
 }
 
@@ -319,7 +321,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // frozen.
     context.where_stack().back().rewrites.Insert(
         context.constant_values().Get(
-            GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
+            GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), lhs_id)),
         rhs_id);
   }
   return true;
@@ -359,7 +361,7 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
     }
     // Recurse through ImplWitnessAccess into the self type being accessed.
     auto access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, inst_id));
+        GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), inst_id));
     if (!access) {
       return false;
     }
@@ -607,6 +609,16 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   requirements_id = CheckForNestedWhereInRequirementsAfterEval(
       context, where_loc, requirements_id);
   requirements_id = ThawPeriodSelfInRequirements(context, requirements_id);
+
+  // We make and discard a generic because we may have instructions inside which
+  // are only PeriodSelfDependent. These should not be part of any enclosing
+  // generic. A facet type is only symbolic if it depends on symbolic values
+  // from outside the facet type (which are Symbolic rather than
+  // PeriodSelfSymbolic). If the resulting facet type is Symbolic, the Symbolic
+  // instructions that it depends on (which are being discarded in the eval
+  // block here) will be added as dependent instructions of the facet type in
+  // the enclosing generic.
+  DiscardGenericDecl(context);
 
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,

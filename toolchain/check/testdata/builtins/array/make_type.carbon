@@ -63,7 +63,11 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_negative_bound.carbon:[[@LINE+2]]:8-25: error: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_negative_bound.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var n: MakeArray(i32, -1);
+// CHECK:STDERR:        ·        ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: MakeArray(i32, -1);
 
@@ -73,7 +77,12 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_bound_too_large.carbon:[[@LINE+2]]:8-46: error: array bound of 18446744073709551616 is too large [ArrayBoundTooLarge]
+// CHECK:STDERR:        ╭─┤ fail_bound_too_large.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var n: MakeArray(i32, 0x1_0000_0000_0000_0000);
+// CHECK:STDERR:        ·        ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: array bound of 18446744073709551616 is too large
+// CHECK:STDERR:        ·                        ┃        [ArrayBoundTooLarge]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: MakeArray(i32, 0x1_0000_0000_0000_0000);
 
@@ -84,7 +93,12 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 fn F(n: Core.IntLiteral) {
-  // CHECK:STDERR: fail_dyn_bound.carbon:[[@LINE+2]]:17-33: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╭─┤ fail_dyn_bound.carbon:[[@LINE+7]]:17
+  // CHECK:STDERR: ->     │   var unused a: MakeArray(i32, n);
+  // CHECK:STDERR:        ·                 ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot evaluate type expression
+  // CHECK:STDERR:        ·                            ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused a: MakeArray(i32, n);
 }
@@ -114,11 +128,11 @@ fn F(n: Core.IntLiteral) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.3bd: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]

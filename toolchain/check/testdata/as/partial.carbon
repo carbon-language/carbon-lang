@@ -60,16 +60,40 @@ var reference: partial X;
 let ptr: partial X* = &reference;
 
 fn Use() {
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+3]]:21-30: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+2]]:21-30: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   let unused v: X = value as X;
+  // CHECK:STDERR:        ·                     ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert expression of type `partial X` to
+  // CHECK:STDERR:        ·                     │  ┃        `X` with `as`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `partial X` does not implement interface
+  // CHECK:STDERR:        ·                          │ `Core.As(X)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: X = value as X;
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+3]]:24-37: error: cannot convert expression of type `partial X` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+2]]:24-37: note: type `partial X` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:24
+  // CHECK:STDERR: ->     │   let unused a: X* = &(reference as X);
+  // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert expression of type `partial X`
+  // CHECK:STDERR:        ·                        │  ┃        to `X` with `as`
+  // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                        ╰────┤ type `partial X` does not implement interface
+  // CHECK:STDERR:        ·                             │ `Core.As(X)`
+  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+3]]:22-30: error: cannot convert expression of type `partial X*` to `X*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_partial.carbon:[[@LINE+2]]:22-30: note: type `partial X*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:22
+  // CHECK:STDERR: ->     │   let unused b: X* = ptr as X*;
+  // CHECK:STDERR:        ·                      ┳━━━━━━━━
+  // CHECK:STDERR:        ·                      ┗━━┫ error: cannot convert expression of type `partial X*`
+  // CHECK:STDERR:        ·                      │  ┃        to `X*` with `as`
+  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                      ╰────┤ type `partial X*` does not implement interface
+  // CHECK:STDERR:        ·                           │ `Core.As(X*)`
+  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;
 }
@@ -153,7 +177,8 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.53b = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.53b = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %X = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %X = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %X.ref.loc15_46: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc15_38: type = partial_type %X.ref.loc15_46 [concrete = constants.%.d74]
 // CHECK:STDOUT:   %.loc15_35.1: %.d74 = as_compatible %value.ref
@@ -181,7 +206,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.12c = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.db8 = global_ref file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %X.ref.loc17_45: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc17_37: type = partial_type %X.ref.loc17_45 [concrete = constants.%.d74]
 // CHECK:STDOUT:   %ptr.loc17_46: type = ptr_type %.loc17_37 [concrete = constants.%ptr.44a]
@@ -336,7 +362,8 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %value.ref: %.d74 = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %.d74 = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %.d74 = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %X.ref.loc14_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_34.1: %X = as_compatible %value.ref
 // CHECK:STDOUT:   %.loc14_34.2: %X = converted %value.ref, %.loc14_34.1
@@ -358,7 +385,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.990 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.44a = name_ref ptr, file.%ptr.loc10_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.44a = global_ref file.%ptr.loc10_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.44a = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %X.ref.loc16_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %ptr.loc16_37: type = ptr_type %X.ref.loc16_36 [concrete = constants.%ptr.db8]
 // CHECK:STDOUT:   %.loc16_33.1: %ptr.db8 = as_compatible %ptr.ref

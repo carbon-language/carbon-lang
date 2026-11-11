@@ -95,11 +95,39 @@ fn GetF(a: Cpp.A) -> i32 { return a.f_4; }
 
 struct BitfieldStruct {
   int a;
+  // CHECK:STDERR:        ╷ ╭── included from: fail_todo_use_bitfields.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./with_bitfields.h:[[@LINE+13]]:7
+  // CHECK:STDERR: ->     │   int b : 2;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·          ┃        `Unsupported: field declaration has unhandled type or kind`
+  // CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_todo_use_bitfields.carbon
+  // CHECK:STDERR:        │   return s.b;
+  // CHECK:STDERR:        ·          ─┬─
+  // CHECK:STDERR:        ·           ╰──┤ in `Cpp` name lookup for `b` [InCppNameLookup]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   int b : 2;
 };
 
 union BitfieldUnion {
   int c;
+  // CHECK:STDERR:        ╷ ╭── included from: fail_todo_use_bitfields.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./with_bitfields.h:[[@LINE+13]]:7
+  // CHECK:STDERR: ->     │   int d : 3;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·          ┃        `Unsupported: field declaration has unhandled type or kind`
+  // CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_todo_use_bitfields.carbon
+  // CHECK:STDERR:        │   return s.d;
+  // CHECK:STDERR:        ·          ─┬─
+  // CHECK:STDERR:        ·           ╰──┤ in `Cpp` name lookup for `d` [InCppNameLookup]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   int d : 3;
 };
 
@@ -125,24 +153,16 @@ fn G(s: Cpp.BitfieldUnion) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_todo_use_bitfields.carbon:[[@LINE+2]]:10 [InCppInclude]
-// CHECK:STDERR: ./with_bitfields.h:4:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
 import Cpp library "with_bitfields.h";
 
 fn F(s: Cpp.BitfieldStruct) -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+4]]:10-12: note: in `Cpp` name lookup for `b` [InCppNameLookup]
-  // CHECK:STDERR:
-  // CHECK:STDERR: included from: fail_todo_use_bitfields.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./with_bitfields.h:9:7: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
   return s.b;
   //@dump-sem-ir-end
 }
 
 fn G(s: Cpp.BitfieldUnion) -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_use_bitfields.carbon:[[@LINE+2]]:10-12: note: in `Cpp` name lookup for `d` [InCppNameLookup]
-  // CHECK:STDERR:
   return s.d;
   //@dump-sem-ir-end
 }
@@ -151,6 +171,22 @@ fn G(s: Cpp.BitfieldUnion) -> i32 {
 
 struct UnsupportedMembers {
   // Volatile is not supported.
+  // CHECK:STDERR:        ╷ ╭── included from: fail_use_unsupported_members.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./unsupported_members.h:[[@LINE+15]]:16
+  // CHECK:STDERR: ->     │   volatile int is_volatile;
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `Unsupported: field declaration has unhandled type or kind`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_use_unsupported_members.carbon
+  // CHECK:STDERR:        │   let unused a: i32 = m->is_volatile;
+  // CHECK:STDERR:        ·                       ───────┬──────
+  // CHECK:STDERR:        ·                              ╰──┤ in `Cpp` name lookup for `is_volatile`
+  // CHECK:STDERR:        ·                                 │ [InCppNameLookup]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   volatile int is_volatile;
   // But this should be fine.
   int integer;
@@ -175,13 +211,9 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_use_unsupported_members.carbon:[[@LINE+2]]:10 [InCppInclude]
-// CHECK:STDERR: ./unsupported_members.h:4:16: error: semantics TODO: `Unsupported: field declaration has unhandled type or kind` [SemanticsTodo]
 import Cpp library "unsupported_members.h";
 
 fn Test(m: Cpp.UnsupportedMembers*) {
-  // CHECK:STDERR: fail_use_unsupported_members.carbon:[[@LINE+2]]:23-36: note: in `Cpp` name lookup for `is_volatile` [InCppNameLookup]
-  // CHECK:STDERR:
   let unused a: i32 = m->is_volatile;
 }
 
@@ -223,11 +255,11 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.95d: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,11 +368,11 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -406,11 +438,11 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %BitfieldUnion: type = class_type @BitfieldUnion [concrete]
 // CHECK:STDOUT:   %BitfieldUnion.elem: type = unbound_element_type %BitfieldUnion, %i32 [concrete]

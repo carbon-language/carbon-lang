@@ -43,7 +43,13 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_very_large.carbon:[[@LINE+2]]:14-33: error: integer value 39999999999999999993 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ let a: i32 = 39999999999999999993;
+// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: integer value 39999999999999999993 too large for type
+// CHECK:STDERR:        ·                 ┃        `i32`
+// CHECK:STDERR:        ·                 ┃        [IntTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: i32 = 39999999999999999993;
 
@@ -51,7 +57,12 @@ let a: i32 = 39999999999999999993;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_boundary.carbon:[[@LINE+2]]:14-26: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_boundary.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let b: i32 = 2_147_483_648;
+// CHECK:STDERR:        ·              ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: integer value 2147483648 too large for type `i32`
+// CHECK:STDERR:        ·                       ┃        [IntTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = 2_147_483_648;
 
@@ -59,7 +70,12 @@ let b: i32 = 2_147_483_648;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_boundary_hex.carbon:[[@LINE+2]]:14-24: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_boundary_hex.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let c: i32 = 0x8000_0000;
+// CHECK:STDERR:        ·              ━━━━━┳━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: integer value 2147483648 too large for type `i32`
+// CHECK:STDERR:        ·                      ┃        [IntTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: i32 = 0x8000_0000;
 
@@ -86,7 +102,15 @@ let max_rounds_down_hex: f64 = 0x1.FFFFFFFFFFFFF7FFFFFFFFFFp+1023;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+2]]:22-98: error: value 399999999999999999999999999999999999999999999999999999999999999999999990*10^237 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large_mantissa.carbon:[[@LINE+10]]:22
+// CHECK:STDERR: ->     │ ... too_large: f64 = 39999999999999999999999999999999999999999999999999999999...
+// CHECK:STDERR:        ·                      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: value
+// CHECK:STDERR:        · ┃        399999999999999999999999999999999999999999999999999999999999999999999990*10^237
+// CHECK:STDERR:        · ┃        too large for floating-point type `f64`
+// CHECK:STDERR:        · ┃        [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let too_large: f64 = 39999999999999999999999999999999999999999999999999999999999999999999999.0e238;
 
@@ -97,15 +121,37 @@ let max_plus_one: f64 = 17976931348623157081452742373170435679807056752584499659
 let max_plus_a_bit_hex: f64 = 0x1.FFFFFFFFFFFFF00000000000000000000001p+1023;
 
 // The smallest number that would round to having an over-large exponent.
-// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+2]]:30-340: error: value 1797693134862315807937289714053034150799341327100378269361737789804449682927647509466490179775872070963302864166928879109465555478519404026306574886715058206819089020007083836762738548458177115317644757302700698555713669596228429148198608349364752927190741684443655107043427115596995080930428801779041744977920*10^-1 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large_mantissa.carbon:[[@LINE+10]]:30
+// CHECK:STDERR: ->     │ ...nds_to_inf: f64 = 17976931348623158079372897140530341507993413271003782693...
+// CHECK:STDERR:        ·                      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: value
+// CHECK:STDERR:        · ┃        1797693134862315807937289714053034150799341327100378269361737789804449682927647509466490179775872070963302864166928879109465555478519404026306574886715058206819089020007083836762738548458177115317644757302700698555713669596228429148198608349364752927190741684443655107043427115596995080930428801779041744977920*10^-1
+// CHECK:STDERR:        · ┃        too large for floating-point type `f64`
+// CHECK:STDERR:        · ┃        [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let min_rounds_to_inf: f64 = 179769313486231580793728971405303415079934132710037826936173778980444968292764750946649017977587207096330286416692887910946555547851940402630657488671505820681908902000708383676273854845817711531764475730270069855571366959622842914819860834936475292719074168444365510704342711559699508093042880177904174497792.0;
 
-// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+2]]:41-117: error: value 179769313486231580793728971405303415079934132710037826936173778980444969*10^237 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large_mantissa.carbon:[[@LINE+10]]:41
+// CHECK:STDERR: ->     │ ...rounded_up: f64 = 17976931348623158079372897140530341507993413271003782693...
+// CHECK:STDERR:        ·                      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: value
+// CHECK:STDERR:        · ┃        179769313486231580793728971405303415079934132710037826936173778980444969*10^237
+// CHECK:STDERR:        · ┃        too large for floating-point type `f64`
+// CHECK:STDERR:        · ┃        [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let min_rounds_to_inf_rounded_up: f64 = 17976931348623158079372897140530341507993413271003782693617377898044496.9e238;
 
-// CHECK:STDERR: fail_overflow_very_large_mantissa.carbon:[[@LINE+2]]:34-57: error: value 144115188075855864*2^967 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large_mantissa.carbon:[[@LINE+8]]:34
+// CHECK:STDERR: ->     │ let min_rounds_to_inf_hex: f64 = 0x1.FFFFFFFFFFFFF8p+1023;
+// CHECK:STDERR:        ·                                  ┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                  ┗━━┫ error: value 144115188075855864*2^967 too
+// CHECK:STDERR:        ·                                     ┃        large for floating-point type `f64`
+// CHECK:STDERR:        ·                                     ┃        [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let min_rounds_to_inf_hex: f64 = 0x1.FFFFFFFFFFFFF8p+1023;
 
@@ -113,7 +159,13 @@ let min_rounds_to_inf_hex: f64 = 0x1.FFFFFFFFFFFFF8p+1023;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow_very_large_exponent.carbon:[[@LINE+2]]:14-37: error: value 50*10^39999999999999999992 too large for floating-point type `f64` [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╭─┤ fail_overflow_very_large_exponent.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ let e: f64 = 5.0e39999999999999999993;
+// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: value 50*10^39999999999999999992 too large for
+// CHECK:STDERR:        ·                 ┃        floating-point type `f64`
+// CHECK:STDERR:        ·                 ┃        [FloatLiteralTooLargeForType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let e: f64 = 5.0e39999999999999999993;
 

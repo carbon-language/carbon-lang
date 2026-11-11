@@ -36,7 +36,12 @@ let b: array(i32, 3)* = &a;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_negative.carbon:[[@LINE+2]]:19-20: error: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_negative.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ var a: array(i32, -1);
+// CHECK:STDERR:        ·                   ━┳
+// CHECK:STDERR:        ·                    ┗━━┫ error: array bound of -1 is negative
+// CHECK:STDERR:        ·                       ┃        [ArrayBoundNegative]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(i32, -1);
 
@@ -44,7 +49,12 @@ var a: array(i32, -1);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:19-38: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ var a: array(i32, 39999999999999999993);
+// CHECK:STDERR:        ·                   ━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: array bound of 39999999999999999993 is too large
+// CHECK:STDERR:        ·                        ┃        [ArrayBoundTooLarge]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(i32, 39999999999999999993);
 
@@ -52,8 +62,16 @@ var a: array(i32, 39999999999999999993);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+3]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+2]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_invalid_type_with_overflow.carbon:[[@LINE+11]]:14
+// CHECK:STDERR: ->     │ var b: array(1, 39999999999999999993);
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·              │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);
 
@@ -116,11 +134,11 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.81c: %Core.IntLiteral.as.As.impl.Convert.type.16e = struct_value () [symbolic]
 // CHECK:STDOUT:   %From.fe9: Core.IntLiteral = symbolic_binding From, 0 [symbolic]
 // CHECK:STDOUT:   %As.impl_witness.f4f: <witness> = impl_witness imports.%As.impl_witness_table.43c, @Core.IntLiteral.as.As.impl.d83(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.ea3: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl.d83(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.0bc: %Core.IntLiteral.as.As.impl.Convert.type.ea3 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.d0a = facet_value Core.IntLiteral, (%As.impl_witness.f4f) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.2f2: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%u32, %As.facet) [concrete]
 // CHECK:STDOUT:   %.a11: type = fn_type_with_self_type %As.WithSelf.Convert.type.2f2, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.ea3: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl.d83(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.0bc: %Core.IntLiteral.as.As.impl.Convert.type.ea3 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.As.impl.Convert.0bc [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.0bc, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.286: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
@@ -129,11 +147,11 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.type.802: type = fn_type @UInt.as.ImplicitAs.impl.Convert.1, @UInt.as.ImplicitAs.impl.d6a(%From.fe9) [symbolic]
 // CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.7a2: %UInt.as.ImplicitAs.impl.Convert.type.802 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.adc: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.7eb, @UInt.as.ImplicitAs.impl.d6a(%int_32) [concrete]
-// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.type.311: type = fn_type @UInt.as.ImplicitAs.impl.Convert.1, @UInt.as.ImplicitAs.impl.d6a(%int_32) [concrete]
-// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.9a6: %UInt.as.ImplicitAs.impl.Convert.type.311 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.d02: %ImplicitAs.type.5be = facet_value %u32, (%ImplicitAs.impl_witness.adc) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.ae5: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(Core.IntLiteral, %ImplicitAs.facet.d02) [concrete]
 // CHECK:STDOUT:   %.4a3: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.ae5, %ImplicitAs.facet.d02 [concrete]
+// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.type.311: type = fn_type @UInt.as.ImplicitAs.impl.Convert.1, @UInt.as.ImplicitAs.impl.d6a(%int_32) [concrete]
+// CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.9a6: %UInt.as.ImplicitAs.impl.Convert.type.311 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_3.d32, %UInt.as.ImplicitAs.impl.Convert.9a6 [concrete]
 // CHECK:STDOUT:   %UInt.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %UInt.as.ImplicitAs.impl.Convert.9a6, @UInt.as.ImplicitAs.impl.Convert.1(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.12e: <bound method> = bound_method %int_3.d32, %UInt.as.ImplicitAs.impl.Convert.specific_fn [concrete]

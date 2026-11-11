@@ -47,8 +47,16 @@ class D {
 }
 
 fn Test(d: D) {
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+3]]:3: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-10]]:16-18: note: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_no_such_member.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   let n: i32 = x.n;
+  // CHECK:STDERR:        ·                ─┬─
+  // CHECK:STDERR:        ·                 ╰──┤ member name `n` not found in `D`
+  // CHECK:STDERR:        ·                    │ [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(d);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(d);
 }
@@ -68,9 +76,19 @@ class E {
 }
 
 fn Test(e: E) {
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE+4]]:3: error: unable to monomorphize specific `F(E)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-11]]:16-18: note: cannot implicitly convert expression of type `F` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_member_wrong_type.carbon:[[@LINE-12]]:16-18: note: type `F` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_member_wrong_type.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │   let n: i32 = x.n;
+  // CHECK:STDERR:        ·                ┬──
+  // CHECK:STDERR:        ·                ╰──┤ cannot implicitly convert expression of type `F` to `i32`
+  // CHECK:STDERR:        ·                │  │ [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `F` does not implement interface
+  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(e);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `F(E)` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(e);
 }
@@ -147,11 +165,11 @@ fn G() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
@@ -335,11 +353,11 @@ fn G() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.579: init %i32 = splice_block %Int.as.Copy.impl.Op.call {

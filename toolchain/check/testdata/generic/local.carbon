@@ -29,8 +29,13 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+3]]:9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+2]]:11-17: note: name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ╭─┤ fail_param_shadows_class.carbon:[[@LINE+8]]:9
+  // CHECK:STDERR: ->     │   class C(C: type) {
+  // CHECK:STDERR:        ·         ┳ ───┬───
+  // CHECK:STDERR:        ·         ┗━━━━━━━┫ error: duplicate name `C` being declared in the same scope
+  // CHECK:STDERR:        ·              │  ┃        [NameDeclDuplicate]
+  // CHECK:STDERR:        ·              ╰────┤ name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   class C(C: type) {
   }
@@ -84,11 +89,11 @@ class C(C: type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -289,9 +294,9 @@ class C(C: type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc9_12.2: type) {
-// CHECK:STDOUT:   %C.patt.loc9_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
-// CHECK:STDOUT:   %C.loc9_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
+// CHECK:STDOUT: generic class @C(%C.loc14_12.2: type) {
+// CHECK:STDOUT:   %C.patt.loc14_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc14_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:   %C.loc14_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc14_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -307,20 +312,20 @@ class C(C: type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %C.patt.loc9_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.patt.loc14_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc14_12.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_14.1: type = splice_block %.loc9_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc9_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc14_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.loc9_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
+// CHECK:STDOUT:     %C.loc14_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc14_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.67d) {
-// CHECK:STDOUT:   %C.patt.loc9_12.2 => constants.%C.patt
-// CHECK:STDOUT:   %C.loc9_12.1 => constants.%C.67d
+// CHECK:STDOUT:   %C.patt.loc14_12.2 => constants.%C.patt
+// CHECK:STDOUT:   %C.loc14_12.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon

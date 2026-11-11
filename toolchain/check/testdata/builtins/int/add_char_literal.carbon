@@ -36,7 +36,13 @@ alias IntLiteral = MakeIntLiteral();
 
 fn AddIntChar(n: IntLiteral, c: CharLiteral) -> CharLiteral = "int.add_char_literal";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-54: error: character arithmetic result 4503599627370593 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddIntChar(0x10000000000000, 'a');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 4503599627370593 is
+// CHECK:STDERR:        ·                         ┃        not a valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddIntChar(0x10000000000000, 'a');
 
@@ -52,15 +58,33 @@ alias IntLiteral = MakeIntLiteral();
 fn AddIntChar(n: IntLiteral, c: CharLiteral) -> CharLiteral = "int.add_char_literal";
 fn Negate(n: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-48: error: character arithmetic result 1114112 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddIntChar(1, '\u{10FFFF}');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 1114112 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddIntChar(1, '\u{10FFFF}');
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-46: error: character arithmetic result 55296 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = AddIntChar(1, '\u{D7FF}');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 55296 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = AddIntChar(1, '\u{D7FF}');
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-48: error: character arithmetic result -1 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let c: CharLiteral = AddIntChar(Negate(98), 'a');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result -1 is not a valid
+// CHECK:STDERR:        ·                         ┃        Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: CharLiteral = AddIntChar(Negate(98), 'a');
 
@@ -78,10 +102,8 @@ let c: CharLiteral = AddIntChar(Negate(98), 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer @__global_init.%AddIntChar.call [concrete = constants.%.711]
-// CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted @__global_init.%AddIntChar.call, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   %CharLiteral.ref: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc12_39.2
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, @__global_init.%.loc12_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
@@ -91,8 +113,10 @@ let c: CharLiteral = AddIntChar(Negate(98), 'a');
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %AddIntChar.ref: %AddIntChar.type = name_ref AddIntChar, file.%AddIntChar.decl [concrete = constants.%AddIntChar]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc12: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
-// CHECK:STDOUT:   %AddIntChar.call: init Core.CharLiteral = call %AddIntChar.ref(%int_1, %.loc12) [concrete = constants.%.711]
+// CHECK:STDOUT:   %.loc12_36: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %AddIntChar.call: init Core.CharLiteral = call %AddIntChar.ref(%int_1, %.loc12_36) [concrete = constants.%.711]
+// CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer %AddIntChar.call [concrete = constants.%.711]
+// CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted %AddIntChar.call, %.loc12_39.1 [concrete = constants.%.711]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

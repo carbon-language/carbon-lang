@@ -83,54 +83,116 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: ./types.h:14:3: note: 'DeletedCopy' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./types.h
+  // CHECK:STDERR:        │   DeletedCopy(const DeletedCopy&) = delete;
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ 'DeletedCopy' has been explicitly marked deleted here
+  // CHECK:STDERR:        ·      │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: ./types.h:19:3: note: copy constructor is implicitly deleted because 'MoveOnly' has a user-declared move constructor [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./types.h
+  // CHECK:STDERR:        │   MoveOnly(MoveOnly&&);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ copy constructor is implicitly deleted because 'MoveOnly' has a
+  // CHECK:STDERR:        ·      │ user-declared move constructor
+  // CHECK:STDERR:        ·      │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: ./types.h:24:3: note: copy constructor is implicitly deleted because 'DeletedMove' has a user-declared move constructor [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./types.h
+  // CHECK:STDERR:        │   DeletedMove(DeletedMove&&) = delete;
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ copy constructor is implicitly deleted because 'DeletedMove' has a
+  // CHECK:STDERR:        ·      │ user-declared move constructor
+  // CHECK:STDERR:        ·      │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot copy value of type `NonConstCopy` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+2]]:10: note: type `Cpp.NonConstCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `NonConstCopy`
+  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.NonConstCopy` does not implement interface `Core.Copy`
+  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot copy value of type `AmbiguousCopy` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+2]]:10: note: type `Cpp.AmbiguousCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AmbiguousCopy`
+  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.AmbiguousCopy` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.Copy`
+  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot access private member `PrivateCopy` of type `Cpp.PrivateCopy` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: ./types.h:40:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access private member `PrivateCopy` of type
+  // CHECK:STDERR:        ·             ┃        `Cpp.PrivateCopy`
+  // CHECK:STDERR:        ·             ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./types.h
+  // CHECK:STDERR:        │   PrivateCopy(const PrivateCopy&);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyProtectedCopy(c: Cpp.ProtectedCopy) -> Cpp.ProtectedCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot access protected member `ProtectedCopy` of type `Cpp.ProtectedCopy` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: ./types.h:45:3: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR: ->     │   return c;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access protected member `ProtectedCopy` of type
+  // CHECK:STDERR:        ·             ┃        `Cpp.ProtectedCopy`
+  // CHECK:STDERR:        ·             ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./types.h
+  // CHECK:STDERR:        │   ProtectedCopy(const ProtectedCopy&);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
 }
@@ -275,11 +337,11 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Wrap.064: type = class_type @Wrap, @Wrap(%Copy.facet.07e) [concrete]
 // CHECK:STDOUT:   %ptr.5a2: type = ptr_type %Wrap.064 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.35f: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Wrap.064) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.fbc: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.064) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.4dc: %ptr.as.Copy.impl.Op.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.d17: %Copy.type.bd0 = facet_value %ptr.5a2, (%Copy.impl_witness.35f) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e69: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.d17) [concrete]
 // CHECK:STDOUT:   %.a85: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e69, %Copy.facet.d17 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.fbc: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.064) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.4dc: %ptr.as.Copy.impl.Op.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.4dc, @ptr.as.Copy.impl.Op(%Wrap.064) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

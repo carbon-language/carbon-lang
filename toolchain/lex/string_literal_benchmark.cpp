@@ -99,7 +99,7 @@ static void BM_SimpleStringValue(benchmark::State& state, int size,
   x.append(terminator);
   for (auto _ : state) {
     StringLiteral::Lex(x)->ComputeStringValue(
-        allocator, Diagnostics::NullEmitter<const char*>());
+        allocator, Diagnostics::NullEmitter<Lex::SourceLoc>());
   }
 }
 

@@ -126,8 +126,22 @@ fn F() {
 
 // --- forward_decl.h
 
-// CHECK:STDERR: error: calling function with incomplete return type 'Incomplete' [CppInteropParseError]
-// CHECK:STDERR: ./forward_decl.h:[[@LINE+1]]:7: note: forward declaration of 'Incomplete' [CppInteropParseNote]
+// CHECK:STDERR: ->     ╭─┤ <no location>
+// CHECK:STDERR:        · ┗━━┫ error: calling function with incomplete return type 'Incomplete'
+// CHECK:STDERR:        ·    ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./forward_decl.h:[[@LINE+12]]:7
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ forward declaration of 'Incomplete' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_use_forward_decl.carbon
+// CHECK:STDERR:        │   Cpp.ReturnCallback()();
+// CHECK:STDERR:        ·   ───────────┬──────────
+// CHECK:STDERR:        ·              ╰──┤ in thunk for C++ function pointer type used here
+// CHECK:STDERR:        ·                 │ [InCppFunctionPointerThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 class Incomplete;
 
 using CallbackType = Incomplete (*)();
@@ -151,12 +165,21 @@ library "[[@TEST_NAME]]";
 import Cpp library "forward_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+7]]:3-24: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+5]]:3-24: error: function returns incomplete type `Cpp.Incomplete` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: included from: fail_use_forward_decl.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./forward_decl.h:4:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_use_forward_decl.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   Cpp.ReturnCallback()();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Cpp.Incomplete`
+  // CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_use_forward_decl.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./forward_decl.h
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ <no location>
+  // CHECK:STDERR:        · ╰──┤ return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.ReturnCallback()();
 }
@@ -171,7 +194,13 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(generic arg: i32);
 
 fn F() {
-  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:43-52: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_convert_generic_arg.carbon:[[@LINE+8]]:43
+  // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:        ·                                           ━━━━━┳━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `binding maps to a non-type template parameter`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
@@ -186,8 +215,19 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(arg: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+3]]:43-52: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-4]]:1-31: note: function exported with pointer type `int (*)(int)` [ExportedFromFunction]
+  // CHECK:STDERR:        ╭─┤ fail_convert_type_mismatch.carbon:[[@LINE+14]]:43
+  // CHECK:STDERR:        │ fn MyCallback(arg: i32) -> i32;
+  // CHECK:STDERR:        · ───────────────┬───────────────
+  // CHECK:STDERR:        ·                ╰──┤ function exported with pointer type `int (*)(int)`
+  // CHECK:STDERR:        ·                   │ [ExportedFromFunction]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:        ·                                           ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                                           ┗━━┫ error: can't convert exported
+  // CHECK:STDERR:        ·                                              ┃        function pointer to
+  // CHECK:STDERR:        ·                                              ┃        `void (*)(int)`
+  // CHECK:STDERR:        ·                                              ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
@@ -403,24 +443,24 @@ fn F() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.e8d: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Float.as.Copy.impl.Op.fe9: %Float.as.Copy.impl.Op.type.e8d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.409: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f2e, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.587: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.587 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6bb = facet_value Core.FloatLiteral, (%ImplicitAs.impl_witness.409) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.049: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%f32.3bc, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.f723: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.049, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.587: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.587 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d9b, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.f84: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.239: %f32.3bc = float_value 1 [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.e8d: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.fe9: %Float.as.Copy.impl.Op.type.e8d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.cc6: <witness> = impl_witness imports.%Copy.impl_witness_table.14d, @Float.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.bc1: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Float.as.Copy.impl.Op.f7a: %Float.as.Copy.impl.Op.type.bc1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.62e: %Copy.type = facet_value %f32.3bc, (%Copy.impl_witness.cc6) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e23: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.62e) [concrete]
 // CHECK:STDOUT:   %.c24: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e23, %Copy.facet.62e [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.type.bc1: type = fn_type @Float.as.Copy.impl.Op, @Float.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Float.as.Copy.impl.Op.f7a: %Float.as.Copy.impl.Op.type.bc1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.bound: <bound method> = bound_method %float.239, %Float.as.Copy.impl.Op.f7a [concrete]
 // CHECK:STDOUT:   %Float.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Float.as.Copy.impl.Op.f7a, @Float.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.acb: <bound method> = bound_method %float.239, %Float.as.Copy.impl.Op.specific_fn [concrete]

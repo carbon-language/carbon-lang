@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -36,6 +36,7 @@ jobs:
             formulae.brew.sh:443
             github.com:443
             go.dev:443
+            index.crates.io:443
             mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
@@ -48,11 +49,13 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.astral.sh:443
             releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -66,17 +69,17 @@ jobs:
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
-      # permissions to the repository, so we create the suggestions in a separate
-      # privileged `workflow_run` action in prek_suggestions.yaml. Here,
-      # we upload the diffs and event configuration to an artifact for use by
-      # that action.
+      # permissions to the repository, so we create the suggestions (or, for
+      # Dependabot PRs, commit the fixes) in a separate privileged `workflow_run`
+      # action in prek_suggestions.yaml. Here, we upload the diffs and event
+      # configuration to an artifact for use by that action.
       - name: Collect prek output
         if: failure()
         run: |
           mkdir -p prek-output
           git diff > prek-output/diff
           cp $GITHUB_EVENT_PATH prek-output/event
-      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: prek output

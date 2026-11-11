@@ -295,8 +295,7 @@ auto FileContext::GetOrCreateFunctionInfo(
 auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
     -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(inst_block_id)) {
-    // Only `VarStorage` indicates a global variable declaration in the
-    // top instruction block.
+    // `VarStorage` indicates a global variable declaration.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
       // Get the global variable declaration. We created this when lowering the
       // constant unless the variable is unnamed, in which case we need to
@@ -315,6 +314,40 @@ auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
       global_variables_.Insert(inst_id, llvm_var);
       llvm_var->setInitializer(
           llvm::Constant::getNullValue(llvm_var->getValueType()));
+      continue;
+    }
+
+    // A non-constant global `let` binding is placed outside `__global_init`
+    // only if its initializer is constant. In that case, statically initialize
+    // its global storage rather than initializing it in `__global_init`.
+    if (auto binding =
+            sem_ir().insts().TryGetAs<SemIR::WrapperBinding>(inst_id)) {
+      const auto& entity_name =
+          sem_ir().entity_names().Get(binding->entity_name_id);
+      if (entity_name.name_id == SemIR::NameId::Underscore ||
+          sem_ir().constant_values().Get(inst_id).is_constant()) {
+        continue;
+      }
+      auto value_const_id = sem_ir().constant_values().Get(binding->value_id);
+      if (!value_const_id.is_concrete()) {
+        // TODO: Support non-constant `let` bindings in generic classes.
+        continue;
+      }
+      auto* llvm_var = GetOrCreateGlobalBinding(inst_id);
+      if (!llvm_var) {
+        // The absence of a variable indicates that no storage is required for
+        // this value -- that is, it has an empty value representation.
+        continue;
+      }
+      // For a type with a pointer value representation, the lowered constant
+      // is the object representation, which is what the global holds.
+      auto* init =
+          constants_.Get(sem_ir().constant_values().GetInstId(value_const_id));
+      CARBON_CHECK(init->getType() == llvm_var->getValueType(),
+                   "Constant initializer type mismatch for {0}", *binding);
+      llvm_var->setInitializer(init);
+      // A value binding is immutable.
+      llvm_var->setConstant(true);
     }
   }
 }
@@ -427,7 +460,7 @@ auto FileContext::GetOrCreateLLVMFunction(
     // file. That's OK.
     // TODO: If the prior function was inexact and the new one is not, we should
     // lower this new one and replace the existing function with it.
-    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM functions are not
     // produced by declarations of the same Carbon function. Name collisions
     // between non-private members of the same library should have been
     // diagnosed by check if detected, but it's not clear that check will
@@ -621,6 +654,11 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     linkage = llvm::Function::InternalLinkage;
   } else if (specific_id.has_value()) {
     // Specific functions are emitted in each file they are referenced in.
+    linkage = llvm::Function::LinkOnceODRLinkage;
+  } else if (declaration_function.special_function_kind ==
+             SemIR::Function::SpecialFunctionKind::CppThunk) {
+    // A C++ thunk that we define wraps a Carbon function for use from C++. It
+    // is emitted in each file that exposes the function to C++.
     linkage = llvm::Function::LinkOnceODRLinkage;
   } else if (declaration_function.special_function_kind ==
                  SemIR::Function::SpecialFunctionKind::Generated ||
@@ -845,12 +883,77 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
           ("var.anon" + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
               .str();
     }
+  } else if (auto* existing = llvm_module().getNamedGlobal(mangled_name)) {
+    // We might have already declared this variable while lowering a different
+    // file, such as when lowering a specific of a generic function from the
+    // file that defines the variable. Reuse that declaration rather than
+    // creating a new one, which LLVM would rename to avoid the collision.
+    //
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM variables are not
+    // produced by declarations of the same Carbon variable. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will
+    // always be able to see this problem. In theory, name collisions could
+    // also occur due to fingerprint collision.
+    return existing;
   }
 
   auto* type = GetType(var_storage.type_id);
   return new llvm::GlobalVariable(llvm_module(), type,
                                   /*isConstant=*/false, linkage,
                                   /*Initializer=*/nullptr, mangled_name);
+}
+
+auto FileContext::GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+    -> llvm::GlobalVariable* {
+  if (auto result = global_bindings_.Lookup(binding_inst_id)) {
+    return result.value();
+  }
+
+  auto binding = sem_ir().insts().GetAs<SemIR::WrapperBinding>(binding_inst_id);
+  llvm::Type* type = nullptr;
+  if (SemIR::IsRefCategory(SemIR::GetExprCategory(sem_ir(), binding_inst_id))) {
+    type = llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0);
+  } else {
+    auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), binding.type_id);
+    switch (value_rep.kind) {
+      case SemIR::ValueRepr::Unknown:
+      case SemIR::ValueRepr::Dependent:
+        CARBON_FATAL("Unexpected incomplete or dependent global binding: {0}",
+                     binding);
+      case SemIR::ValueRepr::None:
+        global_bindings_.Insert(binding_inst_id, nullptr);
+        return nullptr;
+      case SemIR::ValueRepr::Copy:
+        type = GetType(value_rep.type_id);
+        break;
+      case SemIR::ValueRepr::Pointer:
+        type = GetType(sem_ir().GetPointeeType(value_rep.type_id));
+        break;
+      case SemIR::ValueRepr::Custom:
+        CARBON_FATAL("TODO: Support global binding with custom value repr");
+    }
+  }
+
+  auto mangled_name =
+      mangler_.MangleGlobalBinding(binding.entity_name_id, binding_inst_id);
+  auto linkage = llvm::GlobalVariable::ExternalLinkage;
+  if (mangled_name.empty()) {
+    // If the variable doesn't have an externally-visible name, demote it to
+    // internal linkage and invent a plausible name that shouldn't collide with
+    // any of our real manglings.
+    linkage = llvm::GlobalVariable::InternalLinkage;
+    if (inst_namer_) {
+      mangled_name =
+          ("let.anon" + inst_namer_->GetUnscopedNameFor(binding_inst_id)).str();
+    }
+  }
+
+  auto* global_var = new llvm::GlobalVariable(
+      llvm_module(), type, /*isConstant=*/false, linkage,
+      /*Initializer=*/nullptr, mangled_name);
+  global_bindings_.Insert(binding_inst_id, global_var);
+  return global_var;
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {

@@ -231,7 +231,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Final.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !49 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Final.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Final.Main(ptr %self), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
@@ -262,7 +262,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Base.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !66 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Base.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !66 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Base.Main(ptr %self), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
@@ -385,8 +385,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: attributes #12 = { builtin nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!28}
-// CHECK:STDOUT: !llvm.module.flags = !{!98, !99, !100, !11, !12}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!103}
+// CHECK:STDOUT: !llvm.module.flags = !{!98, !99, !100, !101, !11, !12}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!104}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -460,10 +460,11 @@ void delete_new_Base() {
 // CHECK:STDOUT: !92 = !{!91, !91, i64 0}
 // CHECK:STDOUT: !95 = !{}
 // CHECK:STDOUT: !96 = !{i64 8}
-// CHECK:STDOUT: !98 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !99 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !100 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !101 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !102 = !{!"__libc_errno", !101, i64 0}
-// CHECK:STDOUT: !103 = !{!102, !101, i64 0}
+// CHECK:STDOUT: !98 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !99 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !100 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !101 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !102 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !103 = !{!"__libc_errno", !102, i64 0}
+// CHECK:STDOUT: !104 = !{!103, !102, i64 0}
 // CHECK:STDOUT:

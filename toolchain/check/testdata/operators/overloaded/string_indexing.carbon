@@ -14,7 +14,12 @@
 library "[[@TEST_NAME]]";
 
 fn TestLiteralNegativeIndex() {
-  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative [StringAtIndexNegative]
+  // CHECK:STDERR:        ╭─┤ fail_literal_negative_index.carbon:[[@LINE+7]]:24
+  // CHECK:STDERR: ->     │   let unused c: char = "Test"[-1];
+  // CHECK:STDERR:        ·                        ━━━━━┳━━━━
+  // CHECK:STDERR:        ·                             ┗━━┫ error: index `-1` is negative
+  // CHECK:STDERR:        ·                                ┃        [StringAtIndexNegative]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: char = "Test"[-1];
 }
@@ -23,7 +28,13 @@ fn TestLiteralNegativeIndex() {
 library "[[@TEST_NAME]]";
 
 fn TestLiteralOutOfBounds() {
-  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4 [StringAtIndexOutOfBounds]
+  // CHECK:STDERR:        ╭─┤ fail_literal_out_of_bounds.carbon:[[@LINE+8]]:24
+  // CHECK:STDERR: ->     │   let unused c: char = "Test"[4];
+  // CHECK:STDERR:        ·                        ┳━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: string index `4` is out of bounds; string has
+  // CHECK:STDERR:        ·                           ┃        length 4
+  // CHECK:STDERR:        ·                           ┃        [StringAtIndexOutOfBounds]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: char = "Test"[4];
 }
@@ -34,7 +45,13 @@ library "[[@TEST_NAME]]";
 fn TestWrongType() {
   class C{}
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.IndexWith(type)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   "Test"[C];
+  // CHECK:STDERR:        ·   ┳━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.IndexWith(type)` in type
+  // CHECK:STDERR:        ·      ┃        `str` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "Test"[C];
   //@dump-sem-ir-end
@@ -43,15 +60,30 @@ fn TestWrongType() {
 // --- fail_bad_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn At(s: str, index: i64) -> i32 = "string.at";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: invalid signature for builtin function "string.at"
+// CHECK:STDERR:        ·                     ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn At(s: str, index: i64) -> i32 = "string.at";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-24: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn At2(s: str) -> char = "string.at";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "string.at"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn At2(s: str) -> char = "string.at";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-36: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn At3(s: i32, index: i64) -> char = "string.at";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: invalid signature for builtin function "string.at"
+// CHECK:STDERR:        ·                      ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn At3(s: i32, index: i64) -> char = "string.at";
 
@@ -113,11 +145,11 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.b1b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_64) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e56 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.b1b) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness.e0f: <witness> = impl_witness imports.%IndexWith.impl_witness_table.002, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.9e0: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %str.as.IndexWith.impl.At.484: %str.as.IndexWith.impl.At.type.9e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet.bbf: %IndexWith.type.06b = facet_value %str.3d4, (%IndexWith.impl_witness.e0f) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.938: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet.bbf) [concrete]
 // CHECK:STDOUT:   %.55c: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.938, %IndexWith.facet.bbf [concrete]
+// CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.9e0: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %str.as.IndexWith.impl.At.484: %str.as.IndexWith.impl.At.type.9e0 = struct_value () [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.bound: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.484 [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %str.as.IndexWith.impl.At.484, @str.as.IndexWith.impl.At(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.specific_fn [concrete]

@@ -29,8 +29,16 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+3]]:8-18: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+11]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(i32*);
+// CHECK:STDERR:        ·        ━━━━━┳━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: 1 argument passed to generic class expecting 2 arguments
+// CHECK:STDERR:        ·                ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(i32*);
 
@@ -40,8 +48,16 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+3]]:8-24: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+11]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(i32*, 1, 2);
+// CHECK:STDERR:        ·        ━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: 3 arguments passed to generic class expecting 2 arguments
+// CHECK:STDERR:        ·               ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(i32*, 1, 2);
 
@@ -51,9 +67,21 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:8-21: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:8-21: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-4]]:13-19: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+16]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        ·             ───┬───
+// CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                   │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(5, i32*);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·        │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·        ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·             │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(5, i32*);
 
@@ -106,11 +134,11 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.ab2: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -123,9 +151,9 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.90f: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%Class.29e) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.3e6: %DefaultOrUnformed.type = facet_value %Class.29e, (%DefaultOrUnformed.impl_witness.90f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.ec3: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Class.29e) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.7ee: %T.as.DefaultOrUnformed.impl.Op.type.ec3 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.3e6: %DefaultOrUnformed.type = facet_value %Class.29e, (%DefaultOrUnformed.impl_witness.90f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.7ad: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.7ee, @T.as.DefaultOrUnformed.impl.Op(%Class.29e) [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -137,9 +165,9 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %b.patt: %pattern_type.6a3 = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.6a3 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.7d5: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%Class.766) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.501: %DefaultOrUnformed.type = facet_value %Class.766, (%DefaultOrUnformed.impl_witness.7d5) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.991: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Class.766) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.715: %T.as.DefaultOrUnformed.impl.Op.type.991 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.501: %DefaultOrUnformed.type = facet_value %Class.766, (%DefaultOrUnformed.impl_witness.7d5) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn.5ed: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.715, @T.as.DefaultOrUnformed.impl.Op(%Class.766) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -551,7 +579,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
-// CHECK:STDOUT:     %.loc10: type = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc22: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

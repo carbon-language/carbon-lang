@@ -135,8 +135,8 @@ fn F() {
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!33}
+// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !31, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!34}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -161,12 +161,13 @@ fn F() {
 // CHECK:STDOUT: !25 = !{!"any pointer", !24, i64 0}
 // CHECK:STDOUT: !26 = !{!25, !25, i64 0}
 // CHECK:STDOUT: !27 = !{!24, !24, i64 0}
-// CHECK:STDOUT: !28 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !29 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !30 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !31 = !{!"int", !24, i64 0}
-// CHECK:STDOUT: !32 = !{!"__libc_errno", !31, i64 0}
-// CHECK:STDOUT: !33 = !{!32, !31, i64 0}
+// CHECK:STDOUT: !28 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !29 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !30 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !31 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !32 = !{!"int", !24, i64 0}
+// CHECK:STDOUT: !33 = !{!"__libc_errno", !32, i64 0}
+// CHECK:STDOUT: !34 = !{!33, !32, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert_method_ptr.carbon'
@@ -177,40 +178,40 @@ fn F() {
 // CHECK:STDOUT: declare void @_CMethod.C.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !36 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ptr.var = alloca ptr, align 8, !dbg !37
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr.var), !dbg !37
-// CHECK:STDOUT:   store ptr @_CMethod.C.Main, ptr %ptr.var, align 8, !dbg !37
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %ptr.var), !dbg !37
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   %ptr.var = alloca ptr, align 8, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ptr.var), !dbg !38
+// CHECK:STDOUT:   store ptr @_CMethod.C.Main, ptr %ptr.var, align 8, !dbg !38
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %ptr.var), !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !40 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !43
+// CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMethod__carbon_thunk.C.Main(ptr noundef nonnull align 1 %self) #2 !dbg !44 {
+// CHECK:STDOUT: define linkonce_odr void @_CMethod__carbon_thunk.C.Main(ptr noundef nonnull align 1 %self) #2 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !47
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !48
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %t) #0 !dbg !49 {
-// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %t) #0 !dbg !50 {
+// CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !56 {
-// CHECK:STDOUT:   ret void, !dbg !61
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !57 {
+// CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -218,9 +219,9 @@ fn F() {
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
-// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!33}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
+// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !31, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!34}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -232,33 +233,34 @@ fn F() {
 // CHECK:STDOUT: !15 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
 // CHECK:STDOUT: !23 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !24 = !{!"omnipotent char", !23, i64 0}
-// CHECK:STDOUT: !28 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !29 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !30 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !31 = !{!"int", !24, i64 0}
-// CHECK:STDOUT: !32 = !{!"__libc_errno", !31, i64 0}
-// CHECK:STDOUT: !33 = !{!32, !31, i64 0}
-// CHECK:STDOUT: !34 = !DIFile(filename: "convert_method_ptr.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !34, line: 13, type: !7, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !37 = !DILocation(line: 14, column: 3, scope: !36)
-// CHECK:STDOUT: !39 = !DILocation(line: 13, column: 1, scope: !36)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.C.Main", scope: null, file: !34, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !43)
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !8)
-// CHECK:STDOUT: !42 = !DILocation(line: 5, column: 1, scope: !40)
-// CHECK:STDOUT: !43 = !{!41}
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "Method__carbon_thunk", linkageName: "_CMethod__carbon_thunk.C.Main", scope: null, file: !34, line: 14, type: !10, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !48)
-// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !44, type: !8)
-// CHECK:STDOUT: !47 = !DILocation(line: 6, column: 3, scope: !44)
-// CHECK:STDOUT: !48 = !{!45}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d0db8a57c58fabc", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !55)
-// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !8)
-// CHECK:STDOUT: !54 = !DILocation(line: 36, column: 1, scope: !49)
-// CHECK:STDOUT: !55 = !{!50}
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !62)
-// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !56, type: !8)
-// CHECK:STDOUT: !61 = !DILocation(line: 36, column: 1, scope: !56)
-// CHECK:STDOUT: !62 = !{!57}
+// CHECK:STDOUT: !28 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !29 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !30 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !31 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !32 = !{!"int", !24, i64 0}
+// CHECK:STDOUT: !33 = !{!"__libc_errno", !32, i64 0}
+// CHECK:STDOUT: !34 = !{!33, !32, i64 0}
+// CHECK:STDOUT: !35 = !DIFile(filename: "convert_method_ptr.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !35, line: 13, type: !7, spFlags: DISPFlagDefinition, unit: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 14, column: 3, scope: !37)
+// CHECK:STDOUT: !40 = !DILocation(line: 13, column: 1, scope: !37)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.C.Main", scope: null, file: !35, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !44)
+// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !8)
+// CHECK:STDOUT: !43 = !DILocation(line: 5, column: 1, scope: !41)
+// CHECK:STDOUT: !44 = !{!42}
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "Method__carbon_thunk", linkageName: "_CMethod__carbon_thunk.C.Main", scope: null, file: !35, line: 14, type: !10, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !49)
+// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !45, type: !8)
+// CHECK:STDOUT: !48 = !DILocation(line: 6, column: 3, scope: !45)
+// CHECK:STDOUT: !49 = !{!46}
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d0db8a57c58fabc", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !56)
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !8)
+// CHECK:STDOUT: !55 = !DILocation(line: 36, column: 1, scope: !50)
+// CHECK:STDOUT: !56 = !{!51}
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !63)
+// CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !8)
+// CHECK:STDOUT: !62 = !DILocation(line: 36, column: 1, scope: !57)
+// CHECK:STDOUT: !63 = !{!58}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_method_ptr.carbon'
@@ -271,27 +273,27 @@ fn F() {
 // CHECK:STDOUT: declare void @_CMethod.C.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !65 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_29.3.temp = alloca ptr, align 8, !dbg !66
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_29.3.temp), !dbg !66
-// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE.carbon_thunk._(ptr @.b35), !dbg !67
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr @.b35), !dbg !66
-// CHECK:STDOUT:   ret void, !dbg !68
+// CHECK:STDOUT:   %.loc10_29.3.temp = alloca ptr, align 8, !dbg !67
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_29.3.temp), !dbg !67
+// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE.carbon_thunk._(ptr @.b35), !dbg !68
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr @.b35), !dbg !67
+// CHECK:STDOUT:   ret void, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !69 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !71
-// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !72
+// CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMethod__carbon_thunk.C.Main(ptr noundef nonnull align 1 %self) #2 !dbg !73 {
+// CHECK:STDOUT: define linkonce_odr void @_CMethod__carbon_thunk.C.Main(ptr noundef nonnull align 1 %self) #2 !dbg !74 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !75
-// CHECK:STDOUT:   ret void, !dbg !75
+// CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !76
+// CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -315,13 +317,13 @@ fn F() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %t) #0 !dbg !77 {
-// CHECK:STDOUT:   ret void, !dbg !82
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d0db8a57c58fabc(ptr %t) #0 !dbg !78 {
+// CHECK:STDOUT:   ret void, !dbg !83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !84 {
-// CHECK:STDOUT:   ret void, !dbg !89
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !85 {
+// CHECK:STDOUT:   ret void, !dbg !90
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE(i64, i64) #5
@@ -333,9 +335,9 @@ fn F() {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!64}
-// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!33}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!65}
+// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !31, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!34}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -350,32 +352,33 @@ fn F() {
 // CHECK:STDOUT: !25 = !{!"any pointer", !24, i64 0}
 // CHECK:STDOUT: !26 = !{!25, !25, i64 0}
 // CHECK:STDOUT: !27 = !{!24, !24, i64 0}
-// CHECK:STDOUT: !28 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !29 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !30 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !31 = !{!"int", !24, i64 0}
-// CHECK:STDOUT: !32 = !{!"__libc_errno", !31, i64 0}
-// CHECK:STDOUT: !33 = !{!32, !31, i64 0}
-// CHECK:STDOUT: !63 = !DIFile(filename: "pass_method_ptr.carbon", directory: "")
-// CHECK:STDOUT: !64 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !63, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !63, line: 9, type: !7, spFlags: DISPFlagDefinition, unit: !64)
-// CHECK:STDOUT: !66 = !DILocation(line: 10, column: 28, scope: !65)
-// CHECK:STDOUT: !67 = !DILocation(line: 10, column: 3, scope: !65)
-// CHECK:STDOUT: !68 = !DILocation(line: 9, column: 1, scope: !65)
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.C.Main", scope: null, file: !63, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !64, retainedNodes: !72)
-// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !8)
-// CHECK:STDOUT: !71 = !DILocation(line: 5, column: 1, scope: !69)
-// CHECK:STDOUT: !72 = !{!70}
-// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "Method__carbon_thunk", linkageName: "_CMethod__carbon_thunk.C.Main", scope: null, file: !63, line: 6, type: !10, spFlags: DISPFlagDefinition, unit: !64, retainedNodes: !76)
-// CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !73, type: !8)
-// CHECK:STDOUT: !75 = !DILocation(line: 6, column: 3, scope: !73)
-// CHECK:STDOUT: !76 = !{!74}
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d0db8a57c58fabc", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !64, retainedNodes: !83)
-// CHECK:STDOUT: !78 = !DILocalVariable(arg: 1, scope: !77, type: !8)
-// CHECK:STDOUT: !82 = !DILocation(line: 36, column: 1, scope: !77)
-// CHECK:STDOUT: !83 = !{!78}
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !64, retainedNodes: !90)
-// CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !8)
-// CHECK:STDOUT: !89 = !DILocation(line: 36, column: 1, scope: !84)
-// CHECK:STDOUT: !90 = !{!85}
+// CHECK:STDOUT: !28 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !29 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !30 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !31 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !32 = !{!"int", !24, i64 0}
+// CHECK:STDOUT: !33 = !{!"__libc_errno", !32, i64 0}
+// CHECK:STDOUT: !34 = !{!33, !32, i64 0}
+// CHECK:STDOUT: !64 = !DIFile(filename: "pass_method_ptr.carbon", directory: "")
+// CHECK:STDOUT: !65 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !64, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !64, line: 9, type: !7, spFlags: DISPFlagDefinition, unit: !65)
+// CHECK:STDOUT: !67 = !DILocation(line: 10, column: 28, scope: !66)
+// CHECK:STDOUT: !68 = !DILocation(line: 10, column: 3, scope: !66)
+// CHECK:STDOUT: !69 = !DILocation(line: 9, column: 1, scope: !66)
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.C.Main", scope: null, file: !64, line: 5, type: !10, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !73)
+// CHECK:STDOUT: !71 = !DILocalVariable(arg: 1, scope: !70, type: !8)
+// CHECK:STDOUT: !72 = !DILocation(line: 5, column: 1, scope: !70)
+// CHECK:STDOUT: !73 = !{!71}
+// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "Method__carbon_thunk", linkageName: "_CMethod__carbon_thunk.C.Main", scope: null, file: !64, line: 6, type: !10, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !77)
+// CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !74, type: !8)
+// CHECK:STDOUT: !76 = !DILocation(line: 6, column: 3, scope: !74)
+// CHECK:STDOUT: !77 = !{!75}
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d0db8a57c58fabc", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !84)
+// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !8)
+// CHECK:STDOUT: !83 = !DILocation(line: 36, column: 1, scope: !78)
+// CHECK:STDOUT: !84 = !{!79}
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !15, line: 36, type: !10, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !91)
+// CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !8)
+// CHECK:STDOUT: !90 = !DILocation(line: 36, column: 1, scope: !85)
+// CHECK:STDOUT: !91 = !{!86}
 // CHECK:STDOUT:

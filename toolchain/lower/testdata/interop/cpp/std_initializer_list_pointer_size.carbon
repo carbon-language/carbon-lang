@@ -305,8 +305,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!109, !110, !111, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!113}
+// CHECK:STDOUT: !llvm.module.flags = !{!109, !110, !111, !112, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!114}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -391,9 +391,10 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !106 = !{i64 0, i64 8, !104, i64 8, i64 8, !105}
 // CHECK:STDOUT: !107 = !{!"p1 _ZTS15nontrivial_dtor", !95, i64 0}
 // CHECK:STDOUT: !108 = !{!107, !107, i64 0}
-// CHECK:STDOUT: !109 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !110 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !111 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !112 = !{!"__libc_errno", !100, i64 0}
-// CHECK:STDOUT: !113 = !{!112, !100, i64 0}
+// CHECK:STDOUT: !109 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !110 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !111 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !112 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !113 = !{!"__libc_errno", !100, i64 0}
+// CHECK:STDOUT: !114 = !{!113, !100, i64 0}
 // CHECK:STDOUT:

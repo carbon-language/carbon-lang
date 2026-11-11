@@ -96,8 +96,14 @@ fn F() -> var auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+3]]:3-18: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+2]]:10-17: note: return type deduced as `i32` [ReturnTypeDeducedAs]
+  // CHECK:STDERR:        ╭─┤ fail_ref_auto_non_ref.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   return 0 as i32;
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot bind durable reference to non-reference value of
+  // CHECK:STDERR:        ·          │  ┃        type `i32`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ·          ╰────┤ return type deduced as `i32` [ReturnTypeDeducedAs]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return 0 as i32;
 }
@@ -106,8 +112,17 @@ fn F() -> ref auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE-2]]:1-20: note: return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ╭─┤ fail_ref_auto_returned_var.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F() -> ref auto {
+  // CHECK:STDERR:        · ──────────┬─────────
+  // CHECK:STDERR:        ·           ╰──┤ return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var v: i32 = 1;
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `returned var` declaration in function with non-initializing
+  // CHECK:STDERR:        ·      ┃        return form
+  // CHECK:STDERR:        ·      ┃        [ReturnedVarNotInit]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;
@@ -117,8 +132,17 @@ fn F() -> ref auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> val auto {
-  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE-2]]:1-20: note: return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ╭─┤ fail_val_auto_returned_var.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F() -> val auto {
+  // CHECK:STDERR:        · ──────────┬─────────
+  // CHECK:STDERR:        ·           ╰──┤ return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var v: i32 = 1;
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `returned var` declaration in function with non-initializing
+  // CHECK:STDERR:        ·      ┃        return form
+  // CHECK:STDERR:        ·      ┃        [ReturnedVarNotInit]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;
@@ -127,7 +151,12 @@ fn F() -> val auto {
 // --- fail_ref_auto_forward_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_ref_auto_forward_decl.carbon:[[@LINE+2]]:8-18: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╭─┤ fail_ref_auto_forward_decl.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ fn F() -> ref auto;
+// CHECK:STDERR:        ·        ━━━━━┳━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: forward declaration of function with deduced return type
+// CHECK:STDERR:        ·                ┃        [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> ref auto;
 
@@ -135,8 +164,15 @@ fn F() -> ref auto;
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE+3]]:3-9: error: missing return value [ReturnStatementMissingExpr]
-  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE-2]]:1-20: note: return type of function is deduced [ReturnTypeIsDeducedNote]
+  // CHECK:STDERR:        ╭─┤ fail_ref_auto_missing_return_value.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        │ fn F() -> ref auto {
+  // CHECK:STDERR:        · ──────────┬─────────
+  // CHECK:STDERR:        ·           ╰──┤ return type of function is deduced [ReturnTypeIsDeducedNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return;
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: missing return value [ReturnStatementMissingExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return;
 }
@@ -146,7 +182,12 @@ library "[[@TEST_NAME]]";
 
 var g: i32 = 0;
 
-// CHECK:STDERR: fail_todo_form_literal.carbon:[[@LINE+2]]:21-24: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_form_literal.carbon:[[@LINE+7]]:21
+// CHECK:STDERR: ->     │ fn F() ->? form(ref auto) {
+// CHECK:STDERR:        ·                     ━━┳━
+// CHECK:STDERR:        ·                       ┗━━┫ error: semantics TODO: `HandleAutoTypeLiteral`
+// CHECK:STDERR:        ·                          ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() ->? form(ref auto) {
   return g;
@@ -226,11 +267,11 @@ fn F() ->? form(ref auto) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.396: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.84a: %Core.IntLiteral.as.As.impl.Convert.type.396 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.impl_witness.e09: <witness> = impl_witness imports.%As.impl_witness_table.1c2, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.b93 = facet_value Core.IntLiteral, (%As.impl_witness.e09) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.2be: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
 // CHECK:STDOUT:   %.979: type = fn_type_with_self_type %As.WithSelf.Convert.type.2be, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.94f [concrete]
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.94f, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
@@ -307,11 +348,11 @@ fn F() ->? form(ref auto) {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.396: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.84a: %Core.IntLiteral.as.As.impl.Convert.type.396 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.impl_witness.e09: <witness> = impl_witness imports.%As.impl_witness_table.1c2, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.b93 = facet_value Core.IntLiteral, (%As.impl_witness.e09) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.2be: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
 // CHECK:STDOUT:   %.979: type = fn_type_with_self_type %As.WithSelf.Convert.type.2be, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.94f [concrete]
 // CHECK:STDOUT:   %.0b3: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
@@ -324,11 +365,11 @@ fn F() ->? form(ref auto) {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_1.68a, %Int.as.Copy.impl.Op.cae [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.a13: <bound method> = bound_method %int_1.68a, %Int.as.Copy.impl.Op.specific_fn [concrete]

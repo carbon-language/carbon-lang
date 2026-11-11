@@ -369,11 +369,27 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   auto name_id = AddIdentifierName(*context_, identifier->getName());
 
-  // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
-  // it or even SFINAE.
-  LookupResult result = LookupQualifiedName(*context_, GetCurrentCppLocId(),
-                                            name_id, lookup_scopes,
-                                            /*required=*/false);
+  LookupResult result{
+      .specific_id = SemIR::SpecificId::None,
+      .scope_result = SemIR::ScopeLookupResult::MakeNotFound(),
+  };
+  for (auto lookup_scope : lookup_scopes) {
+    auto scope_id = lookup_scope.name_scope_id;
+    if (!scope_id.has_value()) {
+      continue;
+    }
+    result.scope_result =
+        LookupNameInExactScope(*context_, GetCurrentCppLocId(), name_id,
+                               scope_id, context_->name_scopes().Get(scope_id));
+    result.specific_id = lookup_scope.specific_id;
+    // TODO: If the name is found in multiple scopes, it should be treated as
+    // ambiguous, possibly by adding all the results to the name lookup table
+    // so Clang reports the ambiguity.
+    if (result.scope_result.is_found()) {
+      break;
+    }
+  }
+
   if (!result.scope_result.is_found()) {
     // Avoid caching a negative lookup, as a declaration with this name may be
     // added in Carbon later.
@@ -572,6 +588,27 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
                                     virtual_fn.function_id,
                                     virtual_fn.method_decl);
     }
+  }
+
+  // Export friends.
+  for (auto friend_scope : class_info.friend_scopes.entries()) {
+    auto friend_inst_id = context_->constant_values().GetInstId(friend_scope);
+    if (auto friend_class_type =
+            context_->insts().TryGetAs<SemIR::ClassType>(friend_inst_id)) {
+      const auto& friend_class_info =
+          context_->classes().Get(friend_class_type->class_id);
+      if (const auto* friend_clang_decl = context_->clang_decls().Lookup(
+              friend_class_info.first_decl_id())) {
+        auto* friend_tag_decl =
+            llvm::cast<clang::TagDecl>(friend_clang_decl->decl());
+        auto* friend_tsi = context_->ast_context().getTrivialTypeSourceInfo(
+            context_->ast_context().getCanonicalTagType(friend_tag_decl));
+        clang::FriendDecl::Create(context_->ast_context(), class_decl,
+                                  /*L=*/clang::SourceLocation(), friend_tsi,
+                                  /*FL=*/clang::SourceLocation());
+      }
+    }
+    // TODO: support other kinds of friends.
   }
 }
 

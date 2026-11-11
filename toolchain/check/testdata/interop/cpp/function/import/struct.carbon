@@ -18,36 +18,88 @@
 
 struct ForwardDeclaredStruct;
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_param_type.h:[[@LINE+16]]:6
+// CHECK:STDERR:        │ struct ForwardDeclaredStruct;
+// CHECK:STDERR:        ·        ┬
+// CHECK:STDERR:        ·        ╰──┤ forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo1(ForwardDeclaredStruct) -> void;
+// CHECK:STDERR:        ·      ━━┳━
+// CHECK:STDERR:        ·        ┗━━┫ error: argument type 'ForwardDeclaredStruct' is incomplete
+// CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_param_type.carbon
+// CHECK:STDERR:        │   Cpp.foo1(*p);
+// CHECK:STDERR:        ·   ──────┬─────
+// CHECK:STDERR:        ·         ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo1(ForwardDeclaredStruct) -> void;
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_param_type.h:[[@LINE+16]]:6
+// CHECK:STDERR:        │ struct ForwardDeclaredStruct;
+// CHECK:STDERR:        ·        ┬
+// CHECK:STDERR:        ·        ╰──┤ forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo2(ForwardDeclaredStruct) -> void;
+// CHECK:STDERR:        ·      ━━┳━
+// CHECK:STDERR:        ·        ┗━━┫ error: argument type 'ForwardDeclaredStruct' is incomplete
+// CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_param_type.carbon
+// CHECK:STDERR:        │   Cpp.foo2(*p);
+// CHECK:STDERR:        ·   ──────┬─────
+// CHECK:STDERR:        ·         ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo2(ForwardDeclaredStruct) -> void;
 
 // --- fail_import_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6-9: error: argument type 'ForwardDeclaredStruct' is incomplete [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredStruct*) {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:3-14: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR: ->     │   Cpp.foo1(*p);
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
+  // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredStruct`
+  // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
+  // CHECK:STDERR:        │ struct ForwardDeclaredStruct;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo1(ForwardDeclaredStruct) -> void;
+  // CHECK:STDERR:        ·                                ┬
+  // CHECK:STDERR:        ·                                ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                   │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6-9: error: argument type 'ForwardDeclaredStruct' is incomplete [CppInteropParseError]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: forward declaration of 'ForwardDeclaredStruct' [CppInteropParseNote]
   Cpp.foo1(*p);
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-14: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-3]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredStruct` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-12]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_param_type.h:4:32: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredStruct` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-17]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:32: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR: ->     │   Cpp.foo2(*p);
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
+  // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredStruct`
+  // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
+  // CHECK:STDERR:        │ struct ForwardDeclaredStruct;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo2(ForwardDeclaredStruct) -> void;
+  // CHECK:STDERR:        ·                                ┬
+  // CHECK:STDERR:        ·                                ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                   │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo2(*p);
 }
@@ -84,22 +136,37 @@ struct NonCopyableStruct {
   NonCopyableStruct(const NonCopyableStruct&) = delete;
 };
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_non_copyable_param_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./non_copyable_param_type.h:[[@LINE+20]]:6
+// CHECK:STDERR:        │   NonCopyableStruct(const NonCopyableStruct&) = delete;
+// CHECK:STDERR:        ·   ┬
+// CHECK:STDERR:        ·   ╰──┤ 'NonCopyableStruct' has been explicitly marked deleted here
+// CHECK:STDERR:        ·      │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo_non_copyable(NonCopyableStruct) -> void;
+// CHECK:STDERR:        ·      ━━━━━━━━┳━━━━━━━                  ┬
+// CHECK:STDERR:        ·              ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ error: call to deleted constructor
+// CHECK:STDERR:        ·                                        │  ┃        of 'NonCopyableStruct'
+// CHECK:STDERR:        ·                                        │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·                                        ╰────┤ passing argument to parameter here
+// CHECK:STDERR:        ·                                             │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_non_copyable_param_type.carbon
+// CHECK:STDERR:        │   Cpp.foo_non_copyable(s);
+// CHECK:STDERR:        ·   ───────────┬───────────
+// CHECK:STDERR:        ·              ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo_non_copyable(NonCopyableStruct) -> void;
 
 // --- fail_import_non_copyable_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10 [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:6-21: error: call to deleted constructor of 'NonCopyableStruct' [CppInteropParseError]
-// CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'NonCopyableStruct' has been explicitly marked deleted here [CppInteropParseNote]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:40: note: passing argument to parameter here [CppInteropParseNote]
 import Cpp library "non_copyable_param_type.h";
 
 fn F(s: Cpp.NonCopyableStruct) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+2]]:3-25: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:
   Cpp.foo_non_copyable(s);
   //@dump-sem-ir-end
 }
@@ -283,9 +350,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:3-26: error: member access into incomplete class `Cpp.IncompleteStruct` [QualifiedExprInIncompleteClassScope]
-  // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   Cpp.IncompleteStruct.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: member access into incomplete class `Cpp.IncompleteStruct`
+  // CHECK:STDERR:        ·              ┃        [QualifiedExprInIncompleteClassScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./incomplete.h
+  // CHECK:STDERR:        │ struct IncompleteStruct;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.IncompleteStruct.foo();
 }
@@ -342,6 +418,25 @@ fn F(s: Cpp.DefPointerParamStruct*) {
 
 struct DeclValueReturnStruct;
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_return_type.h:[[@LINE+18]]:6
+// CHECK:STDERR:        │ struct DeclValueReturnStruct;
+// CHECK:STDERR:        ·        ┬
+// CHECK:STDERR:        ·        ╰──┤ forward declaration of 'DeclValueReturnStruct' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo_decl_value_return() -> DeclValueReturnStruct;
+// CHECK:STDERR:        ·      ┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: calling 'foo_decl_value_return' with incomplete return type
+// CHECK:STDERR:        ·      │  ┃        'DeclValueReturnStruct'
+// CHECK:STDERR:        ·      │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·      ╰────┤ 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_return_type.carbon
+// CHECK:STDERR:        │   Cpp.foo_decl_value_return();
+// CHECK:STDERR:        ·   ─────────────┬─────────────
+// CHECK:STDERR:        ·                ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo_decl_value_return() -> DeclValueReturnStruct;
 
 // --- fail_import_decl_value_return_type.carbon
@@ -349,19 +444,26 @@ auto foo_decl_value_return() -> DeclValueReturnStruct;
 library "[[@TEST_NAME]]";
 
 // TODO: We should only produce one error here.
-// CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnStruct' [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR: ./decl_value_return_type.h:2:8: note: forward declaration of 'DeclValueReturnStruct' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+7]]:3-29: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnStruct` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:8: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_return_type.h:4:33: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo_decl_value_return();
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: function returns incomplete type `Cpp.DeclValueReturnStruct`
+  // CHECK:STDERR:        ·            ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_return_type.h
+  // CHECK:STDERR:        │ struct DeclValueReturnStruct;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo_decl_value_return() -> DeclValueReturnStruct;
+  // CHECK:STDERR:        ·                                 ┬
+  // CHECK:STDERR:        ·                                 ╰──┤ return type declared here
+  // CHECK:STDERR:        ·                                    │ [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }
@@ -500,7 +602,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%s.param: %NonCopyableStruct) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_non_copyable.ref: %foo_non_copyable.cpp_overload_set.type = name_ref foo_non_copyable, imports.%foo_non_copyable.cpp_overload_set.value [concrete = constants.%foo_non_copyable.cpp_overload_set.value]
 // CHECK:STDOUT:   %s.ref: %NonCopyableStruct = name_ref s, %s
 // CHECK:STDOUT:   %foo_non_copyable.call: init %empty_tuple.type = call imports.%foo_non_copyable.decl(%s.ref)

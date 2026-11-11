@@ -11,9 +11,18 @@ name: 'Add prek suggestions'
 # we use a separate privileged `workflow_run` action here to pick up its results
 # and convert them into suggestion comments.
 #
+# For Dependabot PRs, prek's fixes usually come from an updated hook and are in
+# files outside the PR's diff, where GitHub doesn't allow suggestions. So
+# instead, we commit the fixes directly to Dependabot's branch.
+#
+# A privileged `workflow_run` action is inherently risky, because it could be
+# tricked into running untrusted code from a PR. So neither job here runs
+# anything from the PR, and both treat prek's output as untrusted.
+#
 # This action is only run from the workflow file on the trunk branch. Changes to
 # this file will not take effect until they are merged to trunk.
 on:
+  # zizmor: ignore[dangerous-triggers] - {necessary to act on prek's results}
   workflow_run:
     workflows: [prek]
     types:
@@ -25,14 +34,16 @@ permissions:
 
 jobs:
   pull-request-suggestions:
-    # Only generate suggestions if prek for a PR failed.
+    # Only generate suggestions if prek for a PR failed. Dependabot's PRs are
+    # handled by `dependabot-fixes` below.
     if: |
       github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.event == 'pull_request'
+      github.event.workflow_run.event == 'pull_request' &&
+      !startsWith(github.event.workflow_run.head_branch, 'dependabot/')
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           disable-sudo: true
           egress-policy: block
@@ -42,17 +53,18 @@ jobs:
             github.com:443
             objects.githubusercontent.com:443
             raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
 
-      - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
         with:
-          reviewdog_version: latest
+          reviewdog_version: v0.21.2
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Download prek output
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: prek output
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -68,3 +80,101 @@ jobs:
           cat ./diff | \
           GITHUB_EVENT_PATH=./event \
             reviewdog -f=diff -f.diff.strip=1 -reporter=github-pr-review
+
+  dependabot-fixes:
+    # Only handle prek failures from Dependabot's own pushes to its branches in
+    # this repository. This also keeps us from reacting to our own fix commits.
+    if: |
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # To download the artifact from the prek run.
+      contents: read # For actions/checkout.
+      pull-requests: read # To check the PR before pushing to it.
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Download prek output
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: prek output
+          path: ${{ runner.temp }}/prek-output
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      # The diff comes from running newly updated hooks, so treat it as
+      # untrusted: never run anything from it, and only accept edits to existing
+      # files outside of `.github`.
+      - name: Commit prek's fixes
+        env:
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          DIFF: ${{ runner.temp }}/prek-output/diff
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
+          # A CarbonInfraBot token that can push to this repository. A push with
+          # `GITHUB_TOKEN` wouldn't trigger CI for the new commit.
+          PUSH_TOKEN: ${{ secrets.CARBON_INFRA_BOT_DEPENDABOT_FIXES }}
+        run: |
+          # Check the PR itself, rather than trusting the artifact.
+          if [[ -z "$PR_NUMBER" ]]; then
+            echo "No PR is associated with this run, so skipping."
+            exit 0
+          fi
+          pr="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER" \
+            --jq '[.user.login, .head.ref, .head.sha] | join(" ")')"
+          if [[ "$pr" != "dependabot[bot] $BRANCH $HEAD_SHA" ]]; then
+            echo "PR #$PR_NUMBER isn't Dependabot's or has moved on; skipping."
+            exit 0
+          fi
+
+          if [[ ! -s "$DIFF" ]]; then
+            echo "prek didn't change any files, so there's nothing to commit."
+            exit 0
+          fi
+
+          # Have git describe the diff: `--numstat` gives a tab-separated line
+          # per file with its added and removed line counts ("-" for binary
+          # files), and `--summary` adds a line for anything that isn't an edit,
+          # such as creating, deleting, or renaming a file. Only accept text
+          # edits to files outside of `.github`.
+          changes="$(git apply --numstat --summary "$DIFF")"
+          rejected="$(awk -F'\t' '
+            !($1 ~ /^[0-9]+$/ && $2 ~ /^[0-9]+$/ && $3 !~ /^\.github\//)
+          ' <<<"$changes")"
+          if [[ -n "$rejected" ]]; then
+            echo "::error::Not applying prek's diff because of:"
+            echo "$rejected"
+            exit 1
+          fi
+          if ! git apply "$DIFF"; then
+            echo "::error::prek's diff doesn't apply; run prek on the branch."
+            exit 1
+          fi
+          if [[ -z "$PUSH_TOKEN" ]]; then
+            echo "::error::CARBON_INFRA_BOT_DEPENDABOT_FIXES isn't available."
+            exit 1
+          fi
+
+          git -c user.name=CarbonInfraBot \
+            -c user.email=64870956+CarbonInfraBot@users.noreply.github.com \
+            commit --all --quiet --message='Apply fixes from updated prek hooks'
+          remote="https://x-access-token:${PUSH_TOKEN}@github.com"
+          git push "$remote/$GITHUB_REPOSITORY.git" "HEAD:refs/heads/$BRANCH"

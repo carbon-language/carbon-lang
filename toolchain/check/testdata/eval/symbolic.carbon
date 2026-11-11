@@ -41,8 +41,17 @@ fn G(generic B: bool) {
 
 // TODO: Provide a location for the "cannot initialize" error message.
 fn H() {
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+3]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE-6]]:24-31: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
+  // CHECK:STDERR:        ╭─┤ fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   let unused n: F(B) = ({}, {});
+  // CHECK:STDERR:        ·                        ┬───────
+  // CHECK:STDERR:        ·                        ╰──┤ cannot initialize tuple of 0 elements from tuple
+  // CHECK:STDERR:        ·                           │ with 2 elements
+  // CHECK:STDERR:        ·                           │ [TupleInitElementCountMismatch]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   G(true);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(true);
 }
@@ -83,16 +92,41 @@ eval fn G(generic B: bool, (a: bool, b: bool)) -> type {
 // the type of the parameter. The argument for the generic parameter is found
 // in the specific for the callee, not in the arguments of the SemIR `call`.
 fn UseF(generic B: bool, x: F(B));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for F(B)>` [RedeclParamDiffersType]
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-32: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+15]]:26
+// CHECK:STDERR:        │ fn UseF(generic B: bool, x: F(B));
+// CHECK:STDERR:        ·                          ┬──────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseF(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type `<pattern for F(B)>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseF(generic B: bool, x: bool);
 
 // The arguments of the SemIR `call` are flattened by the nested tuple pattern
 // in the signature of `G`, and are regrouped here to match the source.
 fn UseG(generic B: bool, x: G(B, (true, false)));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for G(B, (true, false))>` [RedeclParamDiffersType]
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-47: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseG(generic B: bool, x: G(B, (true, false)));
+// CHECK:STDERR:        ·                          ┬─────────────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseG(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for G(B, (true, false))>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseG(generic B: bool, x: bool);
 
@@ -103,15 +137,32 @@ eval fn H(generic B: bool, (a: bool,)) -> type {
 }
 
 fn UseH(generic B: bool, x: H(B, (true,)));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for H(B, (true,))>` [RedeclParamDiffersType]
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-41: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseH(generic B: bool, x: H(B, (true,)));
+// CHECK:STDERR:        ·                          ┬───────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseH(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for H(B, (true,))>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseH(generic B: bool, x: bool);
 
 // The `self` argument is the first argument of the SemIR `call`, but is printed
 // before the name of the method, as it was written.
 class C {
-  // CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+2]]:13-22: warning: binding `self` unused [UnusedBinding]
+  // CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+6]]:13
+  // CHECK:STDERR: ->     │   eval fn M(self: Self, b: bool) -> type {
+  // CHECK:STDERR:        ·             ━━━━━┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ warning: binding `self` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   eval fn M(self: Self, b: bool) -> type {
     if (b) { return (); }
@@ -120,8 +171,19 @@ class C {
 }
 
 fn UseM(generic c: C, x: c.M(true));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:23-29: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (c).M(true)>` [RedeclParamDiffersType]
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:23-34: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+14]]:23
+// CHECK:STDERR:        │ fn UseM(generic c: C, x: c.M(true));
+// CHECK:STDERR:        ·                       ──┬─────────
+// CHECK:STDERR:        ·                         ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                            │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseM(generic c: C, x: bool);
+// CHECK:STDERR:        ·                       ┳━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                          ┃        redeclaration differs from previous parameter
+// CHECK:STDERR:        ·                          ┃        type `<pattern for (c).M(true)>`
+// CHECK:STDERR:        ·                          ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseM(generic c: C, x: bool);
 
@@ -134,8 +196,21 @@ impl type as J {
 }
 
 fn UseN(generic T: type, x: (const T).(J.N)());
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (const T).N()>` [RedeclParamDiffersType]
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-45: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseN(generic T: type, x: (const T).(J.N)());
+// CHECK:STDERR:        ·                          ┬───────────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseN(generic T: type, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for (const T).N()>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseN(generic T: type, x: bool);
 

@@ -13,10 +13,20 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:3: error: cannot dereference operand of non-pointer type `<type of A>` [DerefOfNonPointer]
+  // CHECK:STDERR:        ╭─┤ fail_deref_function.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   *A;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot dereference operand of non-pointer type `<type of A>`
+  // CHECK:STDERR:        ·      ┃        [DerefOfNonPointer]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_function.carbon:[[@LINE+2]]:4-5: error: cannot apply `->` operator to non-pointer type `<type of A>` [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR:        ╭─┤ fail_deref_function.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   A->foo;
+  // CHECK:STDERR:        ·    ━┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot apply `->` operator to non-pointer type `<type of A>`
+  // CHECK:STDERR:        ·        ┃        [ArrowOperatorOfNonPointer]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   A->foo;
 }
@@ -47,10 +57,10 @@ fn A() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc18: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc18: ref <error> = deref %A.ref.loc18 [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc21: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %.loc21: ref <error> = deref %A.ref.loc21 [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc23: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc23: ref <error> = deref %A.ref.loc23 [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc31: %A.type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %.loc31: ref <error> = deref %A.ref.loc31 [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

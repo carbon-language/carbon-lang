@@ -93,7 +93,11 @@ fn Run() -> i32 {
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_access_error.carbon:[[@LINE+2]]:17-20: error: name `oops` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_access_error.carbon:[[@LINE+6]]:17
+// CHECK:STDERR: ->     │ var b: i32 = a.(oops);
+// CHECK:STDERR:        ·                 ━━┳━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `oops` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.(oops);
 
@@ -103,7 +107,12 @@ library "[[@TEST_NAME]]";
 fn F() {}
 
 fn Run() {
-  // CHECK:STDERR: fail_empty_access.carbon:[[@LINE+2]]:3-7: error: tuple element index `0` is past the end of type `()` [TupleIndexOutOfBounds]
+  // CHECK:STDERR:        ╭─┤ fail_empty_access.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   F().0;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: tuple element index `0` is past the end of type `()`
+  // CHECK:STDERR:        ·        ┃        [TupleIndexOutOfBounds]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F().0;
 }
@@ -113,10 +122,22 @@ library "[[@TEST_NAME]]";
 
 var a: (i32,) = (12,);
 var b: (i32,) = a;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+2]]:14-16: error: tuple element index `1` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╭─┤ fail_large_index.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ var c: i32 = b.1;
+// CHECK:STDERR:        ·              ┳━━
+// CHECK:STDERR:        ·              ┗━━┫ error: tuple element index `1` is past the end of type
+// CHECK:STDERR:        ·                 ┃        `(i32,)`
+// CHECK:STDERR:        ·                 ┃        [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: i32 = b.1;
-// CHECK:STDERR: fail_large_index.carbon:[[@LINE+2]]:14-28: error: tuple element index `2147483647` is past the end of type `(i32,)` [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╭─┤ fail_large_index.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ var d: i32 = b.(0x7FFF_FFFF);
+// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: tuple element index `2147483647` is past the end of
+// CHECK:STDERR:        ·                 ┃        type `(i32,)`
+// CHECK:STDERR:        ·                 ┃        [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var d: i32 = b.(0x7FFF_FFFF);
 
@@ -124,7 +145,13 @@ var d: i32 = b.(0x7FFF_FFFF);
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_negative_indexing.carbon:[[@LINE+2]]:14-20: error: tuple element index `-10` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╭─┤ fail_negative_indexing.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ var b: i32 = a.(-10);
+// CHECK:STDERR:        ·              ┳━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: tuple element index `-10` is past the end of type
+// CHECK:STDERR:        ·                 ┃        `(i32, i32)`
+// CHECK:STDERR:        ·                 ┃        [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.(-10);
 
@@ -133,10 +160,25 @@ library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (2, 3);
 var b: i32 = 0;
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+5]]:17: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: min_prelude/parts/int.carbon:27:3-34: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ╭─┤ fail_non_deterministic_type.carbon:[[@LINE+20]]:17
+// CHECK:STDERR: ->     │ var c: i32 = a.(b);
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: non-constant call to compile-time-only function
+// CHECK:STDERR:        ·                    ┃        [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/int.carbon
+// CHECK:STDERR:        │   fn Convert(self) -> IntLiteral = "int.convert_checked";
+// CHECK:STDERR:        ·   ────────────────┬───────────────
+// CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_non_deterministic_type.carbon:[[@LINE+2]]:14-18: error: tuple index must be a constant [TupleIndexNotConstant]
+// CHECK:STDERR:        ╭─┤ fail_non_deterministic_type.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ var c: i32 = a.(b);
+// CHECK:STDERR:        ·              ━━┳━━
+// CHECK:STDERR:        ·                ┗━━┫ error: tuple index must be a constant
+// CHECK:STDERR:        ·                   ┃        [TupleIndexNotConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: i32 = a.(b);
 
@@ -144,8 +186,16 @@ var c: i32 = a.(b);
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17-19: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `Core.IntLiteral` [ConversionFailure]
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+2]]:17-19: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_non_int_indexing.carbon:[[@LINE+11]]:17
+// CHECK:STDERR: ->     │ var b: i32 = a.(2.6);
+// CHECK:STDERR:        ·                 ┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·                 │  ┃        `Core.FloatLiteral` to `Core.IntLiteral`
+// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                 ╰────┤ type `Core.FloatLiteral` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.IntLiteral)`
+// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.(2.6);
 
@@ -154,7 +204,14 @@ library "[[@TEST_NAME]]";
 
 fn Main() {
   var non_tuple: array(i32, 2) = (5, 5);
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+2]]:27-37: error: type `array(i32, 2)` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+  // CHECK:STDERR:        ╭─┤ fail_non_tuple_access.carbon:[[@LINE+9]]:27
+  // CHECK:STDERR: ->     │   var unused first: i32 = non_tuple.0;
+  // CHECK:STDERR:        ·                           ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·                           ┗━━┫ error: type `array(i32, 2)` does not support
+  // CHECK:STDERR:        ·                              ┃        tuple indexing; only tuples can be indexed
+  // CHECK:STDERR:        ·                              ┃        that way
+  // CHECK:STDERR:        ·                              ┃        [TupleIndexOnANonTupleType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused first: i32 = non_tuple.0;
 }
@@ -163,7 +220,13 @@ fn Main() {
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR: fail_out_of_bound_access.carbon:[[@LINE+2]]:14-16: error: tuple element index `2` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╭─┤ fail_out_of_bound_access.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ var b: i32 = a.2;
+// CHECK:STDERR:        ·              ┳━━
+// CHECK:STDERR:        ·              ┗━━┫ error: tuple element index `2` is past the end of type
+// CHECK:STDERR:        ·                 ┃        `(i32, i32)`
+// CHECK:STDERR:        ·                 ┃        [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.2;
 
@@ -171,7 +234,13 @@ var b: i32 = a.2;
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 34);
-// CHECK:STDERR: fail_out_of_bound_not_literal.carbon:[[@LINE+2]]:14-35: error: tuple element index `2` is past the end of type `(i32, i32)` [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╭─┤ fail_out_of_bound_not_literal.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ var b: i32 = a.({.index = 2}.index);
+// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: tuple element index `2` is past the end of type
+// CHECK:STDERR:        ·                 ┃        `(i32, i32)`
+// CHECK:STDERR:        ·                 ┃        [TupleIndexOutOfBounds]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.({.index = 2}.index);
 
@@ -189,11 +258,11 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.d94 = ref_binding_pattern c [concrete]
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.d94 = var_pattern %c.patt [concrete]
@@ -258,11 +327,11 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.cb1 = ref_binding_pattern c [concrete]
@@ -272,21 +341,21 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.396: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.84a: %Core.IntLiteral.as.As.impl.Convert.type.396 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.impl_witness.e09: <witness> = impl_witness imports.%As.impl_witness_table.1c2, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.b93 = facet_value Core.IntLiteral, (%As.impl_witness.e09) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.2be: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
 // CHECK:STDOUT:   %.979: type = fn_type_with_self_type %As.WithSelf.Convert.type.2be, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound.326: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.As.impl.Convert.94f [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.94f, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.e88: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_0.753: %i32 = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.323: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.b7c, @Int.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.f39: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.779: %Int.as.ImplicitAs.impl.Convert.type.f39 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.0aa: %ImplicitAs.type.5be = facet_value %i32, (%ImplicitAs.impl_witness.323) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.4c7: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(Core.IntLiteral, %ImplicitAs.facet.0aa) [concrete]
 // CHECK:STDOUT:   %.ce7: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.4c7, %ImplicitAs.facet.0aa [concrete]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.type.f39: type = fn_type @Int.as.ImplicitAs.impl.Convert, @Int.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.779: %Int.as.ImplicitAs.impl.Convert.type.f39 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound.741: <bound method> = bound_method %int_0.753, %Int.as.ImplicitAs.impl.Convert.779 [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Int.as.ImplicitAs.impl.Convert.779, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.ae8: <bound method> = bound_method %int_0.753, %Int.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -422,11 +491,11 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -66,7 +66,13 @@ library "[[@TEST_NAME]]";
 choice Never {}
 
 // TODO: Can we produce a better diagnostic?
-// CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+2]]:20-21: error: missing value for field `discriminant` in struct initialization [StructInitMissingFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_no_alternative_construct.carbon:[[@LINE+8]]:20
+// CHECK:STDERR: ->     │ let never: Never = {};
+// CHECK:STDERR:        ·                    ┳━
+// CHECK:STDERR:        ·                    ┗━━┫ error: missing value for field `discriminant` in struct
+// CHECK:STDERR:        ·                       ┃        initialization
+// CHECK:STDERR:        ·                       ┃        [StructInitMissingFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let never: Never = {};
 
@@ -132,7 +138,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_1.10: init %Always = converted %.loc6_1.3, %.loc6_1.9 [concrete = constants.%Always.val]
 // CHECK:STDOUT:   %.loc6_1.11: ref %Always = temporary %.loc6_1.4, %.loc6_1.10 [concrete = constants.%.302]
 // CHECK:STDOUT:   %.loc6_1.12: %Always = acquire_value %.loc6_1.11 [concrete = constants.%Always.val]
-// CHECK:STDOUT:   %Sunny: %Always = wrapper_binding Sunny, %.loc6_1.12
+// CHECK:STDOUT:   %Sunny: %Always = alias_binding Sunny, %.loc6_1.12 [concrete = constants.%Always.val]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -143,7 +149,7 @@ let never: Never = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Always.ref: type = name_ref Always, file.%Always.decl [concrete = constants.%Always]
-// CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny
+// CHECK:STDOUT:   %Sunny.ref: %Always = name_ref Sunny, @Always.%Sunny [concrete = constants.%Always.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -163,11 +169,11 @@ let never: Never = {};
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.be5: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.60e: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.be5 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.28a: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.79a, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.303: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.303 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.666 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.28a) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.e12: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%u2, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.935: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.e12, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.303: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.303 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.0c6: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.0f4: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -177,11 +183,11 @@ let never: Never = {};
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.97a: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.2a0: %UInt.as.Copy.impl.Op.type.97a = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.81e: <witness> = impl_witness imports.%Copy.impl_witness_table.238, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
-// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.141: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
-// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.c78: %UInt.as.Copy.impl.Op.type.141 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %u2, (%Copy.impl_witness.81e) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.7a4: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.7ec: type = fn_type_with_self_type %Copy.WithSelf.Op.type.7a4, %Copy.facet [concrete]
+// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.type.141: type = fn_type @UInt.as.Copy.impl.Op, @UInt.as.Copy.impl(%int_2.ecc) [concrete]
+// CHECK:STDOUT:   %UInt.as.Copy.impl.Op.c78: %UInt.as.Copy.impl.Op.type.141 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.bound.2cc: <bound method> = bound_method %int_0.fdb, %UInt.as.Copy.impl.Op.c78 [concrete]
 // CHECK:STDOUT:   %UInt.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %UInt.as.Copy.impl.Op.c78, @UInt.as.Copy.impl.Op(%int_2.ecc) [concrete]
 // CHECK:STDOUT:   %bound_method.51c: <bound method> = bound_method %int_0.fdb, %UInt.as.Copy.impl.Op.specific_fn [concrete]
@@ -274,7 +280,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc5_7.8: init %Ordering = converted %.loc5_7.3, %.loc5_7.7 [concrete = constants.%Ordering.val.cff]
 // CHECK:STDOUT:   %.loc5_7.9: ref %Ordering = temporary %.loc5_7.4, %.loc5_7.8 [concrete = constants.%.51f]
 // CHECK:STDOUT:   %.loc5_7.10: %Ordering = acquire_value %.loc5_7.9 [concrete = constants.%Ordering.val.cff]
-// CHECK:STDOUT:   %Less: %Ordering = wrapper_binding Less, %.loc5_7.10
+// CHECK:STDOUT:   %Less: %Ordering = alias_binding Less, %.loc5_7.10 [concrete = constants.%Ordering.val.cff]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1: %.935 = impl_witness_access constants.%ImplicitAs.impl_witness.28a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %int_1, %impl.elem0.loc6_13.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.758]
@@ -296,7 +302,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc6_13.8: init %Ordering = converted %.loc6_13.3, %.loc6_13.7 [concrete = constants.%Ordering.val.168]
 // CHECK:STDOUT:   %.loc6_13.9: ref %Ordering = temporary %.loc6_13.4, %.loc6_13.8 [concrete = constants.%.6c9]
 // CHECK:STDOUT:   %.loc6_13.10: %Ordering = acquire_value %.loc6_13.9 [concrete = constants.%Ordering.val.168]
-// CHECK:STDOUT:   %Equivalent: %Ordering = wrapper_binding Equivalent, %.loc6_13.10
+// CHECK:STDOUT:   %Equivalent: %Ordering = alias_binding Equivalent, %.loc6_13.10 [concrete = constants.%Ordering.val.168]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %impl.elem0.loc7_10.1: %.935 = impl_witness_access constants.%ImplicitAs.impl_witness.28a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc]
 // CHECK:STDOUT:   %bound_method.loc7_10.1: <bound method> = bound_method %int_2, %impl.elem0.loc7_10.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5fc]
@@ -318,7 +324,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc7_10.8: init %Ordering = converted %.loc7_10.3, %.loc7_10.7 [concrete = constants.%Ordering.val.b35]
 // CHECK:STDOUT:   %.loc7_10.9: ref %Ordering = temporary %.loc7_10.4, %.loc7_10.8 [concrete = constants.%.14c]
 // CHECK:STDOUT:   %.loc7_10.10: %Ordering = acquire_value %.loc7_10.9 [concrete = constants.%Ordering.val.b35]
-// CHECK:STDOUT:   %Greater: %Ordering = wrapper_binding Greater, %.loc7_10.10
+// CHECK:STDOUT:   %Greater: %Ordering = alias_binding Greater, %.loc7_10.10 [concrete = constants.%Ordering.val.b35]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %impl.elem0.loc9_1.1: %.935 = impl_witness_access constants.%ImplicitAs.impl_witness.28a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.dcc]
 // CHECK:STDOUT:   %bound_method.loc9_1.1: <bound method> = bound_method %int_3, %impl.elem0.loc9_1.1 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.65d]
@@ -340,7 +346,7 @@ let never: Never = {};
 // CHECK:STDOUT:   %.loc9_1.8: init %Ordering = converted %.loc9_1.3, %.loc9_1.7 [concrete = constants.%Ordering.val.40a]
 // CHECK:STDOUT:   %.loc9_1.9: ref %Ordering = temporary %.loc9_1.4, %.loc9_1.8 [concrete = constants.%.7f3]
 // CHECK:STDOUT:   %.loc9_1.10: %Ordering = acquire_value %.loc9_1.9 [concrete = constants.%Ordering.val.40a]
-// CHECK:STDOUT:   %Incomparable: %Ordering = wrapper_binding Incomparable, %.loc9_1.10
+// CHECK:STDOUT:   %Incomparable: %Ordering = alias_binding Incomparable, %.loc9_1.10 [concrete = constants.%Ordering.val.40a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -354,13 +360,13 @@ let never: Never = {};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Ordering.ref.loc11: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %Less.ref: %Ordering = name_ref Less, @Ordering.%Less
+// CHECK:STDOUT:   %Less.ref: %Ordering = name_ref Less, @Ordering.%Less [concrete = constants.%Ordering.val.cff]
 // CHECK:STDOUT:   %Ordering.ref.loc12: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %Equivalent.ref: %Ordering = name_ref Equivalent, @Ordering.%Equivalent
+// CHECK:STDOUT:   %Equivalent.ref: %Ordering = name_ref Equivalent, @Ordering.%Equivalent [concrete = constants.%Ordering.val.168]
 // CHECK:STDOUT:   %Ordering.ref.loc13: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %Greater.ref: %Ordering = name_ref Greater, @Ordering.%Greater
+// CHECK:STDOUT:   %Greater.ref: %Ordering = name_ref Greater, @Ordering.%Greater [concrete = constants.%Ordering.val.b35]
 // CHECK:STDOUT:   %Ordering.ref.loc14: type = name_ref Ordering, file.%Ordering.decl [concrete = constants.%Ordering]
-// CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable
+// CHECK:STDOUT:   %Incomparable.ref: %Ordering = name_ref Incomparable, @Ordering.%Incomparable [concrete = constants.%Ordering.val.40a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

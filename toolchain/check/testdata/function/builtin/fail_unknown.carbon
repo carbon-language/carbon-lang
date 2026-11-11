@@ -12,7 +12,13 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/builtin/fail_unknown.carbon
 
-// CHECK:STDERR: fail_unknown.carbon:[[@LINE+2]]:23-44: error: unknown builtin function name "unknown.builtin.name" [UnknownBuiltinFunctionName]
+// CHECK:STDERR:        ╭─┤ fail_unknown.carbon:[[@LINE+8]]:23
+// CHECK:STDERR: ->     │ fn UnknownBuiltin() = "unknown.builtin.name";
+// CHECK:STDERR:        ·                       ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: unknown builtin function name
+// CHECK:STDERR:        ·                          ┃        "unknown.builtin.name"
+// CHECK:STDERR:        ·                          ┃        [UnknownBuiltinFunctionName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UnknownBuiltin() = "unknown.builtin.name";
 

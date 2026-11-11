@@ -10,9 +10,13 @@
 
 fn f() -> i32 {
   match (3) {
-    case x: i32 =>
-    // CHECK:STDERR: fail_missing_case_statements_block.carbon:[[@LINE+2]]:5-11: error: expected `{` after `=>` [ExpectedMatchCaseBlock]
+    // CHECK:STDERR:        ╭─┤ fail_missing_case_statements_block.carbon:[[@LINE+6]]:19
+    // CHECK:STDERR: ->     │     case x: i32 =>
+    // CHECK:STDERR:        ·                   ┳
+    // CHECK:STDERR:        ·                   ┗━━┫ error: expected `{` after `=>` [ExpectedMatchCaseBlock]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
+    case x: i32 =>
     default => { return 3; }
   }
   return 0;

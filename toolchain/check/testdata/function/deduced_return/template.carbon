@@ -45,8 +45,18 @@ class D {
 // The definition of `F(D)` is needed to determine the return type, so it's
 // instantiated at the call.
 fn G(d: D) -> i32 {
-  // CHECK:STDERR: fail_instantiation_error.carbon:[[@LINE+3]]:10-13: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_instantiation_error.carbon:[[@LINE-10]]:47-49: note: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_instantiation_error.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        │ fn F[template T: type](x: T) -> auto { return x.n; }
+  // CHECK:STDERR:        ·                                               ┬──
+  // CHECK:STDERR:        ·                                               ╰──┤ member name `n` not found in
+  // CHECK:STDERR:        ·                                                  │ `D`
+  // CHECK:STDERR:        ·                                                  │ [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return F(d);
+  // CHECK:STDERR:        ·          ━━┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `F(D)`
+  // CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return F(d);
 }
@@ -59,9 +69,21 @@ fn F[template T: type](x: T) -> auto {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE+4]]:3-13: error: unable to monomorphize specific `F(i32)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE-5]]:10-13: note: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-  // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE-7]]:1-38: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_recursion_before_deduced.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        │ fn F[template T: type](x: T) -> auto {
+  // CHECK:STDERR:        · ───────────────────┬──────────────────
+  // CHECK:STDERR:        ·                    ╰──┤ return type of `F` is deduced from its definition
+  // CHECK:STDERR:        ·                       │ [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        │   return F(x);
+  // CHECK:STDERR:        ·          ──┬─
+  // CHECK:STDERR:        ·            ╰──┤ call to `F` before its return type is known
+  // CHECK:STDERR:        ·               │ [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(0 as i32);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: unable to monomorphize specific `F(i32)`
+  // CHECK:STDERR:        ·           ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(0 as i32);
 }
@@ -129,11 +151,11 @@ fn G() -> i32 { return F(0 as i32, true); }
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.95d: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.c58: init %i32 = splice_block %Int.as.Copy.impl.Op.call {

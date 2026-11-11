@@ -14,8 +14,17 @@
 library "[[@TEST_NAME]]";
 
 fn F(x: i32 = 0, y: i32 = 10);
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE+3]]:25-42: error: redeclaration differs at parameter 2 [RedeclParamDiffers]
-// CHECK:STDERR: fail_defaults_different_values_redecl.carbon:[[@LINE-2]]:18-28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_defaults_different_values_redecl.carbon:[[@LINE+12]]:25
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 10);
+// CHECK:STDERR:        ·                  ─────┬─────
+// CHECK:STDERR:        ·                       ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                          │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused x: i32 = 0, unused y: i32 = 22) { }
+// CHECK:STDERR:        ·                         ━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: redeclaration differs at parameter 2
+// CHECK:STDERR:        ·                                    ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
@@ -27,8 +36,18 @@ fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
 // --- fail_imported_default_presence_mismatch.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+3]]:13-18: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: imported_default_presence_mismatch.carbon:3:6-15: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_imported_default_presence_mismatch.impl.carbon:[[@LINE+13]]:13
+// CHECK:STDERR: ->     │ fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
+// CHECK:STDERR:        ·             ━━━┳━━
+// CHECK:STDERR:        ·                ┗━━┫ error: redeclaration differs at parameter 1
+// CHECK:STDERR:        ·                   ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ imported_default_presence_mismatch.carbon
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 1, z: i32 = 2);
+// CHECK:STDERR:        ·      ─────┬────
+// CHECK:STDERR:        ·           ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·              │ [RedeclParamPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32, unused y: i32 = 1, unused z: i32 = 2) { }
 
@@ -40,8 +59,18 @@ fn F(x: i32 = 0, y: i32 = 10);
 // --- fail_imported_defaults_different_values.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_imported_defaults_different_values.impl.carbon:[[@LINE+3]]:25-42: error: redeclaration differs at parameter 2 [RedeclParamDiffers]
-// CHECK:STDERR: imported_defaults_different_values.carbon:3:18-28: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
+// CHECK:STDERR:        ╭─┤ fail_imported_defaults_different_values.impl.carbon:[[@LINE+13]]:25
+// CHECK:STDERR: ->     │ fn F(unused x: i32 = 0, unused y: i32 = 22) { }
+// CHECK:STDERR:        ·                         ━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: redeclaration differs at parameter 2
+// CHECK:STDERR:        ·                                    ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ imported_defaults_different_values.carbon
+// CHECK:STDERR:        │ fn F(x: i32 = 0, y: i32 = 10);
+// CHECK:STDERR:        ·                  ─────┬─────
+// CHECK:STDERR:        ·                       ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                          │ [RedeclParamPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused x: i32 = 0, unused y: i32 = 22) { }
 
@@ -82,11 +111,11 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %.0b3: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.299: %pattern_type.d94 = out_param_pattern [concrete]
@@ -101,11 +130,11 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,11 +198,11 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %.0b3: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.299: %pattern_type.d94 = out_param_pattern [concrete]
@@ -188,11 +217,11 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

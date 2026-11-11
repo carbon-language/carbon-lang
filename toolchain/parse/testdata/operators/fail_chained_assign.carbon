@@ -13,7 +13,12 @@ fn F() {
   var b: i32;
 
   // TODO: Produce a custom diagnostic for this.
-  // CHECK:STDERR: fail_chained_assign.carbon:[[@LINE+2]]:9: error: operator `=` can only be used as a complete statement [StatementOperatorAsSubExpr]
+  // CHECK:STDERR:        ╭─┤ fail_chained_assign.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   a = b = 1;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: operator `=` can only be used as a complete statement
+  // CHECK:STDERR:        ·            ┃        [StatementOperatorAsSubExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = b = 1;
 }

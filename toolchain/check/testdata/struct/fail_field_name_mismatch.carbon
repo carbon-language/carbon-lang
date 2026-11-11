@@ -13,15 +13,33 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_name_mismatch.carbon
 
 var a: {.a: i32} = {.a = 1 };
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:29: error: cannot convert from struct type `{.a: i32}` to `{.a: i32, .b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
+// CHECK:STDERR:        ╭─┤ fail_field_name_mismatch.carbon:[[@LINE+9]]:29
+// CHECK:STDERR: ->     │ var b: {.a: i32, .b: i32} = a;
+// CHECK:STDERR:        ·                             ┳
+// CHECK:STDERR:        ·                             ┗━━┫ error: cannot convert from struct type
+// CHECK:STDERR:        ·                                ┃        `{.a: i32}` to `{.a: i32, .b: i32}`:
+// CHECK:STDERR:        ·                                ┃        missing field `b` in source type
+// CHECK:STDERR:        ·                                ┃        [StructInitMissingFieldInConversion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: {.a: i32, .b: i32} = a;
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:20-27: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_field_name_mismatch.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ var x: {.a: i32} = {.b = 1};
+// CHECK:STDERR:        ·                    ━━━━┳━━━
+// CHECK:STDERR:        ·                        ┗━━┫ error: struct `{.a: i32}` has no field named `b`
+// CHECK:STDERR:        ·                           ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ╭─┤ fail_field_name_mismatch.carbon:[[@LINE+8]]:20
+// CHECK:STDERR: ->     │ var y: {.b: i32} = x;
+// CHECK:STDERR:        ·                    ┳
+// CHECK:STDERR:        ·                    ┗━━┫ error: cannot convert from struct type `{.a: i32}` to
+// CHECK:STDERR:        ·                       ┃        `{.b: i32}`: unexpected field `a` in source type
+// CHECK:STDERR:        ·                       ┃        [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y: {.b: i32} = x;
 
@@ -49,11 +67,11 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -68,11 +86,11 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete]
@@ -121,9 +139,9 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.243 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref %struct_type.a.b = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b] {
-// CHECK:STDOUT:     %i32.loc18_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc18_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc25: type = splice_block %struct_type.a.b [concrete = constants.%struct_type.a.b] {
+// CHECK:STDOUT:     %i32.loc25_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc25_22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: ref %struct_type.a.b = wrapper_binding b, %b.var [concrete = %b.var]
@@ -132,9 +150,9 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.290 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x.var: ref %struct_type.a.15e = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc22: type = splice_block %struct_type.a.loc22 [concrete = constants.%struct_type.a.15e] {
-// CHECK:STDOUT:     %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %struct_type.a.loc22: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.15e]
+// CHECK:STDOUT:   %.loc34: type = splice_block %struct_type.a.loc34 [concrete = constants.%struct_type.a.15e] {
+// CHECK:STDOUT:     %i32.loc34: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.loc34: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.15e]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a.15e = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -142,8 +160,8 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.5bf = var_storage %y.var_patt [concrete]
-// CHECK:STDOUT:   %.loc26: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.5bf] {
-// CHECK:STDOUT:     %i32.loc26: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc44: type = splice_block %struct_type.b [concrete = constants.%struct_type.b.5bf] {
+// CHECK:STDOUT:     %i32.loc44: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b: type = struct_type {.b: %i32} [concrete = constants.%struct_type.b.5bf]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.5bf = wrapper_binding y, %y.var [concrete = %y.var]
@@ -167,18 +185,18 @@ var y: {.b: i32} = x;
 // CHECK:STDOUT:   %.loc15_1: init %struct_type.a.15e = converted %.loc15_28.1, %.loc15_28.3 [concrete = constants.%struct.570]
 // CHECK:STDOUT:   assign file.%a.var, %.loc15_1
 // CHECK:STDOUT:   %a.ref: ref %struct_type.a.15e = name_ref a, file.%a [concrete = file.%a.var]
-// CHECK:STDOUT:   %.loc18_29.1: ref %i32 = struct_access %a.ref, element0 [concrete = constants.%.c96]
-// CHECK:STDOUT:   %.loc18_29.2: %i32 = acquire_value %.loc18_29.1
-// CHECK:STDOUT:   %impl.elem0.loc18: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc18_29.1: <bound method> = bound_method %.loc18_29.2, %impl.elem0.loc18
-// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_29.2: <bound method> = bound_method %.loc18_29.2, %specific_fn.loc18
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_29.2(%.loc18_29.2)
-// CHECK:STDOUT:   %.loc18_29.3: ref %i32 = struct_access file.%b.var, element0 [concrete = constants.%.b5f]
-// CHECK:STDOUT:   %.loc18_29.4: init %i32 to %.loc18_29.3 = in_place_init %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT:   %.loc25_29.1: ref %i32 = struct_access %a.ref, element0 [concrete = constants.%.c96]
+// CHECK:STDOUT:   %.loc25_29.2: %i32 = acquire_value %.loc25_29.1
+// CHECK:STDOUT:   %impl.elem0.loc25: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc25_29.1: <bound method> = bound_method %.loc25_29.2, %impl.elem0.loc25
+// CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem0.loc25, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc25_29.2: <bound method> = bound_method %.loc25_29.2, %specific_fn.loc25
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc25_29.2(%.loc25_29.2)
+// CHECK:STDOUT:   %.loc25_29.3: ref %i32 = struct_access file.%b.var, element0 [concrete = constants.%.b5f]
+// CHECK:STDOUT:   %.loc25_29.4: init %i32 to %.loc25_29.3 = in_place_init %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %.loc22: %struct_type.b.a15 = struct_literal (%int_1.loc22) [concrete = constants.%struct.62b]
+// CHECK:STDOUT:   %int_1.loc34: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %.loc34: %struct_type.b.a15 = struct_literal (%int_1.loc34) [concrete = constants.%struct.62b]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   %x.ref: ref %struct_type.a.15e = name_ref x, file.%x [concrete = file.%x.var]
 // CHECK:STDOUT:   assign file.%y.var, <error>

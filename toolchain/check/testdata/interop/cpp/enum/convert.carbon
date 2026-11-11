@@ -39,28 +39,60 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+3]]:3-18: error: cannot convert expression of type `Cpp.Enum` to `i8` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-18: note: type `Cpp.Enum` does not implement interface `Core.As(i8)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   Cpp.Enum.a as i8;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot convert expression of type `Cpp.Enum` to `i8` with `as`
+  // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·       ╰────┤ type `Cpp.Enum` does not implement interface `Core.As(i8)`
+  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Enum.a as i8;
 
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+3]]:3-19: error: cannot convert expression of type `Cpp.Enum` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-19: note: type `Cpp.Enum` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   Cpp.Enum.a as i32;
+  // CHECK:STDERR:        ·   ━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot convert expression of type `Cpp.Enum` to `i32` with `as`
+  // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·      ╰────┤ type `Cpp.Enum` does not implement interface `Core.As(i32)`
+  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Enum.a as i32;
 
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+3]]:3-24: error: cannot convert expression of type `i8` to `Cpp.Enum` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-24: note: type `i8` does not implement interface `Core.As(Cpp.Enum)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   (42 as i8) as Cpp.Enum;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot convert expression of type `i8` to `Cpp.Enum` with `as`
+  // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·       ╰────┤ type `i8` does not implement interface `Core.As(Cpp.Enum)`
+  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (42 as i8) as Cpp.Enum;
 
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+3]]:3-25: error: cannot convert expression of type `i32` to `Cpp.Enum` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-25: note: type `i32` does not implement interface `Core.As(Cpp.Enum)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   (42 as i32) as Cpp.Enum;
+  // CHECK:STDERR:        ·   ━━━┳━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot convert expression of type `i32` to `Cpp.Enum` with `as`
+  // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·      ╰────┤ type `i32` does not implement interface `Core.As(Cpp.Enum)`
+  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (42 as i32) as Cpp.Enum;
 
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+3]]:3-28: error: cannot convert expression of type `Cpp.Enum` to `Cpp.DifferentSize` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-28: note: type `Cpp.Enum` does not implement interface `Core.As(Cpp.DifferentSize)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   Cpp.a as Cpp.DifferentSize;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert expression of type `Cpp.Enum` to
+  // CHECK:STDERR:        ·   │  ┃        `Cpp.DifferentSize` with `as`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.Enum` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.As(Cpp.DifferentSize)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.a as Cpp.DifferentSize;
 }
@@ -86,11 +118,11 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.396: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.84a: %Core.IntLiteral.as.As.impl.Convert.type.396 = struct_value () [symbolic]
 // CHECK:STDOUT:   %As.impl_witness.4de: <witness> = impl_witness imports.%As.impl_witness_table.1c2, @Core.IntLiteral.as.As.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.361: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_16) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.262: %Core.IntLiteral.as.As.impl.Convert.type.361 = struct_value () [concrete]
 // CHECK:STDOUT:   %As.facet: %As.type.144 = facet_value Core.IntLiteral, (%As.impl_witness.4de) [concrete]
 // CHECK:STDOUT:   %As.WithSelf.Convert.type.0b5: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i16, %As.facet) [concrete]
 // CHECK:STDOUT:   %.f79: type = fn_type_with_self_type %As.WithSelf.Convert.type.0b5, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.361: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_16) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.262: %Core.IntLiteral.as.As.impl.Convert.type.361 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.As.impl.Convert.262 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.262, @Core.IntLiteral.as.As.impl.Convert(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]

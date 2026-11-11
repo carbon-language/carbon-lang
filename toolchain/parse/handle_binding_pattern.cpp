@@ -77,15 +77,16 @@ auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&](bool expected_name, bool recover_as_raw = false) {
+  auto on_error = [&](DiagnosticLoc loc, bool expected_name,
+                      bool recover_as_raw = false) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(
           ExpectedBindingPattern, Error,
           "expected {0:name|`:` or `:?`} in binding pattern"
           "{1:; prefix reserved word with `r#` to form a valid identifier|}",
           Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
-      context.emitter().Emit(*context.position(), ExpectedBindingPattern,
-                             expected_name, recover_as_raw);
+      context.emitter().Emit(loc, ExpectedBindingPattern, expected_name,
+                             recover_as_raw);
       state.has_error = !recover_as_raw;
     }
   };
@@ -135,8 +136,7 @@ auto HandleBindingPattern(Context& context) -> void {
           AnonymousBindingInStructPattern, Error,
           "anonymous binding found in struct pattern; use `.field = "
           "_: field_type` or `unused field: field_type`");
-      context.emitter().Emit(*context.position(),
-                             AnonymousBindingInStructPattern);
+      context.emitter().Emit(*underscore, AnonymousBindingInStructPattern);
       state.has_error = true;
     }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
@@ -147,17 +147,22 @@ auto HandleBindingPattern(Context& context) -> void {
     // such as a numeric type literal or a keyword. For error recovery, convert
     // the token to an identifier, as we can be confident that a word in this
     // position was intended to be a declared name.
+    auto word = context.Consume();
     auto word_as_identifier =
-        context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
-            context.Consume());
+        context.tokens().AddPostLexingRecoveryTokenAsIdentifier(word);
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         word_as_identifier);
-    on_error(/*expected_name=*/true, /*recover_as_raw*/ true);
+    on_error(word, /*expected_name=*/true, /*recover_as_raw*/ true);
   } else {
+    // The missing name goes after the modifiers before it. With none, the
+    // binding starts at the token found in the name's place.
+    auto missing_name_loc = state.token == *context.position()
+                                ? DiagnosticLoc(*context.position())
+                                : context.PointAfterPreviousToken();
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         *context.position(), /*has_error=*/true);
-    on_error(/*expected_name=*/true);
+    on_error(missing_name_loc, /*expected_name=*/true);
   }
 
   auto token_kind = context.PositionKind();
@@ -177,7 +182,7 @@ auto HandleBindingPattern(Context& context) -> void {
       }
       return;
     }
-    on_error(/*expected_name=*/false);
+    on_error(context.PointAfterPreviousToken(), /*expected_name=*/false);
     // Add a substitute for the identifier name and virtual type-start nodes.
     context.AddInvalidParse(*context.position());
     context.AddInvalidParse(*context.position());

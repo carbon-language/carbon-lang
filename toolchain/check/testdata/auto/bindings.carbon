@@ -46,7 +46,12 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-    // CHECK:STDERR: fail_todo_tuple.carbon:[[@LINE+2]]:20-23: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+    // CHECK:STDERR:        ╭─┤ fail_todo_tuple.carbon:[[@LINE+7]]:20
+    // CHECK:STDERR: ->     │     let unused x: (auto, auto) = (86, false);
+    // CHECK:STDERR:        ·                    ━━┳━
+    // CHECK:STDERR:        ·                      ┗━━┫ error: semantics TODO: `HandleAutoTypeLiteral`
+    // CHECK:STDERR:        ·                         ┃        [SemanticsTodo]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let unused x: (auto, auto) = (86, false);
     var unused y: (auto, auto) = ({}, "str");
@@ -79,7 +84,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-    // CHECK:STDERR: fail_tuple_pattern_mismatch.carbon:[[@LINE+2]]:5-40: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
+    // CHECK:STDERR:        ╭─┤ fail_tuple_pattern_mismatch.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     var (unused x: auto, unused y: auto) = ((), (), ());
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot initialize tuple of 2 elements from tuple with 3 elements
+    // CHECK:STDERR:        ·        ┃        [TupleInitElementCountMismatch]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     var (unused x: auto, unused y: auto) = ((), (), ());
 }
@@ -88,7 +98,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-    // CHECK:STDERR: fail_nested_tuple_pattern_mismatch.carbon:[[@LINE+2]]:5-74: error: cannot initialize tuple of 3 elements from tuple with 2 elements [TupleInitElementCountMismatch]
+    // CHECK:STDERR:        ╭─┤ fail_nested_tuple_pattern_mismatch.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     var (unused x: auto, (unused y: auto, unused z: auto, unused w: auto))...
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot initialize tuple of 3 elements from tuple with 2 elements
+    // CHECK:STDERR:        ·        ┃        [TupleInitElementCountMismatch]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     var (unused x: auto, (unused y: auto, unused z: auto, unused w: auto)) = ((), ({}, ()));
 }
@@ -97,7 +112,13 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-    // CHECK:STDERR: fail_uninitialized_var.carbon:[[@LINE+2]]:5-23: error: expected `=`; `var` declaration with type `auto` must have an initializer [ExpectedInitializerAfterAutoTypedVar]
+    // CHECK:STDERR:        ╭─┤ fail_uninitialized_var.carbon:[[@LINE+8]]:5
+    // CHECK:STDERR: ->     │     var unused x: auto;
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: expected `=`; `var` declaration with type `auto` must have an
+    // CHECK:STDERR:        ·        ┃        initializer
+    // CHECK:STDERR:        ·        ┃        [ExpectedInitializerAfterAutoTypedVar]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     var unused x: auto;
 }

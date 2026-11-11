@@ -47,11 +47,21 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-20: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew() -> i32 = "int.snegate";
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: invalid signature for builtin function "int.snegate"
+// CHECK:STDERR:        ·              ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew() -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:25-32: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:25
+// CHECK:STDERR: ->     │ var too_few: array(i32, TooFew());
+// CHECK:STDERR:        ·                         ━━━━┳━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_few: array(i32, TooFew());
 
@@ -63,11 +73,21 @@ fn RuntimeCallIsValidTooFew() -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid signature for builtin function "int.snegate"
+// CHECK:STDERR:        ·                    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:26-38: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:26
+// CHECK:STDERR: ->     │ var too_many: array(i32, TooMany(1, 2));
+// CHECK:STDERR:        ·                          ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                   ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_many: array(i32, TooMany(1, 2));
 
@@ -79,11 +99,21 @@ fn RuntimeCallIsValidTooMany(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "int.snegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: i32) -> bool = "int.snegate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid signature for builtin function "int.snegate"
+// CHECK:STDERR:        ·                    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: i32) -> bool = "int.snegate";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:33-48: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:33
+// CHECK:STDERR: ->     │ var bad_return_type: array(i32, BadReturnType(1));
+// CHECK:STDERR:        ·                                 ━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·                                        ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                           ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_return_type: array(i32, BadReturnType(1));
 
@@ -97,8 +127,17 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: i32) -> i32 = "int.snegate";
 
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+3]]:26-37: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-3]]:1-26: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
+// CHECK:STDERR:        │ fn Negate(a: i32) -> i32 = "int.snegate";
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var bad_call: array(i32, Negate(1, 2));
+// CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: 2 arguments passed to function expecting 1
+// CHECK:STDERR:        ·                             ┃        argument
+// CHECK:STDERR:        ·                             ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_call: array(i32, Negate(1, 2));
 
@@ -113,7 +152,12 @@ fn Sub(a: i32, b: i32) -> i32 = "int.ssub";
 let a: i32 = Negate(Negate(0x7FFF_FFFF));
 
 // -INT_MIN is too large for i32.
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:14-33: error: integer overflow in negation of -2147483648 [CompileTimeIntegerNegateOverflow]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let b: i32 = Negate(-0x8000_0000);
+// CHECK:STDERR:        ·              ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·                        ┗━━┫ error: integer overflow in negation of -2147483648
+// CHECK:STDERR:        ·                           ┃        [CompileTimeIntegerNegateOverflow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = Negate(-0x8000_0000);
 

@@ -251,8 +251,7 @@ class TypeCompleter {
              SemIR::AutoType, SemIR::BoundMethodType, SemIR::CharLiteralType,
              SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
              SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
-             SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
-             SemIR::SpecificFunctionType, SemIR::VtableType,
+             SemIR::PatternType, SemIR::SpecificFunctionType, SemIR::VtableType,
              SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
@@ -1062,7 +1061,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto rewrite_as_constants =
           [&](auto rewrite) -> IdentifiedFacetType::Rewrite {
         return {context.constant_values().Get(
-                    GetImplWitnessAccessWithoutSubstitution(context,
+                    GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
                                                             rewrite.lhs_id)),
                 context.constant_values().Get(rewrite.rhs_id)};
       };
@@ -1073,7 +1072,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto rewrite_as_constants =
           [&](auto rewrite) -> IdentifiedFacetType::Equivalent {
         return {context.constant_values().Get(
-                    GetImplWitnessAccessWithoutSubstitution(context,
+                    GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
                                                             rewrite.lhs_id)),
                 context.constant_values().Get(rewrite.rhs_id)};
       };

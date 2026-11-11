@@ -8,14 +8,26 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/fail_missing_open_curly.carbon
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+2]]:15-17: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╭─┤ fail_missing_open_curly.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ interface Bar Baz {}
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: `interface` declarations must either end with a `;` or
+// CHECK:STDERR:        ·                 ┃        have a `{ ... }` block for a definition
+// CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Bar Baz {}
 
+// CHECK:STDERR:        ╭─┤ fail_missing_open_curly.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ interface Foo
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: `interface` declarations must either end with a `;` or
+// CHECK:STDERR:        ·                 ┃        have a `{ ... }` block for a definition
+// CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 interface Foo
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+11]]:26: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_missing_open_curly.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'

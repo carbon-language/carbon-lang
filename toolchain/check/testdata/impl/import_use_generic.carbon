@@ -34,14 +34,38 @@ import library "import_generic";
 
 var c: C({}) = {};
 // We're just checking that this doesn't crash. It's not expected to compile.
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:11-17: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR:        ╭─┤ fail_use_in_fn_decl.carbon:[[@LINE+16]]:11
+// CHECK:STDERR: ->     │ fn G() -> c.(I.F)() {}
+// CHECK:STDERR:        ·           ┳━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: `Core.ImplicitAs` implicitly referenced here, but package
+// CHECK:STDERR:        ·              ┃        `Core` not found
+// CHECK:STDERR:        ·              ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+2]]:22: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_use_in_fn_decl.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ fn G() -> c.(I.F)() {}
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: missing `return` at end of function with
+// CHECK:STDERR:        ·                         ┃        declared return type
+// CHECK:STDERR:        ·                         ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() -> c.(I.F)() {}
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+4]]:11-23: error: `Core.ImplicitAs` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR:        ╭─┤ fail_use_in_fn_decl.carbon:[[@LINE+16]]:11
+// CHECK:STDERR: ->     │ fn H() -> C({}).(I.F)() {}
+// CHECK:STDERR:        ·           ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: `Core.ImplicitAs` implicitly referenced here, but package
+// CHECK:STDERR:        ·              ┃        `Core` not found
+// CHECK:STDERR:        ·              ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_in_fn_decl.carbon:[[@LINE+2]]:26: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_use_in_fn_decl.carbon:[[@LINE+8]]:26
+// CHECK:STDERR: ->     │ fn H() -> C({}).(I.F)() {}
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: missing `return` at end of function with
+// CHECK:STDERR:        ·                             ┃        declared return type
+// CHECK:STDERR:        ·                             ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H() -> C({}).(I.F)() {}
 
@@ -241,12 +265,12 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %C.as.I.impl.F.55f: %C.as.I.impl.F.type.3e4 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.442: <witness> = impl_self_witness %C.664, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.85d: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %C.as.I.impl.F.type.18e: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %C.as.I.impl.F.bb5: %C.as.I.impl.F.type.18e = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.664, (%I.impl_witness.85d) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.425: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.552: %I.WithSelf.F.type.425 = struct_value () [concrete]
 // CHECK:STDOUT:   %.250: type = fn_type_with_self_type %I.WithSelf.F.type.425, %I.facet [concrete]
+// CHECK:STDOUT:   %C.as.I.impl.F.type.18e: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %C.as.I.impl.F.bb5: %C.as.I.impl.F.type.18e = struct_value () [concrete]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn: <specific function> = specific_function %C.as.I.impl.F.bb5, @C.as.I.impl.F(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
@@ -299,24 +323,24 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:     %c.ref: ref %C.664 = name_ref c, file.%c [concrete = file.%c.var]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.a45 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %.loc12: %I.type = converted %c.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc24: %I.type = converted %c.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
-// CHECK:STDOUT:     %.loc17_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc17_15: type = converted %.loc17_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc41_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc41_15: type = converted %.loc41_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%empty_struct_type) [concrete = constants.%C.664]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, imports.%Main.import_ref.a45 [concrete = constants.%assoc0]
 // CHECK:STDOUT:     %I.facet: %I.type = facet_value %C, (constants.%I.impl_witness.85d) [concrete = constants.%I.facet]
-// CHECK:STDOUT:     %.loc17_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
+// CHECK:STDOUT:     %.loc41_16: %I.type = converted %C, %I.facet [concrete = constants.%I.facet]
 // CHECK:STDOUT:     %impl.elem0: %.250 = impl_witness_access constants.%I.impl_witness.85d, element0 [concrete = constants.%C.as.I.impl.F.bb5]
 // CHECK:STDOUT:     %specific_fn: <specific function> = specific_function %impl.elem0, @C.as.I.impl.F(constants.%empty_struct_type) [concrete = constants.%C.as.I.impl.F.specific_fn]
 // CHECK:STDOUT:     %C.as.I.impl.F.call: init %empty_tuple.type = call %specific_fn()
-// CHECK:STDOUT:     %.loc17_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc41_23: type = converted %C.as.I.impl.F.call, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

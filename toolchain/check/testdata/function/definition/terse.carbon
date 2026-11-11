@@ -90,18 +90,34 @@ fn Run() => ();
 // --- fail_main_run_bool.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_run_bool.carbon:[[@LINE+2]]:1-11: error: invalid return type for `Main.Run` function; expected `fn (...)` or `fn (...) -> i32` [InvalidMainRunReturnType]
+// CHECK:STDERR:        ╭─┤ fail_main_run_bool.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Run() => true;
+// CHECK:STDERR:        · ┳━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid return type for `Main.Run` function; expected `fn (...)` or
+// CHECK:STDERR:        ·    ┃        `fn (...) -> i32`
+// CHECK:STDERR:        ·    ┃        [InvalidMainRunReturnType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Run() => true;
 
 // --- fail_return_type.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_type.carbon:[[@LINE+2]]:14-19: error: cannot specify a return type with `=>` [ReturnTypeInTerseFunction]
+// CHECK:STDERR:        ╭─┤ fail_return_type.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ fn G(x: i32) -> i32 => x;
+// CHECK:STDERR:        ·              ━━━┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot specify a return type with `=>`
+// CHECK:STDERR:        ·                    ┃        [ReturnTypeInTerseFunction]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(x: i32) -> i32 => x;
 
-// CHECK:STDERR: fail_return_type.carbon:[[@LINE+2]]:18-34: error: cannot specify a return form with `=>` [ReturnTypeInTerseFunction]
+// CHECK:STDERR:        ╭─┤ fail_return_type.carbon:[[@LINE+7]]:18
+// CHECK:STDERR: ->     │ fn H(ref x: i32) ->? form(ref i32) => x;
+// CHECK:STDERR:        ·                  ━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: cannot specify a return form with `=>`
+// CHECK:STDERR:        ·                             ┃        [ReturnTypeInTerseFunction]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H(ref x: i32) ->? form(ref i32) => x;
 
@@ -109,20 +125,44 @@ fn H(ref x: i32) ->? form(ref i32) => x;
 library "[[@TEST_NAME]]";
 
 fn DeclaredI32() -> i32;
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+3]]:1-19: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-2]]:1-24: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn DeclaredI32() -> i32;
+// CHECK:STDERR:        · ────────────┬───────────
+// CHECK:STDERR:        ·             ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn DeclaredI32() => 0 as i32;
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·             ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn DeclaredI32() => 0 as i32;
 
 fn DeclaredUnit();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+3]]:1-20: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-2]]:1-18: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn DeclaredUnit();
+// CHECK:STDERR:        · ─────────┬────────
+// CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn DeclaredUnit() => ();
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·              ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn DeclaredUnit() => ();
 
 fn TerseFirst() => 0 as i32;
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+3]]:1-18: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-2]]:1-18: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn TerseFirst() => 0 as i32;
+// CHECK:STDERR:        · ─────────┬────────
+// CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn TerseFirst() => 1 as i32;
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·             ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TerseFirst() => 1 as i32;
 
@@ -133,23 +173,75 @@ class Incomplete;
 
 // TODO: This test produces too many error messages for the same problem.
 
-// CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+3]]:39-40: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-5]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+12]]:39
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        · ────────┬────────
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn DerefIncomplete(p: Incomplete*) => *p;
+// CHECK:STDERR:        ·                                       ┳━
+// CHECK:STDERR:        ·                                       ┗━━┫ error: function returns incomplete
+// CHECK:STDERR:        ·                                          ┃        type `Incomplete`
+// CHECK:STDERR:        ·                                          ┃        [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn DerefIncomplete(p: Incomplete*) => *p;
 
 fn GenericDerefIncomplete[template T: type](p: T*) => *p;
 fn CallGenericDerefIncomplete(p: Incomplete*) {
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+11]]:3-27: error: unable to monomorphize specific `GenericDerefIncomplete(Incomplete)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-3]]:55-56: note: `T` evaluates to incomplete type `Incomplete` [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-13]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+54]]:3
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+  // CHECK:STDERR:        ·                                                       ┬─
+  // CHECK:STDERR:        ·                                                       ╰──┤ `T` evaluates to
+  // CHECK:STDERR:        ·                                                          │ incomplete type
+  // CHECK:STDERR:        ·                                                          │ `Incomplete`
+  // CHECK:STDERR:        ·                                                          │ [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   GenericDerefIncomplete(p);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
+  // CHECK:STDERR:        ·      ┃        `GenericDerefIncomplete(Incomplete)`
+  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+7]]:3-27: error: unable to monomorphize specific `GenericDerefIncomplete(Incomplete)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-7]]:55-56: note: cannot access member of interface `Core.Copy` in type `Incomplete` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+35]]:3
+  // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+  // CHECK:STDERR:        ·                                                       ┬─
+  // CHECK:STDERR:        ·                                                       ╰──┤ cannot access member
+  // CHECK:STDERR:        ·                                                          │ of interface
+  // CHECK:STDERR:        ·                                                          │ `Core.Copy` in type
+  // CHECK:STDERR:        ·                                                          │ `Incomplete` that
+  // CHECK:STDERR:        ·                                                          │ does not implement
+  // CHECK:STDERR:        ·                                                          │ that interface
+  // CHECK:STDERR:        ·                                                          │ [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   GenericDerefIncomplete(p);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
+  // CHECK:STDERR:        ·      ┃        `GenericDerefIncomplete(Incomplete)`
+  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+4]]:3-27: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-19]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:55-56: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+  // CHECK:STDERR:        ·                                                       ┬─
+  // CHECK:STDERR:        ·                                                       ╰──┤ return type declared
+  // CHECK:STDERR:        ·                                                          │ here
+  // CHECK:STDERR:        ·                                                          │ [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   GenericDerefIncomplete(p);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: function returns incomplete type `Incomplete`
+  // CHECK:STDERR:        ·                  ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   GenericDerefIncomplete(p);
 }
@@ -157,25 +249,52 @@ fn CallGenericDerefIncomplete(p: Incomplete*) {
 // --- fail_unused.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_unused.carbon:[[@LINE+5]]:15-20: warning: binding `x` unused [UnusedBinding]
+// CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+15]]:15
+// CHECK:STDERR: ->     │ fn UnusedTest(x: i32, unused y: i32) => y;
+// CHECK:STDERR:        ·               ━━━┳━━
+// CHECK:STDERR:        ·                  ┗━━┫ warning: binding `x` unused [UnusedBinding]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unused.carbon:[[@LINE+3]]:30-35: error: variable `y` marked `unused` but used [UnusedButUsed]
-// CHECK:STDERR: fail_unused.carbon:[[@LINE+2]]:41: note: usage here [UnusedButUsedHere]
+// CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+9]]:30
+// CHECK:STDERR: ->     │ fn UnusedTest(x: i32, unused y: i32) => y;
+// CHECK:STDERR:        ·                              ━━━┳━━     ┬
+// CHECK:STDERR:        ·                                 ┗━━━━━━━━━━┫ error: variable `y` marked `unused`
+// CHECK:STDERR:        ·                                         │  ┃        but used
+// CHECK:STDERR:        ·                                         │  ┃        [UnusedButUsed]
+// CHECK:STDERR:        ·                                         ╰────┤ usage here [UnusedButUsedHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UnusedTest(x: i32, unused y: i32) => y;
 
 // --- fail_call_before_deduced.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:23-32: error: call to `Recurse` before its return type is known [CallBeforeReturnTypeDeduced]
-// CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+2]]:1-21: note: return type of `Recurse` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+// CHECK:STDERR:        ╭─┤ fail_call_before_deduced.carbon:[[@LINE+11]]:23
+// CHECK:STDERR: ->     │ fn Recurse(x: i32) => Recurse(x);
+// CHECK:STDERR:        · ──────────┬────────── ┳━━━━━━━━━
+// CHECK:STDERR:        ·           │           ┗━━┫ error: call to `Recurse` before its return type is
+// CHECK:STDERR:        ·           │              ┃        known
+// CHECK:STDERR:        ·           │              ┃        [CallBeforeReturnTypeDeduced]
+// CHECK:STDERR:        ·           ╰────────────────┤ return type of `Recurse` is deduced from its
+// CHECK:STDERR:        ·                            │ definition
+// CHECK:STDERR:        ·                            │ [ReturnTypeDeducedFromDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Recurse(x: i32) => Recurse(x);
 
 class EarlyCall {
   fn M() => 1 as i32;
-  // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:16-18: error: call to `M` before its return type is known [CallBeforeReturnTypeDeduced]
-  // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE-2]]:3-11: note: return type of `M` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_call_before_deduced.carbon:[[@LINE+12]]:16
+  // CHECK:STDERR:        │   fn M() => 1 as i32;
+  // CHECK:STDERR:        ·   ────┬────
+  // CHECK:STDERR:        ·       ╰──┤ return type of `M` is deduced from its definition
+  // CHECK:STDERR:        ·          │ [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var x: i32 = M();
+  // CHECK:STDERR:        ·                ━┳━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: call to `M` before its return type is known
+  // CHECK:STDERR:        ·                    ┃        [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = M();
 }
@@ -189,7 +308,12 @@ interface I {
 
 class C {
   impl as I {
-    // CHECK:STDERR: fail_todo_thunk_before_deduced.carbon:[[@LINE+2]]:5-13: error: semantics TODO: `deduced return type for `impl` member` [SemanticsTodo]
+    // CHECK:STDERR:        ╭─┤ fail_todo_thunk_before_deduced.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     fn F() => 0 as i32;
+    // CHECK:STDERR:        ·     ━━━━┳━━━━
+    // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `deduced return type for `impl` member`
+    // CHECK:STDERR:        ·            ┃        [SemanticsTodo]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn F() => 0 as i32;
   }
@@ -215,11 +339,11 @@ class C {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Unit.type: type = fn_type @Unit [concrete]
 // CHECK:STDOUT:   %Unit: %Unit.type = struct_value () [concrete]
@@ -246,11 +370,11 @@ class C {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.fc6: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet.fc6) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet.fc6 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.81c: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
