@@ -944,28 +944,25 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
   return IsConstantOrError(*phase);
 }
 
-static auto GetPhaseForImport(SemIR::InstKind kind, Phase phase)
-    -> Phase {
-  // These instructions implicitly carry a reference to `.Self` and always eval
-  // as symbolic. Ensure the same when importing.
-  if (kind == SemIR::InstKind::IdentifiedWitness ||
-      kind == SemIR::InstKind::ImplSelfWitness) {
-    return std::max(phase, Phase::PeriodSelfSymbolic);
-  }
-  return phase;
-}
-
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
   CARBON_CHECK(inst.kind().has_type(), "Can't import untyped instructions: {0}",
                inst.kind());
-  Phase phase = GetPhase(context.constant_values(),
-                         context.types().GetConstantId(inst.type_id()));
+  Phase phase;
+  if (inst.kind().implied_period_self()) {
+    // These instructions implicitly carry a reference to `.Self` and always
+    // eval as symbolic. Ensure the same when importing.
+    phase = Phase::PeriodSelfSymbolic;
+  } else {
+    phase = Phase::Concrete;
+  }
+  phase = LatestPhase(phase,
+                      GetPhase(context.constant_values(),
+                               context.types().GetConstantId(inst.type_id())));
   // We ignore the return value of ReplaceAllFieldsWithConstantValues and just
   // propagate runtime and error constant values into the resulting ConstantId.
   ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
-  phase = GetPhaseForImport(inst.kind(), phase);
   return MakeConstantResult(context, inst, phase);
 }
 
@@ -3026,7 +3023,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
   } else {
     // Build a constant instruction by replacing each non-constant operand with
     // its constant value.
-    Phase phase = Phase::Concrete;
+    Phase phase;
+    if constexpr (InstT::Kind.implied_period_self()) {
+      phase = Phase::PeriodSelfSymbolic;
+    } else {
+      phase = Phase::Concrete;
+    }
     if ((SemIR::Internal::HasTypeIdMember<InstT> &&
          !ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase)) ||
         !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
@@ -3056,6 +3058,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
           SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
+        static_assert(!SemIR::InstValue::Kind.implied_period_self());
         return MakeConstantResult(
             eval_context.context(),
             SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
@@ -3077,6 +3080,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
           eval_context.context(), eval_context.specific_id(),
           SemIR::LocId(inst_id), inst.As<InstT>());
       if (!result_inst_ids.empty()) {
+        static_assert(!SemIR::InstValue::Kind.implied_period_self());
         // The result is a tuple of instruction values.
         for (auto& result_inst_id : result_inst_ids) {
           result_inst_id =
@@ -3086,6 +3090,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                                    .inst_id = result_inst_id},
                   Phase::Concrete));
         }
+        static_assert(!SemIR::TupleValue::Kind.implied_period_self());
         return MakeConstantResult(
             eval_context.context(),
             SemIR::TupleValue{
@@ -3143,64 +3148,6 @@ auto TryEvalTypedInst<SemIR::ImportRefLoaded>(EvalContext& /*eval_context*/,
                                               SemIR::Inst /*inst*/)
     -> SemIR::ConstantId {
   return SemIR::ConstantId::NotConstant;
-}
-
-template <>
-auto TryEvalTypedInst<SemIR::IdentifiedWitness>(EvalContext& eval_context,
-                                                SemIR::InstId inst_id,
-                                                SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  Phase phase = Phase::Concrete;
-  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
-      !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    CARBON_FATAL("IdentifiedWitness with runtime value");
-  }
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
-  // IdentifiedWitness is never concrete even if its operands are. It carries an
-  // implied dependency on `.Self` and stays symbolic as we're still waiting for
-  // the final witness which can be used in an ImplWitnessAccess to get values
-  // from a witness table. The IdentifiedWitness will eventually be replaced by
-  // a final witness through substitution.
-  phase = std::max(phase, Phase::PeriodSelfSymbolic);
-  return MakeConstantResult(eval_context.context(), inst, phase);
-}
-
-template <>
-auto TryEvalTypedInst<SemIR::ImplSelfWitness>(EvalContext& eval_context,
-                                              SemIR::InstId inst_id,
-                                              SemIR::Inst inst)
-    -> SemIR::ConstantId {
-  Phase phase = Phase::Concrete;
-  if (!ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase) ||
-      !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
-    CARBON_FATAL("ImplSelfWitness with runtime value");
-  }
-  if (phase == Phase::UnknownDueToError) {
-    return SemIR::ErrorInst::ConstantId;
-  }
-
-  auto witness = inst.As<SemIR::ImplSelfWitness>();
-
-  // Canonicalize the self in the same way as LookupImplWitness.
-  witness.period_self = eval_context.constant_values().GetInstId(
-      GetCanonicalQuerySelfForLookupImplWitness(
-          eval_context.context(),
-          eval_context.constant_values().Get(witness.period_self), nullptr));
-  // The canonicalization of the self can change the phase. A FacetValue may
-  // contain symbolic witnesses, but a concrete type, and we're left with just
-  // the type.
-  phase = ComputeInstPhase(eval_context.context(), witness);
-
-  // ImplSelfWitness is never concrete even if its operands are. It carries an
-  // implied dependency on `.Self` and stays symbolic as we're still waiting for
-  // the final witness which can be used in an ImplWitnessAccess to get values
-  // from a witness table. The ImplSelfWitness will eventually be replaced by
-  // a final witness through substitution.
-  phase = std::max(phase, Phase::PeriodSelfSymbolic);
-  return MakeConstantResult(eval_context.context(), witness, phase);
 }
 
 // Symbolic bindings are a special case because they can reach into the eval

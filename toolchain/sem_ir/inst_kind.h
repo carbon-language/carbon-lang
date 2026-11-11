@@ -285,6 +285,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
             : InstConstantNeedsInstIdKind::No;
     bool action_needs_specific_id = false;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
+    bool implied_period_self = false;
     bool is_lowered = true;
     bool deduce_through = false;
     bool has_cleanup = false;
@@ -368,6 +369,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // terminator instruction.
   auto terminator_kind() const -> TerminatorKind {
     return definition_info(*this).terminator_kind;
+  }
+
+  // Returns whether the inst has an implied dependence on `.Self`, even when
+  // its operands are concrete.
+  auto implied_period_self() const -> bool {
+    return definition_info(*this).implied_period_self;
   }
 
   // Returns true if `Instruction(A)` == `Instruction(B)` allows deduction to
@@ -475,6 +482,12 @@ class InstKind::Definition : public InstKind {
   // InstKind::terminator_kind().
   constexpr auto terminator_kind() const -> TerminatorKind {
     return info_.terminator_kind;
+  }
+
+  // Returns whether the inst has an implied dependence on `.Self`, even when
+  // its operands are concrete.
+  constexpr auto implied_period_self() const -> bool {
+    return info_.implied_period_self;
   }
 
   // Returns true if the instruction is lowered.
