@@ -197,7 +197,7 @@ package Core;
 interface NegatePrimitive[implicit_into anchor Self:! Form] {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op[bound self:? Self]()
+  fn Op[self:? Self]()
       ->? ResultForm;
 
 }

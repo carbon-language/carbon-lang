@@ -218,7 +218,7 @@ interface ImplicitAsPrimitive
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
   // let implicit_from ResultForm:! Form where .type = Dest;
-  // fn Convert[bound self:? Self]()
+  // fn Convert[self:? Self]()
   //     ->? ResultForm;
 }
 constraint ImplicitAs(Dest:! type) {
