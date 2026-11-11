@@ -238,7 +238,12 @@ static auto CreateClassTemplateSpecializationDecl(
 // decl.  Otherwise, creates a new C++ class template specialization and
 // returns it. Returns nullptr if the class could not be exported and an error
 // was diagnosed.
-static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
+//
+// If `decl_context` is null, `ExportNameScopeToCpp` will called to map the
+// parent scope into a `DeclContext`.
+static auto ExportClassSpecificToCpp(Context& context,
+                                     clang::DeclContext* decl_context,
+                                     SemIR::LocId loc_id,
                                      SemIR::ClassType class_type)
     -> clang::ClassTemplateSpecializationDecl* {
   CARBON_CHECK(class_type.specific_id.has_value());
@@ -258,7 +263,7 @@ static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
   auto param_class_type =
       context.types().GetAs<SemIR::ParameterizedClassType>(param_class_type_id);
   auto* class_template_decl =
-      ExportParameterizedClassToCpp(context, param_class_type);
+      ExportParameterizedClassToCpp(context, decl_context, param_class_type);
   if (!class_template_decl) {
     return nullptr;
   }
@@ -390,7 +395,8 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
   SemIR::LocId loc_id(class_info.first_decl_id());
 
   if (class_type.specific_id.has_value()) {
-    return ExportClassSpecificToCpp(context, loc_id, class_type);
+    return ExportClassSpecificToCpp(context, /*decl_context=*/nullptr, loc_id,
+                                    class_type);
   }
 
   // If this class was produced by importing a C++ declaration or has
@@ -524,7 +530,8 @@ static auto MakeSpecificForTemplateArgs(
 }
 
 auto ExportParameterizedClassToCpp(
-    Context& context, SemIR::ParameterizedClassType param_class_type)
+    Context& context, clang::DeclContext* decl_context,
+    SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl* {
   // Use existing export if possible.
   const auto& class_info = context.classes().Get(param_class_type.class_id);
@@ -535,10 +542,12 @@ auto ExportParameterizedClassToCpp(
 
   // Map the parent scope into the C++ AST.
   SemIR::LocId loc_id(decl_id);
-  auto* decl_context =
-      ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
   if (!decl_context) {
-    return nullptr;
+    decl_context =
+        ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
+    if (!decl_context) {
+      return nullptr;
+    }
   }
 
   auto* template_param_list = ExportGenericBindings(

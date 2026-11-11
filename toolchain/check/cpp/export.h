@@ -75,8 +75,12 @@ auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
 // C++ class template.  Otherwise, creates a new C++ class template and
 // returns it. Returns nullptr if the class could not be exported and an
 // error was diagnosed.
+//
+// If `decl_context` is null, `ExportNameScopeToCpp` will called to map the
+// parent scope into a `DeclContext`.
 auto ExportParameterizedClassToCpp(
-    Context& context, SemIR::ParameterizedClassType param_class_type)
+    Context& context, clang::DeclContext* decl_context,
+    SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl*;
 
 // Creates a C++ class template specialization for a generic Carbon
