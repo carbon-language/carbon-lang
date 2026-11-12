@@ -222,7 +222,7 @@ interface AddWithPrimitive(
 constraint AddWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      AddWithPrimitive
+      AddWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint Add {
@@ -243,7 +243,7 @@ interface SubWithPrimitive(
 constraint SubWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      SubWithPrimitive
+      SubWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint Sub {
@@ -264,7 +264,7 @@ interface MulWithPrimitive(
 constraint MulWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      MulWithPrimitive
+      MulWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint Mul {
@@ -285,7 +285,7 @@ interface DivWithPrimitive(
 constraint DivWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      DivWithPrimitive
+      DivWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint Div {
@@ -306,7 +306,7 @@ interface ModWithPrimitive(
 constraint ModWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      ModWithPrimitive
+      ModWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint Mod {

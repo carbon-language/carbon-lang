@@ -84,7 +84,7 @@ constraint IndexValWith(SubscriptType:! type) {
   require form(val Self) impls
      IndexWithPrimitive(form(val SubscriptType))
      where .ResultForm = form(val ElementType);
-  alias At = LetSelf(IndexWithPrimitive(
+  alias At = ValSelf(IndexWithPrimitive(
       form(val SubscriptType))).Op;
 }
 
@@ -102,8 +102,7 @@ constraint IndexRefWith(SubscriptType:! type) {
 
 // `lhs[index]` is a reference expression or value
 // depending on the category of `lhs`.
-constraint IndexWith(Self:! NoVarForm,
-                     SubscriptType:! type) {
+constraint IndexWith(SubscriptType:! type) {
   let ElementType:! type;
   match_first {
     extend require impls IndexRefWith(SubscriptType)
@@ -130,7 +129,7 @@ constraint IndirectIndexWith(SubscriptType:! type) {
   require form(val Self) impls
      IndexWithPrimitive(form(val SubscriptType))
      where .ResultForm = form(ref ElementType);
-  alias Ref = LetSelf(IndexWithPrimitive(
+  alias Ref = ValSelf(IndexWithPrimitive(
       form(val SubscriptType))).Op;
 }
 ```
