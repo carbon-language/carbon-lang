@@ -319,8 +319,9 @@ static auto ExportParameterizedClassToCppInDeclContext(
   return class_template_decl;
 }
 
-// Look up the `ClassTemplateSpecializationDecl` corresponding to a class
-// specific. Returns nullptr if this class specific has not been exported.
+// Look up the `ClassTemplateSpecializationDecl` corresponding to `class_type`,
+// which must be a specific of a parameterized class. Returns nullptr if this
+// class specific has not been exported.
 static auto GetExistingExportedClassSpecific(Context& context,
                                              SemIR::ClassType class_type)
     -> clang::ClassTemplateSpecializationDecl* {
