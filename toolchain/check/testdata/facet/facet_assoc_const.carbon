@@ -227,8 +227,8 @@ interface M { let X: type; let Y: type; }
 // CHECK:STDERR:        ·                                              ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·                                              ┗━━┫ error: associated constant
 // CHECK:STDERR:        ·                                                 ┃        `.(M.Y)` given two
-// CHECK:STDERR:        ·                                                 ┃        different values
-// CHECK:STDERR:        ·                                                 ┃        `T.(M.X)` and `.(M.X)`
+// CHECK:STDERR:        ·                                                 ┃        different values `()`
+// CHECK:STDERR:        ·                                                 ┃        and `.(M.X)`
 // CHECK:STDERR:        ·                                                 ┃        [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
