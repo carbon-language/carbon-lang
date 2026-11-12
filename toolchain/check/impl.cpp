@@ -861,6 +861,14 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
 
     auto req_interface_type_id = GetInterfaceType(
         context, req_interface.interface_id, req_interface.specific_id);
+    if (req_self_facet == SemIR::ErrorInst::ConstantId ||
+        req_interface_type_id == SemIR::ErrorInst::TypeId) {
+      // The impls requirement can not be met by errors, so the impl is not
+      // valid.
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
+
     auto result = LookupImplWitness(context, loc_id, req_self_facet,
                                     req_interface_type_id.AsConstantId());
     if (!result.has_value()) {
@@ -889,6 +897,13 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     SubstWithImplWitness callbacks(&context, &impl, impl.witness_id);
     auto lhs = equiv.lhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
     auto rhs = equiv.rhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+    if (lhs == SemIR::ErrorInst::ConstantId ||
+        rhs == SemIR::ErrorInst::ConstantId) {
+      // The equivalence requirement can not be met by errors, so the impl is
+      // not valid.
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
 
     if (lhs != rhs) {
       CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotEquivalent, Error,
@@ -905,6 +920,8 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
           context.constant_values().GetInstId(equiv.rhs.RawValue()),
           context.constant_values().GetInstId(lhs),
           context.constant_values().GetInstId(rhs));
+      FillImplWitnessWithErrors(context, impl);
+      return;
     }
   }
 

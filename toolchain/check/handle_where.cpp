@@ -143,7 +143,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     for (const auto& rewrite : base_declared_facet_type.rewrite_constraints) {
       if (rewrite.lhs_id != SemIR::ErrorInst::InstId) {
         auto const_id = context.constant_values().Get(
-            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+            GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
+                                                    rewrite.lhs_id));
         auto frozen_const_id = FreezePeriodSelf(context, const_id);
         context.where_stack().Peek().rewrites.Insert(frozen_const_id,
                                                      rewrite.rhs_id);
@@ -320,7 +321,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // frozen.
     context.where_stack().Peek().rewrites.Insert(
         context.constant_values().Get(
-            GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
+            GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), lhs_id)),
         rhs_id);
   }
   return true;
@@ -360,7 +361,7 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
     }
     // Recurse through ImplWitnessAccess into the self type being accessed.
     auto access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, inst_id));
+        GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), inst_id));
     if (!access) {
       return false;
     }

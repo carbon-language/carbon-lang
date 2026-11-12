@@ -264,8 +264,8 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!41}
-// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!72}
+// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !71, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!73}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -306,11 +306,12 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: !65 = !{!64, !64, i64 0}
 // CHECK:STDOUT: !66 = !{!"float", !61, i64 0}
 // CHECK:STDOUT: !67 = !{!66, !66, i64 0}
-// CHECK:STDOUT: !68 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !69 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !70 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !71 = !{!"__libc_errno", !64, i64 0}
-// CHECK:STDOUT: !72 = !{!71, !64, i64 0}
+// CHECK:STDOUT: !68 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !69 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !70 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !71 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !72 = !{!"__libc_errno", !64, i64 0}
+// CHECK:STDOUT: !73 = !{!72, !64, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'single_file.carbon'
@@ -323,23 +324,23 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: $_Z2G1v = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !75 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !76
+// CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main() #1 !dbg !77 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main() #1 !dbg !78 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(), !dbg !78
-// CHECK:STDOUT:   ret void, !dbg !78
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !79
+// CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !79 {
+// CHECK:STDOUT: define void @_CH.Main() #0 !dbg !80 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z2G2v(), !dbg !80
-// CHECK:STDOUT:   ret void, !dbg !81
+// CHECK:STDOUT:   call void @_Z2G2v(), !dbg !81
+// CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
@@ -368,9 +369,9 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: attributes #2 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!74}
-// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!72}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!75}
+// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !71, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!73}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -379,20 +380,21 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: !60 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !61 = !{!"omnipotent char", !60, i64 0}
 // CHECK:STDOUT: !64 = !{!"int", !61, i64 0}
-// CHECK:STDOUT: !68 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !69 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !70 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !71 = !{!"__libc_errno", !64, i64 0}
-// CHECK:STDOUT: !72 = !{!71, !64, i64 0}
-// CHECK:STDOUT: !73 = !DIFile(filename: "single_file.carbon", directory: "")
-// CHECK:STDOUT: !74 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !73, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !75 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !73, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !74)
-// CHECK:STDOUT: !76 = !DILocation(line: 6, column: 1, scope: !75)
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !73, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !74)
-// CHECK:STDOUT: !78 = !DILocation(line: 6, column: 1, scope: !77)
-// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !73, line: 20, type: !8, spFlags: DISPFlagDefinition, unit: !74)
-// CHECK:STDOUT: !80 = !DILocation(line: 20, column: 10, scope: !79)
-// CHECK:STDOUT: !81 = !DILocation(line: 20, column: 1, scope: !79)
+// CHECK:STDOUT: !68 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !69 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !70 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !71 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !72 = !{!"__libc_errno", !64, i64 0}
+// CHECK:STDOUT: !73 = !{!72, !64, i64 0}
+// CHECK:STDOUT: !74 = !DIFile(filename: "single_file.carbon", directory: "")
+// CHECK:STDOUT: !75 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !74, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !74, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !75)
+// CHECK:STDOUT: !77 = !DILocation(line: 6, column: 1, scope: !76)
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !74, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !75)
+// CHECK:STDOUT: !79 = !DILocation(line: 6, column: 1, scope: !78)
+// CHECK:STDOUT: !80 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !74, line: 20, type: !8, spFlags: DISPFlagDefinition, unit: !75)
+// CHECK:STDOUT: !81 = !DILocation(line: 20, column: 10, scope: !80)
+// CHECK:STDOUT: !82 = !DILocation(line: 20, column: 1, scope: !80)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'keyword_name.carbon'
@@ -403,23 +405,23 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: $_Z8CallBasev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cbase.Main() #0 !dbg !84 {
+// CHECK:STDOUT: define void @_Cbase.Main() #0 !dbg !85 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !85
+// CHECK:STDOUT:   ret void, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_Cbase__carbon_thunk.Main() #1 !dbg !86 {
+// CHECK:STDOUT: define linkonce_odr void @_Cbase__carbon_thunk.Main() #1 !dbg !87 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Cbase.Main(), !dbg !87
-// CHECK:STDOUT:   ret void, !dbg !87
+// CHECK:STDOUT:   call void @_Cbase.Main(), !dbg !88
+// CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallCallBase.Main() #0 !dbg !88 {
+// CHECK:STDOUT: define void @_CCallCallBase.Main() #0 !dbg !89 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z8CallBasev(), !dbg !89
-// CHECK:STDOUT:   ret void, !dbg !90
+// CHECK:STDOUT:   call void @_Z8CallBasev(), !dbg !90
+// CHECK:STDOUT:   ret void, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
@@ -441,9 +443,9 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: attributes #2 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!83}
-// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!72}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!84}
+// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !71, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!73}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -452,18 +454,19 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: !60 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !61 = !{!"omnipotent char", !60, i64 0}
 // CHECK:STDOUT: !64 = !{!"int", !61, i64 0}
-// CHECK:STDOUT: !68 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !69 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !70 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !71 = !{!"__libc_errno", !64, i64 0}
-// CHECK:STDOUT: !72 = !{!71, !64, i64 0}
-// CHECK:STDOUT: !82 = !DIFile(filename: "keyword_name.carbon", directory: "")
-// CHECK:STDOUT: !83 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !82, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "base", linkageName: "_Cbase.Main", scope: null, file: !82, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !83)
-// CHECK:STDOUT: !85 = !DILocation(line: 6, column: 1, scope: !84)
-// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "base__carbon_thunk", linkageName: "_Cbase__carbon_thunk.Main", scope: null, file: !82, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !83)
-// CHECK:STDOUT: !87 = !DILocation(line: 6, column: 1, scope: !86)
-// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "CallCallBase", linkageName: "_CCallCallBase.Main", scope: null, file: !82, line: 14, type: !8, spFlags: DISPFlagDefinition, unit: !83)
-// CHECK:STDOUT: !89 = !DILocation(line: 14, column: 21, scope: !88)
-// CHECK:STDOUT: !90 = !DILocation(line: 14, column: 1, scope: !88)
+// CHECK:STDOUT: !68 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !69 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !70 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !71 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !72 = !{!"__libc_errno", !64, i64 0}
+// CHECK:STDOUT: !73 = !{!72, !64, i64 0}
+// CHECK:STDOUT: !83 = !DIFile(filename: "keyword_name.carbon", directory: "")
+// CHECK:STDOUT: !84 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !83, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "base", linkageName: "_Cbase.Main", scope: null, file: !83, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !84)
+// CHECK:STDOUT: !86 = !DILocation(line: 6, column: 1, scope: !85)
+// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "base__carbon_thunk", linkageName: "_Cbase__carbon_thunk.Main", scope: null, file: !83, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !84)
+// CHECK:STDOUT: !88 = !DILocation(line: 6, column: 1, scope: !87)
+// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "CallCallBase", linkageName: "_CCallCallBase.Main", scope: null, file: !83, line: 14, type: !8, spFlags: DISPFlagDefinition, unit: !84)
+// CHECK:STDOUT: !90 = !DILocation(line: 14, column: 21, scope: !89)
+// CHECK:STDOUT: !91 = !DILocation(line: 14, column: 1, scope: !89)
 // CHECK:STDOUT:

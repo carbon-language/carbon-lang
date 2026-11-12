@@ -2087,6 +2087,114 @@ class B {
   }
 }
 
+// --- fail_access_private_parent_member_in_unrelated_class.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+16]]:8
+    // CHECK:STDERR:        │   static void F() {}
+    // CHECK:STDERR:        ·               ┬
+    // CHECK:STDERR:        ·               ╰──┤ declared private here [CppInteropParseNote]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     T::F();
+    // CHECK:STDERR:        ·        ┳
+    // CHECK:STDERR:        ·        ┗━━┫ error: 'F' is a private member of 'Base' [CppInteropParseError]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR:        │   a.G();
+    // CHECK:STDERR:        ·     ┬
+    // CHECK:STDERR:        ·     ╰──┤ in instantiation of member function 'A<Carbon::Main::Derived>::G'
+    // CHECK:STDERR:        ·        │ requested here
+    // CHECK:STDERR:        ·        │ [CppInteropParseNote]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
+// --- access_private_parent_member_in_unrelated_class_with_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  // This test is identical to
+  // fail_access_private_parent_member_in_unrelated_class except for this
+  // friend decl:
+  template <typename> friend class A;
+
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
+// --- fail_access_private_parent_member_in_unrelated_fn.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+base class A {
+  private fn F();
+}
+
+class B {
+  extend base: A;
+}
+
+inline Cpp '''
+int G() {
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR:        │   private fn F();
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::B::F();
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: 'F' is a private member of 'Carbon::Main::A'
+  // CHECK:STDERR:        ·                 ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  Carbon::B::F();
+}
+''';
+
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

@@ -38,17 +38,13 @@ let b: bool = Neq('a', 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc21_27.1: bool = value_of_initializer @__global_init.%Neq.call.loc21 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_27.2: bool = converted @__global_init.%Neq.call.loc21, %.loc21_27.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_27.2
+// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, @__global_init.%.loc21_27.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_27.1: bool = value_of_initializer @__global_init.%Neq.call.loc22 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc22_27.2: bool = converted @__global_init.%Neq.call.loc22, %.loc22_27.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_27.2
+// CHECK:STDOUT:   %.loc22: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc22_27.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
@@ -60,10 +56,14 @@ let b: bool = Neq('a', 'a');
 // CHECK:STDOUT:   %.loc21_19: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc21_24: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %Neq.call.loc21: init bool = call %Neq.ref.loc21(%.loc21_19, %.loc21_24) [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_27.1: bool = value_of_initializer %Neq.call.loc21 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_27.2: bool = converted %Neq.call.loc21, %.loc21_27.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %Neq.ref.loc22: %Neq.type = name_ref Neq, file.%Neq.decl [concrete = constants.%Neq]
 // CHECK:STDOUT:   %.loc22_19: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc22_24: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %Neq.call.loc22: init bool = call %Neq.ref.loc22(%.loc22_19, %.loc22_24) [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_27.1: bool = value_of_initializer %Neq.call.loc22 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_27.2: bool = converted %Neq.call.loc22, %.loc22_27.1 [concrete = constants.%false]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

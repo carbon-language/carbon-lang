@@ -54,13 +54,13 @@ Its semantics are defined in terms of the following interfaces:
 ```
 interface IndexWith(SubscriptType: type) {
   let ElementType: type;
-  fn At(bound self, subscript: SubscriptType) -> val ElementType;
-  fn Ref(bound ref self, subscript: SubscriptType) -> ref ElementType;
+  fn At(self, subscript: SubscriptType) -> val ElementType;
+  fn Ref(ref self, subscript: SubscriptType) -> ref ElementType;
 }
 
 interface IndirectIndexWith(SubscriptType: type) {
   require Self impls IndexWith(SubscriptType);
-  fn Ref(bound self, subscript: SubscriptType) -> ref ElementType;
+  fn Ref(self, subscript: SubscriptType) -> ref ElementType;
 }
 ```
 
@@ -84,10 +84,10 @@ final impl forall
     [SubscriptType: type, T: IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
   where ElementType = T.(IndirectIndexWith(SubscriptType).ElementType);
-  fn At(bound self, subscript: SubscriptType) -> val ElementType {
+  fn At(self, subscript: SubscriptType) -> val ElementType {
     return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
-  fn Ref(bound ref self, subscript: SubscriptType) -> ref ElementType {
+  fn Ref(ref self, subscript: SubscriptType) -> ref ElementType {
     return self.(IndirectIndexWith(SubscriptType).Ref)(index);
   }
 }
@@ -104,8 +104,8 @@ An array type could implement subscripting like so:
 class Array(template T: type, template N: i64) {
   impl as IndexWith(like i64) {
     let ElementType: type = T;
-    fn At(bound self, subscript: i64) -> val T;
-    fn Ref(bound ref self, subscript: i64) -> ref T;
+    fn At(self, subscript: i64) -> val T;
+    fn Ref(ref self, subscript: i64) -> ref T;
   }
 }
 ```
@@ -116,7 +116,7 @@ And a type such as `std::span` could look like this:
 class Span(T: type) {
   impl as IndirectIndexWith(like i64) {
     let ElementType: type = T;
-    fn Ref(bound ref self, subscript: i64) -> ref T;
+    fn Ref(ref self, subscript: i64) -> ref T;
   }
 }
 ```
@@ -135,3 +135,7 @@ class Span(T: type) {
     [#2274: Subscript syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2274)
 -   Proposal
     [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
+-   Proposal
+    [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
+-   Proposal
+    [#8110: Remove `bound`](https://github.com/carbon-language/carbon-lang/pull/8110)

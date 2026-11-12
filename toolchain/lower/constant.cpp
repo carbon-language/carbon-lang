@@ -328,7 +328,7 @@ static auto EmitAsConstant(ConstantContext& context,
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::StringLiteral inst)
     -> llvm::Constant* {
-  return llvm::IRBuilder<>(context.llvm_context())
+  return llvm::IRBuilder<>(context.llvm_module())
       .CreateGlobalString(
           context.sem_ir().string_literal_values().Get(inst.string_literal_id),
           /*Name=*/"", /*AddressSpace=*/0, &context.llvm_module());

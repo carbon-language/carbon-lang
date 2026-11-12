@@ -369,11 +369,27 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   auto name_id = AddIdentifierName(*context_, identifier->getName());
 
-  // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
-  // it or even SFINAE.
-  LookupResult result = LookupQualifiedName(*context_, GetCurrentCppLocId(),
-                                            name_id, lookup_scopes,
-                                            /*required=*/false);
+  LookupResult result{
+      .specific_id = SemIR::SpecificId::None,
+      .scope_result = SemIR::ScopeLookupResult::MakeNotFound(),
+  };
+  for (auto lookup_scope : lookup_scopes) {
+    auto scope_id = lookup_scope.name_scope_id;
+    if (!scope_id.has_value()) {
+      continue;
+    }
+    result.scope_result =
+        LookupNameInExactScope(*context_, GetCurrentCppLocId(), name_id,
+                               scope_id, context_->name_scopes().Get(scope_id));
+    result.specific_id = lookup_scope.specific_id;
+    // TODO: If the name is found in multiple scopes, it should be treated as
+    // ambiguous, possibly by adding all the results to the name lookup table
+    // so Clang reports the ambiguity.
+    if (result.scope_result.is_found()) {
+      break;
+    }
+  }
+
   if (!result.scope_result.is_found()) {
     // Avoid caching a negative lookup, as a declaration with this name may be
     // added in Carbon later.
