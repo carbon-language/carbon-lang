@@ -427,7 +427,8 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 
   auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
       -> SemIR::InstId override {
-    CARBON_CHECK(context().constant_values().Get(impl_->self_id) ==
+    auto impl_self = context().constant_values().Get(impl_->self_id);
+    CARBON_CHECK(GetCanonicalFacet(context(), impl_self) ==
                  context().constant_values().Get(witness.period_self));
     CARBON_CHECK(context().specific_interfaces().Get(
                      witness.specific_interface_id) == impl_->interface);
