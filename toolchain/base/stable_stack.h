@@ -48,7 +48,7 @@ namespace Carbon {
 template <typename T, int32_t FirstCapacity = 32>
 class StableStack {
   static_assert(FirstCapacity > 0);
-  static_assert(std::has_single_bit(static_cast<uint32_t>(FirstCapacity)),
+  static_assert(std::has_single_bit(uint32_t{FirstCapacity}),
                 "FirstCapacity must be a power of 2");
 
  public:
