@@ -157,7 +157,6 @@ class StableStack {
     auto& ref = Get(chunk, index);
 
     ShrinkSize();
-
     std::destroy_at(&ref);
     __asan_poison_memory_region(&ref, sizeof(T));
   }
@@ -169,9 +168,8 @@ class StableStack {
     auto [chunk, index] = GetIndexAtBack();
     auto& ref = Get(chunk, index);
 
-    ShrinkSize();
-
     auto cleanup = llvm::scope_exit([&] {
+      ShrinkSize();
       std::destroy_at(&ref);
       __asan_poison_memory_region(&ref, sizeof(T));
     });
