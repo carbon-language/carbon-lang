@@ -37,7 +37,7 @@ struct NumericLiteralScan {
   // The number of bytes in the literal.
   int size;
 
-  // The offset of the '.'. Set to `size` if none is present.
+  // The offset of the '.' character. Set to `size` if none is present.
   int radix_point;
 
   // The offset of the alphabetical character introducing the exponent. In a
@@ -539,7 +539,7 @@ auto NumericLiteral::Parser::CheckExponentPart() -> bool {
 // 10^18 - 1 < 2^63 - 1.
 static auto IsSimpleDecimalInt(llvm::StringRef text) -> bool {
   constexpr int MaxSimpleDigits = 18;
-  return static_cast<int>(text.size()) <= MaxSimpleDigits &&
+  return int{text.size()} <= MaxSimpleDigits &&
          (text.size() == 1 || text.front() != '0') &&
          llvm::all_of(text, IsDecimalDigit);
 }

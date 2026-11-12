@@ -84,7 +84,7 @@ class NumericLiteral {
                 Diagnostics::Emitter<SourceLoc>& emitter) const -> ValueId {
     if (text_.size() == 1) [[likely]] {
       return value_stores.ints().Add(
-          static_cast<int64_t>(Internal::ParseDecimalChunk(text_)));
+          int64_t{Internal::ParseDecimalChunk(text_))};
     }
     return AddValueOutOfLine(text_, value_stores, emitter);
   }
@@ -112,7 +112,7 @@ class NumericLiteral {
   // sequence of decimal digits. If the byte after those digits can't, the
   // digits are a complete decimal integer literal.
   static auto IsContinuationByte(char c) -> bool {
-    return ContinuationByteTable[static_cast<unsigned char>(c)];
+    return ContinuationByteTable[uint8_t{c}];
   }
 
   // A table of the bytes that can continue a numeric literal after a sequence
