@@ -287,6 +287,38 @@ static auto ExportGenericBindings(Context& context, SemIR::LocId loc_id,
                                               /*RequiresClause=*/nullptr);
 }
 
+static auto ExportParameterizedClassToCppInDeclContext(
+    Context& context, clang::DeclContext* decl_context, SemIR::ClassId class_id)
+    -> clang::ClassTemplateDecl* {
+  // Use existing export if possible.
+  const auto& class_info = context.classes().Get(class_id);
+  auto decl_id = class_info.first_decl_id();
+  if (const auto* clang_decl = context.clang_decls().Lookup(decl_id)) {
+    return cast<clang::ClassTemplateDecl>(clang_decl->decl());
+  }
+
+  SemIR::LocId loc_id(decl_id);
+  auto* template_param_list = ExportGenericBindings(
+      context, loc_id, class_info.generic_id, decl_context);
+  if (!template_param_list) {
+    return nullptr;
+  }
+
+  auto clang_loc = GetCppLocation(context, loc_id);
+  auto* record_decl = ExportClassToCppInDeclContext(
+      context, decl_context, class_info, SemIR::SpecificId::None);
+  auto* class_template_decl = clang::ClassTemplateDecl::Create(
+      context.ast_context(), decl_context,
+      /*L=*/clang_loc, record_decl->getDeclName(), template_param_list,
+      record_decl);
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      cast<clang::Decl>(class_template_decl));
+  context.clang_decls().Add({.key = key, .inst_id = decl_id});
+
+  return class_template_decl;
+}
+
 // Exports a specific Carbon class into C++ as a template class specialization.
 //
 // If the specific class has already been exported, returns the existing C++
@@ -555,16 +587,10 @@ auto ExportParameterizedClassToCpp(
     Context& context, clang::DeclContext* decl_context,
     SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl* {
-  // Use existing export if possible.
-  const auto& class_info = context.classes().Get(param_class_type.class_id);
-  auto decl_id = class_info.first_decl_id();
-  if (const auto* clang_decl = context.clang_decls().Lookup(decl_id)) {
-    return cast<clang::ClassTemplateDecl>(clang_decl->decl());
-  }
-
-  // Map the parent scope into the C++ AST.
-  SemIR::LocId loc_id(decl_id);
   if (!decl_context) {
+    // Map the parent scope into the C++ AST.
+    const auto& class_info = context.classes().Get(param_class_type.class_id);
+    SemIR::LocId loc_id(class_info.first_decl_id());
     decl_context =
         ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
     if (!decl_context) {
@@ -572,25 +598,8 @@ auto ExportParameterizedClassToCpp(
     }
   }
 
-  auto* template_param_list = ExportGenericBindings(
-      context, loc_id, class_info.generic_id, decl_context);
-  if (!template_param_list) {
-    return nullptr;
-  }
-
-  auto clang_loc = GetCppLocation(context, loc_id);
-  auto* record_decl = ExportClassToCppInDeclContext(
-      context, decl_context, class_info, SemIR::SpecificId::None);
-  auto* class_template_decl = clang::ClassTemplateDecl::Create(
-      context.ast_context(), decl_context,
-      /*L=*/clang_loc, record_decl->getDeclName(), template_param_list,
-      record_decl);
-
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
-      cast<clang::Decl>(class_template_decl));
-  context.clang_decls().Add({.key = key, .inst_id = decl_id});
-
-  return class_template_decl;
+  return ExportParameterizedClassToCppInDeclContext(context, decl_context,
+                                                    param_class_type.class_id);
 }
 
 auto ExportClassSpecializationToCpp(
