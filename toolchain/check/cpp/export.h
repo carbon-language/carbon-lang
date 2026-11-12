@@ -108,9 +108,9 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 // Returns the `ClangDeclId` of a `clang::FunctionDecl` or
 // `clang::FunctionTemplateDecl` that can be used to call the given function.
 // Returns null if an error was diagnosed.
-auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                              SemIR::FunctionId function_id,
-                              SemIR::SpecificId scope_specific_id)
+auto GetOrExportFunctionToCpp(
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionId function_id,
+    SemIR::SpecificId scope_specific_id = SemIR::SpecificId::None)
     -> clang::NamedDecl*;
 
 // Exports the necessary declarations to permit conversion from the given

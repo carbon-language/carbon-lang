@@ -321,8 +321,7 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
       auto decl_id =
           context.functions().Get(function_type.function_id).first_decl_id();
       const auto* clang_decl = GetOrExportFunctionToCpp(
-          context, SemIR::LocId(decl_id), function_type.function_id,
-          /*scope_specific_id=*/SemIR::SpecificId::None);
+          context, SemIR::LocId(decl_id), function_type.function_id);
       if (clang_decl == nullptr) {
         return clang::QualType();
       }

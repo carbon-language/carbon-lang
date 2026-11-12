@@ -2010,9 +2010,8 @@ auto ExportFunctionToCppPointerConversion(
         "can't convert generic function specific to a C++ function pointer");
     return false;
   }
-  auto* src_clang_decl = GetOrExportFunctionToCpp(
-      context, SemIR::LocId(src_id), src_type.function_id,
-      /*scope_specific_id=*/SemIR::SpecificId::None);
+  auto* src_clang_decl = GetOrExportFunctionToCpp(context, SemIR::LocId(src_id),
+                                                  src_type.function_id);
   if (src_clang_decl == nullptr) {
     return false;
   }
