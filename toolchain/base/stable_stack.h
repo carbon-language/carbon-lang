@@ -179,10 +179,10 @@ class StableStack {
 
   // Ensure there is memory allocated to hold at least `reserve` elements.
   auto Reserve(int32_t reserve) -> void {
-    auto current = capacity();
-    while (current < reserve) {
+    auto num_chunks = static_cast<size_t>(NumChunksNeededForCapacity(reserve));
+    chunks_.reserve(num_chunks);
+    while (chunks_.size() < num_chunks) {
       AppendChunk();
-      current += GetChunkCapacity(chunks_.size() - 1);
     }
   }
 
