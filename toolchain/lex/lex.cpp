@@ -581,8 +581,8 @@ class SourceBlock {
     // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
     // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
     // into a 32-bit `int` mask.
-    return uint32_t{
-        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n')))};
+    return static_cast<uint32_t>(
+        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n'))));
   }
 
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
@@ -615,8 +615,8 @@ class SourceBlock {
     // `_mm_cmpeq_epi8` compares 16 bytes in parallel (`0xFF` if equal, `0x00`
     // otherwise), and `_mm_movemask_epi8` packs bit 7 of each byte into the low
     // 16 bits of an `int` mask.
-    return uint32_t{
-        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n')))};
+    return static_cast<uint32_t>(
+        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n'))));
   }
 
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
@@ -785,12 +785,18 @@ auto Lexer::ScanIdentifier(llvm::StringRef source_text, ssize_t position) const
     // Otherwise, keep loading 8 bytes at a time, starting where the previous
     // load ended. This always stops by the end of the source text, because the
     // bits from there on are set.
+    length = 1;
     do {
       bitmap_offset += sizeof(uint64_t);
+      length += 64;
       bits = llvm::support::endian::read64le(bitmap + bitmap_offset);
     } while (bits == 0);
-    length = bitmap_offset * 8 + std::countr_zero(bits) -
-             static_cast<size_t>(position);
+    // It's tempting to refactor the subtraction here to come before the loop,
+    // or another refactoring. But we don't actually want the arithmetic here to
+    // look that much like what we use in the hot `if` above. LLVM will
+    // sometimes de-duplicate the code, which is a non-trivial regression for
+    // the hot path because of how cold this path ends up being in practice.
+    length += std::countr_zero(bits) - (scan_start % 8);
   }
 
   CARBON_DCHECK(static_cast<size_t>(position) + length <= source_text.size());
@@ -1188,15 +1194,18 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   const ssize_t full_blocks_size = size - size % BlockSize;
   char padded_final_block[BlockSize] = {};
   if (full_blocks_size < size) {
-    std::memcpy(padded_final_block, source_text.data() + full_blocks_size,
-                size - full_blocks_size);
+    auto padded_block_text = source_text.substr(full_blocks_size);
+    std::memcpy(padded_final_block, padded_block_text.data(),
+                padded_block_text.size());
   }
 
   uint8_t* id_end_out = id_end_bitmap_.data();
   for (ssize_t block_start = 0; block_start < size; block_start += BlockSize) {
-    if (LLVM_UNLIKELY(line_starts_end + BlockSize >
-                      line_starts.data() + line_starts.size())) {
+    if (LLVM_UNLIKELY(line_starts_end >
+                      line_starts.data() + line_starts.size() - BlockSize)) {
       ssize_t count = line_starts_end - line_starts.data();
+      // Double the size to preserve geometric growth when using
+      // `resize_for_overwrite`.
       line_starts.resize_for_overwrite(line_starts.size() * 2);
       line_starts_end = line_starts.data() + count;
     }
