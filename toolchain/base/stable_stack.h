@@ -17,6 +17,7 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/MathExtras.h"
 #include "toolchain/base/mem_usage.h"
 
 namespace Carbon {
@@ -48,7 +49,7 @@ namespace Carbon {
 template <typename T, int32_t FirstCapacity = 32>
 class StableStack {
   static_assert(FirstCapacity > 0);
-  static_assert(std::has_single_bit(uint32_t{FirstCapacity}),
+  static_assert(llvm::isPowerOf2_32(uint32_t{FirstCapacity}),
                 "FirstCapacity must be a power of 2");
 
  public:
@@ -241,8 +242,8 @@ class StableStack {
     // cap = ((1 << num_chunks) - 1) * FirstCapacity;
     auto ucap = static_cast<uint32_t>(cap);
     // Shifting by this simulates division by FirstCapacity.
-    auto division = std::countr_zero(uint32_t{FirstCapacity});
-    return std::bit_width((ucap + (FirstCapacity - 1)) >> division);
+    auto division = llvm::Log2_32(uint32_t{FirstCapacity});
+    return llvm::Log2_32_Ceil(((ucap + (FirstCapacity - 1)) >> division) + 1);
   }
 
   struct Chunk {
