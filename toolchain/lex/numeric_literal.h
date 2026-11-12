@@ -21,20 +21,6 @@
 
 namespace Carbon::Lex {
 
-namespace Internal {
-
-// Parses a single chunk of up to 19 decimal digits, which always fits in a
-// `uint64_t`.
-inline auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
-  uint64_t chunk_val = 0;
-  for (char c : digits) {
-    chunk_val = chunk_val * 10 + (c - '0');
-  }
-  return chunk_val;
-}
-
-}  // namespace Internal
-
 // A numeric literal token that has been extracted from a source buffer.
 class NumericLiteral {
  public:
@@ -76,15 +62,11 @@ class NumericLiteral {
   // ID. Emits diagnostics to the given emitter if the token is not valid.
   //
   // The most common numeric literal, a single digit, is handled inline so that
-  // it doesn't pay for a call. Other decimal integers of up to 18 digits
-  // without a leading zero, which always fit in an `int64_t`, bypass the
-  // parser, and only build an `APInt` if they're too large to embed in their
-  // ID.
+  // it doesn't pay for a call, and everything else out of line.
   auto AddValue(SharedValueStores& value_stores,
                 Diagnostics::Emitter<SourceLoc>& emitter) const -> ValueId {
     if (text_.size() == 1) [[likely]] {
-      return value_stores.ints().Add(
-          int64_t{Internal::ParseDecimalChunk(text_))};
+      return value_stores.ints().Add(text_[0] - '0');
     }
     return AddValueOutOfLine(text_, value_stores, emitter);
   }
@@ -112,7 +94,7 @@ class NumericLiteral {
   // sequence of decimal digits. If the byte after those digits can't, the
   // digits are a complete decimal integer literal.
   static auto IsContinuationByte(char c) -> bool {
-    return ContinuationByteTable[uint8_t{c}];
+    return ContinuationByteTable[static_cast<uint8_t>(c)];
   }
 
   // A table of the bytes that can continue a numeric literal after a sequence

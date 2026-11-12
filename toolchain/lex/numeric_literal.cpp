@@ -8,6 +8,7 @@
 #include <bitset>
 #include <cmath>
 #include <iterator>
+#include <optional>
 
 #include "common/check.h"
 #include "llvm/ADT/APInt.h"
@@ -290,6 +291,16 @@ static auto ParseOctalOrHexadecimal(llvm::StringRef digits, bool is_signed)
   return value;
 }
 
+// Parses a single chunk of up to 19 decimal digits.
+static auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
+  CARBON_DCHECK(digits.size() <= 19);
+  uint64_t chunk_val = 0;
+  for (char c : digits) {
+    chunk_val = chunk_val * 10 + (c - '0');
+  }
+  return chunk_val;
+}
+
 // Parsing decimals is complex because they're not a power of 2. We process it
 // 19 digits at a time because that's the most that fit into uint64_t, which
 // is APInt's internal unit for storage; chunking this way minimizes
@@ -307,7 +318,7 @@ static auto ParseDecimal(llvm::StringRef digits, bool is_signed)
 
   // If there's only a few digits, we don't need the multiplication logic.
   if (digits.size() <= DigitsPerChunk) {
-    value = Internal::ParseDecimalChunk(digits);
+    value = ParseDecimalChunk(digits);
     return value;
   }
 
@@ -318,7 +329,7 @@ static auto ParseDecimal(llvm::StringRef digits, bool is_signed)
   if (first_chunk_size == 0) {
     first_chunk_size = DigitsPerChunk;
   }
-  value = Internal::ParseDecimalChunk(digits.take_front(first_chunk_size));
+  value = ParseDecimalChunk(digits.take_front(first_chunk_size));
   digits = digits.drop_front(first_chunk_size);
 
   // For each remaining chunk, multiply the value by 10^19 and add the
@@ -326,7 +337,7 @@ static auto ParseDecimal(llvm::StringRef digits, bool is_signed)
   static constexpr uint64_t Mult = 10'000'000'000'000'000'000ULL;
   for (; !digits.empty(); digits = digits.drop_front(DigitsPerChunk)) {
     value *= Mult;
-    value += Internal::ParseDecimalChunk(digits.take_front(DigitsPerChunk));
+    value += ParseDecimalChunk(digits.take_front(DigitsPerChunk));
   }
   return value;
 }
@@ -533,15 +544,25 @@ auto NumericLiteral::Parser::CheckExponentPart() -> bool {
   return exponent_result.ok;
 }
 
-// Returns whether `text`, the text of a numeric literal, is a simple decimal
-// integer literal: at most 18 decimal digits, without a leading zero unless
-// it's just `0`. Its value then always fits in an `int64_t`, as
-// 10^18 - 1 < 2^63 - 1.
-static auto IsSimpleDecimalInt(llvm::StringRef text) -> bool {
-  constexpr int MaxSimpleDigits = 18;
-  return int{text.size()} <= MaxSimpleDigits &&
-         (text.size() == 1 || text.front() != '0') &&
-         llvm::all_of(text, IsDecimalDigit);
+// Parses `text`, the text of a multi-character numeric literal, if it is a
+// simple decimal integer literal: at most 18 decimal digits without a leading
+// zero. Its value then always fits in an `int64_t`, as 10^18 - 1 < 2^63 - 1.
+static auto TryParseSimpleDecimalInt(llvm::StringRef text)
+    -> std::optional<int64_t> {
+  CARBON_DCHECK(text.size() > 1);
+  constexpr size_t MaxSimpleDigits = 18;
+  if (text.size() <= 1 || text.size() > MaxSimpleDigits || text.front() == '0')
+      [[unlikely]] {
+    return std::nullopt;
+  }
+  int64_t value = 0;
+  for (char c : text) {
+    if (!IsDecimalDigit(c)) [[unlikely]] {
+      return std::nullopt;
+    }
+    value = value * 10 + (c - '0');
+  }
+  return value;
 }
 
 // Parse the token, compute its value, and add it to the value stores.
@@ -549,12 +570,12 @@ auto NumericLiteral::AddValueOutOfLine(llvm::StringRef text,
                                        SharedValueStores& value_stores,
                                        Diagnostics::Emitter<SourceLoc>& emitter)
     -> ValueId {
-  // Compute the value of a simple decimal integer literal directly, bypassing
-  // the parser. This only builds an `APInt` if the value is too large to embed
-  // in its ID.
-  if (IsSimpleDecimalInt(text)) {
-    return value_stores.ints().Add(
-        static_cast<int64_t>(Internal::ParseDecimalChunk(text)));
+  // Other decimal integers of up to 18 digits without a leading zero, which
+  // always fit in an `int64_t`, bypass the parser, and only build an `APInt`
+  // if they're too large to embed in their ID.
+  if (std::optional<int64_t> value = TryParseSimpleDecimalInt(text))
+      [[likely]] {
+    return value_stores.ints().Add(*value);
   }
 
   Parser parser(emitter, NumericLiteral(text));
