@@ -76,7 +76,7 @@ choice Never {}
 // CHECK:STDERR:
 let never: Never = {};
 
-// CHECK:STDOUT: --- no_alternative.carbon
+// CHECK:STDOUT: --- no_alternative.carbon = $no_alternative
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -98,7 +98,7 @@ let never: Never = {};
 // CHECK:STDOUT:   .Self = constants.%Never
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- one_alternative.carbon
+// CHECK:STDOUT: --- one_alternative.carbon = $one_alternative
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -153,7 +153,7 @@ let never: Never = {};
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- multiple_alternatives.carbon
+// CHECK:STDOUT: --- multiple_alternatives.carbon = $multiple_alternatives
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

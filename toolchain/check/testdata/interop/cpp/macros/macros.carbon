@@ -1078,7 +1078,7 @@ class C(N: i32) {}
 // Expansion of `COUNT` should be suppressed inside itself.
 let _: C(1) = {} as C(Cpp.COUNT);
 
-// CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon
+// CHECK:STDOUT: --- import_integer_literal_replacement_token.carbon = $import_integer_literal_replacement_token
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1169,7 +1169,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_macro_and_non_macro_same_name.carbon
+// CHECK:STDOUT: --- import_macro_and_non_macro_same_name.carbon = $import_macro_and_non_macro_same_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1329,7 +1329,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_unary_operator.carbon
+// CHECK:STDOUT: --- import_unary_operator.carbon = $import_unary_operator
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1360,7 +1360,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_binary_operator.carbon
+// CHECK:STDOUT: --- import_binary_operator.carbon = $import_binary_operator
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1391,7 +1391,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_casting.carbon
+// CHECK:STDOUT: --- import_casting.carbon = $import_casting
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1457,7 +1457,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_nested_macros.carbon
+// CHECK:STDOUT: --- import_nested_macros.carbon = $import_nested_macros
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1488,7 +1488,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_string_literal_object_like_macro.carbon
+// CHECK:STDOUT: --- import_string_literal_object_like_macro.carbon = $import_string_literal_object_like_macro
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1600,7 +1600,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_floating_point_literal_macro.carbon
+// CHECK:STDOUT: --- import_floating_point_literal_macro.carbon = $import_floating_point_literal_macro
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1656,7 +1656,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_character_literals.carbon
+// CHECK:STDOUT: --- import_character_literals.carbon = $import_character_literals
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1741,7 +1741,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_character_literals_operators.carbon
+// CHECK:STDOUT: --- import_character_literals_operators.carbon = $import_character_literals_operators
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1796,7 +1796,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_boolean_literal_macro.carbon
+// CHECK:STDOUT: --- import_boolean_literal_macro.carbon = $import_boolean_literal_macro
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1922,7 +1922,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nullptr.carbon
+// CHECK:STDOUT: --- nullptr.carbon = $nullptr.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2045,7 +2045,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_14.3(%self.param: ref %Optional.785) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- enums.carbon
+// CHECK:STDOUT: --- enums.carbon = $enums
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2079,7 +2079,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- constexpr_int.carbon
+// CHECK:STDOUT: --- constexpr_int.carbon = $constexpr_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2122,7 +2122,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- constexpr_int_addr.carbon
+// CHECK:STDOUT: --- constexpr_int_addr.carbon = $constexpr_int_addr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2169,7 +2169,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lambda.carbon
+// CHECK:STDOUT: --- lambda.carbon = $lambda
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2200,7 +2200,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_macro_redefined.carbon
+// CHECK:STDOUT: --- import_macro_redefined.carbon = $import_macro_redefined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2231,7 +2231,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_macro_defined_twice.carbon
+// CHECK:STDOUT: --- import_macro_defined_twice.carbon = $import_macro_defined_twice
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2262,7 +2262,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assign.carbon
+// CHECK:STDOUT: --- assign.carbon = $assign
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2316,7 +2316,7 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assign_subobject.carbon
+// CHECK:STDOUT: --- assign_subobject.carbon = $assign_subobject
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

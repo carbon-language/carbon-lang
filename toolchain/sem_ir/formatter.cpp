@@ -54,11 +54,12 @@ static auto GetTentativeScopes(const SemIR::File& sem_ir)
 }
 
 Formatter::Formatter(
-    const File* sem_ir, int total_ir_count,
-    Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
+    const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
+    int total_ir_count, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
+      short_file_names_(short_file_names),
       inst_namer_(sem_ir_, total_ir_count),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
@@ -98,7 +99,8 @@ Formatter::Formatter(
 }
 
 auto Formatter::Format() -> void {
-  out() << "--- " << sem_ir_->filename() << "\n";
+  out() << "--- " << sem_ir_->filename() << " = $"
+        << short_file_names_->Get(sem_ir_->check_ir_id()) << "\n";
 
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
     FormatTopLevelScope(scope_id, insts);
@@ -1833,6 +1835,8 @@ auto Formatter::FormatTypeOfInst(InstId id) -> void {
   FormatConstant(sem_ir_->types().GetConstantId(type_id));
 }
 
+// TODO: Should this use shorthand file names instead of shorthand library
+// names?
 auto Formatter::GetImportIRLabel(ImportIRId id) -> std::string {
   CARBON_CHECK(id.has_value(),
                "Callers are responsible for checking `id.has_value`");

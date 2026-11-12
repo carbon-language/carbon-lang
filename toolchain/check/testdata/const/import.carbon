@@ -30,7 +30,7 @@ var a: const C* = &a_ref;
 var a_ptr: const C* = a_ptr_ref;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -62,7 +62,7 @@ fn G() {
   let unused ref x: i32 = F();
 }
 
-// CHECK:STDOUT: --- ref_return.carbon
+// CHECK:STDOUT: --- ref_return.carbon = $ref_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -124,7 +124,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_ref_return.carbon
+// CHECK:STDOUT: --- import_ref_return.carbon = $import_ref_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

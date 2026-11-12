@@ -25,7 +25,7 @@ impl package Implicit;
 
 var a: i32* = a_ref;
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -137,7 +137,7 @@ var a: i32* = a_ref;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

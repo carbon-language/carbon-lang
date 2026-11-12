@@ -78,7 +78,7 @@ fn E() {}
 // CHECK:STDERR:
 fn E() {}
 
-// CHECK:STDOUT: --- fail_redecl.carbon
+// CHECK:STDOUT: --- fail_redecl.carbon = $fail_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

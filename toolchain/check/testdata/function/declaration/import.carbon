@@ -321,7 +321,7 @@ library "[[@TEST_NAME]]";
 
 import library "extern_api";
 
-// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: --- api.carbon = $api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -428,7 +428,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @E();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_api.carbon
+// CHECK:STDOUT: --- extern_api.carbon = $extern_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -535,7 +535,7 @@ import library "extern_api";
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @E();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon = $basics
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -729,7 +729,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_api.carbon
+// CHECK:STDOUT: --- fail_redecl_api.carbon = $fail_redecl_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -948,7 +948,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_extern_api.carbon
+// CHECK:STDOUT: --- redecl_extern_api.carbon = $redecl_extern_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1167,7 +1167,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_merge.carbon
+// CHECK:STDOUT: --- fail_merge.carbon = $fail_merge
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1361,7 +1361,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_merge_reverse.carbon
+// CHECK:STDOUT: --- fail_merge_reverse.carbon = $fail_merge_reverse
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1555,7 +1555,7 @@ import library "extern_api";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded.carbon
+// CHECK:STDOUT: --- unloaded.carbon = $unloaded
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//api, A, unloaded
@@ -1586,7 +1586,7 @@ import library "extern_api";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded_extern.carbon
+// CHECK:STDOUT: --- unloaded_extern.carbon = $unloaded_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//extern_api, A, unloaded

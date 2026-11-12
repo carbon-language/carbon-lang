@@ -27,7 +27,7 @@ class MemberNamedSelf {
 
 fn MemberNamedSelf.F(unused x: Self, unused y: r#Self) {}
 
-// CHECK:STDOUT: --- raw_self_type.carbon
+// CHECK:STDOUT: --- raw_self_type.carbon = $raw_self_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

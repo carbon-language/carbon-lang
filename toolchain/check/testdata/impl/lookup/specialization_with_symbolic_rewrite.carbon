@@ -99,7 +99,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 }
 
 
-// CHECK:STDOUT: --- final_specialized_symbolic_rewrite.carbon
+// CHECK:STDOUT: --- final_specialized_symbolic_rewrite.carbon = $final_specialized_symbolic_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -510,7 +510,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nonfinal_specialized_symbolic_rewrite.carbon
+// CHECK:STDOUT: --- fail_nonfinal_specialized_symbolic_rewrite.carbon = $fail_nonfinal_specialized_symbolic_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -959,7 +959,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.fd2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_impl_lookup.carbon
+// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_impl_lookup.carbon = $final_impl_rewrite_of_symbolic_through_impl_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1212,7 +1212,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %return.patt.loc9_25.2 => constants.%return.patt.d67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_access_type.carbon
+// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_access_type.carbon = $final_impl_rewrite_of_symbolic_through_facet_access_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1467,7 +1467,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %return.patt.loc9_24.2 => constants.%return.patt.058
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_value.carbon
+// CHECK:STDOUT: --- final_impl_rewrite_of_symbolic_through_facet_value.carbon = $final_impl_rewrite_of_symbolic_through_facet_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

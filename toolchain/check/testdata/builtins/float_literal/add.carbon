@@ -53,7 +53,7 @@ fn F(){
      Add(0x1.0p1024000000000, 0.0000000000000000001);
 }
 
-// CHECK:STDOUT: --- float_literal_add.carbon
+// CHECK:STDOUT: --- float_literal_add.carbon = $float_literal_add
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

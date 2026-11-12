@@ -342,19 +342,17 @@ auto InstNamer::Namespace::Name::GetBaseName() const -> llvm::StringRef {
   return value_->first().take_front(base_name_size_);
 }
 
-auto InstNamer::Namespace::AllocateName(
-    const InstNamer& inst_namer,
-    std::variant<LocId, uint64_t> loc_id_or_fingerprint, std::string name)
-    -> Name {
+auto InstNamer::Namespace::AllocateNameWithSuffixes(
+    std::string full_name, llvm::ArrayRef<ssize_t> name_sizes) -> Name {
   // The best (shortest) name for this instruction so far, and the current
   // name for it.
   Name best;
   Name current;
 
-  const size_t base_name_size = name.size();
+  const size_t base_name_size = name_sizes[0];
 
   // Add `name` as a name for this entity.
-  auto add_name = [&](bool mark_ambiguous = true) {
+  auto add_name = [&](llvm::StringRef name, bool mark_ambiguous = true) {
     auto [it, added] = allocated_.insert({name, NameResult()});
     Name new_name = Name(it, base_name_size);
 
@@ -376,11 +374,35 @@ auto InstNamer::Namespace::AllocateName(
     return added;
   };
 
-  // Use the given name if it's available.
-  if (!name.empty()) {
-    add_name();
+  int previous_size = -1;
+  for (auto name_size : name_sizes) {
+    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
+    previous_size = name_size;
+    if (name_size > 0) {
+      add_name(llvm::StringRef(full_name).take_front(name_size));
+    }
   }
+  CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
+               "`name_sizes` doesn't end with the size of `full_name`");
 
+  // Append numbers until we find an available name.
+  full_name.push_back('.');
+  auto name_size_without_counter = full_name.size();
+  for (int counter = 1;; ++counter) {
+    full_name.resize(name_size_without_counter);
+    llvm::raw_string_ostream(full_name) << counter;
+    if (add_name(full_name, /*mark_ambiguous=*/false)) {
+      return best;
+    }
+  }
+}
+
+auto InstNamer::FileNamespace::AllocateName(
+    const InstNamer& inst_namer,
+    std::variant<LocId, uint64_t> loc_id_or_fingerprint, std::string name)
+    -> Name {
+  llvm::SmallVector<ssize_t, 5> name_sizes;
+  name_sizes.push_back(name.size());
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
     *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
@@ -390,11 +412,11 @@ auto InstNamer::Namespace::AllocateName(
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
           << ".loc" << tree.tokens().GetLineNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
 
       llvm::raw_string_ostream(name)
           << "_" << tree.tokens().GetColumnNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
     }
   } else {
     uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
@@ -405,21 +427,11 @@ auto InstNamer::Namespace::AllocateName(
     for (int n : llvm::seq(1, 7)) {
       out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
       if (n >= 3) {
-        add_name();
+        name_sizes.push_back(name.size());
       }
     }
   }
-
-  // Append numbers until we find an available name.
-  name.push_back('.');
-  auto name_size_without_counter = name.size();
-  for (int counter = 1;; ++counter) {
-    name.resize(name_size_without_counter);
-    llvm::raw_string_ostream(name) << counter;
-    if (add_name(/*mark_ambiguous=*/false)) {
-      return best;
-    }
-  }
+  return AllocateNameWithSuffixes(std::move(name), name_sizes);
 }
 
 auto InstNamer::AddBlockLabel(

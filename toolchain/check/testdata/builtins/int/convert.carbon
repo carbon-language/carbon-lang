@@ -296,7 +296,7 @@ fn F() {
 
 }
 
-// CHECK:STDOUT: --- runtime_call.carbon
+// CHECK:STDOUT: --- runtime_call.carbon = $runtime_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

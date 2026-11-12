@@ -14,7 +14,7 @@
 
 fn F(generic N: i32, a: array(i32, N)*);
 
-// CHECK:STDOUT: --- param_in_type.carbon
+// CHECK:STDOUT: --- param_in_type.carbon = $param_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

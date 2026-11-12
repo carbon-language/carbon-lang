@@ -104,7 +104,7 @@ let (x: {}, y: {}) = ({},);
 // CHECK:STDERR:
 let (a: {}, b: {}) = ({}, {}, {});
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -280,7 +280,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- variable.carbon
+// CHECK:STDOUT: --- variable.carbon = $variable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -534,7 +534,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -592,7 +592,7 @@ let (a: {}, b: {}) = ({}, {}, {});
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package_scope.carbon
+// CHECK:STDOUT: --- package_scope.carbon = $package_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

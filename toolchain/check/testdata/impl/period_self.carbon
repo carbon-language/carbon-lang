@@ -353,7 +353,7 @@ class C(T: Z & Y) {}
 impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- period_self_converted_in_impl_as_decl.carbon
+// CHECK:STDOUT: --- period_self_converted_in_impl_as_decl.carbon = $period_self_converted_in_impl_as_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -425,7 +425,7 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_period_self_converted_in_specific_in_named_constraint.carbon
+// CHECK:STDOUT: --- fail_todo_period_self_converted_in_specific_in_named_constraint.carbon = $fail_todo_period_self_converted_in_specific_in_named_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -669,7 +669,7 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %Z_where.type.loc14_26.3 => constants.%Z_where.type.37e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- period_self_converted_in_specific_in_named_constraint_from_generic_impl.carbon
+// CHECK:STDOUT: --- period_self_converted_in_specific_in_named_constraint_from_generic_impl.carbon = $period_self_converted_in_specific_in_named_constraint_from_generic_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -939,7 +939,7 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %C.loc23_73 => constants.%C.92a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- period_self_conversion_in_generic_impl.carbon
+// CHECK:STDOUT: --- period_self_conversion_in_generic_impl.carbon = $period_self_conversion_in_generic_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

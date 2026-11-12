@@ -593,7 +593,7 @@ fn F[W: A, X: I(W)](x: X) {
   x.TakesT(v);
 }
 
-// CHECK:STDOUT: --- transitive.carbon
+// CHECK:STDOUT: --- transitive.carbon = $transitive
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -798,7 +798,7 @@ fn F[W: A, X: I(W)](x: X) {
 // CHECK:STDOUT:   %c.patt.loc14_20.2 => constants.%c.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- blanket_impls.carbon
+// CHECK:STDOUT: --- blanket_impls.carbon = $blanket_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -921,7 +921,7 @@ fn F[W: A, X: I(W)](x: X) {
 // CHECK:STDOUT:   %x.patt.loc16_21.2 => constants.%x.patt.cd4828.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_nested_functions_in_outer.carbon
+// CHECK:STDOUT: --- fail_todo_nested_functions_in_outer.carbon = $fail_todo_nested_functions_in_outer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1145,7 +1145,7 @@ fn F[W: A, X: I(W)](x: X) {
 // CHECK:STDOUT:   %x.patt.loc12_14.2 => constants.%x.patt.860
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_observe.carbon
+// CHECK:STDOUT: --- generic_observe.carbon = $generic_observe
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -153,7 +153,7 @@ let negative_lit: Core.IntLiteral = RightShiftLit(1, -1);
 // CHECK:STDERR:
 let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -172,7 +172,7 @@ let negative_lit_zero: Core.IntLiteral = RightShiftLit(0, -1);
 // CHECK:STDOUT:   return %RightShift.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- u32.carbon
+// CHECK:STDOUT: --- u32.carbon = $u32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

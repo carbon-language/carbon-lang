@@ -101,7 +101,7 @@ fn F[template T: type](x: T, b: bool) -> auto {
 
 fn G() -> i32 { return F(0 as i32, true); }
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

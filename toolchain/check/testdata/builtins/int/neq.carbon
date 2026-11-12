@@ -28,7 +28,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- int_neq.carbon
+// CHECK:STDOUT: --- int_neq.carbon = $int_neq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

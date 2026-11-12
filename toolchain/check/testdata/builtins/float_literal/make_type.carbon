@@ -27,7 +27,7 @@ import library "types";
 let f: FloatLiteral = 1.0;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

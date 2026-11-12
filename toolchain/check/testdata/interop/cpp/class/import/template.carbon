@@ -162,7 +162,7 @@ fn G() {
   F(i32);
 }
 
-// CHECK:STDOUT: --- use_class_template.carbon
+// CHECK:STDOUT: --- use_class_template.carbon = $use_class_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -248,7 +248,7 @@ fn G() {
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_instantiation_error.carbon
+// CHECK:STDOUT: --- fail_use_instantiation_error.carbon = $fail_use_instantiation_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -338,7 +338,7 @@ fn G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_carbon_class_generic_in_cpp_template_param.carbon
+// CHECK:STDOUT: --- use_carbon_class_generic_in_cpp_template_param.carbon = $use_carbon_class_generic_in_cpp_template_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -510,7 +510,7 @@ fn G() {
 // CHECK:STDOUT:   %complete_type.loc13_1.2 => constants.%complete_type.12b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- let_cpp_template_constructor.carbon
+// CHECK:STDOUT: --- let_cpp_template_constructor.carbon = $let_cpp_template_constructor
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -705,7 +705,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_39.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_cpp_template_constructor.carbon
+// CHECK:STDOUT: --- var_cpp_template_constructor.carbon = $var_cpp_template_constructor
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

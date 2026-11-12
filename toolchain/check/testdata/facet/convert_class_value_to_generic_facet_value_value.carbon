@@ -104,7 +104,7 @@ fn B() {
   A({} as C({}, {}));
 }
 
-// CHECK:STDOUT: --- convert_class_value_to_generic_facet_value_value.carbon
+// CHECK:STDOUT: --- convert_class_value_to_generic_facet_value_value.carbon = $convert_class_value_to_generic_facet_value_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -544,7 +544,7 @@ fn B() {
 // CHECK:STDOUT:   %specific_impl_fn.loc16_4.2 => constants.%ImplsGeneric.as.Generic.impl.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- multiple_generic_params_one_fixed_one_deduced.carbon
+// CHECK:STDOUT: --- multiple_generic_params_one_fixed_one_deduced.carbon = $multiple_generic_params_one_fixed_one_deduced
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -856,7 +856,7 @@ fn B() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_impl_constraint_with_fixed_specific.carbon
+// CHECK:STDOUT: --- fail_mismatch_impl_constraint_with_fixed_specific.carbon = $fail_mismatch_impl_constraint_with_fixed_specific
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1104,7 +1104,7 @@ fn B() {
 // CHECK:STDOUT:   %t.patt.loc9_28.2 => constants.%t.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_impl_self_with_fixed_specific.carbon
+// CHECK:STDOUT: --- fail_mismatch_impl_self_with_fixed_specific.carbon = $fail_mismatch_impl_self_with_fixed_specific
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

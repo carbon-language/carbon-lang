@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 // TODO: Switch a proper type for argv once we require one.
 fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 
-// CHECK:STDOUT: --- no_params.carbon
+// CHECK:STDOUT: --- no_params.carbon = $no_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -99,7 +99,7 @@ fn Run(unused argc: i32, unused argv: i32*) -> i32 { return 0; }
 // CHECK:STDOUT:   return %.loc4_27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- with_params.carbon
+// CHECK:STDOUT: --- with_params.carbon = $with_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -70,7 +70,7 @@ let b: CharLiteral = ConvertFromIntLiteral(0xD800);
 // CHECK:STDERR:
 let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 
-// CHECK:STDOUT: --- success.carbon
+// CHECK:STDOUT: --- success.carbon = $success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

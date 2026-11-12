@@ -17,7 +17,7 @@ interface UseSelf {
 }
 
 
-// CHECK:STDOUT: --- self.carbon
+// CHECK:STDOUT: --- self.carbon = $self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

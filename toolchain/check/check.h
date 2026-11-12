@@ -14,6 +14,7 @@
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Check {
 
@@ -93,6 +94,7 @@ struct CheckParseTreesOptions {
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const SemIR::ShortFileNameStore& short_file_names,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void;

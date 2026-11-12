@@ -56,7 +56,7 @@ fn F() {
   let unused ref a: i32 = G();
 }
 
-// CHECK:STDOUT: --- local.carbon
+// CHECK:STDOUT: --- local.carbon = $local
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

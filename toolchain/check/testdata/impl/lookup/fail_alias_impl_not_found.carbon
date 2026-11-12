@@ -41,7 +41,7 @@ fn F(c: C) {
   c.F();
 }
 
-// CHECK:STDOUT: --- fail_alias_impl_not_found.carbon
+// CHECK:STDOUT: --- fail_alias_impl_not_found.carbon = $fail_alias_impl_not_found
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

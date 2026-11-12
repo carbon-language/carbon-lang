@@ -91,7 +91,7 @@ fn F[A: J, B: A](x: C(A, B)) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- explicit_as_type.carbon
+// CHECK:STDOUT: --- explicit_as_type.carbon = $explicit_as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -125,7 +125,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- facet_type_in_type_position.carbon
+// CHECK:STDOUT: --- facet_type_in_type_position.carbon = $facet_type_in_type_position
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -251,7 +251,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_8.2(%self.param: ref %Goat) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- facet_access_type_converts_back_to_original_facet_value.carbon
+// CHECK:STDOUT: --- facet_access_type_converts_back_to_original_facet_value.carbon = $facet_access_type_converts_back_to_original_facet_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

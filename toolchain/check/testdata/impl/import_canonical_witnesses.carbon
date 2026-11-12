@@ -14,9 +14,9 @@
 // follows (if these become the same, it means the test is no longer effective):
 //
 // SET-CHECK-SUBSET
-// CHECK:STDOUT: --- interfaces.carbon
+// CHECK:STDOUT: --- interfaces.carbon = $interfaces
 // CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@SimpleOp & @Empty> [concrete]
-// CHECK:STDOUT: --- use.carbon
+// CHECK:STDOUT: --- use.carbon = $use
 // CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@Empty & @SimpleOp> [concrete]
 //
 // This check does not strictly exclude extra facet types, although that should

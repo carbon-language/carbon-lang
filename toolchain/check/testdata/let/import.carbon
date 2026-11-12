@@ -36,7 +36,7 @@ import Other;
 
 let b: () = Other.a;
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -68,7 +68,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -106,7 +106,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other.carbon
+// CHECK:STDOUT: --- other.carbon = $other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -138,7 +138,7 @@ let b: () = Other.a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_other.carbon
+// CHECK:STDOUT: --- import_other.carbon = $import_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

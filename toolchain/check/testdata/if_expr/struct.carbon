@@ -19,7 +19,7 @@ fn F(cond: bool) {
   G(if cond then a else a);
 }
 
-// CHECK:STDOUT: --- struct.carbon
+// CHECK:STDOUT: --- struct.carbon = $struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

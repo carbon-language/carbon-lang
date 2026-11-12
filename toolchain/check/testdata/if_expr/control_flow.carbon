@@ -19,7 +19,7 @@ fn F(b: bool) -> i32 {
   return if b then A() else B();
 }
 
-// CHECK:STDOUT: --- control_flow.carbon
+// CHECK:STDOUT: --- control_flow.carbon = $control_flow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

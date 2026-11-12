@@ -39,7 +39,7 @@ fn TestAssign(a: C*, b: C) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- left_shift.carbon
+// CHECK:STDOUT: --- left_shift.carbon = $left_shift
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

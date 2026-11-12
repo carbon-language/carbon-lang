@@ -103,7 +103,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, true);
 
-// CHECK:STDOUT: --- valid.carbon
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -151,7 +151,7 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_template_mismatch.carbon
+// CHECK:STDOUT: --- fail_template_mismatch.carbon = $fail_template_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %x.var: ref <error> = var_storage %x.var_patt [concrete = <error>]

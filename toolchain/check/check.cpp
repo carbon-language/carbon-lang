@@ -331,7 +331,8 @@ static auto BuildApiMapAndDiagnosePackaging(
 // Handles printing of formatted SemIR.
 static auto MaybeDumpFormattedSemIR(
     const SemIR::File& sem_ir, int total_ir_count,
-    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
+    const SemIR::ShortFileNameStore& short_file_names, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   bool dump = options.dump_stream && include_in_dumps;
   if (!options.vlog_stream && !dump) {
@@ -349,8 +350,9 @@ static auto MaybeDumpFormattedSemIR(
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
       tokens.has_dump_sem_ir_ranges();
-  SemIR::Formatter formatter(&sem_ir, total_ir_count, tree_and_subtrees_getter,
-                             options.include_in_dumps, use_dump_sem_ir_ranges);
+  SemIR::Formatter formatter(&sem_ir, &short_file_names, total_ir_count,
+                             tree_and_subtrees_getter, options.include_in_dumps,
+                             use_dump_sem_ir_ranges);
   formatter.Format();
   if (options.vlog_stream) {
     CARBON_VLOG_TO(options.vlog_stream, "*** SemIR::File ***\n");
@@ -365,6 +367,7 @@ static auto MaybeDumpFormattedSemIR(
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const SemIR::ShortFileNameStore& short_file_names,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -387,7 +390,7 @@ static auto MaybeDumpSemIR(
     MaybeDumpFormattedSemIR(
         *unit.sem_ir, units.size(),
         tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
-        include_in_dumps, options);
+        short_file_names, include_in_dumps, options);
   }
 }
 
@@ -411,6 +414,7 @@ static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const SemIR::ShortFileNameStore& short_file_names,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
@@ -606,7 +610,7 @@ auto CheckParseTrees(
     FinalizeCppDomain(*domain);
   }
 
-  MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
+  MaybeDumpSemIR(units, tree_and_subtrees_getters, short_file_names, options);
   MaybeDumpCppAST(units, options);
 }
 

@@ -114,7 +114,7 @@ protected private let h: i32 = 1;
 // CHECK:STDERR:
 protected protected let i: i32 = 1;
 
-// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT: --- fail_modifiers.carbon = $fail_modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

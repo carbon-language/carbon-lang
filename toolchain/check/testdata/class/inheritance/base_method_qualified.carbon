@@ -42,7 +42,7 @@ fn PassDerivedToBaseIndirect(p: Derived*) -> i32 {
   return p->(Base.G)();
 }
 
-// CHECK:STDOUT: --- base_method_qualified.carbon
+// CHECK:STDOUT: --- base_method_qualified.carbon = $base_method_qualified
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

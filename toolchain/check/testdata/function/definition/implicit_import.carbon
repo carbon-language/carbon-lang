@@ -143,7 +143,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn B() {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -160,7 +160,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.impl.carbon
+// CHECK:STDOUT: --- basic.impl.carbon = $basic.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +182,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_api.carbon
+// CHECK:STDOUT: --- extern_api.carbon = $extern_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -199,7 +199,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_api.impl.carbon
+// CHECK:STDOUT: --- fail_extern_api.impl.carbon = $fail_extern_api.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -221,7 +221,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_impl.carbon
+// CHECK:STDOUT: --- extern_impl.carbon = $extern_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -238,7 +238,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_impl.impl.carbon
+// CHECK:STDOUT: --- fail_extern_impl.impl.carbon = $fail_extern_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -260,7 +260,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_after_def.carbon
+// CHECK:STDOUT: --- redecl_after_def.carbon = $redecl_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -280,7 +280,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon = $fail_redecl_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -299,7 +299,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "redecl_after_def.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redef_after_def.carbon
+// CHECK:STDOUT: --- redef_after_def.carbon = $redef_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -319,7 +319,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon = $fail_redef_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -349,7 +349,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_alias.carbon
+// CHECK:STDOUT: --- def_alias.carbon = $def_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -369,7 +369,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_alias.impl.carbon
+// CHECK:STDOUT: --- fail_def_alias.impl.carbon = $fail_def_alias.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

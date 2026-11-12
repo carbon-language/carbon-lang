@@ -40,7 +40,7 @@ class D(b: C(1000));
 // CHECK:STDERR:
 class D(b: C(1_000)) {}
 
-// CHECK:STDOUT: --- int_match.carbon
+// CHECK:STDOUT: --- int_match.carbon = $int_match
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -195,7 +195,7 @@ class D(b: C(1_000)) {}
 // CHECK:STDOUT:   %b.loc5_10.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_int_mismatch.carbon
+// CHECK:STDOUT: --- fail_int_mismatch.carbon = $fail_int_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

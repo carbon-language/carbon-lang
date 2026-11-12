@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 fn F(n: i32, a: array(i32, n)*);
 
-// CHECK:STDOUT: --- fail_param_in_type.carbon
+// CHECK:STDOUT: --- fail_param_in_type.carbon = $fail_param_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

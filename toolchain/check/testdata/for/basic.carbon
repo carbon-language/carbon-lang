@@ -54,7 +54,7 @@ fn Run() {
 }
 
 
-// CHECK:STDOUT: --- trivial.carbon
+// CHECK:STDOUT: --- trivial.carbon = $trivial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

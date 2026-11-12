@@ -40,7 +40,7 @@ fn NS();
 
 fn NS.Foo();
 
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon = $namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -58,7 +58,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

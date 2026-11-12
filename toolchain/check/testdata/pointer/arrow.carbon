@@ -27,7 +27,7 @@ fn Foo(ptr: C*) {
   ptr->field->field;
 }
 
-// CHECK:STDOUT: --- arrow.carbon
+// CHECK:STDOUT: --- arrow.carbon = $arrow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

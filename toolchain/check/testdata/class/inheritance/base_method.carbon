@@ -30,7 +30,7 @@ fn Call(p: Derived*) {
   (*p).F();
 }
 
-// CHECK:STDOUT: --- base_method.carbon
+// CHECK:STDOUT: --- base_method.carbon = $base_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

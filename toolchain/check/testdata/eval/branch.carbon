@@ -69,7 +69,7 @@ import library "types";
 var a: if true then A else B = MakeA();
 var b: if false then A else B = MakeB();
 
-// CHECK:STDOUT: --- if_statement.carbon
+// CHECK:STDOUT: --- if_statement.carbon = $if_statement
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -138,7 +138,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- if_expression_in_eval_fn.carbon
+// CHECK:STDOUT: --- if_expression_in_eval_fn.carbon = $if_expression_in_eval_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

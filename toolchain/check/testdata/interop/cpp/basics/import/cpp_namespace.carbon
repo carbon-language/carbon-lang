@@ -114,7 +114,7 @@ fn F() {
 //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- alias.carbon = $alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
@@ -127,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:   %MyCpp: <namespace> = alias_binding MyCpp, %Cpp.ref [concrete = imports.%Cpp]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_and_impl.carbon
+// CHECK:STDOUT: --- api_and_impl.carbon = $api_and_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -135,9 +135,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_and_impl.impl.carbon
+// CHECK:STDOUT: --- api_and_impl.impl.carbon = $api_and_impl.impl
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- system_header.carbon
+// CHECK:STDOUT: --- system_header.carbon = $system_header
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

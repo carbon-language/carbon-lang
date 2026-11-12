@@ -686,7 +686,7 @@ fn CopyUnsignedLongLong() {
 }
 
 
-// CHECK:STDOUT: --- long.carbon
+// CHECK:STDOUT: --- long.carbon = $long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -887,7 +887,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned_long.carbon
+// CHECK:STDOUT: --- unsigned_long.carbon = $unsigned_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1088,7 +1088,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- long_long.carbon
+// CHECK:STDOUT: --- long_long.carbon = $long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1432,7 +1432,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_long_long.carbon
+// CHECK:STDOUT: --- copy_long_long.carbon = $copy_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1541,7 +1541,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_homogeneous_long_long.carbon
+// CHECK:STDOUT: --- comparisons_homogeneous_long_long.carbon = $comparisons_homogeneous_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1671,7 +1671,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_left_side.carbon
+// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_left_side.carbon = $comparisons_heterogeneous_long_long_left_side
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2128,7 +2128,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_right_side.carbon
+// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_right_side.carbon = $comparisons_heterogeneous_long_long_right_side
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2607,7 +2607,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_homogeneous_long_long.carbon
+// CHECK:STDOUT: --- compound_assignment_homogeneous_long_long.carbon = $compound_assignment_homogeneous_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3072,7 +3072,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_hereogeneous_long_long_and_i64.carbon
+// CHECK:STDOUT: --- compound_assignment_hereogeneous_long_long_and_i64.carbon = $compound_assignment_hereogeneous_long_long_and_i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3548,7 +3548,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_int_literal.carbon
+// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_int_literal.carbon = $compound_assignment_heterogeneous_long_long_and_int_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3664,7 +3664,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_runtime_i64.carbon
+// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_runtime_i64.carbon = $compound_assignment_heterogeneous_long_long_and_runtime_i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3819,7 +3819,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- increment_decrement_long_long.carbon
+// CHECK:STDOUT: --- increment_decrement_long_long.carbon = $increment_decrement_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3921,7 +3921,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned_long_long.carbon
+// CHECK:STDOUT: --- unsigned_long_long.carbon = $unsigned_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -4285,7 +4285,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_unsigned_long_long.carbon
+// CHECK:STDOUT: --- copy_unsigned_long_long.carbon = $copy_unsigned_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

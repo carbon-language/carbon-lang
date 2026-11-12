@@ -15,7 +15,7 @@
 fn F() {
 }
 
-// CHECK:STDOUT: --- missing_return_no_return_type.carbon
+// CHECK:STDOUT: --- missing_return_no_return_type.carbon = $missing_return_no_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -75,7 +75,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
   return BadReturnType(a);
 }
 
-// CHECK:STDOUT: --- float_negate.carbon
+// CHECK:STDOUT: --- float_negate.carbon = $float_negate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

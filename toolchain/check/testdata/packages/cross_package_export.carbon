@@ -207,7 +207,7 @@ import Other library "conflict";
 
 alias C = Other.C;
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -239,7 +239,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   .x = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conflict.carbon
+// CHECK:STDOUT: --- conflict.carbon = $conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -259,7 +259,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_import.carbon
+// CHECK:STDOUT: --- export_import.carbon = $export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
@@ -272,7 +272,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_import_copy.carbon
+// CHECK:STDOUT: --- export_import_copy.carbon = $export_import_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
@@ -285,7 +285,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_import_indirect.carbon
+// CHECK:STDOUT: --- export_import_indirect.carbon = $export_import_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C = import_ref Other//base, C, unloaded
@@ -298,7 +298,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_name.carbon
+// CHECK:STDOUT: --- export_name.carbon = $export_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -331,7 +331,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   .x = imports.%Other.import_ref.d09
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_name_copy.carbon
+// CHECK:STDOUT: --- export_name_copy.carbon = $export_name_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -364,7 +364,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   .x = imports.%Other.import_ref.d09
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_name_indirect.carbon
+// CHECK:STDOUT: --- export_name_indirect.carbon = $export_name_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -397,7 +397,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   .x = imports.%Other.import_ref.82f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_import.carbon
+// CHECK:STDOUT: --- use_export_import.carbon = $use_export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -466,7 +466,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_import_with_copy.carbon
+// CHECK:STDOUT: --- use_export_import_with_copy.carbon = $use_export_import_with_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -536,7 +536,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_import_indirect.carbon
+// CHECK:STDOUT: --- use_export_import_indirect.carbon = $use_export_import_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -606,7 +606,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_name.carbon
+// CHECK:STDOUT: --- use_export_name.carbon = $use_export_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -674,7 +674,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_name_with_copy.carbon
+// CHECK:STDOUT: --- use_export_name_with_copy.carbon = $use_export_name_with_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -743,7 +743,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_name_indirect.carbon
+// CHECK:STDOUT: --- use_export_name_indirect.carbon = $use_export_name_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -811,7 +811,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_all.carbon
+// CHECK:STDOUT: --- use_export_all.carbon = $use_export_all
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -885,7 +885,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unused_conflict_on_export_import.carbon
+// CHECK:STDOUT: --- unused_conflict_on_export_import.carbon = $unused_conflict_on_export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -902,7 +902,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unused_conflict_on_export_name.carbon
+// CHECK:STDOUT: --- unused_conflict_on_export_name.carbon = $unused_conflict_on_export_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -918,7 +918,7 @@ alias C = Other.C;
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict_on_export_import.carbon
+// CHECK:STDOUT: --- fail_conflict_on_export_import.carbon = $fail_conflict_on_export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -949,7 +949,7 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C [from "conflict.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict_on_export_name.carbon
+// CHECK:STDOUT: --- fail_conflict_on_export_name.carbon = $fail_conflict_on_export_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

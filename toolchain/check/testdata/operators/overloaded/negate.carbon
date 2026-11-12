@@ -30,7 +30,7 @@ fn TestOp(a: C) -> C {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- negate.carbon
+// CHECK:STDOUT: --- negate.carbon = $negate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

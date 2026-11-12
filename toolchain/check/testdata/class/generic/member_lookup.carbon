@@ -86,7 +86,7 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 }
 
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
