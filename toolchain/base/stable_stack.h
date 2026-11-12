@@ -135,12 +135,10 @@ class StableStack {
   // Pushes a new element onto the back of the stack.
   auto Push(const T& t) -> void {
     auto* slot = PushSlot();
-    __asan_unpoison_memory_region(slot, sizeof(T));
     std::construct_at<T>(slot, t);
   }
   auto Push(T&& t) -> void {
     auto* slot = PushSlot();
-    __asan_unpoison_memory_region(slot, sizeof(T));
     std::construct_at<T>(slot, std::move(t));
   }
 
@@ -149,7 +147,6 @@ class StableStack {
   template <typename... Args>
   auto Emplace(Args&&... args) -> void {
     auto* slot = PushSlot();
-    __asan_unpoison_memory_region(slot, sizeof(T));
     std::construct_at<T>(slot, std::forward<Args>(args)...);
   }
 
@@ -338,7 +335,7 @@ class StableStack {
   }
 
   // Allocate memory as needed to get a pointer that we can construct `T` into.
-  // The pointer returned is still ASAN poisoned.
+  // The pointer returned has been ASAN unpoisoned.
   auto PushSlot() -> T* {
     // TODO: It would be faster to make the writes to the returned slot not be
     // dependent on the branches, as then the branches can be done
@@ -351,27 +348,26 @@ class StableStack {
     // say we leave moved-from stacks with an empty set of chunks, and DCHECK
     // against use-after-move.
 
+    T* slot;
     if (used_chunks_ > 0 &&
         size_in_last_chunk_ < GetChunkCapacity(used_chunks_ - 1)) {
       // Add a slot in the last used chunk.
-      T* slot = chunks_[used_chunks_ - 1].array + size_in_last_chunk_;
+      slot = chunks_[used_chunks_ - 1].array + size_in_last_chunk_;
       ++size_in_last_chunk_;
-      return slot;
-    }
-
-    if (used_chunks_ < static_cast<int32_t>(chunks_.size())) {
+    } else if (used_chunks_ < static_cast<int32_t>(chunks_.size())) {
       // Add a slot in an unused chunk that already exists.
-      T* slot = chunks_[used_chunks_].array;
+      slot = chunks_[used_chunks_].array;
       ++used_chunks_;
       size_in_last_chunk_ = 1;
-      return slot;
+    } else {
+      // Add a slot in a new chunk.
+      auto& new_chunk = AppendChunk();
+      slot = new_chunk.array;
+      ++used_chunks_;
+      size_in_last_chunk_ = 1;
     }
-
-    // Add a slot in a new chunk.
-    auto& new_chunk = AppendChunk();
-    ++used_chunks_;
-    size_in_last_chunk_ = 1;
-    return new_chunk.array;
+    __asan_unpoison_memory_region(slot, sizeof(T));
+    return slot;
   }
   auto AppendChunk() -> Chunk& {
     auto next_cap = GetChunkCapacity(chunks_.size());
