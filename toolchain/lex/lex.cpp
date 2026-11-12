@@ -581,8 +581,8 @@ class SourceBlock {
     // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
     // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
     // into a 32-bit `int` mask.
-    return static_cast<uint32_t>(
-        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n'))));
+    return uint32_t{
+        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n')))};
   }
 
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
@@ -615,8 +615,8 @@ class SourceBlock {
     // `_mm_cmpeq_epi8` compares 16 bytes in parallel (`0xFF` if equal, `0x00`
     // otherwise), and `_mm_movemask_epi8` packs bit 7 of each byte into the low
     // 16 bits of an `int` mask.
-    return static_cast<uint32_t>(
-        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n'))));
+    return uint32_t{
+        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n')))};
   }
 
   // Returns a mask of the bytes in `input` that aren't identifier bytes.
