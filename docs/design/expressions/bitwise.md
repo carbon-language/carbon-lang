@@ -202,7 +202,7 @@ interface BitComplementPrimitive(
     implicit_into anchor Self:! Form) {
   default let implicit_from ResultForm:! Form
       = form(var Self.type);
-  fn Op(self) -> Result;
+  fn Op(self:? Self) ->? ResultForm;
 }
 constraint BitComplement {
   let Result:! type;
@@ -225,7 +225,7 @@ interface BitAndWithPrimitive(
 constraint BitAndWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      BitAndWithPrimitive
+      BitAndWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint BitAnd {
@@ -246,7 +246,7 @@ interface BitOrWithPrimitive(
 constraint BitOrWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      BitOrWithPrimitive
+      BitOrWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint BitOr {
@@ -267,7 +267,7 @@ interface BitXorWithPrimitive(
 constraint BitXorWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      BitXorWithPrimitive
+      BitXorWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint BitXor {
@@ -290,7 +290,7 @@ interface LeftShiftWithPrimitive(
 constraint LeftShiftWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      LeftShiftWithPrimitive
+      LeftShiftWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint LeftShift {
@@ -311,7 +311,7 @@ interface RightShiftWithPrimitive(
 constraint RightShiftWith(U:! type) {
   let Result:! type;
   extend require form(val Self) impls
-      RightShiftWithPrimitive
+      RightShiftWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
 }
 constraint RightShift {
@@ -321,7 +321,7 @@ constraint RightShift {
 
 These interfaces are used to rewrite uses of the bitwise and shift operators:
 
--   The expression `^x` is rewritten to `x.(BitComplement.Op)()`.
+-   The expression `^x` is rewritten to `x.(BitComplementPrimitive.Op)()`.
 -   The expression `x & y` is rewritten to
     `x.(BitAndWithPrimitive(formof(y)).Op)(y)`.
 -   The expression `x | y` is rewritten to
