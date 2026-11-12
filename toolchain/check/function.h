@@ -15,14 +15,12 @@
 
 namespace Carbon::Check {
 
-// Returns the ID of the self parameter pattern, or None. `self` is declared as
-// the first explicit parameter. The implicit parameter list is also searched
-// for error recovery: declaring `self` there is diagnosed, but we still
-// recognize it as `self` afterwards.
+// Returns the ID of the self parameter pattern in `param_patterns_id`, or None.
+// `self` is declared as the first explicit parameter; a `self` in the implicit
+// parameter list is diagnosed and not recognized as `self`.
 // TODO: Do this during initial traversal of the parameters.
-auto FindSelfPattern(Context& context,
-                     SemIR::InstBlockId implicit_param_patterns_id,
-                     SemIR::InstBlockId param_patterns_id) -> SemIR::InstId;
+auto FindSelfPattern(Context& context, SemIR::InstBlockId param_patterns_id)
+    -> SemIR::InstId;
 
 // Creates suitable return patterns for the given return form, and adds them to
 // the current pattern block.

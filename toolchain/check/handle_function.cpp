@@ -101,14 +101,12 @@ auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
 // present.
-static auto DiagnoseModifiers(Context& context,
-                              Parse::AnyFunctionDeclId node_id,
-                              DeclIntroducerState& introducer,
-                              bool is_definition,
-                              SemIR::NameScopeId parent_scope_id,
-                              SemIR::InstId parent_scope_inst_id,
-                              std::optional<SemIR::Inst> parent_scope_inst,
-                              SemIR::InstId self_param_id) -> void {
+static auto DiagnoseModifiers(
+    Context& context, Parse::AnyFunctionDeclId node_id,
+    DeclIntroducerState& introducer, bool is_definition,
+    SemIR::NameScopeId parent_scope_id, SemIR::InstId parent_scope_inst_id,
+    std::optional<SemIR::Inst> parent_scope_inst, SemIR::InstId self_param_id,
+    bool has_misplaced_self) -> void {
   CheckAccessModifiersOnDecl(context, introducer, parent_scope_inst);
   LimitModifiersOnDecl(
       context, introducer,
@@ -126,8 +124,11 @@ static auto DiagnoseModifiers(Context& context,
 
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
-    CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
-    context.emitter().Emit(node_id, VirtualWithoutSelf);
+    // A `self` in the wrong parameter list has already been diagnosed.
+    if (!has_misplaced_self) {
+      CARBON_DIAGNOSTIC(VirtualWithoutSelf, Error, "virtual class function");
+      context.emitter().Emit(node_id, VirtualWithoutSelf);
+    }
     introducer.modifier_set.Remove(KeywordModifierSet::Method);
   }
 }
@@ -467,8 +468,10 @@ static auto BuildFunctionDecl(Context& context,
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
-  auto self_param_id = FindSelfPattern(context, name.implicit_param_patterns_id,
-                                       name.param_patterns_id);
+  auto self_param_id = FindSelfPattern(context, name.param_patterns_id);
+  // A `self` in the implicit parameter list was diagnosed when it was declared.
+  bool has_misplaced_self =
+      FindSelfPattern(context, name.implicit_param_patterns_id).has_value();
 
   // `self` must be the first explicit parameter. (Declaring it in the implicit
   // parameter list or outside any parameter list is diagnosed earlier.)
@@ -490,7 +493,7 @@ static auto BuildFunctionDecl(Context& context,
       context.decl_introducer_state_stack().Pop<Lex::TokenKind::Fn>();
   DiagnoseModifiers(context, node_id, introducer, is_definition,
                     name_context.parent_scope_id, parent_scope_inst_id,
-                    parent_scope_inst, self_param_id);
+                    parent_scope_inst, self_param_id, has_misplaced_self);
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
