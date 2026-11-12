@@ -45,7 +45,8 @@ class InstNamer {
 
       explicit operator bool() const { return value_; }
 
-      // Returns the disambiguated name.
+      // Returns the disambiguated name. Note that this is not stable until
+      // all names have been added to the `Namespace`.
       auto GetFullName() const -> llvm::StringRef;
 
       // Returns the base name, without any disambiguators.

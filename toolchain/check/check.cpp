@@ -350,7 +350,7 @@ static auto MaybeDumpFormattedSemIR(
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
       tokens.has_dump_sem_ir_ranges();
-  SemIR::Formatter formatter(&sem_ir, short_file_names, total_ir_count,
+  SemIR::Formatter formatter(&sem_ir, &short_file_names, total_ir_count,
                              tree_and_subtrees_getter, options.include_in_dumps,
                              use_dump_sem_ir_ranges);
   formatter.Format();

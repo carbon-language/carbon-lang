@@ -54,7 +54,7 @@ static auto GetTentativeScopes(const SemIR::File& sem_ir)
 }
 
 Formatter::Formatter(
-    const File* sem_ir, const SemIR::ShortFileNameStore& short_file_names,
+    const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
     int total_ir_count, Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
@@ -100,7 +100,7 @@ Formatter::Formatter(
 
 auto Formatter::Format() -> void {
   out() << "--- " << sem_ir_->filename() << " = $"
-        << short_file_names_.Get(sem_ir_->check_ir_id()) << "\n";
+        << short_file_names_->Get(sem_ir_->check_ir_id()) << "\n";
 
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
     FormatTopLevelScope(scope_id, insts);

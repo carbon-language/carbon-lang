@@ -244,6 +244,8 @@ class MultiUnitCache {
         namespace_names.push_back(
             compilation_namespace.AllocateName(std::move(short_name)));
       }
+      // We need to extract the disambiguated names in a separate pass, because
+      // they aren't stable until the namespace is fully populated.
       short_file_names_.emplace(
           SemIR::ShortFileNameStore::MakeWithExplicitSize(units_.size(), ""));
       for (auto [i, name] : llvm::enumerate(namespace_names)) {
