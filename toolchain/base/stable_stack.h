@@ -246,7 +246,7 @@ class StableStack {
     // cap = ((1 << num_chunks) - 1) * FirstCapacity;
     auto ucap = static_cast<uint32_t>(cap);
     // Shifting by this simulates division by FirstCapacity.
-    auto division = std::countr_zero(static_cast<uint32_t>(FirstCapacity));
+    auto division = std::countr_zero(uint32_t{FirstCapacity});
     return std::bit_width((ucap + (FirstCapacity - 1)) >> division);
   }
 
