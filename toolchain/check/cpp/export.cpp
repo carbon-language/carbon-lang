@@ -319,6 +319,20 @@ static auto ExportParameterizedClassToCppInDeclContext(
   return class_template_decl;
 }
 
+// Look up the `ClassTemplateSpecializationDecl` corresponding to a class
+// specific. Returns nullptr if this class specific has not been exported.
+static auto GetExistingExportedClassSpecific(Context& context,
+                                             SemIR::ClassType class_type)
+    -> clang::ClassTemplateSpecializationDecl* {
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, class_type.class_id, class_type.specific_id);
+  if (const auto* clang_decl =
+          context.clang_decls().Lookup(class_type_inst_id)) {
+    return cast<clang::ClassTemplateSpecializationDecl>(clang_decl->decl());
+  }
+  return nullptr;
+}
+
 // Exports a specific Carbon class into C++ as a template class specialization.
 //
 // If the specific class has already been exported, returns the existing C++
@@ -336,11 +350,8 @@ static auto ExportClassSpecificToCpp(Context& context,
   CARBON_CHECK(class_type.specific_id.has_value());
 
   // Use existing export if possible.
-  auto class_type_inst_id =
-      GetClassTypeInstId(context, class_type.class_id, class_type.specific_id);
-  if (const auto* clang_decl =
-          context.clang_decls().Lookup(class_type_inst_id)) {
-    return cast<clang::ClassTemplateSpecializationDecl>(clang_decl->decl());
+  if (auto* decl = GetExistingExportedClassSpecific(context, class_type)) {
+    return decl;
   }
 
   // Ensure the parameterized class is exported, and get its
@@ -381,6 +392,8 @@ static auto ExportClassSpecificToCpp(Context& context,
     template_args.push_back(cpp_type);
   }
 
+  auto class_type_inst_id =
+      GetClassTypeInstId(context, class_type.class_id, class_type.specific_id);
   return CreateClassTemplateSpecializationDecl(
       context, class_template_decl, template_args, class_type_inst_id);
 }
