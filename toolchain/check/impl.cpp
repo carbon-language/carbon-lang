@@ -411,7 +411,10 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 
   auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
       -> SemIR::InstId override {
-    auto impl_self = context().constant_values().Get(impl_->self_id);
+    // The impl `self_id` can be a FacetAccessType in generic impls. We need the
+    // canonical facet to compare with a witness.
+    auto impl_self = context().constant_values().Get(
+        GetCanonicalFacet(context(), impl_->self_id));
     auto witness_self =
         context().constant_values().Get(witness.query_self_inst_id);
     if (impl_self != witness_self) {
@@ -427,11 +430,15 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 
   auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
       -> SemIR::InstId override {
-    auto impl_self = context().constant_values().Get(impl_->self_id);
-    CARBON_CHECK(GetCanonicalFacet(context(), impl_self) ==
-                 context().constant_values().Get(witness.period_self));
-    CARBON_CHECK(context().specific_interfaces().Get(
-                     witness.specific_interface_id) == impl_->interface);
+    // The impl `self_id` can be a FacetAccessType in generic impls. We need the
+    // canonical facet to compare with a witness.
+    auto impl_self = context().constant_values().Get(
+        GetCanonicalFacet(context(), impl_->self_id));
+    auto witness_self = context().constant_values().Get(witness.period_self);
+    auto witness_interface =
+        context().specific_interfaces().Get(witness.specific_interface_id);
+    CARBON_CHECK(impl_self == witness_self);
+    CARBON_CHECK(impl_->interface == witness_interface);
     return impl_witness_id_;
   }
 
