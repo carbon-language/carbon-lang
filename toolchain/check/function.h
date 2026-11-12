@@ -16,8 +16,6 @@
 namespace Carbon::Check {
 
 // Returns the ID of the self parameter pattern in `param_patterns_id`, or None.
-// `self` is declared as the first explicit parameter; a `self` in the implicit
-// parameter list is diagnosed and not recognized as `self`.
 // TODO: Do this during initial traversal of the parameters.
 auto FindSelfPattern(Context& context, SemIR::InstBlockId param_patterns_id)
     -> SemIR::InstId;

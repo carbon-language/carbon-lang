@@ -28,9 +28,6 @@ namespace Carbon::Check {
 
 auto FindSelfPattern(Context& context, SemIR::InstBlockId param_patterns_id)
     -> SemIR::InstId {
-  // `self` is the first explicit parameter. A `self` in the implicit parameter
-  // list is diagnosed (see `SelfInImplicitParamList`) and is not treated as
-  // `self`: the rest of checking relies on `self` being an explicit parameter.
   auto param_patterns = context.inst_blocks().GetOrEmpty(param_patterns_id);
   return FindIfOrNone(param_patterns, [&](auto param_id) {
     return SemIR::IsSelfPattern(context.sem_ir(), param_id);
