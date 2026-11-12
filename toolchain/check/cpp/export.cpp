@@ -343,7 +343,7 @@ static auto GetExistingExportedClassSpecific(Context& context,
 // If `decl_context` is null, `ExportNameScopeToCpp` will called to map the
 // parent scope into a `DeclContext`.
 static auto ExportClassSpecificToCpp(Context& context,
-                                     clang::DeclContext* decl_context,
+                                     clang::DeclContext* /*decl_context*/,
                                      SemIR::LocId loc_id,
                                      SemIR::ClassType class_type)
     -> clang::ClassTemplateSpecializationDecl* {
@@ -361,7 +361,7 @@ static auto ExportClassSpecificToCpp(Context& context,
   auto param_class_type =
       context.types().GetAs<SemIR::ParameterizedClassType>(param_class_type_id);
   auto* class_template_decl =
-      ExportParameterizedClassToCpp(context, decl_context, param_class_type);
+      ExportParameterizedClassToCpp(context, param_class_type);
   if (!class_template_decl) {
     return nullptr;
   }
@@ -597,18 +597,15 @@ static auto MakeSpecificForTemplateArgs(
 }
 
 auto ExportParameterizedClassToCpp(
-    Context& context, clang::DeclContext* decl_context,
-    SemIR::ParameterizedClassType param_class_type)
+    Context& context, SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl* {
+  // Map the parent scope into the C++ AST.
+  const auto& class_info = context.classes().Get(param_class_type.class_id);
+  SemIR::LocId loc_id(class_info.first_decl_id());
+  auto* decl_context =
+      ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
   if (!decl_context) {
-    // Map the parent scope into the C++ AST.
-    const auto& class_info = context.classes().Get(param_class_type.class_id);
-    SemIR::LocId loc_id(class_info.first_decl_id());
-    decl_context =
-        ExportNameScopeToCpp(context, loc_id, class_info.parent_scope_id);
-    if (!decl_context) {
-      return nullptr;
-    }
+    return nullptr;
   }
 
   return ExportParameterizedClassToCppInDeclContext(context, decl_context,

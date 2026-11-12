@@ -239,8 +239,7 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       } else if (auto param_class_type =
                      context_->insts().TryGetAs<SemIR::ParameterizedClassType>(
                          type_inst_id)) {
-        return ExportParameterizedClassToCpp(
-            *context_, /*decl_context=*/nullptr, *param_class_type);
+        return ExportParameterizedClassToCpp(*context_, *param_class_type);
       }
 
       return nullptr;
