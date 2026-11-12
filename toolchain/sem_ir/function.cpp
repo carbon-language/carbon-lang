@@ -17,94 +17,125 @@
 
 namespace Carbon::SemIR {
 
-auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
-                               SpecificId caller_specific_id)
-    -> std::optional<BoundMethod> {
-  // Step through splices before checking for a bound method. Unfortunately we
-  // can't just look at the constant value of callee_id here, because bound
-  // methods are non-constant if their `self` is, so we do a mini-eval here.
+namespace {
+struct UnwrappedCallee {
+  const File* ir;
+  InstId callee_id;
+  SpecificId caller_specific_id;
+};
+}  // namespace
+
+// Returns the callee operand with any splices unwrapped, along with the IR
+// containing it and the specific in which it should be evaluated.
+static auto UnwrapCalleeSplices(const File& callee_ir, InstId callee_id,
+                                const File& caller_specific_ir,
+                                SpecificId caller_specific_id)
+    -> UnwrappedCallee {
+  const File* ir = &callee_ir;
   while (true) {
-    auto inst = sem_ir.insts().Get(callee_id);
+    auto inst = ir->insts().Get(callee_id);
     if (auto splice_inst = inst.TryAs<SpliceInst>()) {
-      auto inst_value_id = GetConstantValueInSpecific(
-          sem_ir, caller_specific_id, splice_inst->inst_id);
+      auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(
+          caller_specific_ir, caller_specific_id, *ir, splice_inst->inst_id);
       if (!inst_value_id.is_concrete()) {
         break;
       }
-      callee_id = sem_ir.constant_values()
+      ir = inst_ir;
+      callee_id = ir->constant_values()
                       .GetInstAs<SemIR::InstValue>(inst_value_id)
                       .inst_id;
+      // The spliced instruction has already been refined into the specific.
+      caller_specific_id = SpecificId::None;
     } else if (auto splice_block = inst.TryAs<SpliceBlock>()) {
       callee_id = splice_block->result_id;
     } else {
       break;
     }
   }
-
-  return sem_ir.insts().TryGetAs<BoundMethod>(callee_id);
+  return {.ir = ir,
+          .callee_id = callee_id,
+          .caller_specific_id = caller_specific_id};
 }
 
-auto GetCallee(const File& sem_ir, InstId callee_id,
-               SpecificId caller_specific_id) -> Callee {
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod> {
+  // Step through splices before checking for a bound method. Unfortunately we
+  // can't just look at the constant value of callee_id here, because bound
+  // methods are non-constant if their `self` is, so we do a mini-eval here.
+  auto unwrapped =
+      UnwrapCalleeSplices(sem_ir, callee_id, sem_ir, caller_specific_id);
+  return unwrapped.ir->insts().TryGetAs<BoundMethod>(unwrapped.callee_id);
+}
+
+auto GetCallee(const File& callee_ir, InstId callee_id,
+               const File& caller_specific_ir, SpecificId caller_specific_id)
+    -> std::pair<const File*, Callee> {
   CalleeFunction fn = {.function_id = FunctionId::None,
                        .enclosing_specific_id = SpecificId::None,
                        .resolved_specific_id = SpecificId::None,
                        .self_type_id = InstId::None,
                        .self_id = InstId::None};
+  auto unwrapped = UnwrapCalleeSplices(callee_ir, callee_id, caller_specific_ir,
+                                       caller_specific_id);
   if (auto bound_method =
-          TryGetCalleeAsBoundMethod(sem_ir, callee_id, caller_specific_id)) {
+          unwrapped.ir->insts().TryGetAs<BoundMethod>(unwrapped.callee_id)) {
     fn.self_id = bound_method->object_id;
-    callee_id = bound_method->function_decl_id;
+    unwrapped.callee_id = bound_method->function_decl_id;
   }
 
-  if (caller_specific_id.has_value()) {
-    callee_id = sem_ir.constant_values().GetInstIdIfValid(
-        GetConstantValueInSpecific(sem_ir, caller_specific_id, callee_id));
-    CARBON_CHECK(callee_id.has_value(),
+  if (unwrapped.caller_specific_id.has_value()) {
+    auto [const_ir, const_id] = GetConstantValueInSpecific(
+        caller_specific_ir, unwrapped.caller_specific_id, *unwrapped.ir,
+        unwrapped.callee_id);
+    unwrapped.ir = const_ir;
+    unwrapped.callee_id =
+        unwrapped.ir->constant_values().GetInstIdIfValid(const_id);
+    CARBON_CHECK(unwrapped.callee_id.has_value(),
                  "Invalid callee id in a specific context");
   }
 
-  if (auto fn_ptr_type = sem_ir.types().TryGetAs<CppFunctionPointerType>(
-          sem_ir.insts().Get(callee_id).type_id())) {
-    return CalleeCppFunctionPointer{.function_type_id =
-                                        fn_ptr_type->clang_type_id};
+  const File* ir = unwrapped.ir;
+  if (auto fn_ptr_type = ir->types().TryGetAs<CppFunctionPointerType>(
+          ir->insts().Get(unwrapped.callee_id).type_id())) {
+    return {ir, CalleeCppFunctionPointer{.function_type_id =
+                                             fn_ptr_type->clang_type_id}};
   }
 
-  auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
+  auto val_id = ir->constant_values().GetConstantInstId(unwrapped.callee_id);
   if (!val_id.has_value()) {
-    return CalleeNonFunction();
+    return {ir, CalleeNonFunction()};
   }
 
-  if (auto specific_function =
-          sem_ir.insts().TryGetAs<SpecificFunction>(val_id)) {
+  if (auto specific_function = ir->insts().TryGetAs<SpecificFunction>(val_id)) {
     fn.resolved_specific_id = specific_function->specific_id;
-    val_id = sem_ir.constant_values().GetConstantInstId(
-        specific_function->callee_id);
+    val_id =
+        ir->constant_values().GetConstantInstId(specific_function->callee_id);
   } else if (auto specific_impl_function =
-                 sem_ir.insts().TryGetAs<SpecificImplFunction>(val_id)) {
+                 ir->insts().TryGetAs<SpecificImplFunction>(val_id)) {
     fn.resolved_specific_id = specific_impl_function->specific_id;
-    val_id = sem_ir.constant_values().GetConstantInstId(
+    val_id = ir->constant_values().GetConstantInstId(
         specific_impl_function->callee_id);
   }
   if (!val_id.has_value()) {
-    return CalleeNonFunction();
+    return {ir, CalleeNonFunction()};
   }
 
   // Identify the function we're calling by its type.
   auto fn_type_inst_id =
-      sem_ir.types().GetTypeInstId(sem_ir.insts().Get(val_id).type_id());
+      ir->types().GetTypeInstId(ir->insts().Get(val_id).type_id());
 
   if (auto cpp_overload_set_type =
-          sem_ir.insts().TryGetAs<CppOverloadSetType>(fn_type_inst_id)) {
+          ir->insts().TryGetAs<CppOverloadSetType>(fn_type_inst_id)) {
     CARBON_CHECK(!fn.resolved_specific_id.has_value(),
                  "Only `SpecificFunction` will be resolved, not C++ overloads");
-    return CalleeCppOverloadSet{
-        .cpp_overload_set_id = cpp_overload_set_type->overload_set_id,
-        .self_id = fn.self_id};
+    return {ir, CalleeCppOverloadSet{.cpp_overload_set_id =
+                                         cpp_overload_set_type->overload_set_id,
+                                     .self_id = fn.self_id}};
   }
 
   if (auto impl_fn_type =
-          sem_ir.insts().TryGetAs<FunctionTypeWithSelfType>(fn_type_inst_id)) {
+          ir->insts().TryGetAs<FunctionTypeWithSelfType>(fn_type_inst_id)) {
     // Combine the associated function's `Self` with the interface function
     // data.
     fn.self_type_id = impl_fn_type->self_id;
@@ -112,25 +143,44 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
   }
 
   auto fn_type_val_id =
-      sem_ir.constant_values().GetConstantInstId(fn_type_inst_id);
+      ir->constant_values().GetConstantInstId(fn_type_inst_id);
   if (fn_type_val_id == ErrorInst::InstId) {
-    return CalleeError();
+    return {ir, CalleeError()};
   }
-  auto fn_type = sem_ir.insts().TryGetAs<FunctionType>(fn_type_val_id);
+  auto fn_type = ir->insts().TryGetAs<FunctionType>(fn_type_val_id);
   if (!fn_type) {
-    return CalleeNonFunction();
+    return {ir, CalleeNonFunction()};
   }
 
   fn.function_id = fn_type->function_id;
   fn.enclosing_specific_id = fn_type->specific_id;
-  return fn;
+  return {ir, fn};
+}
+
+auto GetCallee(const File& sem_ir, InstId callee_id,
+               SpecificId caller_specific_id) -> Callee {
+  auto [callee_ir, callee] =
+      GetCallee(sem_ir, callee_id, sem_ir, caller_specific_id);
+  CARBON_CHECK(callee_ir == &sem_ir);
+  return callee;
+}
+
+auto GetCalleeAsFunction(const File& callee_ir, InstId callee_id,
+                         const File& caller_specific_ir,
+                         SpecificId caller_specific_id)
+    -> std::pair<const File*, CalleeFunction> {
+  auto [result_ir, callee] =
+      GetCallee(callee_ir, callee_id, caller_specific_ir, caller_specific_id);
+  CARBON_CHECK(std::holds_alternative<CalleeFunction>(callee));
+  return {result_ir, std::get<CalleeFunction>(callee)};
 }
 
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
                          SpecificId caller_specific_id) -> CalleeFunction {
-  auto callee = GetCallee(sem_ir, callee_id, caller_specific_id);
-  CARBON_CHECK(std::holds_alternative<CalleeFunction>(callee));
-  return std::get<CalleeFunction>(callee);
+  auto [callee_ir, callee] =
+      GetCalleeAsFunction(sem_ir, callee_id, sem_ir, caller_specific_id);
+  CARBON_CHECK(callee_ir == &sem_ir);
+  return callee;
 }
 
 auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
