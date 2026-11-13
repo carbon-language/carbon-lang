@@ -137,7 +137,7 @@ producing an infinity.
 var x: i32 = -2147483648;
 
 // This initializes y to 2^60.
-var y: i64 = 1 << 60;
+var y: i64 = 1 <<< 60;
 
 // This forms a rational literal whose value is one third, and converts it to
 // the nearest representable value of type `f64`.

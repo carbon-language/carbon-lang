@@ -64,11 +64,13 @@ source file:
 | `*`             | Indirection, multiplication, and forming pointer types                                                       |
 | `/`             | Division                                                                                                     |
 | `%`             | Modulus                                                                                                      |
-| `^`             | Complementing and Bitwise XOR                                                                                |
-| `&`             | Address-of and Bitwise AND                                                                                   |
-| `\|`            | Bitwise OR                                                                                                   |
-| `<<`            | Arithmetic and Logical Left-shift                                                                            |
-| `>>`            | Arithmetic and Logical Right-shift                                                                           |
+| `&`             | Address-of and facet type combination                                                                       |
+| `~~~`           | Bitwise complement                                                                                           |
+| `&&&`           | Bitwise AND                                                                                                  |
+| <code>\|\|\|</code> | Bitwise OR                                                                                               |
+| `^^^`           | Bitwise XOR                                                                                                  |
+| `<<<`           | Arithmetic and Logical Left-shift                                                                            |
+| `>>>`           | Arithmetic and Logical Right-shift                                                                           |
 | `=`             | Assignment and initialization                                                                                |
 | `++`            | Increment                                                                                                    |
 | `--`            | Decrement                                                                                                    |
@@ -77,11 +79,11 @@ source file:
 | `*=`            | Multiply-and-assign                                                                                          |
 | `/=`            | Divide-and-assign                                                                                            |
 | `%=`            | Modulus-and-assign                                                                                           |
-| `&=`            | Bitwise-AND-and-assign                                                                                       |
-| `\|=`           | Bitwise-OR-and-assign                                                                                        |
-| `^=`            | Bitwise-XOR-and-assign                                                                                       |
-| `<<=`           | Left-shift-and-assign                                                                                        |
-| `>>=`           | Right-shift-and-assign                                                                                       |
+| `&&&=`          | Bitwise-AND-and-assign                                                                                       |
+| <code>\|\|\|=</code> | Bitwise-OR-and-assign                                                                                   |
+| `^^^=`          | Bitwise-XOR-and-assign                                                                                       |
+| `<<<=`          | Left-shift-and-assign                                                                                        |
+| `>>>=`          | Right-shift-and-assign                                                                                       |
 | `==`            | Equality or equal to                                                                                         |
 | `!=`            | Inequality or not equal to                                                                                   |
 | `>`             | Greater than                                                                                                 |
@@ -143,3 +145,5 @@ source file:
     [#2665: Semicolons terminate statements](https://github.com/carbon-language/carbon-lang/pull/2665)
 -   Proposal
     [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)
+-   Proposal
+    [#8133: Tripled bitwise operators](https://github.com/carbon-language/carbon-lang/pull/8133)
