@@ -39,7 +39,7 @@ class TextualNamespace {
     explicit operator bool() const { return value_; }
 
     // Returns the disambiguated name. Note that this is not stable until
-    // all names have been added to the `Namespace`.
+    // all names have been added to the `TextualNamespace`.
     auto GetFullName() const -> llvm::StringRef;
 
     // Returns the base name, without any disambiguators.
