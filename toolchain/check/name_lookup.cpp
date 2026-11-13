@@ -364,9 +364,6 @@ static auto DiagnoseInvalidQualifiedNameAccess(
 }
 
 // Returns whether the access is prohibited by the access modifiers.
-//
-// This takes friendship into account. If the current access context is
-// friended by `target_scope_const_id` then any non-hidden access is allowed.
 static auto IsAccessProhibited(Context& context,
                                std::optional<AccessInfo> access_info,
                                SemIR::AccessKind access_kind) -> bool {
