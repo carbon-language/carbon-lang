@@ -371,7 +371,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type.aaf: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %.ea2: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %.ea2: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type) [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.968: %I.type.aaf = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type.aaf = facet_value %C, (%I.impl_witness) [concrete]
@@ -381,7 +381,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.069: %J.type.ed5 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.069 [symbolic]
 // CHECK:STDOUT:   %J.type.64d: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %.c59: <witness> = impl_self_witness %C, @J, @J(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %.c59: <witness> = impl_self_witness %C, @J, @J(%empty_struct_type) [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.8ff: %J.type.64d = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.a15: <witness> = complete_type_witness %I.type.aaf [concrete]
@@ -418,7 +418,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%empty_struct_type)> [concrete = constants.%I.type.aaf]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I, @I(constants.%empty_struct_type) [concrete = constants.%.ea2]
+// CHECK:STDOUT:   %.loc5: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I, @I(constants.%empty_struct_type) [symbolic_self = constants.%.ea2]
 // CHECK:STDOUT:   impl_decl @C.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: %J.type.23c = name_ref J, imports.%Main.J [concrete = constants.%J.generic]
@@ -426,7 +426,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.64d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J, @J(constants.%empty_struct_type) [concrete = constants.%.c59]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J, @J(constants.%empty_struct_type) [symbolic_self = constants.%.c59]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.2: type) [from "basic_import_generic_interface.carbon"] {
@@ -746,7 +746,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.551: %I.type.aab = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %complete_type.8b4: <witness> = complete_type_witness %I.type.aab [concrete]
 // CHECK:STDOUT:   %J.type.d682d6.3: type = facet_type <@J, @J(%empty_struct_type):identified> [concrete]
-// CHECK:STDOUT:   %.ea2: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %.ea2: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type) [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.e1f642.2: %J.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.type.aaf: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
@@ -785,7 +785,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     %.loc5_15: type = converted %.loc5_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %J.type: type = facet_type <@J, @J(constants.%empty_struct_type)> [concrete = constants.%J.type.d682d6.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc5: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I, @I(constants.%empty_struct_type) [concrete = constants.%.ea2]
+// CHECK:STDOUT:   %.loc5: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I, @I(constants.%empty_struct_type) [symbolic_self = constants.%.ea2]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.3: type) [from "basic_import_generic_constraint.carbon"] {

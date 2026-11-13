@@ -227,7 +227,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.b1e = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.17a: %pattern_type.b1e = wrapper_binding_pattern self, %self.param_patt.c01 [symbolic]
 // CHECK:STDOUT:   %I.type.2f8: type = facet_type <@I, @I(%InInterfaceArgs)> [concrete]
-// CHECK:STDOUT:   %.214: <witness> = impl_self_witness %X, @I, @I(%InInterfaceArgs) [concrete]
+// CHECK:STDOUT:   %.214: <witness> = impl_self_witness %X, @I, @I(%InInterfaceArgs) [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @X.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.ac1: %I.type.2f8 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.6cd: type = fn_type @I.WithSelf.F, @I.WithSelf(%InInterfaceArgs, %Self.a4f) [symbolic]
@@ -274,7 +274,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %InInterfaceArgs.ref: type = name_ref InInterfaceArgs, file.%InInterfaceArgs.decl [concrete = constants.%InInterfaceArgs]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%InInterfaceArgs)> [concrete = constants.%I.type.2f8]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @X.as.I.impl.%X.ref, @I, @I(constants.%InInterfaceArgs) [concrete = constants.%.214]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @X.as.I.impl.%X.ref, @I, @I(constants.%InInterfaceArgs) [symbolic_self = constants.%.214]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.3: type) [from "types.carbon"] {
@@ -628,7 +628,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %self.patt.17a: %pattern_type.b1e = wrapper_binding_pattern self, %self.param_patt.c01 [symbolic]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %I.type.208: type = facet_type <@I, @I(%X)> [concrete]
-// CHECK:STDOUT:   %.950: <witness> = impl_self_witness %C.591, @I, @I(%X) [concrete]
+// CHECK:STDOUT:   %.950: <witness> = impl_self_witness %C.591, @I, @I(%X) [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.269: %I.type.208 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.9ea: type = fn_type @I.WithSelf.F, @I.WithSelf(%X, %Self.a4f) [symbolic]
@@ -680,7 +680,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Main.X [concrete = constants.%X]
 // CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%X)> [concrete = constants.%I.type.208]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.I.impl.%C, @I, @I(constants.%X) [concrete = constants.%.950]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.I.impl.%C, @I, @I(constants.%X) [symbolic_self = constants.%.950]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @I(imports.%Main.import_ref.b3bc94.4: type) [from "types.carbon"] {

@@ -250,6 +250,15 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
 }
 
+auto EvalConstantInst(Context& /*context*/, SemIR::IdentifiedWitness inst)
+    -> ConstantEvalResult {
+  // IdentifiedWitness comes from LookupImplWitness which is already
+  // canonicalized, and is never subject to its operands being substituted in a
+  // specific, since it only exists during identify. So no need to further
+  // canonicalize the self.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::ImplSelfWitness inst)
     -> ConstantEvalResult {
   // Canonicalize the self in the same way as LookupImplWitness.
