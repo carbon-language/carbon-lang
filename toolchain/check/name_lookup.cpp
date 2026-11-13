@@ -390,19 +390,6 @@ static auto IsAccessProhibited(Context& context,
   }
 }
 
-// Returns whether the access context has private access to the class of
-// `extended_scope`, a scope reached through `extend` and looked up in
-// `specific_id`. For example, it does if it's that class or one of its friends,
-// or is nested within one of those.
-static auto HasPrivateAccessToExtendedScope(
-    Context& context, const SemIR::NameScope& extended_scope,
-    SemIR::SpecificId specific_id) -> bool {
-  return GetHighestAllowedAccess(
-             context, GetConstantValueInSpecific(context.sem_ir(), specific_id,
-                                                 extended_scope.inst_id())) ==
-         SemIR::AccessKind::Private;
-}
-
 auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
@@ -652,10 +639,19 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     auto scope_access_info = access_info;
     if (has_caller_access_info && is_parent_access && scope_result.is_found() &&
         access_kind == SemIR::AccessKind::Private) {
+      auto scope_constant = GetConstantValueInSpecific(
+          context.sem_ir(), specific_id, name_scope.inst_id());
+      // Whether the access context has private access to the class of
+      // `name_scope`, a scope reached through `extend` and looked up in
+      // `specific_id`. For example, it does if it's that class or one of its
+      // friends, or is nested within one of those.
+      bool has_private_access_to_extended_scope =
+          GetHighestAllowedAccess(context, scope_constant) ==
+          SemIR::AccessKind::Private;
+
       scope_access_info->highest_allowed_access =
-          HasPrivateAccessToExtendedScope(context, name_scope, specific_id)
-              ? SemIR::AccessKind::Private
-              : SemIR::AccessKind::Protected;
+          has_private_access_to_extended_scope ? SemIR::AccessKind::Private
+                                               : SemIR::AccessKind::Protected;
     }
 
     auto is_access_prohibited =
