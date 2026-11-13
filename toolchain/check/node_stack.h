@@ -443,8 +443,6 @@ class NodeStack {
         return Id::KindFor<SemIR::ClassId>();
       case Parse::NodeKind::InterfaceDefinitionStart:
         return Id::KindFor<SemIR::InterfaceId>();
-      case Parse::NodeKind::ImplDefinitionStart:
-        return Id::KindFor<SemIR::ImplId>();
       case Parse::NodeKind::NamedConstraintDefinitionStart:
         return Id::KindFor<SemIR::NamedConstraintId>();
       case Parse::NodeKind::SelfTypeName:
@@ -518,6 +516,7 @@ class NodeStack {
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
+      case Parse::NodeKind::ImplDefinitionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:

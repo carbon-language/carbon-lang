@@ -321,7 +321,7 @@ class C;
 // CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as I where .X1 = () {}
-// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·      ┗━━┫ error: associated constant X2 not given a value in impl of interface I
 // CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────

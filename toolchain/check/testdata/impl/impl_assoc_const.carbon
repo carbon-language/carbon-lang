@@ -119,7 +119,7 @@ impl () as K where .V = {};
 // CHECK:STDERR:        ·                         │ [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl () as K {}
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant V not given a value in impl of interface K
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────

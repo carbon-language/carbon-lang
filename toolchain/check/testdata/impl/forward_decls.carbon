@@ -103,7 +103,7 @@ let x: (C as I).T = ();
 // CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as I {}
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface I
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
@@ -203,7 +203,7 @@ impl C as I where .T = ();
 // CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as I where .T = () {}
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant U not given a value in impl of interface I
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
