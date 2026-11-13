@@ -21,7 +21,8 @@ auto LowerToLLVM(
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
     const SemIR::File& sem_ir, int total_ir_count,
-    const LowerToLLVMOptions& options) -> std::unique_ptr<llvm::Module>;
+    SemIR::GetInstNamerFn get_inst_namer, const LowerToLLVMOptions& options)
+    -> std::unique_ptr<llvm::Module>;
 
 }  // namespace Carbon::Lower
 

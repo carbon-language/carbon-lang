@@ -120,7 +120,7 @@ class InstNamer {
                SpecificInterfaceId, VtableId>;
 
   // Construct the instruction namer, and assign names to all instructions in
-  // the provided file.
+  // the provided file. `*sem_ir` must be complete.
   explicit InstNamer(const File* sem_ir, int total_ir_count);
 
   // Returns the scope ID corresponding to an ID of a function, class,
@@ -317,6 +317,14 @@ class InstNamer {
 
 // Value store of short names for Carbon source files.
 using ShortFileNameStore = FixedSizeValueStore<SemIR::CheckIRId, std::string>;
+
+// A standard signature for a callback to support lazy construction.
+using GetInstNamerFn = llvm::function_ref<auto()->InstNamer&>;
+
+// The typical storage of `GetInstNamerFn`. Note this stores non-owning
+// references.
+using GetInstNamersStore =
+    FixedSizeValueStore<SemIR::CheckIRId, GetInstNamerFn>;
 
 }  // namespace Carbon::SemIR
 
