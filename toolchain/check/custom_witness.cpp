@@ -275,19 +275,25 @@ enum class DestroyFormat {
 namespace {
 // Cleans up state `PrepareForHasWitness`.
 class DestroyFormatWitnessContext {
-  Context& context_;
+  Context* context_;
   SemIR::ConstantId subobject_destroy_facet_id_;
   SemIR::ConstantId destroy_facet_id_;
 
   DestroyFormatWitnessContext(Context& context,
                               SemIR::ConstantId subobject_destroy_facet_id,
                               SemIR::ConstantId destroy_facet_id)
-      : context_(context),
+      : context_(&context),
         subobject_destroy_facet_id_(subobject_destroy_facet_id),
         destroy_facet_id_(destroy_facet_id) {}
 
  public:
-  DestroyFormatWitnessContext(DestroyFormatWitnessContext&&) = delete;
+  DestroyFormatWitnessContext(DestroyFormatWitnessContext&& other)
+      : context_(std::exchange(other.context_, nullptr)),
+        subobject_destroy_facet_id_(std::exchange(
+            other.subobject_destroy_facet_id_, SemIR::ConstantId::None)),
+        destroy_facet_id_(
+            std::exchange(other.destroy_facet_id_, SemIR::ConstantId::None)) {}
+
   DestroyFormatWitnessContext(const DestroyFormatWitnessContext&) = delete;
   auto operator=(DestroyFormatWitnessContext&&) -> void = delete;
   auto operator=(const DestroyFormatWitnessContext&) -> void = delete;
@@ -295,29 +301,39 @@ class DestroyFormatWitnessContext {
   // Starts a block for lookup-related instructions, and returns a `FacetType`
   // for lookups.
   static auto PrepareForLookup(Context& context, SemIR::LocId loc_id)
-      -> DestroyFormatWitnessContext {
+      -> std::optional<DestroyFormatWitnessContext> {
     context.inst_block_stack().Push();
     StartGenericDecl(context);
 
     auto subobject_destroy_interface_id =
         GetCoreInterfaceId(context, loc_id, CoreIdentifier::SubobjectDestroy);
+    if (subobject_destroy_interface_id == SemIR::InterfaceId::None) {
+      return std::nullopt;
+    }
+
+    auto destroy_interface_id =
+        GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyImpl);
+    if (destroy_interface_id == SemIR::InterfaceId::None) {
+      return std::nullopt;
+    }
+
     auto subobject_destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
         context, loc_id,
         {.interface_id = subobject_destroy_interface_id,
          .specific_id = SemIR::SpecificId::None});
-
-    auto destroy_interface_id =
-        GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyImpl);
     auto destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
         context, loc_id,
         {.interface_id = destroy_interface_id,
          .specific_id = SemIR::SpecificId::None});
-    return {context, subobject_destroy_facet_id, destroy_facet_id};
+    return DestroyFormatWitnessContext(context, subobject_destroy_facet_id,
+                                       destroy_facet_id);
   }
 
   ~DestroyFormatWitnessContext() {
-    DiscardGenericDecl(context_);
-    context_.inst_block_stack().PopAndDiscard();
+    if (context_) {
+      DiscardGenericDecl(*context_);
+      context_->inst_block_stack().PopAndDiscard();
+    }
   }
 
   auto GetDestroyFormatForOneType(Context& context, SemIR::LocId loc_id,
@@ -335,7 +351,6 @@ class DestroyFormatWitnessContext {
       if (op_fn_id == SemIR::FunctionId::None) {
         return DestroyFormat::NoDestroy;
       }
-
       auto op_fn = context.functions().Get(*op_fn_id);
       auto builtin_kind = op_fn.GetBuiltinFunctionKind(context.sem_ir());
       if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
