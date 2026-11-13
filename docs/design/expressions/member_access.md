@@ -1176,8 +1176,8 @@ Assert((r as __Binding_C_F).(Call(()).Op)() == 9);
 
 How does this arise?
 
-1.  First the simple member access evaluates `typeof(a).F`, which is `C.F` (`__C_F`
-    with type `__TypeOf_C_F`).
+1.  First the simple member access evaluates `typeof(a).F`, which is `C.F`
+    (`__C_F` with type `__TypeOf_C_F`).
 2.  It then looks at the expression to the left of the `.`:
     -   If it is a reference expression, the "member binding to reference"
         (`BindToRef`) operator is applied.

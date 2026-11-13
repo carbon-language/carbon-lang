@@ -48,9 +48,20 @@ fn F[template T: type](x: T) -> i32 {
 class D {}
 
 fn Test(d: D) -> i32 {
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE+4]]:10: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-8]]:16: note: cannot implicitly convert expression of type `D` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_convert.carbon:[[@LINE-9]]:16: note: type `D` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_convert.carbon:[[@LINE+15]]:10
+  // CHECK:STDERR:        │   let n: i32 = x;
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ cannot implicitly convert expression of type `D` to `i32`
+  // CHECK:STDERR:        ·                │  │ [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `D` does not implement interface
+  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return F(d);
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `F(D)`
+  // CHECK:STDERR:        ·             ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return F(d);
 }
@@ -178,9 +189,19 @@ fn AsI32[template T: type](x: T) -> i32 {
 class D {}
 
 fn Test(d: D) {
-  // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE+4]]:16-20: error: unable to monomorphize specific `AsI32(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE-7]]:10-17: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE-8]]:10-17: note: type `D` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_as.carbon:[[@LINE+14]]:16
+  // CHECK:STDERR:        │   return x as i32;
+  // CHECK:STDERR:        ·          ────┬───
+  // CHECK:STDERR:        ·              ╰──┤ cannot convert expression of type `D` to `i32` with `as`
+  // CHECK:STDERR:        ·              │  │ [ConversionFailure]
+  // CHECK:STDERR:        ·              ╰────┤ type `D` does not implement interface `Core.As(i32)`
+  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let _: i32 = AsI32(d);
+  // CHECK:STDERR:        ·                ━━┳━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: unable to monomorphize specific `AsI32(D)`
+  // CHECK:STDERR:        ·                     ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = AsI32(d);
 }
@@ -221,9 +242,19 @@ fn AsType[template T: type](x: T, template U: type) {
 class D {}
 
 fn Test(d: D) {
-  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE+4]]:3-8: error: unable to monomorphize specific `AsType(D, i32)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-7]]:14-19: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-8]]:14-19: note: type `D` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_as_type.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │   let _: U = x as U;
+  // CHECK:STDERR:        ·              ───┬──
+  // CHECK:STDERR:        ·                 ╰──┤ cannot convert expression of type `D` to `i32` with `as`
+  // CHECK:STDERR:        ·                 │  │ [ConversionFailure]
+  // CHECK:STDERR:        ·                 ╰────┤ type `D` does not implement interface `Core.As(i32)`
+  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   AsType(d, i32);
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: unable to monomorphize specific `AsType(D, i32)`
+  // CHECK:STDERR:        ·         ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AsType(d, i32);
 }
@@ -280,7 +311,7 @@ fn Run() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- convert.carbon
+// CHECK:STDOUT: --- convert.carbon = $convert
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -309,11 +340,11 @@ fn Run() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %x.param_patt.051: %pattern_type.d94 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.0f7: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt.051 [concrete]
@@ -437,7 +468,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_16.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_dependent_target_from_literal.carbon
+// CHECK:STDOUT: --- initialize_dependent_target_from_literal.carbon = $initialize_dependent_target_from_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -473,11 +504,11 @@ fn Run() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.036: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -591,7 +622,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_3.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_primitive.carbon
+// CHECK:STDOUT: --- initialize_primitive.carbon = $initialize_primitive
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -633,11 +664,11 @@ fn Run() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.ccd: init %i32 = splice_block %Int.as.Copy.impl.Op.call {
@@ -735,7 +766,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_3.5 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_tuple.carbon
+// CHECK:STDOUT: --- initialize_from_tuple.carbon = $initialize_from_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1123,7 +1154,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3.14 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_nested_literal.carbon
+// CHECK:STDOUT: --- initialize_from_nested_literal.carbon = $initialize_from_nested_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1656,7 +1687,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3.14 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as.carbon
+// CHECK:STDOUT: --- as.carbon = $as.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1697,11 +1728,11 @@ fn Run() {
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %x.param_patt.0f9: %pattern_type.98b = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.953: %pattern_type.98b = wrapper_binding_pattern x, %x.param_patt.0f9 [concrete]
@@ -1828,7 +1859,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_18.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as_type.carbon
+// CHECK:STDOUT: --- as_type.carbon = $as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1997,7 +2028,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_16.6 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- splice_inst_storage_arg.carbon
+// CHECK:STDOUT: --- splice_inst_storage_arg.carbon = $splice_inst_storage_arg
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2297,7 +2328,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13_32.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_template_method_call.carbon
+// CHECK:STDOUT: --- initialize_from_template_method_call.carbon = $initialize_from_template_method_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

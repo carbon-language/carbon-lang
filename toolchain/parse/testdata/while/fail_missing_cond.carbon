@@ -9,7 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/while/fail_missing_cond.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+2]]:9: error: expected `(` after `while` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╭─┤ fail_missing_cond.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   while {
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `(` after `while` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   while {
   }

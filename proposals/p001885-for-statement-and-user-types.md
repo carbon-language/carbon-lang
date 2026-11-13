@@ -116,14 +116,15 @@ as the next value to the `for` loop. Iteration ends when the function returns.
 
 ```python
 def generate_fibonacci():
-  yield 0;
-  n1, n2 = 0, 1;
-  while True:
-    n1, n2 = n2, n1+n2;
-    yield n1;
+    yield 0
+    n1, n2 = 0, 1
+    while True:
+        n1, n2 = n2, n1 + n2
+        yield n1
+
 
 for n in generate():
-  print(n);
+    print(n)
 ```
 
 #### Rust

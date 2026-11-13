@@ -18,8 +18,16 @@ class C {
 }
 
 fn F(c: C) -> i32 {
-  // CHECK:STDERR: fail_non_friend.carbon:[[@LINE+3]]:10-12: error: cannot access private member `i` of type `C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_non_friend.carbon:[[@LINE-5]]:15-20: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_non_friend.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │   private var i: i32;
+  // CHECK:STDERR:        ·               ───┬──
+  // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return c.i;
+  // CHECK:STDERR:        ·          ━┳━
+  // CHECK:STDERR:        ·           ┗━━┫ error: cannot access private member `i` of type `C`
+  // CHECK:STDERR:        ·              ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c.i;
 }
@@ -33,7 +41,12 @@ fn F(c: C) -> i32;
 
 class C {
   private var i: i32;
-  // CHECK:STDERR: fail_todo_friend_function.carbon:[[@LINE+2]]:3-11: error: semantics TODO: `befriending a function not yet implemented` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_friend_function.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   friend F;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO: `befriending a function not yet implemented`
+  // CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend F;
 }
@@ -134,7 +147,12 @@ var v: i32;
 
 class C {
   private var i: i32;
-  // CHECK:STDERR: fail_friend_var.carbon:[[@LINE+2]]:10: error: friend declaration names entity that is not a name scope [FriendNotNameScope]
+  // CHECK:STDERR:        ╭─┤ fail_friend_var.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   friend v;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: friend declaration names entity that is not a name scope
+  // CHECK:STDERR:        ·             ┃        [FriendNotNameScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend v;
 }
@@ -161,7 +179,12 @@ library "[[@TEST_NAME]]";
 class C;
 
 interface I {
-  // CHECK:STDERR: fail_friend_not_in_class.carbon:[[@LINE+2]]:3-11: error: `friend` declaration in non-class scope [FriendNotAllowedInScope]
+  // CHECK:STDERR:        ╭─┤ fail_friend_not_in_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   friend C;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `friend` declaration in non-class scope
+  // CHECK:STDERR:        ·          ┃        [FriendNotAllowedInScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend C;
 }
@@ -171,7 +194,12 @@ library "[[@TEST_NAME]]";
 
 class C {
   var v: i32;
-  // CHECK:STDERR: fail_friend_not_constant.carbon:[[@LINE+2]]:10: error: friend declaration names entity that is not a name scope [FriendNotNameScope]
+  // CHECK:STDERR:        ╭─┤ fail_friend_not_constant.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   friend v;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: friend declaration names entity that is not a name scope
+  // CHECK:STDERR:        ·             ┃        [FriendNotNameScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend v;
 }

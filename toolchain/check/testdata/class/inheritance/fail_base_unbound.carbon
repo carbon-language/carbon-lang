@@ -16,6 +16,11 @@ class C {
   extend base: B;
 }
 
-// CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+2]]:12-17: error: expression cannot be used as a value [UseOfNonExprAsValue]
+// CHECK:STDERR:        ╭─┤ fail_base_unbound.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ let b: B = C.base;
+// CHECK:STDERR:        ·            ━━━┳━━
+// CHECK:STDERR:        ·               ┗━━┫ error: expression cannot be used as a value
+// CHECK:STDERR:        ·                  ┃        [UseOfNonExprAsValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: B = C.base;

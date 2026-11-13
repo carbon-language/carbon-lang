@@ -21,20 +21,35 @@
 // rather than guessed at. The trailing `[` is closed immediately, since there's
 // nothing left for it to contain.
 
-// CHECK:STDERR: fail_top_level_brackets.carbon:[[@LINE+2]]:1: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+// CHECK:STDERR:        ╭─┤ fail_top_level_brackets.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: closing symbol without a corresponding opening symbol
+// CHECK:STDERR:        ·    ┃        [UnmatchedClosing]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 // CHECK:STDOUT:   - { index: 1, kind:              "Error", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "}", has_leading_space: true }
 
-// CHECK:STDERR: fail_top_level_brackets.carbon:[[@LINE+2]]:3: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+// CHECK:STDERR:        ╭─┤ fail_top_level_brackets.carbon:[[@LINE+7]]:3
+// CHECK:STDERR: ->     │ ( } )
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: closing symbol without a corresponding opening symbol
+// CHECK:STDERR:        ·      ┃        [UnmatchedClosing]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 ( } )
 // CHECK:STDOUT:   - { index: 2, kind:          "OpenParen", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "(", closing_token: 4, has_leading_space: true }
 // CHECK:STDOUT:   - { index: 3, kind:              "Error", line: {{ *}}[[@LINE-2]], column: 3, indent: 1, spelling: "}", has_leading_space: true }
 // CHECK:STDOUT:   - { index: 4, kind:         "CloseParen", line: {{ *}}[[@LINE-3]], column: 5, indent: 1, spelling: ")", opening_token: 2, has_leading_space: true }
 
-// CHECK:STDERR: fail_top_level_brackets.carbon:[[@LINE+3]]:1: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_top_level_brackets.carbon:[[@LINE+2]]:2: note: possibly missing `]` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_top_level_brackets.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ [
+// CHECK:STDERR:        · ╻╷
+// CHECK:STDERR:        · ┗━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·  │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·  ╰────┤ possibly missing `]` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 [
 // CHECK:STDOUT:   - { index: 5, kind:  "OpenSquareBracket", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "[", closing_token: 6, has_leading_space: true }
@@ -53,8 +68,15 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 17, has_leading_space: true }
-  // CHECK:STDERR: fail_semi_in_paren.carbon:[[@LINE+3]]:16: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_semi_in_paren.carbon:[[@LINE+2]]:22: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_semi_in_paren.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   var x: i32 = (1 + 2;
+  // CHECK:STDERR:        ·                ┳     ┬
+  // CHECK:STDERR:        ·                ┗━━━━━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                      │  ┃        symbol
+  // CHECK:STDERR:        ·                      │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                      ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                           │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = (1 + 2;
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -77,8 +99,14 @@ fn F() {
 
 // As above, at the top level rather than inside a function.
 
-// CHECK:STDERR: fail_scope_in_paren.carbon:[[@LINE+3]]:14: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_scope_in_paren.carbon:[[@LINE+2]]:20: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_scope_in_paren.carbon:[[@LINE+9]]:14
+// CHECK:STDERR: ->     │ var x: i32 = (1 + 2;
+// CHECK:STDERR:        ·              ┳     ┬
+// CHECK:STDERR:        ·              ┗━━━━━━━━┫ error: opening symbol without a corresponding closing
+// CHECK:STDERR:        ·                    │  ┃        symbol
+// CHECK:STDERR:        ·                    │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·                    ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: i32 = (1 + 2;
 // CHECK:STDOUT:   - { index:  1, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "var", has_leading_space: true }
@@ -115,8 +143,13 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column: 5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column: 6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column: 8, indent: 1, spelling: "{", closing_token: 16, has_leading_space: true }
-  // CHECK:STDERR: fail_close_paren_before_brace.carbon:[[@LINE+3]]:6: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_close_paren_before_brace.carbon:[[@LINE+2]]:8: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_close_paren_before_brace.carbon:[[@LINE+8]]:6
+  // CHECK:STDERR: ->     │   if (C {
+  // CHECK:STDERR:        ·      ┳ ┬
+  // CHECK:STDERR:        ·      ┗━━━━┫ error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR:        ·        │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·        ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if (C {
   // CHECK:STDOUT:   - { index:  6, kind:              "If", line: {{ *}}[[@LINE-1]], column: 3, indent: 3, spelling: "if", has_leading_space: true }
@@ -141,8 +174,13 @@ fn F() {
 // `->` structures a declaration rather than an expression, so a parameter
 // list's paren must have closed before it.
 
-// CHECK:STDERR: fail_close_paren_before_arrow.carbon:[[@LINE+3]]:5: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_close_paren_before_arrow.carbon:[[@LINE+2]]:12: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_close_paren_before_arrow.carbon:[[@LINE+8]]:5
+// CHECK:STDERR: ->     │ fn F(x: i32 -> i32 {
+// CHECK:STDERR:        ·     ┳      ┬
+// CHECK:STDERR:        ·     ┗━━━━━━━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·            │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·            ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(x: i32 -> i32 {
 // CHECK:STDOUT:   - { index:  1, kind:              "Fn", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "fn", has_leading_space: true }
@@ -176,8 +214,13 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 13, has_leading_space: true }
-  // CHECK:STDERR: fail_close_paren_at_wide_gap.carbon:[[@LINE+3]]:4: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_close_paren_at_wide_gap.carbon:[[@LINE+2]]:6: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_close_paren_at_wide_gap.carbon:[[@LINE+8]]:4
+  // CHECK:STDERR: ->     │   G(1  + 2;
+  // CHECK:STDERR:        ·    ┳ ┬
+  // CHECK:STDERR:        ·    ┗━━━━┫ error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR:        ·      │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·      ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(1  + 2;
   // CHECK:STDOUT:   - { index:  6, kind:      "Identifier", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "G", identifier: 1, has_leading_space: true }
@@ -202,14 +245,35 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 22, has_leading_space: true }
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+9]]:17: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+8]]:23: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_paren_cascade.carbon:[[@LINE+30]]:17
+  // CHECK:STDERR: ->     │   var x: i32 = G(H(I(1;
+  // CHECK:STDERR:        ·                 ┳     ┬
+  // CHECK:STDERR:        ·                 ┗━━━━━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                       │  ┃        symbol
+  // CHECK:STDERR:        ·                       │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                       ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                            │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+6]]:19: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+5]]:23: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_paren_cascade.carbon:[[@LINE+20]]:19
+  // CHECK:STDERR: ->     │   var x: i32 = G(H(I(1;
+  // CHECK:STDERR:        ·                   ┳   ┬
+  // CHECK:STDERR:        ·                   ┗━━━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                       │  ┃        symbol
+  // CHECK:STDERR:        ·                       │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                       ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                            │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+3]]:21: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_paren_cascade.carbon:[[@LINE+2]]:23: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_paren_cascade.carbon:[[@LINE+10]]:21
+  // CHECK:STDERR: ->     │   var x: i32 = G(H(I(1;
+  // CHECK:STDERR:        ·                     ┳ ┬
+  // CHECK:STDERR:        ·                     ┗━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                       │  ┃        symbol
+  // CHECK:STDERR:        ·                       │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                       ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                            │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = G(H(I(1;
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -244,8 +308,15 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 23, has_leading_space: true }
-  // CHECK:STDERR: fail_close_struct_before_semi.carbon:[[@LINE+3]]:17: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_close_struct_before_semi.carbon:[[@LINE+2]]:32: note: possibly missing `}` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_close_struct_before_semi.carbon:[[@LINE+10]]:17
+  // CHECK:STDERR: ->     │   var x: auto = {.a = 1, .b = 2;
+  // CHECK:STDERR:        ·                 ┳              ┬
+  // CHECK:STDERR:        ·                 ┗━━━━━━━━━━━━━━━━━┫ error: opening symbol without a
+  // CHECK:STDERR:        ·                                │  ┃        corresponding closing symbol
+  // CHECK:STDERR:        ·                                │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                                ╰────┤ possibly missing `}` here
+  // CHECK:STDERR:        ·                                     │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: auto = {.a = 1, .b = 2;
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -283,11 +354,25 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 19, has_leading_space: true }
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+6]]:16: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+5]]:22: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_mismatched_kinds.carbon:[[@LINE+20]]:16
+  // CHECK:STDERR: ->     │   var x: i32 = (1 + 2};
+  // CHECK:STDERR:        ·                ┳     ┬
+  // CHECK:STDERR:        ·                ┗━━━━━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                      │  ┃        symbol
+  // CHECK:STDERR:        ·                      │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                      ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                           │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+3]]:22: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-  // CHECK:STDERR: fail_mismatched_kinds.carbon:[[@LINE+2]]:22: note: possibly missing `{` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_mismatched_kinds.carbon:[[@LINE+10]]:22
+  // CHECK:STDERR: ->     │   var x: i32 = (1 + 2};
+  // CHECK:STDERR:        ·                      ┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: closing symbol without a corresponding opening
+  // CHECK:STDERR:        ·                      │  ┃        symbol
+  // CHECK:STDERR:        ·                      │  ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ·                      ╰────┤ possibly missing `{` here
+  // CHECK:STDERR:        ·                           │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = (1 + 2};
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -319,8 +404,13 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 18, has_leading_space: true }
-  // CHECK:STDERR: fail_missing_open_paren_after_if.carbon:[[@LINE+3]]:11: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-  // CHECK:STDERR: fail_missing_open_paren_after_if.carbon:[[@LINE+2]]:6: note: possibly missing `(` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_missing_open_paren_after_if.carbon:[[@LINE+8]]:11
+  // CHECK:STDERR: ->     │   if C > 0) {
+  // CHECK:STDERR:        ·      ┬    ┳
+  // CHECK:STDERR:        ·      │    ┗━━┫ error: closing symbol without a corresponding opening symbol
+  // CHECK:STDERR:        ·      │       ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ·      ╰─────────┤ possibly missing `(` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if C > 0) {
   // CHECK:STDOUT:   - { index:  6, kind:              "If", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "if", has_leading_space: true }
@@ -346,8 +436,14 @@ fn F() {
 
 // As above for `forall`, which wants a `[` rather than a `(`.
 
-// CHECK:STDERR: fail_missing_open_square_after_forall.carbon:[[@LINE+3]]:20: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-// CHECK:STDERR: fail_missing_open_square_after_forall.carbon:[[@LINE+2]]:13: note: possibly missing `[` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_missing_open_square_after_forall.carbon:[[@LINE+9]]:20
+// CHECK:STDERR: ->     │ impl forall T: type] X as Y {
+// CHECK:STDERR:        ·             ┬      ┳
+// CHECK:STDERR:        ·             │      ┗━━┫ error: closing symbol without a corresponding opening
+// CHECK:STDERR:        ·             │         ┃        symbol
+// CHECK:STDERR:        ·             │         ┃        [UnmatchedClosing]
+// CHECK:STDERR:        ·             ╰───────────┤ possibly missing `[` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall T: type] X as Y {
 // CHECK:STDOUT:   - { index:  1, kind:               "Impl", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "impl", has_leading_space: true }
@@ -386,8 +482,16 @@ fn F() {
     thing2;
     // CHECK:STDOUT:   - { index: 11, kind:      "Identifier", line: {{ *}}[[@LINE-1]], column:  5, indent: 5, spelling: "thing2", identifier: 2 }
     // CHECK:STDOUT:   - { index: 12, kind:            "Semi", line: {{ *}}[[@LINE-2]], column: 11, indent: 5, spelling: ";" }
-  // CHECK:STDERR: fail_missing_brace_after_if.carbon:[[@LINE+3]]:3: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-  // CHECK:STDERR: fail_missing_brace_after_if.carbon:[[@LINE-10]]:14: note: possibly missing `{` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_missing_brace_after_if.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   if (thing1)
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ possibly missing `{` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   }
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: closing symbol without a corresponding opening symbol
+  // CHECK:STDERR:        ·      ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   }
   // CHECK:STDOUT:   - { index: 13, kind: "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "}", opening_token: 10, has_leading_space: true }
@@ -426,8 +530,16 @@ fn F[T: type]
   // CHECK:STDOUT:   - { index: 19, kind:          "OpenParen", line: {{ *}}[[@LINE-2]], column:  6, indent: 3, spelling: "(", closing_token: 20 }
   // CHECK:STDOUT:   - { index: 20, kind:         "CloseParen", line: {{ *}}[[@LINE-3]], column:  7, indent: 3, spelling: ")", opening_token: 19 }
   // CHECK:STDOUT:   - { index: 21, kind:               "Semi", line: {{ *}}[[@LINE-4]], column:  8, indent: 3, spelling: ";" }
-// CHECK:STDERR: fail_missing_brace_multi_line_header.carbon:[[@LINE+3]]:1: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-// CHECK:STDERR: fail_missing_brace_multi_line_header.carbon:[[@LINE-18]]:11: note: possibly missing `{` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_missing_brace_multi_line_header.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │     (x: T)
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ possibly missing `{` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: closing symbol without a corresponding opening symbol
+// CHECK:STDERR:        ·    ┃        [UnmatchedClosing]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 // CHECK:STDOUT:   - { index: 22, kind:    "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "}", opening_token: 13, has_leading_space: true }
@@ -445,8 +557,14 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 16, has_leading_space: true }
-  // CHECK:STDERR: fail_missing_open_paren_at_leaf.carbon:[[@LINE+3]]:19: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-  // CHECK:STDERR: fail_missing_open_paren_at_leaf.carbon:[[@LINE+2]]:18: note: possibly missing `(` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_missing_open_paren_at_leaf.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR: ->     │   var x: i32 = G 1);
+  // CHECK:STDERR:        ·                  ╷╻
+  // CHECK:STDERR:        ·                  │┗━━┫ error: closing symbol without a corresponding opening
+  // CHECK:STDERR:        ·                  │   ┃        symbol
+  // CHECK:STDERR:        ·                  │   ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ·                  ╰─────┤ possibly missing `(` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = G 1);
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -475,7 +593,13 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:  5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:  6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:  8, indent: 1, spelling: "{", closing_token: 17, has_leading_space: true }
-  // CHECK:STDERR: fail_unmatched_closer.carbon:[[@LINE+2]]:20: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+  // CHECK:STDERR:        ╭─┤ fail_unmatched_closer.carbon:[[@LINE+8]]:20
+  // CHECK:STDERR: ->     │   var x: i32 = G(x));
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: closing symbol without a corresponding opening
+  // CHECK:STDERR:        ·                       ┃        symbol
+  // CHECK:STDERR:        ·                       ┃        [UnmatchedClosing]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 = G(x));
   // CHECK:STDOUT:   - { index:  6, kind:             "Var", line: {{ *}}[[@LINE-1]], column:  3, indent: 3, spelling: "var", has_leading_space: true }
@@ -505,8 +629,13 @@ fn F() {
 // CHECK:STDOUT:   - { index:  3, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:   5, indent: 1, spelling: "(", closing_token: 4 }
 // CHECK:STDOUT:   - { index:  4, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:   6, indent: 1, spelling: ")", opening_token: 3 }
 // CHECK:STDOUT:   - { index:  5, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:   8, indent: 1, spelling: "{", closing_token: 13, has_leading_space: true }
-  // CHECK:STDERR: fail_two_damaged_regions.carbon:[[@LINE+3]]:4: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_two_damaged_regions.carbon:[[@LINE+2]]:6: note: possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_two_damaged_regions.carbon:[[@LINE+8]]:4
+  // CHECK:STDERR: ->     │   G(1  + 2;
+  // CHECK:STDERR:        ·    ┳ ┬
+  // CHECK:STDERR:        ·    ┗━━━━┫ error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR:        ·      │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·      ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(1  + 2;
   // CHECK:STDOUT:   - { index:  6, kind:      "Identifier", line: {{ *}}[[@LINE-1]], column:   3, indent: 3, spelling: "G", identifier: 1, has_leading_space: true }
@@ -525,8 +654,15 @@ fn H() {
 // CHECK:STDOUT:   - { index: 16, kind:       "OpenParen", line: {{ *}}[[@LINE-3]], column:   5, indent: 1, spelling: "(", closing_token: 17 }
 // CHECK:STDOUT:   - { index: 17, kind:      "CloseParen", line: {{ *}}[[@LINE-4]], column:   6, indent: 1, spelling: ")", opening_token: 16 }
 // CHECK:STDOUT:   - { index: 18, kind:  "OpenCurlyBrace", line: {{ *}}[[@LINE-5]], column:   8, indent: 1, spelling: "{", closing_token: 31, has_leading_space: true }
-  // CHECK:STDERR: fail_two_damaged_regions.carbon:[[@LINE+3]]:17: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR: fail_two_damaged_regions.carbon:[[@LINE+2]]:24: note: possibly missing `}` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╭─┤ fail_two_damaged_regions.carbon:[[@LINE+10]]:17
+  // CHECK:STDERR: ->     │   var y: auto = {.a = 3;
+  // CHECK:STDERR:        ·                 ┳      ┬
+  // CHECK:STDERR:        ·                 ┗━━━━━━━━━┫ error: opening symbol without a corresponding
+  // CHECK:STDERR:        ·                        │  ┃        closing symbol
+  // CHECK:STDERR:        ·                        │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                        ╰────┤ possibly missing `}` here
+  // CHECK:STDERR:        ·                             │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var y: auto = {.a = 3;
   // CHECK:STDOUT:   - { index: 19, kind:             "Var", line: {{ *}}[[@LINE-1]], column:   3, indent: 3, spelling: "var", has_leading_space: true }

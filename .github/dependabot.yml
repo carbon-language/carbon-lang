@@ -1,0 +1,61 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Dependabot version updates for our GitHub Actions, pre-commit hooks, and Bazel
+# modules. See .github/workflows/README.md for how these PRs are handled.
+#
+# Updates keep our existing pinning: actions stay pinned to full commit SHAs
+# with a `# vX.Y.Z` comment, and pre-commit hooks stay frozen to commit SHAs
+# with a `# frozen: vX.Y.Z` comment.
+#
+# Security updates for other ecosystems, such as npm and pip, are enabled in the
+# repository settings and don't need an entry here.
+
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    # `/` only covers `.github/workflows`; list composite actions separately.
+    directories: ['/', '/.github/actions/*']
+    schedule:
+      interval: weekly
+    # Give new releases a week to be vetted before we adopt them.
+    cooldown:
+      default-days: 7
+    # Use our existing label instead of Dependabot's per-ecosystem labels.
+    labels: ['dependencies']
+    groups:
+      # Batch minor and patch updates, but put major updates in a separate PR so
+      # they get a closer look.
+      github-actions:
+        patterns: ['*']
+        update-types: ['minor', 'patch']
+      github-actions-major:
+        patterns: ['*']
+        update-types: ['major']
+
+  - package-ecosystem: pre-commit
+    directory: '/'
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    labels: ['dependencies']
+    groups:
+      pre-commit:
+        patterns: ['*']
+
+  # Dependabot regenerates `MODULE.bazel.lock` on a single platform, so the test
+  # workflow may still ask for platform-specific lockfile updates. LLVM is
+  # pinned with `git_override`, which Dependabot doesn't update.
+  - package-ecosystem: bazel
+    directory: '/'
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    labels: ['dependencies']
+    groups:
+      bazel:
+        patterns: ['*']

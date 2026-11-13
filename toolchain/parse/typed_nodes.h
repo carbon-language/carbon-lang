@@ -169,6 +169,10 @@ using UnderscoreName =
     LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
              NodeCategory::NonExprName>;
 
+// The `_` token, when used as the field in a struct pattern.
+using PatternListUnderscoreField =
+    LeafNode<NodeKind::PatternListUnderscoreField, Lex::UnderscoreTokenIndex>;
+
 // A name qualifier with parameters, such as `A(T: type).` or
 // `A[T: type](N: T).`.
 struct IdentifierNameQualifierWithParams {
@@ -1594,6 +1598,36 @@ struct StructTypeLiteral {
 using StructPatternStart =
     LeafNode<NodeKind::StructPatternStart, Lex::OpenCurlyBraceTokenIndex>;
 
+// shorthand let binding in a struct pattern such as `let {a: i32}`.
+struct StructPatternFieldLetBindingPattern {
+  static constexpr auto Kind =
+      NodeKind::StructPatternFieldLetBindingPattern.Define(
+          {.category = NodeCategory::Pattern, .child_count = 3});
+
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RefBindingName, RuntimeBindingName>
+      name;
+  BindingPatternTypeStartId introducer;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+// shorthand var binding in a struct pattern such as `var {a: i32}`.
+struct StructPatternFieldVarBindingPattern {
+  static constexpr auto Kind =
+      NodeKind::StructPatternFieldVarBindingPattern.Define(
+          {.category = NodeCategory::Pattern, .child_count = 3});
+
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RuntimeBindingName>
+      name;
+  BindingPatternTypeStartId introducer;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
 // `.a = pattern`
 struct StructPatternDesignatedField {
   static constexpr auto Kind = NodeKind::StructPatternDesignatedField.Define(
@@ -1605,9 +1639,10 @@ struct StructPatternDesignatedField {
 };
 
 using StructPatternFieldId =
-    NodeIdOneOf<StructPatternDesignatedField, LetBindingPattern,
-                VariablePattern, VarBindingPattern, UnusedPattern,
-                UnderscoreName, DefaultValuePattern>;
+    NodeIdOneOf<StructPatternDesignatedField,
+                StructPatternFieldLetBindingPattern, VariablePattern,
+                StructPatternFieldVarBindingPattern, UnusedPattern,
+                PatternListUnderscoreField, DefaultValuePattern>;
 
 struct StructPattern {
   static constexpr auto Kind = NodeKind::StructPattern.Define(

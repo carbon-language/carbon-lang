@@ -31,8 +31,13 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 class C {
-  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+3]]:9-14: error: `extend` must appear before `final` [ModifierMustAppearBefore]
-  // CHECK:STDERR: fail_final_extend_impl.carbon:[[@LINE+2]]:3-7: note: `final` previously appeared here [ModifierPrevious]
+  // CHECK:STDERR:        ╭─┤ fail_final_extend_impl.carbon:[[@LINE+8]]:9
+  // CHECK:STDERR: ->     │   final extend impl as Z {}
+  // CHECK:STDERR:        ·   ──┬── ━━━┳━━
+  // CHECK:STDERR:        ·     │      ┗━━┫ error: `extend` must appear before `final`
+  // CHECK:STDERR:        ·     │         ┃        [ModifierMustAppearBefore]
+  // CHECK:STDERR:        ·     ╰───────────┤ `final` previously appeared here [ModifierPrevious]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final extend impl as Z {}
 }
@@ -44,6 +49,11 @@ interface Z {}
 
 class C {}
 
-// CHECK:STDERR: fail_final_extend_impl_outside_class.carbon:[[@LINE+2]]:1-26: error: `extend impl` can only be used in an interface or class [ExtendImplOutsideClass]
+// CHECK:STDERR:        ╭─┤ fail_final_extend_impl_outside_class.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extend final impl C as Z {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: `extend impl` can only be used in an interface or class
+// CHECK:STDERR:        ·                 ┃        [ExtendImplOutsideClass]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extend final impl C as Z {}

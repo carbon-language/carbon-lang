@@ -18,12 +18,27 @@
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: fail_mismatch_at_start_of_file.carbon:1:1: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
+// CHECK:STDERR:        ╭─┤ fail_mismatch_at_start_of_file.carbon:1:1
+// CHECK:STDERR: ->     │ (}var(
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·    ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mismatch_at_start_of_file.carbon:1:2: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+// CHECK:STDERR:        ╭─┤ fail_mismatch_at_start_of_file.carbon:1:2
+// CHECK:STDERR: ->     │ (}var(
+// CHECK:STDERR:        ·  ┳
+// CHECK:STDERR:        ·  ┗━━┫ error: closing symbol without a corresponding opening symbol
+// CHECK:STDERR:        ·     ┃        [UnmatchedClosing]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mismatch_at_start_of_file.carbon:1:6: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fail_mismatch_at_start_of_file.carbon:1:7: note: possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╭─┤ fail_mismatch_at_start_of_file.carbon:1:6
+// CHECK:STDERR: ->     │ (}var(
+// CHECK:STDERR:        ·      ╻╷
+// CHECK:STDERR:        ·      ┗━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·       │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·       ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_mismatch_at_start_of_file.carbon
 // CHECK:STDOUT:   tokens:

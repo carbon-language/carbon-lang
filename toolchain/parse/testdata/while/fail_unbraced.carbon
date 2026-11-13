@@ -10,9 +10,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/while/fail_unbraced.carbon
 
 fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_unbraced.carbon:[[@LINE+6]]:12
+  // CHECK:STDERR: ->     │   while (a)
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   while (a)
-    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+2]]:5-9: error: expected braced code block [ExpectedCodeBlock]
-    // CHECK:STDERR:
     break;
 }
 

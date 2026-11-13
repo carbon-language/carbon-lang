@@ -21,7 +21,11 @@ class X {
 class A { class B; }
 
 class Y {
-  // CHECK:STDERR: fail_redeclaration_scope.carbon:[[@LINE+2]]:9: error: name `A` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_redeclaration_scope.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   class A.B {}
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: name `A` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   class A.B {}
 }

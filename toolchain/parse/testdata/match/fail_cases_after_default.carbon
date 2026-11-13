@@ -12,13 +12,28 @@ fn f() -> i32 {
   var x: i32 = 3;
   match (x) {
     default => { return 1; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+2]]:5-8: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
+    // CHECK:STDERR:        ╭─┤ fail_cases_after_default.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     case a: i32 => { return 2; }
+    // CHECK:STDERR:        ·     ━━┳━
+    // CHECK:STDERR:        ·       ┗━━┫ error: unreachable case; `case` occurs after the `default`
+    // CHECK:STDERR:        ·          ┃        [UnreachableMatchCase]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     case a: i32 => { return 2; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+2]]:5-11: error: unreachable case; `default` occurs after the `default` [UnreachableMatchCase]
+    // CHECK:STDERR:        ╭─┤ fail_cases_after_default.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     default => { return 3; }
+    // CHECK:STDERR:        ·     ━━━┳━━━
+    // CHECK:STDERR:        ·        ┗━━┫ error: unreachable case; `default` occurs after the `default`
+    // CHECK:STDERR:        ·           ┃        [UnreachableMatchCase]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     default => { return 3; }
-    // CHECK:STDERR: fail_cases_after_default.carbon:[[@LINE+2]]:5-8: error: unreachable case; `case` occurs after the `default` [UnreachableMatchCase]
+    // CHECK:STDERR:        ╭─┤ fail_cases_after_default.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     case (a: i32) if (a == 4) => { return 4; }
+    // CHECK:STDERR:        ·     ━━┳━
+    // CHECK:STDERR:        ·       ┗━━┫ error: unreachable case; `case` occurs after the `default`
+    // CHECK:STDERR:        ·          ┃        [UnreachableMatchCase]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     case (a: i32) if (a == 4) => { return 4; }
   }

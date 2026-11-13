@@ -33,7 +33,12 @@ library "[[@TEST_NAME]]";
 
 // TODO: Per p5434, a return form starting with `(` is a compound form, which
 // isn't supported yet.
-// CHECK:STDERR: fail_todo_ref_return_parenthesized.carbon:[[@LINE+2]]:12-18: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_ref_return_parenthesized.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ fn F() -> (ref i32);
+// CHECK:STDERR:        ·            ━━━┳━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `ref` tag is not an argument to a `ref` parameter
+// CHECK:STDERR:        ·                  ┃        [RefTagNoRefParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> (ref i32);
 
@@ -57,7 +62,7 @@ fn G() {
   let unused ref x: i32 = F();
 }
 
-// CHECK:STDOUT: --- ref_return.carbon
+// CHECK:STDOUT: --- ref_return.carbon = $ref_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -119,7 +124,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_ref_return.carbon
+// CHECK:STDOUT: --- import_ref_return.carbon = $import_ref_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

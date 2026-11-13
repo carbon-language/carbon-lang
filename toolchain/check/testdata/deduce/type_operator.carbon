@@ -57,13 +57,22 @@ class C {}
 fn F[T: type](p: const T*) -> T { return F(p); }
 
 fn G(p: C*) -> const C {
-  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE+3]]:10-13: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
-  // CHECK:STDERR: fail_const_from_nonconst.carbon:[[@LINE-4]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_const_from_nonconst.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        │ fn F[T: type](p: const T*) -> T { return F(p); }
+  // CHECK:STDERR:        · ────────────────┬────────────────
+  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return F(p);
+  // CHECK:STDERR:        ·          ━━┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: cannot deduce value for generic parameter `T`
+  // CHECK:STDERR:        ·               ┃        [DeductionIncomplete]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return F(p);
 }
 
-// CHECK:STDOUT: --- pointer.carbon
+// CHECK:STDOUT: --- pointer.carbon = $pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -241,7 +250,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_36.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- const.carbon
+// CHECK:STDOUT: --- const.carbon = $const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -426,7 +435,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_42.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nonconst_from_const.carbon
+// CHECK:STDOUT: --- nonconst_from_const.carbon = $nonconst_from_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -607,7 +616,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_36.2 => constants.%F.specific_fn.016
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_const_from_nonconst.carbon
+// CHECK:STDOUT: --- fail_const_from_nonconst.carbon = $fail_const_from_nonconst
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

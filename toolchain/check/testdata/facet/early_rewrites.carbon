@@ -29,8 +29,19 @@ class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == ()
-  // CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE+3]]:25-32: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE-5]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_implied_constraint_on_self.carbon:[[@LINE+14]]:25
+  // CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+  // CHECK:STDERR:        ·         ─────────┬─────────
+  // CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: Z where .Z2 = C(.Self);
+  // CHECK:STDERR:        ·                         ┳━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `.Self` that implements
+  // CHECK:STDERR:        ·                            ┃        `Z` into type implementing
+  // CHECK:STDERR:        ·                            ┃        `Z where .(Z.Z1) = ()`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: Z where .Z2 = C(.Self);
 }
@@ -39,8 +50,20 @@ fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
-// CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fail_todo_implied_constraint_on_self.carbon:[[@LINE-15]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_implied_constraint_on_self.carbon:[[@LINE+15]]:38
+// CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+// CHECK:STDERR:        ·         ─────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+// CHECK:STDERR:        ·                                         ┃        implementing
+// CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(generic T: J where .J1 = D) {
@@ -62,8 +85,18 @@ class C(T: Tuple) {}
 
 interface J {
   // Implied: .Z1 impls Tuple
-  // CHECK:STDERR: fail_todo_implied_constraint_on_associated_constant.carbon:[[@LINE+3]]:25-30: error: cannot convert type `.(Z.Z1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_todo_implied_constraint_on_associated_constant.carbon:[[@LINE-5]]:9-16: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_implied_constraint_on_associated_constant.carbon:[[@LINE+13]]:25
+  // CHECK:STDERR:        │ class C(T: Tuple) {}
+  // CHECK:STDERR:        ·         ────┬───
+  // CHECK:STDERR:        ·             ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: Z where .Z2 = C(.Z1);
+  // CHECK:STDERR:        ·                         ┳━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `.(Z.Z1)` into type
+  // CHECK:STDERR:        ·                            ┃        implementing `Tuple`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: Z where .Z2 = C(.Z1);
 }
@@ -101,9 +134,22 @@ class D;
 //
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So () can't convert to it.
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+4]]:38-50: error: cannot implicitly convert expression of type `type` to `.(Z.Z1)` [ConversionFailure]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+3]]:38-50: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE-15]]:1-32: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific.carbon:[[@LINE+17]]:38
+// CHECK:STDERR:        │ class C(T: Z & Y, U: T.(Z.Z1)) {}
+// CHECK:STDERR:        · ────────────────┬───────────────
+// CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot implicitly convert
+// CHECK:STDERR:        ·                                      │  ┃        expression of type `type` to
+// CHECK:STDERR:        ·                                      │  ┃        `.(Z.Z1)`
+// CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                                      ╰────┤ type `type` does not implement
+// CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(.(Z.Z1))`
+// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
 
@@ -131,9 +177,21 @@ class D;
 //
 // TODO: Right now the type of `U` ends up with an ImplSelfWitness
 // which does not resolve the access. So `.Z1` can't convert to it.
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+4]]:25-37: error: cannot implicitly convert expression of type `type` to `.(Z.Z1)` [ConversionFailure]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+3]]:25-37: note: type `type` does not implement interface `Core.ImplicitAs(.(Z.Z1))` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE-15]]:1-32: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_used_in_access_in_nested_specific_before_rewrite_of_access.carbon:[[@LINE+16]]:25
+// CHECK:STDERR:        │ class C(T: Z & Y, U: T.(Z.Z1)) {}
+// CHECK:STDERR:        · ────────────────┬───────────────
+// CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}
+// CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·                         ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·                         │  ┃        `type` to `.(Z.Z1)`
+// CHECK:STDERR:        ·                         │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                         ╰────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                              │ `Core.ImplicitAs(.(Z.Z1))`
+// CHECK:STDERR:        ·                              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}
 
@@ -149,8 +207,20 @@ class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:42-49: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-5]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:42
+  // CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+  // CHECK:STDERR:        ·         ─────────┬─────────
+  // CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: (Z where .Z1 = ()) where .Z2 = C(.Self);
+  // CHECK:STDERR:        ·                                          ┳━━━━━━━
+  // CHECK:STDERR:        ·                                          ┗━━┫ error: cannot convert type `.Self`
+  // CHECK:STDERR:        ·                                             ┃        that implements `Z` into
+  // CHECK:STDERR:        ·                                             ┃        type implementing
+  // CHECK:STDERR:        ·                                             ┃        `Z where .(Z.Z1) = ()`
+  // CHECK:STDERR:        ·                                             ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: (Z where .Z1 = ()) where .Z2 = C(.Self);
 }
@@ -159,8 +229,20 @@ fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-15]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:38
+// CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+// CHECK:STDERR:        ·         ─────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+// CHECK:STDERR:        ·                                         ┃        implementing
+// CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(generic T: J where .J1 = D) {
@@ -179,8 +261,19 @@ class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:26-33: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-5]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+14]]:26
+  // CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+  // CHECK:STDERR:        ·         ─────────┬─────────
+  // CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: (Z where .Z2 = C(.Self)) where .Z1 = ();
+  // CHECK:STDERR:        ·                          ┳━━━━━━━
+  // CHECK:STDERR:        ·                          ┗━━┫ error: cannot convert type `.Self` that implements
+  // CHECK:STDERR:        ·                             ┃        `Z` into type implementing
+  // CHECK:STDERR:        ·                             ┃        `Z where .(Z.Z1) = ()`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: (Z where .Z2 = C(.Self)) where .Z1 = ();
 }
@@ -189,8 +282,20 @@ fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
-// CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE-15]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_outer_nested_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:38
+// CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+// CHECK:STDERR:        ·         ─────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+// CHECK:STDERR:        ·                                         ┃        implementing
+// CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(generic T: J where .J1 = D) {
@@ -209,8 +314,20 @@ class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE-5]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:38
+  // CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+  // CHECK:STDERR:        ·         ─────────┬─────────
+  // CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: Z where .Z1 = () and .Z2 = C(.Self);
+  // CHECK:STDERR:        ·                                      ┳━━━━━━━
+  // CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+  // CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+  // CHECK:STDERR:        ·                                         ┃        implementing
+  // CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+  // CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: Z where .Z1 = () and .Z2 = C(.Self);
 }
@@ -219,8 +336,20 @@ fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
-// CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE-15]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_earlier_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:38
+// CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+// CHECK:STDERR:        ·         ─────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+// CHECK:STDERR:        ·                                         ┃        implementing
+// CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(generic T: J where .J1 = D) {
@@ -239,8 +368,19 @@ class C(T: Z where .Z1 = ()) {}
 
 interface J {
   // Implied: .Z1 == (), but this is also explicitly required for J1.
-  // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:25-32: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE-5]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE+14]]:25
+  // CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+  // CHECK:STDERR:        ·         ─────────┬─────────
+  // CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let J1: Z where .Z2 = C(.Self) and .Z1 = ();
+  // CHECK:STDERR:        ·                         ┳━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `.Self` that implements
+  // CHECK:STDERR:        ·                            ┃        `Z` into type implementing
+  // CHECK:STDERR:        ·                            ┃        `Z where .(Z.Z1) = ()`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let J1: Z where .Z2 = C(.Self) and .Z1 = ();
 }
@@ -249,8 +389,20 @@ fn F(unused generic T: J) {}
 
 class D;
 // Satisfies the implied constraint in J.J1.
-// CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE+3]]:38-45: error: cannot convert type `.Self` that implements `Z` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE-15]]:9-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_later_constraint_visible_in_type_parameter.carbon:[[@LINE+15]]:38
+// CHECK:STDERR:        │ class C(T: Z where .Z1 = ()) {}
+// CHECK:STDERR:        ·         ─────────┬─────────
+// CHECK:STDERR:        ·                  ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                     │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                      ┳━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                         ┃        that implements `Z` into type
+// CHECK:STDERR:        ·                                         ┃        implementing
+// CHECK:STDERR:        ·                                         ┃        `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        ·                                         ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self) {}
 fn G(generic T: J where .J1 = D) {
@@ -387,10 +539,23 @@ fn F(unused generic T: J) {}
 class D;
 // Satisfies the implied constraint in J.J1.
 impl D as Y where .Y1 = () {}
-// CHECK:STDERR: fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+2]]:25-29: error: cannot convert type `.Self` that implements `Z` into type implementing `Y` [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╭─┤ fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+8]]:25
+// CHECK:STDERR: ->     │ impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
+// CHECK:STDERR:        ·                         ┳━━━━
+// CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `.Self` that implements
+// CHECK:STDERR:        ·                            ┃        `Z` into type implementing `Y`
+// CHECK:STDERR:        ·                            ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = .Self and .Z2 = () and .Z3 = C(()) {}
-// CHECK:STDERR: fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+2]]:31: error: cannot convert type `D` into type implementing `Y & Z where .(Y.Y1) = () and .(Z.Z1) = .Self as Y and .(Z.Z2) = () and .(Z.Z3) = C(() as Tuple)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╭─┤ fail_todo_resolved_constraint_visible_in_type_parameter.carbon:[[@LINE+9]]:31
+// CHECK:STDERR: ->     │ fn G(generic T: J where .J1 = D) {
+// CHECK:STDERR:        ·                               ┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `D` into type implementing
+// CHECK:STDERR:        · ┃        `Y & Z where .(Y.Y1) = () and .(Z.Z1) = .Self as Y and .(Z.Z2) = () and .(Z.Z3) = C(() as Tuple)`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(generic T: J where .J1 = D) {
   F(T);
@@ -415,8 +580,18 @@ constraint NY(V: type) {
   extend require impls Y where .Y1 = V;
 }
 
-// CHECK:STDERR: fail_todo_early_rewrite_from_previous_impls_constraint.carbon:[[@LINE+3]]:59-71: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_todo_early_rewrite_from_previous_impls_constraint.carbon:[[@LINE-7]]:9-16: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_from_previous_impls_constraint.carbon:[[@LINE+13]]:59
+// CHECK:STDERR:        │ class C(U: Tuple);
+// CHECK:STDERR:        ·         ────┬───
+// CHECK:STDERR:        ·             ╰──┤ initializing generic parameter `U` declared here
+// CHECK:STDERR:        ·                │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused generic T: Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
+// CHECK:STDERR:        ·                                                           ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: Z where .Z1 impls NY(()) and .Z2 = C(.Z1.(Y.Y1))) {}
 
@@ -442,8 +617,18 @@ constraint NY(V: type) {
 // This should fail: `T.(Y.Y1)` is rewritten to be `()` but `T.(Z.Z1).(Y.Y1)`
 // is used in the argument to `C`.
 //
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE+3]]:77-89: error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE-10]]:9-16: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_period_self.carbon:[[@LINE+13]]:77
+// CHECK:STDERR:        │ class C(U: Tuple);
+// CHECK:STDERR:        ·         ────┬───
+// CHECK:STDERR:        ·             ╰──┤ initializing generic parameter `U` declared here
+// CHECK:STDERR:        ·                │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ ... T: Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
+// CHECK:STDERR:        ·                                                             ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `.(Z.Z1).(Y.Y1)` into type implementing `Tuple`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: Z where .Self impls NY(()) and .Z1 impls Y and .Z2 = C(.Z1.(Y.Y1))) {}
 
@@ -469,7 +654,15 @@ constraint NY(V: type) {
 // This should fail: `T.(Z.Z1).(Y.Y1)` is rewritten to be `()` but `T.(Y.Y1)` is used
 // in the argument to `C`.
 //
-// CHECK:STDERR: fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon:[[@LINE+2]]:79-82: error: name `Self` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_correct_interface_wrong_self_access_rewrite_in_associated_constant.carbon:[[@LINE+10]]:79
+// CHECK:STDERR: ->     │ ...T: Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
+// CHECK:STDERR:        ·                                                              ┳━━━
+// CHECK:STDERR:        ·                                                              ┗━━┫ error: name
+// CHECK:STDERR:        ·                                                                 ┃        `Self`
+// CHECK:STDERR:        ·                                                                 ┃        not
+// CHECK:STDERR:        ·                                                                 ┃        found
+// CHECK:STDERR:        ·                                                                 ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(unused generic T: Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 

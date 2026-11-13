@@ -18,36 +18,88 @@
 
 union ForwardDeclaredUnion;
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_param_type.h:[[@LINE+16]]:6
+// CHECK:STDERR:        │ union ForwardDeclaredUnion;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo1(ForwardDeclaredUnion) -> void;
+// CHECK:STDERR:        ·      ━━┳━
+// CHECK:STDERR:        ·        ┗━━┫ error: argument type 'ForwardDeclaredUnion' is incomplete
+// CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_param_type.carbon
+// CHECK:STDERR:        │   Cpp.foo1(*p);
+// CHECK:STDERR:        ·   ──────┬─────
+// CHECK:STDERR:        ·         ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo1(ForwardDeclaredUnion) -> void;
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_param_type.h:[[@LINE+16]]:6
+// CHECK:STDERR:        │ union ForwardDeclaredUnion;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo2(ForwardDeclaredUnion) -> void;
+// CHECK:STDERR:        ·      ━━┳━
+// CHECK:STDERR:        ·        ┗━━┫ error: argument type 'ForwardDeclaredUnion' is incomplete
+// CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_param_type.carbon
+// CHECK:STDERR:        │   Cpp.foo2(*p);
+// CHECK:STDERR:        ·   ──────┬─────
+// CHECK:STDERR:        ·         ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo2(ForwardDeclaredUnion) -> void;
 
 // --- fail_import_decl_value_param_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredUnion*) {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:3-14: note: in thunk for C++ function used here [InCppThunk]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR: ->     │   Cpp.foo1(*p);
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
+  // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredUnion`
+  // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
+  // CHECK:STDERR:        │ union ForwardDeclaredUnion;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo1(ForwardDeclaredUnion) -> void;
+  // CHECK:STDERR:        ·                               ┬
+  // CHECK:STDERR:        ·                               ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                  │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6-9: error: argument type 'ForwardDeclaredUnion' is incomplete [CppInteropParseError]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredUnion' [CppInteropParseNote]
   Cpp.foo1(*p);
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-14: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-3]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-12]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_param_type.h:4:31: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:12-13: error: forming value of incomplete type `Cpp.ForwardDeclaredUnion` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-17]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:31: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR: ->     │   Cpp.foo2(*p);
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
+  // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredUnion`
+  // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
+  // CHECK:STDERR:        │ union ForwardDeclaredUnion;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo2(ForwardDeclaredUnion) -> void;
+  // CHECK:STDERR:        ·                               ┬
+  // CHECK:STDERR:        ·                               ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                  │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo2(*p);
 }
@@ -254,9 +306,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:3-25: error: member access into incomplete class `Cpp.IncompleteUnion` [QualifiedExprInIncompleteClassScope]
-  // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   Cpp.IncompleteUnion.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: member access into incomplete class `Cpp.IncompleteUnion`
+  // CHECK:STDERR:        ·               ┃        [QualifiedExprInIncompleteClassScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./incomplete.h
+  // CHECK:STDERR:        │ union IncompleteUnion;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.IncompleteUnion.foo();
 }
@@ -313,25 +374,51 @@ fn F(u: Cpp.DefPointerParamUnion*) {
 
 union DeclValueReturnUnion;
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./decl_value_return_type.h:[[@LINE+18]]:6
+// CHECK:STDERR:        │ union DeclValueReturnUnion;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ auto foo_decl_value_return() -> DeclValueReturnUnion;
+// CHECK:STDERR:        ·      ┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: calling 'foo_decl_value_return' with incomplete return type
+// CHECK:STDERR:        ·      │  ┃        'DeclValueReturnUnion'
+// CHECK:STDERR:        ·      │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·      ╰────┤ 'foo_decl_value_return' declared here [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_import_decl_value_return_type.carbon
+// CHECK:STDERR:        │   Cpp.foo_decl_value_return();
+// CHECK:STDERR:        ·   ─────────────┬─────────────
+// CHECK:STDERR:        ·                ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo_decl_value_return() -> DeclValueReturnUnion;
 
 // --- fail_import_decl_value_return_type.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnUnion' [CppInteropParseError]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnUnion' [CppInteropParseNote]
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+7]]:3-29: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnUnion` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: ./decl_value_return_type.h:4:33: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo_decl_value_return();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: function returns incomplete type `Cpp.DeclValueReturnUnion`
+  // CHECK:STDERR:        ·             ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./decl_value_return_type.h
+  // CHECK:STDERR:        │ union DeclValueReturnUnion;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ auto foo_decl_value_return() -> DeclValueReturnUnion;
+  // CHECK:STDERR:        ·                                 ┬
+  // CHECK:STDERR:        ·                                 ╰──┤ return type declared here
+  // CHECK:STDERR:        ·                                    │ [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }
@@ -402,7 +489,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon = $import_definition_no_data_members_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -441,7 +528,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon = $import_definition_single_data_member_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -480,7 +567,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon = $import_definition_multiple_data_members_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -519,7 +606,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon = $import_definition_in_namespace_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -616,7 +703,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon = $import_definition_in_relative_namespace_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -664,7 +751,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
+// CHECK:STDOUT: --- import_definition_in_outer_definition.carbon = $import_definition_in_outer_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -757,7 +844,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
+// CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon = $import_definition_and_static_method_call_before
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -806,7 +893,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
+// CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon = $import_definition_and_static_method_call_after
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -855,7 +942,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon = $import_decl_pointer_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -892,7 +979,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_definition_pointer_param_type.carbon = $import_definition_pointer_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -929,7 +1016,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_value_return_type.carbon
+// CHECK:STDOUT: --- import_definition_value_return_type.carbon = $import_definition_value_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -986,7 +1073,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon = $import_decl_pointer_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1019,7 +1106,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_definition_pointer_return_type.carbon = $import_definition_pointer_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

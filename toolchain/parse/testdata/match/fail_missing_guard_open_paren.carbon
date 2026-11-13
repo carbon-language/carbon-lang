@@ -10,8 +10,15 @@
 
 fn f() -> i32 {
   match (true) {
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+3]]:26: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-    // CHECK:STDERR: fail_missing_guard_open_paren.carbon:[[@LINE+2]]:21: note: possibly missing `(` here [PossiblyMissingBracketHere]
+    // CHECK:STDERR:        ╭─┤ fail_missing_guard_open_paren.carbon:[[@LINE+10]]:26
+    // CHECK:STDERR: ->     │     case x: bool if false) => { return 1; }
+    // CHECK:STDERR:        ·                     ┬    ┳
+    // CHECK:STDERR:        ·                     │    ┗━━┫ error: closing symbol without a corresponding
+    // CHECK:STDERR:        ·                     │       ┃        opening symbol
+    // CHECK:STDERR:        ·                     │       ┃        [UnmatchedClosing]
+    // CHECK:STDERR:        ·                     ╰─────────┤ possibly missing `(` here
+    // CHECK:STDERR:        ·                               │ [PossiblyMissingBracketHere]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     case x: bool if false) => { return 1; }
   }

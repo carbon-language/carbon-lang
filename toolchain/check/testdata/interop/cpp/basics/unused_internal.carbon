@@ -16,10 +16,18 @@
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
-// CHECK:STDERR: unused.carbon:[[@LINE+2]]:12: warning: unused variable 'n' [CppInteropParseWarning]
+// CHECK:STDERR:        ╭─┤ unused.carbon:[[@LINE+6]]:12
+// CHECK:STDERR: ->     │ static int n = 0;
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ warning: unused variable 'n' [CppInteropParseWarning]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 static int n = 0;
-// CHECK:STDERR: unused.carbon:[[@LINE+2]]:13: warning: unused function 'f' [CppInteropParseWarning]
+// CHECK:STDERR:        ╭─┤ unused.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ static void f() {}
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ warning: unused function 'f' [CppInteropParseWarning]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 static void f() {}
 ''';

@@ -25,7 +25,7 @@ class C {
   }
 }
 
-// CHECK:STDOUT: --- impl_as.carbon
+// CHECK:STDOUT: --- impl_as.carbon = $impl_as
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

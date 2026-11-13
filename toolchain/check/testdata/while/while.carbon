@@ -80,8 +80,14 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9-12: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+2]]:9-12: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_bad_condition.carbon:[[@LINE+9]]:9
+  // CHECK:STDERR: ->     │   while ({}) {}
+  // CHECK:STDERR:        ·         ━┳━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `{}` to `bool`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   while ({}) {}
 }
@@ -90,25 +96,41 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-10: error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   continue;
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-7: error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   break;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   break;
   while (false) {
     continue;
     break;
   }
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-10: error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   continue;
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+2]]:3-7: error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   break;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   break;
 }
 
-// CHECK:STDOUT: --- while.carbon
+// CHECK:STDOUT: --- while.carbon = $while
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -153,7 +175,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unreachable_end.carbon
+// CHECK:STDOUT: --- unreachable_end.carbon = $unreachable_end
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -198,7 +220,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- break_continue.carbon
+// CHECK:STDOUT: --- break_continue.carbon = $break_continue
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

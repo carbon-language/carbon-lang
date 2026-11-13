@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
@@ -41,21 +42,37 @@ auto HandleAssociatedConstant(Context& context) -> void {
           "phase keyword is not allowed on an associated constant");
       context.emitter().Emit(*context.position(),
                              PhaseKeywordInAssociatedConstant);
+      state.has_error = true;
     } else {
+      // A word that can't be a name, followed by the `:`, was most likely
+      // meant as the name, and is what the message is about. Otherwise the
+      // name is missing, and goes after `let`.
+      bool recover_as_raw =
+          kind.is_word() &&
+          context.PositionKind(Lookahead::NextToken) == Lex::TokenKind::Colon;
       CARBON_DIAGNOSTIC(
           ExpectedAssociatedConstantIdentifier, Error,
-          "expected identifier in associated constant declaration");
-      context.emitter().Emit(*context.position(),
-                             ExpectedAssociatedConstantIdentifier);
+          "expected identifier in associated constant declaration"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(recover_as_raw ? DiagnosticLoc(*context.position())
+                                            : context.PointAfterPreviousToken(),
+                             ExpectedAssociatedConstantIdentifier,
+                             recover_as_raw);
+      if (recover_as_raw) {
+        identifier = context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+            context.Consume());
+      } else {
+        state.has_error = true;
+      }
     }
-    state.has_error = true;
   }
 
   auto colon = context.ConsumeIf(Lex::TokenKind::Colon);
   if (identifier && !colon) {
     CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColon, Error,
                       "expected `:` in associated constant declaration");
-    context.emitter().Emit(*context.position(),
+    context.emitter().Emit(context.PointAfterPreviousToken(),
                            ExpectedAssociatedConstantColon);
     state.has_error = true;
   }

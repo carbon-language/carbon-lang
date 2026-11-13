@@ -18,12 +18,23 @@ base class B {
   extend base: A;
 }
 
-// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+3]]:1-14: error: redefinition of `class A` [RedeclRedef]
-// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE-9]]:1-14: note: previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ╭─┤ fail_extend_cycle.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ base class A {
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ base class A {
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redefinition of `class A` [RedeclRedef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 base class A {
   extend base: A;
-  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+2]]:10: error: name `C` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_extend_cycle.carbon:[[@LINE+6]]:10
+  // CHECK:STDERR: ->     │   var c: C;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `C` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var c: C;
 }

@@ -20,28 +20,38 @@ namespace Internal {
 struct PreparedPart;
 }  // namespace Internal
 
+// Which line numbers the framed form shows.
+enum class LineNumbers : int8_t {
+  // Every line of source is numbered, and every location has its line and
+  // column.
+  All,
+  // Only the first location row that has a location keeps its line and
+  // column. The gutter has no numbers, and every other location shows only its
+  // file name.
+  First,
+};
+
 // Draws diagnostics for a terminal.
 //
-// A diagnostic renders as its headline, and then a frame holding everything
-// that explains it: which file, the source there, and the text of each label
-// against the code it marks.
+// A diagnostic renders as one frame holding a snippet of each file it points
+// into. The message's text is placed under the range that is wrong, which has a
+// heavy underline, and begins with the level word. Every label is placed under
+// the range it is attached to.
 //
-//   error: 1 argument passed to function expecting 0 arguments
 //          ╭─┤ foo.carbon:19:3
-//          │
 //        1 │ fn Run0() {}
 //          · ──────┬─────
 //          ·       ╰──┤ calling function declared here
 //          ┆
 //   ->  19 │   Run0(1);
-//          ·   ───┬───
-//          ·      ╰──┤ 1 argument passed here
-//          ╰────────────
+//          ·   ━━━┳━━━
+//          ·      ┗━━┫ error: invalid arguments in function call
+//          ╰────
 //
 // With snippets off, each part of the diagnostic is one line, led by its
 // location and the extent of its range:
 //
-//   foo.carbon:19:3-9: error: 1 argument passed to function expecting 0
+//   foo.carbon:19:3-9: error: invalid arguments in function call
 //   foo.carbon:1:1-12: note: calling function declared here
 //
 // See /toolchain/docs/diagnostics_rendering.md for the full form, the palette,
@@ -75,8 +85,19 @@ class Renderer {
   // Sets whether diagnostics show snippets of the source they point at. With
   // them off, every diagnostic takes the compact form: one line per part, led
   // by its location and the extent of its range, positioned against nothing,
-  // which is what a build log and a golden file want.
+  // which suits a build log.
   auto set_snippets(bool value) -> void { snippets_ = value; }
+
+  // Sets which line numbers the framed form shows. The layout is the same
+  // either way.
+  //
+  // `LineNumbers::First` is for golden files. Adding a `CHECK` line changes the
+  // number of every source line below it, so a golden can only hold a line
+  // number as a `[[@LINE...]]` offset from its `CHECK` line. Autoupdate writes
+  // that offset for the first location row only: it doesn't rewrite gutter
+  // numbers, and a frame's `CHECK` lines are all in that row's file, so a
+  // location in another file has no offset from them.
+  auto set_line_numbers(LineNumbers value) -> void { line_numbers_ = value; }
 
   auto set_capabilities(const Terminal::Capabilities& capabilities) -> void {
     capabilities_ = capabilities;
@@ -91,12 +112,13 @@ class Renderer {
   // Renders the framed form into the geometry `Render` chose.
   auto RenderFramed(Terminal::OutputBufferRef out,
                     llvm::MutableArrayRef<Internal::PreparedPart> parts,
-                    int headline, Level level, int frame_x, int content_x,
+                    int leading, Level level, int frame_x, int content_x,
                     int source_columns, int columns) const -> void;
 
   Terminal::Capabilities capabilities_;
   bool include_kind_ = false;
   bool snippets_ = true;
+  LineNumbers line_numbers_ = LineNumbers::All;
 };
 
 // Returns `loc` as `<filename>:<line>:<column>`, with the parts that are

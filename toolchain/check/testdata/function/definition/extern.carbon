@@ -42,8 +42,16 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fail_def_extern_mismatch.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_def_extern_mismatch.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() {}
 
@@ -52,8 +60,16 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F();
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE+3]]:1-15: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fail_def_extern_mismatch_reverse.carbon:[[@LINE-2]]:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_def_extern_mismatch_reverse.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn F();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -62,12 +78,27 @@ extern fn F() {}
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+3]]:1-7: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_diag_suppressed.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F();
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: fail_extern_diag_suppressed.carbon:[[@LINE-6]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_diag_suppressed.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() {}
 
@@ -76,8 +107,15 @@ fn F() {}
 library "[[@TEST_NAME]]";
 
 fn F() {}
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE+3]]:1-14: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fail_extern_decl_after_def.carbon:[[@LINE-2]]:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_decl_after_def.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ fn F() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F();
 
@@ -89,11 +127,16 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╭─┤ fail_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR:        ·           ┃        [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 
-// CHECK:STDOUT: --- extern_def.carbon
+// CHECK:STDOUT: --- extern_def.carbon = $extern_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -113,7 +156,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_for_extern_decl.carbon
+// CHECK:STDOUT: --- def_for_extern_decl.carbon = $def_for_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -134,7 +177,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- split_library.carbon
+// CHECK:STDOUT: --- split_library.carbon = $split_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -151,7 +194,7 @@ extern fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- split_library.impl.carbon
+// CHECK:STDOUT: --- split_library.impl.carbon = $split_library.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -173,7 +216,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_extern_mismatch.carbon
+// CHECK:STDOUT: --- fail_def_extern_mismatch.carbon = $fail_def_extern_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -186,7 +229,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc16: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -194,7 +237,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_extern_mismatch_reverse.carbon
+// CHECK:STDOUT: --- fail_def_extern_mismatch_reverse.carbon = $fail_def_extern_mismatch_reverse
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -207,7 +250,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc16: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -215,7 +258,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_diag_suppressed.carbon
+// CHECK:STDOUT: --- fail_extern_diag_suppressed.carbon = $fail_extern_diag_suppressed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -228,8 +271,8 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc27: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F() {
@@ -237,7 +280,7 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_def.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_def.carbon = $fail_extern_decl_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -250,7 +293,7 @@ extern fn F() {}
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -258,13 +301,13 @@ extern fn F() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl.carbon
+// CHECK:STDOUT: --- in_impl.carbon = $in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_in_impl.impl.carbon = $fail_in_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

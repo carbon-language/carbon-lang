@@ -16,7 +16,7 @@ fn F();
 
 fn G() { F(); }
 
-// CHECK:STDOUT: --- simple.carbon
+// CHECK:STDOUT: --- simple.carbon = $simple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

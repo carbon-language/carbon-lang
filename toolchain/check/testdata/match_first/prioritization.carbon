@@ -34,8 +34,18 @@ interface Y {}
 interface X {}
 
 impl forall [T: Y] T as Z where .Z1 = {.y: type} {}
-// CHECK:STDERR: fail_overlap_not_allowed_in_different_match_first.carbon:[[@LINE+3]]:1-50: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: fail_overlap_not_allowed_in_different_match_first.carbon:[[@LINE-2]]:1-50: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ╭─┤ fail_overlap_not_allowed_in_different_match_first.carbon:[[@LINE+13]]:1
+// CHECK:STDERR:        │ impl forall [T: Y] T as Z where .Z1 = {.y: type} {}
+// CHECK:STDERR:        · ─────────────────────────┬────────────────────────
+// CHECK:STDERR:        ·                          ╰──┤ other `impl` here
+// CHECK:STDERR:        ·                             │ [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl forall [T: X] T as Z where .Z1 = {.x: type} {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: found non-final `impl` with the same type structure as another
+// CHECK:STDERR:        ·    ┃        non-final `impl`
+// CHECK:STDERR:        ·    ┃        [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: X] T as Z where .Z1 = {.x: type} {}
 
@@ -150,7 +160,12 @@ fn F() {
   impl C as X {}
   // Since C impls X and Y, the first one in the match_first block
   // should be selected, which is the .y impl. So this should fail.
-  // CHECK:STDERR: fail_prioritization_does_not_choose_second_declarared.carbon:[[@LINE+2]]:3-13: error: struct `{.y: type}` has no field named `x` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR:        ╭─┤ fail_prioritization_does_not_choose_second_declarared.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.x = type} as C.(Z.Z1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: struct `{.y: type}` has no field named `x`
+  // CHECK:STDERR:        ·           ┃        [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.x = type} as C.(Z.Z1);
 }
@@ -178,7 +193,12 @@ fn F() {
   impl C as X {}
   // Since C impls X and Y, the first one in the match_first block
   // should be selected, which is the .x impl. So this should fail.
-  // CHECK:STDERR: fail_prioritization_does_not_choose_first_declarared.carbon:[[@LINE+2]]:3-13: error: struct `{.x: type}` has no field named `y` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR:        ╭─┤ fail_prioritization_does_not_choose_first_declarared.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.y = type} as C.(Z.Z1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: struct `{.x: type}` has no field named `y`
+  // CHECK:STDERR:        ·           ┃        [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.y = type} as C.(Z.Z1);
 }
@@ -249,7 +269,12 @@ match_first {
 fn F[U: type where .Self impls X and .Self impls Y]() {
   // The impls are not final, so we can't use the concrete `.Z1` value provided
   // by the impls here. This conversion should fail.
-  // CHECK:STDERR: fail_match_first_does_not_imply_final.carbon:[[@LINE+2]]:3-25: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_match_first_does_not_imply_final.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.y = type} as U.(Z.Z1);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `Core.As` implicitly referenced here, but package `Core` not found
+  // CHECK:STDERR:        ·      ┃        [CoreNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.y = type} as U.(Z.Z1);
 }
@@ -363,7 +388,12 @@ match_first {
 fn F(generic T: Y) {
   // This query is not concrete, so the impl will not give a final witness, so
   // we can't use the rewrite constraint's RHS here.
-  // CHECK:STDERR: fail_non_final_match_first_is_not_final.carbon:[[@LINE+2]]:3-32: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_non_final_match_first_is_not_final.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.y = type} as ().(Z(C(T)).Z1);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `Core.As` implicitly referenced here, but package `Core` not found
+  // CHECK:STDERR:        ·      ┃        [CoreNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.y = type} as ().(Z(C(T)).Z1);
 }
@@ -425,7 +455,12 @@ final match_first {
 
 fn F(generic T: type) {
   // Could match C(T) later, but doesn't yet. So it's not considered final.
-  // CHECK:STDERR: fail_final_overlapping_query_in_match_first.carbon:[[@LINE+2]]:3-29: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_final_overlapping_query_in_match_first.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.t = type} as ().(Z(T).Z1);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `Core.As` implicitly referenced here, but package `Core` not found
+  // CHECK:STDERR:        ·      ┃        [CoreNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.t = type} as ().(Z(T).Z1);
 }
@@ -452,7 +487,12 @@ final match_first {
 
 fn F(generic T: type) {
   // Could match C(T) later, but doesn't yet. So it's not considered final.
-  // CHECK:STDERR: fail_final_overlapping_query_in_match_first_reverse_order.carbon:[[@LINE+2]]:3-29: error: `Core.As` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_final_overlapping_query_in_match_first_reverse_order.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   {.t = type} as ().(Z(T).Z1);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `Core.As` implicitly referenced here, but package `Core` not found
+  // CHECK:STDERR:        ·      ┃        [CoreNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {.t = type} as ().(Z(T).Z1);
 }

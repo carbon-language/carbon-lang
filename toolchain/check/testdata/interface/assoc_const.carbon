@@ -18,7 +18,7 @@ interface I {
   let Empty: ();
 }
 
-// CHECK:STDOUT: --- assoc_const.carbon
+// CHECK:STDOUT: --- assoc_const.carbon = $assoc_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

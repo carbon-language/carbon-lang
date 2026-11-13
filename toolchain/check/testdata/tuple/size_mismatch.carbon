@@ -13,27 +13,51 @@
 // --- fail_assign_from_empty.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_assign_from_empty.carbon:[[@LINE+2]]:16-17: error: cannot initialize tuple of 1 element from tuple with 0 elements [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╭─┤ fail_assign_from_empty.carbon:[[@LINE+8]]:16
+// CHECK:STDERR: ->     │ var x: ((),) = ();
+// CHECK:STDERR:        ·                ┳━
+// CHECK:STDERR:        ·                ┗━━┫ error: cannot initialize tuple of 1 element from tuple with
+// CHECK:STDERR:        ·                   ┃        0 elements
+// CHECK:STDERR:        ·                   ┃        [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: ((),) = ();
 
 // --- fail_assign_to_empty.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+2]]:13-17: error: cannot initialize tuple of 0 elements from tuple with 1 element [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╭─┤ fail_assign_to_empty.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ var x: () = ((),);
+// CHECK:STDERR:        ·             ┳━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot initialize tuple of 0 elements from tuple with 1
+// CHECK:STDERR:        ·                ┃        element
+// CHECK:STDERR:        ·                ┃        [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: () = ((),);
 
 // --- fail_assign_nested.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+2]]:32-43: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╭─┤ fail_assign_nested.carbon:[[@LINE+8]]:32
+// CHECK:STDERR: ->     │ var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: cannot initialize tuple of 2 elements
+// CHECK:STDERR:        ·                                   ┃        from tuple with 3 elements
+// CHECK:STDERR:        ·                                   ┃        [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
 
 // --- fail_too_few_elements.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few_elements.carbon:[[@LINE+2]]:19-24: error: cannot initialize tuple of 2 elements from tuple with 1 element [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╭─┤ fail_too_few_elements.carbon:[[@LINE+8]]:19
+// CHECK:STDERR: ->     │ var x: ((), ()) = ((), );
+// CHECK:STDERR:        ·                   ┳━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: cannot initialize tuple of 2 elements from tuple
+// CHECK:STDERR:        ·                      ┃        with 1 element
+// CHECK:STDERR:        ·                      ┃        [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: ((), ()) = ((), );

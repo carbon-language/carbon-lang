@@ -96,7 +96,8 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
   if (!semi) {
     CARBON_DIAGNOSTIC(ExpectedStatementSemi, Error,
                       "`{0}` statements must end with a `;`", Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedStatementSemi,
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
     // Recover to the next semicolon if possible.
@@ -144,7 +145,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
     end_token = context.Consume();
   } else if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedIn, Error, "expected `in` after loop pattern");
-    context.emitter().Emit(*context.position(), ExpectedIn);
+    context.emitter().Emit(context.PointAfterPreviousToken(), ExpectedIn);
     state.has_error = true;
   }
 

@@ -13,20 +13,38 @@
 class Class {
   var field: i32;
   fn F() -> i32 {
-    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+2]]:12-16: error: expression cannot be used as a value [UseOfNonExprAsValue]
+    // CHECK:STDERR:        ╭─┤ fail_unbound_field.carbon:[[@LINE+7]]:12
+    // CHECK:STDERR: ->     │     return field;
+    // CHECK:STDERR:        ·            ━━┳━━
+    // CHECK:STDERR:        ·              ┗━━┫ error: expression cannot be used as a value
+    // CHECK:STDERR:        ·                 ┃        [UseOfNonExprAsValue]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return field;
   }
 
   fn IsZero() -> bool {
-    // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+2]]:12-21: error: cannot access member of interface `Core.EqWith(Core.IntLiteral)` in type `<unbound element of class Class>` that does not implement that interface [MissingImplInMemberAccess]
+    // CHECK:STDERR:        ╭─┤ fail_unbound_field.carbon:[[@LINE+10]]:12
+    // CHECK:STDERR: ->     │     return field == 0;
+    // CHECK:STDERR:        ·            ┳━━━━━━━━━
+    // CHECK:STDERR:        ·            ┗━━┫ error: cannot access member of interface
+    // CHECK:STDERR:        ·               ┃        `Core.EqWith(Core.IntLiteral)` in type
+    // CHECK:STDERR:        ·               ┃        `<unbound element of class Class>` that does not
+    // CHECK:STDERR:        ·               ┃        implement that interface
+    // CHECK:STDERR:        ·               ┃        [MissingImplInMemberAccess]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return field == 0;
   }
 }
 
 fn G() -> i32 {
-  // CHECK:STDERR: fail_unbound_field.carbon:[[@LINE+2]]:10-20: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╭─┤ fail_unbound_field.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return Class.field;
+  // CHECK:STDERR:        ·          ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: expression cannot be used as a value
+  // CHECK:STDERR:        ·                  ┃        [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return Class.field;
 }

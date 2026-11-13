@@ -12,6 +12,7 @@
 #include "common/command_line.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/build_subcommand.h"
@@ -36,6 +37,8 @@ struct Options {
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
   bool diagnostic_snippets = true;
+  Diagnostics::LineNumbers diagnostic_line_numbers =
+      Diagnostics::LineNumbers::All;
   bool threads = true;
   bool build_runtimes_on_demand = false;
 
@@ -148,12 +151,37 @@ By default a diagnostic shows one view of each file it points into, with the
 lines between its ranges elided, so a message and a label near it read as one
 piece of code. `--no-diagnostic-snippets` drops that: each part of a diagnostic
 is one line, led by its location and the extent of its range, positioned
-against nothing, which is what a build log and a golden file want.
+against nothing, which suits a build log.
 )""",
       },
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&diagnostic_snippets);
+      });
+
+  b.AddOneOfOption(
+      {
+          .name = "diagnostic-line-numbers",
+          .value_name = "(all|first)",
+          .help = R"""(
+Which line numbers diagnostics show.
+
+By default every line of source shown is numbered, and every location has its
+line and column. With `first`, only the first location in each diagnostic keeps
+its line and column, normally the one it is reported at. The lines of source are
+unnumbered, and every other location shows only its file name. Golden test
+files use `first` so that their expected output doesn't change when lines of a
+test move.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("all", Diagnostics::LineNumbers::All)
+                    .Default(true),
+                arg_b.OneOfValue("first", Diagnostics::LineNumbers::First),
+            },
+            &diagnostic_line_numbers);
       });
 
   b.AddOneOfOption(
@@ -358,6 +386,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   // flag and render for whatever is behind the error stream.
   consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
   consumer.set_diagnostic_snippets(options.diagnostic_snippets);
+  consumer.set_diagnostic_line_numbers(options.diagnostic_line_numbers);
   consumer.set_capabilities(ErrorCapabilities(options.terminal));
 
   if (env.installation->error()) {

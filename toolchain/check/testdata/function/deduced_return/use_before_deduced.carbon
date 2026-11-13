@@ -15,8 +15,17 @@ library "[[@TEST_NAME]]";
 
 fn F(b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_recursion.carbon:[[@LINE+3]]:12-19: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-    // CHECK:STDERR: fail_recursion.carbon:[[@LINE-3]]:1-23: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_recursion.carbon:[[@LINE+12]]:12
+    // CHECK:STDERR:        │ fn F(b: bool) -> auto {
+    // CHECK:STDERR:        · ───────────┬───────────
+    // CHECK:STDERR:        ·            ╰──┤ return type of `F` is deduced from its definition
+    // CHECK:STDERR:        ·               │ [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     return F(false);
+    // CHECK:STDERR:        ·            ━━━━┳━━━
+    // CHECK:STDERR:        ·                ┗━━┫ error: call to `F` before its return type is known
+    // CHECK:STDERR:        ·                   ┃        [CallBeforeReturnTypeDeduced]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return F(false);
   }
@@ -28,10 +37,18 @@ library "[[@TEST_NAME]]";
 
 class C {
   // The body of `F` is checked after the body of `G`.
-  // CHECK:STDERR: fail_member_order.carbon:[[@LINE+1]]:26-28: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-  fn G() -> i32 { return F(); }
-  // CHECK:STDERR: fail_member_order.carbon:[[@LINE+2]]:3-18: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_member_order.carbon:[[@LINE+11]]:26
+  // CHECK:STDERR: ->     │   fn G() -> i32 { return F(); }
+  // CHECK:STDERR:        ·                          ┳━━
+  // CHECK:STDERR:        ·                          ┗━━┫ error: call to `F` before its return type is known
+  // CHECK:STDERR:        ·                             ┃        [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR:        │   fn F() -> auto { return 0 as i32; }
+  // CHECK:STDERR:        ·   ────────┬───────
+  // CHECK:STDERR:        ·           ╰──┤ return type of `F` is deduced from its definition
+  // CHECK:STDERR:        ·              │ [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
+  fn G() -> i32 { return F(); }
   fn F() -> auto { return 0 as i32; }
 }
 

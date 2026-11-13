@@ -27,11 +27,16 @@ import library "a";
 
 export C1;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+2]]:10-18: error: `export` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ export C2(T: type);
+// CHECK:STDERR:        ·          ━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: `export` declaration cannot have parameters
+// CHECK:STDERR:        ·                 ┃        [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export C2(T: type);
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -94,7 +99,7 @@ export C2(T: type);
 // CHECK:STDOUT:   %T.loc5_11.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -122,9 +127,9 @@ export C2(T: type);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %C1: %C1.type = export C1, imports.%Foo.C1 [concrete = constants.%C1.generic]
-// CHECK:STDOUT:   %.loc10_14.1: type = splice_block %.loc10_14.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc15_14.1: type = splice_block %.loc15_14.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc10_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc15_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = constants.%T]
 // CHECK:STDOUT:   %C2: %C2.type = export C2, imports.%Foo.C2 [concrete = constants.%C2.generic]

@@ -10,7 +10,11 @@
 
 // --- fail_unused_does_not_start_declaration.carbon
 
-// CHECK:STDERR: fail_unused_does_not_start_declaration.carbon:[[@LINE+2]]:1-6: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_unused_does_not_start_declaration.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ unused y: i32;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 unused y: i32;
 
@@ -62,19 +66,33 @@ fn F(x: (), unused var y: ());
 
 // --- fail_ref_unused.carbon
 
-// CHECK:STDERR: fail_ref_unused.carbon:[[@LINE+2]]:10-15: error: `unused` must be written before `ref` [UnusedAfterBindingModifier]
+// CHECK:STDERR:        ╭─┤ fail_ref_unused.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F(ref unused y: i32);
+// CHECK:STDERR:        ·          ━━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: `unused` must be written before `ref`
+// CHECK:STDERR:        ·                ┃        [UnusedAfterBindingModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(ref unused y: i32);
 
 // --- fail_nested.carbon
 
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:12-17: error: `unused` nested within another `unused` [NestedUnused]
+// CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+6]]:12
+// CHECK:STDERR: ->     │ var unused unused x: i32 = 0;
+// CHECK:STDERR:        ·            ━━━┳━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `unused` nested within another `unused` [NestedUnused]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var unused unused x: i32 = 0;
 
 // --- fail_nested_parens.carbon
 
-// CHECK:STDERR: fail_nested_parens.carbon:[[@LINE+2]]:13-18: error: `unused` nested within another `unused` [NestedUnused]
+// CHECK:STDERR:        ╭─┤ fail_nested_parens.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ var unused (unused y: i32) = (0,);
+// CHECK:STDERR:        ·             ━━━┳━━
+// CHECK:STDERR:        ·                ┗━━┫ error: `unused` nested within another `unused`
+// CHECK:STDERR:        ·                   ┃        [NestedUnused]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var unused (unused y: i32) = (0,);
 
@@ -316,7 +334,7 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │     ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │     ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ╭─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ ╭─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
@@ -337,7 +355,7 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │     ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │     ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ╭─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ ╭─VariablePattern 'var'
 // CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
@@ -350,12 +368,12 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─PatternListComma ','
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ╭─StructPattern '}'
 // CHECK:STDOUT:   │ ├─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -367,12 +385,12 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─PatternListComma ','
 // CHECK:STDOUT:   │ │   │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │   │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   │ ╭─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ │ ╭─StructPattern '}'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
@@ -385,12 +403,12 @@ var unused (unused y: i32) = (0,);
 // CHECK:STDOUT:   │ │     │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │     │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │     │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │     ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │     ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │     ├─PatternListComma ','
 // CHECK:STDOUT:   │ │     │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │     │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │     │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │     ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │     ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │   ╭─StructPattern '}'
 // CHECK:STDOUT:   │ │ ╭─UnusedPattern 'unused'
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'

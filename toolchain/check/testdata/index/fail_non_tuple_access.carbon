@@ -13,12 +13,19 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+2]]:3-6: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_non_tuple_access.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   0[1];
+  // CHECK:STDERR:        ·   ┳━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·      ┃        `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that
+  // CHECK:STDERR:        ·      ┃        does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   0[1];
 }
 
-// CHECK:STDOUT: --- fail_non_tuple_access.carbon
+// CHECK:STDOUT: --- fail_non_tuple_access.carbon = $fail_non_tuple_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

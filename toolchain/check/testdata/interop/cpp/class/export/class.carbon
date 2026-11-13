@@ -59,13 +59,30 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+2]]:1-26: error: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_concrete.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ class IncompleteConcreteA;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: class was forward declared here
+// CHECK:STDERR:        ·                 ┃        [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class IncompleteConcreteA;
 
 inline Cpp '''
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE+3]]:29: error: variable has incomplete type 'Carbon::IncompleteConcreteA' (aka 'Carbon::Main::IncompleteConcreteA') [CppInteropParseError]
-// CHECK:STDERR: fail_incomplete_concrete.carbon:[[@LINE-4]]:26: note: forward declaration of 'Carbon::Main::IncompleteConcreteA' [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_concrete.carbon:[[@LINE+15]]:29
+// CHECK:STDERR:        │ class IncompleteConcreteA;
+// CHECK:STDERR:        ·                          ┬
+// CHECK:STDERR:        ·                          ╰──┤ forward declaration of
+// CHECK:STDERR:        ·                             │ 'Carbon::Main::IncompleteConcreteA'
+// CHECK:STDERR:        ·                             │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ Carbon::IncompleteConcreteA incomplete_concrete_a;
+// CHECK:STDERR:        ·                             ┳
+// CHECK:STDERR:        ·                             ┗━━┫ error: variable has incomplete type
+// CHECK:STDERR:        ·                                ┃        'Carbon::IncompleteConcreteA' (aka
+// CHECK:STDERR:        ·                                ┃        'Carbon::Main::IncompleteConcreteA')
+// CHECK:STDERR:        ·                                ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 Carbon::IncompleteConcreteA incomplete_concrete_a;
 ''';
@@ -75,7 +92,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+2]]:1-17: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_monomorphization_failure.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ class B(N: i32) {
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `binding maps to a non-type template parameter`
+// CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class B(N: i32) {
   var a: array(i8, N);
@@ -86,9 +108,18 @@ class B(N: i32) {
 alias T = B(-1);
 
 inline Cpp '''
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+4]]:1: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_monomorphization_failure.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ Carbon::T t;
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_monomorphization_failure.carbon:[[@LINE+2]]:9: error: no type named 'T' in namespace 'Carbon' [CppInteropParseError]
+// CHECK:STDERR:        ╭─┤ fail_todo_monomorphization_failure.carbon:[[@LINE+7]]:9
+// CHECK:STDERR: ->     │ Carbon::T t;
+// CHECK:STDERR:        · ───────╴╻
+// CHECK:STDERR:        ·         ┗━━┫ error: no type named 'T' in namespace 'Carbon'
+// CHECK:STDERR:        ·            ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 Carbon::T t;
 ''';

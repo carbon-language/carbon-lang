@@ -19,6 +19,7 @@
 #include "toolchain/base/mem_usage.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
 #include "toolchain/lex/token_kind.h"
@@ -205,6 +206,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // of the given word token. This should only be used for error recovery
   // purposes, when a phase after the lexer determines that a word token was
   // intended to represent an identifier rather than its special meaning.
+  //
+  // TODO: Recover with a raw identifier only when it names something, perhaps
+  // with a note suggesting `r#` otherwise. The parser recovers with one for any
+  // reserved word it takes as a name, so check cascades, for example to "name
+  // `r#Cpp` not found" on `class Cpp.C {}`.
   auto AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token) -> TokenIndex;
 
   // Returns the 1-based indentation column number.
@@ -251,6 +257,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto TokenToDiagnosticLoc(TokenIndex token) const
       -> Diagnostics::ConvertedLoc;
 
+  // Converts a run of tokens to a diagnostic location. A run spanning lines
+  // covers the rest of its first line.
+  auto TokenRangeToDiagnosticLoc(InclusiveTokenRange tokens) const
+      -> Diagnostics::ConvertedLoc;
+
+  // Converts the point just past `token`, where something missing after it
+  // would be written, to a diagnostic location.
+  auto PointAfterTokenToDiagnosticLoc(TokenIndex token) const
+      -> Diagnostics::ConvertedLoc;
+
   // Returns true if the given range overlaps with an entry in
   // `dump_sem_ir_ranges_`. Must not be called when there are no ranges; query
   // `has_dump_sem_ir_ranges` first.
@@ -294,17 +310,19 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
  private:
   friend class Lexer;
 
-  class SourcePointerDiagnosticEmitter
-      : public Diagnostics::Emitter<const char*> {
+  class SourceLocDiagnosticEmitter : public Diagnostics::Emitter<SourceLoc> {
    public:
-    explicit SourcePointerDiagnosticEmitter(Diagnostics::Consumer* consumer,
-                                            const TokenizedBuffer* tokens)
+    explicit SourceLocDiagnosticEmitter(Diagnostics::Consumer* consumer,
+                                        const TokenizedBuffer* tokens)
         : Emitter(consumer), tokens_(tokens) {}
 
    protected:
-    auto ConvertLoc(const char* loc, ContextFnT /*context_fn*/) const
+    auto ConvertLoc(SourceLoc loc, ContextFnT /*context_fn*/) const
         -> Diagnostics::ConvertedLoc override {
-      return tokens_->SourcePointerToDiagnosticLoc(loc);
+      auto converted =
+          tokens_->SourcePointerToDiagnosticLoc(loc.text().begin());
+      converted.loc.length = loc.text().size();
+      return converted;
     }
 
    private:

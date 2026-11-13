@@ -12,7 +12,11 @@
 
 // --- fail_multiline_token.carbon
 
-// CHECK:STDERR: fail_multiline_token.carbon:[[@LINE+2]]:1-13: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_multiline_token.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ '''
+// CHECK:STDERR:        · ━┳━
+// CHECK:STDERR:        ·  ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 '''
 hello

@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_no_name.carbon
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+2]]:7: error: expected identifier or `library` after `import` [ExpectedIdentifierAfterImport]
+// CHECK:STDERR:        ╭─┤ fail_no_name.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ import;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: expected identifier or `library` after `import`
+// CHECK:STDERR:        ·          ┃        [ExpectedIdentifierAfterImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import;
 

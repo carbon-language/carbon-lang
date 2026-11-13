@@ -90,16 +90,16 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
 
 // Returns the constant-dependence of `inst_id` (i.e. the maximum of the
 // constant-dependences of its type and its value).
-auto OperandDependence(Context& context, SemIR::InstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::InstId inst_id)
     -> SemIR::ConstantDependence;
-auto OperandDependence(Context& context, SemIR::MetaInstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::MetaInstId inst_id)
     -> SemIR::ConstantDependence;
-auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::TypeInstId inst_id)
     -> SemIR::ConstantDependence;
 
 // Returns the constant-dependence of `type_id` (i.e. the constant-dependence
 // of the corresponding type constant).
-auto OperandDependence(Context& context, SemIR::TypeId type_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::TypeId type_id)
     -> SemIR::ConstantDependence;
 
 // Adds an instruction to the current block to splice in the given instruction

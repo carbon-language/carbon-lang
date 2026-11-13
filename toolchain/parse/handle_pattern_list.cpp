@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -107,7 +108,7 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
 
       CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
                         "expected `= value` after `.field`");
-      context.emitter().Emit(*context.position(),
+      context.emitter().Emit(context.PointAfterPreviousToken(),
                              ExpectedStructPatternDesignatedField);
     }
     skip_to_recovery_position(/*add_invalid_parse=*/true);
@@ -143,19 +144,37 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
 
   auto underscore = context.ConsumeChecked(Lex::TokenKind::Underscore);
 
-  bool is_last = context.PositionIs(Lex::TokenKind::CloseCurlyBrace);
+  if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+    bool has_error = true;
+    bool has_comma = context.PositionIs(Lex::TokenKind::Comma);
 
-  if (!is_last) {
-    CARBON_DIAGNOSTIC(
-        ExpectedCloseAfterUnderscore, Error,
-        "unexpected token `{0}` after `_` in struct pattern, expected `}`",
-        Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedCloseAfterUnderscore,
-                           context.PositionKind());
-    state.has_error = true;
+    auto token = context.position();
+    auto token_kind = context.PositionKind();
+
+    if (has_comma) {
+      if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace,
+                             Lookahead::NextToken)) {
+        // We have a trailing `,` followed by `}`, so there is no error
+        has_error = false;
+      } else {
+        token++;
+        token_kind = context.PositionKind(Lookahead::NextToken);
+      }
+    }
+
+    if (has_error) {
+      CARBON_DIAGNOSTIC(ExpectedCloseAfterUnderscore, Error,
+                        "unexpected token `{0}` after {1:`,`|`_`} in struct "
+                        "pattern{1: with `_` field|}, expected `}`",
+                        Lex::TokenKind, Diagnostics::BoolAsSelect);
+      context.emitter().Emit(*token, ExpectedCloseAfterUnderscore, token_kind,
+                             has_comma);
+      state.has_error = true;
+    }
   }
 
-  context.AddNode(NodeKind::UnderscoreName, underscore, state.has_error);
+  context.AddNode(NodeKind::PatternListUnderscoreField, underscore,
+                  state.has_error);
 
   if (state.has_error) {
     context.ReturnErrorOnState();

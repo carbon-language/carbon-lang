@@ -81,12 +81,36 @@ library "[[@TEST_NAME]]";
 
 class Incomplete;
 
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+7]]:8-27: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: min_prelude/parts/array.carbon:13:3-24: note: `<builtin array(T, N)>` evaluates to incomplete type `<builtin array(Incomplete, 1)>` [IncompleteTypeInMonomorphization]
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-4]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_element.carbon:[[@LINE+31]]:8
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        · ────────┬────────
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: array(Incomplete, 1);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `array(Incomplete, 1)` in
+// CHECK:STDERR:        ·           ┃        name binding declaration
+// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/array.carbon
+// CHECK:STDERR:        │   adapt MakeArray(T, N);
+// CHECK:STDERR:        ·   ┬─────────────────────
+// CHECK:STDERR:        ·   ╰──┤ `<builtin array(T, N)>` evaluates to incomplete type
+// CHECK:STDERR:        ·      │ `<builtin array(Incomplete, 1)>`
+// CHECK:STDERR:        ·      │ [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+3]]:8-27: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-7]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_element.carbon:[[@LINE+12]]:8
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        · ────────┬────────
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: array(Incomplete, 1);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `array(Incomplete, 1)` in
+// CHECK:STDERR:        ·           ┃        name binding declaration
+// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(Incomplete, 1);
 
@@ -96,12 +120,20 @@ var p: Incomplete* = &a[0];
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+3]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_invalid_element.carbon:[[@LINE+2]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_invalid_element.carbon:[[@LINE+11]]:14
+// CHECK:STDERR: ->     │ var a: array(1, 1);
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·              │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(1, 1);
 
-// CHECK:STDOUT: --- assign_var.carbon
+// CHECK:STDOUT: --- assign_var.carbon = $assign_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -165,7 +197,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- array_in_place.carbon
+// CHECK:STDOUT: --- array_in_place.carbon = $array_in_place
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -311,7 +343,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- array_vs_tuple.carbon
+// CHECK:STDOUT: --- array_vs_tuple.carbon = $array_vs_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -491,7 +523,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assign_return_value.carbon
+// CHECK:STDOUT: --- assign_return_value.carbon = $assign_return_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -607,7 +639,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nine_elements.carbon
+// CHECK:STDOUT: --- nine_elements.carbon = $nine_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

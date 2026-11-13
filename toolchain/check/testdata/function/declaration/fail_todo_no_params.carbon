@@ -13,14 +13,24 @@
 // --- fail_no_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_no_body.carbon:[[@LINE+2]]:1-5: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_no_body.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn A;
+// CHECK:STDERR:        · ━━┳━━
+// CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A;
 
 // --- fail_todo_brace_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_brace_body.carbon:[[@LINE+2]]:1-6: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_brace_body.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn A {
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·       ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A {
 }
@@ -28,21 +38,36 @@ fn A {
 // --- fail_todo_return_type.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_return_type.carbon:[[@LINE+2]]:1-11: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn A -> ();
+// CHECK:STDERR:        · ━━━━━┳━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A -> ();
 
 // --- fail_todo_implicit_only.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_implicit_only.carbon:[[@LINE+2]]:1-13: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_implicit_only.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn A[] -> ();
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A[] -> ();
 
 // --- fail_todo_arrow_body.carbon
 
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+2]]:1-7: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_arrow_body.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn A => 0;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·       ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A => 0;
 
@@ -50,9 +75,19 @@ fn A => 0;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+4]]:13-17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_invalid_file_generic_regression_test.carbon:[[@LINE+14]]:13
+// CHECK:STDERR: ->     │ var generic x: () = ();
+// CHECK:STDERR:        ·             ━┳━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_file_generic_regression_test.carbon:[[@LINE+2]]:19: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+// CHECK:STDERR:        ╭─┤ fail_invalid_file_generic_regression_test.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ var generic x: () = ();
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: found generic binding inside `var` pattern
+// CHECK:STDERR:        ·                      ┃        [NonRegularBindingInVarDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var generic x: () = ();
 

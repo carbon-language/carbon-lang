@@ -23,7 +23,13 @@ fn CarbonSide[template T: type](p: T) -> T;
 
 inline Cpp '''c++
 template<typename T>
-// CHECK:STDERR: fail_todo_bidirectional_intorp_too_deep.carbon:[[@LINE+2]]:6: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 10` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_bidirectional_intorp_too_deep.carbon:[[@LINE+8]]:6
+// CHECK:STDERR: ->     │ auto AddTypeWrapper(T x) -> T {
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·         ┃        `maximum depth for bidirectional Carbon/C++ interop is 10`
+// CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 auto AddTypeWrapper(T x) -> T {
     // Calls into to Carbon, adding a layer of Wrap(...) to the type T that

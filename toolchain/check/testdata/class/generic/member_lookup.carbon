@@ -53,25 +53,40 @@ class Derived(T: type) {
 }
 
 fn AccessMissingBase[T: type](x: Base(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Base(T)` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return x.nonesuch;
+  // CHECK:STDERR:        ·          ━━━━━┳━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Base(T)`
+  // CHECK:STDERR:        ·                  ┃        [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x.nonesuch;
 }
 
 fn AccessMissingDerived[T: type](x: Derived(T)) -> T {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Derived(T)` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return x.nonesuch;
+  // CHECK:STDERR:        ·          ━━━━━┳━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Derived(T)`
+  // CHECK:STDERR:        ·                  ┃        [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x.nonesuch;
 }
 
 fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE+2]]:10-19: error: member name `nonesuch` not found in `Derived(i32)` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return x.nonesuch;
+  // CHECK:STDERR:        ·          ━━━━━┳━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Derived(i32)`
+  // CHECK:STDERR:        ·                  ┃        [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x.nonesuch;
 }
 
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

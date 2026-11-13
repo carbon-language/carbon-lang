@@ -27,8 +27,18 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn G() {
-  // CHECK:STDERR: fail_void_abstract.carbon:[[@LINE+3]]:17-24: error: binding pattern has abstract type `Cpp.void` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR: {{.*}}/prelude/types/cpp/void.carbon:24:1-35: note: class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ╭─┤ fail_void_abstract.carbon:[[@LINE+13]]:17
+  // CHECK:STDERR: ->     │   var unused x: Cpp.void;
+  // CHECK:STDERR:        ·                 ┳━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has abstract type `Cpp.void` in
+  // CHECK:STDERR:        ·                    ┃        `var` pattern
+  // CHECK:STDERR:        ·                    ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/types/cpp/void.carbon
+  // CHECK:STDERR:        │ abstract class CppCompat.VoidBase {
+  // CHECK:STDERR:        · ─────────────────┬─────────────────
+  // CHECK:STDERR:        ·                  ╰──┤ class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: Cpp.void;
 }
@@ -40,17 +50,35 @@ library "[[@TEST_NAME]]";
 import Cpp inline "void F(int);";
 
 fn G(v: Cpp.void) {
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE+4]]:3-7: error: no matching function for call to 'F' [CppInteropParseError]
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE-4]]:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE-5]]:8-10: note: cannot convert argument of incomplete type 'void' to 'int' for 1st argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_void_argument.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ void F(int);
+  // CHECK:STDERR:        ·      ┬ ┬──
+  // CHECK:STDERR:        ·      ╰────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·        ╰────┤ cannot convert argument of incomplete type 'void' to 'int' for 1st
+  // CHECK:STDERR:        ·             │ argument
+  // CHECK:STDERR:        ·             │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Cpp.F(v);
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: no matching function for call to 'F' [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.F(v);
 }
 
 fn H(p: Cpp.void*) {
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE+4]]:3-7: error: no matching function for call to 'F' [CppInteropParseError]
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE-12]]:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: fail_void_argument.carbon:[[@LINE-13]]:8-10: note: cannot convert argument of incomplete type 'void' to 'int' for 1st argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_void_argument.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ void F(int);
+  // CHECK:STDERR:        ·      ┬ ┬──
+  // CHECK:STDERR:        ·      ╰────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·        ╰────┤ cannot convert argument of incomplete type 'void' to 'int' for 1st
+  // CHECK:STDERR:        ·             │ argument
+  // CHECK:STDERR:        ·             │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Cpp.F(*p);
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: no matching function for call to 'F' [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.F(*p);
 }

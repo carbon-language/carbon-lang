@@ -37,7 +37,7 @@ fn F() {
   (CC(DD)) as Z;
 }
 
-// CHECK:STDOUT: --- deduce_nested_facet_value.carbon
+// CHECK:STDOUT: --- deduce_nested_facet_value.carbon = $deduce_nested_facet_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -332,7 +332,5 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc19_28.2 => constants.%CC.2bf
 // CHECK:STDOUT:   %.loc19_35 => constants.%.b08
 // CHECK:STDOUT:   %Z.impl_witness.loc19_35.2 => constants.%Z.impl_witness.f9a
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

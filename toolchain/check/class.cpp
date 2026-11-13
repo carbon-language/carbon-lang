@@ -8,6 +8,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
@@ -457,17 +458,37 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
 }
 
 auto InNonStaticFieldDecl(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          !context.decl_introducer_state_stack()
               .innermost()
               .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
 auto InStaticClassScopeVar(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          context.decl_introducer_state_stack()
              .innermost()
              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
+auto InClassScopeLet(Context& context) -> bool {
+  return context.full_pattern_stack().CurrentKindIs(
+      FullPatternStack::Kind::ClassScopeLetDecl);
+}
+
+auto LookupClassFieldByStructField(Context& context,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  auto entry_id = class_scope.Lookup(struct_field.name_id);
+  if (!entry_id) {
+    return std::nullopt;
+  }
+  auto entry_inst_id = class_scope.GetEntry(*entry_id).result.target_inst_id();
+  LoadImportRef(context, entry_inst_id);
+  return SemIR::GetClassFieldFromScopeEntry(context.sem_ir(), entry_inst_id);
 }
 
 }  // namespace Carbon::Check

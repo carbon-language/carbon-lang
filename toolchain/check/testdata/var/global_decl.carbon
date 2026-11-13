@@ -14,7 +14,7 @@
 var x: {.v: ()} = {.v = ()};
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- global_decl.carbon
+// CHECK:STDOUT: --- global_decl.carbon = $global_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

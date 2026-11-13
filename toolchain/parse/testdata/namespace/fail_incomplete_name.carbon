@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/namespace/fail_incomplete_name.carbon
 
-// CHECK:STDERR: fail_incomplete_name.carbon:[[@LINE+2]]:15: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_name.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ namespace Foo.;
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: `.` should be followed by a name
+// CHECK:STDERR:        ·                  ┃        [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Foo.;
 

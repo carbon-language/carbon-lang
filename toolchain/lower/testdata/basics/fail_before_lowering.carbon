@@ -12,8 +12,17 @@
 
 // This validates that earlier errors prevent lowering, without crashing.
 
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_before_lowering.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ a;
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_before_lowering.carbon:[[@LINE+2]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_before_lowering.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ a;
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·    ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 a;

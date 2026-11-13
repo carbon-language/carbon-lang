@@ -515,7 +515,7 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandDependence(eval_context.context(), inst_id) ==
+  if (OperandDependence(eval_context.sem_ir(), inst_id) ==
       SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
@@ -792,30 +792,26 @@ static auto GetConstantDeclaredFacetType(EvalContext& eval_context,
                  &self_phase)}});
   }
 
-  // Rewrite constraints are resolved first before replacing them with their
-  // canonical instruction, so that in a `WhereExpr` we can work with the
-  // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
-  // rather than the value of the associated constant they reference.
-  //
-  // This also implies that we may find `ImplWitnessAccessSubstituted`
-  // instructions in the LHS and RHS of these constraints, which are preserved
-  // to maintain them as an unresolved reference to an associated constant, but
-  // which must be handled gracefully during resolution. They will be replaced
-  // with the constant value of the `ImplWitnessAccess` below when they are
-  // substituted with a constant value.
-  declared_facet_type.rewrite_constraints = orig.rewrite_constraints;
+  // The rewrite constraints may not be fully resolved yet, so there may be
+  // `ImplWitnessAccessSubstituted` insts on the LHS that we need to look
+  // through in order to constant-evaluate correctly.
+  declared_facet_type.rewrite_constraints.reserve(
+      orig.rewrite_constraints.size());
+  for (const auto& rewrite : orig.rewrite_constraints) {
+    declared_facet_type.rewrite_constraints.push_back(
+        {.lhs_id = RequireConstantValue(
+             eval_context,
+             GetImplWitnessAccessWithoutSubstitution(
+                 eval_context.context().sem_ir(), rewrite.lhs_id),
+             &self_phase),
+         .rhs_id =
+             RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase)});
+  }
+
   if (!ResolveFacetTypeRewriteConstraints(
           eval_context.context(), loc_id,
           declared_facet_type.rewrite_constraints)) {
     *phase = Phase::UnknownDueToError;
-  }
-
-  for (auto& rewrite : declared_facet_type.rewrite_constraints) {
-    auto lhs_id =
-        RequireConstantValue(eval_context, rewrite.lhs_id, &self_phase);
-    auto rhs_id =
-        RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase);
-    rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
 
   // Update phase, ignoring `.Self` dependence from constraints whose `.Self` is
@@ -2922,11 +2918,14 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   // Handle calls to `eval` and `musteval` functions.
   if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
     // A non-concrete call to `eval` or `musteval` is a template symbolic
-    // constant, regardless of the phase of the arguments.
+    // constant, unless it is only dependent on `.Self`. Then preserve that so
+    // a Call on the RHS of a `where` does not change the phase of the whole
+    // facet type.
     if (phase != Phase::Concrete) {
       CARBON_CHECK(phase <= Phase::TemplateSymbolic);
-      return MakeConstantResult(eval_context.context(), call,
-                                Phase::TemplateSymbolic);
+      phase = phase == Phase::PeriodSelfSymbolic ? Phase::PeriodSelfSymbolic
+                                                 : Phase::TemplateSymbolic;
+      return MakeConstantResult(eval_context.context(), call, phase);
     }
 
     // TODO: Instead of performing the call immediately, add it to a work queue
@@ -3464,6 +3463,11 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // specific, we are resolving existing instructions in the eval block for a
   // generic. The global state should not apply to anything done while resolving
   // a specific.
+  //
+  // TODO: Instead of moving the whole stack here, track an index on Context
+  // that is the start of the stack that we're going to consider (in practice we
+  // only consider a single value right now, but we'd only consider the latest
+  // value at least at that tracked index).
   CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
 
   // The `eval_impl_lookup_to_identified_witness` is also a global state that
@@ -3504,13 +3508,10 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     result_id = context.constant_values().GetInstId(const_id);
   }
 
-  // TODO: Enable this CHECK once it passes.
-  //
-  // CARBON_CHECK(
-  //     context.generic_region_stack().num_tracked_insts() ==
-  //     num_tracked_insts, "Evaluating {0} added instructions to an enclosing
-  //     generic region", specific_id);
-  static_cast<void>(num_tracked_insts);
+  CARBON_CHECK(
+      context.generic_region_stack().num_tracked_insts() == num_tracked_insts,
+      "Evaluating {0} added instructions to an enclosing generic region",
+      specific_id);
 }
 
 // Information about the function call we are currently executing. Unlike

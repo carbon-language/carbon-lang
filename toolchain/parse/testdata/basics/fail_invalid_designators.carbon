@@ -10,10 +10,21 @@
 
 // NOTE: Move to its own directory when more tests are added.
 fn F() {
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+2]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╭─┤ fail_invalid_designators.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   a.;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.;
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+2]]:5-6: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╭─┤ fail_invalid_designators.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.fn;
+  // CHECK:STDERR:        ·     ┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`; prefix reserved word with `r#` to
+  // CHECK:STDERR:        ·        ┃        form a valid identifier
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.fn;
 }

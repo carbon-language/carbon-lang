@@ -12,6 +12,16 @@
 
 // --- leaf.h
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_use.carbon [InImport]
+// CHECK:STDERR:        │ ├── included from: middle.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./leaf.h:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ class Leaf {};
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·          ┃        `indirect import of C++ declaration with no direct Cpp import`
+// CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 class Leaf {};
 
 // --- middle.carbon
@@ -34,10 +44,6 @@ class Middle(T: type) {
 // Consequently, this test can be removed if this TODO is resolved and there are
 // no other ways of triggering an error while importing a valid generic.
 
-// CHECK:STDERR: imported from: fail_use.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: included from: middle.carbon:3:10 [InCppInclude]
-// CHECK:STDERR: ./leaf.h:2:7: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
-// CHECK:STDERR:
 import library "lib";
 
 alias M = Middle;

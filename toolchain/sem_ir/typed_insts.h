@@ -139,6 +139,18 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
+// An action that performs the AddressOf operation on a reference expression.
+struct AddrOfAction {
+  static constexpr auto Kind = InstKind::AddrOfAction.Define<Parse::NodeId>(
+      {.ir_name = "addr_of_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId lvalue_id;
+};
+
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(
@@ -1049,6 +1061,21 @@ struct GenericNamedConstraintType {
   SpecificId enclosing_specific_id;
 };
 
+// References a non-constant global or static binding (such as a package- or
+// class-scope `let`), accessing its dynamically initialized global value.
+struct GlobalRef {
+  static constexpr auto Kind = InstKind::GlobalRef.Define<Parse::NodeId>(
+      {.ir_name = "global_ref",
+       .expr_category = ComputedExprCategory::SameAsFirstOperand,
+       .constant_kind = InstConstantKind::Never});
+
+  TypeId type_id;
+  // This is an indirect reference to this global instruction -- we use its
+  // identity rather than its value as an operand -- so is represented as an
+  // AbsoluteInstId.
+  AbsoluteInstId inst_id;
+};
+
 // An `impl` declaration.
 struct ImplDecl {
   static constexpr auto Kind = InstKind::ImplDecl.Define<Parse::AnyImplDeclId>(
@@ -1800,24 +1827,6 @@ struct RequireImplsDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// As part of a generic region, requires that an `impl` which is initially part
-// of a symbolic specific be defined once a concrete specific is formed.
-struct RequireSpecificDefinition {
-  static constexpr auto Kind =
-      InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
-          {.ir_name = "require_specific_def",
-           .constant_kind = InstConstantKind::Conditional,
-           .is_lowered = false});
-  // Always the builtin `RequireSpecificDefinitionType` type.
-  TypeId type_id;
-  SemIR::SpecificId specific_id;
-};
-
-// A dedicated type for `RequireSpecificDefinition`.
-using RequireSpecificDefinitionType =
-    SingletonTypeInst<InstKind::RequireSpecificDefinitionType,
-                      "require_specific_def_type">;
-
 // A requirement that `.Self` implements a facet type, specified as the first
 // operand of a `where` expression. This is always the first requirement in a
 // requirement block for a `where` expression.
@@ -2173,6 +2182,21 @@ struct StructLiteral {
        .expr_category = ExprCategory::Mixed,
        .constant_kind = InstConstantKind::Indirect});
 
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
+// A struct pattern, such as `{.x = y: i32, z: i32}`.
+struct StructPattern {
+  static constexpr auto Kind =
+      InstKind::StructPattern.Define<Parse::StructPatternId>(
+          {.ir_name = "struct_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always a PatternType whose scrutinee type is a struct of the scrutinee
+  // types of the elements.
   TypeId type_id;
   InstBlockId elements_id;
 };

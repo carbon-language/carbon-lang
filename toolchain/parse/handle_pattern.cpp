@@ -76,11 +76,12 @@ auto HandleExprPattern(Context& context) -> void {
   if (context.PositionKind().is_binding_pattern_operator()) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingName, Error,
-                        "unexpected expression before {0} in binding pattern",
+                        "unexpected expression before `{0}` in binding pattern",
                         Lex::TokenKind);
-      // TODO: Underline the parsed expression.
-      context.emitter().Emit(*context.position(), ExpectedBindingName,
-                             context.PositionKind());
+      context.emitter().Emit(
+          DiagnosticLoc::Tokens(
+              {.begin = state.token, .end = *(context.position() - 1)}),
+          ExpectedBindingName, context.PositionKind());
       state.has_error = true;
     }
     context.Consume();

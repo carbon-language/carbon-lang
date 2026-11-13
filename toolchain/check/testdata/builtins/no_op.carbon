@@ -60,11 +60,16 @@ var x: () = NoOp();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_signature.carbon:[[@LINE+2]]:1-17: error: invalid signature for builtin function "no_op" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_signature.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoOp() -> {} = "no_op";
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: invalid signature for builtin function "no_op"
+// CHECK:STDERR:        ·            ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoOp() -> {} = "no_op";
 
-// CHECK:STDOUT: --- no_op.carbon
+// CHECK:STDOUT: --- no_op.carbon = $no_op
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -81,7 +86,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_return.carbon
+// CHECK:STDOUT: --- explicit_return.carbon = $explicit_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -98,7 +103,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ignore_args.carbon
+// CHECK:STDOUT: --- ignore_args.carbon = $ignore_args
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -118,7 +123,7 @@ fn NoOp() -> {} = "no_op";
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assign.carbon
+// CHECK:STDOUT: --- assign.carbon = $assign
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -155,6 +155,16 @@ using ClassStore = ValueStore<ClassId, Class, Tag<CheckIRId>>;
 auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
     -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>>;
 
+// Given the target instruction of an entry in a class's scope, returns the
+// corresponding `FieldDecl`, or `nullopt` if the entry is not a field. If the
+// class was imported, the entry must already have been loaded.
+auto GetClassFieldFromScopeEntry(const File& sem_ir, InstId entry_inst_id)
+    -> std::optional<InstStore::GetAsWithIdResult<SemIR::FieldDecl>>;
+
+// Returns the `FieldDecl` in the class scope corresponding to the given field
+// of the class's object representation, or `nullopt` if there is none, such as
+// for a base class. If the class was imported, the field must already have
+// been loaded.
 auto LookupClassFieldByStructField(const File& sem_ir,
                                    const NameScope& class_scope,
                                    const StructTypeField& struct_field)

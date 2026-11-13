@@ -92,8 +92,17 @@ class RefMethodRValueClass {
 
 inline Cpp '''
 void RefMethodRValue() {
-  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE+3]]:3: error: 'this' argument to member function 'M' is an rvalue, but function has non-const lvalue ref-qualifier [CppInteropParseError]
-  // CHECK:STDERR: fail_ref_method_rvalue.carbon:[[@LINE-6]]:17: note: 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_ref_method_rvalue.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   fn M(ref self);
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::RefMethodRValueClass().M();
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: 'this' argument to member function 'M' is an rvalue, but function
+  // CHECK:STDERR:        ·      ┃        has non-const lvalue ref-qualifier
+  // CHECK:STDERR:        ·      ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Carbon::RefMethodRValueClass().M();
 }
@@ -109,8 +118,19 @@ class RefMethodConstLValueClass {
 
 inline Cpp '''
 void RefMethodConstLValue(const Carbon::RefMethodConstLValueClass& c) {
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+3]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass' (aka 'const Carbon::Main::RefMethodConstLValueClass'), but function is not marked const [CppInteropParseError]
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-6]]:17: note: 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_ref_method_const_lvalue.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │   fn M(ref self);
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ 'M' declared here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   c.M();
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: 'this' argument to member function 'M' has type 'const
+  // CHECK:STDERR:        ·      ┃        Carbon::RefMethodConstLValueClass' (aka 'const
+  // CHECK:STDERR:        ·      ┃        Carbon::Main::RefMethodConstLValueClass'), but function is not
+  // CHECK:STDERR:        ·      ┃        marked const
+  // CHECK:STDERR:        ·      ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.M();
 }

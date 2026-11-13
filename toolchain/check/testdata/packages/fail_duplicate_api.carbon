@@ -24,7 +24,12 @@ library "lib";
 
 // --- fail_main_lib2.carbon
 
-// CHECK:STDERR: fail_main_lib2.carbon:[[@LINE+2]]:1-14: error: library's API previously provided by `main_lib1.carbon` [DuplicateLibraryApi]
+// CHECK:STDERR:        ╭─┤ fail_main_lib2.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ library "lib";
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: library's API previously provided by `main_lib1.carbon`
+// CHECK:STDERR:        ·           ┃        [DuplicateLibraryApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 library "lib";
 
@@ -34,7 +39,12 @@ package Package;
 
 // --- fail_package2.carbon
 
-// CHECK:STDERR: fail_package2.carbon:[[@LINE+2]]:1-16: error: library's API previously provided by `package1.carbon` [DuplicateLibraryApi]
+// CHECK:STDERR:        ╭─┤ fail_package2.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ package Package;
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: library's API previously provided by `package1.carbon`
+// CHECK:STDERR:        ·            ┃        [DuplicateLibraryApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package Package;
 
@@ -44,53 +54,58 @@ package Package library "lib";
 
 // --- fail_package_lib2.carbon
 
-// CHECK:STDERR: fail_package_lib2.carbon:[[@LINE+2]]:1-30: error: library's API previously provided by `package_lib1.carbon` [DuplicateLibraryApi]
+// CHECK:STDERR:        ╭─┤ fail_package_lib2.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ package Package library "lib";
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: library's API previously provided by `package_lib1.carbon`
+// CHECK:STDERR:        ·              ┃        [DuplicateLibraryApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package Package library "lib";
 
-// CHECK:STDOUT: --- main1.carbon
+// CHECK:STDOUT: --- main1.carbon = $main1
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main2.carbon
+// CHECK:STDOUT: --- fail_main2.carbon = $fail_main2
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib1.carbon
+// CHECK:STDOUT: --- main_lib1.carbon = $main_lib1
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib2.carbon
+// CHECK:STDOUT: --- fail_main_lib2.carbon = $fail_main_lib2
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package1.carbon
+// CHECK:STDOUT: --- package1.carbon = $package1
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package2.carbon
+// CHECK:STDOUT: --- fail_package2.carbon = $fail_package2
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package_lib1.carbon
+// CHECK:STDOUT: --- package_lib1.carbon = $package_lib1
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib2.carbon
+// CHECK:STDOUT: --- fail_package_lib2.carbon = $fail_package_lib2
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

@@ -19,8 +19,11 @@ auto HandleParseNode(Context& context, Parse::TypeOfExprOpenParenId /*node_id*/)
   // separate expression region that is not part of the enclosing control flow.
   context.inst_block_stack().Push();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-  // Any cleanups created by the operand are never needed.
-  context.scope_stack().PushForSameRegion(ScopeStack::CleanupScopeKind::None);
+  // Any cleanups created by the operand are never needed, and enclosing
+  // non-constant locals can be referenced in unevaluated `typeof` operands.
+  context.scope_stack().PushForSameRegion(
+      ScopeStack::CleanupScopeKind::None,
+      ScopeStack::NonConstantAccess::Unevaluated);
   return true;
 }
 

@@ -132,6 +132,10 @@ auto SugaredTypeFinder::FindSpelledType(InstId inst_id) -> TypeInstId {
 
       // The following instructions have the same type as one of their operands,
       // so look through them to that operand.
+      case CARBON_KIND(GlobalRef global_ref): {
+        inst_id = LookThrough(inst.type_id(), global_ref.inst_id);
+        continue;
+      }
       case CARBON_KIND(NameRef name_ref): {
         inst_id = LookThrough(inst.type_id(), name_ref.value_id);
         continue;

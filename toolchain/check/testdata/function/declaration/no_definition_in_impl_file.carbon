@@ -52,11 +52,23 @@ fn C();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+6]]:1-7: error: redeclaration of `fn C` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
-// CHECK:STDERR: decl_in_api_decl_in_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+18]]:1
+// CHECK:STDERR: ->     │ fn C();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl_in_api_decl_in_impl.carbon
+// CHECK:STDERR:        │ fn C();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-7: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn C();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: no definition found for declaration in impl file
+// CHECK:STDERR:        ·       ┃        [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C();
 
@@ -70,9 +82,16 @@ fn D();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+4]]:1-7: error: redeclaration of `fn D` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
-// CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn D();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn D` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl_in_api_decl_and_definition_in_impl.carbon
+// CHECK:STDERR:        │ fn D();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn D();
 
@@ -86,6 +105,11 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+2]]:1-7: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╭─┤ fail_decl_only_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn E();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: no definition found for declaration in impl file
+// CHECK:STDERR:        ·       ┃        [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn E();

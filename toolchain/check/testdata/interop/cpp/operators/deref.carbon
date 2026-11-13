@@ -62,7 +62,13 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.MultiDeref) -> ref i32 {
-  // CHECK:STDERR: fail_todo_multi_deref.carbon:[[@LINE+2]]:10-41: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_multi_deref.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return int_ptr.(Core.CppUnsafeDeref.Op)();
+  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·             ┃        `operator* overload sets not implemented yet`
+  // CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return int_ptr.(Core.CppUnsafeDeref.Op)();
 }
@@ -89,7 +95,13 @@ public:
 ''';
 
 fn TestDerefPass(var int_ptr: Cpp.MaybeDeref(i32)) -> ref i32 {
-  // CHECK:STDERR: fail_todo_maybe_deref.carbon:[[@LINE+2]]:10-41: error: semantics TODO: `operator* overload sets not implemented yet` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_maybe_deref.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return int_ptr.(Core.CppUnsafeDeref.Op)();
+  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·             ┃        `operator* overload sets not implemented yet`
+  // CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return int_ptr.(Core.CppUnsafeDeref.Op)();
 }
@@ -103,12 +115,18 @@ class NotAPtr {};
 ''';
 
 fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
-  // CHECK:STDERR: fail_not_a_ptr.carbon:[[@LINE+2]]:3-34: error: cannot access member of interface `Core.CppUnsafeDeref` in type `Cpp.NotAPtr` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_not_a_ptr.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   not_ptr.(Core.CppUnsafeDeref.Op)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.CppUnsafeDeref` in type
+  // CHECK:STDERR:        ·      ┃        `Cpp.NotAPtr` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   not_ptr.(Core.CppUnsafeDeref.Op)();
 }
 
-// CHECK:STDOUT: --- const_deref.carbon
+// CHECK:STDOUT: --- const_deref.carbon = $const_deref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -178,7 +196,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   return %operator_Star__carbon_thunk.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mutable_deref.carbon
+// CHECK:STDOUT: --- mutable_deref.carbon = $mutable_deref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

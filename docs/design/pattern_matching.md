@@ -414,8 +414,9 @@ matches if all of these sub-matches succeed.
 
 A struct can be matched with a struct pattern.
 
--   _struct-pattern_ ::= `{` [_field-pattern_ [`,` _field-pattern_ ]\* ] `}`
--   _struct-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `}`
+-   _struct-pattern_ ::= `{` [_field-pattern_ [`,` _field-pattern_ ]\* `,`? ]
+    `}`
+-   _struct-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `,`? `}`
 -   _field-pattern_ ::= _designator_ `=` _pattern_
 -   _field-pattern_ ::= _binding-pattern_
 -   _pattern_ ::= _struct-pattern_

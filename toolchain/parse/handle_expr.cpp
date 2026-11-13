@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
@@ -189,7 +190,8 @@ auto HandleExprInPostfix(Context& context) -> void {
       if (context.PositionKind() != Lex::TokenKind::Period) {
         CARBON_DIAGNOSTIC(ExpectedPeriodAfterPackage, Error,
                           "expected `.` after `package` expression");
-        context.emitter().Emit(*context.position(), ExpectedPeriodAfterPackage);
+        context.emitter().Emit(context.PointAfterPreviousToken(),
+                               ExpectedPeriodAfterPackage);
         state.has_error = true;
       }
       context.PushState(state);
@@ -228,12 +230,21 @@ auto HandleExprInPostfix(Context& context) -> void {
                      NodeKind::SelfTypeName)) {
         // OK, `.Self`.
       } else {
-        CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
-                          "expected identifier or `Self` after `.`");
-        context.emitter().Emit(*context.position(),
-                               ExpectedIdentifierOrSelfAfterPeriod);
+        // A keyword after the `.` was most likely meant as the name, and is
+        // what the message is about. Otherwise the name is missing, and goes
+        // after the `.`.
+        bool recover_as_raw = context.PositionKind().is_keyword();
+        CARBON_DIAGNOSTIC(
+            ExpectedIdentifierOrSelfAfterPeriod, Error,
+            "expected identifier or `Self` after `.`"
+            "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+            Diagnostics::BoolAsSelect);
+        context.emitter().Emit(
+            recover_as_raw ? DiagnosticLoc(*context.position())
+                           : context.PointAfterPreviousToken(),
+            ExpectedIdentifierOrSelfAfterPeriod, recover_as_raw);
         // Only consume if it is a number or word.
-        if (context.PositionKind().is_keyword()) {
+        if (recover_as_raw) {
           context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                               context.Consume(), /*has_error=*/true);
         } else if (context.PositionIs(Lex::TokenKind::IntLiteral)) {
@@ -262,7 +273,16 @@ auto HandleExprInPostfix(Context& context) -> void {
                             [&](const Context::State& s) { return s.kind; }));
         bool in_pattern = state_kinds == llvm::ArrayRef{StateKind::ExprPattern,
                                                         StateKind::ExprLoop};
-        context.emitter().Emit(*context.position(),
+        // The missing expression goes after the token before it, unless it
+        // starts a statement. Then the token before it ends another statement,
+        // and the statement starts at the token found in the expression's
+        // place.
+        bool starts_statement =
+            state_kinds ==
+            llvm::ArrayRef{StateKind::ExprStatementFinish, StateKind::ExprLoop};
+        context.emitter().Emit(starts_statement
+                                   ? DiagnosticLoc(*context.position())
+                                   : context.PointAfterPreviousToken(),
                                in_pattern ? ExpectedPattern : ExpectedExpr);
       }
 
@@ -508,7 +528,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedExprSemi, Error,
                       "expected `;` after expression statement");
-    context.emitter().Emit(*context.position(), ExpectedExprSemi);
+    context.emitter().Emit(context.PointAfterPreviousToken(), ExpectedExprSemi);
   }
 
   context.AddNode(NodeKind::ExprStatement,

@@ -48,7 +48,12 @@ auto UndeducedReturn();
 ''';
 
 fn Call() {
-  // CHECK:STDERR: fail_return_undeduced_auto.carbon:[[@LINE+2]]:3-23: error: semantics TODO: `Unsupported: return type: auto` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_return_undeduced_auto.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.UndeducedReturn();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: semantics TODO: `Unsupported: return type: auto`
+  // CHECK:STDERR:        ·                ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.UndeducedReturn();
 }
@@ -102,7 +107,7 @@ fn Var() {
   var unused my_u32: u32 = Cpp.ReturnU32();
 }
 
-// CHECK:STDOUT: --- import_multiple.carbon
+// CHECK:STDOUT: --- import_multiple.carbon = $import_multiple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -189,7 +194,7 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_from_thunk_param.carbon
+// CHECK:STDOUT: --- var_from_thunk_param.carbon = $var_from_thunk_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -276,7 +281,7 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_3.3(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_from_thunk_param.carbon
+// CHECK:STDOUT: --- return_from_thunk_param.carbon = $return_from_thunk_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -363,7 +368,7 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnU8__carbon_thunk(%return.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_from_thunk_by_value.carbon
+// CHECK:STDOUT: --- var_from_thunk_by_value.carbon = $var_from_thunk_by_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

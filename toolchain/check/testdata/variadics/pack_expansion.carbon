@@ -14,7 +14,11 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_pack_expansion_statement.carbon:[[@LINE+2]]:3-5: error: semantics TODO: `HandlePackExpansionStart` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_pack_expansion_statement.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   ... F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: semantics TODO: `HandlePackExpansionStart` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ... F();
 }
@@ -23,7 +27,11 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F(x: (i32, i32)) {
-  // CHECK:STDERR: fail_todo_expand.carbon:[[@LINE+2]]:3-10: error: semantics TODO: `HandlePrefixOperatorExpand` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_expand.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   expand x;
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO: `HandlePrefixOperatorExpand` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   expand x;
 }

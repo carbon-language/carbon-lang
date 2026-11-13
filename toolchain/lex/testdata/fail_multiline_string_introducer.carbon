@@ -16,7 +16,14 @@
 
 // A `'''` in the middle of a line cannot close a block string literal, so a
 // single-line use is a malformed introducer.
-// CHECK:STDERR: fail_multiline_string_introducer.carbon:[[@LINE+2]]:17: error: invalid multi-line string literal introducer; a file type indicator may not contain `'`, `#`, or `"`, and the content must begin on a new line [MultiLineStringInvalidIntroducer]
+// CHECK:STDERR:        ╭─┤ fail_multiline_string_introducer.carbon:[[@LINE+9]]:17
+// CHECK:STDERR: ->     │ var s: String = '''not multi-line''';
+// CHECK:STDERR:        ·                 ┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid multi-line string literal introducer; a file
+// CHECK:STDERR:        ·                    ┃        type indicator may not contain `'`, `#`, or `"`, and
+// CHECK:STDERR:        ·                    ┃        the content must begin on a new line
+// CHECK:STDERR:        ·                    ┃        [MultiLineStringInvalidIntroducer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var s: String = '''not multi-line''';
 // CHECK:STDOUT:   - { index:  1, kind:            "Var", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "var", has_leading_space: true }
@@ -28,7 +35,14 @@ var s: String = '''not multi-line''';
 
 // A file type indicator may not contain `#`. The error covers the introducer
 // line and lexing continues on the next line.
-// CHECK:STDERR: fail_multiline_string_introducer.carbon:[[@LINE+2]]:17: error: invalid multi-line string literal introducer; a file type indicator may not contain `'`, `#`, or `"`, and the content must begin on a new line [MultiLineStringInvalidIntroducer]
+// CHECK:STDERR:        ╭─┤ fail_multiline_string_introducer.carbon:[[@LINE+9]]:17
+// CHECK:STDERR: ->     │ var t: String = '''bad#type
+// CHECK:STDERR:        ·                 ┳━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid multi-line string literal introducer; a file
+// CHECK:STDERR:        ·                    ┃        type indicator may not contain `'`, `#`, or `"`, and
+// CHECK:STDERR:        ·                    ┃        the content must begin on a new line
+// CHECK:STDERR:        ·                    ┃        [MultiLineStringInvalidIntroducer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var t: String = '''bad#type
 // CHECK:STDOUT:   - { index:  7, kind:            "Var", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "var", has_leading_space: true }

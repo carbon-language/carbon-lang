@@ -9,9 +9,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/return/fail_var_no_semi.carbon
 
 fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_var_no_semi.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   return var
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: `return` statements must end with a `;`
+  // CHECK:STDERR:        ·                ┃        [ExpectedStatementSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   return var
-// CHECK:STDERR: fail_var_no_semi.carbon:[[@LINE+2]]:1: error: `return` statements must end with a `;` [ExpectedStatementSemi]
-// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: fail_var_no_semi.carbon

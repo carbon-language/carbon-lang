@@ -75,25 +75,49 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a < b;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
+  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a < b;
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a <= b;
+  // CHECK:STDERR:        ·          ┳━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
+  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a <= b;
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a > b;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
+  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a > b;
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a >= b;
+  // CHECK:STDERR:        ·          ┳━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
+  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a >= b;
 }

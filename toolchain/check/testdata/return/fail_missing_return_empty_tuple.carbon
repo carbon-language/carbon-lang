@@ -13,11 +13,16 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_missing_return_empty_tuple.carbon
 
 fn F() -> () {
-// CHECK:STDERR: fail_missing_return_empty_tuple.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_missing_return_empty_tuple.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
+// CHECK:STDERR:        ·    ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
-// CHECK:STDOUT: --- fail_missing_return_empty_tuple.carbon
+// CHECK:STDOUT: --- fail_missing_return_empty_tuple.carbon = $fail_missing_return_empty_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

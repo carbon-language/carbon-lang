@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -65,6 +65,51 @@ fn G() {
   F(type, X);
 }
 
+// --- addr_of_dependent_type.carbon
+library "[[@TEST_NAME]]";
+
+class C {};
+impl C as Core.Copy {
+  fn Op(unused self) -> C { return {} as C; }
+}
+class D(template T: type) {
+  fn F(ref self) -> C* { return &self.c; }
+  var c: C;
+}
+
+var d: D(C) = {.c = {} as C};
+let e: C* = d.F();
+
+// --- fail_addr_of_non_addressable_dependent_type.carbon
+library "[[@TEST_NAME]]";
+
+class C {};
+impl C as Core.Copy {
+  fn Op(unused self) -> C { return {} as C; }
+}
+class D(template T: type) {
+  // Note thae missing `ref` qualifier on the `self` parameter, which makes
+  // the expression `self.c` non-addressable.
+  fn F(self) -> C* { return &self.c; }
+  var c: C;
+}
+
+var d: D(C) = {.c = {} as C};
+// CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+13]]:13
+// CHECK:STDERR:        │   fn F(self) -> C* { return &self.c; }
+// CHECK:STDERR:        ·                             ┬──────
+// CHECK:STDERR:        ·                             ╰──┤ cannot take the address of non-reference
+// CHECK:STDERR:        ·                                │ expression
+// CHECK:STDERR:        ·                                │ [AddrOfNonRef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let e: C* = d.F();
+// CHECK:STDERR:        ·             ━┳━
+// CHECK:STDERR:        ·              ┗━━┫ error: unable to monomorphize specific `F(C)`
+// CHECK:STDERR:        ·                 ┃        [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let e: C* = d.F();
+
 // --- fail_non_constant_type_argument.carbon
 library "[[@TEST_NAME]]";
 
@@ -74,8 +119,17 @@ let T: type = Y;
 fn F(template T: type, unused y: T) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE+3]]:3-9: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE-4]]:6-21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_non_constant_type_argument.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(template T: type, unused y: T) {}
+  // CHECK:STDERR:        ·      ────────┬───────
+  // CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                 │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(T, y);
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: argument for generic parameter is not a compile-time constant
+  // CHECK:STDERR:        ·         ┃        [CompTimeArgumentNotConstant]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(T, y);
 }
@@ -88,8 +142,17 @@ class Y {}
 fn F(unused template X: Y) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE+3]]:3-6: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE-4]]:13-25: note: initializing generic parameter `X` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_non_constant_nontype_argument.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(unused template X: Y) {}
+  // CHECK:STDERR:        ·             ──────┬──────
+  // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `X` declared here
+  // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(y);
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: argument for generic parameter is not a compile-time constant
+  // CHECK:STDERR:        ·        ┃        [CompTimeArgumentNotConstant]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(y);
 }

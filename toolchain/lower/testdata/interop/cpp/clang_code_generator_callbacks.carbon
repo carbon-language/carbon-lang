@@ -129,8 +129,8 @@ void f2() {
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!16}
-// CHECK:STDOUT: !llvm.module.flags = !{!17, !18, !19, !13, !14}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!21}
+// CHECK:STDOUT: !llvm.module.flags = !{!17, !18, !19, !20, !13, !14}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!22}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -147,9 +147,10 @@ void f2() {
 // CHECK:STDOUT: !14 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !15 = !DIFile(filename: "clang_code_generator_callbacks.carbon", directory: "")
 // CHECK:STDOUT: !16 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !15, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !17 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !18 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !19 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !20 = !{!"__libc_errno", !5, i64 0}
-// CHECK:STDOUT: !21 = !{!20, !5, i64 0}
+// CHECK:STDOUT: !17 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !18 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !19 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !20 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !21 = !{!"__libc_errno", !5, i64 0}
+// CHECK:STDOUT: !22 = !{!21, !5, i64 0}
 // CHECK:STDOUT:

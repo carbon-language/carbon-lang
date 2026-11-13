@@ -212,7 +212,7 @@ var a: i32 = 1;
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cx.Main, ptr align 4 @tuple.380.loc4_1, i64 8, i1 false), !dbg !63
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var.anon.var_patt.loc5, ptr align 4 @tuple.859.loc5_1, i64 8, i1 false), !dbg !65
-// CHECK:STDOUT:   ret void, !dbg !66
+// CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -236,7 +236,7 @@ var a: i32 = 1;
 // CHECK:STDOUT: !62 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !60, type: !29, spFlags: DISPFlagDefinition, unit: !61)
 // CHECK:STDOUT: !63 = !DILocation(line: 4, column: 1, scope: !62)
 // CHECK:STDOUT: !65 = !DILocation(line: 5, column: 1, scope: !62)
-// CHECK:STDOUT: !66 = !DILocation(line: 0, scope: !62)
+// CHECK:STDOUT: !68 = !DILocation(line: 0, scope: !62)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'not_main_package.carbon'
@@ -246,24 +246,24 @@ var a: i32 = 1;
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Other, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Other() #0 !dbg !69 {
+// CHECK:STDOUT: define internal void @_C__global_init.Other() #0 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 1, ptr @_Ca.Other, align 4, !dbg !70
-// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT:   store i32 1, ptr @_Ca.Other, align 4, !dbg !72
+// CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!68}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!70}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !28 = !{null}
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !67 = !DIFile(filename: "not_main_package.carbon", directory: "")
-// CHECK:STDOUT: !68 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !67, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Other", scope: null, file: !67, type: !29, spFlags: DISPFlagDefinition, unit: !68)
-// CHECK:STDOUT: !70 = !DILocation(line: 4, column: 1, scope: !69)
-// CHECK:STDOUT: !71 = !DILocation(line: 0, scope: !69)
+// CHECK:STDOUT: !69 = !DIFile(filename: "not_main_package.carbon", directory: "")
+// CHECK:STDOUT: !70 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !69, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Other", scope: null, file: !69, type: !29, spFlags: DISPFlagDefinition, unit: !70)
+// CHECK:STDOUT: !72 = !DILocation(line: 4, column: 1, scope: !71)
+// CHECK:STDOUT: !73 = !DILocation(line: 0, scope: !71)
 // CHECK:STDOUT:

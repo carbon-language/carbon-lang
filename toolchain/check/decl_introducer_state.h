@@ -70,6 +70,11 @@ class DeclIntroducerStateStack {
   // declaration currently being processed.
   auto innermost() -> DeclIntroducerState& { return stack_.back(); }
 
+  // Returns whether the innermost declaration is of kind `kind`.
+  auto InnermostKindIs(Lex::TokenKind kind) const -> bool {
+    return !stack_.empty() && stack_.back().kind == kind;
+  }
+
   // Finishes a declaration introducer `Kind` and returns the produced state.
   template <Lex::TokenKind::RawEnumType Kind>
     requires(IsDeclIntroducer<Kind>())

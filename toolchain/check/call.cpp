@@ -195,23 +195,21 @@ static auto BuildCalleeSpecificFunction(
     // This is an associated function in an interface; the callee is the
     // specific function in the impl that corresponds to the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
-                     SemIR::SpecificImplFunction{
-                         .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::TypeInstId),
-                         .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+    callee_id = GetOrAddInst<SemIR::SpecificImplFunction>(
+        context, SemIR::LocId(generic_callee_id),
+        {.type_id =
+             GetSingletonType(context, SemIR::SpecificFunctionType::TypeInstId),
+         .callee_id = generic_callee_id,
+         .specific_id = callee_specific_id});
   } else {
     // This is a regular generic function. The callee is the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
-                     SemIR::SpecificFunction{
-                         .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::TypeInstId),
-                         .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+    callee_id = GetOrAddInst<SemIR::SpecificFunction>(
+        context, SemIR::LocId(generic_callee_id),
+        {.type_id =
+             GetSingletonType(context, SemIR::SpecificFunctionType::TypeInstId),
+         .callee_id = generic_callee_id,
+         .specific_id = callee_specific_id});
   }
 
   // Add the `self` argument back if there was one.
@@ -356,7 +354,7 @@ static auto IsCppTemplateCallPerformable(Context& context,
                                          SemIR::InstId callee_id,
                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> bool {
-  CARBON_CHECK(OperandDependence(context, callee_id) <
+  CARBON_CHECK(OperandDependence(context.sem_ir(), callee_id) <
                SemIR::ConstantDependence::Template);
 
   for (auto arg_id : arg_ids) {
@@ -452,12 +450,12 @@ static auto PerformCallToCppFunctionPointer(
 // non-template-dependent).
 static auto IsCallPerformable(Context& context, SemIR::InstId callee_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> bool {
-  if (OperandDependence(context, callee_id) ==
+  if (OperandDependence(context.sem_ir(), callee_id) ==
       SemIR::ConstantDependence::Template) {
     return false;
   }
   for (auto arg_id : arg_ids) {
-    if (OperandDependence(context, arg_id) ==
+    if (OperandDependence(context.sem_ir(), arg_id) ==
         SemIR::ConstantDependence::Template) {
       return false;
     }

@@ -30,7 +30,12 @@ let {var y: ()} = {.y = ()};
 
 // --- fail_nested.carbon
 
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:25-27: error: `var` nested within another `var` [NestedVar]
+// CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+7]]:25
+// CHECK:STDERR: ->     │ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
+// CHECK:STDERR:        ·                         ━┳━
+// CHECK:STDERR:        ·                          ┗━━┫ error: `var` nested within another `var`
+// CHECK:STDERR:        ·                             ┃        [NestedVar]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 
@@ -131,7 +136,7 @@ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
 // CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='

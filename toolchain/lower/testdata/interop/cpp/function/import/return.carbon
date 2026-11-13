@@ -134,7 +134,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !224
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !224
-// CHECK:STDOUT:   %call = call noundef zeroext i8 @_Z8ReturnU8v()
+// CHECK:STDOUT:   %call = call noundef i8 @_Z8ReturnU8v()
 // CHECK:STDOUT:   store i8 %call, ptr %0, align 1, !tbaa !225
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -155,7 +155,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !228
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !228
-// CHECK:STDOUT:   %call = call noundef zeroext i16 @_Z9ReturnU16v()
+// CHECK:STDOUT:   %call = call noundef i16 @_Z9ReturnU16v()
 // CHECK:STDOUT:   store i16 %call, ptr %0, align 2, !tbaa !229
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -194,7 +194,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !224
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !224
-// CHECK:STDOUT:   %call = call noundef signext i8 @_Z8ReturnI8v()
+// CHECK:STDOUT:   %call = call noundef i8 @_Z8ReturnI8v()
 // CHECK:STDOUT:   store i8 %call, ptr %0, align 1, !tbaa !225
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -215,7 +215,7 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !228
 // CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !228
-// CHECK:STDOUT:   %call = call noundef signext i16 @_Z9ReturnI16v()
+// CHECK:STDOUT:   %call = call noundef i16 @_Z9ReturnI16v()
 // CHECK:STDOUT:   store i16 %call, ptr %0, align 2, !tbaa !229
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -365,13 +365,13 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   ret void, !dbg !218
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef zeroext i8 @_Z8ReturnU8v() #2
+// CHECK:STDOUT: declare noundef i8 @_Z8ReturnU8v() #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef zeroext i16 @_Z9ReturnU16v() #2
+// CHECK:STDOUT: declare noundef i16 @_Z9ReturnU16v() #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef signext i8 @_Z8ReturnI8v() #2
+// CHECK:STDOUT: declare noundef i8 @_Z8ReturnI8v() #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare noundef signext i16 @_Z9ReturnI16v() #2
+// CHECK:STDOUT: declare noundef i16 @_Z9ReturnI16v() #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 }
@@ -386,8 +386,8 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!235}
+// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !233, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!236}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -540,12 +540,13 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !227 = !{!"p1 short", !222, i64 0}
 // CHECK:STDOUT: !228 = !{!227, !227, i64 0}
 // CHECK:STDOUT: !229 = !{!226, !226, i64 0}
-// CHECK:STDOUT: !230 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !231 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !232 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !233 = !{!"int", !221, i64 0}
-// CHECK:STDOUT: !234 = !{!"__libc_errno", !233, i64 0}
-// CHECK:STDOUT: !235 = !{!234, !233, i64 0}
+// CHECK:STDOUT: !230 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !231 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !232 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !233 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !234 = !{!"int", !221, i64 0}
+// CHECK:STDOUT: !235 = !{!"__libc_errno", !234, i64 0}
+// CHECK:STDOUT: !236 = !{!235, !234, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_class.carbon'
@@ -556,52 +557,52 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: %struct.X = type { ptr, ptr }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGetX.Main(ptr sret([16 x i8]) %return) #0 !dbg !240 {
+// CHECK:STDOUT: define void @_CGetX.Main(ptr sret([16 x i8]) %return) #0 !dbg !241 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %return), !dbg !243
-// CHECK:STDOUT:   ret void, !dbg !244
+// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %return), !dbg !244
+// CHECK:STDOUT:   ret void, !dbg !245
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z4Makev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !263
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !263
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !264
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !264
 // CHECK:STDOUT:   call void @_Z4Makev(ptr dead_on_unwind writable sret(%struct.X) align 8 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CLet.Main() #0 !dbg !245 {
+// CHECK:STDOUT: define void @_CLet.Main() #0 !dbg !246 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_27.1.temp = alloca [16 x i8], align 8, !dbg !246
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_27.1.temp), !dbg !246
-// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %.loc9_27.1.temp), !dbg !246
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc9_27.1.temp), !dbg !246
-// CHECK:STDOUT:   ret void, !dbg !249
+// CHECK:STDOUT:   %.loc9_27.1.temp = alloca [16 x i8], align 8, !dbg !247
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_27.1.temp), !dbg !247
+// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %.loc9_27.1.temp), !dbg !247
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc9_27.1.temp), !dbg !247
+// CHECK:STDOUT:   ret void, !dbg !250
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare void @_ZN1XD1Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16)) unnamed_addr #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !250 {
+// CHECK:STDOUT: define void @_CVar.Main() #0 !dbg !251 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !251
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !251
-// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %_.var), !dbg !252
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %_.var), !dbg !251
-// CHECK:STDOUT:   ret void, !dbg !254
+// CHECK:STDOUT:   %_.var = alloca [16 x i8], align 8, !dbg !252
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !252
+// CHECK:STDOUT:   call void @_Z4Makev.carbon_thunk.(ptr %_.var), !dbg !253
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %_.var), !dbg !252
+// CHECK:STDOUT:   ret void, !dbg !255
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %t) #0 !dbg !255 {
-// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %t), !dbg !259
-// CHECK:STDOUT:   ret void, !dbg !260
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %t) #0 !dbg !256 {
+// CHECK:STDOUT:   call void @_ZN1XD1Ev(ptr %t), !dbg !260
+// CHECK:STDOUT:   ret void, !dbg !261
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z4Makev(ptr dead_on_unwind writable sret(%struct.X) align 8) #4
@@ -616,9 +617,9 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!237}
-// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!235}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!238}
+// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !233, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!236}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -631,33 +632,34 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !220 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !221 = !{!"omnipotent char", !220, i64 0}
 // CHECK:STDOUT: !222 = !{!"any pointer", !221, i64 0}
-// CHECK:STDOUT: !230 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !231 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !232 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !233 = !{!"int", !221, i64 0}
-// CHECK:STDOUT: !234 = !{!"__libc_errno", !233, i64 0}
-// CHECK:STDOUT: !235 = !{!234, !233, i64 0}
-// CHECK:STDOUT: !236 = !DIFile(filename: "import_class.carbon", directory: "")
-// CHECK:STDOUT: !237 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !236, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !238 = !{!16}
-// CHECK:STDOUT: !239 = !DISubroutineType(types: !238)
-// CHECK:STDOUT: !240 = distinct !DISubprogram(name: "GetX", linkageName: "_CGetX.Main", scope: null, file: !236, line: 6, type: !239, spFlags: DISPFlagDefinition, unit: !237)
-// CHECK:STDOUT: !243 = !DILocation(line: 6, column: 29, scope: !240)
-// CHECK:STDOUT: !244 = !DILocation(line: 6, column: 22, scope: !240)
-// CHECK:STDOUT: !245 = distinct !DISubprogram(name: "Let", linkageName: "_CLet.Main", scope: null, file: !236, line: 8, type: !36, spFlags: DISPFlagDefinition, unit: !237)
-// CHECK:STDOUT: !246 = !DILocation(line: 9, column: 18, scope: !245)
-// CHECK:STDOUT: !249 = !DILocation(line: 8, column: 1, scope: !245)
-// CHECK:STDOUT: !250 = distinct !DISubprogram(name: "Var", linkageName: "_CVar.Main", scope: null, file: !236, line: 12, type: !36, spFlags: DISPFlagDefinition, unit: !237)
-// CHECK:STDOUT: !251 = !DILocation(line: 13, column: 3, scope: !250)
-// CHECK:STDOUT: !252 = !DILocation(line: 13, column: 18, scope: !250)
-// CHECK:STDOUT: !254 = !DILocation(line: 12, column: 1, scope: !250)
-// CHECK:STDOUT: !255 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !163, line: 36, type: !18, spFlags: DISPFlagDefinition, unit: !237, retainedNodes: !261)
-// CHECK:STDOUT: !256 = !DILocalVariable(arg: 1, scope: !255, type: !16)
-// CHECK:STDOUT: !259 = !DILocation(line: 38, column: 5, scope: !255)
-// CHECK:STDOUT: !260 = !DILocation(line: 36, column: 1, scope: !255)
-// CHECK:STDOUT: !261 = !{!256}
-// CHECK:STDOUT: !262 = !{!"p1 _ZTS1X", !222, i64 0}
-// CHECK:STDOUT: !263 = !{!262, !262, i64 0}
+// CHECK:STDOUT: !230 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !231 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !232 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !233 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !234 = !{!"int", !221, i64 0}
+// CHECK:STDOUT: !235 = !{!"__libc_errno", !234, i64 0}
+// CHECK:STDOUT: !236 = !{!235, !234, i64 0}
+// CHECK:STDOUT: !237 = !DIFile(filename: "import_class.carbon", directory: "")
+// CHECK:STDOUT: !238 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !237, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !239 = !{!16}
+// CHECK:STDOUT: !240 = !DISubroutineType(types: !239)
+// CHECK:STDOUT: !241 = distinct !DISubprogram(name: "GetX", linkageName: "_CGetX.Main", scope: null, file: !237, line: 6, type: !240, spFlags: DISPFlagDefinition, unit: !238)
+// CHECK:STDOUT: !244 = !DILocation(line: 6, column: 29, scope: !241)
+// CHECK:STDOUT: !245 = !DILocation(line: 6, column: 22, scope: !241)
+// CHECK:STDOUT: !246 = distinct !DISubprogram(name: "Let", linkageName: "_CLet.Main", scope: null, file: !237, line: 8, type: !36, spFlags: DISPFlagDefinition, unit: !238)
+// CHECK:STDOUT: !247 = !DILocation(line: 9, column: 18, scope: !246)
+// CHECK:STDOUT: !250 = !DILocation(line: 8, column: 1, scope: !246)
+// CHECK:STDOUT: !251 = distinct !DISubprogram(name: "Var", linkageName: "_CVar.Main", scope: null, file: !237, line: 12, type: !36, spFlags: DISPFlagDefinition, unit: !238)
+// CHECK:STDOUT: !252 = !DILocation(line: 13, column: 3, scope: !251)
+// CHECK:STDOUT: !253 = !DILocation(line: 13, column: 18, scope: !251)
+// CHECK:STDOUT: !255 = !DILocation(line: 12, column: 1, scope: !251)
+// CHECK:STDOUT: !256 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !163, line: 36, type: !18, spFlags: DISPFlagDefinition, unit: !238, retainedNodes: !262)
+// CHECK:STDOUT: !257 = !DILocalVariable(arg: 1, scope: !256, type: !16)
+// CHECK:STDOUT: !260 = !DILocation(line: 38, column: 5, scope: !256)
+// CHECK:STDOUT: !261 = !DILocation(line: 36, column: 1, scope: !256)
+// CHECK:STDOUT: !262 = !{!257}
+// CHECK:STDOUT: !263 = !{!"p1 _ZTS1X", !222, i64 0}
+// CHECK:STDOUT: !264 = !{!263, !263, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_return_with_args.carbon'
@@ -669,10 +671,10 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: %class.C = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.Main(ptr sret({}) %return, ptr %x) #0 !dbg !271 {
+// CHECK:STDOUT: define void @_CCall.Main(ptr sret({}) %return, ptr %x) #0 !dbg !272 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z1f1D.carbon_thunk._(ptr %x, ptr %return), !dbg !277
-// CHECK:STDOUT:   ret void, !dbg !278
+// CHECK:STDOUT:   call void @_Z1f1D.carbon_thunk._(ptr %x, ptr %return), !dbg !278
+// CHECK:STDOUT:   ret void, !dbg !279
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -682,10 +684,10 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.D, align 1
 // CHECK:STDOUT:   %undef.agg.tmp = alloca %class.C, align 1
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !281
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !283
-// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !283
-// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !281
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !282
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !284
+// CHECK:STDOUT:   %1 = load ptr, ptr %return.addr, align 8, !tbaa !284
+// CHECK:STDOUT:   %2 = load ptr, ptr %.addr, align 8, !tbaa !282
 // CHECK:STDOUT:   call void @_Z1f1D()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -696,9 +698,9 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!266}
-// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!235}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!267}
+// CHECK:STDOUT: !llvm.module.flags = !{!230, !231, !232, !233, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!236}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -706,23 +708,24 @@ fn Call(x: Cpp.D) -> Cpp.C {
 // CHECK:STDOUT: !220 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !221 = !{!"omnipotent char", !220, i64 0}
 // CHECK:STDOUT: !222 = !{!"any pointer", !221, i64 0}
-// CHECK:STDOUT: !230 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !231 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !232 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !233 = !{!"int", !221, i64 0}
-// CHECK:STDOUT: !234 = !{!"__libc_errno", !233, i64 0}
-// CHECK:STDOUT: !235 = !{!234, !233, i64 0}
-// CHECK:STDOUT: !265 = !DIFile(filename: "indirect_return_with_args.carbon", directory: "")
-// CHECK:STDOUT: !266 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !265, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !267 = !{!16, !16}
-// CHECK:STDOUT: !268 = !DISubroutineType(types: !267)
-// CHECK:STDOUT: !271 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !265, line: 10, type: !268, spFlags: DISPFlagDefinition, unit: !266, retainedNodes: !279)
-// CHECK:STDOUT: !272 = !DILocalVariable(arg: 1, scope: !271, type: !16)
-// CHECK:STDOUT: !277 = !DILocation(line: 11, column: 10, scope: !271)
-// CHECK:STDOUT: !278 = !DILocation(line: 11, column: 3, scope: !271)
-// CHECK:STDOUT: !279 = !{!272}
-// CHECK:STDOUT: !280 = !{!"p1 _ZTS1D", !222, i64 0}
-// CHECK:STDOUT: !281 = !{!280, !280, i64 0}
-// CHECK:STDOUT: !282 = !{!"p1 _ZTS1C", !222, i64 0}
-// CHECK:STDOUT: !283 = !{!282, !282, i64 0}
+// CHECK:STDOUT: !230 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !231 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !232 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !233 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !234 = !{!"int", !221, i64 0}
+// CHECK:STDOUT: !235 = !{!"__libc_errno", !234, i64 0}
+// CHECK:STDOUT: !236 = !{!235, !234, i64 0}
+// CHECK:STDOUT: !266 = !DIFile(filename: "indirect_return_with_args.carbon", directory: "")
+// CHECK:STDOUT: !267 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !266, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !268 = !{!16, !16}
+// CHECK:STDOUT: !269 = !DISubroutineType(types: !268)
+// CHECK:STDOUT: !272 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !266, line: 10, type: !269, spFlags: DISPFlagDefinition, unit: !267, retainedNodes: !280)
+// CHECK:STDOUT: !273 = !DILocalVariable(arg: 1, scope: !272, type: !16)
+// CHECK:STDOUT: !278 = !DILocation(line: 11, column: 10, scope: !272)
+// CHECK:STDOUT: !279 = !DILocation(line: 11, column: 3, scope: !272)
+// CHECK:STDOUT: !280 = !{!273}
+// CHECK:STDOUT: !281 = !{!"p1 _ZTS1D", !222, i64 0}
+// CHECK:STDOUT: !282 = !{!281, !281, i64 0}
+// CHECK:STDOUT: !283 = !{!"p1 _ZTS1C", !222, i64 0}
+// CHECK:STDOUT: !284 = !{!283, !283, i64 0}
 // CHECK:STDOUT:

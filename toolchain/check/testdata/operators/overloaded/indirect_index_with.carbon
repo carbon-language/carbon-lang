@@ -89,7 +89,13 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 fn F(c: CNonCopy, s: SubscriptType) {
-  // CHECK:STDERR: fail_at_non_copyable.carbon:[[@LINE+2]]:3-38: error: cannot access member of interface `Core.IndexWith(SubscriptType)` in type `CNonCopy` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_at_non_copyable.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   c.(Core.IndexWith(SubscriptType).At)(s);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.IndexWith(SubscriptType)`
+  // CHECK:STDERR:        ·      ┃        in type `CNonCopy` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.(Core.IndexWith(SubscriptType).At)(s);
 }
@@ -130,7 +136,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- types.carbon
+// CHECK:STDOUT: --- types.carbon = $types.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -257,7 +263,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %.loc19_12
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_copyable.carbon
+// CHECK:STDOUT: --- ref_copyable.carbon = $ref_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -344,7 +350,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %C.as.IndirectIndexWith.impl.Ref.call.loc9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_non_copyable.carbon
+// CHECK:STDOUT: --- ref_non_copyable.carbon = $ref_non_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -403,7 +409,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %CNonCopy.as.IndirectIndexWith.impl.Ref.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- at_from_blanket_impl.carbon
+// CHECK:STDOUT: --- at_from_blanket_impl.carbon = $at_from_blanket_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -439,11 +445,11 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %Copy.impl_witness.c00: <witness> = impl_witness imports.%Copy.impl_witness_table.a69 [concrete]
 // CHECK:STDOUT:   %facet_value: %IndirectIndexWith_where.type.c10528.1 = facet_value %C, (%IndirectIndexWith.impl_witness, %Copy.impl_witness.c00) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness.8ae: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @T.as_type.as.IndexWith.impl(%SubscriptType.f8f, %facet_value) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.a8d: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%SubscriptType.f8f, %facet_value) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.a13: %T.as_type.as.IndexWith.impl.At.type.a8d = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet.fe4: %IndexWith.type.a14 = facet_value %C, (%IndexWith.impl_witness.8ae) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.54e: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.f8f, %IndexWith.facet.fe4) [concrete]
 // CHECK:STDOUT:   %.646: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.54e, %IndexWith.facet.fe4 [concrete]
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.a8d: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%SubscriptType.f8f, %facet_value) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.a13: %T.as_type.as.IndexWith.impl.At.type.a8d = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %T.as_type.as.IndexWith.impl.At.a13, @T.as_type.as.IndexWith.impl.At(%SubscriptType.f8f, %facet_value) [concrete]
 // CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref.type: type = fn_type @C.as.IndirectIndexWith.impl.Ref [concrete]
 // CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref: %C.as.IndirectIndexWith.impl.Ref.type = struct_value () [concrete]
@@ -491,7 +497,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %T.as_type.as.IndexWith.impl.At.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- subscript_copyable.carbon
+// CHECK:STDOUT: --- subscript_copyable.carbon = $subscript_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -537,7 +543,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %Copyable.as.Copy.impl.Op.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- subscript_non_copyable.carbon
+// CHECK:STDOUT: --- subscript_non_copyable.carbon = $subscript_non_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -569,7 +575,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   return %CNonCopy.as.IndirectIndexWith.impl.Ref.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- subscript_assign.carbon
+// CHECK:STDOUT: --- subscript_assign.carbon = $subscript_assign
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

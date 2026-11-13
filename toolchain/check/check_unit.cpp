@@ -95,6 +95,7 @@ auto CheckUnit::Run() -> void {
 
   if (!ProcessNodeIds()) {
     context_.sem_ir().set_has_errors(true);
+    context_.sem_ir().set_complete();
 
     // TODO: Are there more steps from `FinishRun` we should be doing here?
     FinalizeCppAstFragment(context_);
@@ -711,6 +712,7 @@ auto CheckUnit::FinishRun() -> void {
   emitter_.Flush();
 
   context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+  context_.sem_ir().set_complete();
 
   // Verify that Context cleanly finished.
   context_.VerifyOnFinish();

@@ -10,7 +10,11 @@
 
 // --- fail_todo_template_constraint.carbon
 
-// CHECK:STDERR: fail_todo_template_constraint.carbon:[[@LINE+2]]:1-8: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_todo_template_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ template constraint Foo {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint Foo {
   // TODO: Add a require statement.
@@ -18,7 +22,11 @@ template constraint Foo {
   fn DefinedMethod() {}
 }
 
-// CHECK:STDERR: fail_todo_template_constraint.carbon:[[@LINE+2]]:1-8: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_todo_template_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ template constraint ForwardDeclared;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint ForwardDeclared;
 
