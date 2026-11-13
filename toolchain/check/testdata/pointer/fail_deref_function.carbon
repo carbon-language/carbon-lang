@@ -31,7 +31,7 @@ fn A() {
   A->foo;
 }
 
-// CHECK:STDOUT: --- fail_deref_function.carbon ($fail_deref_function)
+// CHECK:STDOUT: --- fail_deref_function.carbon = $fail_deref_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

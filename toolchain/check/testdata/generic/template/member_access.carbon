@@ -136,7 +136,7 @@ fn G() {
   b.F();
 }
 
-// CHECK:STDOUT: --- simple_member_access.carbon ($simple_member_access)
+// CHECK:STDOUT: --- simple_member_access.carbon = $simple_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -309,7 +309,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc6_17.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_member_access.carbon ($compound_member_access)
+// CHECK:STDOUT: --- compound_member_access.carbon = $compound_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

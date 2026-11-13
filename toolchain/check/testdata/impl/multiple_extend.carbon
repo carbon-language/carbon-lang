@@ -176,7 +176,7 @@ fn P(o: O) {
    o.N();
 }
 
-// CHECK:STDOUT: --- different_impl_member_names.carbon ($different_impl_member_names)
+// CHECK:STDOUT: --- different_impl_member_names.carbon = $different_impl_member_names
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -413,7 +413,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.c72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_ambiguous_impls.carbon ($fail_ambiguous_impls)
+// CHECK:STDOUT: --- fail_ambiguous_impls.carbon = $fail_ambiguous_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -632,7 +632,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasA1.WithSelf.A => constants.%HasA1.WithSelf.A.254
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- different_impl_and_base.carbon ($different_impl_and_base)
+// CHECK:STDOUT: --- different_impl_and_base.carbon = $different_impl_and_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -809,7 +809,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasI.WithSelf.I => constants.%HasI.WithSelf.I.f9b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_ambiguous_impl_and_base.carbon ($fail_ambiguous_impl_and_base)
+// CHECK:STDOUT: --- fail_ambiguous_impl_and_base.carbon = $fail_ambiguous_impl_and_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -971,7 +971,7 @@ fn P(o: O) {
 // CHECK:STDOUT:   %HasK.WithSelf.K => constants.%HasK.WithSelf.K.73a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ambiguity_hidden.carbon ($ambiguity_hidden)
+// CHECK:STDOUT: --- ambiguity_hidden.carbon = $ambiguity_hidden
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

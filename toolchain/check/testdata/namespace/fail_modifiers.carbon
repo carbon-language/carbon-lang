@@ -83,7 +83,7 @@ impl namespace B;
 // CHECK:STDERR:
 extern namespace C;
 
-// CHECK:STDOUT: --- fail_modifiers.carbon ($fail_modifiers)
+// CHECK:STDOUT: --- fail_modifiers.carbon = $fail_modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {

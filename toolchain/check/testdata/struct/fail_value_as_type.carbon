@@ -25,7 +25,7 @@
 // CHECK:STDERR:
 var x: {.a = 1};
 
-// CHECK:STDOUT: --- fail_value_as_type.carbon ($fail_value_as_type)
+// CHECK:STDOUT: --- fail_value_as_type.carbon = $fail_value_as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

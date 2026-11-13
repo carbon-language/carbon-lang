@@ -43,7 +43,7 @@ var x: {.a: i32} = {.b = 1};
 // CHECK:STDERR:
 var y: {.b: i32} = x;
 
-// CHECK:STDOUT: --- fail_field_name_mismatch.carbon ($fail_field_name_mismatch)
+// CHECK:STDOUT: --- fail_field_name_mismatch.carbon = $fail_field_name_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

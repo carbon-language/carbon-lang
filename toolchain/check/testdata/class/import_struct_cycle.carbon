@@ -35,7 +35,7 @@ fn Run() {
   a.b = (*a.b).c.b;
 }
 
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -119,7 +119,7 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

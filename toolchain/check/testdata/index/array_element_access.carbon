@@ -17,7 +17,7 @@ var b: i32 = 1;
 var c: i32 = a[0];
 var d: i32 = a[b];
 
-// CHECK:STDOUT: --- array_element_access.carbon ($array_element_access)
+// CHECK:STDOUT: --- array_element_access.carbon = $array_element_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

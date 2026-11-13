@@ -29,7 +29,7 @@ fn Access(p: Derived*) -> i32* {
   return &(*p).c;
 }
 
-// CHECK:STDOUT: --- base_field.carbon ($base_field)
+// CHECK:STDOUT: --- base_field.carbon = $base_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

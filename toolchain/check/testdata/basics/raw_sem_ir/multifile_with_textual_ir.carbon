@@ -131,7 +131,7 @@ fn B() {
 // CHECK:STDOUT:         identifier0:     A
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -285,7 +285,7 @@ fn B() {
 // CHECK:STDOUT:         identifier1:     A
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

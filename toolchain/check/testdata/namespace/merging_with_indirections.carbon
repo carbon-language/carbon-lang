@@ -45,7 +45,7 @@ fn Run() {
   a = Other.F();
 }
 
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -81,7 +81,7 @@ fn Run() {
 // CHECK:STDOUT:   .Self = constants.%A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -162,7 +162,7 @@ fn Run() {
 // CHECK:STDOUT:   return %.loc8_28 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main.carbon ($main)
+// CHECK:STDOUT: --- main.carbon = $main
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

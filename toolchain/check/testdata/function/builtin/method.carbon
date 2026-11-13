@@ -23,7 +23,7 @@ impl i32 as I {
 var arr: array(i32, (1 as i32).(I.F)(2));
 
 
-// CHECK:STDOUT: --- method.carbon ($method)
+// CHECK:STDOUT: --- method.carbon = $method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

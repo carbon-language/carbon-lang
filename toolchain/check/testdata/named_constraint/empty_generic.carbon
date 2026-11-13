@@ -26,7 +26,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- empty_generic.carbon ($empty_generic)
+// CHECK:STDOUT: --- empty_generic.carbon = $empty_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

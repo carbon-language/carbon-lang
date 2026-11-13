@@ -58,7 +58,7 @@ namespace D;
 // CHECK:STDERR:
 fn D(unused T: type).F() {}
 
-// CHECK:STDOUT: --- fail_params.carbon ($fail_params)
+// CHECK:STDOUT: --- fail_params.carbon = $fail_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

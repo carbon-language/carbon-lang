@@ -254,7 +254,7 @@ interface B {
   require impls A;
 }
 
-// CHECK:STDOUT: --- fail_empty_struct.carbon ($fail_empty_struct)
+// CHECK:STDOUT: --- fail_empty_struct.carbon = $fail_empty_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -295,7 +295,7 @@ interface B {
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class.carbon ($fail_class)
+// CHECK:STDOUT: --- fail_class.carbon = $fail_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -347,7 +347,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class_no_forward_decl.carbon ($fail_class_no_forward_decl)
+// CHECK:STDOUT: --- fail_class_no_forward_decl.carbon = $fail_class_no_forward_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -392,7 +392,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class_with_rewrite.carbon ($fail_class_with_rewrite)
+// CHECK:STDOUT: --- fail_class_with_rewrite.carbon = $fail_class_with_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -463,7 +463,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- incomplete_where.carbon ($incomplete_where)
+// CHECK:STDOUT: --- incomplete_where.carbon = $incomplete_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -610,7 +610,7 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- incomplete_where_rewrite.carbon ($incomplete_where_rewrite)
+// CHECK:STDOUT: --- incomplete_where_rewrite.carbon = $incomplete_where_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -798,7 +798,7 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_where_definition.carbon ($fail_incomplete_where_definition)
+// CHECK:STDOUT: --- fail_incomplete_where_definition.carbon = $fail_incomplete_where_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -883,7 +883,7 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_declaration_lookup_into_incomplete.carbon ($fail_declaration_lookup_into_incomplete)
+// CHECK:STDOUT: --- fail_declaration_lookup_into_incomplete.carbon = $fail_declaration_lookup_into_incomplete
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -983,7 +983,7 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_unidentified_constraint.carbon ($fail_unidentified_constraint)
+// CHECK:STDOUT: --- fail_unidentified_constraint.carbon = $fail_unidentified_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1018,7 +1018,7 @@ interface B {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_require_incomplete_interface.carbon ($nested_require_incomplete_interface)
+// CHECK:STDOUT: --- nested_require_incomplete_interface.carbon = $nested_require_incomplete_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1195,7 +1195,7 @@ interface B {
 // CHECK:STDOUT:   %T.loc16_22.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_constraint.carbon ($fail_incomplete_constraint)
+// CHECK:STDOUT: --- fail_incomplete_constraint.carbon = $fail_incomplete_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

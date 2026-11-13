@@ -108,7 +108,7 @@ var d: AdaptC = MakeC();
 // CHECK:STDERR:
 var e: C = MakeAdaptC();
 
-// CHECK:STDOUT: --- init_adapt.carbon ($init_adapt)
+// CHECK:STDOUT: --- init_adapt.carbon = $init_adapt
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -329,7 +329,7 @@ var e: C = MakeAdaptC();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_implicit.carbon ($fail_not_implicit)
+// CHECK:STDOUT: --- fail_not_implicit.carbon = $fail_not_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

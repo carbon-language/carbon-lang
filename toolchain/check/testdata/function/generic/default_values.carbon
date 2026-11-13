@@ -35,7 +35,7 @@ fn G() {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- generic_fn_specific_param.carbon ($generic_fn_specific_param)
+// CHECK:STDOUT: --- generic_fn_specific_param.carbon = $generic_fn_specific_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

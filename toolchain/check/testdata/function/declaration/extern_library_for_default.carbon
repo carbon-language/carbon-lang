@@ -48,7 +48,7 @@ import library default;
 // CHECK:STDERR:
 extern fn F();
 
-// CHECK:STDOUT: --- default.carbon ($default)
+// CHECK:STDOUT: --- default.carbon = $default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -65,7 +65,7 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- expected.carbon ($expected)
+// CHECK:STDOUT: --- expected.carbon = $expected
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -83,7 +83,7 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_wrong_library.carbon ($fail_wrong_library)
+// CHECK:STDOUT: --- fail_wrong_library.carbon = $fail_wrong_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

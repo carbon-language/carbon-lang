@@ -118,7 +118,7 @@ interface A(T: type) {
   extend require impls A({});
 }
 
-// CHECK:STDOUT: --- incomplete_type.carbon ($incomplete_type)
+// CHECK:STDOUT: --- incomplete_type.carbon = $incomplete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -161,7 +161,7 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_type_impl.carbon ($fail_incomplete_type_impl)
+// CHECK:STDOUT: --- fail_incomplete_type_impl.carbon = $fail_incomplete_type_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -246,7 +246,7 @@ interface A(T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- incomplete_type_usage.carbon ($incomplete_type_usage)
+// CHECK:STDOUT: --- incomplete_type_usage.carbon = $incomplete_type_usage
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -358,7 +358,7 @@ interface A(T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_extend_constraint.carbon ($fail_incomplete_extend_constraint)
+// CHECK:STDOUT: --- fail_incomplete_extend_constraint.carbon = $fail_incomplete_extend_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -394,7 +394,7 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extend_require_enclosing.carbon ($fail_extend_require_enclosing)
+// CHECK:STDOUT: --- fail_extend_require_enclosing.carbon = $fail_extend_require_enclosing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -443,7 +443,7 @@ interface A(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc16_18.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extend_require_enclosing_generic.carbon ($fail_extend_require_enclosing_generic)
+// CHECK:STDOUT: --- fail_extend_require_enclosing_generic.carbon = $fail_extend_require_enclosing_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

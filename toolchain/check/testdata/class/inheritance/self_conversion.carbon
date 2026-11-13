@@ -36,7 +36,7 @@ fn Call(p: Derived*) -> i32 {
   return (*p).SelfBase();
 }
 
-// CHECK:STDOUT: --- self_conversion.carbon ($self_conversion)
+// CHECK:STDOUT: --- self_conversion.carbon = $self_conversion
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

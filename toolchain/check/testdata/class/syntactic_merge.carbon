@@ -230,7 +230,7 @@ fn Base.F(ref self: Base) {
   self.a = ();
 }
 
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -345,7 +345,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc10_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- spacing.carbon ($spacing)
+// CHECK:STDOUT: --- spacing.carbon = $spacing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -415,7 +415,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc6_19.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_parens.carbon ($fail_parens)
+// CHECK:STDOUT: --- fail_parens.carbon = $fail_parens
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -499,7 +499,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc19_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_identifier.carbon ($fail_raw_identifier)
+// CHECK:STDOUT: --- fail_raw_identifier.carbon = $fail_raw_identifier
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -583,7 +583,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc19_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon ($two_file)
+// CHECK:STDOUT: --- two_file.carbon = $two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -662,7 +662,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc8_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.impl.carbon ($two_file.impl)
+// CHECK:STDOUT: --- two_file.impl.carbon = $two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -766,7 +766,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_mismatch.carbon ($fail_name_mismatch)
+// CHECK:STDOUT: --- fail_name_mismatch.carbon = $fail_name_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -855,7 +855,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %b.loc20_12.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias.carbon ($fail_alias)
+// CHECK:STDOUT: --- fail_alias.carbon = $fail_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -942,7 +942,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc20_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduced_alias.carbon ($fail_deduced_alias)
+// CHECK:STDOUT: --- fail_deduced_alias.carbon = $fail_deduced_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1029,7 +1029,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc20_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_two_file.carbon ($alias_two_file)
+// CHECK:STDOUT: --- alias_two_file.carbon = $alias_two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1081,7 +1081,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc6_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon ($todo_fail_alias_two_file.impl)
+// CHECK:STDOUT: --- todo_fail_alias_two_file.impl.carbon = $todo_fail_alias_two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1152,7 +1152,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_repeat_const.carbon ($fail_repeat_const)
+// CHECK:STDOUT: --- fail_repeat_const.carbon = $fail_repeat_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1240,7 +1240,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %a.loc27_12.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_type.carbon ($fail_self_type)
+// CHECK:STDOUT: --- fail_self_type.carbon = $fail_self_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

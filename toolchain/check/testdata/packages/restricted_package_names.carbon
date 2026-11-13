@@ -104,49 +104,49 @@ package r#Cpp;
 // CHECK:STDERR:
 package Cpp library "[[@TEST_NAME]]";
 
-// CHECK:STDOUT: --- lowercase_main.carbon ($lowercase_main)
+// CHECK:STDOUT: --- lowercase_main.carbon = $lowercase_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main.carbon ($fail_main)
+// CHECK:STDOUT: --- fail_main.carbon = $fail_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_impl.carbon ($fail_main_impl)
+// CHECK:STDOUT: --- fail_main_impl.carbon = $fail_main_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_main.carbon ($fail_raw_main)
+// CHECK:STDOUT: --- fail_raw_main.carbon = $fail_raw_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib.carbon ($fail_main_lib)
+// CHECK:STDOUT: --- fail_main_lib.carbon = $fail_main_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lowercase_cpp.carbon ($lowercase_cpp)
+// CHECK:STDOUT: --- lowercase_cpp.carbon = $lowercase_cpp
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cpp.carbon ($fail_cpp)
+// CHECK:STDOUT: --- fail_cpp.carbon = $fail_cpp
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cpp.impl.carbon ($fail_cpp.impl)
+// CHECK:STDOUT: --- fail_cpp.impl.carbon = $fail_cpp.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -154,13 +154,13 @@ package Cpp library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- raw_cpp.carbon ($raw_cpp)
+// CHECK:STDOUT: --- raw_cpp.carbon = $raw_cpp
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cpp_lib.carbon ($fail_cpp_lib)
+// CHECK:STDOUT: --- fail_cpp_lib.carbon = $fail_cpp_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

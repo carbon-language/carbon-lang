@@ -44,7 +44,7 @@ package Example library "[[@TEST_NAME]]";
 import library "fn";
 import library "var";
 
-// CHECK:STDOUT: --- fn.carbon ($fn)
+// CHECK:STDOUT: --- fn.carbon = $fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -70,7 +70,7 @@ import library "var";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Foo();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var.carbon ($var)
+// CHECK:STDOUT: --- var.carbon = $var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -132,7 +132,7 @@ import library "var";
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon ($fail_conflict)
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Example.Foo = import_ref Example//fn, Foo, unloaded

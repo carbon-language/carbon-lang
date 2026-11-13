@@ -97,7 +97,7 @@ fn TestStringIndexing() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_wrong_type.carbon ($fail_wrong_type)
+// CHECK:STDOUT: --- fail_wrong_type.carbon = $fail_wrong_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -122,7 +122,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- test_string_indexing.carbon ($test_string_indexing)
+// CHECK:STDOUT: --- test_string_indexing.carbon = $test_string_indexing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

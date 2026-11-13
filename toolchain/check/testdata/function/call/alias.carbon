@@ -20,7 +20,7 @@ fn Main() {
   var unused b: () = B();
 }
 
-// CHECK:STDOUT: --- alias.carbon ($alias)
+// CHECK:STDOUT: --- alias.carbon = $alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

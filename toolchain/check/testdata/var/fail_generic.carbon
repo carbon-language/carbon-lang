@@ -31,7 +31,7 @@ fn Main() {
   var generic x: () = ();
 }
 
-// CHECK:STDOUT: --- fail_generic.carbon ($fail_generic)
+// CHECK:STDOUT: --- fail_generic.carbon = $fail_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main();
 // CHECK:STDOUT:

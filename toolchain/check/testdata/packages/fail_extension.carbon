@@ -112,25 +112,25 @@ package SwappedExt;
 impl package SwappedExt;
 
 
-// CHECK:STDOUT: --- fail_main.incorrect ($fail_main)
+// CHECK:STDOUT: --- fail_main.incorrect = $fail_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_redundant_with_swapped_ext.impl.carbon ($fail_main_redundant_with_swapped_ext.impl)
+// CHECK:STDOUT: --- fail_main_redundant_with_swapped_ext.impl.carbon = $fail_main_redundant_with_swapped_ext.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib.incorrect ($fail_main_lib)
+// CHECK:STDOUT: --- fail_main_lib.incorrect = $fail_main_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib.impl.incorrect ($fail_main_lib.impl)
+// CHECK:STDOUT: --- fail_main_lib.impl.incorrect = $fail_main_lib.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -138,27 +138,13 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %default.import.loc9_24.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package.incorrect ($fail_package)
+// CHECK:STDOUT: --- fail_package.incorrect = $fail_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_impl.incorrect ($fail_package_impl)
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %Package.import = import Package
-// CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib.incorrect ($fail_package_lib)
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib.impl.incorrect ($fail_package_lib.impl)
+// CHECK:STDOUT: --- fail_package_impl.incorrect = $fail_package_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -166,13 +152,27 @@ impl package SwappedExt;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_swapped_ext.impl.carbon ($fail_swapped_ext.impl)
+// CHECK:STDOUT: --- fail_package_lib.incorrect = $fail_package_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_swapped_ext.carbon ($fail_swapped_ext)
+// CHECK:STDOUT: --- fail_package_lib.impl.incorrect = $fail_package_lib.impl
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %Package.import = import Package
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_swapped_ext.impl.carbon = $fail_swapped_ext.impl
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_swapped_ext.carbon = $fail_swapped_ext
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

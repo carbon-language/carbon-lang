@@ -26,7 +26,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "including_file.h";
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_function_decl.carbon ($import_function_decl)
+// CHECK:STDOUT: --- import_function_decl.carbon = $import_function_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {

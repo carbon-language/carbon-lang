@@ -122,7 +122,7 @@ fn WhileContinue(cond: bool) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- if_then.carbon ($if_then)
+// CHECK:STDOUT: --- if_then.carbon = $if_then
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -217,7 +217,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- if_else.carbon ($if_else)
+// CHECK:STDOUT: --- if_else.carbon = $if_else
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -338,7 +338,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- if_return.carbon ($if_return)
+// CHECK:STDOUT: --- if_return.carbon = $if_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -435,7 +435,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_5.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- while_break.carbon ($while_break)
+// CHECK:STDOUT: --- while_break.carbon = $while_break
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -573,7 +573,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_7.2(%self.param: ref %Destructible) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- while_continue.carbon ($while_continue)
+// CHECK:STDOUT: --- while_continue.carbon = $while_continue
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -44,7 +44,7 @@ var b: C(true == false) = False();
 var c: C(false == true) = False();
 var d: C(false == false) = True();
 
-// CHECK:STDOUT: --- builtin_call.carbon ($builtin_call)
+// CHECK:STDOUT: --- builtin_call.carbon = $builtin_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -89,7 +89,7 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude.carbon ($prelude.2)
+// CHECK:STDOUT: --- prelude.carbon = $prelude.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

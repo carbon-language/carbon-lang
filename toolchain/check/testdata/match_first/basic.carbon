@@ -512,7 +512,7 @@ final match_first {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- decl.carbon ($decl)
+// CHECK:STDOUT: --- decl.carbon = $decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -540,7 +540,7 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- definition.carbon ($definition)
+// CHECK:STDOUT: --- definition.carbon = $definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -570,7 +570,7 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_defined.carbon ($redecl_defined)
+// CHECK:STDOUT: --- redecl_defined.carbon = $redecl_defined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -598,7 +598,7 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_redecl.carbon ($final_block_redecl)
+// CHECK:STDOUT: --- final_block_redecl.carbon = $final_block_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -626,7 +626,7 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_decl.carbon ($final_block_decl)
+// CHECK:STDOUT: --- final_block_decl.carbon = $final_block_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -654,7 +654,7 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_defined.carbon ($final_block_defined)
+// CHECK:STDOUT: --- final_block_defined.carbon = $final_block_defined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

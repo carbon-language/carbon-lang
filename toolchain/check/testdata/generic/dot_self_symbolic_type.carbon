@@ -80,7 +80,7 @@ fn H(generic T: type) {
   D({}).G(T);
 }
 
-// CHECK:STDOUT: --- fail_dot_self_symbolic_type.carbon ($fail_dot_self_symbolic_type)
+// CHECK:STDOUT: --- fail_dot_self_symbolic_type.carbon = $fail_dot_self_symbolic_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -314,7 +314,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %C.F => constants.%C.F.0b5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dot_self_symbolic_in_impl_lookup.carbon ($dot_self_symbolic_in_impl_lookup)
+// CHECK:STDOUT: --- dot_self_symbolic_in_impl_lookup.carbon = $dot_self_symbolic_in_impl_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

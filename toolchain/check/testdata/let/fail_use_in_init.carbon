@@ -31,7 +31,7 @@ fn F() {
   let unused a: i32 = a;
 }
 
-// CHECK:STDOUT: --- fail_use_in_init.carbon ($fail_use_in_init)
+// CHECK:STDOUT: --- fail_use_in_init.carbon = $fail_use_in_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

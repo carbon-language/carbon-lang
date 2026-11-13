@@ -20,7 +20,7 @@
 // CHECK:STDERR:
 fn Six() -> x;
 
-// CHECK:STDOUT: --- fail_error_in_type.carbon ($fail_error_in_type)
+// CHECK:STDOUT: --- fail_error_in_type.carbon = $fail_error_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

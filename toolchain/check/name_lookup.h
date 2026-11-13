@@ -118,7 +118,9 @@ auto LookupNameInExactScope(Context& context, SemIR::LocId loc_id,
 // the interface/constraint.
 //
 // Returns `false` if not a scope. On invalid scopes, prints a diagnostic, but
-// still updates `*scopes` and returns `true`.
+// still updates `*scopes` and returns `true`. Note that this means callers
+// should check if `LookupScope::name_scope_id` has a value before using
+// elements of `scopes`, even when `true` is returned.
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    SemIR::ConstantId lookup_const_id,
                                    SemIR::ConstantId self_type_const_id,

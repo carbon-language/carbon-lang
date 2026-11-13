@@ -378,14 +378,14 @@ auto InstNamer::Namespace::AllocateNameWithSuffixes(
 
   int previous_size = -1;
   for (auto name_size : name_sizes) {
-    CARBON_CHECK(name_size > previous_size, "`prefix_sizes` not sorted");
+    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
     previous_size = name_size;
     if (name_size > 0) {
       add_name(llvm::StringRef(full_name).take_front(name_size));
     }
   }
   CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
-               "`prefix_sizes` doesn't end with the size of `full_name`");
+               "`name_sizes` doesn't end with the size of `full_name`");
 
   // Append numbers until we find an available name.
   full_name.push_back('.');

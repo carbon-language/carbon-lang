@@ -141,7 +141,7 @@ interface L { let W: type; }
 // CHECK:STDERR: ->     │ impl () as L where .W = {} and .W = () {}
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·            ┗━━┫ error: associated constant `.(L.W)` given two different values
-// CHECK:STDERR:        ·               ┃        `{}` and `()`
+// CHECK:STDERR:        ·               ┃        `()` and `{}`
 // CHECK:STDERR:        ·               ┃        [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -276,7 +276,7 @@ interface M { let X: type; }
 // CHECK:STDERR: ->     │ impl () as M where .X = {} and .X = () and .X = {} {}
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·            ┗━━┫ error: associated constant `.(M.X)` given two different values
-// CHECK:STDERR:        ·               ┃        `{}` and `()`
+// CHECK:STDERR:        ·               ┃        `()` and `{}`
 // CHECK:STDERR:        ·               ┃        [AssociatedConstantWithDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -521,7 +521,7 @@ fn G() {
   F(C);
 }
 
-// CHECK:STDOUT: --- fail_many_different.carbon ($fail_many_different)
+// CHECK:STDOUT: --- fail_many_different.carbon = $fail_many_different
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -642,7 +642,7 @@ fn G() {
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cycle.carbon ($fail_cycle)
+// CHECK:STDOUT: --- fail_cycle.carbon = $fail_cycle
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

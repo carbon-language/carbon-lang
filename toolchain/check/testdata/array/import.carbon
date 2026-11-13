@@ -50,7 +50,7 @@ fn F() -> i32 {
   return a[0];
 }
 
-// CHECK:STDOUT: --- user.carbon ($user)
+// CHECK:STDOUT: --- user.carbon = $user
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -506,7 +506,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_symbolic_decl.carbon ($import_symbolic_decl)
+// CHECK:STDOUT: --- import_symbolic_decl.carbon = $import_symbolic_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

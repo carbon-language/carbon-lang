@@ -165,7 +165,7 @@ fn Use() {
   D_As_I.(I.F)();
 }
 
-// CHECK:STDOUT: --- require_specific_impl_definition.carbon ($require_specific_impl_definition)
+// CHECK:STDOUT: --- require_specific_impl_definition.carbon = $require_specific_impl_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -545,7 +545,7 @@ fn Use() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_specific_impl_definition_from_symbolic_impl_in_class_definition.carbon ($require_specific_impl_definition_from_symbolic_impl_in_class_definition)
+// CHECK:STDOUT: --- require_specific_impl_definition_from_symbolic_impl_in_class_definition.carbon = $require_specific_impl_definition_from_symbolic_impl_in_class_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -915,7 +915,7 @@ fn Use() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_specific_impl_definition_from_lookup_impl_witness_in_class_definition.carbon ($require_specific_impl_definition_from_lookup_impl_witness_in_class_definition)
+// CHECK:STDOUT: --- require_specific_impl_definition_from_lookup_impl_witness_in_class_definition.carbon = $require_specific_impl_definition_from_lookup_impl_witness_in_class_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1384,7 +1384,7 @@ fn Use() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_specific_impl_definition_through_specific_instantiation.carbon ($require_specific_impl_definition_through_specific_instantiation)
+// CHECK:STDOUT: --- require_specific_impl_definition_through_specific_instantiation.carbon = $require_specific_impl_definition_through_specific_instantiation
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1740,7 +1740,7 @@ fn Use() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_specific_impl_definition_from_inside_impl_definition.carbon ($require_specific_impl_definition_from_inside_impl_definition)
+// CHECK:STDOUT: --- require_specific_impl_definition_from_inside_impl_definition.carbon = $require_specific_impl_definition_from_inside_impl_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -147,7 +147,7 @@ fn TakeNonConstConst(p: (const X*)*);
 // CHECK:STDERR:
 fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 
-// CHECK:STDOUT: --- same_or_added_qualifiers.carbon ($same_or_added_qualifiers)
+// CHECK:STDOUT: --- same_or_added_qualifiers.carbon = $same_or_added_qualifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -198,7 +198,7 @@ fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_nested_qualifiers.carbon ($fail_todo_nested_qualifiers)
+// CHECK:STDOUT: --- fail_todo_nested_qualifiers.carbon = $fail_todo_nested_qualifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

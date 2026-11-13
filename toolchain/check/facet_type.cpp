@@ -42,10 +42,10 @@ auto FacetTypeFromNamedConstraint(Context& context,
           .declared_facet_type_id = declared_facet_type_id};
 }
 
-auto GetImplWitnessAccessWithoutSubstitution(Context& context,
+auto GetImplWitnessAccessWithoutSubstitution(const SemIR::File& sem_ir,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (auto inst = context.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
+  if (auto inst = sem_ir.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
           inst_id)) {
     return inst->impl_witness_access_id;
   }
@@ -340,7 +340,7 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
 static auto TryGetRewriteAccess(Context& context, SemIR::InstId inst_id)
     -> std::optional<SemIR::KnownInstId<SemIR::ImplWitnessAccess>> {
   auto access_without_subst_id =
-      GetImplWitnessAccessWithoutSubstitution(context, inst_id);
+      GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), inst_id);
 
   // When a facet type is first constructed, the LHS of every rewrite is an
   // access into `.Self`. But because we resolve rewrites on every evaluation,
@@ -425,7 +425,7 @@ auto ResolveFacetTypeRewriteConstraints(
           // location along with them in the rewrite constraints.
           context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
                                  GetImplWitnessAccessWithoutSubstitution(
-                                     context, constraint.lhs_id),
+                                     context.sem_ir(), constraint.lhs_id),
                                  source_order1, source_order2);
         }
         return false;

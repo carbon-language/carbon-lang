@@ -133,7 +133,7 @@ fn InstanceCallFail() {
 }
 
 
-// CHECK:STDOUT: --- core.carbon ($core)
+// CHECK:STDOUT: --- core.carbon = $core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -257,7 +257,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %return.patt.loc4_20.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non-instance_success.carbon ($non-instance_success)
+// CHECK:STDOUT: --- non-instance_success.carbon = $non-instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -366,7 +366,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance1.WithSelf.F1(constants.%NonInstance1.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non-instance.carbon ($fail_non-instance)
+// CHECK:STDOUT: --- fail_non-instance.carbon = $fail_non-instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -601,7 +601,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b94
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non-instance_indirect.carbon ($fail_non-instance_indirect)
+// CHECK:STDOUT: --- fail_non-instance_indirect.carbon = $fail_non-instance_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -839,7 +839,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.7ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- instance_success.carbon ($instance_success)
+// CHECK:STDOUT: --- instance_success.carbon = $instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1039,7 +1039,7 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.6f9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_instance.carbon ($fail_instance)
+// CHECK:STDOUT: --- fail_instance.carbon = $fail_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

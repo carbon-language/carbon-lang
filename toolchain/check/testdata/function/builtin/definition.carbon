@@ -14,7 +14,7 @@
 
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
-// CHECK:STDOUT: --- definition.carbon ($definition)
+// CHECK:STDOUT: --- definition.carbon = $definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

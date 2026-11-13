@@ -167,7 +167,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add_unformed.carbon ($add_unformed)
+// CHECK:STDOUT: --- add_unformed.carbon = $add_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -245,7 +245,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_add_unformed_nonref.carbon ($fail_todo_add_unformed_nonref)
+// CHECK:STDOUT: --- fail_todo_add_unformed_nonref.carbon = $fail_todo_add_unformed_nonref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -359,7 +359,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_remove_unformed.carbon ($unsafe_remove_unformed)
+// CHECK:STDOUT: --- unsafe_remove_unformed.carbon = $unsafe_remove_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

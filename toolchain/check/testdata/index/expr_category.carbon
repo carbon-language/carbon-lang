@@ -32,7 +32,7 @@ fn ValueBinding(b: array(i32, 3)) {
   F()[0];
 }
 
-// CHECK:STDOUT: --- expr_category.carbon ($expr_category)
+// CHECK:STDOUT: --- expr_category.carbon = $expr_category
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

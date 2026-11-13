@@ -52,7 +52,7 @@ class Derived {
   extend base: Base;
 }
 
-// CHECK:STDOUT: --- base.carbon ($base)
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -277,7 +277,7 @@ class Derived {
 // CHECK:STDOUT:   return %.loc18_25 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_base_after_field.carbon ($fail_base_after_field)
+// CHECK:STDOUT: --- fail_base_after_field.carbon = $fail_base_after_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

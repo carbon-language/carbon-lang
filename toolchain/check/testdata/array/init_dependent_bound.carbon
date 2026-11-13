@@ -80,7 +80,7 @@ fn G(template N: i32) {
 
 fn H() { G(3); }
 
-// CHECK:STDOUT: --- generic_empty.carbon ($generic_empty)
+// CHECK:STDOUT: --- generic_empty.carbon = $generic_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -194,7 +194,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.2 => constants.%SelfDestruct.specific_fn.cac
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_template_dependent_bound.carbon ($init_template_dependent_bound)
+// CHECK:STDOUT: --- init_template_dependent_bound.carbon = $init_template_dependent_bound
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

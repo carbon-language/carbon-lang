@@ -33,7 +33,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- use_class_template.carbon ($use_class_template)
+// CHECK:STDOUT: --- use_class_template.carbon = $use_class_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

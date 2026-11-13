@@ -23,7 +23,7 @@ fn F() {
   WalkAnimal(Goat);
 }
 
-// CHECK:STDOUT: --- convert_class_type_to_facet_type.carbon ($convert_class_type_to_facet_type)
+// CHECK:STDOUT: --- convert_class_type_to_facet_type.carbon = $convert_class_type_to_facet_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

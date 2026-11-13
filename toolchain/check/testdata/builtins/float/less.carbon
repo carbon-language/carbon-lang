@@ -32,7 +32,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- float_less.carbon ($float_less)
+// CHECK:STDOUT: --- float_less.carbon = $float_less
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

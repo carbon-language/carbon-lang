@@ -109,7 +109,7 @@ fn G() {
 
 
 
-// CHECK:STDOUT: --- tuple_access.carbon ($tuple_access)
+// CHECK:STDOUT: --- tuple_access.carbon = $tuple_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -374,7 +374,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.loc8_51 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- struct_access.carbon ($struct_access)
+// CHECK:STDOUT: --- struct_access.carbon = $struct_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -634,7 +634,7 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.loc8_53 => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_class_access.carbon ($fail_todo_class_access)
+// CHECK:STDOUT: --- fail_todo_class_access.carbon = $fail_todo_class_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -960,7 +960,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_array_index.carbon ($fail_todo_array_index)
+// CHECK:STDOUT: --- fail_todo_array_index.carbon = $fail_todo_array_index
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

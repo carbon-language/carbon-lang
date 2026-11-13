@@ -57,7 +57,7 @@ fn NotRef(a: i32, b: i32) = "int.smod_assign";
 // CHECK:STDERR:
 fn MixedTypes(ref a: i32, b: i64) = "int.smod_assign";
 
-// CHECK:STDOUT: --- call.carbon ($call)
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

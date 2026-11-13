@@ -245,7 +245,7 @@ interface C {
   final let U: type = C;
 }
 
-// CHECK:STDOUT: --- default_interfaces.carbon ($default_interfaces)
+// CHECK:STDOUT: --- default_interfaces.carbon = $default_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -518,7 +518,7 @@ interface C {
 // CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.99e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_interfaces.carbon ($final_interfaces)
+// CHECK:STDOUT: --- final_interfaces.carbon = $final_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -791,7 +791,7 @@ interface C {
 // CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.bc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_function.carbon ($default_function)
+// CHECK:STDOUT: --- default_function.carbon = $default_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -857,7 +857,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_method.carbon ($default_method)
+// CHECK:STDOUT: --- default_method.carbon = $default_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -964,7 +964,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_15.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_function_overridden.carbon ($default_function_overridden)
+// CHECK:STDOUT: --- default_function_overridden.carbon = $default_function_overridden
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1050,7 +1050,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_method_overridden.carbon ($default_method_overridden)
+// CHECK:STDOUT: --- default_method_overridden.carbon = $default_method_overridden
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1193,7 +1193,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_15.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_function.carbon ($final_function)
+// CHECK:STDOUT: --- final_function.carbon = $final_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1259,7 +1259,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_method.carbon ($final_method)
+// CHECK:STDOUT: --- final_method.carbon = $final_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

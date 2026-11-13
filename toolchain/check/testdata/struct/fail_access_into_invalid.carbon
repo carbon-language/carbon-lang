@@ -21,7 +21,7 @@
 // CHECK:STDERR:
 fn F() { a.b; }
 
-// CHECK:STDOUT: --- fail_access_into_invalid.carbon ($fail_access_into_invalid)
+// CHECK:STDOUT: --- fail_access_into_invalid.carbon = $fail_access_into_invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

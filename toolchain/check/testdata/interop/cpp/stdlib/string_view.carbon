@@ -72,7 +72,7 @@ fn StarstWith(a: str, b: str) -> bool {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- pass_and_return.carbon ($pass_and_return)
+// CHECK:STDOUT: --- pass_and_return.carbon = $pass_and_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -162,7 +162,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   return %.loc14 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_base_method.carbon ($call_base_method)
+// CHECK:STDOUT: --- call_base_method.carbon = $call_base_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

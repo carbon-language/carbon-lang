@@ -38,7 +38,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 let U: (type where .Self impls type).missing = {};
 
-// CHECK:STDOUT: --- fail_lookup_in_type.carbon ($fail_lookup_in_type)
+// CHECK:STDOUT: --- fail_lookup_in_type.carbon = $fail_lookup_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -63,7 +63,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_lookup_type_where.carbon ($fail_lookup_type_where)
+// CHECK:STDOUT: --- fail_lookup_type_where.carbon = $fail_lookup_type_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -24,7 +24,7 @@
 // CHECK:STDERR: *** Parse::Parse done ***
 // CHECK:STDERR: *** Check::CheckParseTrees ***
 // CHECK:STDERR: *** SemIR::File ***
-// CHECK:STDERR: --- empty.carbon ($empty)
+// CHECK:STDERR: --- empty.carbon = $empty
 // CHECK:STDERR: *** Check::CheckParseTrees done ***
 // CHECK:STDERR: *** Lower::LowerToLLVM: empty.carbon ***
 // CHECK:STDERR: *** llvm::Module ***

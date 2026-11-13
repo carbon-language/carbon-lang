@@ -104,7 +104,7 @@ import library "b";
 var value: D = {};
 var ptr: E* = &value;
 
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -137,7 +137,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -238,7 +238,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon ($c)
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -339,7 +339,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- triangle.carbon ($triangle)
+// CHECK:STDOUT: --- triangle.carbon = $triangle
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -443,7 +443,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- triangle_reverse.carbon ($triangle_reverse)
+// CHECK:STDOUT: --- triangle_reverse.carbon = $triangle_reverse
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -547,7 +547,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- diamond.carbon ($diamond)
+// CHECK:STDOUT: --- diamond.carbon = $diamond
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -655,7 +655,7 @@ var ptr: E* = &value;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- diamond_reverse.carbon ($diamond_reverse)
+// CHECK:STDOUT: --- diamond_reverse.carbon = $diamond_reverse
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

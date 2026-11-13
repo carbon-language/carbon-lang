@@ -221,7 +221,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- copy_copyable.carbon ($copy_copyable)
+// CHECK:STDOUT: --- copy_copyable.carbon = $copy_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +318,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   return %.loc14_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_generically.carbon ($copy_generically)
+// CHECK:STDOUT: --- copy_generically.carbon = $copy_generically
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

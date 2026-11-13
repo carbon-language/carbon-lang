@@ -116,7 +116,7 @@ default final virtual fn ModifiersConflict2() {}
 // CHECK:STDERR:
 extern private fn ExternOrderAndConflict() {}
 
-// CHECK:STDOUT: --- fail_modifiers.carbon ($fail_modifiers)
+// CHECK:STDOUT: --- fail_modifiers.carbon = $fail_modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

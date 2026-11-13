@@ -60,7 +60,7 @@ class r#Core {
 
 var c: r#Core = {.n = 0 as Core.Int(32)};
 
-// CHECK:STDOUT: --- package_raw_core.carbon ($package_raw_core)
+// CHECK:STDOUT: --- package_raw_core.carbon = $package_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -86,7 +86,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_raw_core.carbon ($import_raw_core)
+// CHECK:STDOUT: --- import_raw_core.carbon = $import_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -149,7 +149,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_core_not_core.carbon ($fail_raw_core_not_core)
+// CHECK:STDOUT: --- fail_raw_core_not_core.carbon = $fail_raw_core_not_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -200,7 +200,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class_raw_core.carbon ($class_raw_core)
+// CHECK:STDOUT: --- class_raw_core.carbon = $class_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

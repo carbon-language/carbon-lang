@@ -43,7 +43,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.neq";
 
-// CHECK:STDOUT: --- float_neq.carbon ($float_neq)
+// CHECK:STDOUT: --- float_neq.carbon = $float_neq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

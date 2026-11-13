@@ -22,7 +22,7 @@
 // CHECK:STDERR:
 fn F(n: i32, n: i32);
 
-// CHECK:STDOUT: --- fail_param_redecl.carbon ($fail_param_redecl)
+// CHECK:STDOUT: --- fail_param_redecl.carbon = $fail_param_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

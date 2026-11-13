@@ -120,14 +120,15 @@ class A {}
 
 class B(T: type) {
   // TODO: exporting of methods in generics is not yet supported.
-  // CHECK:STDERR:        ╭─┤ fail_todo_access_exported_private_method_in_generic.carbon:[[@LINE+7]]:3
-  // CHECK:STDERR: ->     │   private fn F() {}
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
-  // CHECK:STDERR:        ·              ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_access_exported_private_method_in_generic.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   private fn F(unused self) {}
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  private fn F() {}
+  private fn F(unused self) {}
 }
 
 fn MakeB() -> B(A) {

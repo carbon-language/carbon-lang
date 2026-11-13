@@ -52,7 +52,7 @@ alias UseForwardDeclaredF = ForwardDeclared.F;
 
 var f: ForwardDeclared* = &f_ref.f;
 
-// CHECK:STDOUT: --- a.carbon ($a)
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -208,7 +208,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.d56) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon ($b)
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

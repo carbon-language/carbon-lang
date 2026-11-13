@@ -25,7 +25,7 @@ class X {
   }
 }
 
-// CHECK:STDOUT: --- todo_impl_with_unrelated_fn.carbon ($todo_impl_with_unrelated_fn)
+// CHECK:STDOUT: --- todo_impl_with_unrelated_fn.carbon = $todo_impl_with_unrelated_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -23,7 +23,7 @@ fn F(generic T: Empty) {
 }
 
 
-// CHECK:STDOUT: --- as_type_of_type.carbon ($as_type_of_type)
+// CHECK:STDOUT: --- as_type_of_type.carbon = $as_type_of_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

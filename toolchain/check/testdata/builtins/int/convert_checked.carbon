@@ -312,7 +312,7 @@ let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 
-// CHECK:STDOUT: --- runtime_call.carbon ($runtime_call)
+// CHECK:STDOUT: --- runtime_call.carbon = $runtime_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

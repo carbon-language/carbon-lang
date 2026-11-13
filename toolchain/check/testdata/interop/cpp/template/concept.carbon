@@ -33,7 +33,7 @@ var x1: X(Cpp.IsLarge(Cpp.Small)) = X(false).Make();
 var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_concept.carbon ($use_concept)
+// CHECK:STDOUT: --- use_concept.carbon = $use_concept
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

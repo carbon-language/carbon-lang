@@ -23,7 +23,7 @@ class Formatter {
  public:
   // sem_ir and include_ir_in_dumps must be non-null.
   explicit Formatter(
-      const File* sem_ir, const SemIR::ShortFileNameStore& short_file_names,
+      const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
       const SemIR::GetInstNamersStore& inst_namers,
       Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
       const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
@@ -346,7 +346,7 @@ class Formatter {
   FormatterChunks chunks_;
 
   const File* sem_ir_;
-  InstNamer::Namespace::Name file_name_;
+  const SemIR::ShortFileNameStore* short_file_names_;
   InstNamer& inst_namer_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 

@@ -21,7 +21,7 @@ fn Run() -> i32 {
   return c.F();
 }
 
-// CHECK:STDOUT: --- static_method.carbon ($static_method)
+// CHECK:STDOUT: --- static_method.carbon = $static_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

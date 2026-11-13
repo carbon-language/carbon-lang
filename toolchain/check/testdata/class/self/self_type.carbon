@@ -26,7 +26,7 @@ fn Class.F(self) -> i32 {
   return (*self.p).F();
 }
 
-// CHECK:STDOUT: --- self_type.carbon ($self_type)
+// CHECK:STDOUT: --- self_type.carbon = $self_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

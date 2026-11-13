@@ -49,7 +49,7 @@ impl forall [T: type] T as I {
 
 fn Call() { ().(I.G)(); }
 
-// CHECK:STDOUT: --- parsed_in_class_scope.carbon ($parsed_in_class_scope)
+// CHECK:STDOUT: --- parsed_in_class_scope.carbon = $parsed_in_class_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -240,7 +240,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_impl.carbon ($generic_impl)
+// CHECK:STDOUT: --- generic_impl.carbon = $generic_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

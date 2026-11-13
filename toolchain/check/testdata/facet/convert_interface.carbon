@@ -22,7 +22,7 @@ impl Animal as Eats {}
 fn F(unused e: Eats) {}
 fn G() { F(Animal); }
 
-// CHECK:STDOUT: --- convert_interface.carbon ($convert_interface)
+// CHECK:STDOUT: --- convert_interface.carbon = $convert_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -24,7 +24,7 @@ fn ReturnType() -> type { return i32; }
 // CHECK:STDERR:
 fn Six() -> ReturnType() { return 6; }
 
-// CHECK:STDOUT: --- fail_call_in_type.carbon ($fail_call_in_type)
+// CHECK:STDOUT: --- fail_call_in_type.carbon = $fail_call_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

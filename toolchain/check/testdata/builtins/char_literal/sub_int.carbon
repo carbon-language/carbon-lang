@@ -62,7 +62,7 @@ let a: CharLiteral = SubCharInt('\u{0000}', 1);
 // CHECK:STDERR:
 let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
 
-// CHECK:STDOUT: --- success.carbon ($success)
+// CHECK:STDOUT: --- success.carbon = $success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

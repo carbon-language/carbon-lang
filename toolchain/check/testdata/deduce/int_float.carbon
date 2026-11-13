@@ -36,7 +36,7 @@ fn G(a: f64) -> Core.IntLiteral {
   return F(a);
 }
 
-// CHECK:STDOUT: --- int.carbon ($int.2)
+// CHECK:STDOUT: --- int.carbon = $int.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -198,7 +198,7 @@ fn G(a: f64) -> Core.IntLiteral {
 // CHECK:STDOUT:   %Core.IntLiteral.as.Copy.impl.Op.bound => constants.%Core.IntLiteral.as.Copy.impl.Op.bound.03c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- float.carbon ($float.2)
+// CHECK:STDOUT: --- float.carbon = $float.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

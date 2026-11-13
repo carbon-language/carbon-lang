@@ -306,7 +306,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 }
 
 
-// CHECK:STDOUT: --- arithmetic_operators.carbon ($arithmetic_operators)
+// CHECK:STDOUT: --- arithmetic_operators.carbon = $arithmetic_operators
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -16,7 +16,7 @@ fn Foo() {}
 fn Bar() {}
 fn Baz() {}
 
-// CHECK:STDOUT: --- order.carbon ($order)
+// CHECK:STDOUT: --- order.carbon = $order
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

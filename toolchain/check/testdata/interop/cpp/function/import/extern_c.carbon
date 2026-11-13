@@ -69,7 +69,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- extern_c_function.carbon ($extern_c_function)
+// CHECK:STDOUT: --- extern_c_function.carbon = $extern_c_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -97,7 +97,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_c_function_with_cpp_overload_set.carbon ($extern_c_function_with_cpp_overload_set)
+// CHECK:STDOUT: --- extern_c_function_with_cpp_overload_set.carbon = $extern_c_function_with_cpp_overload_set
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -162,7 +162,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_c_variable.carbon ($extern_c_variable)
+// CHECK:STDOUT: --- extern_c_variable.carbon = $extern_c_variable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -210,7 +210,7 @@ fn MyF(a: Cpp.X, b: Cpp.X) -> Cpp.X {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_c_with_special_name.carbon ($extern_c_with_special_name)
+// CHECK:STDOUT: --- extern_c_with_special_name.carbon = $extern_c_with_special_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

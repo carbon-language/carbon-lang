@@ -45,7 +45,8 @@ class InstNamer {
 
       explicit operator bool() const { return value_; }
 
-      // Returns the disambiguated name.
+      // Returns the disambiguated name. Note that this is not stable until
+      // all names have been added to the `Namespace`.
       auto GetFullName() const -> llvm::StringRef;
 
       // Returns the base name, without any disambiguators.
@@ -315,8 +316,7 @@ class InstNamer {
 };
 
 // Value store of short names for Carbon source files.
-using ShortFileNameStore =
-    FixedSizeValueStore<SemIR::CheckIRId, SemIR::InstNamer::Namespace::Name>;
+using ShortFileNameStore = FixedSizeValueStore<SemIR::CheckIRId, std::string>;
 
 // A standard signature for a callback to support lazy construction.
 using GetInstNamerFn = llvm::function_ref<auto()->InstNamer&>;

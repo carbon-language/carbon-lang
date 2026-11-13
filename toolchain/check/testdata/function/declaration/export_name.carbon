@@ -42,7 +42,7 @@ import library "export";
 
 var f: () = F();
 
-// CHECK:STDOUT: --- base.carbon ($base)
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -59,7 +59,7 @@ var f: () = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon ($export)
+// CHECK:STDOUT: --- export.carbon = $export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -81,7 +81,7 @@ var f: () = F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "base.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon ($use_export)
+// CHECK:STDOUT: --- use_export.carbon = $use_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

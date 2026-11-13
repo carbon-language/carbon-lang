@@ -271,7 +271,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
   EqWith(returns_strong_ordering, returns_strong_ordering);
 }
 
-// CHECK:STDOUT: --- fail_todo_spaceship_rewrites.carbon ($fail_todo_spaceship_rewrites)
+// CHECK:STDOUT: --- fail_todo_spaceship_rewrites.carbon = $fail_todo_spaceship_rewrites
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

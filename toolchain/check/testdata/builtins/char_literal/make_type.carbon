@@ -29,7 +29,7 @@ let not_7_bit: CharLiteral = '\u{80}';
 let not_8_bit: CharLiteral = '\u{1E15}';
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_types.carbon ($use_types)
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

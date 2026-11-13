@@ -179,7 +179,7 @@ class C {}
 fn F(x: C = {});
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- implicit.carbon ($implicit)
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -232,7 +232,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %D);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon ($nested)
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -345,7 +345,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %C, %b.param: %C, %c.param: %C, %d.param: %C, %e.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.carbon ($basic)
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

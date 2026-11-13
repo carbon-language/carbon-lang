@@ -27,7 +27,7 @@ fn Convert(unused t: ()) {
 }
 
 
-// CHECK:STDOUT: --- var_init.carbon ($var_init)
+// CHECK:STDOUT: --- var_init.carbon = $var_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

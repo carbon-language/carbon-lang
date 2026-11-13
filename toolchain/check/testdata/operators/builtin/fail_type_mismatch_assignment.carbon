@@ -28,7 +28,7 @@ fn Main() {
   a = 5.6;
 }
 
-// CHECK:STDOUT: --- fail_type_mismatch_assignment.carbon ($fail_type_mismatch_assignment)
+// CHECK:STDOUT: --- fail_type_mismatch_assignment.carbon = $fail_type_mismatch_assignment
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

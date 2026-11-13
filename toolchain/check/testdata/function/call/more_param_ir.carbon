@@ -20,7 +20,7 @@ fn Main() {
   Foo(x.0, 6);
 }
 
-// CHECK:STDOUT: --- more_param_ir.carbon ($more_param_ir)
+// CHECK:STDOUT: --- more_param_ir.carbon = $more_param_ir
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

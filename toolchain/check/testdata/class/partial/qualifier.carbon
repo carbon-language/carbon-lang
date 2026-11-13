@@ -203,7 +203,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn F[T: type](p: partial T*);
 
-// CHECK:STDOUT: --- base.carbon ($base)
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -232,7 +232,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p.param: %.331);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract.carbon ($abstract)
+// CHECK:STDOUT: --- abstract.carbon = $abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -261,7 +261,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p.param: %.331);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_var.carbon ($abstract_var)
+// CHECK:STDOUT: --- abstract_var.carbon = $abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -290,7 +290,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A(%p.param: ref %.331);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_partial_nondynamic.carbon ($fail_partial_nondynamic)
+// CHECK:STDOUT: --- fail_partial_nondynamic.carbon = $fail_partial_nondynamic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -319,7 +319,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.331);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_partial_final.carbon ($fail_partial_final)
+// CHECK:STDOUT: --- fail_partial_final.carbon = $fail_partial_final
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -348,7 +348,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.546);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_partial_decl.carbon ($fail_partial_decl)
+// CHECK:STDOUT: --- fail_partial_decl.carbon = $fail_partial_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -377,7 +377,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.331);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_partial_tuple.carbon ($fail_partial_tuple)
+// CHECK:STDOUT: --- fail_partial_tuple.carbon = $fail_partial_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -412,7 +412,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.8dc);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_partial_struct.carbon ($fail_partial_struct)
+// CHECK:STDOUT: --- fail_partial_struct.carbon = $fail_partial_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -443,7 +443,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G(%p.param: %.91f);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate.carbon ($fail_duplicate)
+// CHECK:STDOUT: --- fail_duplicate.carbon = $fail_duplicate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

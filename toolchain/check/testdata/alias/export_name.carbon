@@ -74,7 +74,7 @@ import library "export_orig";
 var c: C = {};
 var d: D* = &c;
 
-// CHECK:STDOUT: --- base.carbon ($base)
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -110,7 +110,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon ($export)
+// CHECK:STDOUT: --- export.carbon = $export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +148,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_orig.carbon ($export_orig)
+// CHECK:STDOUT: --- export_orig.carbon = $export_orig
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -186,7 +186,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon ($use_export)
+// CHECK:STDOUT: --- use_export.carbon = $use_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -243,7 +243,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon ($fail_orig_name_not_in_export)
+// CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon = $fail_orig_name_not_in_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -284,7 +284,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_compat.carbon ($indirect_compat)
+// CHECK:STDOUT: --- indirect_compat.carbon = $indirect_compat
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

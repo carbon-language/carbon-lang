@@ -115,7 +115,7 @@ fn F(x: i8388608) {
   Cpp.foo(x);
 }
 
-// CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon ($fail_todo_import_unsupported_primitive_type)
+// CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type.carbon = $fail_todo_import_unsupported_primitive_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -140,7 +140,7 @@ fn F(x: i8388608) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type_among_params.carbon ($fail_todo_import_unsupported_primitive_type_among_params)
+// CHECK:STDOUT: --- fail_todo_import_unsupported_primitive_type_among_params.carbon = $fail_todo_import_unsupported_primitive_type_among_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

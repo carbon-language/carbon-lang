@@ -69,7 +69,7 @@ fn G() -> i32 {
   return F({} as WithNontype(0));
 }
 
-// CHECK:STDOUT: --- class.carbon ($class)
+// CHECK:STDOUT: --- class.carbon = $class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -289,7 +289,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn.loc7_38.2 => constants.%F.specific_fn.8e2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- interface.carbon ($interface)
+// CHECK:STDOUT: --- interface.carbon = $interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -489,7 +489,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn.loc7_38.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon ($nested)
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -824,7 +824,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %F.specific_fn.loc13_65.2 => constants.%F.specific_fn.ed6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nontype.carbon ($nontype)
+// CHECK:STDOUT: --- nontype.carbon = $nontype
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

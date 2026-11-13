@@ -22,7 +22,7 @@ fn F(generic T: type, n: T*) -> T* {
 }
 
 
-// CHECK:STDOUT: --- local_let.carbon ($local_let)
+// CHECK:STDOUT: --- local_let.carbon = $local_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
