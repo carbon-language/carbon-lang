@@ -1499,7 +1499,7 @@ using WhereAssignmentIntroducer =
 struct WhereAssignmentOperator {
   static constexpr auto Kind =
       NodeKind::WhereAssignmentOperator.Define({.child_count = 2});
-  IdentifierNameExprId lhs;
+  IdentifierNameNotBeforeSignatureId lhs;
   Lex::EqualTokenIndex token;
   AnyExprId rhs;
 };

@@ -14,8 +14,9 @@ namespace Carbon::Parse {
 auto HandleWhereAssignment(Context& context) -> void {
   auto state = context.PopState();
 
-  if (!context.ConsumeAndAddLeafNodeIf(Lex::TokenKind::Identifier,
-                                       NodeKind::IdentifierNameExpr)) {
+  if (!context.ConsumeAndAddLeafNodeIf(
+          Lex::TokenKind::Identifier,
+          NodeKind::IdentifierNameNotBeforeSignature)) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(
           WhereAssignmentMissingIdentifier, Error,

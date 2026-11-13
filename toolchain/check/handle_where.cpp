@@ -649,8 +649,9 @@ auto HandleParseNode(Context& /*context*/,
 auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
     -> bool {
   [[maybe_unused]] auto rhs_inst_id = context.node_stack().PopExpr();
-  [[maybe_unused]] auto lhs_inst_id =
-      context.node_stack().Pop<Parse::NodeKind::IdentifierNameExpr>();
+  [[maybe_unused]] auto lhs_name_id =
+      context.node_stack()
+          .Pop<Parse::NodeKind::IdentifierNameNotBeforeSignature>();
   auto scope_inst_id =
       context.node_stack().Pop<Parse::NodeKind::WhereAssignmentIntroducer>();
   if (scope_inst_id == SemIR::ErrorInst::InstId) {

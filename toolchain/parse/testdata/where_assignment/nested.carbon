@@ -20,7 +20,7 @@ impl C as Z {
 // CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
 // CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'Z2'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Z2'
 // CHECK:STDOUT:   │ │ │ │ ╭─ParenExprStart '('
 // CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameExpr 'Y'
 // CHECK:STDOUT:   │ │ │ │ │ ╭─WhereOperand 'where'
