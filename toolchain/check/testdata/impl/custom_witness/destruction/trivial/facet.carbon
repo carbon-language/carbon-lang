@@ -55,4 +55,3 @@ fn Test(generic T: Core.TrivialDestroy) {
   typeof(Tuple) as Core.Destroy;
   typeof(Tuple) as Core.TrivialDestroy;
 }
-
