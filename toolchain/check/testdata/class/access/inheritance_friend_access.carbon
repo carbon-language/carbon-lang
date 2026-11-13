@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/access/inheritance_friend_access.carbon
 
-// --- fail_todo_friend_of_base.carbon
+// --- friend_of_base.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -24,22 +24,11 @@ class Derived {
   extend base: Base;
 
   fn G() {
-    // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     Self.F();
-    // CHECK:STDERR:        ·     ━━━┳━━
-    // CHECK:STDERR:        ·        ┗━━┫ error: cannot access private member `F` of type `Base`
-    // CHECK:STDERR:        ·           ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     Self.F();
   }
 }
 
-// --- fail_todo_unqualified_in_friend_of_base.carbon
+// --- unqualified_in_friend_of_base.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -53,22 +42,11 @@ class Derived {
   extend base: Base;
 
   fn G() {
-    // CHECK:STDERR:        ╭─┤ fail_todo_unqualified_in_friend_of_base.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     F();
-    // CHECK:STDERR:        ·     ┳
-    // CHECK:STDERR:        ·     ┗━━┫ error: cannot access private member `F` of type `Base`
-    // CHECK:STDERR:        ·        ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     F();
   }
 }
 
-// --- fail_todo_friend_of_base_via_other_class.carbon
+// --- friend_of_base_via_other_class.carbon
 library "[[@TEST_NAME]]";
 
 class Friend;
@@ -84,22 +62,11 @@ class Derived {
 
 class Friend {
   fn G(d: Derived) {
-    // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_via_other_class.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     d.F();
-    // CHECK:STDERR:        ·     ━┳━
-    // CHECK:STDERR:        ·      ┗━━┫ error: cannot access private member `F` of type `Base`
-    // CHECK:STDERR:        ·         ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     d.F();
   }
 }
 
-// --- fail_todo_nested_in_friend_of_base.carbon
+// --- nested_in_friend_of_base.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -117,23 +84,12 @@ class Derived {
       b.F();
     }
     fn ViaDerived(d: Derived) {
-      // CHECK:STDERR:        ╭─┤ fail_todo_nested_in_friend_of_base.carbon:[[@LINE+11]]:7
-      // CHECK:STDERR:        │   private fn F() {}
-      // CHECK:STDERR:        ·   ────────┬───────
-      // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-      // CHECK:STDERR:        ┆
-      // CHECK:STDERR: ->     │       d.F();
-      // CHECK:STDERR:        ·       ━┳━
-      // CHECK:STDERR:        ·        ┗━━┫ error: cannot access private member `F` of type `Base`
-      // CHECK:STDERR:        ·           ┃        [ClassInvalidMemberAccess]
-      // CHECK:STDERR:        ╰────
-      // CHECK:STDERR:
       d.F();
     }
   }
 }
 
-// --- fail_todo_friend_of_base_via_template.carbon
+// --- friend_of_base_via_template.carbon
 library "[[@TEST_NAME]]";
 
 class A(template T: type);
@@ -154,26 +110,10 @@ class Derived {
 }
 
 fn H() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_via_template.carbon:[[@LINE+16]]:3
-  // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │     T.F();
-  // CHECK:STDERR:        ·     ─┬─
-  // CHECK:STDERR:        ·      ╰──┤ cannot access private member `F` of type `Base`
-  // CHECK:STDERR:        ·         │ [ClassInvalidMemberAccess]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   A(Derived).G();
-  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
-  // CHECK:STDERR:        ·         ┗━━┫ error: unable to monomorphize specific `G()`
-  // CHECK:STDERR:        ·            ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   A(Derived).G();
 }
 
-// --- fail_todo_base_member_via_derived.carbon
+// --- base_member_via_derived.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -188,21 +128,10 @@ class Derived {
 }
 
 fn Base.G(d: Derived) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_base_member_via_derived.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   d.F();
-  // CHECK:STDERR:        ·   ━┳━
-  // CHECK:STDERR:        ·    ┗━━┫ error: cannot access private member `F` of type `Base`
-  // CHECK:STDERR:        ·       ┃        [ClassInvalidMemberAccess]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   d.F();
 }
 
-// --- fail_todo_generic_base_member_via_derived.carbon
+// --- generic_base_member_via_derived.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -217,22 +146,11 @@ class Derived {
 }
 
 fn Base(T: type).G(d: Derived) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_generic_base_member_via_derived.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   d.F();
-  // CHECK:STDERR:        ·   ━┳━
-  // CHECK:STDERR:        ·    ┗━━┫ error: cannot access private member `F` of type `Base(())`
-  // CHECK:STDERR:        ·       ┃        [ClassInvalidMemberAccess]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   d.F();
   T;
 }
 
-// --- fail_todo_generic_base_member_via_derived_in_nested_class.carbon
+// --- generic_base_member_via_derived_in_nested_class.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -250,22 +168,11 @@ class Derived {
 }
 
 fn Base(T: type).Nested.G(d: Derived) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_generic_base_member_via_derived_in_nested_class.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   d.F();
-  // CHECK:STDERR:        ·   ━┳━
-  // CHECK:STDERR:        ·    ┗━━┫ error: cannot access private member `F` of type `Base(())`
-  // CHECK:STDERR:        ·       ┃        [ClassInvalidMemberAccess]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   d.F();
   T;
 }
 
-// --- fail_todo_friend_of_indirect_base.carbon
+// --- friend_of_indirect_base.carbon
 library "[[@TEST_NAME]]";
 
 class Friend;
@@ -285,22 +192,11 @@ class Bottom {
 
 class Friend {
   fn G(b: Bottom) {
-    // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_indirect_base.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     b.F();
-    // CHECK:STDERR:        ·     ━┳━
-    // CHECK:STDERR:        ·      ┗━━┫ error: cannot access private member `F` of type `Middle`
-    // CHECK:STDERR:        ·         ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     b.F();
   }
 }
 
-// --- fail_todo_friend_interface_of_base.carbon
+// --- friend_interface_of_base.carbon
 library "[[@TEST_NAME]]";
 
 interface I;
@@ -316,22 +212,11 @@ class Derived {
 
 interface I {
   default fn G(d: Derived) {
-    // CHECK:STDERR:        ╭─┤ fail_todo_friend_interface_of_base.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     d.F();
-    // CHECK:STDERR:        ·     ━┳━
-    // CHECK:STDERR:        ·      ┗━━┫ error: cannot access private member `F` of type `Base`
-    // CHECK:STDERR:        ·         ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     d.F();
   }
 }
 
-// --- fail_todo_friend_of_adapted_class.carbon
+// --- friend_of_adapted_class.carbon
 library "[[@TEST_NAME]]";
 
 class Adapter;
@@ -345,17 +230,6 @@ class Adapter {
   extend adapt Adapted;
 
   fn G() {
-    // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_adapted_class.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     Self.F();
-    // CHECK:STDERR:        ·     ━━━┳━━
-    // CHECK:STDERR:        ·        ┗━━┫ error: cannot access private member `F` of type `Adapted`
-    // CHECK:STDERR:        ·           ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     Self.F();
   }
 }
@@ -408,7 +282,7 @@ fn NonFriend(d: Derived) {
   d.F();
 }
 
-// --- todo_fail_friend_of_base_ambiguous_with_extended_impl.carbon
+// --- fail_friend_of_base_ambiguous_with_extended_impl.carbon
 library "[[@TEST_NAME]]";
 
 class Friend;
@@ -431,8 +305,13 @@ class Derived {
 
 class Friend {
   fn G() {
-    // TODO: should fail, a friend of `Base` can see `Base.F`, so `F` is
-    // ambiguous between it and `I.F`.
+    // CHECK:STDERR:        ╭─┤ fail_friend_of_base_ambiguous_with_extended_impl.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     Derived.F();
+    // CHECK:STDERR:        ·     ━━━━┳━━━━
+    // CHECK:STDERR:        ·         ┗━━┫ error: ambiguous use of name `F` found in multiple extended scopes
+    // CHECK:STDERR:        ·            ┃        [NameAmbiguousDueToExtend]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     Derived.F();
   }
 }
