@@ -1130,7 +1130,8 @@ static auto BuildCppFunctionDecl(
     clang::DeclarationName declaration_name,
     clang::ArrayRef<clang::QualType> param_types,
     std::optional<clang::ArrayRef<clang::Expr*>> default_value_exprs,
-    clang::QualType return_type, bool export_as_constructor) {
+    clang::QualType return_type, bool export_as_constructor)
+    -> clang::FunctionDecl* {
   CARBON_CHECK(!default_value_exprs.has_value() ||
                default_value_exprs->size() == param_types.size());
   auto clang_loc = GetCppLocation(context, loc_id);
