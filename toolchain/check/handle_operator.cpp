@@ -274,15 +274,18 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
     case SemIR::ExprCategory::Error:
       break;
     default:
-      // TODO: This diagnostic should be located on the actual `&` token for the
-      // address_of operation, but the location of the parse tree node is the
-      // location of the lvalue argument, so the location of the diagnostic
-      // is necessarily there. There seems to be no way to encode the location
-      // of a single token in anything but a diagnostic location, so that is
-      // where this diagnostic is issued. Restore the location of the token.
+      // TODO: If this is a dependent action the `loc_id` provided is not
+      // associated with a parse tree `node_id` and so we can't extract the
+      // token location for the `&` operator, which is the normal location to
+      // issue the error. Therefore deferred types will have the error in the
+      // less ideal location of the non-addressable expression. Repair to make
+      // these locations consistent.
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
-      context.emitter().Emit(loc_id, AddrOfNonRef);
+      auto diag_loc_id = loc_id.kind() == SemIR::LocId::Kind::NodeId
+                             ? LocIdForDiagnostics::TokenOnly(loc_id.node_id())
+                             : LocIdForDiagnostics(loc_id);
+      context.emitter().Emit(diag_loc_id, AddrOfNonRef);
       value_id = SemIR::ErrorInst::InstId;
       break;
   }
