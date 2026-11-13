@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -69,35 +69,46 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 class C {};
+impl C as Core.Copy {
+  fn Op(unused self) -> C { return {} as C; }
+}
 class D(template T: type) {
-  fn F(self) -> C* { return &self.c; }
+  fn F(ref self) -> C* { return &self.c; }
   var c: C;
 }
 
-let d: D(C) = {.c = {} as C};
+var d: D(C) = {.c = {} as C};
+let e: C* = d.F();
 
 // --- fail_addr_of_non_addressable_dependent_type.carbon
 library "[[@TEST_NAME]]";
 
 class C {};
+impl C as Core.Copy {
+  fn Op(unused self) -> C { return {} as C; }
+}
 class D(template T: type) {
-  let c: type* = &D(T);
+  // Note thae missing `ref` qualifier on the `self` parameter, which makes
+  // the expression `self.c` non-addressable.
+  fn F(self) -> C* { return &self.c; }
+  var c: C;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+13]]:8
-// CHECK:STDERR:        │   let c: type* = &D(T);
-// CHECK:STDERR:        ·                  ──┬──
-// CHECK:STDERR:        ·                    ╰──┤ cannot take the address of non-reference expression
-// CHECK:STDERR:        ·                       │ [AddrOfNonRef]
+var d: D(C) = {.c = {} as C};
+// CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+13]]:13
+// CHECK:STDERR:        │   fn F(self) -> C* { return &self.c; }
+// CHECK:STDERR:        ·                             ┬──────
+// CHECK:STDERR:        ·                             ╰──┤ cannot take the address of non-reference
+// CHECK:STDERR:        ·                                │ expression
+// CHECK:STDERR:        ·                                │ [AddrOfNonRef]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ let c: D(C) = {} as D(C);
-// CHECK:STDERR:        ·        ┳━━━
-// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `D(C)` in name binding
-// CHECK:STDERR:        ·           ┃        declaration
-// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR: ->     │ let e: C* = d.F();
+// CHECK:STDERR:        ·             ━┳━
+// CHECK:STDERR:        ·              ┗━━┫ error: unable to monomorphize specific `F(C)`
+// CHECK:STDERR:        ·                 ┃        [ResolvingSpecificHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-let c: D(C) = {} as D(C);
+let e: C* = d.F();
 
 // --- fail_non_constant_type_argument.carbon
 library "[[@TEST_NAME]]";

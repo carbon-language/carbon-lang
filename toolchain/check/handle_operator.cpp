@@ -265,9 +265,9 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
   return true;
 }
 
-static auto PerformAddrOfAction(Context& context, SemIR::LocId loc_id,
-                                SemIR::InstId value_id) -> SemIR::InstId {
-  auto type_id = context.insts().Get(value_id).type_id();
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AddrOfAction action) -> SemIR::InstId {
+  auto value_id = action.lvalue_id;
   // Only durable reference expressions can have their address taken.
   switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
     case SemIR::ExprCategory::DurableRef:
@@ -288,16 +288,12 @@ static auto PerformAddrOfAction(Context& context, SemIR::LocId loc_id,
   }
 
   // TODO: Preserve spelling of type of operand where possible.
+  auto type_id = context.insts().Get(value_id).type_id();
   auto type_inst_id = context.types().GetTypeInstId(type_id);
   return AddInst<SemIR::AddrOf>(
       context, loc_id,
       SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),
                     .lvalue_id = value_id});
-}
-
-auto PerformAction(Context& context, SemIR::LocId loc_id,
-                   SemIR::AddrOfAction action) -> SemIR::InstId {
-  return PerformAddrOfAction(context, loc_id, action.lvalue_id);
 }
 
 auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
@@ -311,15 +307,9 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
   auto expected_type_id = GetPointerType(context, type_inst_id);
 
   // If the value is still symbolic, defer checking until monomorphization.
-  auto inst_id = AddActionSpliceIfDependent<SemIR::AddrOfAction>(
+  auto inst_id = HandleAction<SemIR::AddrOfAction>(
       context, loc_id, context.types().GetTypeInstId(expected_type_id),
       {.type_id = SemIR::InstType::TypeId, .lvalue_id = value_id});
-
-  // Value isn't dependent, so check it now.
-  if (!inst_id.has_value()) {
-    inst_id = PerformAddrOfAction(context, loc_id, value_id);
-  }
-
   context.node_stack().Push(node_id, inst_id);
   return true;
 }
