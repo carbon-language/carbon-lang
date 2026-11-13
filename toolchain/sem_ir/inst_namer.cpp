@@ -178,6 +178,8 @@ class InstNamer::NamingContext {
 
 InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
     : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
+  CARBON_CHECK(sem_ir_->is_complete(),
+               "Can't create InstNamer for pending SemIR::File");
   insts_.resize(sem_ir->insts().size(),
                 {ScopeId::None, TextualNamespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
