@@ -82,8 +82,7 @@ static auto HandleLambdaSignature(Context& context,
 
   // Function expressions may not take `self` as a parameter. (`self` in the
   // implicit parameter list is already diagnosed by `SelfInImplicitParamList`.)
-  if (auto self_param_id = FindSelfPattern(context, SemIR::InstBlockId::None,
-                                           *param_patterns_id);
+  if (auto self_param_id = FindSelfPattern(context, *param_patterns_id);
       self_param_id.has_value()) {
     CARBON_DIAGNOSTIC(SelfParameterInLambda, Error,
                       "`self` parameter in function expression");

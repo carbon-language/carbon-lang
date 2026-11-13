@@ -321,6 +321,86 @@ class T2 {
   override fn F();
 }
 
+// --- fail_self_in_implicit_params.carbon
+
+library "[[@TEST_NAME]]";
+
+// A `self` in the implicit parameter list is diagnosed where it is declared
+// and is not treated as `self`, so neither function is virtual.
+base class Base {
+  // CHECK:STDERR:        ╭─┤ fail_self_in_implicit_params.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR: ->     │   virtual fn F[self: Self]();
+  // CHECK:STDERR:        ·                ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: `self` must be declared in the explicit parameter
+  // CHECK:STDERR:        ·                   ┃        list
+  // CHECK:STDERR:        ·                   ┃        [SelfInImplicitParamList]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  virtual fn F[self: Self]();
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR:        ╭─┤ fail_self_in_implicit_params.carbon:[[@LINE+8]]:17
+  // CHECK:STDERR: ->     │   override fn F[self: Self]();
+  // CHECK:STDERR:        ·                 ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: `self` must be declared in the explicit parameter
+  // CHECK:STDERR:        ·                    ┃        list
+  // CHECK:STDERR:        ·                    ┃        [SelfInImplicitParamList]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  override fn F[self: Self]();
+}
+
+// --- fail_override_self_in_implicit_params.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base {
+  virtual fn F(self);
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR:        ╭─┤ fail_override_self_in_implicit_params.carbon:[[@LINE+8]]:17
+  // CHECK:STDERR: ->     │   override fn F[self: Self]();
+  // CHECK:STDERR:        ·                 ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: `self` must be declared in the explicit parameter
+  // CHECK:STDERR:        ·                    ┃        list
+  // CHECK:STDERR:        ·                    ┃        [SelfInImplicitParamList]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  override fn F[self: Self]();
+}
+
+// --- fail_virtual_self_in_implicit_params.carbon
+
+library "[[@TEST_NAME]]";
+
+base class Base {
+  // CHECK:STDERR:        ╭─┤ fail_virtual_self_in_implicit_params.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR: ->     │   virtual fn F[self: Self]();
+  // CHECK:STDERR:        ·                ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: `self` must be declared in the explicit parameter
+  // CHECK:STDERR:        ·                   ┃        list
+  // CHECK:STDERR:        ·                   ┃        [SelfInImplicitParamList]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  virtual fn F[self: Self]();
+}
+
+class Derived {
+  extend base: Base;
+  // CHECK:STDERR:        ╭─┤ fail_virtual_self_in_implicit_params.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   override fn F(self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  override fn F(self);
+}
+
 // --- fail_ref_self_mismatch.carbon
 
 library "[[@TEST_NAME]]";
