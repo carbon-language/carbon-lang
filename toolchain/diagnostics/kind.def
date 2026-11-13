@@ -202,6 +202,11 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierForFriend)
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
+// Where assignment declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingIdentifier)
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingEquals)
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentInWrongScope)
+
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)

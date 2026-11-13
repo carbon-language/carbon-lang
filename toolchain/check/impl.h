@@ -64,13 +64,17 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void;
 // Adds the function members to the witness for `impl`.
 auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 
-// Checks that any `require` declarations in the interface being implemented by
-// `impl` are satisfied. Otherwise, a diagnostic is issued and the `impl` is
-// made invalid.
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
-                                SemIR::Impl& impl,
-                                SemIR::TypeInstId full_constraint_id,
-                                IdentifiedFacetTypeId identified_id) -> void;
+// Checks that the impl's definition meets its requirements:
+// - That every associated constant in the witness table was given a value.
+// - That any equivalent-type and impls requirements in its facet type are
+//   satisfied.
+// - That any `require` declarations in the interface being implemented by
+//   `impl` are satisfied.
+// Otherwise, a diagnostic is issued.
+auto CheckImplRequirementsAtEndOfDefinition(
+    Context& context, SemIR::LocId loc_id, SemIR::Impl& impl,
+    SemIR::TypeInstId full_constraint_id, IdentifiedFacetTypeId identified_id)
+    -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.

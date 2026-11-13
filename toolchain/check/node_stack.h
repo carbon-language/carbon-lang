@@ -423,6 +423,7 @@ class NodeStack {
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
       case Parse::NodeKind::StructPatternDesignatedField:
+      case Parse::NodeKind::WhereAssignmentIntroducer:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
@@ -442,8 +443,6 @@ class NodeStack {
         return Id::KindFor<SemIR::ClassId>();
       case Parse::NodeKind::InterfaceDefinitionStart:
         return Id::KindFor<SemIR::InterfaceId>();
-      case Parse::NodeKind::ImplDefinitionStart:
-        return Id::KindFor<SemIR::ImplId>();
       case Parse::NodeKind::NamedConstraintDefinitionStart:
         return Id::KindFor<SemIR::NamedConstraintId>();
       case Parse::NodeKind::SelfTypeName:
@@ -517,6 +516,7 @@ class NodeStack {
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
+      case Parse::NodeKind::ImplDefinitionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
@@ -552,6 +552,7 @@ class NodeStack {
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::TypeOfExprKeyword:
       case Parse::NodeKind::TypeOfExprOpenParen:
+      case Parse::NodeKind::WhereAssignmentOperator:
       case Parse::NodeKind::WhereOperand:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;

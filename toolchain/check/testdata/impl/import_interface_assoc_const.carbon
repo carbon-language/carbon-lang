@@ -124,7 +124,7 @@ class C6 { }
 impl C6 as I where .T = {};
 // CHECK:STDERR:        ╭─┤ fail_missing_on_definition.carbon:[[@LINE+19]]:1
 // CHECK:STDERR: ->     │ impl C6 as I { }
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface I
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ┆

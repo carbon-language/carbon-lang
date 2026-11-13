@@ -679,8 +679,6 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_table =
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
-  auto witness_block =
-      context.inst_blocks().GetMutable(witness_table.elements_id);
 
   // The impl declaration may have created a placeholder witness table, or a
   // full witness table. We can detect that the witness table is a placeholder
@@ -689,7 +687,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // size, since the interface must be complete for the impl definition.
   bool witness_table_is_placeholder =
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
-      witness_block.empty();
+      context.inst_blocks().Get(witness_table.elements_id).empty();
   if (witness_table_is_placeholder) {
     // TODO: Since our `empty_table` repeats the same value throughout, we could
     // skip an allocation here if there was a `ReplacePlaceholder` function that
@@ -698,36 +696,6 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
         assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
     context.inst_blocks().ReplacePlaceholder(witness_table.elements_id,
                                              empty_table);
-    witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
-  }
-
-  // Check we have a value for all non-function associated constants in the
-  // witness.
-  for (auto [assoc_entity, witness_value] :
-       llvm::zip_equal(assoc_entities, witness_block)) {
-    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
-    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (auto decl =
-            context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
-        CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
-                          "associated constant {0} not given a value in impl "
-                          "of interface {1}",
-                          SemIR::NameId, SemIR::NameId);
-        CARBON_DIAGNOSTIC_LABEL(AssociatedConstantHere, Info,
-                                "associated constant declared here");
-        context.emitter()
-            .Build(impl.definition_id, ImplAssociatedConstantNeedsValue,
-                   context.associated_constants()
-                       .Get(decl->assoc_const_id)
-                       .name_id,
-                   interface.name_id)
-            .Attach(assoc_entity, AssociatedConstantHere)
-            .Emit();
-
-        witness_value = SemIR::ErrorInst::InstId;
-      }
-    }
   }
 }
 
@@ -839,12 +807,51 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
-                                SemIR::Impl& impl,
-                                SemIR::TypeInstId full_constraint_id,
-                                IdentifiedFacetTypeId identified_id) -> void {
+auto CheckImplRequirementsAtEndOfDefinition(
+    Context& context, SemIR::LocId loc_id, SemIR::Impl& impl,
+    SemIR::TypeInstId full_constraint_id, IdentifiedFacetTypeId identified_id)
+    -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
+  }
+
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto witness_block =
+      context.inst_blocks().GetMutable(witness_table.elements_id);
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+
+  // Check we have a value for all non-function associated constants in the
+  // witness.
+  for (auto [assoc_entity, witness_value] :
+       llvm::zip_equal(assoc_entities, witness_block)) {
+    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+    if (auto decl =
+            context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
+      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
+        CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
+                          "associated constant {0} not given a value in impl "
+                          "of interface {1}",
+                          SemIR::NameId, SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(AssociatedConstantHere, Info,
+                                "associated constant declared here");
+        context.emitter()
+            .Build(loc_id, ImplAssociatedConstantNeedsValue,
+                   context.associated_constants()
+                       .Get(decl->assoc_const_id)
+                       .name_id,
+                   interface.name_id)
+            .Attach(assoc_entity, AssociatedConstantHere)
+            .Emit();
+        // Just set the one value in the witness table to an error. The rest of
+        // the impl remains valid.
+        witness_value = SemIR::ErrorInst::InstId;
+      }
+    }
   }
 
   // The IdentifiedFacetType canonicalizes the self facets, so we do the same
@@ -933,18 +940,15 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
-
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
-  if (require_ids.empty()) {
-    return;
+  auto interface_with_self_specific_id = SemIR::SpecificId::None;
+  if (!require_ids.empty()) {
+    interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+        context, loc_id, interface.generic_id, interface.generic_with_self_id,
+        impl.interface.specific_id,
+        context.constant_values().Get(impl.self_id));
   }
-
-  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-      context, loc_id, interface.generic_id, interface.generic_with_self_id,
-      impl.interface.specific_id, context.constant_values().Get(impl.self_id));
-
   for (auto require_id : require_ids) {
     const auto& require = context.require_impls().Get(require_id);
 

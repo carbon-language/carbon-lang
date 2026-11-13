@@ -152,7 +152,7 @@ interface Incomplete;
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete_where_definition.carbon:[[@LINE+8]]:1
 // CHECK:STDERR: ->     │ impl C as I where .Self impls Incomplete {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┗━━┫ error: constraint `I where .Self impls Incomplete` being implemented
 // CHECK:STDERR:        ·    ┃        requires that `C` implements `Incomplete`
 // CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
@@ -168,16 +168,8 @@ class C {}
 interface I {}
 interface Incomplete;
 
-// CHECK:STDERR:        ╭─┤ fail_declaration_lookup_into_incomplete.carbon:[[@LINE+8]]:1
-// CHECK:STDERR: ->     │ impl C as I where .Self impls Incomplete {
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: constraint `I where .Self impls Incomplete` being implemented
-// CHECK:STDERR:        ·    ┃        requires that `C` implements `Incomplete`
-// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl C as I where .Self impls Incomplete {
-  // CHECK:STDERR:        ╭─┤ fail_declaration_lookup_into_incomplete.carbon:[[@LINE+13]]:19
+  // CHECK:STDERR:        ╭─┤ fail_declaration_lookup_into_incomplete.carbon:[[@LINE+21]]:19
   // CHECK:STDERR:        │ interface Incomplete;
   // CHECK:STDERR:        · ──────────┬──────────
   // CHECK:STDERR:        ·           ╰──┤ interface was forward declared here
@@ -188,6 +180,14 @@ impl C as I where .Self impls Incomplete {
   // CHECK:STDERR:        ·                   ┗━━┫ error: member access into incomplete facet type
   // CHECK:STDERR:        ·                      ┃        `Incomplete`
   // CHECK:STDERR:        ·                      ┃        [QualifiedExprInIncompleteFacetTypeScope]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_declaration_lookup_into_incomplete.carbon:[[@LINE-14]]:1
+  // CHECK:STDERR: ->     │ impl C as I where .Self impls Incomplete {
+  // CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        · ┗━━┫ error: constraint `I where .Self impls Incomplete` being implemented
+  // CHECK:STDERR:        ·    ┃        requires that `C` implements `Incomplete`
+  // CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> Self.(Incomplete.T);
@@ -918,22 +918,22 @@ interface B {
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc16_19.1: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.ref.loc8_19.1: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %Incomplete.ref: type = name_ref Incomplete, file.%Incomplete.decl [concrete = constants.%Incomplete.type]
-// CHECK:STDOUT:     %.Self.as_type.loc16_19.1: type = facet_access_type %.Self.ref.loc16_19.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc16_19.1: type = converted %.Self.ref.loc16_19.1, %.Self.as_type.loc16_19.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %impls.loc16_25.1 = requirement_impls %.loc16_19.1, %Incomplete.ref [concrete]
+// CHECK:STDOUT:     %.Self.as_type.loc8_19.1: type = facet_access_type %.Self.ref.loc8_19.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %.loc8_19.1: type = converted %.Self.ref.loc8_19.1, %.Self.as_type.loc8_19.1 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %impls.loc8_25.1 = requirement_impls %.loc8_19.1, %Incomplete.ref [concrete]
 // CHECK:STDOUT:     %.Self: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc16_19.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type.loc16_19.2: type = facet_access_type %.Self.ref.loc16_19.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc16_19.2: type = converted %.Self.ref.loc16_19.1, %.Self.as_type.loc16_19.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %impls.loc16_25.2 = requirement_impls %.loc16_19.2, %Incomplete.ref [concrete]
-// CHECK:STDOUT:     %.loc16_13: type = where_expr [concrete = constants.%I_where.type] {
+// CHECK:STDOUT:     %.Self.ref.loc8_19.2: %I.type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.as_type.loc8_19.2: type = facet_access_type %.Self.ref.loc8_19.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %.loc8_19.2: type = converted %.Self.ref.loc8_19.1, %.Self.as_type.loc8_19.2 [symbolic_self = constants.%.Self.as_type]
+// CHECK:STDOUT:     %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref [concrete]
+// CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%I_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %impls.loc16_25.2 = requirement_impls %.loc16_19.2, %Incomplete.ref [concrete]
+// CHECK:STDOUT:       %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
