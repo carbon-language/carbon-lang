@@ -369,9 +369,8 @@ static auto IsAccessProhibited(Context& context,
                                SemIR::AccessKind access_kind) -> bool {
   // Namespace members are always available within the current library;
   // filtering of private names happens in import, not here.
-  if (!access_info || !access_info->constant_id.has_value() ||
-      context.constant_values().InstIs<SemIR::Namespace>(
-          access_info->constant_id)) {
+  if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
+                          access_info->constant_id)) {
     return false;
   }
 
