@@ -45,8 +45,19 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_too_few_arguments.carbon:[[@LINE+3]]:26: error: too few template arguments for class template 'TwoTypes' [CppInteropParseError]
-// CHECK:STDERR: ./templates.h:5:41: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_too_few_arguments.carbon:[[@LINE+14]]:26
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTypes(Cpp.A);
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: too few template arguments for class
+// CHECK:STDERR:        ·                             ┃        template 'TwoTypes'
+// CHECK:STDERR:        ·                             ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./templates.h
+// CHECK:STDERR:        │ template<typename T, typename U> struct TwoTypes {};
+// CHECK:STDERR:        · ────────────────────────────────        ┬
+// CHECK:STDERR:        ·                                         ╰──┤ template is declared here
+// CHECK:STDERR:        ·                                            │ [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A);
 
@@ -56,8 +67,19 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_too_many_arguments.carbon:[[@LINE+3]]:38-40: error: too many template arguments for class template 'TwoTypes' [CppInteropParseError]
-// CHECK:STDERR: ./templates.h:5:41: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_too_many_arguments.carbon:[[@LINE+14]]:38
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTypes(Cpp.A, Cpp.A, Cpp.A);
+// CHECK:STDERR:        ·                                      ┳━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: too many template arguments for
+// CHECK:STDERR:        ·                                         ┃        class template 'TwoTypes'
+// CHECK:STDERR:        ·                                         ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./templates.h
+// CHECK:STDERR:        │ template<typename T, typename U> struct TwoTypes {};
+// CHECK:STDERR:        · ────────────────────────────────        ┬
+// CHECK:STDERR:        ·                                         ╰──┤ template is declared here
+// CHECK:STDERR:        ·                                            │ [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, Cpp.A, Cpp.A);
 
@@ -88,17 +110,43 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE+3]]:57: error: too few template arguments for class template 'Inner' [CppInteropParseError]
-// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_fixed_size_pack_wrong_size.carbon:[[@LINE+18]]:57
+// CHECK:STDERR: ->     │ var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
+// CHECK:STDERR:        ·                                                         ┳
+// CHECK:STDERR:        ·                                                         ┗━━┫ error: too few
+// CHECK:STDERR:        ·                                                            ┃        template
+// CHECK:STDERR:        ·                                                            ┃        arguments
+// CHECK:STDERR:        ·                                                            ┃        for class
+// CHECK:STDERR:        ·                                                            ┃        template
+// CHECK:STDERR:        ·                                                            ┃        'Inner'
+// CHECK:STDERR:        ·                                                            ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./templates.h
+// CHECK:STDERR:        │   template<True<T> ...U> struct Inner {};
+// CHECK:STDERR:        ·   ──────────────────────        ┬
+// CHECK:STDERR:        ·                                 ╰──┤ template is declared here
+// CHECK:STDERR:        ·                                    │ [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_few: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B);
 
-// CHECK:STDERR: fail_fixed_size_pack_wrong_size.carbon:[[@LINE+3]]:70-72: error: too many template arguments for class template 'Inner' [CppInteropParseError]
-// CHECK:STDERR: ./templates.h:15:33: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_fixed_size_pack_wrong_size.carbon:[[@LINE+14]]:70
+// CHECK:STDERR: ->     │ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
+// CHECK:STDERR:        ·                                                                      ━┳━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: too many template arguments for class template 'Inner'
+// CHECK:STDERR:        · ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./templates.h
+// CHECK:STDERR:        │   template<True<T> ...U> struct Inner {};
+// CHECK:STDERR:        ·   ──────────────────────        ┬
+// CHECK:STDERR:        ·                                 ╰──┤ template is declared here
+// CHECK:STDERR:        ·                                    │ [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 
-// CHECK:STDOUT: --- valid.carbon
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -146,7 +194,7 @@ var too_many: Cpp.FixedSizePack(Cpp.A, Cpp.A).Inner(Cpp.B, Cpp.B, Cpp.B);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- pack.carbon
+// CHECK:STDOUT: --- pack.carbon = $pack
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

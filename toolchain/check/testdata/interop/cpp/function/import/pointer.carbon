@@ -43,9 +43,21 @@ fn G() -> const Cpp.NonNullableParamS;
 
 fn F() {
   var s: const Cpp.NonNullableParamS = G();
-  // CHECK:STDERR: fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+4]]:3-28: error: no matching function for call to 'non_nullable_param_foo' [CppInteropParseError]
-  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./non_nullable_pointer_param.h:4:29-55: note: 1st argument ('const NonNullableParamS * _Nonnull') would lose const qualifier [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_import_non_nullable_pointer_param_using_const_value.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   Cpp.non_nullable_param_foo(&s);
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: no matching function for call to 'non_nullable_param_foo'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./non_nullable_pointer_param.h
+  // CHECK:STDERR:        │ auto non_nullable_param_foo(NonNullableParamS* _Nonnull) -> void;
+  // CHECK:STDERR:        ·      ┬                      ┬──────────────────────────
+  // CHECK:STDERR:        ·      ╰─────────────────────────┤ candidate function not viable
+  // CHECK:STDERR:        ·                             │  │ [CppInteropParseNote]
+  // CHECK:STDERR:        ·                             ╰────┤ 1st argument ('const NonNullableParamS *
+  // CHECK:STDERR:        ·                                  │ _Nonnull') would lose const qualifier
+  // CHECK:STDERR:        ·                                  │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.non_nullable_param_foo(&s);
 }
@@ -413,13 +425,24 @@ import Cpp library "deduced_pointer_param.h";
 
 fn F() {
   // This could return a null pointer, so should not be given the type `Cpp.DeducedPointerS*`.
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+3]]:40-78: error: cannot implicitly convert expression of type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` to `Cpp.DeducedPointerS*` [ConversionFailure]
-  // CHECK:STDERR: fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+2]]:40-78: note: type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(Cpp.DeducedPointerS*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_import_deduced_pointer_param_as_optional_pointer.carbon:[[@LINE+14]]:40
+  // CHECK:STDERR: ->     │   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
+  // CHECK:STDERR:        ·                                        ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        · ┃        `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` to
+  // CHECK:STDERR:        · ┃        `Cpp.DeducedPointerS*`
+  // CHECK:STDERR:        · ┃        [ConversionFailure]
+  // CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────╯
+  // CHECK:STDERR:        · │ type `Core.Optional(Cpp.DeducedPointerS* as Core.OptionalStorage)` does not
+  // CHECK:STDERR:        · │ implement interface `Core.ImplicitAs(Cpp.DeducedPointerS*)`
+  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: Cpp.DeducedPointerS* = Cpp.Indirect({} as Cpp.DeducedPointerS);
 }
 
-// CHECK:STDOUT: --- import_non_nullable_pointer_param.carbon
+// CHECK:STDOUT: --- import_non_nullable_pointer_param.carbon = $import_non_nullable_pointer_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -496,7 +519,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_nullable_pointer_param_using_const_pointer.carbon
+// CHECK:STDOUT: --- import_non_nullable_pointer_param_using_const_pointer.carbon = $import_non_nullable_pointer_param_using_const_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -578,7 +601,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_double_non_nullable_pointer_param.carbon
+// CHECK:STDOUT: --- import_double_non_nullable_pointer_param.carbon = $import_double_non_nullable_pointer_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -705,7 +728,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %ptr.40d) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_const.carbon
+// CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_const.carbon = $import_non_nullable_pointer_to_const_param_using_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -788,7 +811,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_non_const.carbon
+// CHECK:STDOUT: --- import_non_nullable_pointer_to_const_param_using_non_const.carbon = $import_non_nullable_pointer_to_const_param_using_non_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -868,7 +891,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_const.carbon
+// CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_const.carbon = $import_const_non_nullable_pointer_param_using_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -950,7 +973,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_non_const.carbon
+// CHECK:STDOUT: --- import_const_non_nullable_pointer_param_using_non_const.carbon = $import_const_non_nullable_pointer_param_using_non_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1028,7 +1051,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_nullable_pointer_param_using_const.carbon
+// CHECK:STDOUT: --- import_const_nullable_pointer_param_using_const.carbon = $import_const_nullable_pointer_param_using_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1198,7 +1221,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %const.2f4) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_nullable_pointer_param_using_non_const.carbon
+// CHECK:STDOUT: --- import_const_nullable_pointer_param_using_non_const.carbon = $import_const_nullable_pointer_param_using_non_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1350,7 +1373,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_26.3(%self.param: ref %Optional.4b8) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_nullable_pointer_return.carbon
+// CHECK:STDOUT: --- import_non_nullable_pointer_return.carbon = $import_non_nullable_pointer_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1395,7 +1418,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_double_pointer_return.carbon
+// CHECK:STDOUT: --- import_double_pointer_return.carbon = $import_double_pointer_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1441,7 +1464,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_const_non_nullable_pointer_return.carbon
+// CHECK:STDOUT: --- import_const_non_nullable_pointer_return.carbon = $import_const_non_nullable_pointer_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1487,7 +1510,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_nullable_pointer_arg_to_pointer_param.carbon
+// CHECK:STDOUT: --- non_nullable_pointer_arg_to_pointer_param.carbon = $non_nullable_pointer_arg_to_pointer_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1646,7 +1669,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_26.3(%self.param: ref %Optional.37f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- null_pointer_arg_to_pointer_param.carbon
+// CHECK:STDOUT: --- null_pointer_arg_to_pointer_param.carbon = $null_pointer_arg_to_pointer_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1774,7 +1797,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_66.3(%self.param: ref %Optional.37f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nonnull_pointer_arg_to_pointer_param.carbon
+// CHECK:STDOUT: --- nonnull_pointer_arg_to_pointer_param.carbon = $nonnull_pointer_arg_to_pointer_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1940,7 +1963,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_68.3(%self.param: ref %Optional.37f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_nullable_pointer.carbon
+// CHECK:STDOUT: --- forward_nullable_pointer.carbon = $forward_nullable_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2050,7 +2073,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_49.3(%self.param: ref %Optional.37f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_deduced_any_param_as_pointer.carbon
+// CHECK:STDOUT: --- import_deduced_any_param_as_pointer.carbon = $import_deduced_any_param_as_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2140,7 +2163,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_deduced_pointer_param_as_pointer.carbon
+// CHECK:STDOUT: --- import_deduced_pointer_param_as_pointer.carbon = $import_deduced_pointer_param_as_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

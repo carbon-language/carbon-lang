@@ -29,8 +29,16 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+3]]:8-18: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+11]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(i32*);
+// CHECK:STDERR:        ·        ━━━━━┳━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: 1 argument passed to generic class expecting 2 arguments
+// CHECK:STDERR:        ·                ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(i32*);
 
@@ -40,8 +48,16 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+3]]:8-24: error: 3 arguments passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE-3]]:1-30: note: calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+11]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(i32*, 1, 2);
+// CHECK:STDERR:        ·        ━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: 3 arguments passed to generic class expecting 2 arguments
+// CHECK:STDERR:        ·               ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(i32*, 1, 2);
 
@@ -51,9 +67,21 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:8-21: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:8-21: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-4]]:13-19: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+16]]:8
+// CHECK:STDERR:        │ class Class(T: type, N: i32) {}
+// CHECK:STDERR:        ·             ───┬───
+// CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                   │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: Class(5, i32*);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·        │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·        ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·             │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(5, i32*);
 
@@ -76,7 +104,7 @@ class Outer(T: type) {
   }
 }
 
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -288,7 +316,7 @@ class Outer(T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_too_few.carbon
+// CHECK:STDOUT: --- fail_too_few.carbon = $fail_too_few
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -385,7 +413,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_too_many.carbon
+// CHECK:STDOUT: --- fail_too_many.carbon = $fail_too_many
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -486,7 +514,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_conversion.carbon
+// CHECK:STDOUT: --- fail_no_conversion.carbon = $fail_no_conversion
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -551,7 +579,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:     %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %ptr: type = ptr_type %i32 [concrete = constants.%ptr]
-// CHECK:STDOUT:     %.loc10: type = converted %int_5, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc22: type = converted %int_5, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -590,7 +618,7 @@ class Outer(T: type) {
 // CHECK:STDOUT:   %N.loc4_23.1 => constants.%N.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_in_nested_return_type.carbon
+// CHECK:STDOUT: --- call_in_nested_return_type.carbon = $call_in_nested_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

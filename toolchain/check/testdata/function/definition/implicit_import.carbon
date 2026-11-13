@@ -34,8 +34,17 @@ extern fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_api.impl.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern_api.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_api.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn A() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_api.carbon
+// CHECK:STDERR:        │ extern fn A();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {}
 
@@ -49,8 +58,17 @@ fn A();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_impl.impl.carbon:[[@LINE+3]]:1-15: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern_impl.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_impl.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern fn A() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `fn A` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_impl.carbon
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn A() {}
 
@@ -64,8 +82,16 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+3]]:1-7: error: redeclaration of `fn A` is redundant [RedeclRedundant]
-// CHECK:STDERR: redecl_after_def.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl_after_def.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn A();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn A` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ redecl_after_def.carbon
+// CHECK:STDERR:        │ fn A() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A();
 
@@ -79,8 +105,16 @@ fn A() {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+3]]:1-8: error: redefinition of `fn A` [RedeclRedef]
-// CHECK:STDERR: redef_after_def.carbon:4:1-8: note: previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ╭─┤ fail_redef_after_def.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn A() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redefinition of `fn A` [RedeclRedef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ redef_after_def.carbon
+// CHECK:STDERR:        │ fn A() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {}
 
@@ -95,12 +129,21 @@ alias B = A;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+3]]:4: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_def_alias.impl.carbon:[[@LINE+12]]:4
+// CHECK:STDERR: ->     │ fn B() {}
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: duplicate name `B` being declared in the same scope
+// CHECK:STDERR:        ·       ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ def_alias.carbon
+// CHECK:STDERR:        │ alias B = A;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn B() {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -117,7 +160,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.impl.carbon
+// CHECK:STDOUT: --- basic.impl.carbon = $basic.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -139,7 +182,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_api.carbon
+// CHECK:STDOUT: --- extern_api.carbon = $extern_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -156,7 +199,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_api.impl.carbon
+// CHECK:STDOUT: --- fail_extern_api.impl.carbon = $fail_extern_api.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -178,7 +221,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_impl.carbon
+// CHECK:STDOUT: --- extern_impl.carbon = $extern_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -195,7 +238,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_impl.impl.carbon
+// CHECK:STDOUT: --- fail_extern_impl.impl.carbon = $fail_extern_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -217,7 +260,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_after_def.carbon
+// CHECK:STDOUT: --- redecl_after_def.carbon = $redecl_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -237,7 +280,7 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon = $fail_redecl_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -256,7 +299,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A [from "redecl_after_def.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redef_after_def.carbon
+// CHECK:STDOUT: --- redef_after_def.carbon = $redef_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -276,13 +319,13 @@ fn B() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon = $fail_redef_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc7 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc15 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,17 +339,17 @@ fn B() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc7 [concrete = constants.%A.921eb9.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc15 [concrete = constants.%A.921eb9.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "redef_after_def.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc7() {
+// CHECK:STDOUT: fn @A.loc15() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_alias.carbon
+// CHECK:STDOUT: --- def_alias.carbon = $def_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -326,7 +369,7 @@ fn B() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_alias.impl.carbon
+// CHECK:STDOUT: --- fail_def_alias.impl.carbon = $fail_def_alias.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

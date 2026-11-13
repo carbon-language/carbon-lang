@@ -20,7 +20,7 @@ class A {}
 base class B {}
 abstract class C {}
 
-// CHECK:STDOUT: --- redeclaration_introducer.carbon
+// CHECK:STDOUT: --- redeclaration_introducer.carbon = $redeclaration_introducer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

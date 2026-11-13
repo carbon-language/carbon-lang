@@ -16,7 +16,7 @@ var x: {.a: f64, .b: i32} = {.a = 0.0, .b = 1};
 var y: i32 = x.b;
 var z: i32 = y;
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

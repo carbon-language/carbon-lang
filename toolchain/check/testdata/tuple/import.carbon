@@ -35,8 +35,19 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+3]]:14-22: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: implicit.carbon:7:9-21: note: initializing generic parameter `X` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_bad_type.impl.carbon:[[@LINE+14]]:14
+// CHECK:STDERR: ->     │ var c_bad: C((1, 2, 3)) = F();
+// CHECK:STDERR:        ·              ┳━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: cannot initialize tuple of 2 elements from tuple with 3
+// CHECK:STDERR:        ·                 ┃        elements
+// CHECK:STDERR:        ·                 ┃        [TupleInitElementCountMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ implicit.carbon
+// CHECK:STDERR:        │ class C(X: (i32, i32)) {}
+// CHECK:STDERR:        ·         ──────┬──────
+// CHECK:STDERR:        ·               ╰──┤ initializing generic parameter `X` declared here
+// CHECK:STDERR:        ·                  │ [InitializingGenericParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C((1, 2, 3)) = F();
 
@@ -44,8 +55,16 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1-20: error: cannot implicitly convert expression of type `C((1, 2))` to `C((3, 4))` [ConversionFailure]
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+2]]:1-20: note: type `C((1, 2))` does not implement interface `Core.ImplicitAs(C((3, 4)))` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ var c_bad: C((3, 4)) = F();
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `C((1, 2))` to
+// CHECK:STDERR:        · │  ┃        `C((3, 4))`
+// CHECK:STDERR:        · │  ┃        [ConversionFailure]
+// CHECK:STDERR:        · ╰────┤ type `C((1, 2))` does not implement interface
+// CHECK:STDERR:        ·      │ `Core.ImplicitAs(C((3, 4)))`
+// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C((3, 4)) = F();
 
@@ -72,7 +91,7 @@ fn F() -> (i32,) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -304,7 +323,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_symbolic_decl.carbon
+// CHECK:STDOUT: --- import_symbolic_decl.carbon = $import_symbolic_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

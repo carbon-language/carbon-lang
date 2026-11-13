@@ -17,7 +17,7 @@ interface I { let T: type; }
 fn NotGenericF(unused U: I where .T == i32) {}
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- non_generic.carbon
+// CHECK:STDOUT: --- non_generic.carbon = $non_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

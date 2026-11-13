@@ -42,26 +42,26 @@ library "[[@TEST_NAME]]";
 
 import library "main_lib_api";
 
-// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: --- api.carbon = $api
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_lib.carbon
+// CHECK:STDOUT: --- api_lib.carbon = $api_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- same_package.carbon
+// CHECK:STDOUT: --- same_package.carbon = $same_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- different_package.carbon
+// CHECK:STDOUT: --- different_package.carbon = $different_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Api: <namespace> = namespace file.%Api.import, [concrete] {
@@ -77,13 +77,13 @@ import library "main_lib_api";
 // CHECK:STDOUT:   %Api.import = import Api
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib_api.carbon
+// CHECK:STDOUT: --- main_lib_api.carbon = $main_lib_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_import.carbon
+// CHECK:STDOUT: --- main_import.carbon = $main_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

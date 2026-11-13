@@ -43,7 +43,12 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR: fail_not_extend.carbon:[[@LINE+2]]:3-5: error: member name `F` not found in `AdaptNotExtend` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_not_extend.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   a.F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: member name `F` not found in `AdaptNotExtend`
+  // CHECK:STDERR:        ·       ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.F();
 }
@@ -53,18 +58,28 @@ fn F(a: AdaptNotExtend) {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+2]]:3-12: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
+  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   adapt i32;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: `adapt` declaration outside class
+  // CHECK:STDERR:        ·           ┃        [ClassSpecificDeclOutsideClass]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt i32;
 }
 
 interface I {
-  // CHECK:STDERR: fail_misplaced.carbon:[[@LINE+2]]:3-12: error: `adapt` declaration outside class [ClassSpecificDeclOutsideClass]
+  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   adapt i32;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: `adapt` declaration outside class
+  // CHECK:STDERR:        ·           ┃        [ClassSpecificDeclOutsideClass]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt i32;
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -141,7 +156,7 @@ interface I {
 // CHECK:STDOUT:   .Self = constants.%StructAdapter
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_extend.carbon
+// CHECK:STDOUT: --- fail_not_extend.carbon = $fail_not_extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -216,7 +231,7 @@ interface I {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_misplaced.carbon
+// CHECK:STDOUT: --- fail_misplaced.carbon = $fail_misplaced
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

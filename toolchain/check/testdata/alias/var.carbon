@@ -34,14 +34,19 @@ library "[[@TEST_NAME]]";
 fn F() -> () {
   var a: () = ();
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_local.carbon:[[@LINE+2]]:13: error: alias refers to a runtime value [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_local.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   alias b = a;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: alias refers to a runtime value
+  // CHECK:STDERR:        ·                ┃        [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias b = a;
   //@dump-sem-ir-end
   return b;
 }
 
-// CHECK:STDOUT: --- global.carbon
+// CHECK:STDOUT: --- global.carbon = $global
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -60,7 +65,7 @@ fn F() -> () {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local.carbon
+// CHECK:STDOUT: --- fail_local.carbon = $fail_local
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

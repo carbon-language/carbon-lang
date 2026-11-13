@@ -165,17 +165,37 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface Modifiers {
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-9: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_deferred_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   default fn DefaultFunction();
+  // CHECK:STDERR:        ·   ━━┳━━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: TODO: `default` modifier currently requires an inline definition
+  // CHECK:STDERR:        ·        ┃        [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default fn DefaultFunction();
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-9: error: TODO: `default` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_deferred_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   default fn DefaultMethod(self);
+  // CHECK:STDERR:        ·   ━━┳━━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: TODO: `default` modifier currently requires an inline definition
+  // CHECK:STDERR:        ·        ┃        [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default fn DefaultMethod(self);
 
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-7: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_deferred_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   final fn FinalFunction();
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: TODO: `final` modifier currently requires an inline definition
+  // CHECK:STDERR:        ·        ┃        [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final fn FinalFunction();
-  // CHECK:STDERR: fail_todo_deferred_modifiers.carbon:[[@LINE+2]]:3-7: error: TODO: `final` modifier currently requires an inline definition [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╭─┤ fail_todo_deferred_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   final fn FinalMethod(self);
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: TODO: `final` modifier currently requires an inline definition
+  // CHECK:STDERR:        ·        ┃        [ModifierFinalRequiresDefaultImpl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final fn FinalMethod(self);
 }
@@ -186,8 +206,18 @@ library "[[@TEST_NAME]]";
 import library "final_interfaces";
 
 class C {
-  // CHECK:STDERR: fail_impl_final.carbon:[[@LINE+3]]:3-23: error: attempted to implement `M`, which is final in interface `FinalMethod` [ImplFinalFunction]
-  // CHECK:STDERR: final_interfaces.carbon:10:3-27: note: associated function M declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_impl_final.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   impl as FinalMethod {
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: attempted to implement `M`, which is final in interface
+  // CHECK:STDERR:        ·      ┃        `FinalMethod`
+  // CHECK:STDERR:        ·      ┃        [ImplFinalFunction]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ final_interfaces.carbon
+  // CHECK:STDERR:        │   final fn M(unused self) {}
+  // CHECK:STDERR:        ·   ────────────┬────────────
+  // CHECK:STDERR:        ·               ╰──┤ associated function M declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl as FinalMethod {
     fn M(unused self) { }
@@ -199,15 +229,23 @@ class C {
 library "[[@TEST_NAME]]";
 
 interface C {
-  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+2]]:3-9: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_modified_associated_constants.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   default let T: type = C;
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default let T: type = C;
-  // CHECK:STDERR: fail_modified_associated_constants.carbon:[[@LINE+2]]:3-7: error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_modified_associated_constants.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   final let U: type = C;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `interface modifier` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final let U: type = C;
 }
 
-// CHECK:STDOUT: --- default_interfaces.carbon
+// CHECK:STDOUT: --- default_interfaces.carbon = $default_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -480,7 +518,7 @@ interface C {
 // CHECK:STDOUT:   %self.patt.loc10_23.2 => constants.%self.patt.99e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_interfaces.carbon
+// CHECK:STDOUT: --- final_interfaces.carbon = $final_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -753,7 +791,7 @@ interface C {
 // CHECK:STDOUT:   %self.patt.loc10_21.2 => constants.%self.patt.bc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_function.carbon
+// CHECK:STDOUT: --- default_function.carbon = $default_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -819,7 +857,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_method.carbon
+// CHECK:STDOUT: --- default_method.carbon = $default_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -926,7 +964,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_15.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_function_overridden.carbon
+// CHECK:STDOUT: --- default_function_overridden.carbon = $default_function_overridden
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1012,7 +1050,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_method_overridden.carbon
+// CHECK:STDOUT: --- default_method_overridden.carbon = $default_method_overridden
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1155,7 +1193,7 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_15.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_function.carbon
+// CHECK:STDOUT: --- final_function.carbon = $final_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1221,7 +1259,7 @@ interface C {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_method.carbon
+// CHECK:STDOUT: --- final_method.carbon = $final_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

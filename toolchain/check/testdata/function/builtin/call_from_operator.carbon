@@ -56,7 +56,7 @@ import Core;
 var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 
 
-// CHECK:STDOUT: --- core.carbon
+// CHECK:STDOUT: --- core.carbon = $core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -865,7 +865,7 @@ var arr: array(i32, (1 as i32) + (2 as i32)) = (3, 4, (3 as i32) + (4 as i32));
 // CHECK:STDOUT:   %return.patt.loc18_20.2 => constants.%return.patt.cd4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- user.carbon
+// CHECK:STDOUT: --- user.carbon = $user
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

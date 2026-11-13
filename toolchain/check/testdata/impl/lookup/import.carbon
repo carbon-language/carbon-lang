@@ -216,13 +216,20 @@ import HasExtraInterfaces;
 fn Test(c: HasExtraInterfaces.C(type)) {
   // This triggers the import of a bunch more interfaces, which reallocates the
   // interface ValueStore. Ensure that doesn't result in a use-after-free crash.
-  // CHECK:STDERR: fail_use_has_extra_interfaces.carbon:[[@LINE+2]]:3-28: error: cannot access member of interface `HasExtraInterfaces.I` in type `HasExtraInterfaces.C(type)` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_use_has_extra_interfaces.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   c.(HasExtraInterfaces.I.F)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `HasExtraInterfaces.I` in type
+  // CHECK:STDERR:        ·      ┃        `HasExtraInterfaces.C(type)` that does not implement that
+  // CHECK:STDERR:        ·      ┃        interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.(HasExtraInterfaces.I.F)();
 }
 
 
-// CHECK:STDOUT: --- package_a.carbon
+// CHECK:STDOUT: --- package_a.carbon = $package_a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -372,7 +379,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt.loc5_8.2 => constants.%self.patt.610
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package_b.carbon
+// CHECK:STDOUT: --- package_b.carbon = $package_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -692,7 +699,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt.loc7_8.2 => constants.%self.patt.2d6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_cf.carbon
+// CHECK:STDOUT: --- use_cf.carbon = $use_cf
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -838,7 +845,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.0d8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_df.carbon
+// CHECK:STDOUT: --- use_df.carbon = $use_df
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1007,7 +1014,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.b68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_cg.carbon
+// CHECK:STDOUT: --- use_cg.carbon = $use_cg
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1176,7 +1183,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %HasG.WithSelf.G => constants.%HasG.WithSelf.G.747
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_dg.carbon
+// CHECK:STDOUT: --- use_dg.carbon = $use_dg
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1340,7 +1347,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %HasG.WithSelf.G => constants.%HasG.WithSelf.G.5a9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_interface.carbon
+// CHECK:STDOUT: --- associated_interface.carbon = $associated_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1480,7 +1487,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt.loc5_8.2 => constants.%self.patt.462
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_associated_interface.carbon
+// CHECK:STDOUT: --- import_associated_interface.carbon = $import_associated_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1603,7 +1610,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Z.WithSelf.H => constants.%Z.WithSelf.H.18a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- has_param.carbon
+// CHECK:STDOUT: --- has_param.carbon = $has_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1748,7 +1755,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt.loc7_15.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- has_generic_interface.carbon
+// CHECK:STDOUT: --- has_generic_interface.carbon = $has_generic_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2050,7 +2057,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.5a8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_generic_interface_as_param.carbon
+// CHECK:STDOUT: --- use_generic_interface_as_param.carbon = $use_generic_interface_as_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2317,7 +2324,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Y.WithSelf.K => constants.%Y.WithSelf.K.93e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- has_generic_class.carbon
+// CHECK:STDOUT: --- has_generic_class.carbon = $has_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2611,7 +2618,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.274
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_generic_class_as_param.carbon
+// CHECK:STDOUT: --- use_generic_class_as_param.carbon = $use_generic_class_as_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2872,7 +2879,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Y.WithSelf.K => constants.%Y.WithSelf.K.a5b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- has_extra_interfaces.carbon
+// CHECK:STDOUT: --- has_extra_interfaces.carbon = $has_extra_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3206,7 +3213,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %self.patt.loc14_20.2 => constants.%self.patt.d38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_has_extra_interfaces.carbon
+// CHECK:STDOUT: --- fail_use_has_extra_interfaces.carbon = $fail_use_has_extra_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3404,7 +3411,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @Test(%c.param: %C.6a9) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C.6a9 = name_ref c, %c
-// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc10: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [concrete = imports.%HasExtraInterfaces]
+// CHECK:STDOUT:   %HasExtraInterfaces.ref.loc17: <namespace> = name_ref HasExtraInterfaces, imports.%HasExtraInterfaces [concrete = imports.%HasExtraInterfaces]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, imports.%HasExtraInterfaces.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   %F.ref: %I.assoc_type = name_ref F, imports.%HasExtraInterfaces.import_ref.d70 [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return

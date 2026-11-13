@@ -201,8 +201,8 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!35}
-// CHECK:STDOUT: !llvm.module.flags = !{!134, !135, !136, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!139}
+// CHECK:STDOUT: !llvm.module.flags = !{!134, !135, !136, !137, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!140}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -275,10 +275,11 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !131 = !{!130, !130, i64 0}
 // CHECK:STDOUT: !132 = !{!"p1 _ZTS6Packed", !127, i64 0}
 // CHECK:STDOUT: !133 = !{!132, !132, i64 0}
-// CHECK:STDOUT: !134 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !135 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !136 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !137 = !{!"int", !126, i64 0}
-// CHECK:STDOUT: !138 = !{!"__libc_errno", !137, i64 0}
-// CHECK:STDOUT: !139 = !{!138, !137, i64 0}
+// CHECK:STDOUT: !134 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !135 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !136 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !137 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !138 = !{!"int", !126, i64 0}
+// CHECK:STDOUT: !139 = !{!"__libc_errno", !138, i64 0}
+// CHECK:STDOUT: !140 = !{!139, !138, i64 0}
 // CHECK:STDOUT:

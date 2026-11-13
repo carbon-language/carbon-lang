@@ -80,8 +80,18 @@ fn G(generic T: Core.Default & Core.Destroy) {
 }
 
 fn CallG() {
-  // CHECK:STDERR: fail_no_default.carbon:[[@LINE+3]]:3-18: error: cannot convert type `NoDefault` into type implementing `Core.Default & Core.Destroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_no_default.carbon:[[@LINE-6]]:14-43: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_no_default.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn G(generic T: Core.Default & Core.Destroy) {
+  // CHECK:STDERR:        ·              ──────────────┬───────────────
+  // CHECK:STDERR:        ·                            ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                               │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   G(Cpp.NoDefault);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NoDefault` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Default & Core.Destroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(Cpp.NoDefault);
 }
@@ -208,13 +218,33 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+3]]:32-52: error: call to deleted function 'DeletedC' [CppInteropParseError]
-  // CHECK:STDERR: ./deleted.h:4:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_import_deleted.carbon:[[@LINE+12]]:32
+  // CHECK:STDERR: ->     │   let unused c: Cpp.DeletedC = Cpp.DeletedC.DeletedC();
+  // CHECK:STDERR:        ·                                ━━┳━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                  ┗━━┫ error: call to deleted function 'DeletedC'
+  // CHECK:STDERR:        ·                                     ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./deleted.h
+  // CHECK:STDERR:        │   DeletedC() = delete;
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: Cpp.DeletedC = Cpp.DeletedC.DeletedC();
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+4]]:32-52: error: call to deleted function 'DeletedD' [CppInteropParseError]
-  // CHECK:STDERR: ./deleted.h:9:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: ./deleted.h:10:3: note: candidate constructor [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_import_deleted.carbon:[[@LINE+15]]:32
+  // CHECK:STDERR: ->     │   let unused d: Cpp.DeletedD = Cpp.DeletedD.DeletedD(0);
+  // CHECK:STDERR:        ·                                ━━┳━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                  ┗━━┫ error: call to deleted function 'DeletedD'
+  // CHECK:STDERR:        ·                                     ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./deleted.h
+  // CHECK:STDERR:        │   DeletedD(int) = delete;
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ candidate constructor has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        │   DeletedD(short);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ candidate constructor [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused d: Cpp.DeletedD = Cpp.DeletedD.DeletedD(0);
 }
@@ -283,14 +313,23 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-   // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:4-30: error: member access into incomplete class `Cpp.IncompleteC` [QualifiedExprInIncompleteClassScope]
-   // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
-   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+   // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:4
+   // CHECK:STDERR: ->     │    Cpp.IncompleteC.IncompleteC();
+   // CHECK:STDERR:        ·    ━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+   // CHECK:STDERR:        ·                ┗━━┫ error: member access into incomplete class `Cpp.IncompleteC`
+   // CHECK:STDERR:        ·                   ┃        [QualifiedExprInIncompleteClassScope]
+   // CHECK:STDERR:        ┆
+   // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
+   // CHECK:STDERR:        ├─┤ ./incomplete.h
+   // CHECK:STDERR:        │ class IncompleteC;
+   // CHECK:STDERR:        ·       ┬
+   // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+   // CHECK:STDERR:        ╰────
    // CHECK:STDERR:
    Cpp.IncompleteC.IncompleteC();
 }
 
-// CHECK:STDOUT: --- import_default.carbon
+// CHECK:STDOUT: --- import_default.carbon = $import_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -360,7 +399,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_default.carbon
+// CHECK:STDOUT: --- implicit_default.carbon = $implicit_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +473,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_default.carbon
+// CHECK:STDOUT: --- import_non_default.carbon = $import_non_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -543,7 +582,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple.carbon
+// CHECK:STDOUT: --- import_multiple.carbon = $import_multiple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -683,7 +722,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_default_arguments.carbon
+// CHECK:STDOUT: --- import_default_arguments.carbon = $import_default_arguments
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -831,7 +870,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_template.carbon
+// CHECK:STDOUT: --- import_template.carbon = $import_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1033,7 +1072,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_implicit_single_argument.carbon
+// CHECK:STDOUT: --- import_implicit_single_argument.carbon = $import_implicit_single_argument
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1175,7 +1214,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_implicit_multi_arguments.carbon
+// CHECK:STDOUT: --- import_implicit_multi_arguments.carbon = $import_implicit_multi_arguments
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

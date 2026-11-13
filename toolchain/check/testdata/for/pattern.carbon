@@ -106,15 +106,21 @@ import library "empty_range";
 class X {}
 
 fn Run() {
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+3]]:7-43: error: cannot implicitly convert expression of type `C` to `X` [ConversionFailure]
-  // CHECK:STDERR: fail_bad_pattern.carbon:[[@LINE+2]]:7-43: note: type `C` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_bad_pattern.carbon:[[@LINE+9]]:7
+  // CHECK:STDERR: ->     │   for (unused x: X in EmptyRange(C).Make()) {
+  // CHECK:STDERR:        ·       ━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `C` to `X`
+  // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·              ╰────┤ type `C` does not implement interface `Core.ImplicitAs(X)`
+  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   for (unused x: X in EmptyRange(C).Make()) {
   }
 }
 
 
-// CHECK:STDOUT: --- value.carbon
+// CHECK:STDOUT: --- value.carbon = $value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -380,7 +386,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_35(%self.param: ref %EmptyRange.c31) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var.carbon
+// CHECK:STDOUT: --- var.carbon = $var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -656,7 +662,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_39(%self.param: ref %EmptyRange.c31) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple.carbon
+// CHECK:STDOUT: --- tuple.carbon = $tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -964,7 +970,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_60(%self.param: ref %EmptyRange.7d6) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_class.carbon
+// CHECK:STDOUT: --- tuple_class.carbon = $tuple_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

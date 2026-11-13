@@ -22,7 +22,7 @@ fn Foo.Bar.Baz() {
   Foo.Bar.Wiz();
 }
 
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

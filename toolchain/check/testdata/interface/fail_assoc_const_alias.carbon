@@ -19,7 +19,13 @@ interface I {
 
 interface J {
   alias U = I.T;
-  // CHECK:STDERR: fail_alias_to_different_interface.carbon:[[@LINE+2]]:13: error: cannot convert type `Self` that implements `J` into type implementing `I` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_alias_to_different_interface.carbon:[[@LINE+8]]:13
+  // CHECK:STDERR: ->     │   fn F() -> U;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert type `Self` that implements `J` into type
+  // CHECK:STDERR:        ·                ┃        implementing `I`
+  // CHECK:STDERR:        ·                ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> U;
 }
@@ -50,7 +56,13 @@ interface A {
 }
 interface B {
   alias F = A.F;
-  // CHECK:STDERR: fail_call_method_alias.carbon:[[@LINE+2]]:13: error: cannot convert type `Self` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_call_method_alias.carbon:[[@LINE+8]]:13
+  // CHECK:STDERR: ->     │   fn G() -> F();
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert type `Self` that implements `B` into type
+  // CHECK:STDERR:        ·                ┃        implementing `A`
+  // CHECK:STDERR:        ·                ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn G() -> F();
 }
@@ -70,7 +82,7 @@ interface C {
 }
 
 
-// CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon
+// CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon = $alias_to_different_interface_with_requires
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -159,7 +171,7 @@ interface C {
 // CHECK:STDOUT:   %return.patt.loc14_11.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_with_compound_member_access.carbon
+// CHECK:STDOUT: --- call_with_compound_member_access.carbon = $call_with_compound_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

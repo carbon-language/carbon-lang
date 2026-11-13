@@ -18,7 +18,7 @@ class C {
   var a: i32;
 }
 
-// CHECK:STDOUT: --- complete_in_member_fn.carbon
+// CHECK:STDOUT: --- complete_in_member_fn.carbon = $complete_in_member_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -31,7 +31,7 @@ fn EnclosingButAfter(b: bool) -> i32 {
   return var;
 }
 
-// CHECK:STDOUT: --- returned_var_scope.carbon
+// CHECK:STDOUT: --- returned_var_scope.carbon = $returned_var_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

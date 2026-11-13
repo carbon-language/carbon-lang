@@ -42,7 +42,7 @@ fn TestSpecific(a: A({})*) -> {}* {
 }
 
 
-// CHECK:STDOUT: --- impl_forall.carbon
+// CHECK:STDOUT: --- impl_forall.carbon = $impl_forall
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

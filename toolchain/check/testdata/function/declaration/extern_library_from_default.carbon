@@ -30,12 +30,23 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+3]]:1-14: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
-// CHECK:STDERR: extern_library.carbon:4:1-30: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR:        ╭─┤ fail_wrong_library.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: declaration in library "wrong_library" doesn't match
+// CHECK:STDERR:        ·    ┃        `extern library` declaration
+// CHECK:STDERR:        ·    ┃        [ExternLibraryIncorrect]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_library.carbon
+// CHECK:STDERR:        │ extern library default fn F();
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ previously declared with `extern library` here
+// CHECK:STDERR:        ·                   │ [ExternLibraryExpected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F();
 
-// CHECK:STDOUT: --- extern_library.carbon
+// CHECK:STDOUT: --- extern_library.carbon = $extern_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -52,7 +63,7 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default.carbon
+// CHECK:STDOUT: --- default.carbon = $default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -70,7 +81,7 @@ extern fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_wrong_library.carbon
+// CHECK:STDOUT: --- fail_wrong_library.carbon = $fail_wrong_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

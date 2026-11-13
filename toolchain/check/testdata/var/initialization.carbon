@@ -55,12 +55,18 @@ import Core;
 class A {}
 
 fn Main() {
-  // CHECK:STDERR: fail_uninitialized_no_impl.carbon:[[@LINE+2]]:3-18: error: cannot convert type `A` into type implementing `Core.DefaultOrUnformed` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_uninitialized_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   var unused x: A;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `A` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.DefaultOrUnformed`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: A;
 }
 
-// CHECK:STDOUT: --- initialized.carbon
+// CHECK:STDOUT: --- initialized.carbon = $initialized
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -114,7 +120,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- uninitialized.carbon
+// CHECK:STDOUT: --- uninitialized.carbon = $uninitialized
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

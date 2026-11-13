@@ -58,8 +58,17 @@ extern fn F();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_two_file_impl_mismatch.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn F() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ two_file_impl_mismatch.carbon
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() {}
 
@@ -67,6 +76,14 @@ fn F() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_no_decl.carbon [InImport]
+// CHECK:STDERR:        ├─┤ no_decl_extern.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern library "no_decl" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: owning declaration required for non-owning declaration
+// CHECK:STDERR:        ·                  ┃        [MissingOwningDeclarationInApi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern library "no_decl" fn F();
 
 // --- no_decl_extern.impl.carbon
@@ -77,31 +94,38 @@ impl library "no_decl_extern";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_no_decl.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: no_decl_extern.carbon:4:1-32: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
-// CHECK:STDERR:
 import library "no_decl_extern";
 
 // --- indirect_two_file_extern.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_indirect_two_file.carbon [InImport]
+// CHECK:STDERR:        ├─┤ indirect_two_file_extern.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern library "indirect_two_file" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: owning declaration required for non-owning declaration
+// CHECK:STDERR:        ·                  ┃        [MissingOwningDeclarationInApi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern library "indirect_two_file" fn F();
 
 // --- fail_indirect_two_file.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_indirect_two_file.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: indirect_two_file_extern.carbon:4:1-42: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
-// CHECK:STDERR:
 import library "indirect_two_file_extern";
 
 // --- fail_indirect_two_file.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╭─┤ fail_indirect_two_file.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR:        ·           ┃        [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -121,7 +145,12 @@ impl library "[[@TEST_NAME]]";
 
 import library "in_impl_extern";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╭─┤ fail_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR:        ·           ┃        [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -159,7 +188,7 @@ import library "unloaded_decl_extern";
 extern fn ExternDecl();
 
 
-// CHECK:STDOUT: --- one_file_extern.carbon
+// CHECK:STDOUT: --- one_file_extern.carbon = $one_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -176,7 +205,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- one_file.carbon
+// CHECK:STDOUT: --- one_file.carbon = $one_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -196,7 +225,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_extern.carbon
+// CHECK:STDOUT: --- two_file_extern.carbon = $two_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -213,7 +242,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon
+// CHECK:STDOUT: --- two_file.carbon = $two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -230,7 +259,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.impl.carbon
+// CHECK:STDOUT: --- two_file.impl.carbon = $two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -252,7 +281,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_impl_mismatch_extern.carbon
+// CHECK:STDOUT: --- two_file_impl_mismatch_extern.carbon = $two_file_impl_mismatch_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -269,7 +298,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_impl_mismatch.carbon
+// CHECK:STDOUT: --- two_file_impl_mismatch.carbon = $two_file_impl_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -286,7 +315,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_file_impl_mismatch.impl.carbon
+// CHECK:STDOUT: --- fail_two_file_impl_mismatch.impl.carbon = $fail_two_file_impl_mismatch.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -308,7 +337,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_decl_extern.carbon
+// CHECK:STDOUT: --- no_decl_extern.carbon = $no_decl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -325,7 +354,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_decl_extern.impl.carbon
+// CHECK:STDOUT: --- no_decl_extern.impl.carbon = $no_decl_extern.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F = import_ref Main//no_decl_extern, F, unloaded
@@ -339,7 +368,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_decl.carbon
+// CHECK:STDOUT: --- fail_no_decl.carbon = $fail_no_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -360,7 +389,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_two_file_extern.carbon
+// CHECK:STDOUT: --- indirect_two_file_extern.carbon = $indirect_two_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -377,7 +406,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_indirect_two_file.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.carbon = $fail_indirect_two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -398,7 +427,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon = $fail_indirect_two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -420,7 +449,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl_extern.carbon
+// CHECK:STDOUT: --- in_impl_extern.carbon = $in_impl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -437,13 +466,13 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl.carbon
+// CHECK:STDOUT: --- in_impl.carbon = $in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_in_impl.impl.carbon = $fail_in_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -465,7 +494,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_package_extern.carbon
+// CHECK:STDOUT: --- cross_package_extern.carbon = $cross_package_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -482,7 +511,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_package.carbon
+// CHECK:STDOUT: --- cross_package.carbon = $cross_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -520,7 +549,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded_decl_extern.carbon
+// CHECK:STDOUT: --- unloaded_decl_extern.carbon = $unloaded_decl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -543,7 +572,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonExternDecl();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded_decl.carbon
+// CHECK:STDOUT: --- unloaded_decl.carbon = $unloaded_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

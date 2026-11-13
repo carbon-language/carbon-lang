@@ -29,7 +29,7 @@ fn Main() {
   }
 }
 
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon = $basics
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

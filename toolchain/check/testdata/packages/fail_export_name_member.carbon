@@ -28,12 +28,22 @@ import library "a";
 
 // TODO: This diagnostic doesn't clearly explain the problem. We should instead
 // say something like: Only namespace-scope names can be exported.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: a.carbon:4:1-9: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+13]]:8
+// CHECK:STDERR: ->     │ export C.n;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: name qualifiers are only allowed for entities that provide a
+// CHECK:STDERR:        ·           ┃        scope
+// CHECK:STDERR:        ·           ┃        [QualifiedNameInNonScope]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ class C {
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export C.n;
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -65,7 +75,7 @@ export C.n;
 // CHECK:STDOUT:   .n = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

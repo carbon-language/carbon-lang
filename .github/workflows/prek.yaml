@@ -36,6 +36,7 @@ jobs:
             formulae.brew.sh:443
             github.com:443
             go.dev:443
+            index.crates.io:443
             mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
@@ -48,11 +49,13 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.astral.sh:443
             releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -66,10 +69,10 @@ jobs:
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
-      # permissions to the repository, so we create the suggestions in a separate
-      # privileged `workflow_run` action in prek_suggestions.yaml. Here,
-      # we upload the diffs and event configuration to an artifact for use by
-      # that action.
+      # permissions to the repository, so we create the suggestions (or, for
+      # Dependabot PRs, commit the fixes) in a separate privileged `workflow_run`
+      # action in prek_suggestions.yaml. Here, we upload the diffs and event
+      # configuration to an artifact for use by that action.
       - name: Collect prek output
         if: failure()
         run: |

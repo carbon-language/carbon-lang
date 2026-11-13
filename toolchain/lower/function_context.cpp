@@ -27,7 +27,7 @@ FunctionContext::FunctionContext(
       specific_file_context_(&specific_file_context),
       specific_sem_ir_function_id_(specific_sem_ir_function_id),
       specific_id_(specific_id),
-      builder_(file_context.llvm_context(), llvm::ConstantFolder(),
+      builder_(file_context.llvm_module(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),
@@ -410,16 +410,21 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
   }
 }
 
-auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
-                                 SemIR::InstId dest_id) -> void {
+auto FunctionContext::CopyObject(TypeInFile type, llvm::Value* source,
+                                 llvm::Value* dest) -> void {
   const auto& layout = llvm_module().getDataLayout();
   auto* llvm_type = GetType(type);
   auto align = GetAlignment(type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
-  builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
+  builder().CreateMemCpy(dest, align, source, align,
                          layout.getTypeAllocSize(llvm_type));
+}
+
+auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
+                                 SemIR::InstId dest_id) -> void {
+  CopyObject(type, GetValue(source_id), GetValue(dest_id));
 }
 
 auto FunctionContext::Inserter::InsertHelper(

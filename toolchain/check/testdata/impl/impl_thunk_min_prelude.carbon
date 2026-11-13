@@ -51,8 +51,14 @@ interface OpWith(U: type) {
 }
 
 impl forall [T: type, U: Core.ImplicitAs(Wrap(T))] Wrap(T) as OpWith(U) {
-  // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+3]]:3-27: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR: fail_todo_out_of_line_thunk.carbon:[[@LINE+2]]:3-27: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_out_of_line_thunk.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   fn Op(self, other: Self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: use of undefined generic function
+  // CHECK:STDERR:        ·               │  ┃        [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:        ·               ╰────┤ generic function declared here
+  // CHECK:STDERR:        ·                    │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn Op(self, other: Self);
 }
@@ -98,7 +104,7 @@ fn Call() -> i32 {
   ;
 }
 
-// CHECK:STDOUT: --- thunk_literal_convert.carbon
+// CHECK:STDOUT: --- thunk_literal_convert.carbon = $thunk_literal_convert
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

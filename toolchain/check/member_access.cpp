@@ -186,7 +186,7 @@ static auto PerformImplWitnessAccessAndSubstitute(
       GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
 
   if (!context.where_stack().empty()) {
-    if (auto result = context.where_stack().back().rewrites.Lookup(
+    if (auto result = context.where_stack().Peek().rewrites.Lookup(
             context.constant_values().Get(access_id))) {
       return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
           context, loc_id,
@@ -324,6 +324,10 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
       context, loc_id, name_id, lookup_scopes, required, access_info);
 
   if (!result.scope_result.is_found()) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (!TryGetLookupResultInCurrentScope(context, loc_id, name_id, result)) {
     return SemIR::ErrorInst::InstId;
   }
 

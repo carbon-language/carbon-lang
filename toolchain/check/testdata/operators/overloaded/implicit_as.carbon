@@ -36,7 +36,7 @@ fn Test() {
 }
 
 
-// CHECK:STDOUT: --- implicit_as.carbon
+// CHECK:STDOUT: --- implicit_as.carbon = $implicit_as
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

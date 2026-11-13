@@ -27,7 +27,7 @@ class Class(F: type) {
 
 fn Class(F: type).Inner.G() -> i32 { return F(); }
 
-// CHECK:STDOUT: --- prefer_unqualified_lookup.carbon
+// CHECK:STDOUT: --- prefer_unqualified_lookup.carbon = $prefer_unqualified_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

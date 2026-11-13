@@ -13,11 +13,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_access_into_invalid.carbon
 
 
-// CHECK:STDERR: fail_access_into_invalid.carbon:[[@LINE+2]]:10: error: name `a` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_access_into_invalid.carbon:[[@LINE+6]]:10
+// CHECK:STDERR: ->     │ fn F() { a.b; }
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: name `a` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() { a.b; }
 
-// CHECK:STDOUT: --- fail_access_into_invalid.carbon
+// CHECK:STDOUT: --- fail_access_into_invalid.carbon = $fail_access_into_invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

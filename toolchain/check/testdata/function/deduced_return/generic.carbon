@@ -108,8 +108,17 @@ library "[[@TEST_NAME]]";
 
 fn F[T: Core.Copy](x: T, b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE+3]]:12-22: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-    // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE-3]]:1-43: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_recursion_before_deduced.carbon:[[@LINE+12]]:12
+    // CHECK:STDERR:        │ fn F[T: Core.Copy](x: T, b: bool) -> auto {
+    // CHECK:STDERR:        · ─────────────────────┬─────────────────────
+    // CHECK:STDERR:        ·                      ╰──┤ return type of `F` is deduced from its definition
+    // CHECK:STDERR:        ·                         │ [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     return F(x, false);
+    // CHECK:STDERR:        ·            ━━━━━┳━━━━━
+    // CHECK:STDERR:        ·                 ┗━━┫ error: call to `F` before its return type is known
+    // CHECK:STDERR:        ·                    ┃        [CallBeforeReturnTypeDeduced]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return F(x, false);
   }
@@ -122,15 +131,24 @@ library "[[@TEST_NAME]]";
 fn F[T: Core.Copy](x: T, b: bool) -> auto {
   returned var r: T = x;
   if (b) {
-    // CHECK:STDERR: fail_recursion_with_different_arguments.carbon:[[@LINE+3]]:5-22: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-    // CHECK:STDERR: fail_recursion_with_different_arguments.carbon:[[@LINE-4]]:1-43: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_recursion_with_different_arguments.carbon:[[@LINE+12]]:5
+    // CHECK:STDERR:        │ fn F[T: Core.Copy](x: T, b: bool) -> auto {
+    // CHECK:STDERR:        · ─────────────────────┬─────────────────────
+    // CHECK:STDERR:        ·                      ╰──┤ return type of `F` is deduced from its definition
+    // CHECK:STDERR:        ·                         │ [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     F(0 as i32, false);
+    // CHECK:STDERR:        ·     ━━━━━━━━━┳━━━━━━━━
+    // CHECK:STDERR:        ·              ┗━━┫ error: call to `F` before its return type is known
+    // CHECK:STDERR:        ·                 ┃        [CallBeforeReturnTypeDeduced]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     F(0 as i32, false);
   }
   return var;
 }
 
-// CHECK:STDOUT: --- generic_definition.carbon
+// CHECK:STDOUT: --- generic_definition.carbon = $generic_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -238,7 +256,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %x.patt.loc4_21.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -316,7 +334,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_from_generic.carbon
+// CHECK:STDOUT: --- call_from_generic.carbon = $call_from_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -461,7 +479,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %F.specific_fn.loc6_40.2 => constants.%F.specific_fn.37a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_type_from_definition.carbon
+// CHECK:STDOUT: --- return_type_from_definition.carbon = $return_type_from_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

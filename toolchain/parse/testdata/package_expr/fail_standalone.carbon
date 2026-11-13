@@ -9,7 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/package_expr/fail_standalone.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_standalone.carbon:[[@LINE+2]]:10: error: expected `.` after `package` expression [ExpectedPeriodAfterPackage]
+  // CHECK:STDERR:        ╭─┤ fail_standalone.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   package;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: expected `.` after `package` expression
+  // CHECK:STDERR:        ·             ┃        [ExpectedPeriodAfterPackage]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   package;
 }

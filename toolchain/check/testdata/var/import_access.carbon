@@ -38,7 +38,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:14: error: name `v` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ var v2: () = v;
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: name `v` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v2: () = v;
 
@@ -48,11 +52,16 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:14-19: error: member name `v` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ var v2: () = Test.v;
+// CHECK:STDERR:        ·              ━━━┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: member name `v` not found in `Test`
+// CHECK:STDERR:        ·                    ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v2: () = Test.v;
 
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -88,7 +97,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon = $def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -134,7 +143,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_def.carbon
+// CHECK:STDOUT: --- fail_local_def.carbon = $fail_local_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -152,9 +161,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var_storage %v2.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_10.1: type = splice_block %.loc12_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_10.3: type = converted %.loc12_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = wrapper_binding v2, %v2.var [concrete = %v2.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -170,7 +179,7 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_def.carbon
+// CHECK:STDOUT: --- fail_other_def.carbon = $fail_other_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -195,9 +204,9 @@ var v2: () = Test.v;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %v2.var: ref %empty_tuple.type = var_storage %v2.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc13_10.1: type = splice_block %.loc13_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc13_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_10.3: type = converted %.loc13_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: ref %empty_tuple.type = wrapper_binding v2, %v2.var [concrete = %v2.var]
 // CHECK:STDOUT:   name_binding_decl {

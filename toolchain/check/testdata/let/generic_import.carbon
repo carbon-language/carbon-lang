@@ -16,7 +16,14 @@
 
 package Implicit;
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:13-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_implicit.carbon:[[@LINE+9]]:13
+// CHECK:STDERR: ->     │ let generic T: type = i32;
+// CHECK:STDERR:        ·             ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        ``let` compile time binding outside function or interface`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let generic T: type = i32;
 
@@ -24,14 +31,22 @@ let generic T: type = i32;
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+2]]:8-9: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_implicit.impl.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var a: T*;
+// CHECK:STDERR:        ·        ━┳
+// CHECK:STDERR:        ·         ┗━━┫ error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: T*;
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+2]]:8: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_implicit.impl.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var b: T = *a;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: T = *a;
 
-// CHECK:STDOUT: --- fail_implicit.carbon
+// CHECK:STDOUT: --- fail_implicit.carbon = $fail_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -59,9 +74,9 @@ var b: T = *a;
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc6_16.1: type = splice_block %.loc6_16.2 [concrete = type] {
+// CHECK:STDOUT:   %.loc13_16.1: type = splice_block %.loc13_16.2 [concrete = type] {
 // CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc6_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc13_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%i32
 // CHECK:STDOUT:   name_binding_decl {
@@ -75,7 +90,7 @@ var b: T = *a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon = $fail_implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -100,8 +115,9 @@ var b: T = *a;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %a.var: ref <error> = var_storage %a.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc6: type = splice_block %ptr [concrete = <error>] {
-// CHECK:STDOUT:     %T.ref.loc6: type = name_ref T, imports.%Implicit.T
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %T.global_ref.loc10: type = global_ref imports.%Implicit.T
+// CHECK:STDOUT:     %T.ref.loc10: type = name_ref T, %T.global_ref.loc10
 // CHECK:STDOUT:     %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
@@ -110,7 +126,10 @@ var b: T = *a;
 // CHECK:STDOUT:     %a.var_patt: <error> = var_pattern %a.patt [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.var: ref <error> = var_storage %b.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %T.ref.loc9: type = name_ref T, imports.%Implicit.T
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %T.global_ref.loc17: type = global_ref imports.%Implicit.T
+// CHECK:STDOUT:     %T.ref.loc17: type = name_ref T, %T.global_ref.loc17
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b: <error> = wrapper_binding b, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: <error> = ref_binding_pattern b [concrete = <error>]
@@ -122,7 +141,7 @@ var b: T = *a;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %a.ref: <error> = name_ref a, file.%a [concrete = <error>]
-// CHECK:STDOUT:   %.loc9: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%b.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

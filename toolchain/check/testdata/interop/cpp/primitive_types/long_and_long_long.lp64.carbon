@@ -78,8 +78,16 @@ import Cpp;
 
 fn F() {
   let cpp_long_long: Cpp.long_long = 1;
-  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+3]]:32-44: error: cannot implicitly convert expression of type `long_long` to `i64` [ConversionFailure]
-  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+2]]:32-44: note: type `Cpp.long_long` does not implement interface `Core.ImplicitAs(i64)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+11]]:32
+  // CHECK:STDERR: ->     │   let unused carbon_i64: i64 = cpp_long_long;
+  // CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                ┗━━┫ error: cannot implicitly convert expression
+  // CHECK:STDERR:        ·                                │  ┃        of type `long_long` to `i64`
+  // CHECK:STDERR:        ·                                │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                                ╰────┤ type `Cpp.long_long` does not implement
+  // CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(i64)`
+  // CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused carbon_i64: i64 = cpp_long_long;
 }
@@ -177,10 +185,22 @@ import Cpp;
 fn ComparisonsHeterogeneousLongLongAndI32() {
   let a: Cpp.long_long = 1;
   let b: i32 = 1;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(i32)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_long_and_i32.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a == b;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(i32)` in type
+  // CHECK:STDERR:        ·      ┃        `Cpp.long_long` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a == b;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(Cpp.long_long)` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_long_and_i32.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   b == a;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(Cpp.long_long)` in
+  // CHECK:STDERR:        ·      ┃        type `i32` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   b == a;
 }
@@ -207,10 +227,22 @@ import Cpp;
 fn ComparisonsHeterogeneousLongLongAndI256() {
   let a: Cpp.long_long = 1;
   let b: i256 = 1;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_long_and_i256.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(i256)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_long_and_i256.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a == b;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(i256)` in type
+  // CHECK:STDERR:        ·      ┃        `Cpp.long_long` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a == b;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_long_and_i256.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(Cpp.long_long)` in type `i256` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_long_and_i256.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   b == a;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(Cpp.long_long)` in
+  // CHECK:STDERR:        ·      ┃        type `i256` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   b == a;
 }
@@ -295,11 +327,25 @@ fn AssertSameType[T: type](unused a: T, unused b: T) {}
 fn ArithmeticHeterogeneousLongLongAndI32() {
   let x: Cpp.long_long = 1;
   let y: i32 = 1;
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(i32)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_long_and_i32.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR: ->     │   AssertSameType(x + y, x);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.AddWith(i32)` in type `Cpp.long_long` that
+  // CHECK:STDERR:        ·                     ┃        does not implement that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(x + y, x);
 
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(Cpp.long_long)` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_long_and_i32.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR: ->     │   AssertSameType(y + x, x);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.AddWith(Cpp.long_long)` in type `i32` that
+  // CHECK:STDERR:        ·                     ┃        does not implement that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(y + x, x);
 }
@@ -401,10 +447,24 @@ fn BitWiseHeterogeneousLongLongAndI32() {
   let a: Cpp.long_long = 1;
   let b: i32 = 1;
 
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(i32)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_long_and_i32.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR: ->     │   AssertSameType(a & b, a);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.BitAndWith(i32)` in type `Cpp.long_long` that
+  // CHECK:STDERR:        ·                     ┃        does not implement that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(a & b, a);
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(Cpp.long_long)` in type `i32` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_long_and_i32.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR: ->     │   AssertSameType(b & a, a);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.BitAndWith(Cpp.long_long)` in type `i32` that
+  // CHECK:STDERR:        ·                     ┃        does not implement that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(b & a, a);
 }
@@ -509,7 +569,13 @@ import Cpp;
 
 fn CompoundAssignmentHeterogeneousLongLongAndI32() {
   var a: Cpp.long_long = 1;
-  // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_long_and_i32.carbon:[[@LINE+2]]:3-17: error: cannot access member of interface `Core.AddAssignWith(i32)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_compound_assignment_heterogeneous_long_long_and_i32.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a += (1 as i32);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.AddAssignWith(i32)` in
+  // CHECK:STDERR:        ·      ┃        type `Cpp.long_long` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a += (1 as i32);
 }
@@ -522,7 +588,13 @@ import Cpp;
 
 fn CompoundAssignmentHeterogeneousLongLongAndI128() {
   var a: Cpp.long_long = 1;
-  // CHECK:STDERR: fail_compound_assignment_heterogeneous_long_long_and_i128.carbon:[[@LINE+2]]:3-18: error: cannot access member of interface `Core.AddAssignWith(i128)` in type `Cpp.long_long` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_compound_assignment_heterogeneous_long_long_and_i128.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a += (1 as i128);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.AddAssignWith(i128)` in
+  // CHECK:STDERR:        ·      ┃        type `Cpp.long_long` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a += (1 as i128);
 }
@@ -580,10 +652,22 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `unsigned long
   // long` happens to fit in `u64` on this target.
-  // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+5]]:25-46: error: cannot implicitly convert expression of type `unsigned_long_long` to `u64` [ConversionFailure]
-  // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+4]]:25-46: note: type `Cpp.unsigned_long_long` does not implement interface `Core.ImplicitAs(u64)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_pass_ulonglong_to_u64.carbon:[[@LINE+17]]:25
+  // CHECK:STDERR: ->     │   let carbon_u64: u64 = cpp_unsigned_long_long;
+  // CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                         │  ┃        `unsigned_long_long` to `u64`
+  // CHECK:STDERR:        ·                         │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                         ╰────┤ type `Cpp.unsigned_long_long` does not implement
+  // CHECK:STDERR:        ·                              │ interface `Core.ImplicitAs(u64)`
+  // CHECK:STDERR:        ·                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+2]]:7-21: warning: binding `carbon_u64` unused [UnusedBinding]
+  // CHECK:STDERR:        ╭─┤ fail_pass_ulonglong_to_u64.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   let carbon_u64: u64 = cpp_unsigned_long_long;
+  // CHECK:STDERR:        ·       ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ warning: binding `carbon_u64` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let carbon_u64: u64 = cpp_unsigned_long_long;
 }
@@ -602,7 +686,7 @@ fn CopyUnsignedLongLong() {
 }
 
 
-// CHECK:STDOUT: --- long.carbon
+// CHECK:STDOUT: --- long.carbon = $long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -803,7 +887,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned_long.carbon
+// CHECK:STDOUT: --- unsigned_long.carbon = $unsigned_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1004,7 +1088,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- long_long.carbon
+// CHECK:STDOUT: --- long_long.carbon = $long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1348,7 +1432,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_long_long.carbon
+// CHECK:STDOUT: --- copy_long_long.carbon = $copy_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1457,7 +1541,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_homogeneous_long_long.carbon
+// CHECK:STDOUT: --- comparisons_homogeneous_long_long.carbon = $comparisons_homogeneous_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1587,7 +1671,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_left_side.carbon
+// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_left_side.carbon = $comparisons_heterogeneous_long_long_left_side
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2044,7 +2128,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_right_side.carbon
+// CHECK:STDOUT: --- comparisons_heterogeneous_long_long_right_side.carbon = $comparisons_heterogeneous_long_long_right_side
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2523,7 +2607,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_homogeneous_long_long.carbon
+// CHECK:STDOUT: --- compound_assignment_homogeneous_long_long.carbon = $compound_assignment_homogeneous_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2988,7 +3072,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_hereogeneous_long_long_and_i64.carbon
+// CHECK:STDOUT: --- compound_assignment_hereogeneous_long_long_and_i64.carbon = $compound_assignment_hereogeneous_long_long_and_i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3464,7 +3548,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_int_literal.carbon
+// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_int_literal.carbon = $compound_assignment_heterogeneous_long_long_and_int_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3580,7 +3664,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_runtime_i64.carbon
+// CHECK:STDOUT: --- compound_assignment_heterogeneous_long_long_and_runtime_i64.carbon = $compound_assignment_heterogeneous_long_long_and_runtime_i64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3735,7 +3819,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- increment_decrement_long_long.carbon
+// CHECK:STDOUT: --- increment_decrement_long_long.carbon = $increment_decrement_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3837,7 +3921,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %Cpp.long_long) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned_long_long.carbon
+// CHECK:STDOUT: --- unsigned_long_long.carbon = $unsigned_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -4201,7 +4285,7 @@ fn CopyUnsignedLongLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_unsigned_long_long.carbon
+// CHECK:STDOUT: --- copy_unsigned_long_long.carbon = $copy_unsigned_long_long
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

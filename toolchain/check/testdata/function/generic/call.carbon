@@ -71,7 +71,7 @@ fn CallSpecific(x: C*) -> C* {
 }
 
 
-// CHECK:STDOUT: --- explicit.carbon
+// CHECK:STDOUT: --- explicit.carbon = $explicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -359,7 +359,7 @@ fn CallSpecific(x: C*) -> C* {
 // CHECK:STDOUT:   %specific_impl_fn.loc6_10.2 => constants.%ptr.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduced.carbon
+// CHECK:STDOUT: --- deduced.carbon = $deduced
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

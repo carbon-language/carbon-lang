@@ -57,12 +57,19 @@ var b: F(false) = MakeB();
 library "[[@TEST_NAME]]";
 import library "types";
 
-// CHECK:STDERR: fail_todo_if_expression_direct.carbon:[[@LINE+2]]:8-28: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_if_expression_direct.carbon:[[@LINE+9]]:8
+// CHECK:STDERR: ->     │ var a: if true then A else B = MakeA();
+// CHECK:STDERR:        ·        ━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: if true then A else B = MakeA();
 var b: if false then A else B = MakeB();
 
-// CHECK:STDOUT: --- if_statement.carbon
+// CHECK:STDOUT: --- if_statement.carbon = $if_statement
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -131,7 +138,7 @@ var b: if false then A else B = MakeB();
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- if_expression_in_eval_fn.carbon
+// CHECK:STDOUT: --- if_expression_in_eval_fn.carbon = $if_expression_in_eval_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

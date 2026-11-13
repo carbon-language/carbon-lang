@@ -4,12 +4,53 @@
 
 name: 'Check Dependent PRs'
 on:
+  # zizmor: ignore[dangerous-triggers] - {necessary to mutate the PR}
   pull_request_target:
-    types: [opened, synchronize, ready_for_review, closed]
+    # Beyond code pushes and PR closes:
+    # - `reopened` refreshes status when a closed PR is reopened.
+    # - `edited` lets authors trigger a re-check by editing the PR description.
+    # - `labeled` / `unlabeled` let contributors with write access force a
+    #   re-check (by adding `dependent`) or override a stale check (by removing
+    #   `dependent`).
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - edited
+      - labeled
+      - unlabeled
+      - closed
+  # Required checks on `trunk` must also report `success` on merge queue
+  # commits; PR dependencies are already verified prior to queueing.
+  merge_group:
+  # Allow manually checking, re-checking, overriding, or scanning from Actions.
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to check (empty to scan dependent PRs)'
+        required: false
+        type: number
+      mode:
+        description: 'Mode when pr_number is provided'
+        required: false
+        type: choice
+        default: check
+        options: [check, recheck, override]
 
+# Isolate concurrency by merge_group commit, closed-PR scan, or PR number, and
+# avoid cancelling in-progress runs so rapid events (such as toggling labels or
+# landing stacked PRs) cannot leave a required check unset or skip a scan.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: >-
+    ${{ github.workflow }}-${{
+      github.event.merge_group.head_sha ||
+      (github.event.action == 'closed' && 'scan') ||
+      github.event.pull_request.number ||
+      inputs.pr_number ||
+      'scan'
+    }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -18,6 +59,14 @@ permissions:
 
 jobs:
   check_dependent_prs:
+    # Ignore label events for labels other than `dependent`, and ignore label
+    # changes made by this workflow itself to prevent self-triggering loops.
+    if: |
+      !contains(fromJSON('["labeled", "unlabeled"]'), github.event.action) ||
+      (
+        github.event.label.name == 'dependent' &&
+        github.actor != 'github-actions[bot]'
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
@@ -25,32 +74,57 @@ jobs:
         with:
           disable-sudo: true
           egress-policy: block
+          # prettier-ignore
           allowed-endpoints: >
-            api.github.com:443 github.com:443 pypi.org:443
-            files.pythonhosted.org:443 raw.githubusercontent.com:443
+            api.github.com:443
+            files.pythonhosted.org:443
+            github.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
             releases.astral.sh:443
+
+      - name: Report success for merge queue
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.merge_group.head_sha }}
+        run: |
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" \
+            -f state=success \
+            -f context='PR dependencies check' \
+            -f description='Checked prior to merge queue' \
+            -f target_url="$run_url"
 
       # Note: pull_request_target checks out the base branch by default.
       # This is safe as it avoids running untrusted code from the PR branch.
       - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        if: github.event_name != 'merge_group'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        if: github.event_name != 'merge_group'
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
           version: '0.11.15'
 
       - name: Check Dependent PR
+        if: github.event_name != 'merge_group'
+        env:
+          DISPATCH_MODE: ${{ inputs.mode }}
+          EVENT_ACTION: ${{ github.event.action }}
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
         run: |
-          if [ "$EVENT_ACTION" = "closed" ]; then
+          if [ "$EVENT_ACTION" = "closed" ] || [ -z "$PR_NUMBER" ]; then
             ./github_tools/check_dependent_pr.py --scan
+          elif [ "$EVENT_ACTION" = "unlabeled" ] || [ "$DISPATCH_MODE" = "override" ]; then
+            ./github_tools/check_dependent_pr.py --pr-number "${PR_NUMBER}" --override
+          elif [ "$EVENT_ACTION" = "labeled" ] || [ "$DISPATCH_MODE" = "recheck" ]; then
+            ./github_tools/check_dependent_pr.py --pr-number "${PR_NUMBER}" --recheck
           else
             ./github_tools/check_dependent_pr.py --pr-number "${PR_NUMBER}"
           fi
-        env:
-          GITHUB_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          EVENT_ACTION: ${{ github.event.action }}

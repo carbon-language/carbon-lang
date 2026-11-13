@@ -24,7 +24,7 @@ fn Main() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- char.carbon
+// CHECK:STDOUT: --- char.carbon = $char.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

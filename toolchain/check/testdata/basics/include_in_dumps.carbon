@@ -80,7 +80,7 @@ import library "excluded_with_range";
 fn F(c: C) { c.(I.Op)(); }
 
 
-// CHECK:STDOUT: --- exclude/included.carbon
+// CHECK:STDOUT: --- exclude/included.carbon = $included
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -117,7 +117,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- exclude/included_with_range.carbon
+// CHECK:STDOUT: --- exclude/included_with_range.carbon = $included_with_range
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -212,7 +212,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %self.patt.loc8_9.2 => constants.%self.patt.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_included.carbon
+// CHECK:STDOUT: --- import_included.carbon = $import_included
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -350,7 +350,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.ca6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_excluded.carbon
+// CHECK:STDOUT: --- import_excluded.carbon = $import_excluded
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

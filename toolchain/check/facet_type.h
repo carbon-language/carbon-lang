@@ -29,7 +29,7 @@ auto FacetTypeFromNamedConstraint(Context& context,
 // This must be used when accessing the LHS of a rewrite constraint which has
 // not yet been resolved in order to preserve which associated constant is being
 // rewritten.
-auto GetImplWitnessAccessWithoutSubstitution(Context& context,
+auto GetImplWitnessAccessWithoutSubstitution(const SemIR::File& sem_ir,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId;
 

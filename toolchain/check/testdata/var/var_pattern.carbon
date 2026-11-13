@@ -82,9 +82,20 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:41-43: error: `var` nested within another `var` [NestedVar]
+  // CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+15]]:41
+  // CHECK:STDERR: ->     │   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
+  // CHECK:STDERR:        ·                                         ┳━━
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: `var` nested within another
+  // CHECK:STDERR:        ·                                            ┃        `var`
+  // CHECK:STDERR:        ·                                            ┃        [NestedVar]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:41-56: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+7]]:41
+  // CHECK:STDERR: ->     │   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
+  // CHECK:STDERR:        ·                                         ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
 }
@@ -94,9 +105,20 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn f() {
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_compile_time.carbon:[[@LINE+15]]:15
+  // CHECK:STDERR: ->     │   var generic T: type;
+  // CHECK:STDERR:        ·               ┳━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                  ┃        `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·                  ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+2]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╭─┤ fail_compile_time.carbon:[[@LINE+7]]:22
+  // CHECK:STDERR: ->     │   var generic T: type;
+  // CHECK:STDERR:        ·                      ┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                         ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var generic T: type;
   let (x: (), generic T: type) = ((), ());
@@ -106,11 +128,21 @@ fn f() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:10-14: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╭─┤ fail_implicit.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F[var u: ()]();
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: implicit parameters of functions must be constant
+// CHECK:STDERR:        ·               ┃        [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F[var u: ()]();
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:10-16: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╭─┤ fail_implicit.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn G[var T: type]();
+// CHECK:STDERR:        ·          ━━━┳━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: implicit parameters of functions must be constant
+// CHECK:STDERR:        ·                ┃        [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G[var T: type]();
 
@@ -165,7 +197,7 @@ fn Call() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -239,7 +271,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_in_tuple.carbon
+// CHECK:STDOUT: --- var_in_tuple.carbon = $var_in_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -329,7 +361,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_in_var.carbon
+// CHECK:STDOUT: --- tuple_in_var.carbon = $tuple_in_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -457,7 +489,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_in_let_var.carbon
+// CHECK:STDOUT: --- tuple_in_let_var.carbon = $tuple_in_let_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -585,7 +617,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- function.carbon
+// CHECK:STDOUT: --- function.carbon = $function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -703,7 +735,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc4(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_function.carbon
+// CHECK:STDOUT: --- public_function.carbon = $public_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -754,7 +786,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%x.param: %empty_tuple.type, %y.param: ref %empty_tuple.type);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_function.impl.carbon
+// CHECK:STDOUT: --- public_function.impl.carbon = $public_function.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -810,7 +842,7 @@ fn Call() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_public_function.carbon
+// CHECK:STDOUT: --- use_public_function.carbon = $use_public_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -892,15 +924,15 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.2(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nested.carbon
+// CHECK:STDOUT: --- fail_nested.carbon = $fail_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_compile_time.carbon
+// CHECK:STDOUT: --- fail_compile_time.carbon = $fail_compile_time
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @f();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.carbon
+// CHECK:STDOUT: --- fail_implicit.carbon = $fail_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -932,7 +964,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @G();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_self.carbon
+// CHECK:STDOUT: --- var_self.carbon = $var_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -984,7 +1016,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.F(%self.param.loc5_8: ref %C, %self.param.loc5_12: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_match.carbon
+// CHECK:STDOUT: --- nested_match.carbon = $nested_match
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1118,7 +1150,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_param_from_init.carbon
+// CHECK:STDOUT: --- var_param_from_init.carbon = $var_param_from_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1184,7 +1216,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_12.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_param_from_int_literal.carbon
+// CHECK:STDOUT: --- var_param_from_int_literal.carbon = $var_param_from_int_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

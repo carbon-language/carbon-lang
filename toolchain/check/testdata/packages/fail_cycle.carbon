@@ -16,7 +16,12 @@
 
 package A;
 
-// CHECK:STDERR: fail_a.carbon:[[@LINE+2]]:1-9: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR:        ╭─┤ fail_a.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import B;
+// CHECK:STDERR:        · ━┳━━━━━━━
+// CHECK:STDERR:        ·  ┗━━┫ error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR:        ·     ┃        [ImportCycleDetected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import B;
 
@@ -24,7 +29,12 @@ import B;
 
 package B;
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+2]]:1-9: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import C;
+// CHECK:STDERR:        · ━┳━━━━━━━
+// CHECK:STDERR:        ·  ┗━━┫ error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR:        ·     ┃        [ImportCycleDetected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import C;
 
@@ -32,13 +42,23 @@ import C;
 
 package C;
 
-// CHECK:STDERR: fail_c.carbon:[[@LINE+2]]:1-9: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR:        ╭─┤ fail_c.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import A;
+// CHECK:STDERR:        · ━┳━━━━━━━
+// CHECK:STDERR:        ·  ┗━━┫ error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR:        ·     ┃        [ImportCycleDetected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import A;
 
 // --- fail_c.impl.carbon
 
-// CHECK:STDERR: fail_c.impl.carbon:[[@LINE+2]]:1-15: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR:        ╭─┤ fail_c.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl package C;
+// CHECK:STDERR:        · ━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·  ┗━━┫ error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR:        ·     ┃        [ImportCycleDetected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl package C;
 
@@ -46,11 +66,16 @@ impl package C;
 
 package CycleChild;
 
-// CHECK:STDERR: fail_cycle_child.carbon:[[@LINE+2]]:1-9: error: import cannot be used due to a cycle; cycle must be fixed to import [ImportCycleDetected]
+// CHECK:STDERR:        ╭─┤ fail_cycle_child.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import B;
+// CHECK:STDERR:        · ━┳━━━━━━━
+// CHECK:STDERR:        ·  ┗━━┫ error: import cannot be used due to a cycle; cycle must be fixed to import
+// CHECK:STDERR:        ·     ┃        [ImportCycleDetected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import B;
 
-// CHECK:STDOUT: --- fail_a.carbon
+// CHECK:STDOUT: --- fail_a.carbon = $fail_a
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [concrete] {
@@ -65,7 +90,7 @@ import B;
 // CHECK:STDOUT:   %B.import = import B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %C: <namespace> = namespace file.%C.import, [concrete] {
@@ -80,7 +105,7 @@ import B;
 // CHECK:STDOUT:   %C.import = import C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_c.carbon
+// CHECK:STDOUT: --- fail_c.carbon = $fail_c
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %A: <namespace> = namespace file.%A.import, [concrete] {
@@ -95,7 +120,7 @@ import B;
 // CHECK:STDOUT:   %A.import = import A
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_c.impl.carbon
+// CHECK:STDOUT: --- fail_c.impl.carbon = $fail_c.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -104,7 +129,7 @@ import B;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cycle_child.carbon
+// CHECK:STDOUT: --- fail_cycle_child.carbon = $fail_cycle_child
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %B: <namespace> = namespace file.%B.import, [concrete] {

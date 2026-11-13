@@ -31,7 +31,7 @@ var b2: Cpp.Second(Cpp.A, Cpp.B) = Cpp.B.B();
 var a2: Cpp.Second(Cpp.B, Cpp.A) = Cpp.A.A();
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_alias_template.carbon
+// CHECK:STDOUT: --- use_alias_template.carbon = $use_alias_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

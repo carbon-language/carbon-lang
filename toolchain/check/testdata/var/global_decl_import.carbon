@@ -28,7 +28,7 @@ fn G() -> {.v: ()} {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import.carbon
+// CHECK:STDOUT: --- import.carbon = $import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

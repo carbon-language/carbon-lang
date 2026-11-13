@@ -21,7 +21,11 @@ impl library "[[@TEST_NAME]]";
 // --- fail_b.carbon
 library "[[@TEST_NAME]]";
 interface B {}
-// CHECK:STDERR: fail_b.carbon:[[@LINE+2]]:1-13: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as B;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as B;
 
@@ -29,7 +33,7 @@ impl () as B;
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon = $a.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//a, A, unloaded
@@ -43,7 +47,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.impl.carbon
+// CHECK:STDOUT: --- b.impl.carbon = $b.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -55,8 +59,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.B = import_ref Main//b, B, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c07 = import_ref Main//b, loc2_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc5_7, loaded [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:   %Main.import_ref.21a: type = import_ref Main//b, loc5_12, loaded [concrete = constants.%B.type]
+// CHECK:STDOUT:   %Main.import_ref.e5c: type = import_ref Main//b, loc9_7, loaded [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %Main.import_ref.21a: type = import_ref Main//b, loc9_12, loaded [concrete = constants.%B.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

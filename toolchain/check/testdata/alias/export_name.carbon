@@ -56,7 +56,11 @@ library "[[@TEST_NAME]]";
 
 import library "export";
 
-// CHECK:STDERR: fail_orig_name_not_in_export.carbon:[[@LINE+2]]:8: error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_orig_name_not_in_export.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ var c: C = {};
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: C = {};
 
@@ -70,7 +74,7 @@ import library "export_orig";
 var c: C = {};
 var d: D* = &c;
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -106,7 +110,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon
+// CHECK:STDOUT: --- export.carbon = $export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -144,7 +148,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_orig.carbon
+// CHECK:STDOUT: --- export_orig.carbon = $export_orig
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +186,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon = $use_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -239,7 +243,7 @@ var d: D* = &c;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon
+// CHECK:STDOUT: --- fail_orig_name_not_in_export.carbon = $fail_orig_name_not_in_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -275,12 +279,12 @@ var d: D* = &c;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_compat.carbon
+// CHECK:STDOUT: --- indirect_compat.carbon = $indirect_compat
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -133,9 +133,16 @@ fn F(a: A) {
   // a copy to perform initialization. It's not clear whether that is the right
   // behavior.
 
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:3-22: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+3]]:3-22: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+2]]:26-54: note: in copy of `A` [InCopy]
+  // CHECK:STDERR:        ╭─┤ fail_init_tuple_variable.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   var unused a_init: A = (a as ({}, Noncopyable)) as A;
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━   ┬────────────────────────────
+  // CHECK:STDERR:        ·             ┗━━━━━━━━━━━━━━━┫ error: cannot copy value of type `Noncopyable`
+  // CHECK:STDERR:        ·             │            │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·             ╰─────────────────┤ type `Noncopyable` does not implement interface
+  // CHECK:STDERR:        ·                          │    │ `Core.Copy`
+  // CHECK:STDERR:        ·                          │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ╰──────┤ in copy of `A` [InCopy]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused a_init: A = (a as ({}, Noncopyable)) as A;
 }
@@ -155,12 +162,19 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-25: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+2]]:12-25: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_adapt_init_from_struct.carbon:[[@LINE+10]]:12
+// CHECK:STDERR: ->     │ var b: B = {.x = ()} as B;
+// CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: cannot convert expression of type `{.x: ()}` to `B` with
+// CHECK:STDERR:        ·            │  ┃        `as`
+// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·            ╰────┤ type `{.x: ()}` does not implement interface `Core.As(B)`
+// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
 
-// CHECK:STDOUT: --- adapt_class.carbon
+// CHECK:STDOUT: --- adapt_class.carbon = $adapt_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -181,7 +195,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_val: %B = wrapper_binding b_val, @__global_init.%.loc22_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.e39 = value_binding_pattern b_val [concrete = constants.%b_val.patt]
 // CHECK:STDOUT:   }
@@ -205,10 +218,12 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %a_val.ref: %A = name_ref a_val, file.%a_val
+// CHECK:STDOUT:   %a_val.global_ref: %A = global_ref %a_val
+// CHECK:STDOUT:   %a_val.ref: %A = name_ref a_val, %a_val.global_ref
 // CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc22_22.1: %B = as_compatible %a_val.ref
 // CHECK:STDOUT:   %.loc22_22.2: %B = converted %a_val.ref, %.loc22_22.1
+// CHECK:STDOUT:   %b_val: %B = wrapper_binding b_val, %.loc22_22.2
 // CHECK:STDOUT:   %a_ref.ref.loc23: ref %A = name_ref a_ref, file.%a_ref [concrete = file.%a_ref.var]
 // CHECK:STDOUT:   %B.ref.loc23: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc23_25.1: ref %B = as_compatible %a_ref.ref.loc23 [concrete = constants.%a_ref.var]
@@ -225,7 +240,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt_i32.carbon
+// CHECK:STDOUT: --- adapt_i32.carbon = $adapt_i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -266,7 +281,6 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, @__global_init.%.loc10_16.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -286,14 +300,16 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc9_23.1: %A = as_compatible %.loc9_15.2 [concrete = constants.%int_1.403]
 // CHECK:STDOUT:   %.loc9_23.2: %A = converted %.loc9_15.2, %.loc9_23.1 [concrete = constants.%int_1.403]
-// CHECK:STDOUT:   %a.ref: %A = name_ref a, file.%a
+// CHECK:STDOUT:   %a.global_ref: %A = global_ref file.%a
+// CHECK:STDOUT:   %a.ref: %A = name_ref a, %a.global_ref
 // CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc10_16.1: %i32 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc10_16.2: %i32 = converted %a.ref, %.loc10_16.1
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc10_16.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- multi_level_adapt.carbon
+// CHECK:STDOUT: --- multi_level_adapt.carbon = $multi_level_adapt
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -323,7 +339,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_class_value.carbon
+// CHECK:STDOUT: --- init_class_value.carbon = $init_class_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -365,10 +381,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc14_42.1: ref %B = temporary @__global_init.%.loc14_34.3, @__global_init.%.loc14_42.2 [concrete = constants.%.a63]
-// CHECK:STDOUT:   %.loc14_42.2: %B = acquire_value %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_value: %B = wrapper_binding b_value, %.loc14_42.2
+// CHECK:STDOUT:   %b_value: %B = wrapper_binding b_value, @__global_init.%.loc14_42.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_value.patt: %pattern_type.e39 = value_binding_pattern b_value [concrete = constants.%b_value.patt]
 // CHECK:STDOUT:   }
@@ -402,10 +416,12 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc14_42.1: init %B = as_compatible %.loc14_36 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc14_42.2: init %B = converted %.loc14_36, %.loc14_42.1 [concrete = constants.%B.val]
+// CHECK:STDOUT:   %.loc14_42.3: ref %B = temporary %.loc14_34.3, %.loc14_42.2 [concrete = constants.%.a63]
+// CHECK:STDOUT:   %.loc14_42.4: %B = acquire_value %.loc14_42.3 [concrete = constants.%B.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_tuple_value.carbon
+// CHECK:STDOUT: --- init_tuple_value.carbon = $init_tuple_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

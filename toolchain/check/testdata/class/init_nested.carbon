@@ -28,7 +28,7 @@ fn MakeOuter() -> Outer {
   return {.c = MakeInner(), .d = MakeInner()};
 }
 
-// CHECK:STDOUT: --- init_nested.carbon
+// CHECK:STDOUT: --- init_nested.carbon = $init_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

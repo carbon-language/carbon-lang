@@ -67,8 +67,17 @@ fn F() -> var i32 {
 library "[[@TEST_NAME]]";
 
 fn F() -> val i32 {
-  // CHECK:STDERR: fail_val_return_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR: fail_val_return_returned_var.carbon:[[@LINE-2]]:11-17: note: return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ╭─┤ fail_val_return_returned_var.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F() -> val i32 {
+  // CHECK:STDERR:        ·           ───┬───
+  // CHECK:STDERR:        ·              ╰──┤ return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var v: i32 = 1;
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `returned var` declaration in function with non-initializing
+  // CHECK:STDERR:        ·      ┃        return form
+  // CHECK:STDERR:        ·      ┃        [ReturnedVarNotInit]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;
@@ -115,7 +124,7 @@ fn G() {
   let unused x: i32 = F();
 }
 
-// CHECK:STDOUT: --- val_return.carbon
+// CHECK:STDOUT: --- val_return.carbon = $val_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -177,7 +186,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_return.carbon
+// CHECK:STDOUT: --- var_return.carbon = $var_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -241,7 +250,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_return_definition.carbon
+// CHECK:STDOUT: --- val_return_definition.carbon = $val_return_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +327,7 @@ fn G() {
 // CHECK:STDOUT:   return %.loc7_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_val_return.carbon
+// CHECK:STDOUT: --- import_val_return.carbon = $import_val_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

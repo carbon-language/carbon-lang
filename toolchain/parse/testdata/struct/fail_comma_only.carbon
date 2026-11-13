@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_comma_only.carbon
 
-// CHECK:STDERR: fail_comma_only.carbon:[[@LINE+2]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_comma_only.carbon:[[@LINE+7]]:9
+// CHECK:STDERR: ->     │ var x: {,} = {};
+// CHECK:STDERR:        ·         ┳
+// CHECK:STDERR:        ·         ┗━━┫ error: expected `.field: field_type` or `.field = value`
+// CHECK:STDERR:        ·            ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {,} = {};
 

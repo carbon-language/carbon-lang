@@ -10,8 +10,17 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+3]]:1-6: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-3]]:1-2: note: first declaration is here [FirstDecl]
+// CHECK:STDERR:        ╭─┤ fail_after_decl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first declaration is here [FirstDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import B;
+// CHECK:STDERR:        · ┳━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `import` declarations must come after the `package` declaration (if
+// CHECK:STDERR:        ·    ┃        present) and before any other entities in the file
+// CHECK:STDERR:        ·    ┃        [ImportTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import B;
 

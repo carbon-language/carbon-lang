@@ -39,9 +39,19 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+4]]:1-12: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: imported from: fail_import_not_identified.carbon:[[@LINE-4]]:1 [InImport]
-// CHECK:STDERR: a.carbon:3:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_import_not_identified.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ impl C as A;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: facet type `A` cannot be identified in `impl as`
+// CHECK:STDERR:        ·          ┃        [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ ╭── imported from: fail_import_not_identified.carbon [InImport]
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ constraint A;
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
+// CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C as A;
 
@@ -58,7 +68,7 @@ impl C as B;
 // This requires that B is complete.
 impl C as B {}
 
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon = $a.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//a, A, unloaded
@@ -72,7 +82,7 @@ impl C as B {}
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.impl.carbon
+// CHECK:STDOUT: --- b.impl.carbon = $b.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

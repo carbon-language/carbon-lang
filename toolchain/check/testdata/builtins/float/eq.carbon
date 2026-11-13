@@ -32,7 +32,12 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-39: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "float.eq"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
@@ -40,11 +45,16 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-59: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_literal.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "float.eq"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 
-// CHECK:STDOUT: --- float_eq.carbon
+// CHECK:STDOUT: --- float_eq.carbon = $float_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -16,7 +16,7 @@ fn F(a: i32);
 
 fn G(a: i32);
 
-// CHECK:STDOUT: --- param_same_name.carbon
+// CHECK:STDOUT: --- param_same_name.carbon = $param_same_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

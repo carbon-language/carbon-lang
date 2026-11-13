@@ -29,8 +29,13 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+3]]:9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-  // CHECK:STDERR: fail_param_shadows_class.carbon:[[@LINE+2]]:11-17: note: name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ╭─┤ fail_param_shadows_class.carbon:[[@LINE+8]]:9
+  // CHECK:STDERR: ->     │   class C(C: type) {
+  // CHECK:STDERR:        ·         ┳ ───┬───
+  // CHECK:STDERR:        ·         ┗━━━━━━━┫ error: duplicate name `C` being declared in the same scope
+  // CHECK:STDERR:        ·              │  ┃        [NameDeclDuplicate]
+  // CHECK:STDERR:        ·              ╰────┤ name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   class C(C: type) {
   }
@@ -43,7 +48,7 @@ library "[[@TEST_NAME]]";
 class C(C: type) {
 }
 
-// CHECK:STDOUT: --- class.carbon
+// CHECK:STDOUT: --- class.carbon = $class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -256,7 +261,7 @@ class C(C: type) {
 // CHECK:STDOUT:   %complete_type.loc7_3.2 => constants.%complete_type.c49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_param_shadows_class.carbon
+// CHECK:STDOUT: --- fail_param_shadows_class.carbon = $fail_param_shadows_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -289,9 +294,9 @@ class C(C: type) {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @C(%C.loc9_12.2: type) {
-// CHECK:STDOUT:   %C.patt.loc9_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
-// CHECK:STDOUT:   %C.loc9_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
+// CHECK:STDOUT: generic class @C(%C.loc14_12.2: type) {
+// CHECK:STDOUT:   %C.patt.loc14_12.2: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc14_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:   %C.loc14_12.1: type = symbolic_binding C, 0 [symbolic = %C.loc14_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -307,23 +312,23 @@ class C(C: type) {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
-// CHECK:STDOUT:     %C.patt.loc9_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc9_12.2 (constants.%C.patt)]
+// CHECK:STDOUT:     %C.patt.loc14_12.1: %pattern_type = symbolic_binding_pattern C, 0 [symbolic = %C.patt.loc14_12.2 (constants.%C.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc9_14.1: type = splice_block %.loc9_14.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc14_14.1: type = splice_block %.loc14_14.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc9_14.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc14_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %C.loc9_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc9_12.1 (constants.%C.67d)]
+// CHECK:STDOUT:     %C.loc14_12.2: type = symbolic_binding C, 0 [symbolic = %C.loc14_12.1 (constants.%C.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%C.67d) {
-// CHECK:STDOUT:   %C.patt.loc9_12.2 => constants.%C.patt
-// CHECK:STDOUT:   %C.loc9_12.1 => constants.%C.67d
+// CHECK:STDOUT:   %C.patt.loc14_12.2 => constants.%C.patt
+// CHECK:STDOUT:   %C.loc14_12.1 => constants.%C.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon
+// CHECK:STDOUT: --- nonlocal_param_shadows_class.carbon = $nonlocal_param_shadows_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

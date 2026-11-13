@@ -52,7 +52,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:13-15: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ var f: () = Def();
+// CHECK:STDERR:        ·             ━┳━
+// CHECK:STDERR:        ·              ┗━━┫ error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = Def();
 
@@ -62,7 +66,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:13-20: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ var f: () = Test.Def();
+// CHECK:STDERR:        ·             ━━━━┳━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: member name `Def` not found in `Test`
+// CHECK:STDERR:        ·                    ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = Test.Def();
 
@@ -78,7 +87,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+2]]:13-26: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward_with_def.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ var f: () = ForwardWithDef();
+// CHECK:STDERR:        ·             ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = ForwardWithDef();
 
@@ -88,7 +101,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+2]]:13-31: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_forward_with_def.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ var f: () = Test.ForwardWithDef();
+// CHECK:STDERR:        ·             ━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: member name `ForwardWithDef` not found in `Test`
+// CHECK:STDERR:        ·                        ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = Test.ForwardWithDef();
 
@@ -106,7 +124,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+2]]:13-19: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ var f: () = Forward();
+// CHECK:STDERR:        ·             ━━━┳━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = Forward();
 
@@ -116,7 +138,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+2]]:13-24: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_forward.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ var f: () = Test.Forward();
+// CHECK:STDERR:        ·             ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: member name `Forward` not found in `Test`
+// CHECK:STDERR:        ·                      ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var f: () = Test.Forward();
 
@@ -128,7 +155,7 @@ private fn Redecl();
 
 private fn Redecl() {}
 
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +175,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.carbon
+// CHECK:STDOUT: --- forward_with_def.carbon = $forward_with_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -169,7 +196,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward.carbon
+// CHECK:STDOUT: --- forward.carbon = $forward
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -186,7 +213,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon = $def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -232,7 +259,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_def.carbon
+// CHECK:STDOUT: --- fail_local_def.carbon = $fail_local_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -250,9 +277,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -268,7 +295,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_def.carbon
+// CHECK:STDOUT: --- fail_other_def.carbon = $fail_other_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -293,9 +320,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc13_9.1: type = splice_block %.loc13_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc13_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_9.3: type = converted %.loc13_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -312,7 +339,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.impl.carbon
+// CHECK:STDOUT: --- forward_with_def.impl.carbon = $forward_with_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -358,7 +385,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_forward_with_def.carbon
+// CHECK:STDOUT: --- fail_local_forward_with_def.carbon = $fail_local_forward_with_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -376,9 +403,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -394,7 +421,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_forward_with_def.carbon
+// CHECK:STDOUT: --- fail_other_forward_with_def.carbon = $fail_other_forward_with_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -419,9 +446,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc13_9.1: type = splice_block %.loc13_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc13_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_9.3: type = converted %.loc13_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -438,7 +465,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward.impl.carbon
+// CHECK:STDOUT: --- forward.impl.carbon = $forward.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -488,7 +515,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_forward.carbon
+// CHECK:STDOUT: --- fail_local_forward.carbon = $fail_local_forward
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -506,9 +533,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc12_9.1: type = splice_block %.loc12_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc12_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_9.3: type = converted %.loc12_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -524,7 +551,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_forward.carbon
+// CHECK:STDOUT: --- fail_other_forward.carbon = $fail_other_forward
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,9 +576,9 @@ private fn Redecl() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %f.var: ref %empty_tuple.type = var_storage %f.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc13_9.1: type = splice_block %.loc13_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc13_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc13_9.3: type = converted %.loc13_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %f: ref %empty_tuple.type = wrapper_binding f, %f.var [concrete = %f.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -568,7 +595,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon
+// CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon = $todo_fail_private_on_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

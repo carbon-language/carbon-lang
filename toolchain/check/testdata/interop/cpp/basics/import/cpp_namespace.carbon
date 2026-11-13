@@ -20,7 +20,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_duplicate_cpp_name.carbon:[[@LINE+2]]:11-13: error: `namespace` introducer should be followed by a name; prefix reserved word with `r#` to form a valid identifier [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_cpp_name.carbon:[[@LINE+8]]:11
+// CHECK:STDERR: ->     │ namespace Cpp;
+// CHECK:STDERR:        ·           ┳━━
+// CHECK:STDERR:        ·           ┗━━┫ error: `namespace` introducer should be followed by a name;
+// CHECK:STDERR:        ·              ┃        prefix reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Cpp;
 
@@ -31,7 +37,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "header.h";
 
 namespace N;
-// CHECK:STDERR: fail_cpp_in_inner_namespace.carbon:[[@LINE+2]]:13-15: error: `.` should be followed by a name; prefix reserved word with `r#` to form a valid identifier [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╭─┤ fail_cpp_in_inner_namespace.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ namespace N.Cpp;
+// CHECK:STDERR:        ·             ┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: `.` should be followed by a name; prefix reserved word
+// CHECK:STDERR:        ·                ┃        with `r#` to form a valid identifier
+// CHECK:STDERR:        ·                ┃        [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace N.Cpp;
 
@@ -51,9 +63,19 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "header.h";
 
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+4]]:7-9: error: `class` introducer should be followed by a name; prefix reserved word with `r#` to form a valid identifier [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_add_name_to_cpp_namespace.carbon:[[@LINE+14]]:7
+// CHECK:STDERR: ->     │ class Cpp.C {};
+// CHECK:STDERR:        ·       ┳━━
+// CHECK:STDERR:        ·       ┗━━┫ error: `class` introducer should be followed by a name; prefix
+// CHECK:STDERR:        ·          ┃        reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_add_name_to_cpp_namespace.carbon:[[@LINE+2]]:7-9: error: name `r#Cpp` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_add_name_to_cpp_namespace.carbon:[[@LINE+6]]:7
+// CHECK:STDERR: ->     │ class Cpp.C {};
+// CHECK:STDERR:        ·       ━┳━
+// CHECK:STDERR:        ·        ┗━━┫ error: name `r#Cpp` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Cpp.C {};
 
@@ -92,7 +114,7 @@ fn F() {
 //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- alias.carbon = $alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
@@ -105,7 +127,7 @@ fn F() {
 // CHECK:STDOUT:   %MyCpp: <namespace> = alias_binding MyCpp, %Cpp.ref [concrete = imports.%Cpp]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_and_impl.carbon
+// CHECK:STDOUT: --- api_and_impl.carbon = $api_and_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -113,9 +135,9 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_and_impl.impl.carbon
+// CHECK:STDOUT: --- api_and_impl.impl.carbon = $api_and_impl.impl
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- system_header.carbon
+// CHECK:STDOUT: --- system_header.carbon = $system_header
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

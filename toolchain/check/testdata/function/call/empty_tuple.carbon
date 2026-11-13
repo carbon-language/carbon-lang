@@ -20,7 +20,7 @@ fn Main() {
   Echo(());
 }
 
-// CHECK:STDOUT: --- empty_tuple.carbon
+// CHECK:STDOUT: --- empty_tuple.carbon = $empty_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

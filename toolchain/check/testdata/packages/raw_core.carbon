@@ -34,11 +34,21 @@ library "[[@TEST_NAME]]";
 
 import r#Core;
 
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+2]]:10-15: error: member name `F` not found in `Core` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_raw_core_not_core.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn G() { Core.F(); }
+// CHECK:STDERR:        ·          ━━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: member name `F` not found in `Core`
+// CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() { Core.F(); }
 
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+2]]:10-19: error: member name `Int` not found in `r#Core` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_raw_core_not_core.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn H() { r#Core.Int(32); }
+// CHECK:STDERR:        ·          ━━━━━┳━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: member name `Int` not found in `r#Core`
+// CHECK:STDERR:        ·                  ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H() { r#Core.Int(32); }
 
@@ -50,7 +60,7 @@ class r#Core {
 
 var c: r#Core = {.n = 0 as Core.Int(32)};
 
-// CHECK:STDOUT: --- package_raw_core.carbon
+// CHECK:STDOUT: --- package_raw_core.carbon = $package_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -76,7 +86,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_raw_core.carbon
+// CHECK:STDOUT: --- import_raw_core.carbon = $import_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -139,7 +149,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_core_not_core.carbon
+// CHECK:STDOUT: --- fail_raw_core_not_core.carbon = $fail_raw_core_not_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -190,7 +200,7 @@ var c: r#Core = {.n = 0 as Core.Int(32)};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class_raw_core.carbon
+// CHECK:STDOUT: --- class_raw_core.carbon = $class_raw_core
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

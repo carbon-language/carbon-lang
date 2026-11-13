@@ -24,12 +24,20 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 // TODO: Replace this diagnostic with one that better describes the error, such as 'DeclaredInMultipleLibraries'.
-// CHECK:STDERR: fail_b.carbon:[[@LINE+3]]:1-13: error: redeclaration of `interface I` is redundant [RedeclRedundant]
-// CHECK:STDERR: a.carbon:4:1-12: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ interface I {}
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: redeclaration of `interface I` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ interface I;
+// CHECK:STDERR:        · ──────┬─────
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface I {}
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -45,7 +53,7 @@ interface I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

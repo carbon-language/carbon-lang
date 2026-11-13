@@ -91,8 +91,17 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+3]]:1-10: error: only imported entities are valid for `export` [ExportNotImportedEntity]
-// CHECK:STDERR: base.carbon:8:1-13: note: name is declared here [ExportNotImportedEntitySource]
+// CHECK:STDERR:        ╭─┤ fail_export_ns.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ export NS;
+// CHECK:STDERR:        · ━━━━━┳━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: only imported entities are valid for `export`
+// CHECK:STDERR:        ·         ┃        [ExportNotImportedEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ base.carbon
+// CHECK:STDERR:        │ namespace NS;
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ name is declared here [ExportNotImportedEntitySource]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export NS;
 
@@ -102,8 +111,16 @@ library "[[@TEST_NAME]]";
 
 class Local {}
 
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+3]]:1-13: error: only imported entities are valid for `export` [ExportNotImportedEntity]
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-3]]:1-13: note: name is declared here [ExportNotImportedEntitySource]
+// CHECK:STDERR:        ╭─┤ fail_export_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ class Local {}
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ name is declared here [ExportNotImportedEntitySource]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ export Local;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: only imported entities are valid for `export`
+// CHECK:STDERR:        ·          ┃        [ExportNotImportedEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export Local;
 
@@ -113,8 +130,18 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+3]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: base.carbon:4:1-9: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╭─┤ fail_export_member.carbon:[[@LINE+13]]:8
+// CHECK:STDERR: ->     │ export C.x;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: name qualifiers are only allowed for entities that provide a
+// CHECK:STDERR:        ·           ┃        scope
+// CHECK:STDERR:        ·           ┃        [QualifiedNameInNonScope]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ base.carbon
+// CHECK:STDERR:        │ class C {
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export C.x;
 
@@ -144,10 +171,18 @@ library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+2]]:15: error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_use_not_reexporting.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ alias Local = C;
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias Local = C;
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+2]]:17-18: error: name `NS` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_use_not_reexporting.carbon:[[@LINE+6]]:17
+// CHECK:STDERR: ->     │ alias NSLocal = NS.NSC;
+// CHECK:STDERR:        ·                 ━┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: name `NS` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias NSLocal = NS.NSC;
 
@@ -158,8 +193,15 @@ library "[[@TEST_NAME]]";
 import library "base";
 
 export C;
-// CHECK:STDERR: repeat_export.carbon:[[@LINE+3]]:1-9: warning: `export` matches previous `export` [ExportRedundant]
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-2]]:1-9: note: previous `export` here [ExportPrevious]
+// CHECK:STDERR:        ╭─┤ repeat_export.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ export C;
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ previous `export` here [ExportPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ export C;
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ warning: `export` matches previous `export` [ExportRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export C;
 
@@ -177,11 +219,16 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ private export C;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `private` not allowed on `export` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 private export C;
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -235,7 +282,7 @@ private export C;
 // CHECK:STDOUT:   .y = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export.carbon
+// CHECK:STDOUT: --- export.carbon = $export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -289,7 +336,7 @@ private export C;
 // CHECK:STDOUT:   .y = imports.%Main.import_ref.565
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- not_reexporting.carbon
+// CHECK:STDOUT: --- not_reexporting.carbon = $not_reexporting
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//export, C, unloaded
@@ -308,7 +355,7 @@ private export C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.carbon
+// CHECK:STDOUT: --- export_export.carbon = $export_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -362,13 +409,13 @@ private export C;
 // CHECK:STDOUT:   .y = imports.%Main.import_ref.5a3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_in_impl.carbon
+// CHECK:STDOUT: --- export_in_impl.carbon = $export_in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export.carbon
+// CHECK:STDOUT: --- use_export.carbon = $use_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -475,7 +522,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_export.impl.carbon
+// CHECK:STDOUT: --- export_export.impl.carbon = $export_export.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -583,7 +630,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_export.carbon
+// CHECK:STDOUT: --- use_export_export.carbon = $use_export_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -690,7 +737,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_ns.carbon
+// CHECK:STDOUT: --- fail_export_ns.carbon = $fail_export_ns
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -709,7 +756,7 @@ private export C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_decl.carbon
+// CHECK:STDOUT: --- fail_export_decl.carbon = $fail_export_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -733,7 +780,7 @@ private export C;
 // CHECK:STDOUT:   .Self = constants.%Local
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_export_member.carbon
+// CHECK:STDOUT: --- fail_export_member.carbon = $fail_export_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -771,7 +818,7 @@ private export C;
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_both.carbon
+// CHECK:STDOUT: --- import_both.carbon = $import_both
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -878,7 +925,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_both_reversed.carbon
+// CHECK:STDOUT: --- import_both_reversed.carbon = $import_both_reversed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -985,7 +1032,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_not_reexporting.carbon
+// CHECK:STDOUT: --- fail_use_not_reexporting.carbon = $fail_use_not_reexporting
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -1002,7 +1049,7 @@ private export C;
 // CHECK:STDOUT:   %NSLocal: <error> = alias_binding NSLocal, %NSC.ref [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeat_export.carbon
+// CHECK:STDOUT: --- repeat_export.carbon = $repeat_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1041,7 +1088,7 @@ private export C;
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_repeat_export.carbon
+// CHECK:STDOUT: --- use_repeat_export.carbon = $use_repeat_export
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1102,7 +1149,7 @@ private export C;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT: --- fail_modifiers.carbon = $fail_modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

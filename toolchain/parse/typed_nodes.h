@@ -169,6 +169,10 @@ using UnderscoreName =
     LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
              NodeCategory::NonExprName>;
 
+// The `_` token, when used as the field in a struct pattern.
+using PatternListUnderscoreField =
+    LeafNode<NodeKind::PatternListUnderscoreField, Lex::UnderscoreTokenIndex>;
+
 // A name qualifier with parameters, such as `A(T: type).` or
 // `A[T: type](N: T).`.
 struct IdentifierNameQualifierWithParams {
@@ -1638,7 +1642,7 @@ using StructPatternFieldId =
     NodeIdOneOf<StructPatternDesignatedField,
                 StructPatternFieldLetBindingPattern, VariablePattern,
                 StructPatternFieldVarBindingPattern, UnusedPattern,
-                UnderscoreName, DefaultValuePattern>;
+                PatternListUnderscoreField, DefaultValuePattern>;
 
 struct StructPattern {
   static constexpr auto Kind = NodeKind::StructPattern.Define(

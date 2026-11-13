@@ -43,13 +43,21 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE+3]]:3-16: error: cannot access private member `static_field` of type `C` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_private_static_field_invalid_access.carbon:[[@LINE-5]]:22-38: note: declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_private_static_field_invalid_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   private static var static_field: i32;
+  // CHECK:STDERR:        ·                      ────────┬────────
+  // CHECK:STDERR:        ·                              ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   C.static_field = 123;
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access private member `static_field` of type `C`
+  // CHECK:STDERR:        ·             ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C.static_field = 123;
 }
 
-// CHECK:STDOUT: --- static_field.carbon
+// CHECK:STDOUT: --- static_field.carbon = $static_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

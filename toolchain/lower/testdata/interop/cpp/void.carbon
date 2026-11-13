@@ -250,8 +250,8 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!205, !206, !207, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!212}
+// CHECK:STDOUT: !llvm.module.flags = !{!205, !206, !207, !208, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!213}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -373,14 +373,15 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: !199 = !DILocalVariable(arg: 1, scope: !198, type: !7)
 // CHECK:STDOUT: !203 = !DILocation(line: 36, column: 1, scope: !198)
 // CHECK:STDOUT: !204 = !{!199}
-// CHECK:STDOUT: !205 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !206 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !207 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !208 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !209 = !{!"omnipotent char", !208, i64 0}
-// CHECK:STDOUT: !210 = !{!"int", !209, i64 0}
-// CHECK:STDOUT: !211 = !{!"__libc_errno", !210, i64 0}
-// CHECK:STDOUT: !212 = !{!211, !210, i64 0}
+// CHECK:STDOUT: !205 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !206 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !207 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !208 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !209 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !210 = !{!"omnipotent char", !209, i64 0}
+// CHECK:STDOUT: !211 = !{!"int", !210, i64 0}
+// CHECK:STDOUT: !212 = !{!"__libc_errno", !211, i64 0}
+// CHECK:STDOUT: !213 = !{!212, !211, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'receive.carbon'
@@ -389,59 +390,60 @@ fn ConvertFromConstVoidPtr(p: const Cpp.void*) -> const i32* {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReceiveVoidPtr.Main() #0 !dbg !217 {
+// CHECK:STDOUT: define ptr @_CReceiveVoidPtr.Main() #0 !dbg !218 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %return_void_ptr.call = call ptr @_Z15return_void_ptrv(), !dbg !220
-// CHECK:STDOUT:   ret ptr %return_void_ptr.call, !dbg !221
+// CHECK:STDOUT:   %return_void_ptr.call = call ptr @_Z15return_void_ptrv(), !dbg !221
+// CHECK:STDOUT:   ret ptr %return_void_ptr.call, !dbg !222
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef ptr @_Z15return_void_ptrv() #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CConvertFromVoidPtr.Main(ptr %p) #0 !dbg !222 {
+// CHECK:STDOUT: define ptr @_CConvertFromVoidPtr.Main(ptr %p) #0 !dbg !223 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr %p, !dbg !228
+// CHECK:STDOUT:   ret ptr %p, !dbg !229
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CConvertFromConstVoidPtr.Main(ptr %p) #0 !dbg !230 {
+// CHECK:STDOUT: define ptr @_CConvertFromConstVoidPtr.Main(ptr %p) #0 !dbg !231 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr %p, !dbg !236
+// CHECK:STDOUT:   ret ptr %p, !dbg !237
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!214}
-// CHECK:STDOUT: !llvm.module.flags = !{!205, !206, !207, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!212}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!215}
+// CHECK:STDOUT: !llvm.module.flags = !{!205, !206, !207, !208, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!213}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !14 = !{!7, !7}
 // CHECK:STDOUT: !15 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !205 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !206 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !207 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !208 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !209 = !{!"omnipotent char", !208, i64 0}
-// CHECK:STDOUT: !210 = !{!"int", !209, i64 0}
-// CHECK:STDOUT: !211 = !{!"__libc_errno", !210, i64 0}
-// CHECK:STDOUT: !212 = !{!211, !210, i64 0}
-// CHECK:STDOUT: !213 = !DIFile(filename: "receive.carbon", directory: "")
-// CHECK:STDOUT: !214 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !213, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !215 = !{!7}
-// CHECK:STDOUT: !216 = !DISubroutineType(types: !215)
-// CHECK:STDOUT: !217 = distinct !DISubprogram(name: "ReceiveVoidPtr", linkageName: "_CReceiveVoidPtr.Main", scope: null, file: !213, line: 6, type: !216, spFlags: DISPFlagDefinition, unit: !214)
-// CHECK:STDOUT: !220 = !DILocation(line: 7, column: 10, scope: !217)
-// CHECK:STDOUT: !221 = !DILocation(line: 7, column: 3, scope: !217)
-// CHECK:STDOUT: !222 = distinct !DISubprogram(name: "ConvertFromVoidPtr", linkageName: "_CConvertFromVoidPtr.Main", scope: null, file: !213, line: 10, type: !15, spFlags: DISPFlagDefinition, unit: !214, retainedNodes: !229)
-// CHECK:STDOUT: !223 = !DILocalVariable(arg: 1, scope: !222, type: !7)
-// CHECK:STDOUT: !228 = !DILocation(line: 11, column: 3, scope: !222)
-// CHECK:STDOUT: !229 = !{!223}
-// CHECK:STDOUT: !230 = distinct !DISubprogram(name: "ConvertFromConstVoidPtr", linkageName: "_CConvertFromConstVoidPtr.Main", scope: null, file: !213, line: 14, type: !15, spFlags: DISPFlagDefinition, unit: !214, retainedNodes: !237)
-// CHECK:STDOUT: !231 = !DILocalVariable(arg: 1, scope: !230, type: !7)
-// CHECK:STDOUT: !236 = !DILocation(line: 15, column: 3, scope: !230)
-// CHECK:STDOUT: !237 = !{!231}
+// CHECK:STDOUT: !205 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !206 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !207 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !208 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !209 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !210 = !{!"omnipotent char", !209, i64 0}
+// CHECK:STDOUT: !211 = !{!"int", !210, i64 0}
+// CHECK:STDOUT: !212 = !{!"__libc_errno", !211, i64 0}
+// CHECK:STDOUT: !213 = !{!212, !211, i64 0}
+// CHECK:STDOUT: !214 = !DIFile(filename: "receive.carbon", directory: "")
+// CHECK:STDOUT: !215 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !214, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !216 = !{!7}
+// CHECK:STDOUT: !217 = !DISubroutineType(types: !216)
+// CHECK:STDOUT: !218 = distinct !DISubprogram(name: "ReceiveVoidPtr", linkageName: "_CReceiveVoidPtr.Main", scope: null, file: !214, line: 6, type: !217, spFlags: DISPFlagDefinition, unit: !215)
+// CHECK:STDOUT: !221 = !DILocation(line: 7, column: 10, scope: !218)
+// CHECK:STDOUT: !222 = !DILocation(line: 7, column: 3, scope: !218)
+// CHECK:STDOUT: !223 = distinct !DISubprogram(name: "ConvertFromVoidPtr", linkageName: "_CConvertFromVoidPtr.Main", scope: null, file: !214, line: 10, type: !15, spFlags: DISPFlagDefinition, unit: !215, retainedNodes: !230)
+// CHECK:STDOUT: !224 = !DILocalVariable(arg: 1, scope: !223, type: !7)
+// CHECK:STDOUT: !229 = !DILocation(line: 11, column: 3, scope: !223)
+// CHECK:STDOUT: !230 = !{!224}
+// CHECK:STDOUT: !231 = distinct !DISubprogram(name: "ConvertFromConstVoidPtr", linkageName: "_CConvertFromConstVoidPtr.Main", scope: null, file: !214, line: 14, type: !15, spFlags: DISPFlagDefinition, unit: !215, retainedNodes: !238)
+// CHECK:STDOUT: !232 = !DILocalVariable(arg: 1, scope: !231, type: !7)
+// CHECK:STDOUT: !237 = !DILocation(line: 15, column: 3, scope: !231)
+// CHECK:STDOUT: !238 = !{!232}
 // CHECK:STDOUT:

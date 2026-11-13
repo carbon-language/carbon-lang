@@ -2201,9 +2201,9 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
   // Compute the dependence that the action we create below is going to have. We
   // do this separately from building the action in order to avoid creating the
   // argument bundle in the case where we're not deferring conversion.
-  if (OperandDependence(context, SemIR::MetaInstId(expr_id)) <
+  if (OperandDependence(context.sem_ir(), SemIR::MetaInstId(expr_id)) <
           SemIR::ConstantDependence::Template &&
-      OperandDependence(context, target.type_id) <
+      OperandDependence(context.sem_ir(), target.type_id) <
           SemIR::ConstantDependence::Template) {
     return SemIR::InstId::None;
   }

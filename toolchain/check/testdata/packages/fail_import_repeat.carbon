@@ -27,20 +27,41 @@ library "[[@TEST_NAME]]";
 // --- fail_import.carbon
 
 import Api;
-// CHECK:STDERR: fail_import.carbon:[[@LINE+3]]:1-11: error: library imported more than once [RepeatedImport]
-// CHECK:STDERR: fail_import.carbon:[[@LINE-2]]:1-11: note: first import here [FirstImported]
+// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ import Api;
+// CHECK:STDERR:        · ─────┬─────
+// CHECK:STDERR:        ·      ╰──┤ first import here [FirstImported]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import Api;
+// CHECK:STDERR:        · ━━━━━┳━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: library imported more than once [RepeatedImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Api;
 
 import Api library "api_lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+3]]:1-29: error: library imported more than once [RepeatedImport]
-// CHECK:STDERR: fail_import.carbon:[[@LINE-2]]:1-29: note: first import here [FirstImported]
+// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ import Api library "api_lib";
+// CHECK:STDERR:        · ──────────────┬──────────────
+// CHECK:STDERR:        ·               ╰──┤ first import here [FirstImported]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import Api library "api_lib";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: library imported more than once [RepeatedImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Api library "api_lib";
 
 import library "main_lib";
-// CHECK:STDERR: fail_import.carbon:[[@LINE+3]]:1-26: error: library imported more than once [RepeatedImport]
-// CHECK:STDERR: fail_import.carbon:[[@LINE-2]]:1-26: note: first import here [FirstImported]
+// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ import library "main_lib";
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ first import here [FirstImported]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import library "main_lib";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: library imported more than once [RepeatedImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library "main_lib";
 
@@ -49,30 +70,37 @@ import library "main_lib";
 package Api library "[[@TEST_NAME]]";
 
 import library default;
-// CHECK:STDERR: fail_default_import.carbon:[[@LINE+3]]:1-23: error: library imported more than once [RepeatedImport]
-// CHECK:STDERR: fail_default_import.carbon:[[@LINE-2]]:1-23: note: first import here [FirstImported]
+// CHECK:STDERR:        ╭─┤ fail_default_import.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ import library default;
+// CHECK:STDERR:        · ───────────┬───────────
+// CHECK:STDERR:        ·            ╰──┤ first import here [FirstImported]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import library default;
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: library imported more than once [RepeatedImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library default;
 
-// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: --- api.carbon = $api
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_lib.carbon
+// CHECK:STDOUT: --- api_lib.carbon = $api_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT: --- main_lib.carbon = $main_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Api: <namespace> = namespace file.%Api.import, [concrete] {
@@ -89,7 +117,7 @@ import library default;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_default_import.carbon
+// CHECK:STDOUT: --- fail_default_import.carbon = $fail_default_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

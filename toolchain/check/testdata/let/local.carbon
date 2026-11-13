@@ -29,14 +29,21 @@ fn F(_: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+2]]:15-18: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_symbolic.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic c: C = {};
+  // CHECK:STDERR:        ·               ━━┳━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic c: C = {};
   F(c);
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- local.carbon
+// CHECK:STDOUT: --- local.carbon = $local
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -79,7 +86,7 @@ fn CallF() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_symbolic.carbon
+// CHECK:STDOUT: --- fail_todo_symbolic.carbon = $fail_todo_symbolic
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallF();
 // CHECK:STDOUT:
