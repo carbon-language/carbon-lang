@@ -48,6 +48,11 @@ try:
 except ImportError:
     import github_helpers  # type: ignore
 
+_DOCS_URL = (
+    "https://github.com/carbon-language/carbon-lang/blob/trunk/"
+    "docs/project/pull_request_workflow.md#dependent-pull-requests"
+)
+
 # Queries
 _QUERY_OPEN_PRS = """
 {
@@ -555,7 +560,12 @@ def _process_pr(
         merged_str = ", ".join([f"#{num}" for num in sorted(merged_deps)])
         comment_body += f"\n\nMerged dependency PRs: {merged_str}"
 
-    comment_body += f"\n\n(Last updated: {timestamp})"
+    comment_body += (
+        "\n\nSee the [dependent pull requests documentation]"
+        f"({_DOCS_URL}) for details on how stacked PRs are tracked, "
+        "re-checked, and overridden."
+        f"\n\n(Last updated: {timestamp})"
+    )
 
     # Apply mutations only after all reading and analysis above is complete, so
     # that the analysis never observes our own changes.

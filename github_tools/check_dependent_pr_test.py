@@ -130,6 +130,10 @@ class TestCheckDependentPR(unittest.TestCase):
         calls = self.mock_client.execute.call_args_list
         self.assertIn("addLabelsToLabelable", calls[1][0][0])
         self.assertIn("addComment", calls[2][0][0])
+        self.assertIn(
+            check_dependent_pr._DOCS_URL,
+            calls[2][1]["variable_values"]["body"],
+        )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
@@ -224,6 +228,10 @@ class TestCheckDependentPR(unittest.TestCase):
         calls = self.mock_client.execute.call_args_list
         self.assertIn("addLabelsToLabelable", calls[1][0][0])
         self.assertIn("addComment", calls[2][0][0])
+        self.assertIn(
+            check_dependent_pr._DOCS_URL,
+            calls[2][1]["variable_values"]["body"],
+        )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
