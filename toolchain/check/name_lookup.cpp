@@ -397,16 +397,9 @@ static auto IsAccessProhibited(Context& context,
 static auto HasPrivateAccessToExtendedScope(
     Context& context, const SemIR::NameScope& extended_scope,
     SemIR::SpecificId specific_id) -> bool {
-  // The constant value of a generic class's declaration is the generic class
-  // itself rather than a class type, so form the class type for the specific.
-  auto class_decl =
-      context.insts().TryGetAs<SemIR::ClassDecl>(extended_scope.inst_id());
-  if (!class_decl) {
-    return false;
-  }
-  auto class_type_id = GetClassType(context, class_decl->class_id, specific_id);
   return GetHighestAllowedAccess(
-             context, context.types().GetConstantId(class_type_id)) ==
+             context, GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                                 extended_scope.inst_id())) ==
          SemIR::AccessKind::Private;
 }
 
