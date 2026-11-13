@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/trivial_destroy/arrays.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -23,7 +22,6 @@ class HasNonTrivialDestruction {
 }
 
 // --- todo_trivial_empty_array_with_trivial_element_type.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -32,6 +30,7 @@ alias Array = array(i32, 0);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
   Array as Core.Destroy;
   Array as Core.TrivialDestroy;
 
@@ -41,7 +40,6 @@ fn Test() {
 }
 
 // --- todo_trivial_empty_array_with_nontrivial_element_type.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -50,6 +48,7 @@ alias Array =  array(HasNonTrivialDestruction, 0);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
   Array as Core.Destroy;
   Array as Core.TrivialDestroy;
 
@@ -59,7 +58,6 @@ fn Test() {
 }
 
 // --- todo_trivial_populated.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -68,6 +66,7 @@ alias Array = array(HasTrivialDestruction, 1);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
   Array as Core.Destroy;
   Array as Core.TrivialDestroy;
 
@@ -77,7 +76,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_populated.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -89,7 +87,6 @@ fn Test() {
 }
 
 // --- todo_trivial_array_of_array.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -98,6 +95,7 @@ alias Array = array(array(HasTrivialDestruction, 3), 10);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
   Array as Core.Destroy;
   Array as Core.TrivialDestroy;
 
@@ -107,7 +105,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_array_of_array.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -134,6 +131,7 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
   Adapter as Core.Destroy;
   Adapter as Core.TrivialDestroy;
 
@@ -143,7 +141,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_adapter.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -173,6 +170,7 @@ fn MakeArray(generic T: Core.TrivialDestroy) -> array(T, 3) {
 }
 
 fn Test(generic T: Core.TrivialDestroy) {
+  array(T, 3) as Core.SubobjectDestroy;
   array(T, 3) as Core.Destroy;
   array(T, 3) as Core.TrivialDestroy;
 

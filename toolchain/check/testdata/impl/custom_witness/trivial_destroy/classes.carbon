@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/trivial_destroy/classes.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class A {}
@@ -67,7 +66,6 @@ base class NonTrivialDynamicClass {
 }
 
 // --- todo_trivial_empty_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -84,7 +82,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_empty_class_impls_destroy.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -94,7 +91,6 @@ fn Test() {
 }
 
 // --- todo_trivial_all_trivial_fields.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -102,6 +98,7 @@ import library "types";
 fn Make() -> TrivialFields;
 
 fn Test() {
+  TrivialFields as Core.SubobjectDestroy;
   TrivialFields as Core.Destroy;
   TrivialFields as Core.TrivialDestroy;
 
@@ -111,7 +108,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_field_first.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -126,7 +122,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_field_second.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -141,7 +136,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nested_trivial_fields.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -149,6 +143,7 @@ import library "types";
 fn Make() -> NestedFields;
 
 fn Test() {
+  NestedFields as Core.SubobjectDestroy;
   NestedFields as Core.Destroy;
   NestedFields as Core.TrivialDestroy;
 
@@ -158,7 +153,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_nested_nontrivial_member.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -176,7 +170,6 @@ fn Test() {
 }
 
 // --- todo_trivial_derived_from_trivial_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -189,6 +182,7 @@ class Derived {
 fn Make() -> Derived;
 
 fn Test() {
+  Derived as Core.SubobjectDestroy;
   Derived as Core.Destroy;
   Derived as Core.TrivialDestroy;
 
@@ -198,7 +192,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_derived_from_nontrivial_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -208,7 +201,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_grandparent.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -222,7 +214,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -240,7 +231,6 @@ fn Test() {
 }
 
 // --- todo_trivial_generic_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -249,6 +239,7 @@ alias TrivialGenericClass = GenericClass(HasTrivialDestruction);
 fn Make() -> TrivialGenericClass;
 
 fn Test() {
+  TrivialGenericClass as Core.SubobjectDestroy;
   TrivialGenericClass as Core.Destroy;
   TrivialGenericClass as Core.TrivialDestroy;
 
@@ -258,7 +249,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_generic_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -268,7 +258,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_base_and_trivial_field.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -283,7 +272,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_field_and_trivial_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -298,7 +286,6 @@ fn Test() {
 }
 
 // --- todo_trivial_dynamic_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -306,6 +293,7 @@ import library "types";
 fn Make() -> TrivialDynamicClass;
 
 fn Test() {
+  TrivialDynamicClass as Core.SubobjectDestroy;
   TrivialDynamicClass as Core.Destroy;
   TrivialDynamicClass as Core.TrivialDestroy;
 
@@ -315,7 +303,6 @@ fn Test() {
 }
 
 // --- todo_trivial_dynamic_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -327,6 +314,7 @@ class Derived {
 fn Make() -> Derived;
 
 fn Test() {
+  Derived as Core.SubobjectDestroy;
   Derived as Core.Destroy;
   Derived as Core.TrivialDestroy;
 
@@ -336,7 +324,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_dynamic_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -346,7 +333,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_dynamic_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -360,7 +346,6 @@ fn Test() {
 }
 
 // --- fail_todo_trivial_class_derived_from_abstract.carbon
-
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {}
@@ -373,6 +358,7 @@ fn Make() -> Derived;
 
 // TODO: Support destroying classes that derive from abstract types.
 fn Test() {
+  Derived as Core.SubobjectDestroy;
   // CHECK:STDERR:        ╭─┤ fail_todo_trivial_class_derived_from_abstract.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Derived as Core.Destroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━
@@ -412,7 +398,6 @@ fn Test() {
 }
 
 // --- fail_nontrivial_class_derived_from_nontrivial_abstract.carbon
-
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {

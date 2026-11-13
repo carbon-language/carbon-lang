@@ -27,13 +27,13 @@ class ImplsDestroy {
 }
 
 // --- todo_trivial_empty.carbon
-
 library "[[@TEST_NAME]]";
 
 alias Tuple = ();
 fn Make() -> Tuple;
 
 fn Test() {
+  Tuple as Core.SubobjectDestroy;
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
@@ -43,7 +43,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nonempty.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -52,6 +51,7 @@ alias Tuple = (A, B);
 fn Make() -> Tuple;
 
 fn Test() {
+  Tuple as Core.SubobjectDestroy;
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
@@ -61,7 +61,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_element_first.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -73,7 +72,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_element_second.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -85,7 +83,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nested.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -94,6 +91,7 @@ alias Tuple = (A, (B, A));
 fn Make() -> Tuple;
 
 fn Test() {
+  Tuple as Core.SubobjectDestroy;
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
@@ -103,7 +101,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_nested.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";

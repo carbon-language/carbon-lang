@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/trivial_destroy/structs.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class A {}
@@ -27,13 +26,13 @@ class ImplsDestroy {
 }
 
 // --- todo_trivial_empty.carbon
-
 library "[[@TEST_NAME]]";
 
 alias Struct = {};
 fn Make() -> Struct;
 
 fn Test() {
+  Struct as Core.SubobjectDestroy;
   Struct as Core.Destroy;
   Struct as Core.TrivialDestroy;
 
@@ -43,7 +42,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nonempty.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -52,6 +50,7 @@ alias Struct = {.a: A, .b: B};
 fn Make() -> Struct;
 
 fn Test() {
+  Struct as Core.SubobjectDestroy;
   Struct as Core.Destroy;
   Struct as Core.TrivialDestroy;
 
@@ -61,7 +60,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nested_struct_with_trivial_members.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -70,6 +68,7 @@ alias Struct = {.a: {.b: B}};
 fn Make() -> Struct;
 
 fn Test() {
+  Struct as Core.SubobjectDestroy;
   Struct as Core.Destroy;
   Struct as Core.TrivialDestroy;
 
@@ -79,7 +78,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_struct_nontrivial_field_first.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -91,7 +89,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_struct_nontrivial_field_second.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -103,7 +100,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_struct_nontrivial_field_nested.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";

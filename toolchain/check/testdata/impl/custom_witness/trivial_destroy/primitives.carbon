@@ -11,10 +11,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/trivial_destroy/primitives.carbon
 
 // --- todo_trivial_bool.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  bool as Core.SubobjectDestroy;
   bool as Core.Destroy;
   bool as Core.TrivialDestroy;
 
@@ -24,7 +24,6 @@ fn Test() {
 }
 
 // --- todo_trivial_bound_method.carbon
-
 library "[[@TEST_NAME]]";
 
 class C {
@@ -34,6 +33,7 @@ class C {
 fn Make(c: C) -> typeof(c.Get);
 
 fn Test(c: C) {
+  typeof(c.Get) as Core.SubobjectDestroy;
   typeof(c.Get) as Core.Destroy;
   typeof(c.Get) as Core.TrivialDestroy;
 
@@ -43,11 +43,11 @@ fn Test(c: C) {
 }
 
 // --- todo_trivial_char_literal.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
   // TODO: fix crash
+  // Core.CharLiteral as Core.SubobjectDestroy;
   // Core.CharLiteral as Core.Destroy;
   // Core.CharLiteral as Core.TrivialDestroy;
 
@@ -57,10 +57,10 @@ fn Test() {
 }
 
 // --- todo_trivial_float.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  f64 as Core.SubobjectDestroy;
   f64 as Core.Destroy;
   f64 as Core.TrivialDestroy;
 
@@ -70,11 +70,11 @@ fn Test() {
 }
 
 // --- todo_trivial_float_literal.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
   // TODO: fix crash
+  // Core.FloatLiteral as Core.SubobjectDestroy;
   // Core.FloatLiteral as Core.Destroy;
   // Core.FloatLiteral as Core.TrivialDestroy;
 
@@ -84,13 +84,13 @@ fn Test() {
 }
 
 // --- todo_trivial_form.carbon
-
 library "[[@TEST_NAME]]";
 
 alias Form = typeof(form(var i32));
 fn Make() -> Form;
 
 fn Test() {
+  Form as Core.SubobjectDestroy;
   Form as Core.Destroy;
   Form as Core.TrivialDestroy;
 
@@ -100,7 +100,6 @@ fn Test() {
 }
 
 // --- todo_trivial_form_with_nontrivial.carbon
-
 library "[[@TEST_NAME]]";
 
 class ImplsDestroy {
@@ -113,6 +112,7 @@ alias Form = typeof(form(var ImplsDestroy));
 fn Make() -> Form;
 
 fn Test() {
+  Form as Core.SubobjectDestroy;
   Form as Core.Destroy;
   Form as Core.TrivialDestroy;
 
@@ -122,7 +122,6 @@ fn Test() {
 }
 
 // --- todo_trivial_function.carbon
-
 library "[[@TEST_NAME]]";
 
 fn G() {}
@@ -131,6 +130,7 @@ alias Fn = typeof(G);
 fn Make() -> Fn;
 
 fn Test() {
+  Fn as Core.SubobjectDestroy;
   Fn as Core.Destroy;
   Fn as Core.TrivialDestroy;
 
@@ -140,7 +140,6 @@ fn Test() {
 }
 
 // --- todo_trivial_function_with_self.carbon
-
 library "[[@TEST_NAME]]";
 
 alias FnWithSelf = typeof((i32 as Core.Copy).Op);
@@ -148,6 +147,7 @@ fn Make() -> FnWithSelf;
 
 fn Test() {
   // TODO: fix crash
+  // FnWithSelf as Core.SubobjectDestroy;
   // FnWithSelf as Core.Destroy;
   // FnWithSelf as Core.TrivialDestroy;
 
@@ -157,10 +157,10 @@ fn Test() {
 }
 
 // --- todo_trivial_int_literal.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  Core.IntLiteral as Core.SubobjectDestroy;
   Core.IntLiteral as Core.Destroy;
   Core.IntLiteral as Core.TrivialDestroy;
 
@@ -170,10 +170,10 @@ fn Test() {
 }
 
 // --- todo_trivial_int.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  i32 as Core.SubobjectDestroy;
   i32 as Core.Destroy;
   i32 as Core.TrivialDestroy;
 
@@ -183,12 +183,12 @@ fn Test() {
 }
 
 // --- type.carbon
-
 library "[[@TEST_NAME]]";
 
 fn Make() -> type;
 
 fn Test() {
+  type as Core.SubobjectDestroy;
   type as Core.Destroy;
   type as Core.TrivialDestroy;
 

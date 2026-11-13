@@ -35,6 +35,7 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
   Adapter as Core.Destroy;
   Adapter as Core.TrivialDestroy;
 
@@ -91,6 +92,7 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
   Adapter as Core.Destroy;
   Adapter as Core.TrivialDestroy;
 
@@ -126,6 +128,7 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
   Adapter as Core.Destroy;
   Adapter as Core.TrivialDestroy;
 
@@ -160,6 +163,7 @@ alias Pointer = ImplsDestroy*;
 fn Make() -> Pointer;
 
 fn Test() {
+  Pointer as Core.SubobjectDestroy;
   Pointer as Core.Destroy;
   Pointer as Core.TrivialDestroy;
 
@@ -178,6 +182,8 @@ alias Const = const HasTrivialDestruction;
 fn Make() -> Const;
 
 fn Test() {
+  Const as Core.SubobjectDestroy;
+  Const as Core.Destroy;
   Const as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin

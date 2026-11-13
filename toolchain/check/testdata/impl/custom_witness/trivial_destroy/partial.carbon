@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/trivial_destroy/partial.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class ImplsDestroy {
@@ -27,7 +26,6 @@ class AlsoImplsDestroy {
 }
 
 // --- todo_trivial_empty_partial_class.carbon
-
 library "[[@TEST_NAME]]";
 
 base class Base {}
@@ -43,7 +41,6 @@ fn Test() {
 }
 
 // --- todo_trivial_nonempty_partial_class.carbon
-
 library "[[@TEST_NAME]]";
 
 class A {}
@@ -57,6 +54,7 @@ base class Base {
 fn Make() -> partial Base;
 
 fn Test() {
+  partial Base as Core.SubobjectDestroy;
   partial Base as Core.Destroy;
   partial Base as Core.TrivialDestroy;
 
@@ -66,7 +64,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_member.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -83,7 +80,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_impls_destroy.carbon
-
 library "[[@TEST_NAME]]";
 
 base class Base {
@@ -97,13 +93,13 @@ fn Test() {
 }
 
 // --- todo_trivial_abstract.carbon
-
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {}
 fn Make() -> partial Abstract;
 
 fn Test() {
+  partial Abstract as Core.SubobjectDestroy;
   partial Abstract as Core.Destroy;
   partial Abstract as Core.TrivialDestroy;
 
@@ -113,7 +109,6 @@ fn Test() {
 }
 
 // --- todo_fail_nontrivial_abstract.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";

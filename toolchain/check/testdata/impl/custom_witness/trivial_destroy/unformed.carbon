@@ -21,6 +21,7 @@ alias MaybeUnformed = Core.MaybeUnformed(HasTrivialDestruction);
 fn Make() -> MaybeUnformed;
 
 fn Test() {
+  MaybeUnformed as Core.SubobjectDestroy;
   MaybeUnformed as Core.Destroy;
   MaybeUnformed as Core.TrivialDestroy;
 
