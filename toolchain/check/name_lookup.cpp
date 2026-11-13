@@ -600,7 +600,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
   bool is_parent_access = false;
   // Whether the caller provided access information for the current access
   // context, as opposed to a lookup that doesn't depend on it.
-  const bool has_caller_access_info = access_info.has_value();
+  bool has_caller_access_info = access_info.has_value();
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
