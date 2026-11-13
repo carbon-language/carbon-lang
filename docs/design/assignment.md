@@ -228,7 +228,7 @@ constraint ModAssign { extend ModAssignWith(Self); }
 ```
 // Increment `++`.
 interface Inc { fn Op(ref self); }
-// Decrement `++`.
+// Decrement `--`.
 interface Dec { fn Op(ref self); }
 ```
 
