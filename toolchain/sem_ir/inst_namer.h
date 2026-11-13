@@ -57,7 +57,7 @@ class TextualNamespace {
   };
 
   // Allocates and returns a name, handling ambiguity.
-  auto AllocateName(std::string name) -> Name {
+  auto AllocateName(std::string name) [[clang::lifetimebound]] -> Name {
     auto size = std::ssize(name);
     return AllocateNameWithSuffixes(std::move(name), {size});
   }
@@ -68,7 +68,8 @@ class TextualNamespace {
   // is the size of the base name plus the first N such suffixes
   // (so `name_sizes.back()` should be `full_name.size()`).
   auto AllocateNameWithSuffixes(std::string full_name,
-                                llvm::ArrayRef<ssize_t> name_sizes) -> Name;
+                                llvm::ArrayRef<ssize_t> name_sizes)
+      [[clang::lifetimebound]] -> Name;
 
  private:
   struct NameResult {
