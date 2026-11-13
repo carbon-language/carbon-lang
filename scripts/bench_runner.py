@@ -900,8 +900,8 @@ def get_benchmark_names_and_metrics(
     # per-benchmark result dictionaries; see
     # https://github.com/google/benchmark/blob/main/docs/user_guide.md#output-formats).
     # We combine benchmarks from both experiment and baseline runs to get a
-    # complete set.
-    one_run_benchmarks = list(exp_runs[0]["benchmarks"])
+    # complete set, copying first so `+=` doesn't mutate `exp_runs[0]` in place.
+    one_run_benchmarks = exp_runs[0]["benchmarks"].copy()
     if parsed_args.base_benchmark:
         one_run_benchmarks += base_runs[0]["benchmarks"]
 
