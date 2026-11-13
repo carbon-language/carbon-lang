@@ -177,7 +177,7 @@ fn Test(generic T: Core.TrivialDestroy) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_array_with_trivial_element_type.carbon
+// CHECK:STDOUT: --- todo_trivial_empty_array_with_trivial_element_type.carbon = $todo_trivial_empty_array_with_trivial_element_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -270,7 +270,7 @@ fn Test(generic T: Core.TrivialDestroy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %Array.68f) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_empty_array_with_nontrivial_element_type.carbon
+// CHECK:STDOUT: --- todo_trivial_empty_array_with_nontrivial_element_type.carbon = $todo_trivial_empty_array_with_nontrivial_element_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -358,7 +358,7 @@ fn Test(generic T: Core.TrivialDestroy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %Array.fbd) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_populated.carbon
+// CHECK:STDOUT: --- todo_trivial_populated.carbon = $todo_trivial_populated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -469,7 +469,7 @@ fn Test(generic T: Core.TrivialDestroy) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_array_of_array.carbon
+// CHECK:STDOUT: --- todo_trivial_array_of_array.carbon = $todo_trivial_array_of_array
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -697,7 +697,7 @@ fn Test(generic T: Core.TrivialDestroy) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_adapter.carbon
+// CHECK:STDOUT: --- todo_trivial_adapter.carbon = $todo_trivial_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -820,7 +820,7 @@ fn Test(generic T: Core.TrivialDestroy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc16_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_constrained_facet.carbon
+// CHECK:STDOUT: --- todo_trivial_constrained_facet.carbon = $todo_trivial_constrained_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

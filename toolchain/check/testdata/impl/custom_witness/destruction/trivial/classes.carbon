@@ -431,7 +431,7 @@ fn Test() {
   Derived as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_class.carbon
+// CHECK:STDOUT: --- todo_trivial_empty_class.carbon = $todo_trivial_empty_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -517,7 +517,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_25.2(%self.param: ref %HasTrivialDestruction) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_all_trivial_fields.carbon
+// CHECK:STDOUT: --- todo_trivial_all_trivial_fields.carbon = $todo_trivial_all_trivial_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -668,7 +668,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nested_trivial_fields.carbon
+// CHECK:STDOUT: --- todo_trivial_nested_trivial_fields.carbon = $todo_trivial_nested_trivial_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -856,7 +856,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_derived_from_trivial_base.carbon
+// CHECK:STDOUT: --- todo_trivial_derived_from_trivial_base.carbon = $todo_trivial_derived_from_trivial_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1000,7 +1000,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_generic_class.carbon
+// CHECK:STDOUT: --- todo_trivial_generic_class.carbon = $todo_trivial_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1121,7 +1121,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_dynamic_class.carbon
+// CHECK:STDOUT: --- todo_trivial_dynamic_class.carbon = $todo_trivial_dynamic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1229,7 +1229,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_dynamic_base.carbon
+// CHECK:STDOUT: --- todo_trivial_dynamic_base.carbon = $todo_trivial_dynamic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1380,7 +1380,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_trivial_class_derived_from_abstract.carbon
+// CHECK:STDOUT: --- fail_todo_trivial_class_derived_from_abstract.carbon = $fail_todo_trivial_class_derived_from_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

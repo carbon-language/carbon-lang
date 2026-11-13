@@ -121,7 +121,7 @@ fn Test() {
   partial Abstract as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_partial_class.carbon
+// CHECK:STDOUT: --- todo_trivial_empty_partial_class.carbon = $todo_trivial_empty_partial_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -215,7 +215,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_16.2(%self.param: ref %.edf) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nonempty_partial_class.carbon
+// CHECK:STDOUT: --- todo_trivial_nonempty_partial_class.carbon = $todo_trivial_nonempty_partial_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -348,7 +348,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_abstract.carbon
+// CHECK:STDOUT: --- todo_trivial_abstract.carbon = $todo_trivial_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

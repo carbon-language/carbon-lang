@@ -110,7 +110,7 @@ fn Test() {
   Tuple as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty.carbon
+// CHECK:STDOUT: --- todo_trivial_empty.carbon = $todo_trivial_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -194,7 +194,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nonempty.carbon
+// CHECK:STDOUT: --- todo_trivial_nonempty.carbon = $todo_trivial_nonempty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -323,7 +323,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nested.carbon
+// CHECK:STDOUT: --- todo_trivial_nested.carbon = $todo_trivial_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

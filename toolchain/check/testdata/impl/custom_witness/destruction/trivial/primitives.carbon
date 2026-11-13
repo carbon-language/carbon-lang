@@ -197,7 +197,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_trivial_bool.carbon
+// CHECK:STDOUT: --- todo_trivial_bool.carbon = $todo_trivial_bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -292,7 +292,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_bound_method.carbon
+// CHECK:STDOUT: --- todo_trivial_bound_method.carbon = $todo_trivial_bound_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -396,14 +396,14 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11(%self.param: ref <bound method>) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_char_literal.carbon
+// CHECK:STDOUT: --- todo_trivial_char_literal.carbon = $todo_trivial_char_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_float.carbon
+// CHECK:STDOUT: --- todo_trivial_float.carbon = $todo_trivial_float
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -513,14 +513,14 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %f64.761) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_float_literal.carbon
+// CHECK:STDOUT: --- todo_trivial_float_literal.carbon = $todo_trivial_float_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_form.carbon
+// CHECK:STDOUT: --- todo_trivial_form.carbon = $todo_trivial_form
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -604,7 +604,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref Core.Form) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_form_with_nontrivial.carbon
+// CHECK:STDOUT: --- todo_trivial_form_with_nontrivial.carbon = $todo_trivial_form_with_nontrivial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -687,7 +687,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14(%self.param: ref Core.Form) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_function.carbon
+// CHECK:STDOUT: --- todo_trivial_function.carbon = $todo_trivial_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -768,14 +768,14 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %G.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_function_with_self.carbon
+// CHECK:STDOUT: --- todo_trivial_function_with_self.carbon = $todo_trivial_function_with_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_int_literal.carbon
+// CHECK:STDOUT: --- todo_trivial_int_literal.carbon = $todo_trivial_int_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -876,7 +876,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref Core.IntLiteral) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_int.carbon
+// CHECK:STDOUT: --- todo_trivial_int.carbon = $todo_trivial_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -986,7 +986,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- type.carbon
+// CHECK:STDOUT: --- type.carbon = $type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

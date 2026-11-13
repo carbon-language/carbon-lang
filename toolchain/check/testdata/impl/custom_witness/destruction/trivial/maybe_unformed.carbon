@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/unformed.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/maybe_unformed.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/unformed.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/maybe_unformed.carbon
 
 // --- todo_trivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
@@ -43,7 +43,7 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_maybe_unformed.carbon
+// CHECK:STDOUT: --- todo_trivial_maybe_unformed.carbon = $todo_trivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

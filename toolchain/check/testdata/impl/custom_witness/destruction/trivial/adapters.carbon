@@ -187,7 +187,7 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_class_adapter.carbon
+// CHECK:STDOUT: --- todo_trivial_class_adapter.carbon = $todo_trivial_class_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -275,7 +275,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc13_11.3(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_struct_adapter.carbon
+// CHECK:STDOUT: --- todo_trivial_struct_adapter.carbon = $todo_trivial_struct_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -381,7 +381,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc13_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- trivial_tuple_adapter.carbon
+// CHECK:STDOUT: --- trivial_tuple_adapter.carbon = $trivial_tuple_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -499,7 +499,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc13_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_pointer.carbon
+// CHECK:STDOUT: --- todo_trivial_pointer.carbon = $todo_trivial_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -581,7 +581,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %ptr) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_const.carbon
+// CHECK:STDOUT: --- todo_trivial_const.carbon = $todo_trivial_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
