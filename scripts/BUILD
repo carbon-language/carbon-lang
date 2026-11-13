@@ -5,6 +5,8 @@
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
 
+exports_files(["bench_runner.py"])
+
 py_test(
     name = "no_op_test",
     size = "small",
