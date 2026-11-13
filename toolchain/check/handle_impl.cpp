@@ -484,10 +484,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
   ImplWitnessStartDefinition(context, impl);
-  CheckRequireDeclsSatisfied(context, node_id, impl, full_constraint_id,
-                             identified_id);
   context.inst_block_stack().Push();
-  context.node_stack().Push(node_id, impl_id);
+  context.PushImplDefinitionStart({.impl_id = impl_id,
+                                   .full_constraint_id = full_constraint_id,
+                                   .identified_id = identified_id});
 
   // TODO: Handle the case where there's control flow in the impl body. For
   // example:
@@ -502,11 +502,14 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ImplDefinitionId node_id)
     -> bool {
-  auto impl_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
+  auto [impl_id, full_constraint_id, identified_id] =
+      context.PopImplDefinitionStart();
   auto& impl = context.impls().Get(impl_id);
+
+  CheckImplRequirementsAtEndOfDefinition(context, node_id, impl,
+                                         full_constraint_id, identified_id);
 
   FinishImplWitness(context, impl);
 
