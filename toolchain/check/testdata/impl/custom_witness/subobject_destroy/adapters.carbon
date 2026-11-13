@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/adapters.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -23,7 +22,6 @@ class ImplsDestroy {
 }
 
 // --- todo_nontrivial_class_adapter.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -35,13 +33,15 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_destroy_adapter_with_destroy_impl.carbon
-
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -57,13 +57,15 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_struct_adapter.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -75,13 +77,15 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_nontrivial_tuple_adapter.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -93,22 +97,28 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_const.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Make() -> ImplsDestroy;
+alias Adapter = const ImplsDestroy;
+fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: const ImplsDestroy = Make();
+  var unused x: Adapter = Make();
   //@dump-sem-ir-end
 }
 

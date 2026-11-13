@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/arrays.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -23,7 +22,6 @@ class HasNonTrivialDestruction {
 }
 
 // --- todo_nontrivial_populated.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -32,13 +30,15 @@ alias Array = array(HasNonTrivialDestruction, 2);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
+  Array as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Array = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_array_of_array.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -47,17 +47,19 @@ alias Array = array(array(HasNonTrivialDestruction, 4), 43);
 fn Make() -> Array;
 
 fn Test() {
+  Array as Core.SubobjectDestroy;
+  Array as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Array = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_adapter.carbon
+library "[[@TEST_NAME]]";
 
 // Not in `adapters.carbon`, since that would expand our min_prelude from `destroy.carbon` to
 // `array.carbon`.
-
-library "[[@TEST_NAME]]";
 
 import library "types";
 
@@ -68,6 +70,9 @@ class Adapter {
 fn Make() -> Adapter;
 
 fn Test() {
+  Adapter as Core.SubobjectDestroy;
+  Adapter as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Adapter = Make();
   //@dump-sem-ir-end

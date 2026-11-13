@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/maybe_unformed.carbon
 
 // --- todo_nontrivial_maybe_unformed.carbon
-
 library "[[@TEST_NAME]]";
 
 class ImplsDestroy {
@@ -20,11 +19,15 @@ class ImplsDestroy {
   }
 }
 
-fn Make() -> Core.MaybeUnformed(ImplsDestroy);
+alias MaybeUnformed = Core.MaybeUnformed(ImplsDestroy);
+fn Make() -> MaybeUnformed;
 
 fn Test() {
+  MaybeUnformed as Core.SubobjectDestroy;
+  MaybeUnformed as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: Core.MaybeUnformed(ImplsDestroy) = Make();
+  var unused x: MaybeUnformed = Make();
   //@dump-sem-ir-end
 }
 

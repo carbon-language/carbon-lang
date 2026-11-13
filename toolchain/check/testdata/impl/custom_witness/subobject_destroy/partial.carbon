@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/partial.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class ImplsDestroy {
@@ -26,8 +25,12 @@ class AlsoImplsDestroy {
   }
 }
 
-// --- nontrivial_member.carbon
+abstract class Abstract {
+  var x: ImplsDestroy;
+  var y: AlsoImplsDestroy;
+}
 
+// --- todo_nontrivial_member.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -37,16 +40,19 @@ base class Base {
   var y: AlsoImplsDestroy;
 }
 
-fn Make() -> Base;
+alias Partial = partial Base;
+fn Make() -> Partial;
 
 fn Test() {
+  Partial as Core.SubobjectDestroy;
+  Partial as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: partial Base = Make();
+  var unused x: Partial = Make();
   //@dump-sem-ir-end
 }
 
-// --- nontrivial_impls_destroy.carbon
-
+// --- todo_nontrivial_impls_destroy.carbon
 library "[[@TEST_NAME]]";
 
 base class Base {
@@ -55,30 +61,33 @@ base class Base {
   }
 }
 
+alias Partial = partial Base;
 fn Make() -> Base;
 
 fn Test() {
+  Partial as Core.SubobjectDestroy;
+  Partial as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: partial Base = Make();
   //@dump-sem-ir-end
 }
 
-// --- nontrivial_abstract.carbon
 
+// --- todo_nontrivial_abstract.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-abstract class Abstract {
-  var x: ImplsDestroy;
-  var y: AlsoImplsDestroy;
-}
-
-fn Make() -> partial Abstract;
+alias Partial = partial Abstract;
+fn Make() -> Partial;
 
 fn Test() {
+  Partial as Core.SubobjectDestroy;
+  Partial as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: partial Abstract = Make();
+  var unused x: Partial = Make();
   //@dump-sem-ir-end
 }
 

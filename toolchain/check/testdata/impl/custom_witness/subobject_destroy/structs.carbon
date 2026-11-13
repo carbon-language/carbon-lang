@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/structs.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class A {}
@@ -26,30 +25,47 @@ class ImplsDestroy {
   }
 }
 
-
-// --- todo_nontrivial_all_nontrivial_fields.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
 class AlsoImplsDestroy {
   impl as Core.DestroyImpl {
     fn Op(unused ref self) {}
   }
 }
 
+// --- todo_nontrivial_all_nontrivial_fields.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
 alias Struct = {.a: ImplsDestroy, .b: AlsoImplsDestroy, .c: AlsoImplsDestroy, .d: ImplsDestroy};
 fn Make() -> Struct;
 
 fn Test() {
+  Struct as Core.SubobjectDestroy;
+  Struct as Core.Destroy;
+
+  //@dump-sem-ir-begin
+  var unused x: Struct = Make();
+  //@dump-sem-ir-end
+}
+
+// --- todo_nontrivial_all_nontrivial_fields.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+alias Struct = {.a: ImplsDestroy, .b: AlsoImplsDestroy, .c: HasTrivialDestruction, .d: ImplsDestroy};
+fn Make() -> Struct;
+
+fn Test() {
+  Struct as Core.SubobjectDestroy;
+  Struct as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Struct = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_nested.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -58,6 +74,9 @@ alias Struct = {.a: {.b: ImplsDestroy}};
 fn Make() -> Struct;
 
 fn Test() {
+  Struct as Core.SubobjectDestroy;
+  Struct as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Struct = Make();
   //@dump-sem-ir-end

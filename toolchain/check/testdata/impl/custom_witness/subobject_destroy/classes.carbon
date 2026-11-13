@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/classes.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
 
 class A {}
@@ -34,6 +33,12 @@ base class TrivialBase {}
 class ImplsDestroy {
   impl as Core.DestroyImpl {
     fn Op(unused self) {}
+  }
+}
+
+class AlsoImplsDestroy {
+  impl as Core.DestroyImpl {
+    fn Op(unused ref self) {}
   }
 }
 
@@ -67,30 +72,26 @@ base class NonTrivialDynamicClass {
 }
 
 // --- todo_nontrivial_empty_class_impls_destroy.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Make() -> ImplsDestroy;
+alias Class = ImplsDestroy;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: ImplsDestroy = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_all_nontrivial_fields.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
-
-class AlsoImplsDestroy {
-  impl as Core.DestroyImpl {
-    fn Op(unused ref self) {}
-  }
-}
 
 class AllNonTrivialFields {
   var a: ImplsDestroy;
@@ -99,16 +100,43 @@ class AllNonTrivialFields {
   var d: ImplsDestroy;
 }
 
-fn Make() -> AllNonTrivialFields;
+alias Class = AllNonTrivialFields;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: AllNonTrivialFields = Make();
+  var unused x: Class = Make();
+  //@dump-sem-ir-end
+}
+
+// --- todo_nontrivial_one_trivial_field.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+class OneTrivialField {
+  var a: ImplsDestroy;
+  var b: AlsoImplsDestroy;
+  var c: HasTrivialDestruction;
+  var d: ImplsDestroy;
+}
+
+alias Class = OneTrivialField;
+fn Make() -> Class;
+
+fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
+  //@dump-sem-ir-begin
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_nested_nontrivial_member.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -121,30 +149,36 @@ class NestedNonTrivialMember {
   var x: HasNonTrivialField;
 }
 
-fn Make() -> NestedNonTrivialMember;
+alias Class = NestedNonTrivialMember;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: NestedNonTrivialMember = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_derived_from_nontrivial_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Make() -> DerivedFromNonTrivialBase;
+alias Class = DerivedFromNonTrivialBase;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: DerivedFromNonTrivialBase = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_grandparent.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -153,16 +187,19 @@ class NonTrivialGrandparent {
   extend base: DerivedFromNonTrivialBase;
 }
 
-fn Make() -> NonTrivialGrandparent;
+alias Class = NonTrivialGrandparent;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: NonTrivialGrandparent = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -175,30 +212,36 @@ class Derived {
   }
 }
 
-fn Make() -> Derived;
+alias Class = Derived;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: Derived = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_generic_class.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Make() -> GenericClass(ImplsDestroy);
+alias Class = GenericClass(ImplsDestroy);
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: GenericClass(ImplsDestroy) = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_base_and_trivial_field.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -208,16 +251,19 @@ class NonTrivialBaseAndTrivialMember {
   var y: HasTrivialDestruction;
 }
 
-fn Make() -> NonTrivialBaseAndTrivialMember;
+alias Class = NonTrivialBaseAndTrivialMember;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: NonTrivialBaseAndTrivialMember = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_trivial_base_and_nontrivial_field.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -227,30 +273,36 @@ class TrivialBaseAndNonTrivialMember {
   var x: ImplsDestroy;
 }
 
-fn Make() -> TrivialBaseAndNonTrivialMember;
+alias Class = TrivialBaseAndNonTrivialMember;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: TrivialBaseAndNonTrivialMember = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_class_dynamic.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Make() -> NonTrivialDynamicClass;
+alias Class = NonTrivialDynamicClass;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: NonTrivialDynamicClass = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_dynamic_base.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -259,18 +311,20 @@ class Derived {
   extend base: NonTrivialDynamicClass;
 }
 
-fn Make() -> Derived;
+alias Class = Derived;
+fn Make() -> Class;
 
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
-  var unused x: Derived = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 
 // --- fail_todo_nontrivial_class_derived_from_nontrivial_abstract.carbon
-
 library "[[@TEST_NAME]]";
-
 
 abstract class Abstract {
   impl as Core.DestroyImpl {
@@ -282,10 +336,14 @@ class Derived {
   extend base: Abstract;
 }
 
-fn Make() -> Derived;
+alias Class = Derived;
+fn Make() -> Class;
 
 // TODO: Support destroying classes that derive from abstract types.
 fn Test() {
+  Class as Core.SubobjectDestroy;
+  Class as Core.Destroy;
+
   //@dump-sem-ir-begin
   // CHECK:STDERR:        ╭─┤ fail_todo_nontrivial_class_derived_from_nontrivial_abstract.carbon:[[@LINE+14]]:3
   // CHECK:STDERR: ->     │   var unused x: Derived = Make();
@@ -301,7 +359,7 @@ fn Test() {
   // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  var unused x: Derived = Make();
+  var unused x: Class = Make();
   //@dump-sem-ir-end
 }
 

@@ -11,11 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/subobject_destroy/tuples.carbon
 
 // --- types.carbon
-
 library "[[@TEST_NAME]]";
-
-class A {}
-class B {}
 
 // Used when mixing with `ImplsDestroy`.
 class HasTrivialDestruction {}
@@ -26,37 +22,58 @@ class ImplsDestroy {
   }
 }
 
-// --- todo_nontrivial_all_nontrivial_elements.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "types";
-
 class AlsoImplsDestroy {
   impl as Core.DestroyImpl {
     fn Op(unused ref self) {}
   }
 }
 
+// --- todo_nontrivial_all_nontrivial_elements.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
 alias Tuple = (ImplsDestroy, AlsoImplsDestroy, AlsoImplsDestroy, ImplsDestroy);
 fn Make() -> Tuple;
 
 fn Test() {
+  Tuple as Core.SubobjectDestroy;
+  Tuple as Core.Destroy;
+
+  //@dump-sem-ir-begin
+  var unused x: Tuple = Make();
+  //@dump-sem-ir-end
+}
+
+// --- todo_nontrivial_one_trivial_element.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+alias Tuple = (ImplsDestroy, HasTrivialDestruction, AlsoImplsDestroy, ImplsDestroy);
+fn Make() -> Tuple;
+
+fn Test() {
+  Tuple as Core.SubobjectDestroy;
+  Tuple as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Tuple = Make();
   //@dump-sem-ir-end
 }
 
 // --- todo_nontrivial_nested.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "types";
 
-alias Tuple = ((ImplsDestroy,),);
+alias Tuple = ((ImplsDestroy, HasTrivialDestruction), AlsoImplsDestroy);
 fn Make() -> Tuple;
 
 fn Test() {
+  Tuple as Core.SubobjectDestroy;
+  Tuple as Core.Destroy;
+
   //@dump-sem-ir-begin
   var unused x: Tuple = Make();
   //@dump-sem-ir-end
