@@ -204,6 +204,8 @@ We identify several key requirements for a language to be memory-safe:
     cases. Any use of the unsafe subset must also be well delineated and
     auditable.
 -   Currently, security evidence doesn't _require_ providing guaranteed
-    data-race safety for
-    [data-race bugs that are not _also_ temporal memory safety bugs](/docs/design/safety#data-races-versus-unsynchronized-temporal-safety).
-    However, the temporal memory safety guarantee must still hold.
+    data-race safety for data-race bugs that are not _also_ temporal memory
+    safety bugs. However, preventing data race bugs remains _highly valuable_
+    for correctness, debugging, and achieving [fearless concurrency].
+
+[fearless concurrency]: https://doc.rust-lang.org/book/ch16-00-concurrency.html

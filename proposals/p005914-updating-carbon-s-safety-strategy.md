@@ -88,7 +88,7 @@ requirements on the memory safety design in Carbon:
         allows, for example, zero-initialization rather than fail-stop behavior.
     -   This does not require complete elimination of data races, but does
         require
-        [addressing temporal memory safety even in the face of concurrency](/docs/design/safety#data-races-versus-unsynchronized-temporal-safety).
+        [addressing temporal memory safety even in the face of concurrency](https://github.com/carbon-language/carbon-lang/tree/bd116f5e832b8828364208f1cdbaeadb39f90809/docs/design/safety#data-races-versus-unsynchronized-temporal-safety).
     -   We directly refer to this as simply a
         ["memory-safe language"](/docs/design/safety/terminology.md#memory-safe-language)
         in Carbon.
