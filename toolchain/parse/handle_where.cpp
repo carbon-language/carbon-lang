@@ -11,6 +11,7 @@
 #include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
+
 auto HandleWhereAssignment(Context& context) -> void {
   auto state = context.PopState();
 
