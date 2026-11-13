@@ -218,7 +218,7 @@ fn Works() {
 }
 
 
-// CHECK:STDOUT: --- associated_constant.carbon
+// CHECK:STDOUT: --- associated_constant.carbon = $associated_constant
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -389,7 +389,7 @@ fn Works() {
 // CHECK:STDOUT:   %W.loc11_44.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_instance.carbon
+// CHECK:STDOUT: --- non_instance.carbon = $non_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -566,7 +566,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @K1.WithSelf.Q1(constants.%V) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_caller_instance_interface_not.carbon
+// CHECK:STDOUT: --- fail_caller_instance_interface_not.carbon = $fail_caller_instance_interface_not
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -767,7 +767,7 @@ fn Works() {
 // CHECK:STDOUT:   %y.patt.loc14_30.2 => constants.%y.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- instance.carbon
+// CHECK:STDOUT: --- instance.carbon = $instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1187,7 +1187,7 @@ fn Works() {
 // CHECK:STDOUT:   %self.patt.loc5_13.2 => constants.%self.patt.38f562.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_interface_instance_caller_not.carbon
+// CHECK:STDOUT: --- fail_interface_instance_caller_not.carbon = $fail_interface_instance_caller_not
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1417,7 +1417,7 @@ fn Works() {
 // CHECK:STDOUT:   %V.loc38_23.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_combine_non_instance.carbon
+// CHECK:STDOUT: --- fail_combine_non_instance.carbon = $fail_combine_non_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1609,7 +1609,7 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.G(constants.%A.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- allowed_combine_non_instance.carbon
+// CHECK:STDOUT: --- allowed_combine_non_instance.carbon = $allowed_combine_non_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

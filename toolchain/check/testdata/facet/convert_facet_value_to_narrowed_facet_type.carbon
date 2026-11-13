@@ -89,7 +89,7 @@ fn CallsWithTypeExplicit(generic U: type) {
   TakesExtraWhereExplicit(U);
 }
 
-// CHECK:STDOUT: --- convert_to_narrowed_facet_type.carbon
+// CHECK:STDOUT: --- convert_to_narrowed_facet_type.carbon = $convert_to_narrowed_facet_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -304,7 +304,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ad2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- bigger.carbon
+// CHECK:STDOUT: --- bigger.carbon = $bigger
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -554,7 +554,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.ec1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- with_blanket.carbon
+// CHECK:STDOUT: --- with_blanket.carbon = $with_blanket
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -862,7 +862,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.837
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- equivalent.carbon
+// CHECK:STDOUT: --- equivalent.carbon = $equivalent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1052,7 +1052,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.94f9a3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_interfaces_success.carbon
+// CHECK:STDOUT: --- no_interfaces_success.carbon = $no_interfaces_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1288,7 +1288,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_interfaces.carbon
+// CHECK:STDOUT: --- no_interfaces.carbon = $no_interfaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

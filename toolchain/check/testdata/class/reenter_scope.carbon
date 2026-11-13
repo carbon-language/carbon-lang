@@ -22,7 +22,7 @@ fn Class.F() -> i32 {
   return G();
 }
 
-// CHECK:STDOUT: --- reenter_scope.carbon
+// CHECK:STDOUT: --- reenter_scope.carbon = $reenter_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

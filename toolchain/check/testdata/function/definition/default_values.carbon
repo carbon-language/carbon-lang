@@ -95,7 +95,7 @@ impl library "[[@TEST_NAME]]";
 fn F(x: i32 = 0) -> i32 { return x; }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- redecl.carbon
+// CHECK:STDOUT: --- redecl.carbon = $redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +182,7 @@ fn F(x: i32 = 0) -> i32 { return x; }
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- imported_repeated_defaults.impl.carbon
+// CHECK:STDOUT: --- imported_repeated_defaults.impl.carbon = $imported_repeated_defaults.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -88,7 +88,7 @@ fn F() -> {.x: i32} {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -292,7 +292,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_symbolic_decl.carbon
+// CHECK:STDOUT: --- import_symbolic_decl.carbon = $import_symbolic_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

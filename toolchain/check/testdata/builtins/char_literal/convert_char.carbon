@@ -115,7 +115,7 @@ import library "builtin";
 // CHECK:STDERR:
 let c: UInt(8) = ToChar('\u{1E15}');
 
-// CHECK:STDOUT: --- narrow.carbon
+// CHECK:STDOUT: --- narrow.carbon = $narrow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

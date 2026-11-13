@@ -62,7 +62,7 @@ auto DoThing() -> int {
 ''';
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- dynamic_base_from_cpp.carbon
+// CHECK:STDOUT: --- dynamic_base_from_cpp.carbon = $dynamic_base_from_cpp
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -37,7 +37,7 @@ interface I {
 // CHECK:STDERR:
 impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 4)} {}
 
-// CHECK:STDOUT: --- same_non_type.carbon
+// CHECK:STDOUT: --- same_non_type.carbon = $same_non_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -280,7 +280,7 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_different_non_type.carbon
+// CHECK:STDOUT: --- fail_two_different_non_type.carbon = $fail_two_different_non_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

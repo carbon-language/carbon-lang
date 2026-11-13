@@ -342,7 +342,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
   return Nested();
 }
 
-// CHECK:STDOUT: --- allowed_scopes.carbon
+// CHECK:STDOUT: --- allowed_scopes.carbon = $allowed_scopes
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

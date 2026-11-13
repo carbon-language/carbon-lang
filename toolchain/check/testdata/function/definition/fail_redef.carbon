@@ -25,7 +25,7 @@ fn F() {}
 // CHECK:STDERR:
 fn F() {}
 
-// CHECK:STDOUT: --- fail_redef.carbon
+// CHECK:STDOUT: --- fail_redef.carbon = $fail_redef
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -53,7 +53,7 @@ fn F(a: Outer*) {
   b->qi = a->pi;
 }
 
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

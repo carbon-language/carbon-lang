@@ -46,7 +46,7 @@ interface Outer {
   fn Inner.F();
 }
 
-// CHECK:STDOUT: --- fail_add_member_outside_definition.carbon
+// CHECK:STDOUT: --- fail_add_member_outside_definition.carbon = $fail_add_member_outside_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

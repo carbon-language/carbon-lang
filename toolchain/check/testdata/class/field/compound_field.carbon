@@ -41,7 +41,7 @@ fn AccessBaseIndirect(p: Derived*) -> i32* {
   return &p->(Base.b);
 }
 
-// CHECK:STDOUT: --- compound_field.carbon
+// CHECK:STDOUT: --- compound_field.carbon = $compound_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

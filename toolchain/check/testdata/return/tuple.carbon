@@ -17,7 +17,7 @@ fn Main() -> (i32, i32) {
   return (15, 35);
 }
 
-// CHECK:STDOUT: --- tuple.carbon
+// CHECK:STDOUT: --- tuple.carbon = $tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

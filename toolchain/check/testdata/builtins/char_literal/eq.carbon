@@ -22,7 +22,7 @@ let a: bool = Eq('a', 'a');
 let b: bool = Eq('a', 'b');
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- eq.carbon
+// CHECK:STDOUT: --- eq.carbon = $eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

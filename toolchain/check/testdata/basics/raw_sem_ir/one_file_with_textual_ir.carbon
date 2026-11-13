@@ -269,7 +269,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:         identifier1:     n
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- one_file_with_textual_ir.carbon
+// CHECK:STDOUT: --- one_file_with_textual_ir.carbon = $one_file_with_textual_ir
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

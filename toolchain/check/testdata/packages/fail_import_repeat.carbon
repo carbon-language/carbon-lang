@@ -82,25 +82,25 @@ import library default;
 // CHECK:STDERR:
 import library default;
 
-// CHECK:STDOUT: --- api.carbon
+// CHECK:STDOUT: --- api.carbon = $api
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- api_lib.carbon
+// CHECK:STDOUT: --- api_lib.carbon = $api_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib.carbon
+// CHECK:STDOUT: --- main_lib.carbon = $main_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Api: <namespace> = namespace file.%Api.import, [concrete] {
@@ -117,7 +117,7 @@ import library default;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_default_import.carbon
+// CHECK:STDOUT: --- fail_default_import.carbon = $fail_default_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

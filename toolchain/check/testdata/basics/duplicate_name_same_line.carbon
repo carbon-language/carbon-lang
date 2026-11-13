@@ -20,7 +20,7 @@ fn A() {
   }
 }
 
-// CHECK:STDOUT: --- duplicate_name_same_line.carbon
+// CHECK:STDOUT: --- duplicate_name_same_line.carbon = $duplicate_name_same_line
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -100,7 +100,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add_const.carbon
+// CHECK:STDOUT: --- add_const.carbon = $add_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -227,7 +227,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- remove_const.carbon
+// CHECK:STDOUT: --- remove_const.carbon = $remove_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -303,7 +303,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_remove_const.carbon
+// CHECK:STDOUT: --- unsafe_remove_const.carbon = $unsafe_remove_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

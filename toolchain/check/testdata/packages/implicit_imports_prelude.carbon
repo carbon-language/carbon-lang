@@ -26,7 +26,7 @@ impl library "[[@TEST_NAME]]";
 
 var b: i32 = a;
 
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -97,7 +97,7 @@ var b: i32 = a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lib.impl.carbon
+// CHECK:STDOUT: --- lib.impl.carbon = $lib.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

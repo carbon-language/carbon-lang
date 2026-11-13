@@ -161,7 +161,7 @@ fn F(a: IntAdapter) -> i32 {
   return a.foo;
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -292,7 +292,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_method_access.carbon
+// CHECK:STDOUT: --- fail_todo_method_access.carbon = $fail_todo_method_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -386,7 +386,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_field_access.carbon
+// CHECK:STDOUT: --- fail_todo_field_access.carbon = $fail_todo_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -487,7 +487,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_adapt_struct.carbon
+// CHECK:STDOUT: --- fail_todo_adapt_struct.carbon = $fail_todo_adapt_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -563,7 +563,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon
+// CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon = $fail_todo_adapt_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -642,7 +642,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_builtin.carbon
+// CHECK:STDOUT: --- fail_adapt_builtin.carbon = $fail_adapt_builtin
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

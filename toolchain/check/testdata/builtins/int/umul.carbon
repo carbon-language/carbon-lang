@@ -34,7 +34,7 @@ fn Mul(a: i32, b: i32) -> i32 = "int.umul";
 let a: i32 = Mul(0x7FFF, 0x10000);
 let b: i32 = Mul(0x8000, 0x10000);
 
-// CHECK:STDOUT: --- int_mul.carbon
+// CHECK:STDOUT: --- int_mul.carbon = $int_mul
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

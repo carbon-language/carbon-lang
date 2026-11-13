@@ -34,7 +34,7 @@ fn OuterN.InnerN.CallABC() {
   C();
 }
 
-// CHECK:STDOUT: --- unqualified_lookup.carbon
+// CHECK:STDOUT: --- unqualified_lookup.carbon = $unqualified_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

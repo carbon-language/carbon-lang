@@ -23,7 +23,7 @@ fn A() {
   A.y;
 }
 
-// CHECK:STDOUT: --- fail_member_of_function.carbon
+// CHECK:STDOUT: --- fail_member_of_function.carbon = $fail_member_of_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

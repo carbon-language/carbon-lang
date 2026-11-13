@@ -30,7 +30,7 @@ library "[[@TEST_NAME]]";
 
 var (x: (), y: ()) = ((), ());
 
-// CHECK:STDOUT: --- simple.carbon
+// CHECK:STDOUT: --- simple.carbon = $simple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -74,7 +74,7 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_in_tuple.carbon
+// CHECK:STDOUT: --- var_in_tuple.carbon = $var_in_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -127,7 +127,7 @@ var (x: (), y: ()) = ((), ());
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_in_var.carbon
+// CHECK:STDOUT: --- tuple_in_var.carbon = $tuple_in_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

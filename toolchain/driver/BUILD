@@ -207,6 +207,7 @@ cc_library(
         "//toolchain/lower:options",
         "//toolchain/parse",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:inst_namer",
         "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang:basic",

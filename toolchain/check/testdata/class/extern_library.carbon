@@ -22,7 +22,7 @@
 // CHECK:STDERR:
 extern library "foo" class C;
 
-// CHECK:STDOUT: --- fail_todo.carbon
+// CHECK:STDOUT: --- fail_todo.carbon = $fail_todo
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

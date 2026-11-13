@@ -16,7 +16,7 @@ choice Always(T: type) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- generic.carbon
+// CHECK:STDOUT: --- generic.carbon = $generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

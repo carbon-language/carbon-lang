@@ -2195,7 +2195,7 @@ int G() {
 }
 ''';
 
-// CHECK:STDOUT: --- import_non_function_member_public.carbon
+// CHECK:STDOUT: --- import_non_function_member_public.carbon = $import_non_function_member_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2245,7 +2245,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_function_member_public_extend.carbon
+// CHECK:STDOUT: --- import_non_function_member_public_extend.carbon = $import_non_function_member_public_extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2292,7 +2292,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon
+// CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon = $import_non_function_member_protected_extend_call_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2376,7 +2376,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_member_public.carbon
+// CHECK:STDOUT: --- import_function_member_public.carbon = $import_function_member_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2423,7 +2423,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon = $fail_todo_import_function_member_protected_extend_call_instance_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2456,7 +2456,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon
+// CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon = $import_function_member_protected_extend_call_static_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2506,7 +2506,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public.carbon
+// CHECK:STDOUT: --- import_overload_set_public.carbon = $import_overload_set_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2633,7 +2633,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_protected_base.carbon
+// CHECK:STDOUT: --- import_overload_set_protected_base.carbon = $import_overload_set_protected_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2865,7 +2865,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
+// CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon = $import_overload_set_public_base_class_call_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2944,7 +2944,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
+// CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon = $import_overload_set_public_base_class_derived_call_non_private
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3080,7 +3080,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
+// CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon = $import_overload_set_protected_base_class_derived_call_non_private
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3216,7 +3216,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_public_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_public_access_allowed.carbon = $base_class_public_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3340,7 +3340,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_base_class_public_access_denied.carbon
+// CHECK:STDOUT: --- fail_base_class_public_access_denied.carbon = $fail_base_class_public_access_denied
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3369,7 +3369,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_protected_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_protected_access_allowed.carbon = $base_class_protected_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3469,7 +3469,7 @@ int G() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_public_protected_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_public_protected_access_allowed.carbon = $base_class_public_protected_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

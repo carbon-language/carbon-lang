@@ -121,7 +121,7 @@ class C {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- literal.carbon
+// CHECK:STDOUT: --- literal.carbon = $literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -166,7 +166,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_expr.carbon
+// CHECK:STDOUT: --- init_expr.carbon = $init_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -215,7 +215,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_expr.carbon
+// CHECK:STDOUT: --- ref_expr.carbon = $ref_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -262,7 +262,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- grouping_parens.carbon
+// CHECK:STDOUT: --- grouping_parens.carbon = $grouping_parens
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -303,7 +303,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- one_tuple.carbon
+// CHECK:STDOUT: --- one_tuple.carbon = $one_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -353,7 +353,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_class_var.carbon
+// CHECK:STDOUT: --- fail_in_class_var.carbon = $fail_in_class_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -381,7 +381,7 @@ class C {
 // CHECK:STDOUT:   .b = %field_decl.loc13_16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_empty_in_class_var.carbon
+// CHECK:STDOUT: --- fail_empty_in_class_var.carbon = $fail_empty_in_class_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -396,7 +396,7 @@ class C {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_static_class_var.carbon
+// CHECK:STDOUT: --- in_static_class_var.carbon = $in_static_class_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -463,7 +463,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_class_let.carbon
+// CHECK:STDOUT: --- in_class_let.carbon = $in_class_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -516,7 +516,7 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- empty_in_class_let.carbon
+// CHECK:STDOUT: --- empty_in_class_let.carbon = $empty_in_class_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

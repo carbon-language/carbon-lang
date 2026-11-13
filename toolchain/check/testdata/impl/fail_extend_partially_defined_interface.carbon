@@ -30,7 +30,7 @@ interface I {
   }
 }
 
-// CHECK:STDOUT: --- fail_extend_partially_defined_interface.carbon
+// CHECK:STDOUT: --- fail_extend_partially_defined_interface.carbon = $fail_extend_partially_defined_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

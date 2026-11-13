@@ -30,7 +30,7 @@ fn Foo.Baz() {
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: --- fail_duplicate.carbon
+// CHECK:STDOUT: --- fail_duplicate.carbon = $fail_duplicate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

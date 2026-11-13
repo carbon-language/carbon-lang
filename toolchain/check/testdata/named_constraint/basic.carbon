@@ -60,7 +60,7 @@ constraint Declared {}
 // CHECK:STDERR:
 constraint Declared {}
 
-// CHECK:STDOUT: --- definition.carbon
+// CHECK:STDOUT: --- definition.carbon = $definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -87,7 +87,7 @@ constraint Declared {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Declared.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_declaration.carbon
+// CHECK:STDOUT: --- forward_declaration.carbon = $forward_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

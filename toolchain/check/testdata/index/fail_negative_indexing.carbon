@@ -24,7 +24,7 @@ var c: array(i32, 2) = (42, 42);
 var d: i32 = c[-10];
 
 
-// CHECK:STDOUT: --- fail_negative_indexing.carbon
+// CHECK:STDOUT: --- fail_negative_indexing.carbon = $fail_negative_indexing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

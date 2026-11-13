@@ -23,7 +23,7 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- int_xor.carbon
+// CHECK:STDOUT: --- int_xor.carbon = $int_xor
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -23,7 +23,7 @@ interface I {
   let N: i32 = 42;
 }
 
-// CHECK:STDOUT: --- todo_define_not_default.carbon
+// CHECK:STDOUT: --- todo_define_not_default.carbon = $todo_define_not_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

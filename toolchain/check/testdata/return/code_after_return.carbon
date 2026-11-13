@@ -17,7 +17,7 @@ fn Main() {
   var n: i32 = 1;
 }
 
-// CHECK:STDOUT: --- code_after_return.carbon
+// CHECK:STDOUT: --- code_after_return.carbon = $code_after_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

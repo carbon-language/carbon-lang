@@ -218,7 +218,7 @@ class A {
   }
 }
 
-// CHECK:STDOUT: --- fail_private_field_access.carbon
+// CHECK:STDOUT: --- fail_private_field_access.carbon = $fail_private_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -376,7 +376,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_protected_field_access.carbon
+// CHECK:STDOUT: --- fail_protected_field_access.carbon = $fail_protected_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -399,7 +399,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- instance_private_field_access_on_self.carbon
+// CHECK:STDOUT: --- instance_private_field_access_on_self.carbon = $instance_private_field_access_on_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -461,7 +461,7 @@ class A {
 // CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- out_of_line_instance_private_field_access_on_self.carbon
+// CHECK:STDOUT: --- out_of_line_instance_private_field_access_on_self.carbon = $out_of_line_instance_private_field_access_on_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -511,7 +511,7 @@ class A {
 // CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_global_access.carbon
+// CHECK:STDOUT: --- public_global_access.carbon = $public_global_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -539,7 +539,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_global_access.carbon
+// CHECK:STDOUT: --- fail_global_access.carbon = $fail_global_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -574,7 +574,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- self_access.carbon
+// CHECK:STDOUT: --- self_access.carbon = $self_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

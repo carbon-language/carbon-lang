@@ -18,7 +18,7 @@ interface Empty {
 impl i32 as Empty {
 }
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon = $empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

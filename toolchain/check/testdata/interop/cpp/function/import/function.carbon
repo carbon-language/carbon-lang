@@ -220,7 +220,7 @@ fn G() -> i32 {
 
 // TODO: Add a test per unsupported return type. See https://github.com/carbon-language/carbon-lang/pull/5477/files/4321e21ed27d987fd71be182d292973fd9849df8#r2094655176
 
-// CHECK:STDOUT: --- import_global.carbon
+// CHECK:STDOUT: --- import_global.carbon = $import_global
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -248,7 +248,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_special_name_call_escaped.carbon
+// CHECK:STDOUT: --- import_special_name_call_escaped.carbon = $import_special_name_call_escaped
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -276,7 +276,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overloaded.carbon
+// CHECK:STDOUT: --- import_overloaded.carbon = $import_overloaded
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -304,7 +304,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_variadic.carbon
+// CHECK:STDOUT: --- fail_todo_import_variadic.carbon = $fail_todo_import_variadic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -329,7 +329,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_import_static.carbon
+// CHECK:STDOUT: --- todo_fail_import_static.carbon = $todo_fail_import_static
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -357,7 +357,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_template_function.carbon
+// CHECK:STDOUT: --- import_template_function.carbon = $import_template_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

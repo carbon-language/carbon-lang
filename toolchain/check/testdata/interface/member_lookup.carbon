@@ -59,7 +59,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 }
 
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon = $member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -381,7 +381,7 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8c4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_member.carbon
+// CHECK:STDOUT: --- fail_no_member.carbon = $fail_no_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

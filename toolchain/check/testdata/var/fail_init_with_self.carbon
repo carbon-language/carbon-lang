@@ -33,7 +33,7 @@ fn Main() {
   var unused x: () = x;
 }
 
-// CHECK:STDOUT: --- fail_basic.carbon
+// CHECK:STDOUT: --- fail_basic.carbon = $fail_basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

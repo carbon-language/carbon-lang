@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);
 
-// CHECK:STDOUT: --- addition.carbon
+// CHECK:STDOUT: --- addition.carbon = $addition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -120,7 +120,7 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned.carbon
+// CHECK:STDOUT: --- unsigned.carbon = $unsigned
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

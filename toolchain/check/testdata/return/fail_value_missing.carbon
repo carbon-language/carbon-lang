@@ -26,7 +26,7 @@ fn Main() -> i32 {
   return;
 }
 
-// CHECK:STDOUT: --- fail_value_missing.carbon
+// CHECK:STDOUT: --- fail_value_missing.carbon = $fail_value_missing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

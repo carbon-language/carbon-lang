@@ -58,7 +58,7 @@ fn G(generic N: i32) {
 }
 
 
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon = $basics
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -359,7 +359,7 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_array_temporary.carbon
+// CHECK:STDOUT: --- fail_todo_array_temporary.carbon = $fail_todo_array_temporary
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -498,7 +498,7 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- symbolic.carbon
+// CHECK:STDOUT: --- symbolic.carbon = $symbolic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

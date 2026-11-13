@@ -79,7 +79,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 extern fn A();
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -96,7 +96,7 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.impl.carbon
+// CHECK:STDOUT: --- basic.impl.carbon = $basic.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -118,7 +118,7 @@ extern fn A();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_api.carbon
+// CHECK:STDOUT: --- extern_api.carbon = $extern_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -135,7 +135,7 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_api.impl.carbon
+// CHECK:STDOUT: --- fail_extern_api.impl.carbon = $fail_extern_api.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -154,7 +154,7 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A [from "extern_api.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_impl.carbon
+// CHECK:STDOUT: --- extern_impl.carbon = $extern_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -171,7 +171,7 @@ extern fn A();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_impl.impl.carbon
+// CHECK:STDOUT: --- fail_extern_impl.impl.carbon = $fail_extern_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

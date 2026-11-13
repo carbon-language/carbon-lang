@@ -99,7 +99,7 @@ class Class(U: type) {
   var x: T;
 }
 
-// CHECK:STDOUT: --- foo.carbon
+// CHECK:STDOUT: --- foo.carbon = $foo
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -284,7 +284,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T.loc6_22.1 => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- foo.impl.carbon
+// CHECK:STDOUT: --- foo.impl.carbon = $foo.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -493,7 +493,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.0d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_foo.carbon
+// CHECK:STDOUT: --- use_foo.carbon = $use_foo
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -773,7 +773,7 @@ class Class(U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon
+// CHECK:STDOUT: --- fail_generic_arg_mismatch.carbon = $fail_generic_arg_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -991,7 +991,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.0d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_foo.impl.carbon
+// CHECK:STDOUT: --- fail_foo.impl.carbon = $fail_foo.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

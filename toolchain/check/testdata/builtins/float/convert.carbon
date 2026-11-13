@@ -119,7 +119,7 @@ let a: f64 = Float32ToFloat64(1.0);
 let b: f64 = Float32ToFloat64(1.0e30);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- identity_literal.carbon
+// CHECK:STDOUT: --- identity_literal.carbon = $identity_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -153,7 +153,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_f64.carbon
+// CHECK:STDOUT: --- literal_f64.carbon = $literal_f64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -228,7 +228,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_f32.carbon
+// CHECK:STDOUT: --- literal_f32.carbon = $literal_f32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -303,7 +303,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- identity_f64.carbon
+// CHECK:STDOUT: --- identity_f64.carbon = $identity_f64
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -405,7 +405,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- identity_f32.carbon
+// CHECK:STDOUT: --- identity_f32.carbon = $identity_f32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -507,7 +507,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- truncate.carbon
+// CHECK:STDOUT: --- truncate.carbon = $truncate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -591,7 +591,7 @@ let b: f64 = Float32ToFloat64(1.0e30);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend.carbon
+// CHECK:STDOUT: --- extend.carbon = $extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

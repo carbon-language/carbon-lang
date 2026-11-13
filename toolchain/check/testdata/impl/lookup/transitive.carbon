@@ -48,7 +48,7 @@ fn Call() {
 }
 
 
-// CHECK:STDOUT: --- i.carbon
+// CHECK:STDOUT: --- i.carbon = $i
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -127,7 +127,7 @@ fn Call() {
 // CHECK:STDOUT:   %self.patt.loc4_20.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -262,7 +262,7 @@ fn Call() {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.36a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- get.carbon
+// CHECK:STDOUT: --- get.carbon = $get
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -315,7 +315,7 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Get() -> out %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

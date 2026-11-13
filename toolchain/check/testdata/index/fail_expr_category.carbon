@@ -53,7 +53,7 @@ fn G(b: array(i32, 3)) {
   F()[0] = 4;
 }
 
-// CHECK:STDOUT: --- fail_expr_category.carbon
+// CHECK:STDOUT: --- fail_expr_category.carbon = $fail_expr_category
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

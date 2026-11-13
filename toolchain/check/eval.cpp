@@ -515,7 +515,7 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandDependence(eval_context.context(), inst_id) ==
+  if (OperandDependence(eval_context.sem_ir(), inst_id) ==
       SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
@@ -3463,6 +3463,11 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // specific, we are resolving existing instructions in the eval block for a
   // generic. The global state should not apply to anything done while resolving
   // a specific.
+  //
+  // TODO: Instead of moving the whole stack here, track an index on Context
+  // that is the start of the stack that we're going to consider (in practice we
+  // only consider a single value right now, but we'd only consider the latest
+  // value at least at that tracked index).
   CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
 
   // The `eval_impl_lookup_to_identified_witness` is also a global state that
