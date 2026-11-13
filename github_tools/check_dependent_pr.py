@@ -16,6 +16,12 @@ Usage examples:
   GITHUB_ACCESS_TOKEN=$(gh auth token) \
     ./github_tools/check_dependent_pr.py --pr-number <PR_NUMBER> --dry-run
 
+  # Force a fresh check or override open dependencies:
+  GITHUB_ACCESS_TOKEN=$(gh auth token) \
+    ./github_tools/check_dependent_pr.py --pr-number <PR_NUMBER> --recheck
+  GITHUB_ACCESS_TOKEN=$(gh auth token) \
+    ./github_tools/check_dependent_pr.py --pr-number <PR_NUMBER> --override
+
   # Scan all dependent PRs in dry-run mode:
   GITHUB_ACCESS_TOKEN=$(gh auth token) \
     ./github_tools/check_dependent_pr.py --scan --dry-run
@@ -30,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 import argparse
 import datetime
 import json
+import os
 import re
 import sys
 from typing import Any, Optional
@@ -40,6 +47,11 @@ try:
     from github_tools import github_helpers
 except ImportError:
     import github_helpers  # type: ignore
+
+_DOCS_URL = (
+    "https://github.com/carbon-language/carbon-lang/blob/trunk/"
+    "docs/project/pull_request_workflow.md#dependent-pull-requests"
+)
 
 # Queries
 _QUERY_OPEN_PRS = """
@@ -191,10 +203,11 @@ def _parse_and_validate_state(
     open_pr_numbers: set[int],
     max_merged_pr: int = 10000,
     pr_number: int = 0,
-) -> tuple[list[int], list[int], Optional[str]]:
+) -> tuple[list[int], list[int], list[int], Optional[str]]:
     """Parses and validates the state from a JSON string."""
     parsed_open: list[int] = []
     parsed_merged: list[int] = []
+    parsed_ignored: list[int] = []
     first_commit: Optional[str] = None
 
     raw_state = json.loads(json_str)
@@ -233,6 +246,20 @@ def _parse_and_validate_state(
             )
         else:
             parsed_merged.append(val)
+    for x in raw_state.get("ignored", []):
+        val = _parse_pr_number(x)
+        if val is None:
+            raise ValueError(
+                f"PR #{pr_number}: Invalid PR number format in 'ignored': {x}"
+            )
+        elif val not in open_pr_numbers and val > max_merged_pr:
+            raise ValueError(
+                f"PR #{pr_number}: Rejecting PR #{val} from 'ignored' because "
+                "it is not an open PR and exceeds maximum merged PR "
+                f"#{max_merged_pr}."
+            )
+        else:
+            parsed_ignored.append(val)
     if "first_commit" in raw_state:
         fc = raw_state["first_commit"]
         if fc is None:
@@ -244,7 +271,7 @@ def _parse_and_validate_state(
                 f"PR #{pr_number}: Invalid commit OID format in "
                 f"'first_commit': {fc}"
             )
-    return parsed_open, parsed_merged, first_commit
+    return parsed_open, parsed_merged, parsed_ignored, first_commit
 
 
 def _set_commit_status(
@@ -268,6 +295,13 @@ def _set_commit_status(
         "description": description,
         "context": "PR dependencies check",
     }
+    # Link `Details` to the Actions workflow run when running in CI so
+    # contributors can easily open and re-run the job if the check is stale.
+    server = os.environ.get("GITHUB_SERVER_URL")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    if server and repo and run_id:
+        payload["target_url"] = f"{server}/{repo}/actions/runs/{run_id}"
     if dry_run:
         _print_err(
             f"[Dry-run] Would set commit status on {sha[:8]} to {state} "
@@ -294,6 +328,8 @@ def _process_pr(
     dry_run: bool = False,
     scanning: bool = False,
     max_merged_pr: int = 10000,
+    recheck: bool = False,
+    override: bool = False,
 ) -> None:
     """Processes a single PR to check for dependencies and update comments."""
     current_res = client.execute(
@@ -352,6 +388,7 @@ def _process_pr(
     existing_comment_id = None
     parsed_open_deps: list[int] = []
     parsed_merged_deps: list[int] = []
+    parsed_ignored_deps: list[int] = []
     previous_first_commit: Optional[str] = None
 
     matching_comment = None
@@ -368,21 +405,58 @@ def _process_pr(
         start = body.find(marker_prefix) + len(marker_prefix)
         end = body.find(" -->", start)
         if end != -1:
-            parsed_open_deps, parsed_merged_deps, previous_first_commit = (
-                _parse_and_validate_state(
-                    body[start:end], open_pr_numbers, max_merged_pr, pr_number
-                )
+            (
+                parsed_open_deps,
+                parsed_merged_deps,
+                parsed_ignored_deps,
+                previous_first_commit,
+            ) = _parse_and_validate_state(
+                body[start:end], open_pr_numbers, max_merged_pr, pr_number
             )
 
-    # Keep tracking previously identified dependencies if they are still open,
-    # even if they no longer pass the subset check (e.g. they got new commits).
-    for pr in parsed_open_deps:
-        if pr in open_pr_numbers and pr not in open_deps:
-            open_deps.append(pr)
+    has_dependent_label = any(label["name"] == "dependent" for label in labels)
+
+    # If the `dependent` label was manually removed while open dependencies
+    # were tracked, treat that as an override on single-PR checks as well.
+    if (
+        not recheck
+        and not override
+        and not scanning
+        and parsed_open_deps
+        and not has_dependent_label
+    ):
+        override = True
+
+    if recheck:
+        # Recompute purely from current commit overlap, clearing any override
+        # or sticky dependencies carried over from earlier runs.
+        ignored_deps: list[int] = []
+    elif override:
+        # Move all detected and tracked open dependencies into `ignored` while
+        # they remain open so the status check becomes `success`.
+        ignored_deps = sorted(
+            {
+                pr
+                for pr in (open_deps + parsed_open_deps + parsed_ignored_deps)
+                if pr in open_pr_numbers
+            }
+        )
+        open_deps = []
+    else:
+        # Keep tracking previously identified dependencies if they are still
+        # open, even if they no longer pass the overlap check (e.g. they got
+        # force-pushed), while respecting any overridden dependencies.
+        ignored_deps = [
+            pr for pr in parsed_ignored_deps if pr in open_pr_numbers
+        ]
+        for pr in parsed_open_deps:
+            if pr in open_pr_numbers and pr not in open_deps:
+                open_deps.append(pr)
+        open_deps = [pr for pr in open_deps if pr not in ignored_deps]
 
     # Identify newly merged PRs
     newly_merged_deps = []
-    for pr in parsed_open_deps:
+    for pr in set(parsed_open_deps + parsed_ignored_deps):
         if pr not in open_deps and pr not in open_pr_numbers:
             newly_merged_deps.append(pr)
 
@@ -392,13 +466,13 @@ def _process_pr(
         state = "pending"
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
         description = f"This PR has open dependencies: {pr_list_str}"
+    elif ignored_deps:
+        state = "success"
+        ignored_str = ", ".join([f"#{num}" for num in ignored_deps])
+        description = f"Dependency check overridden (ignoring {ignored_str})"
     else:
         state = "success"
         description = "This PR has no open dependencies"
-
-    _set_commit_status(
-        pr_node["headRefOid"], state, description, token, dry_run
-    )
 
     first_non_dep_oid = None
     if open_deps:
@@ -437,13 +511,6 @@ def _process_pr(
             oid in dep_oids and oid not in last_dep_oids for oid in current_oids
         )
 
-    if (
-        open_deps == parsed_open_deps
-        and merged_deps == parsed_merged_deps
-        and first_non_dep_oid == previous_first_commit
-    ):
-        return
-
     # Construct new comment
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
         "%Y-%m-%d %H:%M:%S UTC"
@@ -453,6 +520,8 @@ def _process_pr(
         "merged": merged_deps,
         "first_commit": first_non_dep_oid,
     }
+    if ignored_deps:
+        new_state["ignored"] = ignored_deps
     state_json = json.dumps(new_state)
 
     comment_body = f"{marker_prefix}{state_json} -->\n"
@@ -479,19 +548,30 @@ def _process_pr(
                 f"Depends on {pr_list_str}, unable to identify starting review "
                 f"commit from simple analysis"
             )
-    else:
+    elif ignored_deps:
+        ignored_str = ", ".join([f"#{num}" for num in ignored_deps])
+        comment_body += f"Dependency check overridden (ignoring {ignored_str})."
+    elif merged_deps:
         comment_body += "All dependency PRs are merged."
+    else:
+        comment_body += "No open dependency PRs."
 
     if merged_deps:
         merged_str = ", ".join([f"#{num}" for num in sorted(merged_deps)])
         comment_body += f"\n\nMerged dependency PRs: {merged_str}"
 
-    comment_body += f"\n\n(Last updated: {timestamp})"
+    comment_body += (
+        "\n\nSee the [dependent pull requests documentation]"
+        f"({_DOCS_URL}) for details on how stacked PRs are tracked, "
+        "re-checked, and overridden."
+        f"\n\n(Last updated: {timestamp})"
+    )
 
-    _print_err(f"PR #{pr_number}: Updating comment. New body:\n{comment_body}")
-
-    # Apply mutations
-    has_dependent_label = any(label["name"] == "dependent" for label in labels)
+    # Apply mutations only after all reading and analysis above is complete, so
+    # that the analysis never observes our own changes.
+    _set_commit_status(
+        pr_node["headRefOid"], state, description, token, dry_run
+    )
 
     if open_deps and not has_dependent_label and not scanning:
         if dry_run:
@@ -513,6 +593,19 @@ def _process_pr(
                 _MUTATION_REMOVE_LABEL,
                 variable_values={"labelableId": pr_id, "labelIds": [label_id]},
             )
+
+    # Only rewrite the comment when its tracked state changed. The status and
+    # label above are always reconciled so that, for example, a `dependent`
+    # label added to force a re-check is removed even if nothing else changed.
+    if (
+        open_deps == parsed_open_deps
+        and merged_deps == parsed_merged_deps
+        and ignored_deps == parsed_ignored_deps
+        and first_non_dep_oid == previous_first_commit
+    ):
+        return
+
+    _print_err(f"PR #{pr_number}: Updating comment. New body:\n{comment_body}")
 
     if existing_comment_id:
         if dry_run:
@@ -557,13 +650,27 @@ def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         action="store_true",
         help="Scan all open PRs with 'dependent' label and update them.",
     )
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
+        "--recheck",
+        action="store_true",
+        help="Clear cached/overridden state and re-check dependencies.",
+    )
+    mode_group.add_argument(
+        "--override",
+        action="store_true",
+        help="Override open dependencies for the PR and set status to success.",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print mutations without updating GitHub",
     )
     github_helpers.add_access_token_arg(parser, "repo")
-    return parser.parse_args(args=args)
+    parsed = parser.parse_args(args=args)
+    if parsed.scan and (parsed.recheck or parsed.override):
+        parser.error("--recheck and --override require --pr-number.")
+    return parsed
 
 
 def main() -> None:
@@ -604,6 +711,8 @@ def main() -> None:
             parsed_args.access_token,
             dry_run=parsed_args.dry_run,
             max_merged_pr=max_merged_pr,
+            recheck=parsed_args.recheck,
+            override=parsed_args.override,
         )
     elif parsed_args.scan:
         for node in client.execute_and_paginate(
