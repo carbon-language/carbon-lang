@@ -242,8 +242,8 @@ class MultiUnitCache {
 
   auto short_file_names() -> const SemIR::ShortFileNameStore& {
     if (!short_file_names_) {
-      SemIR::InstNamer::Namespace compilation_namespace;
-      llvm::SmallVector<SemIR::InstNamer::Namespace::Name> namespace_names;
+      SemIR::TextualNamespace compilation_namespace;
+      llvm::SmallVector<SemIR::TextualNamespace::Name> namespace_names;
       namespace_names.reserve(units_.size());
       for (auto [i, unit] : llvm::enumerate(units_)) {
         std::string short_name;
