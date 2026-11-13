@@ -28,7 +28,7 @@ class Derived {
   }
 }
 
-// --- fail_todo_unqualified_in_friend_of_base.carbon
+// --- unqualified_in_friend_of_base.carbon
 library "[[@TEST_NAME]]";
 
 class Derived;
@@ -42,17 +42,6 @@ class Derived {
   extend base: Base;
 
   fn G() {
-    // CHECK:STDERR:        ╭─┤ fail_todo_unqualified_in_friend_of_base.carbon:[[@LINE+11]]:5
-    // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:        ┆
-    // CHECK:STDERR: ->     │     F();
-    // CHECK:STDERR:        ·     ┳
-    // CHECK:STDERR:        ·     ┗━━┫ error: cannot access private member `F` of type `Base`
-    // CHECK:STDERR:        ·        ┃        [ClassInvalidMemberAccess]
-    // CHECK:STDERR:        ╰────
-    // CHECK:STDERR:
     F();
   }
 }
