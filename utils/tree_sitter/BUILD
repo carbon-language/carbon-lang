@@ -5,6 +5,7 @@
 load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
+load("//bazel/tree_sitter_rules:defs.bzl", "tree_sitter_parser")
 
 package(default_visibility = ["//bazel/check_deps:__pkg__"])
 
@@ -23,7 +24,6 @@ package(default_visibility = ["//bazel/check_deps:__pkg__"])
 # Convenience target for running all tests, including manual tests.
 test_suite(
     name = "tests",
-    tags = ["manual"],
     tests = [
         ":string_fail_tests",
         ":string_tests",
@@ -32,15 +32,9 @@ test_suite(
 )
 
 # Call tree-sitter to generate parser files.
-genrule(
+tree_sitter_parser(
     name = "parser_files",
-    srcs = ["grammar.js"],
-    outs = [
-        "parser.c",
-        "tree_sitter/parser.h",
-    ],
-    cmd = "tree-sitter generate $(location grammar.js) -o $(RULEDIR)",
-    tags = ["manual"],
+    src = "grammar.js",
 )
 
 cc_library(
@@ -51,14 +45,12 @@ cc_library(
     ],
     hdrs = [":tree_sitter/parser.h"],
     copts = make_include_copts(["."]) + ["-Wno-missing-prototypes"],
-    tags = ["manual"],
     deps = ["@tree-sitter-bazel//:tree-sitter"],
 )
 
 cc_shared_library(
     name = "parser_shared",
     shared_lib_name = "carbon.so",
-    tags = ["manual"],
     deps = [":parser"],
 )
 
@@ -66,7 +58,6 @@ cc_binary(
     name = "test_runner",
     testonly = 1,
     srcs = ["test_runner.cpp"],
-    tags = ["manual"],
     deps = [
         ":parser",
         "//testing/base:file_helpers",
@@ -125,7 +116,6 @@ cc_test(
     srcs = ["test_runner.cpp"],
     args = ["$(locations :string_testdata)"],
     data = [":string_testdata"],
-    tags = ["manual"],
     deps = [
         ":parser",
         "//testing/base:file_helpers",
@@ -141,7 +131,6 @@ cc_test(
     env = {
         "FAIL_TESTS": "1",
     },
-    tags = ["manual"],
     deps = [
         ":parser",
         "//testing/base:file_helpers",
