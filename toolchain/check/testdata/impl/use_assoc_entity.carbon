@@ -291,27 +291,14 @@ class A {}
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:3
-  // CHECK:STDERR: ->     │   where .U = T;
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:3
-  // CHECK:STDERR: ->     │   where .U = T;
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
-  // CHECK:STDERR:        ·        ┃        [SemanticsTodo]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  where .U = T;
   // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
-  // CHECK:STDERR: ->     │   where .T = ();
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR: ->     │   where U = T;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `where assignment decl` [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  where .T = ();
+  where U = T;
+  where T = ();
 }
 
 // --- associated_fn_use_in_def_before_decl.carbon

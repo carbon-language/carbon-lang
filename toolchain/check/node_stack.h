@@ -423,6 +423,7 @@ class NodeStack {
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
       case Parse::NodeKind::StructPatternDesignatedField:
+      case Parse::NodeKind::WhereAssignmentIntroducer:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
@@ -552,6 +553,7 @@ class NodeStack {
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::TypeOfExprKeyword:
       case Parse::NodeKind::TypeOfExprOpenParen:
+      case Parse::NodeKind::WhereAssignmentOperator:
       case Parse::NodeKind::WhereOperand:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;

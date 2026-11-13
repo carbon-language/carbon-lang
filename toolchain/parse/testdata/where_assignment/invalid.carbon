@@ -4,115 +4,187 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/where_expr/basic.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/where_assignment/invalid.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/basic.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_assignment/invalid.carbon
 
 // --- fail_self.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_self.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   where Self = 1;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in `where` assignment declaration
+  // CHECK:STDERR:        ·           ┃        [WhereAssignmentMissingIdentifier]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where Self = 1;
 }
 
 // --- fail_keyword.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   where and = 1;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in `where` assignment declaration
+  // CHECK:STDERR:        ·           ┃        [WhereAssignmentMissingIdentifier]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where and = 1;
 }
 
 // --- fail_postfix_after_lhs.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_postfix_after_lhs.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   where Z1* = 1;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: missing `=` in `where` assignment
+  // CHECK:STDERR:        ·              ┃        [WhereAssignmentMissingEquals]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where Z1* = 1;
 }
 
 // --- fail_binary_op_after_lhs.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_binary_op_after_lhs.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   where Z1 + Z2 = 1;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: missing `=` in `where` assignment
+  // CHECK:STDERR:        ·              ┃        [WhereAssignmentMissingEquals]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where Z1 + Z2 = 1;
 }
 
 // --- fail_designator.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_designator.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   where .Z1 = 1;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in `where` assignment declaration
+  // CHECK:STDERR:        ·           ┃        [WhereAssignmentMissingIdentifier]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where .Z1 = 1;
 }
 
 // --- fail_lhs_in_parens.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_lhs_in_parens.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   where (Z1) = 1;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in `where` assignment declaration
+  // CHECK:STDERR:        ·           ┃        [WhereAssignmentMissingIdentifier]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where (Z1) = 1;
 }
 
 // --- fail_multiple_assignments.carbon
 
 impl C as Z {
+  // CHECK:STDERR:        ╭─┤ fail_multiple_assignments.carbon:[[@LINE+7]]:15
+  // CHECK:STDERR: ->     │   where Z1 = 1 and Z2 = 2;
+  // CHECK:STDERR:        ·               ┳
+  // CHECK:STDERR:        ·               ┗━━┫ error: `where` declarations must end with a `;`
+  // CHECK:STDERR:        ·                  ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   where Z1 = 1 and Z2 = 2;
 }
 
-// CHECK:STDOUT: - filename: basic.carbon
+// CHECK:STDOUT: - filename: fail_self.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Foo'
-// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
-// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─SelfTypeName 'Self'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
-// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
-// CHECK:STDOUT:   ├─FunctionDecl ';'
-// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
-// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
-// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
-// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
-// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'Foo'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'Bar'
-// CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
-// CHECK:STDOUT:   │ │ ├─AssociatedConstantNameAndType ':'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';'
-// CHECK:STDOUT:   ├─InterfaceDefinition '}'
-// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │   ╭─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'U'
-// CHECK:STDOUT:   │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'V'
-// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ ├─RequirementEqual '='
-// CHECK:STDOUT:   │ │ ├─WhereExpr 'where'
-// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':'
-// CHECK:STDOUT:   ├─LetDecl ';'
-// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
-// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
-// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
-// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
-// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'W'
-// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'X'
-// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
-// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
-// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
-// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
-// CHECK:STDOUT:   │ ├─LetDecl ';'
-// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_keyword.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_postfix_after_lhs.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Z1'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_binary_op_after_lhs.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Z1'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_designator.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_lhs_in_parens.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_multiple_assignments.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'Z1'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ├─WhereAssignmentOperator '='
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
+// CHECK:STDOUT:   ├─ImplDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

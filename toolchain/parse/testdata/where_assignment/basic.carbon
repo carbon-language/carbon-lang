@@ -9,19 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_assignment/basic.carbon
 
 impl C as Z {
-  // CHECK:STDERR:        ╭─┤ basic.carbon:[[@LINE+6]]:3
-  // CHECK:STDERR: ->     │   where Z1 = D.(Y.Y1);
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   where Z1 = D.(Y.Y1);
-  // CHECK:STDERR:        ╭─┤ basic.carbon:[[@LINE+6]]:3
-  // CHECK:STDERR: ->     │   where Z2 = Z1;
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   where Z2 = Z1;
 }
 
@@ -32,10 +20,22 @@ impl C as Z {
 // CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
 // CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
 // CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
-// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'where' has_error
-// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
-// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'where' has_error
-// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'Z1'
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'D'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ │ │ │ │ │ ├─IdentifierNameNotBeforeSignature 'Y1'
+// CHECK:STDOUT:   │ │ │ │ │ ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │ │ │ ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ ├─WhereAssignmentOperator '='
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';'
+// CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'Z2'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'Z1'
+// CHECK:STDOUT:   │ │ ├─WhereAssignmentOperator '='
+// CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';'
 // CHECK:STDOUT:   ├─ImplDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

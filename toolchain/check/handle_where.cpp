@@ -626,4 +626,38 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context,
+                     Parse::WhereAssignmentIntroducerId node_id) -> bool {
+  auto scope_inst_id = context.scope_stack().PeekInstId();
+  if (!context.insts().Is<SemIR::ImplDecl>(scope_inst_id)) {
+    CARBON_DIAGNOSTIC(WhereAssignmentInWrongScope, Error,
+                      "`where` assignment declaration found in invalid scope; "
+                      "must be in `impl` definition");
+    context.emitter().Emit(node_id, WhereAssignmentInWrongScope);
+    scope_inst_id = SemIR::ErrorInst::InstId;
+  }
+
+  context.node_stack().Push(node_id, scope_inst_id);
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::WhereAssignmentOperatorId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
+    -> bool {
+  [[maybe_unused]] auto rhs_inst_id = context.node_stack().PopExpr();
+  [[maybe_unused]] auto lhs_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::IdentifierNameExpr>();
+  auto scope_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::WhereAssignmentIntroducer>();
+  if (scope_inst_id == SemIR::ErrorInst::InstId) {
+    return true;
+  }
+
+  return context.TODO(node_id, "where assignment decl");
+}
+
 }  // namespace Carbon::Check
