@@ -382,7 +382,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_empty_class_impls_destroy.carbon
+// CHECK:STDOUT: --- todo_nontrivial_empty_class_impls_destroy.carbon = $todo_nontrivial_empty_class_impls_destroy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -459,7 +459,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_9.2(%self.param: ref %ImplsDestroy) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_all_nontrivial_fields.carbon
+// CHECK:STDOUT: --- todo_nontrivial_all_nontrivial_fields.carbon = $todo_nontrivial_all_nontrivial_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -632,7 +632,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_one_trivial_field.carbon
+// CHECK:STDOUT: --- todo_nontrivial_one_trivial_field.carbon = $todo_nontrivial_one_trivial_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -815,7 +815,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_nested_nontrivial_member.carbon
+// CHECK:STDOUT: --- todo_nontrivial_nested_nontrivial_member.carbon = $todo_nontrivial_nested_nontrivial_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -964,7 +964,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_derived_from_nontrivial_base.carbon
+// CHECK:STDOUT: --- todo_nontrivial_derived_from_nontrivial_base.carbon = $todo_nontrivial_derived_from_nontrivial_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1141,7 +1141,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_grandparent.carbon
+// CHECK:STDOUT: --- todo_nontrivial_grandparent.carbon = $todo_nontrivial_grandparent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1352,7 +1352,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon
+// CHECK:STDOUT: --- todo_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon = $todo_nontrivial_derived_has_trivial_base_and_impls_destroy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1467,7 +1467,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_generic_class.carbon
+// CHECK:STDOUT: --- todo_nontrivial_generic_class.carbon = $todo_nontrivial_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1584,7 +1584,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_base_and_trivial_field.carbon
+// CHECK:STDOUT: --- todo_nontrivial_base_and_trivial_field.carbon = $todo_nontrivial_base_and_trivial_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1764,7 +1764,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_trivial_base_and_nontrivial_field.carbon
+// CHECK:STDOUT: --- todo_nontrivial_trivial_base_and_nontrivial_field.carbon = $todo_nontrivial_trivial_base_and_nontrivial_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1904,7 +1904,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_class_dynamic.carbon
+// CHECK:STDOUT: --- todo_nontrivial_class_dynamic.carbon = $todo_nontrivial_class_dynamic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2008,7 +2008,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_dynamic_base.carbon
+// CHECK:STDOUT: --- todo_nontrivial_dynamic_base.carbon = $todo_nontrivial_dynamic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2155,7 +2155,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_nontrivial_class_derived_from_nontrivial_abstract.carbon
+// CHECK:STDOUT: --- fail_todo_nontrivial_class_derived_from_nontrivial_abstract.carbon = $fail_todo_nontrivial_class_derived_from_nontrivial_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -80,7 +80,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_populated.carbon
+// CHECK:STDOUT: --- todo_nontrivial_populated.carbon = $todo_nontrivial_populated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -196,7 +196,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_array.carbon
+// CHECK:STDOUT: --- todo_nontrivial_array_of_array.carbon = $todo_nontrivial_array_of_array
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -725,7 +725,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_adapter.carbon
+// CHECK:STDOUT: --- todo_nontrivial_adapter.carbon = $todo_nontrivial_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

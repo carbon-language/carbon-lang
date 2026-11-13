@@ -33,7 +33,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_maybe_unformed.carbon
+// CHECK:STDOUT: --- todo_nontrivial_maybe_unformed.carbon = $todo_nontrivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
