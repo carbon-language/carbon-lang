@@ -210,14 +210,16 @@ class DestroyFormatWitnessContext {
     }
   }
 
-  // Attempts to determine a type's destroy format.
+  // Determines the destroy format for `type_inst_id`.
   //
   // Returns:
-  //   - `DestroyFormat::NoDestroy`, if the object can't be destroyed;
-  //   - `DestroyFormat::Trivial`, if the object has trivial destruction;
-  //   - `DestroyFormat::NonTrivial`, if the object has non-trivial destruction;
-  //   - `std::nullopt`, if either `SubobjectDestroy`, `Destroy`, or
-  //   `Destroy.Op` can't be found.
+  //   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+  //       `Core.SubobjectDestroy`, `Core.Destroy`, or `Core.Destroy.Op`);
+  //   -   `DestroyFormat::NoDestroy`, if `Core.SubobjectDestroy.Op` doesn't
+  //       exist;
+  //   -   `DestroyFormat::Trivial`, if `Core.SubobjectDestroy.Op` and
+  //       `Core.Destroy.Op` are both no-ops;
+  //   -   `DestroyFormat::NonTrivial`, otherwise;
   auto GetDestroyFormatForOneType(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeInstId type_inst_id)
       -> std::optional<DestroyFormat> {
@@ -287,8 +289,13 @@ class DestroyFormatWitnessContext {
 };
 }  // namespace
 
-// Returns whether an array type has trivial destruction, non-trivial
-// destruction, or cannot be destroyed.
+// Determines the destroy format for an array type.
+//
+// Returns:
+//   -   `DestroyFormat::Trivial` for empty arrays;
+//   -   The array's element type for non-empty arrays;
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
 static auto GetArrayDestroyFormat(Context& context, SemIR::LocId loc_id,
                                   SemIR::ArrayType array_type,
                                   DestroyFormatWitnessContext& witness_context)
@@ -304,8 +311,16 @@ static auto GetArrayDestroyFormat(Context& context, SemIR::LocId loc_id,
       context, loc_id, array_type.element_type_inst_id);
 }
 
-// Returns whether a struct type has trivial destruction, non-trivial
-// destruction, or cannot be destroyed.
+// Determines the destroy format for a struct type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, if any subobject's destroy
+//       format is `DestroyFormat::NoDestroy`;
+//   -   Otherwise, `DestroyFormat::NonTrivial`, if any subobject's destroy
+//       format is `DestroyFormat::NonTrivial`;
+//   -   Otherwise, `DestroyFormat::Trivial`.
 static auto GetStructDestroyFormat(
     Context& context, SemIR::LocId loc_id,
     llvm::ArrayRef<SemIR::StructTypeField> fields,
@@ -329,8 +344,16 @@ static auto GetStructDestroyFormat(
   return result;
 }
 
-// Returns whether a tuple type has trivial destruction, non-trivial
-// destruction, or cannot be destroyed.
+// Determines the destroy format for a tuple type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, if any subobject's destroy
+//       format is `DestroyFormat::NoDestroy`;
+//   -   Otherwise, `DestroyFormat::NonTrivial`, if any subobject's destroy
+//       format is `DestroyFormat::NonTrivial`;
+//   -   Otherwise, `DestroyFormat::Trivial`.
 static auto GetTupleDestroyFormat(Context& context, SemIR::LocId loc_id,
                                   SemIR::TypeInstId type_id,
                                   DestroyFormatWitnessContext& witness_context)
@@ -359,8 +382,19 @@ static auto GetTupleDestroyFormat(Context& context, SemIR::LocId loc_id,
   return result;
 }
 
-// Returns whether a class type has trivial destruction, non-trivial
-// destruction, or cannot be destroyed.
+// Determines the destroy format for a class type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, in the following cases:
+//       -   The class is abstract and non-partial; or
+//       -   the class is a C++ type; or
+//       -   any of the class's subobjects cannot be destroyed;
+//   -   Otherwise, `DestroyFormat::Trivial`, if the class type's
+//       `Core.Destroy.Op` is a no-op, and all of the class's subobjects have
+//       trivial  destruction;
+//   -   Otherwise, `DestroyFormat::NonTrivial`.
 static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
                                   SemIR::ClassType class_type,
                                   const SemIR::CompleteTypeInfo& complete_info,
@@ -457,8 +491,17 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
   }
 }
 
-// Returns whether `Self` has trivial destruction, non-trivial destruction, or
-// should not impl `Destroy`.
+// Determines the destroy format for `Self`.
+//
+// Types that return `DestroyFormat::Trivial` have trivial destruction, should
+// have a no-op for `Core.SubobjectDestroy.Op`, and must implement
+// `Core.TrivialDestroy`. Types that return `DestroyFormat::NonTrivial` can't
+// implement `TrivialDestroy`, and their `SubobjectDestroy.Op` might require
+// some non-trivial work. Types that return `DestroyFormat::NoDestroy` must not
+// implement `SubobjectDestroy`.
+//
+// This function returns `std::nullopt` if a toolchain error occurred (e.g.
+// failed to look up `Core.SubobjectDestroy`).
 static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
                              SemIR::ConstantId query_self_const_id)
     -> std::optional<DestroyFormat> {
