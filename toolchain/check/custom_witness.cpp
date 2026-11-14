@@ -230,7 +230,7 @@ class DestroyFormatWitnessContext {
         return std::nullopt;
       }
 
-      if (op_fn_id == SemIR::FunctionId::None) {
+      if (*op_fn_id == SemIR::FunctionId::None) {
         return DestroyFormat::NoDestroy;
       }
       auto op_fn = context.functions().Get(*op_fn_id);
@@ -242,14 +242,15 @@ class DestroyFormatWitnessContext {
 
     auto op_fn_id = GetAssociatedFunction(context, loc_id, type_id,
                                           destroy_interface_, op_name_id);
-    CARBON_CHECK(op_fn_id != std::nullopt,
-                 "error looking up impl witness for `Core.Destroy` for {}",
-                 context.insts().Get(type_id));
-    CARBON_CHECK(
-        op_fn_id != SemIR::FunctionId::None,
-        "`Core.Destroy` must have an impl whenever there is an impl for "
-        "`Core.SubobjectDestroy`; impl is missing for {}",
-        context.insts().Get(type_id));
+    if (op_fn_id == std::nullopt) {
+      return std::nullopt;
+    }
+
+    // We diagnosed `Core.Destroy.Op` as not having a blanket impl earlier in
+    // the check phase.
+    if (*op_fn_id == SemIR::FunctionId::None) {
+      return std::nullopt;
+    }
     auto op_fn = context.functions().Get(*op_fn_id);
     auto builtin_kind = op_fn.GetBuiltinFunctionKind(context.sem_ir());
     return builtin_kind == SemIR::BuiltinFunctionKind::NoOp
