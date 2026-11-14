@@ -234,6 +234,13 @@ static auto MakeDefaultInit(Context& context, SemIR::LocId loc_id,
   if (type_inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
+  if (type_inst_id == SemIR::AutoType::TypeInstId) {
+    CARBON_DIAGNOSTIC(ExpectedInitializerAfterAutoTypedVar, Error,
+                      "expected `=`; `var` declaration with type `auto` "
+                      "must have an initializer");
+    context.emitter().Emit(loc_id, ExpectedInitializerAfterAutoTypedVar);
+    return SemIR::ErrorInst::InstId;
+  }
 
   // Form `Type as Core.DefaultOrUnformed`.
   auto interface_id =

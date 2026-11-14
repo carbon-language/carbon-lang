@@ -240,16 +240,17 @@ interface I {
   let T: type;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+6]]:8
-// CHECK:STDERR: ->     │ let x: auto = I.T;
-// CHECK:STDERR:        ·        ━━┳━
-// CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 let x: auto = I.T;
 
 interface J {
   // Is this valid?
+  // CHECK:STDERR:        ╭─┤ fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   alias U = x;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: alias refers to a runtime value
+  // CHECK:STDERR:        ·                ┃        [AliasRequiresConstantValue]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   alias U = x;
   // type of U is an assoc entity type, but value is not constant.
   fn F() -> U;
