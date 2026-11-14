@@ -330,7 +330,7 @@ static auto GetStructDestroyFormat(
   for (const auto& subobject : fields) {
     auto destroy_format = witness_context.GetDestroyFormatForOneType(
         context, loc_id, subobject.type_inst_id);
-    if (destroy_format == std::nullopt) {
+    if (!destroy_format) {
       return std::nullopt;
     }
 
@@ -368,7 +368,7 @@ static auto GetTupleDestroyFormat(Context& context, SemIR::LocId loc_id,
   for (const auto& element_id : block) {
     auto destroy_format = witness_context.GetDestroyFormatForOneType(
         context, loc_id, context.types().GetAsTypeInstId(element_id));
-    if (destroy_format == std::nullopt) {
+    if (!destroy_format) {
       return std::nullopt;
     }
 
@@ -1027,11 +1027,11 @@ static auto LookupSubobjectDestroyWitness(
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
   auto format = GetDestroyFormat(context, loc_id, query_self_const_id);
-  if (format == std::nullopt) {
+  if (!format) {
     return SemIR::ErrorInst::InstId;
   }
 
-  if (format == DestroyFormat::NoDestroy) {
+  if (*format == DestroyFormat::NoDestroy) {
     return std::nullopt;
   }
 
