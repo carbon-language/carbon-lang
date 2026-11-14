@@ -5,12 +5,18 @@
 #ifndef CARBON_TOOLCHAIN_LEX_NUMERIC_LITERAL_H_
 #define CARBON_TOOLCHAIN_LEX_NUMERIC_LITERAL_H_
 
-#include <optional>
+#include <array>
+#include <cstdint>
+#include <type_traits>
 #include <variant>
 
-#include "llvm/ADT/APInt.h"
+#include "common/check.h"
 #include "llvm/ADT/StringRef.h"
+#include "toolchain/base/int.h"
+#include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/character_set.h"
 #include "toolchain/lex/source_loc.h"
 
 namespace Carbon::Lex {
@@ -18,42 +24,52 @@ namespace Carbon::Lex {
 // A numeric literal token that has been extracted from a source buffer.
 class NumericLiteral {
  public:
-  enum class Radix : int8_t {
-    Binary = 2,
-    Octal = 8,
-    Decimal = 10,
-    Hexadecimal = 16
-  };
-
-  // Value of an integer literal.
-  struct IntValue {
-    // An unsigned literal value.
-    llvm::APInt value;
-  };
-
-  // Value of a real literal.
-  struct RealValue {
-    // The radix of the exponent, either Binary or Decimal.
-    Radix radix;
-    // The mantissa, represented as a variable-width unsigned integer.
-    llvm::APInt mantissa;
-    // The exponent, represented as a variable-width signed integer.
-    llvm::APInt exponent;
-  };
-
   struct UnrecoverableError {};
 
-  using Value = std::variant<IntValue, RealValue, UnrecoverableError>;
+  // The ID of a numeric literal's value in the shared value stores.
+  using ValueId = std::variant<IntId, RealId, UnrecoverableError>;
 
-  // Extract a numeric literal from the given text, if it has a suitable form.
+  // Lexes the numeric literal at the start of `source_text`, which must start
+  // with a decimal digit.
   //
   // The supplied `source_text` must outlive the return value.
-  static auto Lex(llvm::StringRef source_text, bool can_form_real_literal)
-      -> std::optional<NumericLiteral>;
+  //
+  // `can_form_real_literal` returns whether the literal can be a real literal,
+  // and is only called when that matters, so that callers don't pay to compute
+  // it in the common case.
+  //
+  // The most common numeric literal, a single digit, is lexed inline so that it
+  // doesn't pay for a call, and everything else out of line.
+  template <typename CanFormRealLiteralFn>
+    requires std::is_invocable_r_v<bool, CanFormRealLiteralFn>
+  static auto Lex(llvm::StringRef source_text,
+                  CanFormRealLiteralFn can_form_real_literal)
+      -> NumericLiteral {
+    CARBON_DCHECK(!source_text.empty() && IsDecimalDigit(source_text[0]),
+                  "Numeric literal must start with a decimal digit");
+    // A digit followed by the end of the text or by a byte that can't continue
+    // a numeric literal is a complete one, such as the `1` in `x + 1`.
+    if (source_text.size() == 1 || !IsContinuationByte(source_text[1]))
+        [[likely]] {
+      // Unlike `take_front(1)`, this doesn't clamp the size, so the compiler
+      // can see that it's exactly one.
+      return NumericLiteral(llvm::StringRef(source_text.begin(), 1));
+    }
+    return LexOutOfLine(source_text, can_form_real_literal());
+  }
 
-  // Compute the value of the token, if possible. Emit diagnostics to the given
-  // emitter if the token is not valid.
-  auto ComputeValue(Diagnostics::Emitter<SourceLoc>& emitter) const -> Value;
+  // Computes the value of the token, adds it to `value_stores`, and returns its
+  // ID. Emits diagnostics to the given emitter if the token is not valid.
+  //
+  // The most common numeric literal, a single digit, is handled inline so that
+  // it doesn't pay for a call, and everything else out of line.
+  auto AddValue(SharedValueStores& value_stores,
+                Diagnostics::Emitter<SourceLoc>& emitter) const -> ValueId {
+    if (text_.size() == 1) [[likely]] {
+      return value_stores.ints().Add(text_[0] - '0');
+    }
+    return AddValueOutOfLine(text_, value_stores, emitter);
+  }
 
   // Get the text corresponding to this literal.
   auto text() const -> llvm::StringRef { return text_; }
@@ -61,20 +77,48 @@ class NumericLiteral {
  private:
   class Parser;
 
-  NumericLiteral() = default;
+  // Constructs a literal with the given text, which must be non-empty.
+  explicit NumericLiteral(llvm::StringRef text) : text_(text) {}
+
+  // The out-of-line parts of `Lex` and `AddValue`, which handle everything
+  // other than a single digit. These are static, with text passed by value,
+  // so that the inline paths' literals never need an address.
+  static auto LexOutOfLine(llvm::StringRef source_text,
+                           bool can_form_real_literal) -> NumericLiteral;
+  static auto AddValueOutOfLine(llvm::StringRef text,
+                                SharedValueStores& value_stores,
+                                Diagnostics::Emitter<SourceLoc>& emitter)
+      -> ValueId;
+
+  // Returns whether `c` can continue a numeric literal that starts with a
+  // sequence of decimal digits. If the byte after those digits can't, the
+  // digits are a complete decimal integer literal.
+  static auto IsContinuationByte(char c) -> bool {
+    return ContinuationByteTable[static_cast<uint8_t>(c)];
+  }
+
+  // A table of the bytes that can continue a numeric literal after a sequence
+  // of decimal digits: those that `Lex` always consumes (`[0-9A-Za-z_$]`), and
+  // `.`, which can start the fractional part of a real literal.
+  static constexpr std::array<bool, 256> ContinuationByteTable = [] {
+    std::array<bool, 256> table = {};
+    for (int c = '0'; c <= '9'; ++c) {
+      table[c] = true;
+    }
+    for (int c = 'a'; c <= 'z'; ++c) {
+      table[c] = true;
+    }
+    for (int c = 'A'; c <= 'Z'; ++c) {
+      table[c] = true;
+    }
+    table['_'] = true;
+    table['$'] = true;
+    table['.'] = true;
+    return table;
+  }();
 
   // The text of the token.
   llvm::StringRef text_;
-
-  // The offset of the '.'. Set to text.size() if none is present.
-  int radix_point_;
-
-  // The offset of the alphabetical character introducing the exponent. In a
-  // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
-  // or a '-', but for error recovery, this may simply be the last lowercase
-  // letter in the invalid token. Always greater than or equal to radix_point.
-  // Set to text.size() if none is present.
-  int exponent_;
 };
 
 }  // namespace Carbon::Lex

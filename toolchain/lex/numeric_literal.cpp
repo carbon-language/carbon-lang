@@ -11,24 +11,52 @@
 #include <optional>
 
 #include "common/check.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/FormatVariadicDetails.h"
 #include "toolchain/base/int.h"
+#include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
 
 namespace Carbon::Lex {
 
-auto NumericLiteral::Lex(llvm::StringRef source_text,
-                         bool can_form_real_literal)
-    -> std::optional<NumericLiteral> {
-  NumericLiteral result;
+namespace {
 
-  if (source_text.empty() || !IsDecimalDigit(source_text.front())) {
-    return std::nullopt;
-  }
+// The radix of a numeric literal.
+enum class Radix : int8_t {
+  Binary = 2,
+  Octal = 8,
+  Decimal = 10,
+  Hexadecimal = 16
+};
 
+// The structure of a numeric literal, as found by `ScanNumericLiteral`.
+struct NumericLiteralScan {
+  // The number of bytes in the literal.
+  int size;
+
+  // The offset of the '.' character. Set to `size` if none is present.
+  int radix_point;
+
+  // The offset of the alphabetical character introducing the exponent. In a
+  // valid literal, this will be an 'e' or a 'p', and may be followed by a '+'
+  // or a '-', but for error recovery, this may simply be the last lowercase
+  // letter in the invalid token. Always greater than or equal to radix_point.
+  // Set to `size` if none is present.
+  int exponent;
+};
+
+}  // namespace
+
+// Scans a numeric literal from the start of `source_text`, which must start
+// with a decimal digit.
+static auto ScanNumericLiteral(llvm::StringRef source_text,
+                               bool can_form_real_literal)
+    -> NumericLiteralScan {
+  NumericLiteralScan result = {};
   bool seen_plus_minus = false;
   bool seen_radix_point = false;
   bool seen_potential_exponent = false;
@@ -44,7 +72,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
     char c = source_text[i];
     if (IsAlnum(c) || c == '_' || c == '$') {
       if (IsLower(c) && seen_radix_point && !seen_plus_minus) {
-        result.exponent_ = i;
+        result.exponent = i;
         seen_potential_exponent = true;
       }
       continue;
@@ -54,7 +82,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
     // an alphanumeric character.
     if (c == '.' && can_form_real_literal && i + 1 != n &&
         IsAlnum(source_text[i + 1]) && !seen_radix_point) {
-      result.radix_point_ = i;
+      result.radix_point = i;
       seen_radix_point = true;
       continue;
     }
@@ -64,8 +92,7 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
     // followed by an alphanumeric character. This '+' or '-' cannot be an
     // operator because a literal cannot end in a lowercase letter.
     if ((c == '+' || c == '-') && seen_potential_exponent &&
-        result.exponent_ == i - 1 && i + 1 != n &&
-        IsAlnum(source_text[i + 1])) {
+        result.exponent == i - 1 && i + 1 != n && IsAlnum(source_text[i + 1])) {
       // This is not possible because we don't update result.exponent after we
       // see a '+' or '-'.
       CARBON_CHECK(!seen_plus_minus, "should only consume one + or -");
@@ -76,15 +103,34 @@ auto NumericLiteral::Lex(llvm::StringRef source_text,
     break;
   }
 
-  result.text_ = source_text.substr(0, i);
+  result.size = i;
   if (!seen_radix_point) {
-    result.radix_point_ = i;
+    result.radix_point = i;
   }
   if (!seen_potential_exponent) {
-    result.exponent_ = i;
+    result.exponent = i;
+  }
+  return result;
+}
+
+auto NumericLiteral::LexOutOfLine(llvm::StringRef source_text,
+                                  bool can_form_real_literal)
+    -> NumericLiteral {
+  // Fast path for a run of decimal digits followed by the end of the text or
+  // by a byte that can't continue a numeric literal: those digits are the
+  // whole literal, without needing the general scan.
+  int size = source_text.size();
+  int num_digits = 1;
+  while (num_digits < size && IsDecimalDigit(source_text[num_digits])) {
+    ++num_digits;
+  }
+  if (num_digits == size || !IsContinuationByte(source_text[num_digits]))
+      [[likely]] {
+    return NumericLiteral(source_text.take_front(num_digits));
   }
 
-  return result;
+  return NumericLiteral(source_text.take_front(
+      ScanNumericLiteral(source_text, can_form_real_literal).size));
 }
 
 // Parser for numeric literal tokens.
@@ -96,7 +142,7 @@ class NumericLiteral::Parser {
   Parser(Diagnostics::Emitter<SourceLoc>& emitter, NumericLiteral literal);
 
   auto IsInt() -> bool {
-    return literal_.radix_point_ == static_cast<int>(literal_.text_.size());
+    return radix_point_ == static_cast<int>(literal_.text_.size());
   }
 
   // Check that the numeric literal token is syntactically valid and
@@ -132,6 +178,11 @@ class NumericLiteral::Parser {
   Diagnostics::Emitter<SourceLoc>& emitter_;
   NumericLiteral literal_;
 
+  // The offsets of the radix point and exponent in the literal's text. See
+  // `NumericLiteralScan`.
+  int radix_point_;
+  int exponent_;
+
   // The radix of the literal: 2, 10, or 16, for a prefix of '0b', no prefix,
   // or '0x', respectively.
   Radix radix_ = Radix::Decimal;
@@ -155,7 +206,15 @@ class NumericLiteral::Parser {
 NumericLiteral::Parser::Parser(Diagnostics::Emitter<SourceLoc>& emitter,
                                NumericLiteral literal)
     : emitter_(emitter), literal_(literal) {
-  int_part_ = literal.text_.substr(0, literal.radix_point_);
+  // Rescan the literal's text to find its structure. A `.` is only in the text
+  // when it can form a real literal, so allowing that finds the same structure.
+  NumericLiteralScan scan =
+      ScanNumericLiteral(literal.text_, /*can_form_real_literal=*/true);
+  CARBON_DCHECK(scan.size == static_cast<int>(literal.text_.size()));
+  radix_point_ = scan.radix_point;
+  exponent_ = scan.exponent;
+
+  int_part_ = literal.text_.substr(0, radix_point_);
   if (int_part_.consume_front("0x")) {
     radix_ = Radix::Hexadecimal;
   } else if (int_part_.consume_front("0b")) {
@@ -164,10 +223,10 @@ NumericLiteral::Parser::Parser(Diagnostics::Emitter<SourceLoc>& emitter,
     radix_ = Radix::Octal;
   }
 
-  fract_part_ = literal.text_.substr(
-      literal.radix_point_ + 1, literal.exponent_ - literal.radix_point_ - 1);
+  fract_part_ =
+      literal.text_.substr(radix_point_ + 1, exponent_ - radix_point_ - 1);
 
-  exponent_part_ = literal.text_.substr(literal.exponent_ + 1);
+  exponent_part_ = literal.text_.substr(exponent_ + 1);
   if (!exponent_part_.consume_front("+")) {
     exponent_is_negative_ = exponent_part_.consume_front("-");
   }
@@ -195,20 +254,18 @@ static auto ParseBinary(llvm::StringRef digits, bool is_signed) -> llvm::APInt {
 }
 
 // Parses an octal or hexadecimal integer literal.
-template <NumericLiteral::Radix Radix>
-  requires(Radix == NumericLiteral::Radix::Hexadecimal ||
-           Radix == NumericLiteral::Radix::Octal)
+template <Radix DigitRadix>
+  requires(DigitRadix == Radix::Hexadecimal || DigitRadix == Radix::Octal)
 static auto ParseOctalOrHexadecimal(llvm::StringRef digits, bool is_signed)
     -> llvm::APInt {
-  constexpr int BitsPerDigit =
-      Radix == NumericLiteral::Radix::Hexadecimal ? 4 : 3;
+  constexpr int BitsPerDigit = DigitRadix == Radix::Hexadecimal ? 4 : 3;
   llvm::APInt value(std::max<int>(IntStore::MinAPWidth,
                                   digits.size() * BitsPerDigit + is_signed),
                     0);
   int cursor = digits.size() * BitsPerDigit - 1;
   for (char c : digits) {
     uint8_t digit;
-    if constexpr (Radix == NumericLiteral::Radix::Octal) {
+    if constexpr (DigitRadix == Radix::Octal) {
       digit = c - '0';
     } else {
       digit = c <= '9' ? (c - '0') : (c - 'A' + 10);
@@ -236,6 +293,7 @@ static auto ParseOctalOrHexadecimal(llvm::StringRef digits, bool is_signed)
 
 // Parses a single chunk of up to 19 decimal digits.
 static auto ParseDecimalChunk(llvm::StringRef digits) -> uint64_t {
+  CARBON_DCHECK(digits.size() <= 19);
   uint64_t chunk_val = 0;
   for (char c : digits) {
     chunk_val = chunk_val * 10 + (c - '0');
@@ -293,8 +351,8 @@ static auto ParseDecimal(llvm::StringRef digits, bool is_signed)
 // parsing 123.456e7, we want to decompose it into an integer mantissa
 // (123456) and an exponent (7 - 3 = 4), and this routine is given the
 // "123.456" to parse as the mantissa.
-static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
-                     bool needs_cleaning, bool is_signed) -> llvm::APInt {
+static auto ParseInt(llvm::StringRef digits, Radix radix, bool needs_cleaning,
+                     bool is_signed) -> llvm::APInt {
   llvm::SmallString<32> cleaned;
   if (needs_cleaning) {
     cleaned.reserve(digits.size());
@@ -308,16 +366,14 @@ static auto ParseInt(llvm::StringRef digits, NumericLiteral::Radix radix,
   // We don't use LLVM's `getAsInteger` because it has poor performance.
   // Instead, we implement our own.
   switch (radix) {
-    case NumericLiteral::Radix::Binary:
+    case Radix::Binary:
       return ParseBinary(digits, is_signed);
-    case NumericLiteral::Radix::Octal:
-      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Octal>(digits,
-                                                                   is_signed);
-    case NumericLiteral::Radix::Decimal:
+    case Radix::Octal:
+      return ParseOctalOrHexadecimal<Radix::Octal>(digits, is_signed);
+    case Radix::Decimal:
       return ParseDecimal(digits, is_signed);
-    case NumericLiteral::Radix::Hexadecimal:
-      return ParseOctalOrHexadecimal<NumericLiteral::Radix::Hexadecimal>(
-          digits, is_signed);
+    case Radix::Hexadecimal:
+      return ParseOctalOrHexadecimal<Radix::Hexadecimal>(digits, is_signed);
   }
 }
 
@@ -453,8 +509,8 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
         "{0:=2:binary|=8:octal} real number literals are not supported",
         Diagnostics::IntAsSelect);
     emitter_
-        .Build(literal_.text_.begin() + literal_.radix_point_,
-               InvalidRealLiteralRadix, static_cast<int>(radix_))
+        .Build(literal_.text_.begin() + radix_point_, InvalidRealLiteralRadix,
+               static_cast<int>(radix_))
         .Attach(SourceLoc::Range(literal_.text_))
         .Emit();
     // Carry on and parse the real literal anyway.
@@ -470,16 +526,16 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
 
 // Check the exponent part (if any) is valid.
 auto NumericLiteral::Parser::CheckExponentPart() -> bool {
-  if (literal_.exponent_ == static_cast<int>(literal_.text_.size())) {
+  if (exponent_ == static_cast<int>(literal_.text_.size())) {
     return true;
   }
 
   char expected_exponent_kind = (radix_ == Radix::Decimal ? 'e' : 'p');
-  if (literal_.text_[literal_.exponent_] != expected_exponent_kind) {
+  if (literal_.text_[exponent_] != expected_exponent_kind) {
     CARBON_DIAGNOSTIC(WrongRealLiteralExponent, Error,
                       "expected '{0}' to introduce exponent", char);
-    emitter_.Emit(literal_.text_.begin() + literal_.exponent_,
-                  WrongRealLiteralExponent, expected_exponent_kind);
+    emitter_.Emit(literal_.text_.begin() + exponent_, WrongRealLiteralExponent,
+                  expected_exponent_kind);
     return false;
   }
 
@@ -488,24 +544,54 @@ auto NumericLiteral::Parser::CheckExponentPart() -> bool {
   return exponent_result.ok;
 }
 
-// Parse the token and compute its value.
-auto NumericLiteral::ComputeValue(
-    Diagnostics::Emitter<SourceLoc>& emitter) const -> Value {
-  Parser parser(emitter, *this);
+// Parses `text`, the text of a multi-character numeric literal, if it is a
+// simple decimal integer literal: at most 18 decimal digits without a leading
+// zero. Its value then always fits in an `int64_t`, as 10^18 - 1 < 2^63 - 1.
+static auto TryParseSimpleDecimalInt(llvm::StringRef text)
+    -> std::optional<int64_t> {
+  CARBON_DCHECK(text.size() > 1);
+  constexpr size_t MaxSimpleDigits = 18;
+  if (text.size() <= 1 || text.size() > MaxSimpleDigits || text.front() == '0')
+      [[unlikely]] {
+    return std::nullopt;
+  }
+  int64_t value = 0;
+  for (char c : text) {
+    if (!IsDecimalDigit(c)) [[unlikely]] {
+      return std::nullopt;
+    }
+    value = value * 10 + (c - '0');
+  }
+  return value;
+}
+
+// Parse the token, compute its value, and add it to the value stores.
+auto NumericLiteral::AddValueOutOfLine(llvm::StringRef text,
+                                       SharedValueStores& value_stores,
+                                       Diagnostics::Emitter<SourceLoc>& emitter)
+    -> ValueId {
+  // Other decimal integers of up to 18 digits without a leading zero, which
+  // always fit in an `int64_t`, bypass the parser, and only build an `APInt`
+  // if they're too large to embed in their ID.
+  if (std::optional<int64_t> value = TryParseSimpleDecimalInt(text))
+      [[likely]] {
+    return value_stores.ints().Add(*value);
+  }
+
+  Parser parser(emitter, NumericLiteral(text));
 
   if (!parser.Check()) {
     return UnrecoverableError();
   }
 
   if (parser.IsInt()) {
-    return IntValue{.value = parser.GetMantissa()};
+    return value_stores.ints().AddUnsigned(parser.GetMantissa());
   }
 
-  return RealValue{
-      .radix = (parser.GetRadix() == Radix::Decimal ? Radix::Decimal
-                                                    : Radix::Binary),
-      .mantissa = parser.GetMantissa(),
-      .exponent = parser.GetExponent()};
+  return value_stores.reals().Add(
+      Real{.mantissa = parser.GetMantissa(),
+           .exponent = parser.GetExponent(),
+           .is_decimal = (parser.GetRadix() == Radix::Decimal)});
 }
 
 }  // namespace Carbon::Lex

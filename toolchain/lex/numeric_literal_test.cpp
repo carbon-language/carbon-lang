@@ -7,10 +7,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include <optional>
 #include <string>
 
-#include "common/check.h"
+#include "toolchain/base/int.h"
+#include "toolchain/base/shared_value_stores.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/lex/test_helpers.h"
 
@@ -21,30 +22,56 @@ using ::testing::_;
 using ::testing::Field;
 using ::testing::Matcher;
 using ::testing::Property;
+using ::testing::ResultOf;
 using ::testing::Truly;
 using ::testing::VariantWith;
+
+struct RealMatcher {
+  Matcher<bool> is_decimal = _;
+  Matcher<llvm::APInt> mantissa = _;
+  Matcher<llvm::APInt> exponent = _;
+};
 
 class NumericLiteralTest : public ::testing::Test {
  public:
   NumericLiteralTest() : error_tracker(Diagnostics::ConsoleConsumer()) {}
 
   auto Lex(llvm::StringRef text, bool can_form_real_literal) -> NumericLiteral {
-    std::optional<NumericLiteral> result =
-        NumericLiteral::Lex(text, can_form_real_literal);
-    CARBON_CHECK(result);
+    NumericLiteral result =
+        NumericLiteral::Lex(text, [=] { return can_form_real_literal; });
     if (can_form_real_literal) {
-      EXPECT_EQ(result->text(), text);
+      EXPECT_EQ(result.text(), text);
     }
-    return *result;
+    return result;
   }
 
   auto Parse(llvm::StringRef text, bool can_form_real_literal = true)
-      -> NumericLiteral::Value {
+      -> NumericLiteral::ValueId {
     Testing::SingleTokenDiagnosticEmitter emitter(&error_tracker, text);
-    return Lex(text, can_form_real_literal).ComputeValue(emitter);
+    return Lex(text, can_form_real_literal).AddValue(value_stores, emitter);
+  }
+
+  // Matcher for an integer literal value.
+  template <typename ValueMatcher>
+  auto HasIntValue(const ValueMatcher& value_matcher)
+      -> Matcher<NumericLiteral::ValueId> {
+    return VariantWith<IntId>(
+        ResultOf([this](IntId id) { return value_stores.ints().Get(id); },
+                 value_matcher));
+  }
+
+  // Matcher for a real literal value.
+  auto HasRealValue(const RealMatcher& real_matcher)
+      -> Matcher<NumericLiteral::ValueId> {
+    return VariantWith<RealId>(
+        ResultOf([this](RealId id) { return value_stores.reals().Get(id); },
+                 AllOf(Field(&Real::is_decimal, real_matcher.is_decimal),
+                       Field(&Real::mantissa, real_matcher.mantissa),
+                       Field(&Real::exponent, real_matcher.exponent))));
   }
 
   Diagnostics::ErrorTrackingConsumer error_tracker;
+  SharedValueStores value_stores;
 };
 
 // Matcher for signed llvm::APInt.
@@ -57,31 +84,8 @@ auto IsUnsignedInt(uint64_t value) -> Matcher<llvm::APInt> {
   return Property(&llvm::APInt::getZExtValue, value);
 }
 
-// Matcher for an integer literal value.
-template <typename ValueMatcher>
-auto HasIntValue(const ValueMatcher& value_matcher)
-    -> Matcher<NumericLiteral::Value> {
-  return VariantWith<NumericLiteral::IntValue>(
-      Field(&NumericLiteral::IntValue::value, value_matcher));
-}
-
-struct RealMatcher {
-  Matcher<int> radix = _;
-  Matcher<llvm::APInt> mantissa = _;
-  Matcher<llvm::APInt> exponent = _;
-};
-
-// Matcher for a real literal value.
-auto HasRealValue(const RealMatcher& real_matcher)
-    -> Matcher<NumericLiteral::Value> {
-  return VariantWith<NumericLiteral::RealValue>(AllOf(
-      Field(&NumericLiteral::RealValue::radix, real_matcher.radix),
-      Field(&NumericLiteral::RealValue::mantissa, real_matcher.mantissa),
-      Field(&NumericLiteral::RealValue::exponent, real_matcher.exponent)));
-}
-
 // Matcher for an unrecoverable parse error.
-auto HasUnrecoverableError() -> Matcher<NumericLiteral::Value> {
+auto HasUnrecoverableError() -> Matcher<NumericLiteral::ValueId> {
   return VariantWith<NumericLiteral::UnrecoverableError>(_);
 }
 
@@ -301,7 +305,7 @@ TEST_F(NumericLiteralTest, HandlesRealLiteral) {
   for (Testcase testcase : testcases) {
     error_tracker.Reset();
     EXPECT_THAT(Parse(testcase.token),
-                HasRealValue({.radix = (testcase.radix == 10 ? 10 : 2),
+                HasRealValue({.is_decimal = (testcase.radix == 10),
                               .mantissa = IsUnsignedInt(testcase.mantissa),
                               .exponent = IsSignedInt(testcase.exponent)}))
         << testcase.token;
@@ -325,7 +329,7 @@ TEST_F(NumericLiteralTest, HandlesRealLiteralOverflow) {
   error_tracker.Reset();
   EXPECT_THAT(
       Parse(input),
-      HasRealValue({.radix = 2,
+      HasRealValue({.is_decimal = false,
                     .mantissa = IsUnsignedInt(0x1000001),
                     .exponent = Truly([](llvm::APInt exponent) {
                       return (exponent + 9223372036854775800).getSExtValue() ==
@@ -393,6 +397,47 @@ TEST_F(NumericLiteralTest, TooManyDigits) {
   std::string long_number(20000, '1');
   EXPECT_THAT(Parse(long_number), HasUnrecoverableError());
   EXPECT_TRUE(error_tracker.seen_error());
+}
+
+TEST_F(NumericLiteralTest, LexesDecimalDigits) {
+  // A run of decimal digits ends before a byte that can't continue it.
+  for (llvm::StringRef text : {"7)", "7 ", "42;"}) {
+    SCOPED_TRACE(text.str());
+    EXPECT_EQ(
+        NumericLiteral::Lex(text, /*can_form_real_literal=*/[] { return true; })
+            .text(),
+        text.drop_back());
+  }
+
+  // Anything that could continue the literal takes the general path, which
+  // consumes it.
+  for (llvm::StringRef text : {"1a", "12a", "1_000", "12$"}) {
+    SCOPED_TRACE(text.str());
+    EXPECT_EQ(Lex(text, /*can_form_real_literal=*/true).text(), text);
+  }
+}
+
+TEST_F(NumericLiteralTest, HandlesSimpleDecimalInts) {
+  // A single digit is handled inline, and other decimal integers of up to 18
+  // digits without a leading zero bypass the parser. Longer ones take the
+  // general path.
+  struct Testcase {
+    llvm::StringLiteral token;
+    uint64_t value;
+  };
+  Testcase testcases[] = {
+      {.token = "0", .value = 0},
+      {.token = "7", .value = 7},
+      {.token = "42", .value = 42},
+      {.token = "999999999999999999", .value = 999'999'999'999'999'999},
+      {.token = "9999999999999999999", .value = 9'999'999'999'999'999'999U},
+  };
+  for (Testcase testcase : testcases) {
+    EXPECT_THAT(Parse(testcase.token),
+                HasIntValue(IsUnsignedInt(testcase.value)))
+        << testcase.token;
+  }
+  EXPECT_FALSE(error_tracker.seen_error());
 }
 
 }  // namespace
