@@ -447,45 +447,41 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
     -> std::optional<DestroyFormat> {
   switch (type) {
     // Built-in types have trivial destruction.
-    //
+    case SemIR::AssociatedEntityType::Kind:
     case SemIR::BoolType::Kind:
     case SemIR::BoundMethodType::Kind:
     case SemIR::CharLiteralType::Kind:
     case SemIR::CppFunctionPointerType::Kind:
+    case SemIR::CppOverloadSetType::Kind:
+    case SemIR::CppTemplateNameType::Kind:
     case SemIR::FacetType::Kind:
-    case SemIR::FloatType::Kind:
     case SemIR::FloatLiteralType::Kind:
+    case SemIR::FloatType::Kind:
     case SemIR::FormType::Kind:
     case SemIR::FunctionType::Kind:
     case SemIR::FunctionTypeWithSelfType::Kind:
+    case SemIR::GenericInterfaceType::Kind:
+    case SemIR::GenericNamedConstraintType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
+    case SemIR::NamespaceType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
     case SemIR::PointerType::Kind:
+    case SemIR::SpecificConstant::Kind:
+    case SemIR::TupleAccess::Kind:
+    case SemIR::UnboundElementType::Kind:
       return DestroyFormat::Trivial;
-
-    // Types that can't be destroyed.
-    //
     // A dependent type constructor calls that cannot be resolved under the
     // generic context.
     case SemIR::Call::Kind:
+      return DestroyFormat::NoDestroy;
     // Symbolic facets of type `type`. Such symbolic values can't be
     // destroyed.
     case SemIR::ImplWitnessAccess::Kind:
     case SemIR::SymbolicBinding::Kind:
-    case SemIR::AssociatedEntityType::Kind:
-    case SemIR::CppOverloadSetType::Kind:
-    case SemIR::CppTemplateNameType::Kind:
-    case SemIR::GenericInterfaceType::Kind:
-    case SemIR::GenericNamedConstraintType::Kind:
-    case SemIR::NamespaceType::Kind:
-    case SemIR::ParameterizedClassType::Kind:
-    case SemIR::SpecificConstant::Kind:
-    case SemIR::TupleAccess::Kind:
-    case SemIR::UnboundElementType::Kind:
       return DestroyFormat::NoDestroy;
 
     // We can't work it out from the kind alone
-    //
     default:
       return std::nullopt;
   }
