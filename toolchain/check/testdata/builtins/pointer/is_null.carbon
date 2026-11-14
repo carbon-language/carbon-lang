@@ -100,7 +100,7 @@ fn NoUnformed(p: {}*) -> bool = "pointer.is_null";
 // CHECK:STDERR:
 fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 
-// CHECK:STDOUT: --- call_exact.carbon
+// CHECK:STDOUT: --- call_exact.carbon = $call_exact
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -195,7 +195,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   return %IsNullC.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_generic.carbon
+// CHECK:STDOUT: --- call_generic.carbon = $call_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

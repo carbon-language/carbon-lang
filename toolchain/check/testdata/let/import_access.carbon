@@ -61,7 +61,7 @@ import Test library "def";
 // CHECK:STDERR:
 let v2: () = Test.v;
 
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -93,7 +93,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon = $def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -131,7 +131,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_def.carbon
+// CHECK:STDOUT: --- fail_local_def.carbon = $fail_local_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -163,7 +163,7 @@ let v2: () = Test.v;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_def.carbon
+// CHECK:STDOUT: --- fail_other_def.carbon = $fail_other_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

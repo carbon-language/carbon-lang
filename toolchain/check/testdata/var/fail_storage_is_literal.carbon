@@ -27,7 +27,7 @@ fn Main() {
   var unused x: 1 = 1;
 }
 
-// CHECK:STDOUT: --- fail_storage_is_literal.carbon
+// CHECK:STDOUT: --- fail_storage_is_literal.carbon = $fail_storage_is_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -23,7 +23,7 @@ fn Procedure() -> {} {
   return var;
 }
 
-// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon
+// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon = $fail_return_var_no_returned_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

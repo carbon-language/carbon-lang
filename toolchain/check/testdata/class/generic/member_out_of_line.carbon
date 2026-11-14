@@ -135,7 +135,7 @@ class Generic(unused T: type) {
 fn Generic(unused T: ()).WrongType() {}
 
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -439,7 +439,7 @@ fn Generic(unused T: ()).WrongType() {}
 // CHECK:STDOUT:   %return.patt.loc7 => constants.%return.patt.f44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -39,7 +39,7 @@ interface Y {}
 // CHECK:STDERR:
 impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 
-// CHECK:STDOUT: --- impl_forall.carbon
+// CHECK:STDOUT: --- impl_forall.carbon = $impl_forall
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -163,7 +163,7 @@ impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Simple.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_error.carbon
+// CHECK:STDOUT: --- fail_self_error.carbon = $fail_self_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

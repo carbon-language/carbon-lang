@@ -46,7 +46,7 @@ var a: T*;
 // CHECK:STDERR:
 var b: T = *a;
 
-// CHECK:STDOUT: --- fail_implicit.carbon
+// CHECK:STDOUT: --- fail_implicit.carbon = $fail_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -90,7 +90,7 @@ var b: T = *a;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon = $fail_implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

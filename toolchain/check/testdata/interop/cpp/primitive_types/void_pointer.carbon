@@ -144,7 +144,7 @@ fn F(input: Cpp.void*) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- implicit_as_from_cpp_class_pointer_to_void_pointer.carbon
+// CHECK:STDOUT: --- implicit_as_from_cpp_class_pointer_to_void_pointer.carbon = $implicit_as_from_cpp_class_pointer_to_void_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -200,7 +200,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_as_from_carbon_class_pointer_to_void_pointer.carbon
+// CHECK:STDOUT: --- implicit_as_from_carbon_class_pointer_to_void_pointer.carbon = $implicit_as_from_carbon_class_pointer_to_void_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -254,7 +254,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_as_from_cpp_class_pointer_to_void_pointer.carbon
+// CHECK:STDOUT: --- explicit_as_from_cpp_class_pointer_to_void_pointer.carbon = $explicit_as_from_cpp_class_pointer_to_void_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -323,7 +323,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_as_from_carbon_class_pointer_to_void_pointer.carbon
+// CHECK:STDOUT: --- explicit_as_from_carbon_class_pointer_to_void_pointer.carbon = $explicit_as_from_carbon_class_pointer_to_void_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -390,7 +390,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon
+// CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon = $fail_explicit_as_from_void_pointer_to_cpp_class_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -430,7 +430,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon
+// CHECK:STDOUT: --- fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon = $fail_explicit_as_from_void_pointer_to_carbon_class_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -459,7 +459,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_cpp_class_pointer.carbon
+// CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_cpp_class_pointer.carbon = $unsafe_as_from_void_pointer_to_cpp_class_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -519,7 +519,7 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_carbon_class_pointer.carbon
+// CHECK:STDOUT: --- unsafe_as_from_void_pointer_to_carbon_class_pointer.carbon = $unsafe_as_from_void_pointer_to_carbon_class_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

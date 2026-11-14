@@ -133,7 +133,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var a: array(1, 1);
 
-// CHECK:STDOUT: --- assign_var.carbon
+// CHECK:STDOUT: --- assign_var.carbon = $assign_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -197,7 +197,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- array_in_place.carbon
+// CHECK:STDOUT: --- array_in_place.carbon = $array_in_place
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -343,7 +343,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- array_vs_tuple.carbon
+// CHECK:STDOUT: --- array_vs_tuple.carbon = $array_vs_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -523,7 +523,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assign_return_value.carbon
+// CHECK:STDOUT: --- assign_return_value.carbon = $assign_return_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -639,7 +639,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nine_elements.carbon
+// CHECK:STDOUT: --- nine_elements.carbon = $nine_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

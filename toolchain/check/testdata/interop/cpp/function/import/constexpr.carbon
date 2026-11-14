@@ -173,7 +173,7 @@ eval fn F() -> i32 {
 
 let a: array(i32, F()) = (1, 2, 3);
 
-// CHECK:STDOUT: --- fail_todo_constructor.carbon
+// CHECK:STDOUT: --- fail_todo_constructor.carbon = $fail_todo_constructor
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

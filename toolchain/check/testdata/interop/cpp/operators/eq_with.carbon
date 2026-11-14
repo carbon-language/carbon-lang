@@ -458,7 +458,7 @@ fn Test(only_neq: Cpp.OnlyNeq,
   EqWith(a2, b2);
 }
 
-// CHECK:STDOUT: --- returns_bool.carbon
+// CHECK:STDOUT: --- returns_bool.carbon = $returns_bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -629,7 +629,7 @@ fn Test(only_neq: Cpp.OnlyNeq,
 // CHECK:STDOUT:   %specific_impl_fn.loc14_5.2 => constants.%EqualityComparable.NotEqual
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_type_equality.carbon
+// CHECK:STDOUT: --- cross_type_equality.carbon = $cross_type_equality
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

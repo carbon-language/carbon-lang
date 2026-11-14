@@ -18,7 +18,7 @@ fn Main() {
   Foo(1);
 }
 
-// CHECK:STDOUT: --- params_one.carbon
+// CHECK:STDOUT: --- params_one.carbon = $params_one
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -32,7 +32,7 @@ fn Use(generic T: I) {
 }
 
 
-// CHECK:STDOUT: --- fail_member_access.carbon
+// CHECK:STDOUT: --- fail_member_access.carbon = $fail_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -33,7 +33,7 @@ fn F() {
   let unused n: i32;
 }
 
-// CHECK:STDOUT: --- fail_missing_value.carbon
+// CHECK:STDOUT: --- fail_missing_value.carbon = $fail_missing_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

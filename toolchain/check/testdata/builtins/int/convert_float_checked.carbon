@@ -47,7 +47,7 @@ import library "int_to_float_checked";
 let lossy: f32 = ConvertIntLiteralToF32(123456789);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_lossy.carbon
+// CHECK:STDOUT: --- fail_lossy.carbon = $fail_lossy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -193,7 +193,7 @@ fn F() ->? form(ref auto) {
   return g;
 }
 
-// CHECK:STDOUT: --- ref_auto.carbon
+// CHECK:STDOUT: --- ref_auto.carbon = $ref_auto
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -252,7 +252,7 @@ fn F() ->? form(ref auto) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_auto.carbon
+// CHECK:STDOUT: --- val_auto.carbon = $val_auto
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -331,7 +331,7 @@ fn F() ->? form(ref auto) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_auto.carbon
+// CHECK:STDOUT: --- var_auto.carbon = $var_auto
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

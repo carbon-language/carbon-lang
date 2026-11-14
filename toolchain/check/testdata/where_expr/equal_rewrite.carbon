@@ -278,7 +278,7 @@ let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 
-// CHECK:STDOUT: --- equal_constraint.carbon
+// CHECK:STDOUT: --- equal_constraint.carbon = $equal_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -343,7 +343,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %T.loc9_19.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_rewrites.carbon
+// CHECK:STDOUT: --- nested_rewrites.carbon = $nested_rewrites
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -427,7 +427,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D.loc10_27.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeated_rewrite.carbon
+// CHECK:STDOUT: --- repeated_rewrite.carbon = $repeated_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -578,7 +578,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- rewrites_reordered.carbon
+// CHECK:STDOUT: --- rewrites_reordered.carbon = $rewrites_reordered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

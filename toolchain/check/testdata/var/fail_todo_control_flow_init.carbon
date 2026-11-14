@@ -126,11 +126,11 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 var y2: bool = false or true;
 
-// CHECK:STDOUT: --- fail_if_true.carbon
+// CHECK:STDOUT: --- fail_if_true.carbon = $fail_if_true
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_if_false.carbon
+// CHECK:STDOUT: --- fail_if_false.carbon = $fail_if_false
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_true_or_false.carbon
+// CHECK:STDOUT: --- fail_true_or_false.carbon = $fail_true_or_false
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_false_or_true.carbon
+// CHECK:STDOUT: --- fail_false_or_true.carbon = $fail_false_or_true
 // CHECK:STDOUT:

@@ -88,6 +88,9 @@ def _is_finite_number(val: Any) -> bool:
     try:
         return math.isfinite(val)
     except OverflowError:
+        # Arbitrary-precision Python ints above `sys.float_info.max` (~1.8e308,
+        # e.g. from `json.loads` on a large integer literal) cannot be converted
+        # to a C double for `math.isfinite`.
         return False
 
 
@@ -96,7 +99,11 @@ def validate_bmf(
     suites: Iterable[SuiteSpec] = SUITES,
     max_metrics: int = MAX_METRICS_PER_REPORT,
 ) -> int:
-    """Validates a BMF v0 dictionary and returns its total metric count."""
+    """Validates a BMF v0 dictionary and returns its total metric count.
+
+    See https://bencher.dev/docs/reference/bencher-metric-format/ for the BMF
+    schema (`https://bencher.dev/bmf.json`).
+    """
     if not isinstance(data, dict) or not data:
         raise BmfValidationError("BMF payload must be a non-empty JSON object.")
 

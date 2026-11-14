@@ -1490,6 +1490,29 @@ struct WhereExpr {
   CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
 };
 
+// Where assignment declaration nodes
+// --------------------------------
+
+using WhereAssignmentIntroducer =
+    LeafNode<NodeKind::WhereAssignmentIntroducer, Lex::WhereTokenIndex>;
+
+struct WhereAssignmentOperator {
+  static constexpr auto Kind =
+      NodeKind::WhereAssignmentOperator.Define({.child_count = 2});
+  IdentifierNameNotBeforeSignatureId lhs;
+  Lex::EqualTokenIndex token;
+  AnyExprId rhs;
+};
+
+struct WhereAssignmentDecl {
+  static constexpr auto Kind = NodeKind::WhereAssignmentDecl.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = WhereAssignmentIntroducer::Kind});
+  WhereAssignmentIntroducerId introducer;
+  WhereAssignmentOperatorId op;
+  Lex::SemiTokenIndex token;
+};
+
 // Choice nodes
 // ------------
 

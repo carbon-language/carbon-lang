@@ -46,7 +46,7 @@ fn CallNegative() {
 }
 
 
-// CHECK:STDOUT: --- fail_todo_call_monomorphization_error.carbon
+// CHECK:STDOUT: --- fail_todo_call_monomorphization_error.carbon = $fail_todo_call_monomorphization_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

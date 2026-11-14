@@ -26,7 +26,7 @@ var a: array(i32, 1) = (12,);
 // CHECK:STDERR:
 var b: i32 = a[2.6];
 
-// CHECK:STDOUT: --- fail_array_non_int_indexing.carbon
+// CHECK:STDOUT: --- fail_array_non_int_indexing.carbon = $fail_array_non_int_indexing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

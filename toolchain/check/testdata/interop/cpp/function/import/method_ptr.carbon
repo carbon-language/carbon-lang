@@ -204,7 +204,7 @@ fn G() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- relay_method_ptr.carbon
+// CHECK:STDOUT: --- relay_method_ptr.carbon = $relay_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -298,7 +298,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- convert_method_ptr.carbon
+// CHECK:STDOUT: --- convert_method_ptr.carbon = $convert_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -380,7 +380,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- pass_method_ptr.carbon
+// CHECK:STDOUT: --- pass_method_ptr.carbon = $pass_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -460,7 +460,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_type_mismatch.carbon = $fail_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

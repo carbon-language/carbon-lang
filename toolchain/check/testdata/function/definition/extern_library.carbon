@@ -188,7 +188,7 @@ import library "unloaded_decl_extern";
 extern fn ExternDecl();
 
 
-// CHECK:STDOUT: --- one_file_extern.carbon
+// CHECK:STDOUT: --- one_file_extern.carbon = $one_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -205,7 +205,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- one_file.carbon
+// CHECK:STDOUT: --- one_file.carbon = $one_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -225,7 +225,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_extern.carbon
+// CHECK:STDOUT: --- two_file_extern.carbon = $two_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -242,7 +242,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon
+// CHECK:STDOUT: --- two_file.carbon = $two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -259,7 +259,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.impl.carbon
+// CHECK:STDOUT: --- two_file.impl.carbon = $two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -281,7 +281,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_impl_mismatch_extern.carbon
+// CHECK:STDOUT: --- two_file_impl_mismatch_extern.carbon = $two_file_impl_mismatch_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -298,7 +298,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file_impl_mismatch.carbon
+// CHECK:STDOUT: --- two_file_impl_mismatch.carbon = $two_file_impl_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -315,7 +315,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_file_impl_mismatch.impl.carbon
+// CHECK:STDOUT: --- fail_two_file_impl_mismatch.impl.carbon = $fail_two_file_impl_mismatch.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -337,7 +337,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_decl_extern.carbon
+// CHECK:STDOUT: --- no_decl_extern.carbon = $no_decl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -354,7 +354,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- no_decl_extern.impl.carbon
+// CHECK:STDOUT: --- no_decl_extern.impl.carbon = $no_decl_extern.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F = import_ref Main//no_decl_extern, F, unloaded
@@ -368,7 +368,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_decl.carbon
+// CHECK:STDOUT: --- fail_no_decl.carbon = $fail_no_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -389,7 +389,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_two_file_extern.carbon
+// CHECK:STDOUT: --- indirect_two_file_extern.carbon = $indirect_two_file_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -406,7 +406,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_indirect_two_file.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.carbon = $fail_indirect_two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -427,7 +427,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_indirect_two_file.impl.carbon = $fail_indirect_two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -449,7 +449,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl_extern.carbon
+// CHECK:STDOUT: --- in_impl_extern.carbon = $in_impl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -466,13 +466,13 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_impl.carbon
+// CHECK:STDOUT: --- in_impl.carbon = $in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_in_impl.impl.carbon = $fail_in_impl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -494,7 +494,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_package_extern.carbon
+// CHECK:STDOUT: --- cross_package_extern.carbon = $cross_package_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -511,7 +511,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- cross_package.carbon
+// CHECK:STDOUT: --- cross_package.carbon = $cross_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,7 +549,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @Extern;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded_decl_extern.carbon
+// CHECK:STDOUT: --- unloaded_decl_extern.carbon = $unloaded_decl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -572,7 +572,7 @@ extern fn ExternDecl();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NonExternDecl();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unloaded_decl.carbon
+// CHECK:STDOUT: --- unloaded_decl.carbon = $unloaded_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

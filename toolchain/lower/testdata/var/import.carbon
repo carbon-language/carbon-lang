@@ -158,9 +158,6 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @_Cv.Main = external global { i32, i32 }
 // CHECK:STDOUT: @_Cy.Main = external global i32
 // CHECK:STDOUT: @_Cz.Main = external global { i32, i32 }
-// CHECK:STDOUT: @_Cv.Main.1 = external global { i32, i32 }
-// CHECK:STDOUT: @_Cy.Main.2 = external global i32
-// CHECK:STDOUT: @_Cz.Main.3 = external global { i32, i32 }
 // CHECK:STDOUT: @_Cx.Main = external global i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

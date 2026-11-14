@@ -354,7 +354,7 @@ static auto IsCppTemplateCallPerformable(Context& context,
                                          SemIR::InstId callee_id,
                                          llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> bool {
-  CARBON_CHECK(OperandDependence(context, callee_id) <
+  CARBON_CHECK(OperandDependence(context.sem_ir(), callee_id) <
                SemIR::ConstantDependence::Template);
 
   for (auto arg_id : arg_ids) {
@@ -450,12 +450,12 @@ static auto PerformCallToCppFunctionPointer(
 // non-template-dependent).
 static auto IsCallPerformable(Context& context, SemIR::InstId callee_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids) -> bool {
-  if (OperandDependence(context, callee_id) ==
+  if (OperandDependence(context.sem_ir(), callee_id) ==
       SemIR::ConstantDependence::Template) {
     return false;
   }
   for (auto arg_id : arg_ids) {
-    if (OperandDependence(context, arg_id) ==
+    if (OperandDependence(context.sem_ir(), arg_id) ==
         SemIR::ConstantDependence::Template) {
       return false;
     }

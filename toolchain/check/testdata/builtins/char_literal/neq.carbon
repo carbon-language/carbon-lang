@@ -22,7 +22,7 @@ let a: bool = Neq('a', 'b');
 let b: bool = Neq('a', 'a');
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- neq.carbon
+// CHECK:STDOUT: --- neq.carbon = $neq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

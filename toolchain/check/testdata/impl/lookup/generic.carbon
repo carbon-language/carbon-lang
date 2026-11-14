@@ -139,7 +139,7 @@ fn G(x: A) {
 }
 
 
-// CHECK:STDOUT: --- deduced_type.carbon
+// CHECK:STDOUT: --- deduced_type.carbon = $deduced_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -403,7 +403,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduced_type_subst.carbon
+// CHECK:STDOUT: --- deduced_type_subst.carbon = $deduced_type_subst
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -771,7 +771,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %specific_impl_fn.loc9_29.2 => constants.%ptr.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduced_type_argument.carbon
+// CHECK:STDOUT: --- deduced_type_argument.carbon = $deduced_type_argument
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1088,7 +1088,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduced_interface_argument.carbon
+// CHECK:STDOUT: --- deduced_interface_argument.carbon = $deduced_interface_argument
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1415,7 +1415,7 @@ fn G(x: A) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_deduction.carbon
+// CHECK:STDOUT: --- fail_incomplete_deduction.carbon = $fail_incomplete_deduction
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1627,7 +1627,7 @@ fn G(x: A) {
 // CHECK:STDOUT:   %self.patt.loc16_15.2 => constants.%self.patt.4d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_inconsistent_deduction.carbon
+// CHECK:STDOUT: --- fail_inconsistent_deduction.carbon = $fail_inconsistent_deduction
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

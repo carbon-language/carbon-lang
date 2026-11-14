@@ -245,7 +245,7 @@ fn F() {
   var unused fn_ptr: Cpp.CallbackType = C.MyCallback;
 }
 
-// CHECK:STDOUT: --- relay_fn_ptr.carbon
+// CHECK:STDOUT: --- relay_fn_ptr.carbon = $relay_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -294,7 +294,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- convert_fn_ptr.carbon
+// CHECK:STDOUT: --- convert_fn_ptr.carbon = $convert_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -379,7 +379,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- pass_fn_ptr.carbon
+// CHECK:STDOUT: --- pass_fn_ptr.carbon = $pass_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -418,7 +418,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_fn_ptr.carbon
+// CHECK:STDOUT: --- call_fn_ptr.carbon = $call_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -560,7 +560,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_3(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- relay_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- relay_complex_fn_ptr.carbon = $relay_complex_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -609,7 +609,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- convert_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- convert_complex_fn_ptr.carbon = $convert_complex_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -695,7 +695,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- pass_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- pass_complex_fn_ptr.carbon = $pass_complex_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -737,7 +737,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_complex_fn_ptr.carbon
+// CHECK:STDOUT: --- call_complex_fn_ptr.carbon = $call_complex_fn_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -847,7 +847,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mention_forward_decl.carbon
+// CHECK:STDOUT: --- mention_forward_decl.carbon = $mention_forward_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

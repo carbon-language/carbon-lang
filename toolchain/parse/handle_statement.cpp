@@ -75,7 +75,8 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Observe:
     // We intentionally don't handle Package here, because `package.` can be
     // used at the start of an expression, and it's not worth disambiguating it.
-    case Lex::TokenKind::Var: {
+    case Lex::TokenKind::Var:
+    case Lex::TokenKind::Where: {
       context.PushState(StateKind::DeclAsRegular);
       break;
     }

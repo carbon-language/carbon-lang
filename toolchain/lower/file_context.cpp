@@ -460,7 +460,7 @@ auto FileContext::GetOrCreateLLVMFunction(
     // file. That's OK.
     // TODO: If the prior function was inexact and the new one is not, we should
     // lower this new one and replace the existing function with it.
-    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM functions are not
     // produced by declarations of the same Carbon function. Name collisions
     // between non-private members of the same library should have been
     // diagnosed by check if detected, but it's not clear that check will
@@ -883,6 +883,19 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
           ("var.anon" + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
               .str();
     }
+  } else if (auto* existing = llvm_module().getNamedGlobal(mangled_name)) {
+    // We might have already declared this variable while lowering a different
+    // file, such as when lowering a specific of a generic function from the
+    // file that defines the variable. Reuse that declaration rather than
+    // creating a new one, which LLVM would rename to avoid the collision.
+    //
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM variables are not
+    // produced by declarations of the same Carbon variable. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will
+    // always be able to see this problem. In theory, name collisions could
+    // also occur due to fingerprint collision.
+    return existing;
   }
 
   auto* type = GetType(var_storage.type_id);

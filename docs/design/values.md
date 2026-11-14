@@ -1133,7 +1133,8 @@ specialized constructs given the specialized nature of these operations.
 ### Reference types
 
 TODO: This section needs to be updated to reflect
-[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md).
+[proposal #5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md)
+and [proposal #8110](/proposals/p008110-remove-bound.md).
 
 Unlike C++, Carbon does not currently have reference types. The only form of
 indirect access are pointers. There are a few aspects to this decision that need

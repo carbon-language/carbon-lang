@@ -232,7 +232,7 @@ fn H() {
 
 fn I[U: type](ref u: U) -> U* { return &RefId(ref u); }
 
-// CHECK:STDOUT: --- ref_auto.carbon
+// CHECK:STDOUT: --- ref_auto.carbon = $ref_auto
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -359,7 +359,7 @@ fn I[U: type](ref u: U) -> U* { return &RefId(ref u); }
 // CHECK:STDOUT:   %return.patt.loc4_46.2 => constants.%return.patt.2c5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_auto_call_from_generic.carbon
+// CHECK:STDOUT: --- ref_auto_call_from_generic.carbon = $ref_auto_call_from_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -467,7 +467,7 @@ fn I[U: type](ref u: U) -> U* { return &RefId(ref u); }
 // CHECK:STDOUT:   %F.specific_fn.loc6_43.2 => constants.%F.specific_fn.9db
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_auto.carbon
+// CHECK:STDOUT: --- val_auto.carbon = $val_auto
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -65,7 +65,7 @@ fn F() {
   let unused x: i16 = Cpp.foo_short();
 }
 
-// CHECK:STDOUT: --- import_short_param.carbon
+// CHECK:STDOUT: --- import_short_param.carbon = $import_short_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -220,7 +220,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7(%self.param: ref %i16) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_param.carbon
+// CHECK:STDOUT: --- import_int_param.carbon = $import_int_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +318,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @foo(%a.param: %i32);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_short_return.carbon
+// CHECK:STDOUT: --- import_short_return.carbon = $import_short_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

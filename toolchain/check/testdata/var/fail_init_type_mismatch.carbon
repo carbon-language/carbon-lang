@@ -23,7 +23,7 @@
 // CHECK:STDERR:
 var x: {} = ();
 
-// CHECK:STDOUT: --- fail_init_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_init_type_mismatch.carbon = $fail_init_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

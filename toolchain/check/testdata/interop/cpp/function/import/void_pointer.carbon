@@ -112,7 +112,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- non_nullable_param.carbon
+// CHECK:STDOUT: --- non_nullable_param.carbon = $non_nullable_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +148,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_nullable_return_value.carbon
+// CHECK:STDOUT: --- non_nullable_return_value.carbon = $non_nullable_return_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -195,7 +195,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nullable_param.carbon
+// CHECK:STDOUT: --- nullable_param.carbon = $nullable_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -320,7 +320,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_26.3(%self.param: ref %Optional.7de) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- null_param.carbon
+// CHECK:STDOUT: --- null_param.carbon = $null_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -455,7 +455,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_52.3(%self.param: ref %Optional.7de) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nullable_return_value.carbon
+// CHECK:STDOUT: --- nullable_return_value.carbon = $nullable_return_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -582,7 +582,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_73.3(%self.param: ref %Optional.7de) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_nullable_pointer.carbon
+// CHECK:STDOUT: --- non_nullable_pointer.carbon = $non_nullable_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -671,7 +671,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11(%self.param: ref %ptr.6f9) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_nullable_const.carbon
+// CHECK:STDOUT: --- non_nullable_const.carbon = $non_nullable_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

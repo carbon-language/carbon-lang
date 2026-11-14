@@ -33,7 +33,7 @@ fn G() {
   F({} as Cpp.X);
 }
 
-// CHECK:STDOUT: --- generic_call.carbon
+// CHECK:STDOUT: --- generic_call.carbon = $generic_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

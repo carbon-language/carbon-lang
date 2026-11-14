@@ -19,7 +19,7 @@ fn Main() {
   var unused b: () = MakeImplicitEmptyTuple();
 }
 
-// CHECK:STDOUT: --- return_implicit.carbon
+// CHECK:STDOUT: --- return_implicit.carbon = $return_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

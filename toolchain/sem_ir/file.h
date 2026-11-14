@@ -347,6 +347,9 @@ class File : public Printable<File> {
   auto has_errors() const -> bool { return has_errors_; }
   auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
+  auto is_complete() const -> bool { return is_complete_; }
+  auto set_complete() -> void { is_complete_ = true; }
+
   auto filename() const -> llvm::StringRef { return filename_; }
 
   auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
@@ -356,6 +359,9 @@ class File : public Printable<File> {
 
   // True if parts of the IR may be invalid.
   bool has_errors_ = false;
+
+  // True if this file is complete, i.e. no further mutations are expected.
+  bool is_complete_ = false;
 
   // The file's ID.
   CheckIRId check_ir_id_;
