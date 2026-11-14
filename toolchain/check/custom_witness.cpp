@@ -148,66 +148,6 @@ static auto GetFacetTypeForQuerySpecificInterface(
   return const_id;
 }
 
-// Returns the function that `type_inst_id` uses for the associated function
-// named `assoc_fn_name_id` in `specific_interface`.
-//
-// Similar to `BuildCustomWitness`, `GetAssociatedFunction` returns
-// `std::nullopt` if an error was encountered, and that error was reported by
-// the callee. Returns `SemIR::FunctionId::None` if the type doesn't implement
-// the interface, or there isn't an associated function with the specified name.
-// A symbolic witness has no witness table yet, so in that case this returns the
-// interface's own declaration of the function.
-static auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
-                                  SemIR::TypeInstId type_inst_id,
-                                  SemIR::SpecificInterface specific_interface,
-                                  SemIR::NameId assoc_fn_name_id)
-    -> std::optional<SemIR::FunctionId> {
-  auto witness_id = LookupSingleImplWitness(
-      context, loc_id, context.constant_values().Get(type_inst_id),
-      specific_interface);
-  // Witness lookup failure is not an error.
-  if (!witness_id.has_value()) {
-    return SemIR::FunctionId::None;
-  }
-
-  if (witness_id == SemIR::ErrorInst::InstId) {
-    return std::nullopt;
-  }
-
-  // Name lookup in the interface finds the associated entity.
-  const auto& interface =
-      context.interfaces().Get(specific_interface.interface_id);
-  if (!interface.is_complete()) {
-    return SemIR::FunctionId::None;
-  }
-  auto lookup_result = LookupNameInExactScope(
-      context, loc_id, assoc_fn_name_id, interface.scope_with_self_id,
-      context.name_scopes().Get(interface.scope_with_self_id));
-  if (!lookup_result.is_found()) {
-    return SemIR::FunctionId::None;
-  }
-  // Accessing a member that isn't an associated entity emits a TODO
-  // diagnostic, so check first.
-  if (!context.insts().TryGetAsIfValid<SemIR::AssociatedEntity>(
-          context.constant_values().GetConstantInstId(
-              lookup_result.target_inst_id()))) {
-    return SemIR::FunctionId::None;
-  }
-
-  auto member_id = AccessMemberOfImplWitnessForType(
-      context, loc_id, type_inst_id, specific_interface, witness_id,
-      lookup_result.target_inst_id());
-  auto callee = SemIR::GetCallee(context.sem_ir(), member_id);
-  if (std::holds_alternative<SemIR::CalleeError>(callee)) {
-    return std::nullopt;
-  }
-  // With a symbolic witness the access isn't evaluated, and `GetCallee` finds
-  // the interface's own function through the access's type. Anything that
-  // isn't a function, such as an associated constant, gives `None`.
-  auto* fn = std::get_if<SemIR::CalleeFunction>(&callee);
-  return fn ? fn->function_id : SemIR::FunctionId::None;
-}
-
 // The format for `Destroy.Op`.
 enum class DestroyFormat {
   NoDestroy,

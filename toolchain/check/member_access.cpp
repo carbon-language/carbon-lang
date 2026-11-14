@@ -252,9 +252,11 @@ static auto GetWitnessFromSingleImplLookupResult(
   return witness_id;
 }
 
-auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                             SemIR::ConstantId type_const_id,
-                             SemIR::SpecificInterface specific_interface)
+// Looks up the witness that `type_const_id` implements `specific_interface`.
+// Returns `None` if it doesn't, and `ErrorInst::InstId` on error.
+static auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
+                                    SemIR::ConstantId type_const_id,
+                                    SemIR::SpecificInterface specific_interface)
     -> SemIR::InstId {
   // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
   auto interface_type_id = GetInterfaceType(
@@ -267,7 +269,9 @@ auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
   return GetWitnessFromSingleImplLookupResult(context, lookup_result);
 }
 
-auto AccessMemberOfImplWitnessForType(
+// Accesses the associated entity `member_id` through `witness_id`, which is a
+// witness that `type_inst_id` implements `specific_interface`.
+static auto AccessMemberOfImplWitnessForType(
     Context& context, SemIR::LocId loc_id, SemIR::TypeInstId type_inst_id,
     SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id,
     SemIR::InstId member_id) -> SemIR::InstId {
@@ -282,6 +286,47 @@ auto AccessMemberOfImplWitnessForType(
                                    interface_with_self_specific_id, member_id);
 }
 
+auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::TypeInstId type_inst_id,
+                           SemIR::SpecificInterface specific_interface,
+                           SemIR::NameId assoc_fn_name_id)
+    -> std::optional<SemIR::FunctionId> {
+  auto witness_id = LookupSingleImplWitness(
+      context, loc_id, context.constant_values().Get(type_inst_id),
+      specific_interface);
+  if (!witness_id.has_value()) {
+    return SemIR::FunctionId::None;
+  }
+
+  // Name lookup in the interface finds the associated entity.
+  const auto& interface =
+      context.interfaces().Get(specific_interface.interface_id);
+  if (!interface.is_complete()) {
+    return SemIR::FunctionId::None;
+  }
+
+  auto lookup_result = LookupNameInExactScope(
+      context, loc_id, assoc_fn_name_id, interface.scope_with_self_id,
+      context.name_scopes().Get(interface.scope_with_self_id));
+  if (!lookup_result.is_found()) {
+    return SemIR::FunctionId::None;
+  }
+
+  auto member_id = AccessMemberOfImplWitnessForType(
+      context, loc_id, type_inst_id, specific_interface, witness_id,
+      lookup_result.target_inst_id());
+  auto callee = SemIR::GetCallee(context.sem_ir(), member_id);
+  if (std::holds_alternative<SemIR::CalleeError>(callee)) {
+    return std::nullopt;
+  }
+
+  // With a symbolic witness the access isn't evaluated, and `GetCallee` finds
+  // the interface's own function through the access's type. Anything that
+  // isn't a function, such as an associated constant, gives `None`.
+  auto* fn = std::get_if<SemIR::CalleeFunction>(&callee);
+  return fn ? fn->function_id : SemIR::FunctionId::None;
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -291,35 +336,35 @@ static auto PerformImplLookup(
     DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
     -> SemIR::InstId {
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
-    auto specific_interface = assoc_type.GetSpecificInterface();
-    auto witness_id = LookupSingleImplWitness(context, loc_id, type_const_id,
-                                              specific_interface);
-    if (!witness_id.has_value()) {
-      if (diagnose) {
-        auto interface_type_id =
-            GetInterfaceType(context, specific_interface.interface_id,
-                             specific_interface.specific_id);
-        if (missing_impl_diagnostic_context) {
-          Diagnostics::ContextScope scope(&context.emitter(),
-                                          missing_impl_diagnostic_context);
-          // TODO: Pass in the expression whose type we are printing.
-          CARBON_DIAGNOSTIC(MissingImplInMemberAccessInContext, Error,
-                            "type {1} does not implement interface {0}",
-                            SemIR::TypeId, SemIR::TypeId);
-          context.emitter().Emit(loc_id, MissingImplInMemberAccessInContext,
-                                 interface_type_id, self_type_id);
-        } else {
-          // TODO: Pass in the expression whose type we are printing.
-          CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                            "cannot access member of interface {0} in type {1} "
-                            "that does not implement that interface",
-                            SemIR::TypeId, SemIR::TypeId);
-          context.emitter().Emit(loc_id, MissingImplInMemberAccess,
-                                 interface_type_id, self_type_id);
-        }
+  auto specific_interface = assoc_type.GetSpecificInterface();
+  auto witness_id = LookupSingleImplWitness(context, loc_id, type_const_id,
+                                            specific_interface);
+  if (!witness_id.has_value()) {
+    if (diagnose) {
+      auto interface_type_id =
+          GetInterfaceType(context, specific_interface.interface_id,
+                           specific_interface.specific_id);
+      if (missing_impl_diagnostic_context) {
+        Diagnostics::ContextScope scope(&context.emitter(),
+                                        missing_impl_diagnostic_context);
+        // TODO: Pass in the expression whose type we are printing.
+        CARBON_DIAGNOSTIC(MissingImplInMemberAccessInContext, Error,
+                          "type {1} does not implement interface {0}",
+                          SemIR::TypeId, SemIR::TypeId);
+        context.emitter().Emit(loc_id, MissingImplInMemberAccessInContext,
+                               interface_type_id, self_type_id);
+      } else {
+        // TODO: Pass in the expression whose type we are printing.
+        CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
+                          "cannot access member of interface {0} in type {1} "
+                          "that does not implement that interface",
+                          SemIR::TypeId, SemIR::TypeId);
+        context.emitter().Emit(loc_id, MissingImplInMemberAccess,
+                               interface_type_id, self_type_id);
       }
-      return SemIR::ErrorInst::InstId;
     }
+    return SemIR::ErrorInst::InstId;
+  }
 
   return AccessMemberOfImplWitnessForType(
       context, loc_id, context.types().GetTypeInstId(self_type_id),

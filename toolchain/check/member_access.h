@@ -48,19 +48,21 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId;
 
-// Looks up the witness that `type_const_id` implements `specific_interface`.
-// Returns `None` if it doesn't, and `ErrorInst::InstId` on error.
-auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
-                             SemIR::ConstantId type_const_id,
-                             SemIR::SpecificInterface specific_interface)
-    -> SemIR::InstId;
-
-// Accesses the associated entity `member_id` through `witness_id`, which is a
-// witness that `type_inst_id` implements `specific_interface`.
-auto AccessMemberOfImplWitnessForType(
-    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId type_inst_id,
-    SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id,
-    SemIR::InstId member_id) -> SemIR::InstId;
+// Returns the function that `type_inst_id` uses for the associated function
+// named `assoc_fn_name_id` in `specific_interface`.
+//
+// Similar to `BuildCustomWitness`, `GetAssociatedFunction` returns
+// `std::nullopt` if an error was encountered, and that error was reported by
+// the callee. Returns `SemIR::FunctionId::None` if the type doesn't implement
+// the interface, or there isn't an associated function with the specified name.
+//
+// A symbolic witness has no witness table yet, so in that case this returns the
+// interface's own declaration of the function.
+auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::TypeInstId type_inst_id,
+                           SemIR::SpecificInterface specific_interface,
+                           SemIR::NameId assoc_fn_name_id)
+    -> std::optional<SemIR::FunctionId>;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.
