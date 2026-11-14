@@ -42,8 +42,8 @@ assignment `$=` is provided that performs the operation in-place:
 ```
 // Same as `a = a + 1;`
 a += 1;
-// Same as `a = a << 3;`
-a <<= 3;
+// Same as `a = a <<< 3;`
+a <<<= 3;
 ```
 
 In addition, increment and decrement operators are provided:
@@ -245,7 +245,7 @@ Given `var x: T` and `y: U`:
 ### Bitwise and bit-shift
 
 ```
-// Compound `&=`.
+// Compound `&&&=`.
 interface BitAndAssignWith(U: type) {
   fn Op(ref self, other: U);
 }
@@ -253,7 +253,7 @@ constraint BitAndAssign { extend BitAndAssignWith(Self); }
 ```
 
 ```
-// Compound `|=`.
+// Compound `|||=`.
 interface BitOrAssignWith(U: type) {
   fn Op(ref self, other: U);
 }
@@ -261,7 +261,7 @@ constraint BitOrAssign { extend BitOrAssignWith(Self); }
 ```
 
 ```
-// Compound `^=`.
+// Compound `^^^=`.
 interface BitXorAssignWith(U: type) {
   fn Op(ref self, other: U);
 }
@@ -269,7 +269,7 @@ constraint BitXorAssign { extend BitXorAssignWith(Self); }
 ```
 
 ```
-// Compound `<<=`.
+// Compound `<<<=`.
 interface LeftShiftAssignWith(U: type) {
   fn Op(ref self, other: U);
 }
@@ -277,7 +277,7 @@ constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
 ```
 
 ```
-// Compound `>>=`.
+// Compound `>>>=`.
 interface RightShiftAssignWith(U: type) {
   fn Op(ref self, other: U);
 }
@@ -286,12 +286,12 @@ constraint RightShiftAssign { extend RightShiftAssignWith(Self); }
 
 Given `var x: T` and `y: U`:
 
--   The statement `x &= y;` is rewritten to `x.(BitAndAssignWith(U).Op)(y);`.
--   The statement `x |= y;` is rewritten to `x.(BitOrAssignWith(U).Op)(y);`.
--   The statement `x ^= y;` is rewritten to `x.(BitXorAssignWith(U).Op)(y);`.
--   The statement `x <<= y;` is rewritten to
+-   The statement `x &&&= y;` is rewritten to `x.(BitAndAssignWith(U).Op)(y);`.
+-   The statement `x |||= y;` is rewritten to `x.(BitOrAssignWith(U).Op)(y);`.
+-   The statement `x ^^^= y;` is rewritten to `x.(BitXorAssignWith(U).Op)(y);`.
+-   The statement `x <<<= y;` is rewritten to
     `x.(LeftShiftAssignWith(U).Op)(y);`.
--   The statement `x >>= y;` is rewritten to
+-   The statement `x >>>= y;` is rewritten to
     `x.(RightShiftAssignWith(U).Op)(y)`;.
 
 Implementations of these interfaces are provided for built-in types as necessary
@@ -354,3 +354,5 @@ impl MyString as AddAssignWith(like MyString) {
     [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
+-   Proposal
+    [#8133: Tripled bitwise operators](https://github.com/carbon-language/carbon-lang/pull/8133)

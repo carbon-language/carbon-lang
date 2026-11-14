@@ -30,19 +30,19 @@ var b: u8 = 3;
 var c: i8 = -5;
 
 // 250
-var complement: u8 = ^a;
+var complement: u8 = ~~~a;
 // 1
-var bitwise_and: u8 = a & b;
+var bitwise_and: u8 = a &&& b;
 // 7
-var bitwise_or: u8 = a | b;
+var bitwise_or: u8 = a ||| b;
 // 6
-var bitwise_xor: u8 = a ^ b;
+var bitwise_xor: u8 = a ^^^ b;
 // 40
-var left_shift: u8 = a << b;
+var left_shift: u8 = a <<< b;
 // 2
-var logical_right_shift: u8 = a >> 1;
+var logical_right_shift: u8 = a >>> 1;
 // -3
-var arithmetic_right_shift: i8 = c >> 1;
+var arithmetic_right_shift: i8 = c >>> 1;
 ```
 
 These operators have [predefined meanings](#integer-types) for Carbon's integer
@@ -55,37 +55,37 @@ standard library.
 ```mermaid
 %%{init: {'themeVariables': {'fontFamily': 'monospace'}}}%%
 graph BT
-    complement["^x"]
-    bitwise_and>"x & y"]
-    bitwise_or>"x | y"]
-    bitwise_xor>"x ^ y"]
-    shift["x << y
-           x >> y"]
+    complement["~~~x"]
+    bitwise_and>"x &&& y"]
+    bitwise_or>"x ||| y"]
+    bitwise_xor>"x ^^^ y"]
+    shift["x <<< y
+           x >>> y"]
     bitwise_and & bitwise_or & bitwise_xor & shift --> complement
 ```
 
 <small>[Instructions for reading this diagram.](README.md#precedence)</small>
 
 Parentheses are required when mixing different bitwise and bit-shift operators.
-Binary `&`, `|`, and `^` are left-associative. The bit-shift operators `<<` and
-`>>` are non-associative.
+Binary `&&&`, `|||`, and `^^^` are left-associative. The bit-shift operators
+`<<<` and `>>>` are non-associative.
 
 ```
-// ✅ Same as (1 | 2) | 4, evaluates to 7.
-var a: i32 = 1 | 2 | 4;
+// ✅ Same as (1 ||| 2) ||| 4, evaluates to 7.
+var a: i32 = 1 ||| 2 ||| 4;
 
 // ❌ Error, parentheses are required to distinguish between
-//    (3 | 5) & 6, which evaluates to 6, and
-//    3 | (5 & 6), which evaluates to 7.
-var b: i32 = 3 | 5 & 6;
+//    (3 ||| 5) &&& 6, which evaluates to 6, and
+//    3 ||| (5 &&& 6), which evaluates to 7.
+var b: i32 = 3 ||| 5 &&& 6;
 
 // ❌ Error, parentheses are required to distinguish between
-//    (1 << 2) << 3, which evaluates to 4 << 3 == 32, and
-//    1 << (2 << 3), which evaluates to 1 << 16 == 65536.
-var c: i32 = 1 << 2 << 3;
+//    (1 <<< 2) <<< 3, which evaluates to 4 <<< 3 == 32, and
+//    1 <<< (2 <<< 3), which evaluates to 1 <<< 16 == 65536.
+var c: i32 = 1 <<< 2 <<< 3;
 
-// ❌ Error, can't repeat the `^` operator. Use `^(^4)` or simply `4`.
-var d: i32 = ^^4;
+// ❌ Error, can't repeat the `~~~` operator. Use `~~~(~~~4)` or simply `4`.
+var d: i32 = ~~~~~~4;
 ```
 
 ## Integer types
@@ -103,22 +103,22 @@ are of integer type, this results in the following conversions:
 -   If one type is `iN` and the other type is `uM`, and `M` < `N`, the `uM`
     operand is converted to `iN`.
 
-A built-in binary bitwise `&`, `|`, or `^` operation is performed if, after the
-above conversion step, the operands have the same integer type. The result type
-is that type, and the result value is produced by applying the relevant
-operation -- AND, OR, or XOR -- to each pair of corresponding bits in the input,
-including the sign bit for a signed integer type.
+A built-in binary bitwise `&&&`, `|||`, or `^^^` operation is performed if,
+after the above conversion step, the operands have the same integer type. The
+result type is that type, and the result value is produced by applying the
+relevant operation -- AND, OR, or XOR -- to each pair of corresponding bits in
+the input, including the sign bit for a signed integer type.
 
 A built-in complement operation is performed if the operand can be implicitly
 converted to an integer type. The result type is that type, and the result value
 is produced by flipping all bits in the input, including the sign bit for a
-signed integer type. `^a` is equivalent to `a ^ x`, where `x` is the
+signed integer type. `~~~a` is equivalent to `a ^^^ x`, where `x` is the
 all-one-bits value of the same type as `a`.
 
 A built-in bit-shift operation is performed if both operands are, or can be
 implicitly converted to, integer types. The result type is the converted type of
 the first operand. The result value is produced by shifting the first operand
-left for `<<` or right for `>>` a number of positions equal to the second
+left for `<<<` or right for `>>>` a number of positions equal to the second
 operand. Vacant positions are filled with `0` bits, except for a right shift
 where the first operand is of a signed type and has a negative value, in which
 case they are filled with `1` bits.
@@ -155,8 +155,8 @@ These operations can also be applied to a pair of integer constants, or to an
 integer constant and a value of integer type, as follows:
 
 -   If any binary bitwise or bit-shift operator is applied to two integer
-    constants, or the unary `^` operator is applied to an integer constant, the
-    result is an integer constant. Integer constants are treated as having
+    constants, or the unary `~~~` operator is applied to an integer constant,
+    the result is an integer constant. Integer constants are treated as having
     infinitely many high-order bits, where all but finitely many of those bits
     are sign bits. For example, `-1` comprises infinitely many `1` bits. Note
     that there is no difference between an arithmetic and a logical right shift
@@ -164,12 +164,12 @@ integer constant and a value of integer type, as follows:
     shift from.
     -   It is easy to produce extremely large numbers by left-shifting an
         integer constant. For example, the binary representation of
-        `1 << (1 << 1000)` is thought to be substantially larger than the total
-        entropy in the observable universe. In practice, Carbon implementations
-        will set a much lower limit on the largest integer constant that they
-        support.
--   If a binary bitwise `&`, `|`, or `^` operation is applied to an integer
-    constant and a value of an integer type to which the constant can be
+        `1 <<< (1 <<< 1000)` is thought to be substantially larger than the
+        total entropy in the observable universe. In practice, Carbon
+        implementations will set a much lower limit on the largest integer
+        constant that they support.
+-   If a binary bitwise `&&&`, `|||`, or `^^^` operation is applied to an
+    integer constant and a value of an integer type to which the constant can be
     implicitly converted, the operand that is an integer constant is implicitly
     converted to the integer type and the computation is performed as described
     [above](#integer-types).
@@ -180,14 +180,14 @@ integer constant and a value of integer type, as follows:
     performed as described above.
 
 Other operations involving integer constants are invalid. For example, a bitwise
-`&` between a `u8` and an integer constant `500` is invalid because `500`
-doesn't fit into `u8`, and `1 << n` is invalid if `n` is an integer variable
+`&&&` between a `u8` and an integer constant `500` is invalid because `500`
+doesn't fit into `u8`, and `1 <<< n` is invalid if `n` is an integer variable
 because we don't know what type to use to compute the result.
 
-Note that the unary `^` operator applied to a non-negative integer constant
-results in a negative integer constant, and the binary `^` operator gives a
+Note that the unary `~~~` operator applied to a non-negative integer constant
+results in a negative integer constant, and the binary `^^^` operator gives a
 negative result if exactly one of the input operands was negative. For example,
-`^0 == -1` evaluates to `true`.
+`~~~0 == -1` evaluates to `true`.
 
 ## Extensibility
 
@@ -195,7 +195,7 @@ Bitwise and shift operators can be provided for user-defined types by
 implementing the following family of interfaces:
 
 ```
-// Unary `^`.
+// Unary `~~~`.
 interface BitComplement {
   default let Result: type = Self;
   fn Op(self) -> Result;
@@ -203,7 +203,7 @@ interface BitComplement {
 ```
 
 ```
-// Binary `&`.
+// Binary `&&&`.
 interface BitAndWith(U: type) {
   default let Result: type = Self;
   fn Op(self, other: U) -> Result;
@@ -214,7 +214,7 @@ constraint BitAnd {
 ```
 
 ```
-// Binary `|`.
+// Binary `|||`.
 interface BitOrWith(U: type) {
   default let Result: type = Self;
   fn Op(self, other: U) -> Result;
@@ -225,7 +225,7 @@ constraint BitOr {
 ```
 
 ```
-// Binary `^`.
+// Binary `^^^`.
 interface BitXorWith(U: type) {
   default let Result: type = Self;
   fn Op(self, other: U) -> Result;
@@ -236,7 +236,7 @@ constraint BitXor {
 ```
 
 ```
-// Binary `<<`.
+// Binary `<<<`.
 interface LeftShiftWith(U: type) {
   default let Result: type = Self;
   fn Op(self, other: U) -> Result;
@@ -247,7 +247,7 @@ constraint LeftShift {
 ```
 
 ```
-// Binary `>>`.
+// Binary `>>>`.
 interface RightShiftWith(U: type) {
   default let Result: type = Self;
   fn Op(self, other: U) -> Result;
@@ -259,12 +259,12 @@ constraint RightShift {
 
 Given `x: T` and `y: U`:
 
--   The expression `^x` is rewritten to `x.(BitComplement.Op)()`.
--   The expression `x & y` is rewritten to `x.(BitAndWith(U).Op)(y)`.
--   The expression `x | y` is rewritten to `x.(BitOrWith(U).Op)(y)`.
--   The expression `x ^ y` is rewritten to `x.(BitXorWith(U).Op)(y)`.
--   The expression `x << y` is rewritten to `x.(LeftShiftWith(U).Op)(y)`.
--   The expression `x >> y` is rewritten to `x.(RightShiftWith(U).Op)(y)`.
+-   The expression `~~~x` is rewritten to `x.(BitComplement.Op)()`.
+-   The expression `x &&& y` is rewritten to `x.(BitAndWith(U).Op)(y)`.
+-   The expression `x ||| y` is rewritten to `x.(BitOrWith(U).Op)(y)`.
+-   The expression `x ^^^ y` is rewritten to `x.(BitXorWith(U).Op)(y)`.
+-   The expression `x <<< y` is rewritten to `x.(LeftShiftWith(U).Op)(y)`.
+-   The expression `x >>> y` is rewritten to `x.(RightShiftWith(U).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -276,8 +276,13 @@ to give the semantics described above.
 -   [Provide rotate operators](/proposals/p001191-bitwise-and-shift-operators.md#provide-rotate-operators)
 -   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
 -   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
+-   [Other symbol sequences](/proposals/p008133-tripled-bitwise-operators.md#other-symbol-sequences)
+-   [Keyword operators](/proposals/p008133-tripled-bitwise-operators.md#keyword-operators)
+-   [`<<` and `>>` for C++ streaming operator interop](/proposals/p008133-tripled-bitwise-operators.md#-and--for-c-streaming-operator-interop)
 
 ## References
 
 -   Proposal
     [#1191: bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+-   Proposal
+    [#8133: Tripled bitwise operators](https://github.com/carbon-language/carbon-lang/pull/8133).

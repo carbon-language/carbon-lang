@@ -151,10 +151,10 @@ this conversion is important in order to allow bitwise operations with masks, so
 we allow it:
 
 ```
-// We allow ^0 == -1 to convert to `u32` to represent an all-ones value.
-var a: u32 = ^0;
-// ^4 == -5 is negative, but we want to allow it to convert to u32 here.
-var b: u32 = a & ^4;
+// We allow ~~~0 == -1 to convert to `u32` to represent an all-ones value.
+var a: u32 = ~~~0;
+// ~~~4 == -5 is negative, but we want to allow it to convert to u32 here.
+var b: u32 = a &&& ~~~4;
 ```
 
 ### Character types
