@@ -216,43 +216,53 @@ class DestroyFormatWitnessContext {
   //   - `DestroyFormat::NoDestroy`, if the object can't be destroyed;
   //   - `DestroyFormat::Trivial`, if the object has trivial destruction;
   //   - `DestroyFormat::NonTrivial`, if the object has non-trivial destruction;
-  //   - `std::nullopt`, if either `Core.SubobjectDestroy.Op` or
-  //     `Core.Destroy.Op` can't be found.
+  //   - `std::nullopt`, if either `SubobjectDestroy`, `Destroy`, or
+  //   `Destroy.Op` can't be found.
   auto GetDestroyFormatForOneType(Context& context, SemIR::LocId loc_id,
-                                  SemIR::TypeInstId type_id)
+                                  SemIR::TypeInstId type_inst_id)
       -> std::optional<DestroyFormat> {
     const auto op_name_id =
         context.core_identifiers().AddNameId(CoreIdentifier::Op);
-    {
-      auto op_fn_id = GetAssociatedFunction(
-          context, loc_id, type_id, subobject_destroy_interface_, op_name_id);
-      if (op_fn_id == std::nullopt) {
-        return std::nullopt;
-      }
 
-      if (*op_fn_id == SemIR::FunctionId::None) {
-        return DestroyFormat::NoDestroy;
-      }
-      auto op_fn = context.functions().Get(*op_fn_id);
-      auto builtin_kind = op_fn.GetBuiltinFunctionKind(context.sem_ir());
-      if (builtin_kind == SemIR::BuiltinFunctionKind::None) {
-        return DestroyFormat::NonTrivial;
-      }
-    }
-
-    auto op_fn_id = GetAssociatedFunction(context, loc_id, type_id,
-                                          destroy_interface_, op_name_id);
-    if (op_fn_id == std::nullopt) {
+    auto subobject_destroy_op_fn_id =
+        GetAssociatedFunction(context, loc_id, type_inst_id,
+                              subobject_destroy_interface_, op_name_id);
+    if (subobject_destroy_op_fn_id == std::nullopt) {
       return std::nullopt;
     }
 
-    // We diagnosed `Core.Destroy.Op` as not having a blanket impl earlier in
-    // the check phase.
-    if (*op_fn_id == SemIR::FunctionId::None) {
+    // `SubobjectDestroy.Op`'s definition is provided by the toolchain. Being
+    // unable to find `SubobjectDestroy.Op` signals that the object can't be
+    // destroyed.
+    if (*subobject_destroy_op_fn_id == SemIR::FunctionId::None) {
+      return DestroyFormat::NoDestroy;
+    }
+
+    const auto& subobject_destroy_op_fn =
+        context.functions().Get(*subobject_destroy_op_fn_id);
+    if (auto builtin_kind =
+            subobject_destroy_op_fn.GetBuiltinFunctionKind(context.sem_ir());
+        builtin_kind == SemIR::BuiltinFunctionKind::None) {
+      return DestroyFormat::NonTrivial;
+    }
+
+    auto destroy_op_fn_id = GetAssociatedFunction(
+        context, loc_id, type_inst_id, destroy_interface_, op_name_id);
+    if (destroy_op_fn_id == std::nullopt) {
+      // The toolchain diagnoses a missing `Core.Destroy` elsewhere.
       return std::nullopt;
     }
-    auto op_fn = context.functions().Get(*op_fn_id);
-    auto builtin_kind = op_fn.GetBuiltinFunctionKind(context.sem_ir());
+
+    if (*destroy_op_fn_id == SemIR::FunctionId::None) {
+      CARBON_DIAGNOSTIC(MissingImplForCoreDestroyOp, Error,
+                        "`{}` declares a custom implementation for "
+                        "`Core.Destroy`, but doesn't define `Core.Destroy.Op`",
+                        SemIR::TypeInstId);
+      context.emitter().Emit(loc_id, MissingImplForCoreDestroyOp, type_inst_id);
+      return std::nullopt;
+    }
+    const auto& destroy_op_fn = context.functions().Get(*destroy_op_fn_id);
+    auto builtin_kind = destroy_op_fn.GetBuiltinFunctionKind(context.sem_ir());
     return builtin_kind == SemIR::BuiltinFunctionKind::NoOp
                ? DestroyFormat::Trivial
                : DestroyFormat::NonTrivial;
