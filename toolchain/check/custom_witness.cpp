@@ -413,20 +413,20 @@ static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
     return DestroyFormat::NoDestroy;
   }
 
-  auto object_repr_id =
+  auto adapted_type_id =
       class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
-  if (object_repr_id.has_value()) {
+  if (adapted_type_id.has_value()) {
     if (auto array_type =
-            context.types().TryGetAs<SemIR::ArrayType>(object_repr_id)) {
+            context.types().TryGetAs<SemIR::ArrayType>(adapted_type_id)) {
       return GetArrayDestroyFormat(context, loc_id, *array_type,
                                    witness_context);
     }
     return witness_context.GetDestroyFormatForOneType(
-        context, loc_id, context.types().GetTypeInstId(object_repr_id));
-  } else {
-    object_repr_id =
-        class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+        context, loc_id, context.types().GetTypeInstId(adapted_type_id));
   }
+
+  auto object_repr_id =
+      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
 
   auto destroy_format = witness_context.GetDestroyFormatForOneType(
       context, loc_id, context.types().GetTypeInstId(object_repr_id));
@@ -505,7 +505,6 @@ static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
       GetCanonicalFacet(context, query_self_const_id));
 
   auto inst = context.insts().Get(inst_id);
-
   if (context.types().IsConstrainedFacetType(inst.type_id())) {
     // The value's type is a symbolic constrained facet. We don't provide a
     // custom witness for constrained facets. The witness must be found in the
