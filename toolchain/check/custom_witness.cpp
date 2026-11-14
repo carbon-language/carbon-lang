@@ -427,15 +427,11 @@ static auto GetStructDestroyFormat(
       return std::nullopt;
     }
 
-    switch (*destroy_format) {
-      case DestroyFormat::Trivial:
-        break;
-      case DestroyFormat::NonTrivial:
-        result = DestroyFormat::NonTrivial;
-        break;
-      case DestroyFormat::NoDestroy:
-        return DestroyFormat::NoDestroy;
+    if (*destroy_format == DestroyFormat::NoDestroy) {
+      return DestroyFormat::NoDestroy;
     }
+
+    result = std::max(result, *destroy_format);
   }
 
   return result;
@@ -455,21 +451,17 @@ static auto GetTupleDestroyFormat(Context& context, SemIR::LocId loc_id,
 
   auto result = DestroyFormat::Trivial;
   for (const auto& element_id : block) {
-    auto element_destroy_format = witness_context.GetDestroyFormatForOneType(
+    auto destroy_format = witness_context.GetDestroyFormatForOneType(
         context, loc_id, context.types().GetAsTypeInstId(element_id));
-    if (element_destroy_format == std::nullopt) {
+    if (destroy_format == std::nullopt) {
       return std::nullopt;
     }
 
-    switch (*element_destroy_format) {
-      case DestroyFormat::NoDestroy:
-        return DestroyFormat::NoDestroy;
-      case DestroyFormat::NonTrivial:
-        result = DestroyFormat::NonTrivial;
-        break;
-      case DestroyFormat::Trivial:
-        break;
+    if (*destroy_format == DestroyFormat::NoDestroy) {
+      return DestroyFormat::NoDestroy;
     }
+
+    result = std::max(result, *destroy_format);
   }
 
   return result;
