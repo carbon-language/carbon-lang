@@ -149,47 +149,34 @@ static auto GetFacetTypeForQuerySpecificInterface(
 }
 
 // Returns the function that `type_inst_id` uses for the associated function
-// named `assoc_fn_name_id`, taken from its witness for the single interface in
-// `query_facet_type_const_id`.
+// named `assoc_fn_name_id` in `specific_interface`.
 //
-// Returns `std::nullopt` if impl lookup produces an error, and
-// `FunctionId::None` if the type doesn't implement the interface or there is
-// no function with that name. A symbolic witness has no witness table yet, so
-// in that case this returns the interface's own declaration of the function.
+// Similar to `BuildCustomWitness`, `GetAssociatedFunction` returns
+// `std::nullopt` if an error was encountered, and that error was reported by
+// the callee. Returns `SemIR::FunctionId::None` if the type doesn't implement
+// the interface, or there isn't an associated function with the specified name.
+// A symbolic witness has no witness table yet, so in that case this returns the
+// interface's own declaration of the function.
 static auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
-                                  SemIR::InstId type_inst_id,
-                                  SemIR::ConstantId query_facet_type_const_id,
+                                  SemIR::TypeInstId type_inst_id,
+                                  SemIR::SpecificInterface specific_interface,
                                   SemIR::NameId assoc_fn_name_id)
     -> std::optional<SemIR::FunctionId> {
-  auto witnesses = LookupImplWitness(
+  auto witness_id = LookupSingleImplWitness(
       context, loc_id, context.constant_values().Get(type_inst_id),
-      query_facet_type_const_id);
-  if (witnesses.has_error_value()) {
-    return std::nullopt;
-  }
-  if (!witnesses.has_value()) {
+      specific_interface);
+  // Witness lookup failure is not an error.
+  if (!witness_id.has_value()) {
     return SemIR::FunctionId::None;
   }
-  auto witness_ids = context.inst_blocks().Get(witnesses.inst_block_id());
-  CARBON_CHECK(witness_ids.size() == 1,
-               "Expected one witness for a single interface");
-  if (witness_ids.front() == SemIR::ErrorInst::InstId) {
+
+  if (witness_id == SemIR::ErrorInst::InstId) {
     return std::nullopt;
   }
 
-  // Name lookup in the interface finds the associated entity, which records
-  // where the function is in witness tables.
-  auto facet_type = context.constant_values().GetInstAs<SemIR::FacetType>(
-      query_facet_type_const_id);
-  auto single_extend = context.declared_facet_types()
-                           .Get(facet_type.declared_facet_type_id)
-                           .TryAsSingleExtend();
-  const auto* specific_interface =
-      single_extend ? std::get_if<SemIR::SpecificInterface>(&*single_extend)
-                    : nullptr;
-  CARBON_CHECK(specific_interface, "Expected a single interface");
+  // Name lookup in the interface finds the associated entity.
   const auto& interface =
-      context.interfaces().Get(specific_interface->interface_id);
+      context.interfaces().Get(specific_interface.interface_id);
   if (!interface.is_complete()) {
     return SemIR::FunctionId::None;
   }
@@ -199,70 +186,26 @@ static auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
   if (!lookup_result.is_found()) {
     return SemIR::FunctionId::None;
   }
-  auto assoc_entity = context.insts().TryGetAsIfValid<SemIR::AssociatedEntity>(
-      context.constant_values().GetConstantInstId(
-          lookup_result.target_inst_id()));
-  if (!assoc_entity) {
-    return SemIR::FunctionId::None;
-  }
-  LoadImportRef(context, assoc_entity->decl_id);
-  auto decl_id =
-      context.constant_values().GetConstantInstId(assoc_entity->decl_id);
-  CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-  auto interface_fn_type = context.types().TryGetAs<SemIR::FunctionType>(
-      context.insts().Get(decl_id).type_id());
-  if (!interface_fn_type) {
-    // The name is an associated constant.
+  // Accessing a member that isn't an associated entity emits a TODO
+  // diagnostic, so check first.
+  if (!context.insts().TryGetAsIfValid<SemIR::AssociatedEntity>(
+          context.constant_values().GetConstantInstId(
+              lookup_result.target_inst_id()))) {
     return SemIR::FunctionId::None;
   }
 
-  // Read the witness table entry in the same way as evaluating an
-  // `ImplWitnessAccess`.
-  auto index = static_cast<size_t>(assoc_entity->index.index);
-  auto entry_const_id = SemIR::ConstantId::None;
-  auto witness = context.insts().Get(witness_ids.front());
-  CARBON_KIND_SWITCH(witness) {
-    case CARBON_KIND(SemIR::CustomWitness custom_witness): {
-      auto elements = context.inst_blocks().Get(custom_witness.elements_id);
-      if (index >= elements.size()) {
-        return SemIR::FunctionId::None;
-      }
-      entry_const_id = context.constant_values().Get(elements[index]);
-      break;
-    }
-    case CARBON_KIND(SemIR::ImplWitness impl_witness): {
-      auto witness_table = context.insts().GetAs<SemIR::ImplWitnessTable>(
-          impl_witness.witness_table_id);
-      auto elements = context.inst_blocks().Get(witness_table.elements_id);
-      // `elements` is empty if the impl is only declared, and an entry has no
-      // value until the impl definition gives it one.
-      if (index >= elements.size() || !elements[index].has_value() ||
-          elements[index] == SemIR::InstId::ImplWitnessTablePlaceholder) {
-        return SemIR::FunctionId::None;
-      }
-      LoadImportRef(context, elements[index]);
-      entry_const_id = SemIR::GetConstantValueInSpecific(
-          context.sem_ir(), impl_witness.specific_id, elements[index]);
-      break;
-    }
-    case SemIR::LookupImplWitness::Kind: {
-      // A symbolic witness has no witness table yet.
-      return interface_fn_type->function_id;
-    }
-    default: {
-      CARBON_FATAL("Unexpected witness {0}", witness);
-    }
+  auto member_id = AccessMemberOfImplWitnessForType(
+      context, loc_id, type_inst_id, specific_interface, witness_id,
+      lookup_result.target_inst_id());
+  auto callee = SemIR::GetCallee(context.sem_ir(), member_id);
+  if (std::holds_alternative<SemIR::CalleeError>(callee)) {
+    return std::nullopt;
   }
-
-  // An error entry isn't a function value.
-  auto entry = context.insts().TryGetAsIfValid<SemIR::StructValue>(
-      context.constant_values().GetInstIdIfValid(entry_const_id));
-  if (!entry) {
-    return SemIR::FunctionId::None;
-  }
-  auto entry_fn_type =
-      context.types().TryGetAs<SemIR::FunctionType>(entry->type_id);
-  return entry_fn_type ? entry_fn_type->function_id : SemIR::FunctionId::None;
+  // With a symbolic witness the access isn't evaluated, and `GetCallee` finds
+  // the interface's own function through the access's type. Anything that
+  // isn't a function, such as an associated constant, gives `None`.
+  auto* fn = std::get_if<SemIR::CalleeFunction>(&callee);
+  return fn ? fn->function_id : SemIR::FunctionId::None;
 }
 
 // The format for `Destroy.Op`.
@@ -284,10 +227,11 @@ class DestroyFormatWitnessContext {
  public:
   DestroyFormatWitnessContext(DestroyFormatWitnessContext&& other)
       : context_(std::exchange(other.context_, nullptr)),
-        subobject_destroy_facet_id_(std::exchange(
-            other.subobject_destroy_facet_id_, SemIR::ConstantId::None)),
-        destroy_facet_id_(
-            std::exchange(other.destroy_facet_id_, SemIR::ConstantId::None)) {}
+        subobject_destroy_interface_(
+            std::exchange(other.subobject_destroy_interface_,
+                          SemIR::SpecificInterface::None)),
+        destroy_interface_(std::exchange(other.destroy_interface_,
+                                         SemIR::SpecificInterface::None)) {}
 
   DestroyFormatWitnessContext(const DestroyFormatWitnessContext&) = delete;
   auto operator=(DestroyFormatWitnessContext&&) -> void = delete;
@@ -314,16 +258,8 @@ class DestroyFormatWitnessContext {
       return std::nullopt;
     }
 
-    auto subobject_destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
-        context, loc_id,
-        {.interface_id = subobject_destroy_interface_id,
-         .specific_id = SemIR::SpecificId::None});
-    auto destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
-        context, loc_id,
-        {.interface_id = destroy_interface_id,
-         .specific_id = SemIR::SpecificId::None});
-    return DestroyFormatWitnessContext(context, subobject_destroy_facet_id,
-                                       destroy_facet_id);
+    return DestroyFormatWitnessContext(context, subobject_destroy_interface_id,
+                                       destroy_interface_id);
   }
 
   // Cleans up the block that was created during construction.
@@ -349,7 +285,7 @@ class DestroyFormatWitnessContext {
         context.core_identifiers().AddNameId(CoreIdentifier::Op);
     {
       auto op_fn_id = GetAssociatedFunction(
-          context, loc_id, type_id, subobject_destroy_facet_id_, op_name_id);
+          context, loc_id, type_id, subobject_destroy_interface_, op_name_id);
       if (op_fn_id == std::nullopt) {
         return std::nullopt;
       }
@@ -365,7 +301,7 @@ class DestroyFormatWitnessContext {
     }
 
     auto op_fn_id = GetAssociatedFunction(context, loc_id, type_id,
-                                          destroy_facet_id_, op_name_id);
+                                          destroy_interface_, op_name_id);
     CARBON_CHECK(op_fn_id != std::nullopt,
                  "error looking up impl witness for `Core.Destroy` for {}",
                  context.insts().Get(type_id));
@@ -383,15 +319,20 @@ class DestroyFormatWitnessContext {
 
  private:
   Context* context_;
-  SemIR::ConstantId subobject_destroy_facet_id_;
-  SemIR::ConstantId destroy_facet_id_;
+  SemIR::SpecificInterface subobject_destroy_interface_;
+  SemIR::SpecificInterface destroy_interface_;
 
+  // Private non-static data members prevent us from treating this type as an
+  // aggregate.
   DestroyFormatWitnessContext(Context& context,
-                              SemIR::ConstantId subobject_destroy_facet_id,
-                              SemIR::ConstantId destroy_facet_id)
+                              SemIR::InterfaceId subobject_destroy_interface_id,
+                              SemIR::InterfaceId destroy_interface_id)
       : context_(&context),
-        subobject_destroy_facet_id_(subobject_destroy_facet_id),
-        destroy_facet_id_(destroy_facet_id) {}
+        subobject_destroy_interface_{
+            .interface_id = subobject_destroy_interface_id,
+            .specific_id = SemIR::SpecificId::None},
+        destroy_interface_{.interface_id = destroy_interface_id,
+                           .specific_id = SemIR::SpecificId::None} {}
 };
 }  // namespace
 

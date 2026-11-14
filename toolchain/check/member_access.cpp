@@ -252,6 +252,36 @@ static auto GetWitnessFromSingleImplLookupResult(
   return witness_id;
 }
 
+auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId type_const_id,
+                             SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId {
+  // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
+  auto interface_type_id = GetInterfaceType(
+      context, specific_interface.interface_id, specific_interface.specific_id);
+  auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
+                                         interface_type_id.AsConstantId());
+  if (!lookup_result.has_value()) {
+    return SemIR::InstId::None;
+  }
+  return GetWitnessFromSingleImplLookupResult(context, lookup_result);
+}
+
+auto AccessMemberOfImplWitnessForType(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId type_inst_id,
+    SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id,
+    SemIR::InstId member_id) -> SemIR::InstId {
+  auto self_facet = GetConstantFacetValueForTypeAndInterface(
+      context, type_inst_id, specific_interface, witness_id);
+  const auto& interface =
+      context.interfaces().Get(specific_interface.interface_id);
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      specific_interface.specific_id, self_facet);
+  return AccessMemberOfImplWitness(context, loc_id, witness_id,
+                                   interface_with_self_specific_id, member_id);
+}
+
 // Performs impl lookup for a member name expression. This finds the relevant
 // impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(
@@ -261,48 +291,39 @@ static auto PerformImplLookup(
     DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
     -> SemIR::InstId {
   auto self_type_id = context.types().GetTypeIdForTypeConstantId(type_const_id);
-  // TODO: Avoid forming and then immediately decomposing a `FacetType` here.
-  auto interface_type_id =
-      GetInterfaceType(context, assoc_type.interface_id,
-                       assoc_type.interface_without_self_specific_id);
-  auto lookup_result = LookupImplWitness(context, loc_id, type_const_id,
-                                         interface_type_id.AsConstantId());
-  if (!lookup_result.has_value()) {
-    if (diagnose) {
-      if (missing_impl_diagnostic_context) {
-        Diagnostics::ContextScope scope(&context.emitter(),
-                                        missing_impl_diagnostic_context);
-        // TODO: Pass in the expression whose type we are printing.
-        CARBON_DIAGNOSTIC(MissingImplInMemberAccessInContext, Error,
-                          "type {1} does not implement interface {0}",
-                          SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(loc_id, MissingImplInMemberAccessInContext,
-                               interface_type_id, self_type_id);
-      } else {
-        // TODO: Pass in the expression whose type we are printing.
-        CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
-                          "cannot access member of interface {0} in type {1} "
-                          "that does not implement that interface",
-                          SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(loc_id, MissingImplInMemberAccess,
-                               interface_type_id, self_type_id);
+    auto specific_interface = assoc_type.GetSpecificInterface();
+    auto witness_id = LookupSingleImplWitness(context, loc_id, type_const_id,
+                                              specific_interface);
+    if (!witness_id.has_value()) {
+      if (diagnose) {
+        auto interface_type_id =
+            GetInterfaceType(context, specific_interface.interface_id,
+                             specific_interface.specific_id);
+        if (missing_impl_diagnostic_context) {
+          Diagnostics::ContextScope scope(&context.emitter(),
+                                          missing_impl_diagnostic_context);
+          // TODO: Pass in the expression whose type we are printing.
+          CARBON_DIAGNOSTIC(MissingImplInMemberAccessInContext, Error,
+                            "type {1} does not implement interface {0}",
+                            SemIR::TypeId, SemIR::TypeId);
+          context.emitter().Emit(loc_id, MissingImplInMemberAccessInContext,
+                                 interface_type_id, self_type_id);
+        } else {
+          // TODO: Pass in the expression whose type we are printing.
+          CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
+                            "cannot access member of interface {0} in type {1} "
+                            "that does not implement that interface",
+                            SemIR::TypeId, SemIR::TypeId);
+          context.emitter().Emit(loc_id, MissingImplInMemberAccess,
+                                 interface_type_id, self_type_id);
+        }
       }
+      return SemIR::ErrorInst::InstId;
     }
-    return SemIR::ErrorInst::InstId;
-  }
 
-  auto witness_id =
-      GetWitnessFromSingleImplLookupResult(context, lookup_result);
-
-  auto self_facet = GetConstantFacetValueForTypeAndInterface(
-      context, context.types().GetTypeInstId(self_type_id),
-      assoc_type.GetSpecificInterface(), witness_id);
-  const auto& interface = context.interfaces().Get(assoc_type.interface_id);
-  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-      context, loc_id, interface.generic_id, interface.generic_with_self_id,
-      assoc_type.interface_without_self_specific_id, self_facet);
-  return AccessMemberOfImplWitness(context, loc_id, witness_id,
-                                   interface_with_self_specific_id, member_id);
+  return AccessMemberOfImplWitnessForType(
+      context, loc_id, context.types().GetTypeInstId(self_type_id),
+      specific_interface, witness_id, member_id);
 }
 
 // Performs a member name lookup into the specified scope, including performing

@@ -48,6 +48,20 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId;
 
+// Looks up the witness that `type_const_id` implements `specific_interface`.
+// Returns `None` if it doesn't, and `ErrorInst::InstId` on error.
+auto LookupSingleImplWitness(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId type_const_id,
+                             SemIR::SpecificInterface specific_interface)
+    -> SemIR::InstId;
+
+// Accesses the associated entity `member_id` through `witness_id`, which is a
+// witness that `type_inst_id` implements `specific_interface`.
+auto AccessMemberOfImplWitnessForType(
+    Context& context, SemIR::LocId loc_id, SemIR::TypeInstId type_inst_id,
+    SemIR::SpecificInterface specific_interface, SemIR::InstId witness_id,
+    SemIR::InstId member_id) -> SemIR::InstId;
+
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.
 auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,
