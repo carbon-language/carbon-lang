@@ -638,7 +638,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.df5481.1: <witness> = impl_witness @C.as.I.impl.e103db.1.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet.a71ed7.1: %I.type = facet_value %C, (%I.impl_witness.df5481.1) [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type, type) [concrete]
@@ -668,7 +668,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @C.as.I.impl.e103db.1.%C.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @C.as.I.impl.e103db.1.%C.ref, @I [symbolic_self = constants.%.b7f]
 // CHECK:STDOUT:   impl_decl @C.as.I.impl.e103db.2 [concrete] {} {
 // CHECK:STDOUT:     %C.ref.loc22_7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %C.ref.loc22_10: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -679,7 +679,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:     %tuple.elem0: type = tuple_access %.loc22_11.2, element0 [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @C.as.I.impl.e103db.2.%tuple.elem0, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @C.as.I.impl.e103db.2.%tuple.elem0, @I [symbolic_self = constants.%.b7f]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

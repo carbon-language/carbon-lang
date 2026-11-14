@@ -48,10 +48,10 @@ fn F() {
 // CHECK:STDOUT:   %DD: type = class_type @DD [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.565: <witness> = impl_self_witness %DD, @Y [concrete]
+// CHECK:STDOUT:   %.565: <witness> = impl_self_witness %DD, @Y [symbolic_self]
 // CHECK:STDOUT:   %Y.impl_witness: <witness> = impl_witness @DD.as.Y.impl.%Y.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Y.facet.af9: %Y.type = facet_value %DD, (%Y.impl_witness) [concrete]
-// CHECK:STDOUT:   %.918: <witness> = impl_self_witness %DD, @W [concrete]
+// CHECK:STDOUT:   %.918: <witness> = impl_self_witness %DD, @W [symbolic_self]
 // CHECK:STDOUT:   %W.impl_witness: <witness> = impl_witness @DD.as.W.impl.%W.impl_witness_table [concrete]
 // CHECK:STDOUT:   %W.facet: %W.type = facet_value %DD, (%W.impl_witness) [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
@@ -88,7 +88,7 @@ fn F() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CC.2bf: type = class_type @CC, @CC(%Y.facet.af9) [concrete]
 // CHECK:STDOUT:   %facet_value: %facet_type = facet_value %DD, (%Y.impl_witness, %W.impl_witness) [concrete]
-// CHECK:STDOUT:   %.b08: <witness> = impl_self_witness %CC.2bf, @Z [concrete]
+// CHECK:STDOUT:   %.b08: <witness> = impl_self_witness %CC.2bf, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness.f9a: <witness> = impl_witness @CC.as.Z.impl.%Z.impl_witness_table, @CC.as.Z.impl(%facet_value) [concrete]
 // CHECK:STDOUT:   %Z.facet.e72: %Z.type = facet_value %CC.2bf, (%Z.impl_witness.f9a) [concrete]
 // CHECK:STDOUT: }
@@ -122,12 +122,12 @@ fn F() {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @DD.as.Y.impl.%DD.ref, @Y [concrete = constants.%.565]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @DD.as.Y.impl.%DD.ref, @Y [symbolic_self = constants.%.565]
 // CHECK:STDOUT:   impl_decl @DD.as.W.impl [concrete] {} {
 // CHECK:STDOUT:     %DD.ref: type = name_ref DD, file.%DD.decl [concrete = constants.%DD]
 // CHECK:STDOUT:     %W.ref: type = name_ref W, file.%W.decl [concrete = constants.%W.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @DD.as.W.impl.%DD.ref, @W [concrete = constants.%.918]
+// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness @DD.as.W.impl.%DD.ref, @W [symbolic_self = constants.%.918]
 // CHECK:STDOUT:   %CC.decl: %CC.type = class_decl @CC [concrete = constants.%CC.generic] {
 // CHECK:STDOUT:     %D.patt.loc12_11.1: %pattern_type.cfb = symbolic_binding_pattern D, 0 [symbolic = %D.patt.loc12_11.2 (constants.%D.patt)]
 // CHECK:STDOUT:   } {

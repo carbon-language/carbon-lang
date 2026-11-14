@@ -85,7 +85,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %complete_type.c49: <witness> = complete_type_witness %struct_type.x.991 [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %HasF.type.237: type = facet_type <@HasF, @HasF(%Param)> [concrete]
-// CHECK:STDOUT:   %.6d4: <witness> = impl_self_witness %C, @HasF, @HasF(%Param) [concrete]
+// CHECK:STDOUT:   %.6d4: <witness> = impl_self_witness %C, @HasF, @HasF(%Param) [symbolic_self]
 // CHECK:STDOUT:   %HasF.impl_witness: <witness> = impl_witness @C.as.HasF.impl.%HasF.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.517: %HasF.type.237 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %HasF.WithSelf.F.type.73c: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%Param, %Self.0a5) [symbolic]
@@ -294,7 +294,7 @@ class X(U: type) {
 // CHECK:STDOUT:     %Param.ref: type = name_ref Param, file.%Param.decl [concrete = constants.%Param]
 // CHECK:STDOUT:     %HasF.type: type = facet_type <@HasF, @HasF(constants.%Param)> [concrete = constants.%HasF.type.237]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc13: <witness> = impl_self_witness @C.as.HasF.impl.%Self.ref, @HasF, @HasF(constants.%Param) [concrete = constants.%.6d4]
+// CHECK:STDOUT:   %.loc13: <witness> = impl_self_witness @C.as.HasF.impl.%Self.ref, @HasF, @HasF(constants.%Param) [symbolic_self = constants.%.6d4]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

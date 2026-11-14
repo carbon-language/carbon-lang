@@ -263,7 +263,7 @@ fn H() -> C({}).(I.F)() {}
 // CHECK:STDOUT:   %I.impl_witness.155: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.type.3e4: type = fn_type @C.as.I.impl.F, @C.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.55f: %C.as.I.impl.F.type.3e4 = struct_value () [symbolic]
-// CHECK:STDOUT:   %.442: <witness> = impl_self_witness %C.664, @I [concrete]
+// CHECK:STDOUT:   %.442: <witness> = impl_self_witness %C.664, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.85d: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C.664, (%I.impl_witness.85d) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.425: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]

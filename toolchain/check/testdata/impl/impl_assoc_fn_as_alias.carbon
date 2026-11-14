@@ -35,7 +35,7 @@ class FAlias {
 // CHECK:STDOUT:   %PossiblyF.type: type = fn_type @PossiblyF [concrete]
 // CHECK:STDOUT:   %PossiblyF: %PossiblyF.type = struct_value () [concrete]
 // CHECK:STDOUT:   %FAlias: type = class_type @FAlias [concrete]
-// CHECK:STDOUT:   %.a11: <witness> = impl_self_witness %FAlias, @I [concrete]
+// CHECK:STDOUT:   %.a11: <witness> = impl_self_witness %FAlias, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @FAlias.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %FAlias, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.88f: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]
@@ -85,7 +85,7 @@ class FAlias {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%FAlias [concrete = constants.%FAlias]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @FAlias.as.I.impl.%Self.ref, @I [concrete = constants.%.a11]
+// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @FAlias.as.I.impl.%Self.ref, @I [symbolic_self = constants.%.a11]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

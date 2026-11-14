@@ -443,7 +443,7 @@ fn G() {
 // CHECK:STDOUT:   %C.val.a80: %C.49b051.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.f6a: ref %C.49b051.2 = temporary invalid, %C.val.a80 [symbolic]
 // CHECK:STDOUT:   %C.as.I.impl.F.specific_fn.4fa: <specific function> = specific_function %C.as.I.impl.F.beb65e.2, @C.as.I.impl.F.2(%Y) [symbolic]
-// CHECK:STDOUT:   %.675: <witness> = impl_self_witness %C.6dc, @I [concrete]
+// CHECK:STDOUT:   %.675: <witness> = impl_self_witness %C.6dc, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.d52: <witness> = impl_witness imports.%I.impl_witness_table, @C.as.I.impl(%empty_tuple) [concrete]
 // CHECK:STDOUT:   %I.facet.1d2: %I.type = facet_value %C.6dc, (%I.impl_witness.d52) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.e91: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.1d2) [concrete]

@@ -137,7 +137,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %Action.type.d56: type = facet_type <@Action, @Action(%B)> [concrete]
-// CHECK:STDOUT:   %.cde: <witness> = impl_self_witness %A, @Action, @Action(%B) [concrete]
+// CHECK:STDOUT:   %.cde: <witness> = impl_self_witness %A, @Action, @Action(%B) [symbolic_self]
 // CHECK:STDOUT:   %Action.impl_witness: <witness> = impl_witness @A.as.Action.impl.%Action.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.d4a: %Action.type.d56 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Action.WithSelf.Op.type.17f: type = fn_type @Action.WithSelf.Op, @Action.WithSelf(%B, %Self.fb7) [symbolic]
@@ -194,7 +194,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Action.type: type = facet_type <@Action, @Action(constants.%B)> [concrete = constants.%Action.type.d56]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @A.as.Action.impl.%A.ref, @Action, @Action(constants.%B) [concrete = constants.%.cde]
+// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @A.as.Action.impl.%A.ref, @Action, @Action(constants.%B) [symbolic_self = constants.%.cde]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.9ef = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
@@ -826,7 +826,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %Factory.type.25d: type = facet_type <@Factory, @Factory(%B)> [concrete]
-// CHECK:STDOUT:   %.efe: <witness> = impl_self_witness %A, @Factory, @Factory(%B) [concrete]
+// CHECK:STDOUT:   %.efe: <witness> = impl_self_witness %A, @Factory, @Factory(%B) [symbolic_self]
 // CHECK:STDOUT:   %Factory.impl_witness: <witness> = impl_witness @A.as.Factory.impl.%Factory.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.89c: %Factory.type.25d = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Factory.WithSelf.Make.type.b4d: type = fn_type @Factory.WithSelf.Make, @Factory.WithSelf(%B, %Self.c06) [symbolic]
@@ -886,7 +886,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:     %Factory.type: type = facet_type <@Factory, @Factory(constants.%B)> [concrete = constants.%Factory.type.25d]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @A.as.Factory.impl.%A.ref, @Factory, @Factory(constants.%B) [concrete = constants.%.efe]
+// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @A.as.Factory.impl.%A.ref, @Factory, @Factory(constants.%B) [symbolic_self = constants.%.efe]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Factory(%T.loc4_20.2: type) {
