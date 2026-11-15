@@ -43,6 +43,50 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
+// --- todo_fail_nontrivial_maybe_unformed_of_const.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `unformed.carbon`.
+
+class HasNonTrivialDestruction {
+  impl as Core.DestroyImpl {
+    fn Op(unused self) {}
+  }
+}
+
+class HasNonTrivialMember {
+  var x: HasNonTrivialDestruction;
+}
+
+alias MaybeUnformed = Core.MaybeUnformed(const HasNonTrivialMember);
+
+fn Test() {
+  MaybeUnformed as Core.TrivialDestroy;
+}
+
+// --- todo_fail_nontrivial_const_maybe_unformed.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `unformed.carbon`.
+
+class HasNonTrivialDestruction {
+  impl as Core.DestroyImpl {
+    fn Op(unused self) {}
+  }
+}
+
+class HasNonTrivialMember {
+  var x: HasNonTrivialDestruction;
+}
+
+alias Const = const Core.MaybeUnformed(HasNonTrivialMember);
+
+fn Test() {
+  Const as Core.TrivialDestroy;
+}
+
 // CHECK:STDOUT: --- todo_trivial_maybe_unformed.carbon = $todo_trivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
