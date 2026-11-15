@@ -47,9 +47,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc16_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !35
 // CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds [2 x i32], ptr %_.var, i32 0, i64 1, !dbg !35
 // CHECK:STDOUT:   store i32 %.loc16_28.6, ptr %.loc16_28.7.array.index, align 4, !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %.loc16_28.1.temp), !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %_.var), !dbg !34
-// CHECK:STDOUT:   ret i32 0, !dbg !39
+// CHECK:STDOUT:   ret i32 0, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -57,16 +55,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %t) #0 !dbg !40 {
-// CHECK:STDOUT:   ret void, !dbg !45
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %t) #0 !dbg !47 {
-// CHECK:STDOUT:   ret void, !dbg !52
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
@@ -79,7 +67,6 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !14 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !20 = !DIFile(filename: "assign_return_value.carbon", directory: "")
 // CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -94,15 +81,5 @@ fn Run() {
 // CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !20, line: 15, type: !27, spFlags: DISPFlagDefinition, unit: !21)
 // CHECK:STDOUT: !34 = !DILocation(line: 16, column: 3, scope: !33)
 // CHECK:STDOUT: !35 = !DILocation(line: 16, column: 26, scope: !33)
-// CHECK:STDOUT: !37 = !{null, !23}
-// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
-// CHECK:STDOUT: !39 = !DILocation(line: 15, column: 1, scope: !33)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ffbc82e0019b7bf2", scope: null, file: !14, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !46)
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !23)
-// CHECK:STDOUT: !45 = !DILocation(line: 32, column: 1, scope: !40)
-// CHECK:STDOUT: !46 = !{!41}
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f2cee5f6b4c30a4", scope: null, file: !14, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !53)
-// CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !23)
-// CHECK:STDOUT: !52 = !DILocation(line: 32, column: 1, scope: !47)
-// CHECK:STDOUT: !53 = !{!48}
+// CHECK:STDOUT: !37 = !DILocation(line: 15, column: 1, scope: !33)
 // CHECK:STDOUT:

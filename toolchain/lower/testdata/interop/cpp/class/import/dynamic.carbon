@@ -104,7 +104,6 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Derived.Main"(ptr %self) #3 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9ede905be876779b(ptr %self), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -137,7 +136,6 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !76
 // CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !80
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !81
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9ede905be876779b(ptr %d.var), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -151,11 +149,6 @@ fn DoThing() {
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9ede905be876779b(ptr %t) #2 !dbg !83 {
-// CHECK:STDOUT:   ret void, !dbg !88
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
 // CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #6
 // CHECK:STDOUT:
@@ -166,7 +159,7 @@ fn DoThing() {
 // CHECK:STDOUT: define internal void @_ZNR6Carbon4Main7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #5 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !95
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !88
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cfunc__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -176,7 +169,7 @@ fn DoThing() {
 // CHECK:STDOUT: define internal void @_ZNK6Carbon4Main7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #5 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !95
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !88
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_Cother_func__carbon_thunk.Derived.Main(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -189,7 +182,7 @@ fn DoThing() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #2
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) (i8, ptr @_ZTV4Base, i64 16), ptr %this1, align 8, !tbaa !91
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 16) (i8, ptr @_ZTV4Base, i64 16), ptr %this1, align 8, !tbaa !84
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -197,15 +190,14 @@ fn DoThing() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN11FurtherBaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #8 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !93
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !86
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV11FurtherBase, i64 16), ptr %this1, align 8, !tbaa !91
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV11FurtherBase, i64 16), ptr %this1, align 8, !tbaa !84
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.9ede905be876779b, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -218,8 +210,8 @@ fn DoThing() {
 // CHECK:STDOUT: attributes #8 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!40}
-// CHECK:STDOUT: !llvm.module.flags = !{!100, !101, !102, !103, !7, !8}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!105}
+// CHECK:STDOUT: !llvm.module.flags = !{!93, !94, !95, !96, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!98}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -228,7 +220,6 @@ fn DoThing() {
 // CHECK:STDOUT: !4 = !{!3, !3, i64 0}
 // CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIFile(filename: "dynamic_base_from_cpp.carbon", directory: "")
 // CHECK:STDOUT: !40 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !39, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !42 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -267,21 +258,17 @@ fn DoThing() {
 // CHECK:STDOUT: !80 = !DILocation(line: 32, column: 11, scope: !74)
 // CHECK:STDOUT: !81 = !DILocation(line: 32, column: 3, scope: !74)
 // CHECK:STDOUT: !82 = !DILocation(line: 30, column: 1, scope: !74)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9ede905be876779b", scope: null, file: !31, line: 32, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !89)
-// CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !83, type: !42)
-// CHECK:STDOUT: !88 = !DILocation(line: 32, column: 1, scope: !83)
-// CHECK:STDOUT: !89 = !{!84}
-// CHECK:STDOUT: !90 = !{!"vtable pointer", !0, i64 0}
-// CHECK:STDOUT: !91 = !{!90, !90, i64 0}
-// CHECK:STDOUT: !92 = !{!"p1 _ZTS11FurtherBase", !2, i64 0}
-// CHECK:STDOUT: !93 = !{!92, !92, i64 0}
-// CHECK:STDOUT: !94 = !{!"p1 _ZTSN6Carbon4Main7DerivedE", !2, i64 0}
-// CHECK:STDOUT: !95 = !{!94, !94, i64 0}
-// CHECK:STDOUT: !97 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !100 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !101 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !102 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !103 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !104 = !{!"__libc_errno", !97, i64 0}
-// CHECK:STDOUT: !105 = !{!104, !97, i64 0}
+// CHECK:STDOUT: !83 = !{!"vtable pointer", !0, i64 0}
+// CHECK:STDOUT: !84 = !{!83, !83, i64 0}
+// CHECK:STDOUT: !85 = !{!"p1 _ZTS11FurtherBase", !2, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !85, i64 0}
+// CHECK:STDOUT: !87 = !{!"p1 _ZTSN6Carbon4Main7DerivedE", !2, i64 0}
+// CHECK:STDOUT: !88 = !{!87, !87, i64 0}
+// CHECK:STDOUT: !90 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !93 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !94 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !95 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !96 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !97 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !98 = !{!97, !90, i64 0}
 // CHECK:STDOUT:

@@ -99,17 +99,11 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.124acaad20680602.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !46
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8479fbb1a0ad0f(ptr %.loc30_10.1.temp), !dbg !46
-// CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8479fbb1a0ad0f(ptr %t) #0 !dbg !53 {
-// CHECK:STDOUT:   ret void, !dbg !58
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -146,17 +140,10 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !35 = !DILocation(line: 24, column: 12, scope: !21)
 // CHECK:STDOUT: !36 = !DILocation(line: 24, column: 5, scope: !21)
 // CHECK:STDOUT: !37 = !{!22, !23}
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !4, line: 29, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Calculate", linkageName: "_CCalculate.Main", scope: null, file: !4, line: 29, type: !10, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !6)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 2, scope: !38, type: !6)
 // CHECK:STDOUT: !46 = !DILocation(line: 30, column: 10, scope: !38)
-// CHECK:STDOUT: !48 = !{null, !6}
-// CHECK:STDOUT: !49 = !DISubroutineType(types: !48)
-// CHECK:STDOUT: !50 = !DILocation(line: 30, column: 3, scope: !38)
-// CHECK:STDOUT: !51 = !{!39, !40}
-// CHECK:STDOUT: !52 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
-// CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !6)
-// CHECK:STDOUT: !58 = !DILocation(line: 35, column: 1, scope: !53)
-// CHECK:STDOUT: !59 = !{!54}
+// CHECK:STDOUT: !48 = !DILocation(line: 30, column: 3, scope: !38)
+// CHECK:STDOUT: !49 = !{!39, !40}
 // CHECK:STDOUT:

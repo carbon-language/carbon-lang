@@ -49,7 +49,7 @@ fn VectorizedWithAvx2(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %vector.body, !dbg !11
 // CHECK:STDOUT:
 // CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
-// CHECK:STDOUT:   %index = phi i64 [ 0, %entry ], [ %index.next.3, %vector.body ], !dbg !85
+// CHECK:STDOUT:   %index = phi i64 [ 0, %entry ], [ %index.next.3, %vector.body ], !dbg !77
 // CHECK:STDOUT:   %0 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %index, !dbg !16
 // CHECK:STDOUT:   %1 = getelementptr inbounds nuw i8, ptr %0, i64 32, !dbg !16
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %0, i64 64, !dbg !16
@@ -117,9 +117,9 @@ fn VectorizedWithAvx2(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   store <8 x i32> %32, ptr %28, align 4, !dbg !16
 // CHECK:STDOUT:   store <8 x i32> %33, ptr %29, align 4, !dbg !16
 // CHECK:STDOUT:   store <8 x i32> %34, ptr %30, align 4, !dbg !16
-// CHECK:STDOUT:   %index.next.3 = add nuw nsw i64 %index, 128, !dbg !85
+// CHECK:STDOUT:   %index.next.3 = add nuw nsw i64 %index, 128, !dbg !77
 // CHECK:STDOUT:   %35 = icmp eq i64 %index.next.3, 65536, !dbg !11
-// CHECK:STDOUT:   br i1 %35, label %while.done, label %vector.body, !dbg !11, !llvm.loop !93
+// CHECK:STDOUT:   br i1 %35, label %while.done, label %vector.body, !dbg !11, !llvm.loop !83
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %vector.body
 // CHECK:STDOUT:   ret void, !dbg !22
@@ -145,8 +145,8 @@ fn VectorizedWithAvx2(a: array(i32, 65536)*) {
 // CHECK:STDOUT: attributes #0 = { nofree norecurse nosync nounwind memory(argmem: readwrite) "tune-cpu"="znver4" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!1}
-// CHECK:STDOUT: !llvm.module.flags = !{!66, !67, !68, !69, !75, !76}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!74}
+// CHECK:STDOUT: !llvm.module.flags = !{!58, !59, !60, !61, !67, !68}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!66}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !0, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -168,25 +168,25 @@ fn VectorizedWithAvx2(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !29 = !{null, !2, !2}
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !32 = !{!26}
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !24, line: 331, type: !30, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !48)
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !2)
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 2, scope: !41, type: !2)
-// CHECK:STDOUT: !48 = !{!42, !43}
-// CHECK:STDOUT: !66 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !67 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !68 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !69 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !70 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !71 = !{!"omnipotent char", !70, i64 0}
-// CHECK:STDOUT: !72 = !{!"int", !71, i64 0}
-// CHECK:STDOUT: !73 = !{!"__libc_errno", !72, i64 0}
-// CHECK:STDOUT: !74 = !{!73, !72, i64 0}
-// CHECK:STDOUT: !75 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !76 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !83 = distinct !DILocation(line: 23, column: 5, scope: !6)
-// CHECK:STDOUT: !84 = distinct !DILocation(line: 398, column: 5, scope: !25, inlinedAt: !83)
-// CHECK:STDOUT: !85 = distinct !DILocation(line: 331, column: 3, scope: !41, inlinedAt: !84)
-// CHECK:STDOUT: !90 = !{!"llvm.loop.isvectorized", i32 1}
-// CHECK:STDOUT: !92 = !{!"llvm.loop.unroll.runtime.disable"}
-// CHECK:STDOUT: !93 = distinct !{!93, !90, !92}
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !24, line: 331, type: !30, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
+// CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !33, type: !2)
+// CHECK:STDOUT: !35 = !DILocalVariable(arg: 2, scope: !33, type: !2)
+// CHECK:STDOUT: !40 = !{!34, !35}
+// CHECK:STDOUT: !58 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !59 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !60 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !61 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !62 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !63 = !{!"omnipotent char", !62, i64 0}
+// CHECK:STDOUT: !64 = !{!"int", !63, i64 0}
+// CHECK:STDOUT: !65 = !{!"__libc_errno", !64, i64 0}
+// CHECK:STDOUT: !66 = !{!65, !64, i64 0}
+// CHECK:STDOUT: !67 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !68 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !75 = distinct !DILocation(line: 23, column: 5, scope: !6)
+// CHECK:STDOUT: !76 = distinct !DILocation(line: 398, column: 5, scope: !25, inlinedAt: !75)
+// CHECK:STDOUT: !77 = distinct !DILocation(line: 331, column: 3, scope: !33, inlinedAt: !76)
+// CHECK:STDOUT: !80 = !{!"llvm.loop.isvectorized", i32 1}
+// CHECK:STDOUT: !82 = !{!"llvm.loop.unroll.runtime.disable"}
+// CHECK:STDOUT: !83 = distinct !{!83, !80, !82}
 // CHECK:STDOUT:

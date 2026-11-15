@@ -186,7 +186,7 @@ fn G() {
 // CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !100
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !79
 // CHECK:STDOUT:   call void @_CCallLayoutA__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -195,7 +195,7 @@ fn G() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !100
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !79
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.LayoutA.Main"(ptr noundef nonnull align 8 dereferenceable(12) %this1)
 // CHECK:STDOUT:   ret void
@@ -219,7 +219,7 @@ fn G() {
 // CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutBEPNS0_7LayoutBE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !102
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !81
 // CHECK:STDOUT:   call void @_CCallLayoutB__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -228,7 +228,7 @@ fn G() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !102
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !81
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.LayoutB.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::Main::LayoutB", ptr %this1, i32 0, i32 0
@@ -252,7 +252,7 @@ fn G() {
 // CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutCEPNS0_7LayoutCE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !104
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !83
 // CHECK:STDOUT:   call void @_CCallLayoutC__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %.addr)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -261,7 +261,7 @@ fn G() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !104
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !83
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.LayoutC.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1) #6
@@ -277,7 +277,6 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutA.Main"(ptr %self) #4 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ec5c5666af23bee2(ptr %self), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -292,7 +291,6 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutB.Main"(ptr %self) #4 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dd2d442e060c7dd0(ptr %self), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -307,7 +305,6 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutC.Main"(ptr %self) #4 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.d869c4fcbd4e85a2(ptr %self), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -317,21 +314,6 @@ fn G() {
 // CHECK:STDOUT:   %.loc23 = load ptr, ptr %_, align 8, !dbg !76
 // CHECK:STDOUT:   call void @_CCallLayoutC.Main(ptr %.loc23), !dbg !76
 // CHECK:STDOUT:   ret void, !dbg !76
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ec5c5666af23bee2(ptr %t) #6 !dbg !78 {
-// CHECK:STDOUT:   ret void, !dbg !83
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dd2d442e060c7dd0(ptr %t) #6 !dbg !85 {
-// CHECK:STDOUT:   ret void, !dbg !90
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.d869c4fcbd4e85a2(ptr %t) #6 !dbg !92 {
-// CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -355,7 +337,6 @@ fn G() {
 // CHECK:STDOUT: !5 = !{!"int", !1, i64 0}
 // CHECK:STDOUT: !19 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !20 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !27 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
 // CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
@@ -391,24 +372,12 @@ fn G() {
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !74, type: !51)
 // CHECK:STDOUT: !76 = !DILocation(line: 23, column: 1, scope: !74)
 // CHECK:STDOUT: !77 = !{!75}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ec5c5666af23bee2", scope: null, file: !27, line: 32, type: !53, spFlags: DISPFlagDefinition, unit: !50, retainedNodes: !84)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !51)
-// CHECK:STDOUT: !83 = !DILocation(line: 32, column: 1, scope: !78)
-// CHECK:STDOUT: !84 = !{!79}
-// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dd2d442e060c7dd0", scope: null, file: !27, line: 32, type: !53, spFlags: DISPFlagDefinition, unit: !50, retainedNodes: !91)
-// CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !51)
-// CHECK:STDOUT: !90 = !DILocation(line: 32, column: 1, scope: !85)
-// CHECK:STDOUT: !91 = !{!86}
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d869c4fcbd4e85a2", scope: null, file: !27, line: 32, type: !53, spFlags: DISPFlagDefinition, unit: !50, retainedNodes: !98)
-// CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !51)
-// CHECK:STDOUT: !97 = !DILocation(line: 32, column: 1, scope: !92)
-// CHECK:STDOUT: !98 = !{!93}
-// CHECK:STDOUT: !99 = !{!"p1 _ZTSN6Carbon4Main7LayoutAE", !2, i64 0}
-// CHECK:STDOUT: !100 = !{!99, !99, i64 0}
-// CHECK:STDOUT: !101 = !{!"p1 _ZTSN6Carbon4Main7LayoutBE", !2, i64 0}
-// CHECK:STDOUT: !102 = !{!101, !101, i64 0}
-// CHECK:STDOUT: !103 = !{!"p1 _ZTSN6Carbon4Main7LayoutCE", !2, i64 0}
-// CHECK:STDOUT: !104 = !{!103, !103, i64 0}
+// CHECK:STDOUT: !78 = !{!"p1 _ZTSN6Carbon4Main7LayoutAE", !2, i64 0}
+// CHECK:STDOUT: !79 = !{!78, !78, i64 0}
+// CHECK:STDOUT: !80 = !{!"p1 _ZTSN6Carbon4Main7LayoutBE", !2, i64 0}
+// CHECK:STDOUT: !81 = !{!80, !80, i64 0}
+// CHECK:STDOUT: !82 = !{!"p1 _ZTSN6Carbon4Main7LayoutCE", !2, i64 0}
+// CHECK:STDOUT: !83 = !{!82, !82, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'field.carbon'
@@ -418,7 +387,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: %"class.Carbon::Main::FieldC" = type { i32, i32 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @FieldC.val.loc19_3.1 = internal constant { i32, i32 } zeroinitializer
+// CHECK:STDOUT: @FieldC.val.loc19_3 = internal constant { i32, i32 } zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z1FRN6Carbon4Main6FieldCE(ptr noundef nonnull align 4 dereferenceable(8) %c) #0 {
@@ -435,28 +404,21 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.FieldC.Main"(ptr %self) #1 !dbg !107 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.FieldC.Main"(ptr %self) #1 !dbg !86 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0f9f2a833d58b7bf(ptr %self), !dbg !109
-// CHECK:STDOUT:   ret void, !dbg !109
+// CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #2 !dbg !111 {
+// CHECK:STDOUT: define void @_CG.Main() #2 !dbg !90 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i32, i32 }, align 4, !dbg !112
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !112
-// CHECK:STDOUT:   %.loc19_34.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !113
-// CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !113
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @FieldC.val.loc19_3.1, i64 8, i1 false), !dbg !112
-// CHECK:STDOUT:   call void @_Z1FRN6Carbon4Main6FieldCE(ptr %c.var), !dbg !117
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0f9f2a833d58b7bf(ptr %c.var), !dbg !112
-// CHECK:STDOUT:   ret void, !dbg !118
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0f9f2a833d58b7bf(ptr %t) #2 !dbg !119 {
-// CHECK:STDOUT:   ret void, !dbg !124
+// CHECK:STDOUT:   %c.var = alloca { i32, i32 }, align 4, !dbg !91
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !91
+// CHECK:STDOUT:   %.loc19_34.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !92
+// CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !92
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @FieldC.val.loc19_3, i64 8, i1 false), !dbg !91
+// CHECK:STDOUT:   call void @_Z1FRN6Carbon4Main6FieldCE(ptr %c.var), !dbg !96
+// CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -465,15 +427,12 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.0f9f2a833d58b7bf, { 1, 0 }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!106}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!85}
 // CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !46, !19, !20}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!48}
 // CHECK:STDOUT:
@@ -490,7 +449,6 @@ fn G() {
 // CHECK:STDOUT: !16 = !{!12, !5, i64 4}
 // CHECK:STDOUT: !19 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !20 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !27 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !38 = !{null}
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !38)
 // CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
@@ -502,19 +460,15 @@ fn G() {
 // CHECK:STDOUT: !51 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !52 = !{null, !51}
 // CHECK:STDOUT: !53 = !DISubroutineType(types: !52)
-// CHECK:STDOUT: !105 = !DIFile(filename: "field.carbon", directory: "")
-// CHECK:STDOUT: !106 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !105, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !107 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.FieldC.Main", scope: null, file: !105, line: 6, type: !53, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !110)
-// CHECK:STDOUT: !108 = !DILocalVariable(arg: 1, scope: !107, type: !51)
-// CHECK:STDOUT: !109 = !DILocation(line: 6, column: 1, scope: !107)
-// CHECK:STDOUT: !110 = !{!108}
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !105, line: 18, type: !39, spFlags: DISPFlagDefinition, unit: !106)
-// CHECK:STDOUT: !112 = !DILocation(line: 19, column: 3, scope: !111)
-// CHECK:STDOUT: !113 = !DILocation(line: 19, column: 19, scope: !111)
-// CHECK:STDOUT: !117 = !DILocation(line: 20, column: 3, scope: !111)
-// CHECK:STDOUT: !118 = !DILocation(line: 18, column: 1, scope: !111)
-// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0f9f2a833d58b7bf", scope: null, file: !27, line: 32, type: !53, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !125)
-// CHECK:STDOUT: !120 = !DILocalVariable(arg: 1, scope: !119, type: !51)
-// CHECK:STDOUT: !124 = !DILocation(line: 32, column: 1, scope: !119)
-// CHECK:STDOUT: !125 = !{!120}
+// CHECK:STDOUT: !84 = !DIFile(filename: "field.carbon", directory: "")
+// CHECK:STDOUT: !85 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !84, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.FieldC.Main", scope: null, file: !84, line: 6, type: !53, spFlags: DISPFlagDefinition, unit: !85, retainedNodes: !89)
+// CHECK:STDOUT: !87 = !DILocalVariable(arg: 1, scope: !86, type: !51)
+// CHECK:STDOUT: !88 = !DILocation(line: 6, column: 1, scope: !86)
+// CHECK:STDOUT: !89 = !{!87}
+// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !84, line: 18, type: !39, spFlags: DISPFlagDefinition, unit: !85)
+// CHECK:STDOUT: !91 = !DILocation(line: 19, column: 3, scope: !90)
+// CHECK:STDOUT: !92 = !DILocation(line: 19, column: 19, scope: !90)
+// CHECK:STDOUT: !96 = !DILocation(line: 20, column: 3, scope: !90)
+// CHECK:STDOUT: !97 = !DILocation(line: 18, column: 1, scope: !90)
 // CHECK:STDOUT:

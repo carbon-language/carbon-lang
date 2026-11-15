@@ -94,8 +94,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !52
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !53
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !55
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.fb94fb1298d84111(ptr %pa.var), !dbg !52
-// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !58
+// CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -103,11 +102,6 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.fb94fb1298d84111(ptr %t) #0 !dbg !59 {
-// CHECK:STDOUT:   ret void, !dbg !64
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -117,7 +111,6 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "adapt_class.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -143,50 +136,44 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !52 = !DILocation(line: 27, column: 3, scope: !49)
 // CHECK:STDOUT: !53 = !DILocation(line: 27, column: 25, scope: !49)
 // CHECK:STDOUT: !55 = !DILocation(line: 28, column: 10, scope: !49)
-// CHECK:STDOUT: !56 = !{null, !21}
-// CHECK:STDOUT: !57 = !DISubroutineType(types: !56)
-// CHECK:STDOUT: !58 = !DILocation(line: 28, column: 3, scope: !49)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fb94fb1298d84111", scope: null, file: !10, line: 32, type: !57, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !65)
-// CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !59, type: !21)
-// CHECK:STDOUT: !64 = !DILocation(line: 32, column: 1, scope: !59)
-// CHECK:STDOUT: !65 = !{!60}
+// CHECK:STDOUT: !56 = !DILocation(line: 28, column: 3, scope: !49)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'adapt_int.carbon'
 // CHECK:STDOUT: source_filename = "adapt_int.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_COp.Int.Main:Copy.Core"(i32 %self) #0 !dbg !70 {
+// CHECK:STDOUT: define i32 @"_COp.Int.Main:Copy.Core"(i32 %self) #0 !dbg !61 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %self, !dbg !77
+// CHECK:STDOUT:   ret i32 %self, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CDoStuff.Main(i32 %a) #0 !dbg !79 {
+// CHECK:STDOUT: define i32 @_CDoStuff.Main(i32 %a) #0 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call = call i32 @"_COp.Int.Main:Copy.Core"(i32 %a), !dbg !84
-// CHECK:STDOUT:   ret i32 %Int.as.Copy.impl.Op.call, !dbg !85
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call = call i32 @"_COp.Int.Main:Copy.Core"(i32 %a), !dbg !75
+// CHECK:STDOUT:   ret i32 %Int.as.Copy.impl.Op.call, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!67}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!58}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !66 = !DIFile(filename: "adapt_int.carbon", directory: "")
-// CHECK:STDOUT: !67 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !66, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !68 = !{!20, !20}
-// CHECK:STDOUT: !69 = !DISubroutineType(types: !68)
-// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Main:Copy.Core", scope: null, file: !66, line: 8, type: !69, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !78)
+// CHECK:STDOUT: !57 = !DIFile(filename: "adapt_int.carbon", directory: "")
+// CHECK:STDOUT: !58 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !57, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !59 = !{!20, !20}
+// CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.Main:Copy.Core", scope: null, file: !57, line: 8, type: !60, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !69)
+// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !20)
+// CHECK:STDOUT: !68 = !DILocation(line: 8, column: 27, scope: !61)
+// CHECK:STDOUT: !69 = !{!62}
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "DoStuff", linkageName: "_CDoStuff.Main", scope: null, file: !57, line: 12, type: !60, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !77)
 // CHECK:STDOUT: !71 = !DILocalVariable(arg: 1, scope: !70, type: !20)
-// CHECK:STDOUT: !77 = !DILocation(line: 8, column: 27, scope: !70)
-// CHECK:STDOUT: !78 = !{!71}
-// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "DoStuff", linkageName: "_CDoStuff.Main", scope: null, file: !66, line: 12, type: !69, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !86)
-// CHECK:STDOUT: !80 = !DILocalVariable(arg: 1, scope: !79, type: !20)
-// CHECK:STDOUT: !84 = !DILocation(line: 13, column: 10, scope: !79)
-// CHECK:STDOUT: !85 = !DILocation(line: 13, column: 3, scope: !79)
-// CHECK:STDOUT: !86 = !{!80}
+// CHECK:STDOUT: !75 = !DILocation(line: 13, column: 10, scope: !70)
+// CHECK:STDOUT: !76 = !DILocation(line: 13, column: 3, scope: !70)
+// CHECK:STDOUT: !77 = !{!71}
 // CHECK:STDOUT:
