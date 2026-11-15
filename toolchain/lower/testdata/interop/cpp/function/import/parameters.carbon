@@ -242,21 +242,21 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!96, !97, !98, !99, !2, !3}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!101}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "import_ints.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !35 = !DIFile(filename: "import_ints.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !39 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !51 = !{null, !39, !44}
 // CHECK:STDOUT: !52 = !DISubroutineType(types: !51)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !34, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !35, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !36)
 // CHECK:STDOUT: !56 = !DILocation(line: 7, column: 19, scope: !55)
 // CHECK:STDOUT: !57 = !DILocation(line: 7, column: 22, scope: !55)
 // CHECK:STDOUT: !58 = !DILocation(line: 7, column: 3, scope: !55)
@@ -264,7 +264,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !60 = !DILocation(line: 9, column: 24, scope: !55)
 // CHECK:STDOUT: !61 = !DILocation(line: 9, column: 3, scope: !55)
 // CHECK:STDOUT: !62 = !DILocation(line: 6, column: 1, scope: !55)
-// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !34, line: 16, type: !52, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !78)
+// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !35, line: 16, type: !52, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !78)
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !63, type: !39)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 2, scope: !63, type: !44)
 // CHECK:STDOUT: !68 = !DILocation(line: 17, column: 18, scope: !63)
@@ -277,7 +277,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !76 = !DILocation(line: 20, column: 3, scope: !63)
 // CHECK:STDOUT: !77 = !DILocation(line: 16, column: 1, scope: !63)
 // CHECK:STDOUT: !78 = !{!64, !65}
-// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !34, type: !43, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !35, type: !43, spFlags: DISPFlagDefinition, unit: !36)
 // CHECK:STDOUT: !80 = !DILocation(line: 14, column: 1, scope: !79)
 // CHECK:STDOUT: !81 = !DILocation(line: 0, scope: !79)
 // CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
@@ -389,7 +389,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !22 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !23 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -418,7 +418,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !115 = !DIFile(filename: "./struct.h", directory: "")
 // CHECK:STDOUT: !116 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp", scope: null, file: !115, line: 2, type: !105, spFlags: DISPFlagDefinition, unit: !103)
 // CHECK:STDOUT: !117 = !DILocation(line: 2, column: 8, scope: !116)
-// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !22, line: 9, type: !105, spFlags: DISPFlagDefinition, unit: !103)
+// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !23, line: 9, type: !105, spFlags: DISPFlagDefinition, unit: !103)
 // CHECK:STDOUT: !121 = !DILocation(line: 9, column: 28, scope: !118)
 // CHECK:STDOUT: !122 = !DILocation(line: 9, column: 21, scope: !118)
 // CHECK:STDOUT: !123 = !{!"p1 _ZTS1X", !84, i64 0}

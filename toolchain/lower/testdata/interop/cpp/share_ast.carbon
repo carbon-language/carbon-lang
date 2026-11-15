@@ -132,7 +132,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!44}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!45}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !11, !12}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!10}
 // CHECK:STDOUT:
@@ -147,12 +147,12 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !10 = !{!9, !8, i64 0}
 // CHECK:STDOUT: !11 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !12 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !43 = !DIFile(filename: "use_a.carbon", directory: "")
-// CHECK:STDOUT: !44 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !43, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !45 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !46 = !{!45}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !44 = !DIFile(filename: "use_a.carbon", directory: "")
+// CHECK:STDOUT: !45 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !44, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !46 = !{!15}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !43, line: 4, type: !47, spFlags: DISPFlagDefinition, unit: !44)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !44, line: 4, type: !47, spFlags: DISPFlagDefinition, unit: !45)
 // CHECK:STDOUT: !54 = !DILocation(line: 5, column: 3, scope: !51)
 // CHECK:STDOUT: !55 = !DILocation(line: 5, column: 18, scope: !51)
 // CHECK:STDOUT: !57 = !DILocation(line: 6, column: 10, scope: !51)
@@ -231,8 +231,8 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !10 = !{!9, !8, i64 0}
 // CHECK:STDOUT: !11 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !12 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !45 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !46 = !{!45}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !46 = !{!15}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
 // CHECK:STDOUT: !59 = !{!"any pointer", !7, i64 0}
 // CHECK:STDOUT: !65 = !DIFile(filename: "use_b.carbon", directory: "")
@@ -355,8 +355,8 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !10 = !{!9, !8, i64 0}
 // CHECK:STDOUT: !11 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !12 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !45 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !46 = !{!45}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !46 = !{!15}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
 // CHECK:STDOUT: !59 = !{!"any pointer", !7, i64 0}
 // CHECK:STDOUT: !60 = !{!"p1 _ZTS1A", !59, i64 0}
@@ -515,8 +515,8 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !10 = !{!9, !8, i64 0}
 // CHECK:STDOUT: !11 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !12 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !45 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !46 = !{!45}
+// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !46 = !{!15}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
 // CHECK:STDOUT: !48 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !59 = !{!"any pointer", !7, i64 0}
@@ -530,7 +530,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !101 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !100, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !102 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main", scope: null, file: !100, line: 4, type: !47, spFlags: DISPFlagDefinition, unit: !101)
 // CHECK:STDOUT: !105 = !DILocation(line: 5, column: 10, scope: !102)
-// CHECK:STDOUT: !106 = !{!45, !48}
+// CHECK:STDOUT: !106 = !{!15, !48}
 // CHECK:STDOUT: !107 = !DISubroutineType(types: !106)
 // CHECK:STDOUT: !108 = !DILocation(line: 5, column: 3, scope: !102)
 // CHECK:STDOUT: !109 = distinct !DISubprogram(name: "MakeA", linkageName: "_CMakeA.Main.084a2801e0f5d754", scope: null, file: !98, line: 4, type: !107, spFlags: DISPFlagDefinition, unit: !101, retainedNodes: !119)

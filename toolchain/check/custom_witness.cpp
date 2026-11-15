@@ -601,34 +601,7 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
   while (self_type_id.has_value()) {
     auto inst = context.types().GetAsInst(self_type_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::ArrayType array_type): {
-        auto size = context.ints()
-                        .Get(context.insts()
-                                 .GetAs<SemIR::IntValue>(array_type.bound_id)
-                                 .int_id)
-                        .getSExtValue();
-        auto index_type_id =
-            GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
-
-        // TODO: Significantly reduce how much SemIR we output by replacing O(N)
-        // calls to `Destroy.SelfDestruct` loop over the array that calls the
-        // method in its body.
-        //
-        // Add an `impl` for `Core.Destroy` on `Core.Array` containing a loop,
-        // and make primitive array destruction a no-op.
-        while (--size >= 0) {
-          auto int_id = context.ints().Add(size);
-          auto index_id = AddInst(
-              context, loc_id,
-              SemIR::IntValue{.type_id = index_type_id, .int_id = int_id});
-          auto element_id = AddInst<SemIR::ArrayIndex>(
-              context, loc_id,
-              {.type_id = context.types().GetTypeIdForTypeInstId(
-                   array_type.element_type_inst_id),
-               .array_id = callee_self_param_id,
-               .index_id = index_id});
-          BuildSelfDestructCall(context, element_id);
-        }
+      case SemIR::ArrayType::Kind: {
         return;
       }
       case CARBON_KIND(SemIR::ClassType class_type): {

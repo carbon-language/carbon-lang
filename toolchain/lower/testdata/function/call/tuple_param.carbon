@@ -23,38 +23,38 @@ fn Main() {
 // CHECK:STDOUT: @tuple.05e.loc16_20.6 = internal constant { i32, i32 } { i32 2, i32 3 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main({ i32 } %_, ptr %_1) #0 !dbg !26 {
+// CHECK:STDOUT: define void @_CF.Main({ i32 } %_, ptr %_1) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !34 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.05e.loc16_20.6), !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   call void @_CF.Main({ i32 } { i32 1 }, ptr @tuple.05e.loc16_20.6), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "tuple_param.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{null, !21, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !24 = !{null}
+// CHECK:STDOUT: !20 = !DIFile(filename: "tuple_param.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{null, !23, !23}
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !18, line: 13, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !33)
-// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !26, type: !21)
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 2, scope: !26, type: !21)
-// CHECK:STDOUT: !32 = !DILocation(line: 13, column: 1, scope: !26)
-// CHECK:STDOUT: !33 = !{!27, !28}
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !35 = !DILocation(line: 16, column: 3, scope: !34)
-// CHECK:STDOUT: !36 = !DILocation(line: 15, column: 1, scope: !34)
+// CHECK:STDOUT: !26 = !{null}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !20, line: 13, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !35)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !28, type: !23)
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 2, scope: !28, type: !23)
+// CHECK:STDOUT: !34 = !DILocation(line: 13, column: 1, scope: !28)
+// CHECK:STDOUT: !35 = !{!29, !30}
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !20, line: 15, type: !27, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !37 = !DILocation(line: 16, column: 3, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 15, column: 1, scope: !36)
 // CHECK:STDOUT:

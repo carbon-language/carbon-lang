@@ -46,43 +46,43 @@ fn G() {
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !38 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !40 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !41
+// CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !36 = !{null}
-// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !34, line: 10, type: !37, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !39 = !DILocation(line: 10, column: 3, scope: !38)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !34, line: 17, type: !37, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !41 = !DILocation(line: 17, column: 3, scope: !40)
+// CHECK:STDOUT: !35 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !37 = !{null}
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !35, line: 10, type: !38, spFlags: DISPFlagDefinition, unit: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 10, column: 3, scope: !39)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !35, line: 17, type: !38, spFlags: DISPFlagDefinition, unit: !36)
+// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 3, scope: !41)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.B() #0 !dbg !44 {
+// CHECK:STDOUT: define void @_CG.B() #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !45
-// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !46
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !46
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !47
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"()
@@ -91,17 +91,17 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!43}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!44}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !36 = !{null}
-// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !42 = !DIFile(filename: "b.carbon", directory: "")
-// CHECK:STDOUT: !43 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !42, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !42, line: 4, type: !37, spFlags: DISPFlagDefinition, unit: !43)
-// CHECK:STDOUT: !45 = !DILocation(line: 5, column: 3, scope: !44)
-// CHECK:STDOUT: !46 = !DILocation(line: 6, column: 3, scope: !44)
-// CHECK:STDOUT: !47 = !DILocation(line: 4, column: 1, scope: !44)
+// CHECK:STDOUT: !37 = !{null}
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !43 = !DIFile(filename: "b.carbon", directory: "")
+// CHECK:STDOUT: !44 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !43, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !43, line: 4, type: !38, spFlags: DISPFlagDefinition, unit: !44)
+// CHECK:STDOUT: !46 = !DILocation(line: 5, column: 3, scope: !45)
+// CHECK:STDOUT: !47 = !DILocation(line: 6, column: 3, scope: !45)
+// CHECK:STDOUT: !48 = !DILocation(line: 4, column: 1, scope: !45)
 // CHECK:STDOUT:

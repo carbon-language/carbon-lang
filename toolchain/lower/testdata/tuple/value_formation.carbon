@@ -25,48 +25,48 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !26 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 4, !dbg !27
-// CHECK:STDOUT:   %b.var = alloca { i32, i32, i32 }, align 4, !dbg !29
-// CHECK:STDOUT:   %tuple.loc18_6 = alloca { i32, i32, i32 }, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.loc18_9 = alloca { i32, i32, i32 }, align 4, !dbg !32
-// CHECK:STDOUT:   %tuple.loc18_10 = alloca { ptr, ptr }, align 8, !dbg !33
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !29
-// CHECK:STDOUT:   %tuple.elem0.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   %.loc18_6.1 = load i32, ptr %tuple.elem0.loc18_6.tuple.elem, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.elem1.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !31
-// CHECK:STDOUT:   %.loc18_6.2 = load i32, ptr %tuple.elem1.loc18_6.tuple.elem, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.elem2.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !31
-// CHECK:STDOUT:   %.loc18_6.3 = load i32, ptr %tuple.elem2.loc18_6.tuple.elem, align 4, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_6), !dbg !31
-// CHECK:STDOUT:   %tuple.loc18_61 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   store i32 %.loc18_6.1, ptr %tuple.loc18_61, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.loc18_62 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 1, !dbg !31
-// CHECK:STDOUT:   store i32 %.loc18_6.2, ptr %tuple.loc18_62, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.loc18_63 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 2, !dbg !31
-// CHECK:STDOUT:   store i32 %.loc18_6.3, ptr %tuple.loc18_63, align 4, !dbg !31
-// CHECK:STDOUT:   %tuple.elem0.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   %.loc18_9.1 = load i32, ptr %tuple.elem0.loc18_9.tuple.elem, align 4, !dbg !32
-// CHECK:STDOUT:   %tuple.elem1.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !32
-// CHECK:STDOUT:   %.loc18_9.2 = load i32, ptr %tuple.elem1.loc18_9.tuple.elem, align 4, !dbg !32
-// CHECK:STDOUT:   %tuple.elem2.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 2, !dbg !32
-// CHECK:STDOUT:   %.loc18_9.3 = load i32, ptr %tuple.elem2.loc18_9.tuple.elem, align 4, !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_9), !dbg !32
-// CHECK:STDOUT:   %tuple.loc18_94 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   store i32 %.loc18_9.1, ptr %tuple.loc18_94, align 4, !dbg !32
-// CHECK:STDOUT:   %tuple.loc18_95 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 1, !dbg !32
-// CHECK:STDOUT:   store i32 %.loc18_9.2, ptr %tuple.loc18_95, align 4, !dbg !32
-// CHECK:STDOUT:   %tuple.loc18_96 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 2, !dbg !32
-// CHECK:STDOUT:   store i32 %.loc18_9.3, ptr %tuple.loc18_96, align 4, !dbg !32
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_10), !dbg !33
-// CHECK:STDOUT:   %tuple.loc18_107 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc18_10, i32 0, i32 0, !dbg !33
-// CHECK:STDOUT:   store ptr %tuple.loc18_6, ptr %tuple.loc18_107, align 8, !dbg !33
-// CHECK:STDOUT:   %tuple.loc18_108 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc18_10, i32 0, i32 1, !dbg !33
-// CHECK:STDOUT:   store ptr %tuple.loc18_9, ptr %tuple.loc18_108, align 8, !dbg !33
-// CHECK:STDOUT:   call void @_CG.Main(ptr %tuple.loc18_10), !dbg !34
-// CHECK:STDOUT:   ret void, !dbg !35
+// CHECK:STDOUT:   %a.var = alloca { i32, i32, i32 }, align 4, !dbg !29
+// CHECK:STDOUT:   %b.var = alloca { i32, i32, i32 }, align 4, !dbg !31
+// CHECK:STDOUT:   %tuple.loc18_6 = alloca { i32, i32, i32 }, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.loc18_9 = alloca { i32, i32, i32 }, align 4, !dbg !34
+// CHECK:STDOUT:   %tuple.loc18_10 = alloca { ptr, ptr }, align 8, !dbg !35
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !31
+// CHECK:STDOUT:   %tuple.elem0.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc18_6.1 = load i32, ptr %tuple.elem0.loc18_6.tuple.elem, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.elem1.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 1, !dbg !33
+// CHECK:STDOUT:   %.loc18_6.2 = load i32, ptr %tuple.elem1.loc18_6.tuple.elem, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.elem2.loc18_6.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %a.var, i32 0, i32 2, !dbg !33
+// CHECK:STDOUT:   %.loc18_6.3 = load i32, ptr %tuple.elem2.loc18_6.tuple.elem, align 4, !dbg !33
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_6), !dbg !33
+// CHECK:STDOUT:   %tuple.loc18_61 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   store i32 %.loc18_6.1, ptr %tuple.loc18_61, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.loc18_62 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 1, !dbg !33
+// CHECK:STDOUT:   store i32 %.loc18_6.2, ptr %tuple.loc18_62, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.loc18_63 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_6, i32 0, i32 2, !dbg !33
+// CHECK:STDOUT:   store i32 %.loc18_6.3, ptr %tuple.loc18_63, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.elem0.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !34
+// CHECK:STDOUT:   %.loc18_9.1 = load i32, ptr %tuple.elem0.loc18_9.tuple.elem, align 4, !dbg !34
+// CHECK:STDOUT:   %tuple.elem1.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !34
+// CHECK:STDOUT:   %.loc18_9.2 = load i32, ptr %tuple.elem1.loc18_9.tuple.elem, align 4, !dbg !34
+// CHECK:STDOUT:   %tuple.elem2.loc18_9.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %b.var, i32 0, i32 2, !dbg !34
+// CHECK:STDOUT:   %.loc18_9.3 = load i32, ptr %tuple.elem2.loc18_9.tuple.elem, align 4, !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_9), !dbg !34
+// CHECK:STDOUT:   %tuple.loc18_94 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 0, !dbg !34
+// CHECK:STDOUT:   store i32 %.loc18_9.1, ptr %tuple.loc18_94, align 4, !dbg !34
+// CHECK:STDOUT:   %tuple.loc18_95 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 1, !dbg !34
+// CHECK:STDOUT:   store i32 %.loc18_9.2, ptr %tuple.loc18_95, align 4, !dbg !34
+// CHECK:STDOUT:   %tuple.loc18_96 = getelementptr inbounds nuw { i32, i32, i32 }, ptr %tuple.loc18_9, i32 0, i32 2, !dbg !34
+// CHECK:STDOUT:   store i32 %.loc18_9.3, ptr %tuple.loc18_96, align 4, !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.loc18_10), !dbg !35
+// CHECK:STDOUT:   %tuple.loc18_107 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc18_10, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   store ptr %tuple.loc18_6, ptr %tuple.loc18_107, align 8, !dbg !35
+// CHECK:STDOUT:   %tuple.loc18_108 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple.loc18_10, i32 0, i32 1, !dbg !35
+// CHECK:STDOUT:   store ptr %tuple.loc18_9, ptr %tuple.loc18_108, align 8, !dbg !35
+// CHECK:STDOUT:   call void @_CG.Main(ptr %tuple.loc18_10), !dbg !36
+// CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -78,21 +78,21 @@ fn F() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "value_formation.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !24 = !{null}
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !27 = !DILocation(line: 16, column: 3, scope: !26)
-// CHECK:STDOUT: !29 = !DILocation(line: 17, column: 3, scope: !26)
-// CHECK:STDOUT: !31 = !DILocation(line: 18, column: 6, scope: !26)
-// CHECK:STDOUT: !32 = !DILocation(line: 18, column: 9, scope: !26)
-// CHECK:STDOUT: !33 = !DILocation(line: 18, column: 5, scope: !26)
-// CHECK:STDOUT: !34 = !DILocation(line: 18, column: 3, scope: !26)
-// CHECK:STDOUT: !35 = !DILocation(line: 15, column: 1, scope: !26)
+// CHECK:STDOUT: !20 = !DIFile(filename: "value_formation.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !26 = !{null}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !20, line: 15, type: !27, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 3, scope: !28)
+// CHECK:STDOUT: !31 = !DILocation(line: 17, column: 3, scope: !28)
+// CHECK:STDOUT: !33 = !DILocation(line: 18, column: 6, scope: !28)
+// CHECK:STDOUT: !34 = !DILocation(line: 18, column: 9, scope: !28)
+// CHECK:STDOUT: !35 = !DILocation(line: 18, column: 5, scope: !28)
+// CHECK:STDOUT: !36 = !DILocation(line: 18, column: 3, scope: !28)
+// CHECK:STDOUT: !37 = !DILocation(line: 15, column: 1, scope: !28)
 // CHECK:STDOUT:

@@ -41,61 +41,61 @@ fn Call(a: A) -> i32 {
 // CHECK:STDOUT: source_filename = "impl_def.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !24 {
+// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   %.loc14_16.2 = load i32, ptr %.loc14_16.1.n, align 4, !dbg !29
-// CHECK:STDOUT:   ret i32 %.loc14_16.2, !dbg !30
+// CHECK:STDOUT:   %.loc14_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc14_16.2 = load i32, ptr %.loc14_16.1.n, align 4, !dbg !31
+// CHECK:STDOUT:   ret i32 %.loc14_16.2, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "impl_def.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{!20, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !18, line: 13, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !31)
-// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !24, type: !21)
-// CHECK:STDOUT: !29 = !DILocation(line: 14, column: 12, scope: !24)
-// CHECK:STDOUT: !30 = !DILocation(line: 14, column: 5, scope: !24)
-// CHECK:STDOUT: !31 = !{!25}
+// CHECK:STDOUT: !20 = !DIFile(filename: "impl_def.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{!22, !23}
+// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !20, line: 13, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !33)
+// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !26, type: !23)
+// CHECK:STDOUT: !31 = !DILocation(line: 14, column: 12, scope: !26)
+// CHECK:STDOUT: !32 = !DILocation(line: 14, column: 5, scope: !26)
+// CHECK:STDOUT: !33 = !{!27}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'impl_use.carbon'
 // CHECK:STDOUT: source_filename = "impl_use.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) #0 !dbg !34 {
+// CHECK:STDOUT: define i32 @_CCall.Main(ptr %a) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !39
-// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !40
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(ptr %a), !dbg !41
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_CF.A.Main:I.Main"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!33}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{!20, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !32 = !DIFile(filename: "impl_use.carbon", directory: "")
-// CHECK:STDOUT: !33 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !32, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !32, line: 4, type: !23, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !41)
-// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !21)
-// CHECK:STDOUT: !39 = !DILocation(line: 5, column: 10, scope: !34)
-// CHECK:STDOUT: !40 = !DILocation(line: 5, column: 3, scope: !34)
-// CHECK:STDOUT: !41 = !{!35}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{!22, !23}
+// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !34 = !DIFile(filename: "impl_use.carbon", directory: "")
+// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !34, line: 4, type: !25, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !43)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !23)
+// CHECK:STDOUT: !41 = !DILocation(line: 5, column: 10, scope: !36)
+// CHECK:STDOUT: !42 = !DILocation(line: 5, column: 3, scope: !36)
+// CHECK:STDOUT: !43 = !{!37}
 // CHECK:STDOUT:

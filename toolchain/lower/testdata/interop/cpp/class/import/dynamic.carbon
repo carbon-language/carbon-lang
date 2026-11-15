@@ -209,7 +209,7 @@ fn DoThing() {
 // CHECK:STDOUT: attributes #7 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #8 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!40}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!41}
 // CHECK:STDOUT: !llvm.module.flags = !{!93, !94, !95, !96, !7, !8}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!98}
 // CHECK:STDOUT:
@@ -220,38 +220,38 @@ fn DoThing() {
 // CHECK:STDOUT: !4 = !{!3, !3, i64 0}
 // CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !39 = !DIFile(filename: "dynamic_base_from_cpp.carbon", directory: "")
-// CHECK:STDOUT: !40 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !39, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !40 = !DIFile(filename: "dynamic_base_from_cpp.carbon", directory: "")
+// CHECK:STDOUT: !41 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !40, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !42 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !43 = !{null, !42}
 // CHECK:STDOUT: !44 = !DISubroutineType(types: !43)
 // CHECK:STDOUT: !45 = !{null}
 // CHECK:STDOUT: !46 = !DISubroutineType(types: !45)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "other_func", linkageName: "_Cother_func.Derived.Main", scope: null, file: !39, line: 24, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !51)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "other_func", linkageName: "_Cother_func.Derived.Main", scope: null, file: !40, line: 24, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !51)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !42)
 // CHECK:STDOUT: !50 = !DILocation(line: 24, column: 3, scope: !47)
 // CHECK:STDOUT: !51 = !{!48}
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "func", linkageName: "_Cfunc.Derived.Main", scope: null, file: !39, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !56)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "func", linkageName: "_Cfunc.Derived.Main", scope: null, file: !40, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !56)
 // CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !42)
 // CHECK:STDOUT: !55 = !DILocation(line: 26, column: 3, scope: !52)
 // CHECK:STDOUT: !56 = !{!53}
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "func", linkageName: "_Cfunc:thunk:Base.Cpp:Derived.Main", scope: null, file: !39, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !61)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "func", linkageName: "_Cfunc:thunk:Base.Cpp:Derived.Main", scope: null, file: !40, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !61)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !42)
 // CHECK:STDOUT: !60 = !DILocation(line: 26, column: 3, scope: !57)
 // CHECK:STDOUT: !61 = !{!58}
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Derived.Main", scope: null, file: !39, line: 22, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !65)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Derived.Main", scope: null, file: !40, line: 22, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !65)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !42)
 // CHECK:STDOUT: !64 = !DILocation(line: 22, column: 1, scope: !62)
 // CHECK:STDOUT: !65 = !{!63}
-// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "func__carbon_thunk", linkageName: "_Cfunc__carbon_thunk.Derived.Main", scope: null, file: !39, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !69)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "func__carbon_thunk", linkageName: "_Cfunc__carbon_thunk.Derived.Main", scope: null, file: !40, line: 26, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !69)
 // CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !42)
 // CHECK:STDOUT: !68 = !DILocation(line: 26, column: 3, scope: !66)
 // CHECK:STDOUT: !69 = !{!67}
-// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "other_func__carbon_thunk", linkageName: "_Cother_func__carbon_thunk.Derived.Main", scope: null, file: !39, line: 24, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !73)
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "other_func__carbon_thunk", linkageName: "_Cother_func__carbon_thunk.Derived.Main", scope: null, file: !40, line: 24, type: !44, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !73)
 // CHECK:STDOUT: !71 = !DILocalVariable(arg: 1, scope: !70, type: !42)
 // CHECK:STDOUT: !72 = !DILocation(line: 24, column: 3, scope: !70)
 // CHECK:STDOUT: !73 = !{!71}
-// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "DoThing", linkageName: "_CDoThing.Main", scope: null, file: !39, line: 30, type: !46, spFlags: DISPFlagDefinition, unit: !40)
+// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "DoThing", linkageName: "_CDoThing.Main", scope: null, file: !40, line: 30, type: !46, spFlags: DISPFlagDefinition, unit: !41)
 // CHECK:STDOUT: !75 = !DILocation(line: 31, column: 3, scope: !74)
 // CHECK:STDOUT: !76 = !DILocation(line: 31, column: 20, scope: !74)
 // CHECK:STDOUT: !77 = !DILocation(line: 31, column: 29, scope: !74)

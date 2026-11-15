@@ -70,10 +70,10 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #2 !dbg !29 {
+// CHECK:STDOUT: define i32 @main() #2 !dbg !31 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z1Fv(), !dbg !30
-// CHECK:STDOUT:   ret i32 0, !dbg !31
+// CHECK:STDOUT:   call void @_Z1Fv(), !dbg !32
+// CHECK:STDOUT:   ret i32 0, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -84,27 +84,27 @@ fn Run() {
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!23}
-// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!40}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!25}
+// CHECK:STDOUT: !llvm.module.flags = !{!34, !35, !36, !37, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!42}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !22 = !DIFile(filename: "generic_class.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !22, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !25 = !{!24}
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !22, line: 20, type: !26, spFlags: DISPFlagDefinition, unit: !23)
-// CHECK:STDOUT: !30 = !DILocation(line: 21, column: 3, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 20, column: 1, scope: !29)
-// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !36 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !37 = !{!"omnipotent char", !36, i64 0}
-// CHECK:STDOUT: !38 = !{!"int", !37, i64 0}
-// CHECK:STDOUT: !39 = !{!"__libc_errno", !38, i64 0}
-// CHECK:STDOUT: !40 = !{!39, !38, i64 0}
+// CHECK:STDOUT: !24 = !DIFile(filename: "generic_class.carbon", directory: "")
+// CHECK:STDOUT: !25 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !24, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !{!26}
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !24, line: 20, type: !28, spFlags: DISPFlagDefinition, unit: !25)
+// CHECK:STDOUT: !32 = !DILocation(line: 21, column: 3, scope: !31)
+// CHECK:STDOUT: !33 = !DILocation(line: 20, column: 1, scope: !31)
+// CHECK:STDOUT: !34 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !35 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !36 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !37 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !38 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !39 = !{!"omnipotent char", !38, i64 0}
+// CHECK:STDOUT: !40 = !{!"int", !39, i64 0}
+// CHECK:STDOUT: !41 = !{!"__libc_errno", !40, i64 0}
+// CHECK:STDOUT: !42 = !{!41, !40, i64 0}
 // CHECK:STDOUT:

@@ -360,8 +360,8 @@ var a: array(1, 1);
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %Array.b7c: type = class_type @Array, @Array(%empty_tuple.type, %int_1) [concrete]
 // CHECK:STDOUT:   %pattern_type.f14: type = pattern_type %Array.b7c [concrete]
-// CHECK:STDOUT:   %t.patt: %pattern_type.f14 = ref_binding_pattern t [concrete]
-// CHECK:STDOUT:   %t.var_patt: %pattern_type.f14 = var_pattern %t.patt [concrete]
+// CHECK:STDOUT:   %t.patt.44c: %pattern_type.f14 = ref_binding_pattern t [concrete]
+// CHECK:STDOUT:   %t.var_patt: %pattern_type.f14 = var_pattern %t.patt.44c [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %array: %Array.b7c = tuple_value (%empty_tuple) [concrete]
 // CHECK:STDOUT: }
@@ -390,7 +390,7 @@ var a: array(1, 1);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %t: ref %Array.b7c = wrapper_binding t, %t.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %t.patt: %pattern_type.f14 = ref_binding_pattern t [concrete = constants.%t.patt]
+// CHECK:STDOUT:     %t.patt: %pattern_type.f14 = ref_binding_pattern t [concrete = constants.%t.patt.44c]
 // CHECK:STDOUT:     %t.var_patt: %pattern_type.f14 = var_pattern %t.patt [concrete = constants.%t.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>

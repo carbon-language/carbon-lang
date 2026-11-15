@@ -36,13 +36,13 @@ void SetX(Carbon::Other::Point* p, int x) { p->x = x; }
 // CHECK:STDOUT: ; ModuleID = 'other.carbon'
 // CHECK:STDOUT: source_filename = "other.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!29}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!31}
 // CHECK:STDOUT: !llvm.module.flags = !{!12, !13}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !12 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !13 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "other.carbon", directory: "")
-// CHECK:STDOUT: !29 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !28, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !30 = !DIFile(filename: "other.carbon", directory: "")
+// CHECK:STDOUT: !31 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !30, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'field_imported.carbon'
@@ -78,17 +78,17 @@ void SetX(Carbon::Other::Point* p, int x) { p->x = x; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Point.Other"(ptr %self) #1 !dbg !36 {
+// CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Point.Other"(ptr %self) #1 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!32}
-// CHECK:STDOUT: !llvm.module.flags = !{!40, !41, !42, !43, !12, !13}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!45}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!34}
+// CHECK:STDOUT: !llvm.module.flags = !{!42, !43, !44, !45, !12, !13}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!47}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -102,20 +102,20 @@ void SetX(Carbon::Other::Point* p, int x) { p->x = x; }
 // CHECK:STDOUT: !9 = !{!6, !5, i64 0}
 // CHECK:STDOUT: !12 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !13 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "other.carbon", directory: "")
-// CHECK:STDOUT: !31 = !DIFile(filename: "field_imported.carbon", directory: "")
-// CHECK:STDOUT: !32 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !31, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !33 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !34 = !{null, !33}
-// CHECK:STDOUT: !35 = !DISubroutineType(types: !34)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Point.Other", scope: null, file: !28, line: 4, type: !35, spFlags: DISPFlagDefinition, unit: !32, retainedNodes: !39)
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !33)
-// CHECK:STDOUT: !38 = !DILocation(line: 4, column: 1, scope: !36)
-// CHECK:STDOUT: !39 = !{!37}
-// CHECK:STDOUT: !40 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !41 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !42 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !43 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !44 = !{!"__libc_errno", !5, i64 0}
-// CHECK:STDOUT: !45 = !{!44, !5, i64 0}
+// CHECK:STDOUT: !30 = !DIFile(filename: "other.carbon", directory: "")
+// CHECK:STDOUT: !33 = !DIFile(filename: "field_imported.carbon", directory: "")
+// CHECK:STDOUT: !34 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !33, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !35 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !36 = !{null, !35}
+// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "__destroy_thunk", linkageName: "_C__destroy_thunk:thunk.Point.Other", scope: null, file: !30, line: 4, type: !37, spFlags: DISPFlagDefinition, unit: !34, retainedNodes: !41)
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !35)
+// CHECK:STDOUT: !40 = !DILocation(line: 4, column: 1, scope: !38)
+// CHECK:STDOUT: !41 = !{!39}
+// CHECK:STDOUT: !42 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !43 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !44 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !45 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !46 = !{!"__libc_errno", !5, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !5, i64 0}
 // CHECK:STDOUT:

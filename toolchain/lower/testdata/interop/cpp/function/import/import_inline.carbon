@@ -41,14 +41,14 @@ fn Call() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !33 {
+// CHECK:STDOUT: define i32 @_CCall.Main() #1 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !36
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !36
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !36
-// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !40
-// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !41
-// CHECK:STDOUT:   ret i32 %.loc24, !dbg !42
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !38
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !38
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !38
+// CHECK:STDOUT:   call void @_Z1FPi(ptr %n.var), !dbg !42
+// CHECK:STDOUT:   %.loc24 = load i32, ptr %n.var, align 4, !dbg !43
+// CHECK:STDOUT:   ret i32 %.loc24, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -58,9 +58,9 @@ fn Call() -> i32 {
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!26}
-// CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !46, !9, !10}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!48}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!28}
+// CHECK:STDOUT: !llvm.module.flags = !{!45, !46, !47, !48, !9, !10}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!50}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -71,20 +71,20 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !6 = !{!2, !2, i64 0}
 // CHECK:STDOUT: !9 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !10 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !25 = !DIFile(filename: "import_inline.carbon", directory: "")
-// CHECK:STDOUT: !26 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !25, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !27 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !28 = !{!27}
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !25, line: 21, type: !29, spFlags: DISPFlagDefinition, unit: !26)
-// CHECK:STDOUT: !36 = !DILocation(line: 22, column: 3, scope: !33)
-// CHECK:STDOUT: !40 = !DILocation(line: 23, column: 3, scope: !33)
-// CHECK:STDOUT: !41 = !DILocation(line: 24, column: 10, scope: !33)
-// CHECK:STDOUT: !42 = !DILocation(line: 24, column: 3, scope: !33)
-// CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !47 = !{!"__libc_errno", !2, i64 0}
-// CHECK:STDOUT: !48 = !{!47, !2, i64 0}
+// CHECK:STDOUT: !27 = !DIFile(filename: "import_inline.carbon", directory: "")
+// CHECK:STDOUT: !28 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !27, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !29 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !30 = !{!29}
+// CHECK:STDOUT: !31 = !DISubroutineType(types: !30)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !27, line: 21, type: !31, spFlags: DISPFlagDefinition, unit: !28)
+// CHECK:STDOUT: !38 = !DILocation(line: 22, column: 3, scope: !35)
+// CHECK:STDOUT: !42 = !DILocation(line: 23, column: 3, scope: !35)
+// CHECK:STDOUT: !43 = !DILocation(line: 24, column: 10, scope: !35)
+// CHECK:STDOUT: !44 = !DILocation(line: 24, column: 3, scope: !35)
+// CHECK:STDOUT: !45 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !46 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !47 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !48 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !49 = !{!"__libc_errno", !2, i64 0}
+// CHECK:STDOUT: !50 = !{!49, !2, i64 0}
 // CHECK:STDOUT:

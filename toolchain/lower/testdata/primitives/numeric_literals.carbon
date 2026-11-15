@@ -71,16 +71,16 @@ fn F() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "numeric_literals.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !35 = !DIFile(filename: "numeric_literals.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !37 = !{null}
 // CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !34, line: 13, type: !38, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !35, line: 13, type: !38, spFlags: DISPFlagDefinition, unit: !36)
 // CHECK:STDOUT: !40 = !DILocation(line: 16, column: 3, scope: !39)
 // CHECK:STDOUT: !41 = !DILocation(line: 16, column: 26, scope: !39)
 // CHECK:STDOUT: !43 = !DILocation(line: 22, column: 3, scope: !39)

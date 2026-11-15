@@ -53,24 +53,24 @@ fn Select(b: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !37 = !{!36}
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !35 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !37 = !{!6}
 // CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !40 = !{!36, !39}
+// CHECK:STDOUT: !40 = !{!6, !39}
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !34, line: 13, type: !38, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !35, line: 13, type: !38, spFlags: DISPFlagDefinition, unit: !36)
 // CHECK:STDOUT: !45 = !DILocation(line: 13, column: 17, scope: !42)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !34, line: 14, type: !38, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !35, line: 14, type: !38, spFlags: DISPFlagDefinition, unit: !36)
 // CHECK:STDOUT: !49 = !DILocation(line: 14, column: 17, scope: !46)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Select", linkageName: "_CSelect.Main", scope: null, file: !34, line: 16, type: !41, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !60)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Select", linkageName: "_CSelect.Main", scope: null, file: !35, line: 16, type: !41, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !60)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !39)
 // CHECK:STDOUT: !56 = !DILocation(line: 17, column: 10, scope: !50)
 // CHECK:STDOUT: !57 = !DILocation(line: 17, column: 20, scope: !50)

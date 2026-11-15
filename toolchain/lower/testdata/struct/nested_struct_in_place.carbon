@@ -23,15 +23,15 @@ fn G() {
 // CHECK:STDOUT: declare void @_CF.Main(ptr sret({ i32, i32, i32 }))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !26 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 4, !dbg !27
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !27
-// CHECK:STDOUT:   %.loc16_74.1.a = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 0, !dbg !28
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.1.a), !dbg !29
-// CHECK:STDOUT:   %.loc16_74.2.b = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 1, !dbg !28
-// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.2.b), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   %_.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 4, !dbg !29
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
+// CHECK:STDOUT:   %.loc16_74.1.a = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.1.a), !dbg !31
+// CHECK:STDOUT:   %.loc16_74.2.b = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 1, !dbg !30
+// CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.2.b), !dbg !32
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -40,19 +40,19 @@ fn G() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "nested_struct_in_place.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !24 = !{null}
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !27 = !DILocation(line: 16, column: 3, scope: !26)
-// CHECK:STDOUT: !28 = !DILocation(line: 16, column: 55, scope: !26)
-// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 61, scope: !26)
-// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 71, scope: !26)
-// CHECK:STDOUT: !32 = !DILocation(line: 15, column: 1, scope: !26)
+// CHECK:STDOUT: !20 = !DIFile(filename: "nested_struct_in_place.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !26 = !{null}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !20, line: 15, type: !27, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 3, scope: !28)
+// CHECK:STDOUT: !30 = !DILocation(line: 16, column: 55, scope: !28)
+// CHECK:STDOUT: !31 = !DILocation(line: 16, column: 61, scope: !28)
+// CHECK:STDOUT: !32 = !DILocation(line: 16, column: 71, scope: !28)
+// CHECK:STDOUT: !34 = !DILocation(line: 15, column: 1, scope: !28)
 // CHECK:STDOUT:

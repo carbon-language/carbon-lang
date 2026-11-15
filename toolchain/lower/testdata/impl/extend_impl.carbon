@@ -35,48 +35,48 @@ fn InstanceAccess(a: A) -> i32 {
 // CHECK:STDOUT: source_filename = "extend_impl.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"() #0 !dbg !26 {
+// CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"() #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 0, !dbg !29
+// CHECK:STDOUT:   ret i32 0, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTypeAccess.Main() #0 !dbg !30 {
+// CHECK:STDOUT: define i32 @_CTypeAccess.Main() #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !33
-// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !34
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !35
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) #0 !dbg !35 {
+// CHECK:STDOUT: define i32 @_CInstanceAccess.Main(ptr %a) #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !40
-// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !41
+// CHECK:STDOUT:   %A.as.I.impl.F.call = call i32 @"_CF.A.Main:I.Main"(), !dbg !42
+// CHECK:STDOUT:   ret i32 %A.as.I.impl.F.call, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "extend_impl.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !{!20}
-// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !24 = !{!20, !23}
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !18, line: 19, type: !22, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !29 = !DILocation(line: 20, column: 7, scope: !26)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "TypeAccess", linkageName: "_CTypeAccess.Main", scope: null, file: !18, line: 25, type: !22, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !33 = !DILocation(line: 26, column: 10, scope: !30)
-// CHECK:STDOUT: !34 = !DILocation(line: 26, column: 3, scope: !30)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "InstanceAccess", linkageName: "_CInstanceAccess.Main", scope: null, file: !18, line: 29, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
-// CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !23)
-// CHECK:STDOUT: !40 = !DILocation(line: 30, column: 10, scope: !35)
-// CHECK:STDOUT: !41 = !DILocation(line: 30, column: 3, scope: !35)
-// CHECK:STDOUT: !42 = !{!36}
+// CHECK:STDOUT: !20 = !DIFile(filename: "extend_impl.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{!22}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !25 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !26 = !{!22, !25}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.A.Main:I.Main", scope: null, file: !20, line: 19, type: !24, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !31 = !DILocation(line: 20, column: 7, scope: !28)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "TypeAccess", linkageName: "_CTypeAccess.Main", scope: null, file: !20, line: 25, type: !24, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !35 = !DILocation(line: 26, column: 10, scope: !32)
+// CHECK:STDOUT: !36 = !DILocation(line: 26, column: 3, scope: !32)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "InstanceAccess", linkageName: "_CInstanceAccess.Main", scope: null, file: !20, line: 29, type: !27, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !44)
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !25)
+// CHECK:STDOUT: !42 = !DILocation(line: 30, column: 10, scope: !37)
+// CHECK:STDOUT: !43 = !DILocation(line: 30, column: 3, scope: !37)
+// CHECK:STDOUT: !44 = !{!38}
 // CHECK:STDOUT:

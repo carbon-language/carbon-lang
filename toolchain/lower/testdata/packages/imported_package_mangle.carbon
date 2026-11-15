@@ -94,158 +94,158 @@ fn G() {
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.c34a6de08fb29ead.Core:I.A"() #0 !dbg !38 {
+// CHECK:STDOUT: define void @"_CF.Array.c34a6de08fb29ead.Core:I.A"() #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !36 = !{null}
-// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.c34a6de08fb29ead.Core:I.A", scope: null, file: !34, line: 10, type: !37, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !39 = !DILocation(line: 10, column: 3, scope: !38)
+// CHECK:STDOUT: !35 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !37 = !{null}
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.c34a6de08fb29ead.Core:I.A", scope: null, file: !35, line: 10, type: !38, spFlags: DISPFlagDefinition, unit: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 10, column: 3, scope: !39)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.B() #0 !dbg !42 {
+// CHECK:STDOUT: define void @_CG.B() #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.A"(), !dbg !43
-// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"(), !dbg !44
-// CHECK:STDOUT:   ret void, !dbg !45
+// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.A"(), !dbg !44
+// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"(), !dbg !45
+// CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.Array.c34a6de08fb29ead.Core:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"() #0 !dbg !46 {
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"() #0 !dbg !47 {
+// CHECK:STDOUT:   ret void, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!41}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!42}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !36 = !{null}
-// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !40 = !DIFile(filename: "b.carbon", directory: "")
-// CHECK:STDOUT: !41 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !40, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !40, line: 4, type: !37, spFlags: DISPFlagDefinition, unit: !41)
-// CHECK:STDOUT: !43 = !DILocation(line: 7, column: 3, scope: !42)
-// CHECK:STDOUT: !44 = !DILocation(line: 10, column: 3, scope: !42)
-// CHECK:STDOUT: !45 = !DILocation(line: 4, column: 1, scope: !42)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c", scope: null, file: !34, line: 14, type: !37, spFlags: DISPFlagDefinition, unit: !41)
-// CHECK:STDOUT: !47 = !DILocation(line: 14, column: 3, scope: !46)
+// CHECK:STDOUT: !35 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !37 = !{null}
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !41 = !DIFile(filename: "b.carbon", directory: "")
+// CHECK:STDOUT: !42 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !41, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !41, line: 4, type: !38, spFlags: DISPFlagDefinition, unit: !42)
+// CHECK:STDOUT: !44 = !DILocation(line: 7, column: 3, scope: !43)
+// CHECK:STDOUT: !45 = !DILocation(line: 10, column: 3, scope: !43)
+// CHECK:STDOUT: !46 = !DILocation(line: 4, column: 1, scope: !43)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c", scope: null, file: !35, line: 14, type: !38, spFlags: DISPFlagDefinition, unit: !42)
+// CHECK:STDOUT: !48 = !DILocation(line: 14, column: 3, scope: !47)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'c.carbon'
 // CHECK:STDOUT: source_filename = "c.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.64dce905b462d459.Core:I.C"() #0 !dbg !50 {
+// CHECK:STDOUT: define void @"_CF.Array.64dce905b462d459.Core:I.C"() #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !51
+// CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.64dce905b462d459.Core:I.A"() #0 !dbg !52 {
+// CHECK:STDOUT: define void @"_CF.Array.64dce905b462d459.Core:I.A"() #0 !dbg !53 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !53
+// CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.Array.c34a6de08fb29ead.Core:I.C"() #0 !dbg !54 {
+// CHECK:STDOUT: define void @"_CF.Array.c34a6de08fb29ead.Core:I.C"() #0 !dbg !55 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !55
+// CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.C() #0 !dbg !56 {
+// CHECK:STDOUT: define void @_CG.C() #0 !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.A"(), !dbg !57
-// CHECK:STDOUT:   call void @"_CF.Array.64dce905b462d459.Core:I.A"(), !dbg !58
-// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.C"(), !dbg !59
-// CHECK:STDOUT:   call void @"_CF.Array.64dce905b462d459.Core:I.C"(), !dbg !60
-// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"(), !dbg !61
-// CHECK:STDOUT:   call void @"_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c"(), !dbg !62
-// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c"(), !dbg !63
-// CHECK:STDOUT:   call void @"_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c"(), !dbg !64
-// CHECK:STDOUT:   ret void, !dbg !65
+// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.A"(), !dbg !58
+// CHECK:STDOUT:   call void @"_CF.Array.64dce905b462d459.Core:I.A"(), !dbg !59
+// CHECK:STDOUT:   call void @"_CF.Array.c34a6de08fb29ead.Core:I.C"(), !dbg !60
+// CHECK:STDOUT:   call void @"_CF.Array.64dce905b462d459.Core:I.C"(), !dbg !61
+// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"(), !dbg !62
+// CHECK:STDOUT:   call void @"_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c"(), !dbg !63
+// CHECK:STDOUT:   call void @"_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c"(), !dbg !64
+// CHECK:STDOUT:   call void @"_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c"(), !dbg !65
+// CHECK:STDOUT:   ret void, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CF.Array.c34a6de08fb29ead.Core:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"() #0 !dbg !66 {
-// CHECK:STDOUT:   ret void, !dbg !67
+// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c"() #0 !dbg !67 {
+// CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c"() #0 !dbg !68 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c"() #0 !dbg !69 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !69
+// CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c"() #0 !dbg !70 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c"() #0 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c"() #0 !dbg !72 {
+// CHECK:STDOUT: define linkonce_odr void @"_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c"() #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !73
+// CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!49}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!50}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !36 = !{null}
-// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !48 = !DIFile(filename: "c.carbon", directory: "")
-// CHECK:STDOUT: !49 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !48, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.64dce905b462d459.Core:I.C", scope: null, file: !48, line: 12, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !51 = !DILocation(line: 12, column: 3, scope: !50)
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.64dce905b462d459.Core:I.A", scope: null, file: !48, line: 20, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !53 = !DILocation(line: 20, column: 3, scope: !52)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.c34a6de08fb29ead.Core:I.C", scope: null, file: !48, line: 28, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !55 = !DILocation(line: 28, column: 3, scope: !54)
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "G", linkageName: "_CG.C", scope: null, file: !48, line: 35, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !57 = !DILocation(line: 37, column: 3, scope: !56)
-// CHECK:STDOUT: !58 = !DILocation(line: 38, column: 3, scope: !56)
-// CHECK:STDOUT: !59 = !DILocation(line: 39, column: 3, scope: !56)
-// CHECK:STDOUT: !60 = !DILocation(line: 40, column: 3, scope: !56)
-// CHECK:STDOUT: !61 = !DILocation(line: 43, column: 3, scope: !56)
-// CHECK:STDOUT: !62 = !DILocation(line: 44, column: 3, scope: !56)
-// CHECK:STDOUT: !63 = !DILocation(line: 45, column: 3, scope: !56)
-// CHECK:STDOUT: !64 = !DILocation(line: 46, column: 3, scope: !56)
-// CHECK:STDOUT: !65 = !DILocation(line: 35, column: 1, scope: !56)
-// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c", scope: null, file: !34, line: 14, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !67 = !DILocation(line: 14, column: 3, scope: !66)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c", scope: null, file: !48, line: 24, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !69 = !DILocation(line: 24, column: 3, scope: !68)
-// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c", scope: null, file: !48, line: 32, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !71 = !DILocation(line: 32, column: 3, scope: !70)
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c", scope: null, file: !48, line: 16, type: !37, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !73 = !DILocation(line: 16, column: 3, scope: !72)
+// CHECK:STDOUT: !35 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !37 = !{null}
+// CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
+// CHECK:STDOUT: !49 = !DIFile(filename: "c.carbon", directory: "")
+// CHECK:STDOUT: !50 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !49, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.64dce905b462d459.Core:I.C", scope: null, file: !49, line: 12, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !52 = !DILocation(line: 12, column: 3, scope: !51)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.64dce905b462d459.Core:I.A", scope: null, file: !49, line: 20, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !54 = !DILocation(line: 20, column: 3, scope: !53)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.c34a6de08fb29ead.Core:I.C", scope: null, file: !49, line: 28, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !56 = !DILocation(line: 28, column: 3, scope: !55)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "G", linkageName: "_CG.C", scope: null, file: !49, line: 35, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !58 = !DILocation(line: 37, column: 3, scope: !57)
+// CHECK:STDOUT: !59 = !DILocation(line: 38, column: 3, scope: !57)
+// CHECK:STDOUT: !60 = !DILocation(line: 39, column: 3, scope: !57)
+// CHECK:STDOUT: !61 = !DILocation(line: 40, column: 3, scope: !57)
+// CHECK:STDOUT: !62 = !DILocation(line: 43, column: 3, scope: !57)
+// CHECK:STDOUT: !63 = !DILocation(line: 44, column: 3, scope: !57)
+// CHECK:STDOUT: !64 = !DILocation(line: 45, column: 3, scope: !57)
+// CHECK:STDOUT: !65 = !DILocation(line: 46, column: 3, scope: !57)
+// CHECK:STDOUT: !66 = !DILocation(line: 35, column: 1, scope: !57)
+// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.A.91a8a89714fbc21c", scope: null, file: !35, line: 14, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !68 = !DILocation(line: 14, column: 3, scope: !67)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.3fc281a4708ed92c.Core:I.A.91a8a89714fbc21c", scope: null, file: !49, line: 24, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !70 = !DILocation(line: 24, column: 3, scope: !69)
+// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.4bcaa430271e27dc.Core:I.C.91a8a89714fbc21c", scope: null, file: !49, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !72 = !DILocation(line: 32, column: 3, scope: !71)
+// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.3fc281a4708ed92c.Core:I.C.91a8a89714fbc21c", scope: null, file: !49, line: 16, type: !38, spFlags: DISPFlagDefinition, unit: !50)
+// CHECK:STDOUT: !74 = !DILocation(line: 16, column: 3, scope: !73)
 // CHECK:STDOUT:

@@ -29,17 +29,17 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: @C.val.loc20_3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCallF.Main() #0 !dbg !23 {
+// CHECK:STDOUT: define i32 @_CCallF.Main() #0 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !26
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !28
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !26
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !26
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !28
-// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !31
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.2fad9574e050607e(ptr %c.var, i32 %.loc22_14), !dbg !30
-// CHECK:STDOUT:   ret i32 %C.F.call, !dbg !35
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !28
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !30
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !28
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.loc20_3, i64 0, i1 false), !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !30
+// CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !30
+// CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !33
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.2fad9574e050607e(ptr %c.var, i32 %.loc22_14), !dbg !32
+// CHECK:STDOUT:   ret i32 %C.F.call, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -49,9 +49,9 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.2fad9574e050607e(ptr %self, i32 %x) #0 !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.2fad9574e050607e(ptr %self, i32 %x) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !44
+// CHECK:STDOUT:   ret i32 %x, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -60,28 +60,28 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "call_method.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !{!20}
-// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !18, line: 19, type: !22, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !26 = !DILocation(line: 20, column: 3, scope: !23)
-// CHECK:STDOUT: !28 = !DILocation(line: 21, column: 3, scope: !23)
-// CHECK:STDOUT: !30 = !DILocation(line: 22, column: 10, scope: !23)
-// CHECK:STDOUT: !31 = !DILocation(line: 22, column: 14, scope: !23)
-// CHECK:STDOUT: !32 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !33 = !{!20, !32, !20}
-// CHECK:STDOUT: !34 = !DISubroutineType(types: !33)
-// CHECK:STDOUT: !35 = !DILocation(line: 22, column: 3, scope: !23)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.2fad9574e050607e", scope: null, file: !18, line: 14, type: !34, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !45)
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !32)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !36, type: !20)
-// CHECK:STDOUT: !44 = !DILocation(line: 15, column: 5, scope: !36)
-// CHECK:STDOUT: !45 = !{!37, !38}
+// CHECK:STDOUT: !20 = !DIFile(filename: "call_method.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{!22}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !20, line: 19, type: !24, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !28 = !DILocation(line: 20, column: 3, scope: !25)
+// CHECK:STDOUT: !30 = !DILocation(line: 21, column: 3, scope: !25)
+// CHECK:STDOUT: !32 = !DILocation(line: 22, column: 10, scope: !25)
+// CHECK:STDOUT: !33 = !DILocation(line: 22, column: 14, scope: !25)
+// CHECK:STDOUT: !34 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !35 = !{!22, !34, !22}
+// CHECK:STDOUT: !36 = !DISubroutineType(types: !35)
+// CHECK:STDOUT: !37 = !DILocation(line: 22, column: 3, scope: !25)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.2fad9574e050607e", scope: null, file: !20, line: 14, type: !36, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !34)
+// CHECK:STDOUT: !40 = !DILocalVariable(arg: 2, scope: !38, type: !22)
+// CHECK:STDOUT: !46 = !DILocation(line: 15, column: 5, scope: !38)
+// CHECK:STDOUT: !47 = !{!39, !40}
 // CHECK:STDOUT:

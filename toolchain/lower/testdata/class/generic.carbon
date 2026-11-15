@@ -106,13 +106,13 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: ; ModuleID = 'classes.carbon'
 // CHECK:STDOUT: source_filename = "classes.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "classes.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !35 = !DIFile(filename: "classes.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'create.carbon'
@@ -143,21 +143,21 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!37}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!38}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !36 = !DIFile(filename: "create.carbon", directory: "")
-// CHECK:STDOUT: !37 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !36, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !37 = !DIFile(filename: "create.carbon", directory: "")
+// CHECK:STDOUT: !38 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !37, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !40 = !{!39}
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "CreateDerived", linkageName: "_CCreateDerived.Create", scope: null, file: !36, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !37)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "CreateDerived", linkageName: "_CCreateDerived.Create", scope: null, file: !37, line: 6, type: !41, spFlags: DISPFlagDefinition, unit: !38)
 // CHECK:STDOUT: !45 = !DILocation(line: 7, column: 10, scope: !42)
 // CHECK:STDOUT: !46 = !DILocation(line: 7, column: 19, scope: !42)
 // CHECK:STDOUT: !47 = !DILocation(line: 7, column: 3, scope: !42)
-// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "CreateAdapter", linkageName: "_CCreateAdapter.Create", scope: null, file: !36, line: 10, type: !41, spFlags: DISPFlagDefinition, unit: !37)
+// CHECK:STDOUT: !48 = distinct !DISubprogram(name: "CreateAdapter", linkageName: "_CCreateAdapter.Create", scope: null, file: !37, line: 10, type: !41, spFlags: DISPFlagDefinition, unit: !38)
 // CHECK:STDOUT: !51 = !DILocation(line: 11, column: 10, scope: !48)
 // CHECK:STDOUT: !52 = !DILocation(line: 11, column: 3, scope: !48)
 // CHECK:STDOUT:
@@ -239,8 +239,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !11 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
-// CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !12 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !40 = !{!39}
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
@@ -248,7 +248,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !54 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !53, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !55 = distinct !DISubprogram(name: "Ints", linkageName: "_CInts.Main", scope: null, file: !53, line: 13, type: !41, spFlags: DISPFlagDefinition, unit: !54)
 // CHECK:STDOUT: !58 = !DILocation(line: 14, column: 10, scope: !55)
-// CHECK:STDOUT: !59 = !{!39, !38, !38}
+// CHECK:STDOUT: !59 = !{!39, !6, !6}
 // CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
 // CHECK:STDOUT: !61 = !DILocation(line: 14, column: 3, scope: !55)
 // CHECK:STDOUT: !62 = distinct !DISubprogram(name: "Empty", linkageName: "_CEmpty.Main", scope: null, file: !53, line: 17, type: !41, spFlags: DISPFlagDefinition, unit: !54)
@@ -260,8 +260,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !76 = !DISubroutineType(types: !75)
 // CHECK:STDOUT: !77 = !DILocation(line: 23, column: 3, scope: !67)
 // CHECK:STDOUT: !78 = distinct !DISubprogram(name: "Make", linkageName: "_CMake.Main.2fad9574e050607e", scope: null, file: !53, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !54, retainedNodes: !89)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !38)
-// CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !38)
+// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !6)
+// CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !6)
 // CHECK:STDOUT: !87 = !DILocation(line: 10, column: 10, scope: !78)
 // CHECK:STDOUT: !88 = !DILocation(line: 10, column: 3, scope: !78)
 // CHECK:STDOUT: !89 = !{!79, !80}
@@ -278,7 +278,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !110 = !DISubroutineType(types: !109)
 // CHECK:STDOUT: !111 = !DILocation(line: 10, column: 3, scope: !99)
 // CHECK:STDOUT: !112 = !{!100, !101}
-// CHECK:STDOUT: !113 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4e4edddc7580c79b:Copy.Core.3eda18978e8f48e1", scope: null, file: !11, line: 52, type: !110, spFlags: DISPFlagDefinition, unit: !54, retainedNodes: !122)
+// CHECK:STDOUT: !113 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4e4edddc7580c79b:Copy.Core.3eda18978e8f48e1", scope: null, file: !12, line: 52, type: !110, spFlags: DISPFlagDefinition, unit: !54, retainedNodes: !122)
 // CHECK:STDOUT: !114 = !DILocalVariable(arg: 1, scope: !113, type: !39)
 // CHECK:STDOUT: !118 = !DILocation(line: 53, column: 13, scope: !113)
 // CHECK:STDOUT: !119 = !DILocation(line: 53, column: 12, scope: !113)
@@ -412,8 +412,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !11 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
-// CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !12 = !DIFile(filename: "min_prelude/parts/copy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !40 = !{!39}
 // CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
@@ -421,7 +421,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !110 = !DISubroutineType(types: !109)
 // CHECK:STDOUT: !123 = !DIFile(filename: "access.carbon", directory: "")
 // CHECK:STDOUT: !124 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !123, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !125 = !{!38}
+// CHECK:STDOUT: !125 = !{!6}
 // CHECK:STDOUT: !126 = !DISubroutineType(types: !125)
 // CHECK:STDOUT: !127 = !{null}
 // CHECK:STDOUT: !128 = !DISubroutineType(types: !127)
@@ -434,7 +434,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !140 = !DILocation(line: 21, column: 3, scope: !137)
 // CHECK:STDOUT: !141 = !DILocation(line: 21, column: 19, scope: !137)
 // CHECK:STDOUT: !143 = !DILocation(line: 22, column: 10, scope: !137)
-// CHECK:STDOUT: !144 = !{!38, !39}
+// CHECK:STDOUT: !144 = !{!6, !39}
 // CHECK:STDOUT: !145 = !DISubroutineType(types: !144)
 // CHECK:STDOUT: !146 = !DILocation(line: 22, column: 3, scope: !137)
 // CHECK:STDOUT: !147 = distinct !DISubprogram(name: "AccessEmpty", linkageName: "_CAccessEmpty.Main", scope: null, file: !123, line: 25, type: !128, spFlags: DISPFlagDefinition, unit: !124)
@@ -470,7 +470,7 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: !195 = !DILocation(line: 9, column: 12, scope: !190)
 // CHECK:STDOUT: !196 = !DILocation(line: 9, column: 5, scope: !190)
 // CHECK:STDOUT: !197 = !{!191}
-// CHECK:STDOUT: !198 = distinct !DISubprogram(name: "Op", linkageName: "_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450", scope: null, file: !11, line: 58, type: !110, spFlags: DISPFlagDefinition, unit: !124, retainedNodes: !208)
+// CHECK:STDOUT: !198 = distinct !DISubprogram(name: "Op", linkageName: "_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450", scope: null, file: !12, line: 58, type: !110, spFlags: DISPFlagDefinition, unit: !124, retainedNodes: !208)
 // CHECK:STDOUT: !199 = !DILocalVariable(arg: 1, scope: !198, type: !39)
 // CHECK:STDOUT: !203 = !DILocation(line: 59, column: 13, scope: !198)
 // CHECK:STDOUT: !204 = !DILocation(line: 59, column: 12, scope: !198)

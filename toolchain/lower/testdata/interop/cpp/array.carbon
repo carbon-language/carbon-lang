@@ -54,8 +54,8 @@ int H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !48
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !48, !nonnull !49, !align !50
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !50
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !50, !nonnull !51, !align !52
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %1, ptr noundef nonnull align 4 dereferenceable(4) %retval)
 // CHECK:STDOUT:   %2 = load i32, ptr %retval, align 4
 // CHECK:STDOUT:   ret i32 %2
@@ -79,19 +79,19 @@ int H() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CF.Main(ptr %a) #3 !dbg !32 {
+// CHECK:STDOUT: define i32 @_CF.Main(ptr %a) #3 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc5_43.2.array.index = getelementptr inbounds [5 x i32], ptr %a, i32 0, i32 2, !dbg !37
-// CHECK:STDOUT:   %.loc5_43.3 = load i32, ptr %.loc5_43.2.array.index, align 4, !dbg !37
-// CHECK:STDOUT:   ret i32 %.loc5_43.3, !dbg !38
+// CHECK:STDOUT:   %.loc5_43.2.array.index = getelementptr inbounds [5 x i32], ptr %a, i32 0, i32 2, !dbg !39
+// CHECK:STDOUT:   %.loc5_43.3 = load i32, ptr %.loc5_43.2.array.index, align 4, !dbg !39
+// CHECK:STDOUT:   ret i32 %.loc5_43.3, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #4 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #4 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %_), !dbg !43
-// CHECK:STDOUT:   store i32 %F.call, ptr %_1, align 4, !dbg !43
-// CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %_), !dbg !45
+// CHECK:STDOUT:   store i32 %F.call, ptr %_1, align 4, !dbg !45
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -100,9 +100,9 @@ int H() {
 // CHECK:STDOUT: attributes #3 = { nounwind }
 // CHECK:STDOUT: attributes #4 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!25}
-// CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !54, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!56}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!28}
+// CHECK:STDOUT: !llvm.module.flags = !{!53, !54, !55, !56, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!58}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -110,34 +110,34 @@ int H() {
 // CHECK:STDOUT: !3 = !{i64 0, i64 20, !2}
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !24 = !DIFile(filename: "array_value_param.carbon", directory: "")
-// CHECK:STDOUT: !25 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !24, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !27 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !28 = !{!26, !27}
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !30 = !{null, !27, !26}
+// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !DIFile(filename: "array_value_param.carbon", directory: "")
+// CHECK:STDOUT: !28 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !27, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !29 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !30 = !{!10, !29}
 // CHECK:STDOUT: !31 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !24, line: 5, type: !29, spFlags: DISPFlagDefinition, unit: !25, retainedNodes: !39)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !32, type: !27)
-// CHECK:STDOUT: !37 = !DILocation(line: 5, column: 40, scope: !32)
-// CHECK:STDOUT: !38 = !DILocation(line: 5, column: 33, scope: !32)
-// CHECK:STDOUT: !39 = !{!33}
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !24, line: 5, type: !31, spFlags: DISPFlagDefinition, unit: !25, retainedNodes: !44)
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !27)
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 2, scope: !40, type: !26)
-// CHECK:STDOUT: !43 = !DILocation(line: 5, column: 1, scope: !40)
-// CHECK:STDOUT: !44 = !{!41, !42}
-// CHECK:STDOUT: !45 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !46 = !{!"any pointer", !1, i64 0}
-// CHECK:STDOUT: !47 = !{!"p1 int", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!47, !47, i64 0}
-// CHECK:STDOUT: !49 = !{}
-// CHECK:STDOUT: !50 = !{i64 4}
-// CHECK:STDOUT: !51 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !52 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !53 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !54 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !55 = !{!"__libc_errno", !45, i64 0}
-// CHECK:STDOUT: !56 = !{!55, !45, i64 0}
+// CHECK:STDOUT: !32 = !{null, !29, !10}
+// CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !27, line: 5, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !41)
+// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !29)
+// CHECK:STDOUT: !39 = !DILocation(line: 5, column: 40, scope: !34)
+// CHECK:STDOUT: !40 = !DILocation(line: 5, column: 33, scope: !34)
+// CHECK:STDOUT: !41 = !{!35}
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.Main", scope: null, file: !27, line: 5, type: !33, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !46)
+// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !29)
+// CHECK:STDOUT: !44 = !DILocalVariable(arg: 2, scope: !42, type: !10)
+// CHECK:STDOUT: !45 = !DILocation(line: 5, column: 1, scope: !42)
+// CHECK:STDOUT: !46 = !{!43, !44}
+// CHECK:STDOUT: !47 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !48 = !{!"any pointer", !1, i64 0}
+// CHECK:STDOUT: !49 = !{!"p1 int", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!49, !49, i64 0}
+// CHECK:STDOUT: !51 = !{}
+// CHECK:STDOUT: !52 = !{i64 4}
+// CHECK:STDOUT: !53 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !54 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !55 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !56 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !57 = !{!"__libc_errno", !47, i64 0}
+// CHECK:STDOUT: !58 = !{!57, !47, i64 0}
 // CHECK:STDOUT:
