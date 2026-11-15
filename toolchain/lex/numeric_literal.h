@@ -121,6 +121,10 @@ class NumericLiteral {
   llvm::StringRef text_;
 };
 
+// Keep `NumericLiteral` within 16 bytes so that it can be passed and returned
+// in registers.
+static_assert(sizeof(NumericLiteral) <= 16);
+
 }  // namespace Carbon::Lex
 
 #endif  // CARBON_TOOLCHAIN_LEX_NUMERIC_LITERAL_H_

@@ -551,8 +551,7 @@ static auto TryParseSimpleDecimalInt(llvm::StringRef text)
     -> std::optional<int64_t> {
   CARBON_DCHECK(text.size() > 1);
   constexpr size_t MaxSimpleDigits = 18;
-  if (text.size() <= 1 || text.size() > MaxSimpleDigits || text.front() == '0')
-      [[unlikely]] {
+  if (text.size() > MaxSimpleDigits || text.front() == '0') [[unlikely]] {
     return std::nullopt;
   }
   int64_t value = 0;
