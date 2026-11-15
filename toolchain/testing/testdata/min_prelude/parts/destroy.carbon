@@ -31,7 +31,7 @@ constraint Destroy {
   extend require impls SubobjectDestroy & DestroyImpl;
 }
 
-// TODO: uncomment when `require impls` adds a witness table entry.
+// TODO: uncomment when blanket impls can be applied to partial types.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;
 // }

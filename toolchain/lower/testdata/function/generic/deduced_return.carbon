@@ -163,9 +163,9 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT: !53 = !DILocation(line: 3, column: 37, scope: !49)
 // CHECK:STDOUT: !54 = !{!50}
 // CHECK:STDOUT: !55 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ffbc82e0019b7bf2", scope: null, file: !55, line: 36, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !62)
+// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ffbc82e0019b7bf2", scope: null, file: !55, line: 35, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !62)
 // CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !56, type: !16)
-// CHECK:STDOUT: !61 = !DILocation(line: 36, column: 1, scope: !56)
+// CHECK:STDOUT: !61 = !DILocation(line: 35, column: 1, scope: !56)
 // CHECK:STDOUT: !62 = !{!57}
 // CHECK:STDOUT: !63 = distinct !DISubprogram(name: "Id", linkageName: "_CId.Main.1ac5a6b0e5910c46", scope: null, file: !4, line: 3, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
 // CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !63, type: !16)

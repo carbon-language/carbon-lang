@@ -320,9 +320,9 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: !73 = !DILocation(line: 21, column: 24, scope: !70)
 // CHECK:STDOUT: !74 = !DILocation(line: 21, column: 17, scope: !70)
 // CHECK:STDOUT: !75 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !75, line: 36, type: !49, spFlags: DISPFlagDefinition, unit: !44, retainedNodes: !82)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !75, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !44, retainedNodes: !82)
 // CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !45)
-// CHECK:STDOUT: !81 = !DILocation(line: 36, column: 1, scope: !76)
+// CHECK:STDOUT: !81 = !DILocation(line: 35, column: 1, scope: !76)
 // CHECK:STDOUT: !82 = !{!77}
 // CHECK:STDOUT: !83 = !{!"any pointer", !1, i64 0}
 // CHECK:STDOUT: !84 = !{!"p1 _ZTSN6Carbon4Main1CE", !83, i64 0}

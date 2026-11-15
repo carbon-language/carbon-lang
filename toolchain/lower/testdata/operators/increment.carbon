@@ -97,9 +97,9 @@ fn IncrSigned() {
 // CHECK:STDOUT: !24 = !DILocation(line: 396, column: 3, scope: !18)
 // CHECK:STDOUT: !25 = !{!19}
 // CHECK:STDOUT: !26 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !26, line: 36, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !26, line: 35, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !27, type: !6)
-// CHECK:STDOUT: !32 = !DILocation(line: 36, column: 1, scope: !27)
+// CHECK:STDOUT: !32 = !DILocation(line: 35, column: 1, scope: !27)
 // CHECK:STDOUT: !33 = !{!28}
 // CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !17, line: 331, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !6)
