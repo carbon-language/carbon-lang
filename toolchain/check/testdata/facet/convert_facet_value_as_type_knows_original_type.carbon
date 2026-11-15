@@ -132,7 +132,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Eats.assoc_type: type = assoc_entity_type @Eats [concrete]
-// CHECK:STDOUT:   %assoc0: %Eats.assoc_type = assoc_entity element0, @Eats.WithSelf.%Eats.WithSelf.Eat.decl [concrete]
+// CHECK:STDOUT:   %assoc0.0db: %Eats.assoc_type = assoc_entity element0, @Eats.WithSelf.%Eats.WithSelf.Eat.decl [concrete]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
 // CHECK:STDOUT:   %Goat.Bleet.type: type = fn_type @Goat.Bleet [concrete]
@@ -194,7 +194,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %Bleet.ref.loc23: %Goat.Bleet.type = name_ref Bleet, @Goat.%Goat.Bleet.decl [concrete = constants.%Goat.Bleet]
 // CHECK:STDOUT:   %Goat.Bleet.call.loc23: init %empty_tuple.type = call %Bleet.ref.loc23()
 // CHECK:STDOUT:   %x.ref.loc24: %Goat = name_ref x, %x
-// CHECK:STDOUT:   %Eat.ref.loc24: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Eat.ref.loc24: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.0db]
 // CHECK:STDOUT:   %impl.elem0.loc24: %.482 = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
 // CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc24: init %empty_tuple.type = call %impl.elem0.loc24()
 // CHECK:STDOUT:   %.loc26_6.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
@@ -229,7 +229,7 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %as_type.loc27: type = facet_access_type %.loc27_26 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc27_35: type = converted %.loc27_26, %as_type.loc27 [concrete = constants.%Goat]
 // CHECK:STDOUT:   %.loc27_8.2: ref %Goat = temporary %.loc27_6.2, %.loc27_8.1 [concrete = constants.%.4ea]
-// CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %Eat.ref.loc27: %Eats.assoc_type = name_ref Eat, @Eats.WithSelf.%assoc0 [concrete = constants.%assoc0.0db]
 // CHECK:STDOUT:   %impl.elem0.loc27: %.482 = impl_witness_access constants.%Eats.impl_witness, element0 [concrete = constants.%Goat.as.Eats.impl.Eat]
 // CHECK:STDOUT:   %Goat.as.Eats.impl.Eat.call.loc27: init %empty_tuple.type = call %impl.elem0.loc27()
 // CHECK:STDOUT:   %Destroy.facet.loc27_8.1: %Destroy.type = facet_value constants.%Goat, (constants.%DestroyImpl.impl_witness.c35, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
