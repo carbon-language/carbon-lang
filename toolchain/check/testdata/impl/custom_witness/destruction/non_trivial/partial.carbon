@@ -94,6 +94,32 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
+// --- todo_nontrivial_derived.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+base class Base {
+  var x: HasNonTrivialDestruction;
+}
+
+base class Derived {
+  extend base: Base;
+  var y: AlsoHasNonTrivialDestruction;
+}
+
+alias Partial = partial Derived;
+fn Make() -> Partial;
+
+fn Test() {
+  //@dump-sem-ir-begin
+  Partial as Core.SubobjectDestroy;
+  Partial as Core.Destroy;
+
+  var unused x: Partial = Make();
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- todo_nontrivial_member.carbon = $todo_nontrivial_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
