@@ -80,6 +80,46 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
+// --- todo_nontrivial_const_array.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `array.carbon`.
+
+import library "types";
+
+alias Array = const array(HasNonTrivialDestruction, 2);
+fn Make() -> Array;
+
+fn Test() {
+  //@dump-sem-ir-begin
+  Array as Core.SubobjectDestroy;
+  Array as Core.Destroy;
+
+  var unused x: Array = Make();
+  //@dump-sem-ir-end
+}
+
+// --- todo_nontrivial_array_of_const.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `array.carbon`.
+
+import library "types";
+
+alias Array = array(const HasNonTrivialDestruction, 2);
+fn Make() -> Array;
+
+fn Test() {
+  //@dump-sem-ir-begin
+  Array as Core.SubobjectDestroy;
+  Array as Core.Destroy;
+
+  var unused x: Array = Make();
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- todo_nontrivial_populated.carbon = $todo_nontrivial_populated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

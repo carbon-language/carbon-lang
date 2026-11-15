@@ -59,6 +59,62 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
+// --- todo_nontrivial_maybe_unformed_of_const.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `unformed.carbon`.
+
+class HasNonTrivialDestruction {
+  impl as Core.DestroyImpl {
+    fn Op(unused self) {}
+  }
+}
+
+class HasNonTrivialMember {
+  var x: HasNonTrivialDestruction;
+}
+
+alias MaybeUnformed = Core.MaybeUnformed(const HasNonTrivialMember);
+fn Make() -> MaybeUnformed;
+
+fn Test() {
+  //@dump-sem-ir-begin
+  MaybeUnformed as Core.SubobjectDestroy;
+  MaybeUnformed as Core.Destroy;
+
+  var unused x: MaybeUnformed = Make();
+  //@dump-sem-ir-end
+}
+
+// --- todo_nontrivial_const_maybe_unformed.carbon
+library "[[@TEST_NAME]]";
+
+// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
+// `unformed.carbon`.
+
+class HasNonTrivialDestruction {
+  impl as Core.DestroyImpl {
+    fn Op(unused self) {}
+  }
+}
+
+class HasNonTrivialMember {
+  var x: HasNonTrivialDestruction;
+}
+
+alias Const = const Core.MaybeUnformed(HasNonTrivialMember);
+fn Make() -> Const;
+
+fn Test() {
+  //@dump-sem-ir-begin
+  Const as Core.SubobjectDestroy;
+  Const as Core.Destroy;
+
+  var unused x: Const = Make();
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- todo_nontrivial_maybe_unformed.carbon = $todo_nontrivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
