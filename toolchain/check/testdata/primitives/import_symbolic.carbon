@@ -219,7 +219,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//bool, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//bool, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.c71: %I.assoc_type = import_ref Main//bool, loc5_12, loaded [concrete = constants.%assoc0.39d]
-// CHECK:STDOUT:   %Main.import_ref.d18: bool = import_ref Main//bool, loc9_34, loaded [concrete = constants.%false]
+// CHECK:STDOUT:   %Main.import_ref.d18: bool = import_ref Main//bool, loc9_13, loaded [concrete = constants.%false]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.d18), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.5d7: bool = import_ref Main//bool, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: bool = assoc_const_decl @value [concrete] {}
@@ -269,7 +269,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//char, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//char, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.b27: %I.assoc_type = import_ref Main//char, loc5_12, loaded [concrete = constants.%assoc0.3af]
-// CHECK:STDOUT:   %Main.import_ref.e0f: %char = import_ref Main//char, loc10_32, loaded [concrete = constants.%int_97]
+// CHECK:STDOUT:   %Main.import_ref.e0f: %char = import_ref Main//char, loc10_13, loaded [concrete = constants.%int_97]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.e0f), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.ed0: %char = import_ref Main//char, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %char = assoc_const_decl @value [concrete] {}
@@ -318,7 +318,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//char_literal, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//char_literal, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.d65: %I.assoc_type = import_ref Main//char_literal, loc5_12, loaded [concrete = constants.%assoc0.ca7]
-// CHECK:STDOUT:   %Main.import_ref.43e: Core.CharLiteral = import_ref Main//char_literal, loc10_32, loaded [concrete = constants.%.54f]
+// CHECK:STDOUT:   %Main.import_ref.43e: Core.CharLiteral = import_ref Main//char_literal, loc10_13, loaded [concrete = constants.%.54f]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.43e), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.a77: Core.CharLiteral = import_ref Main//char_literal, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: Core.CharLiteral = assoc_const_decl @value [concrete] {}
@@ -374,7 +374,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//float, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//float, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.9d8: %I.assoc_type = import_ref Main//float, loc5_12, loaded [concrete = constants.%assoc0.ad2]
-// CHECK:STDOUT:   %Main.import_ref.c6c: %f64.761 = import_ref Main//float, loc10_32, loaded [concrete = constants.%float]
+// CHECK:STDOUT:   %Main.import_ref.c6c: %f64.761 = import_ref Main//float, loc10_13, loaded [concrete = constants.%float]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.c6c), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.d6b: %f64.761 = import_ref Main//float, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %f64.761 = assoc_const_decl @value [concrete] {}
@@ -425,7 +425,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//float_literal, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//float_literal, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.da8: %I.assoc_type = import_ref Main//float_literal, loc5_12, loaded [concrete = constants.%assoc0.cf2]
-// CHECK:STDOUT:   %Main.import_ref.78a: Core.FloatLiteral = import_ref Main//float_literal, loc10_32, loaded [concrete = constants.%float]
+// CHECK:STDOUT:   %Main.import_ref.78a: Core.FloatLiteral = import_ref Main//float_literal, loc10_13, loaded [concrete = constants.%float]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.78a), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.433: Core.FloatLiteral = import_ref Main//float_literal, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: Core.FloatLiteral = assoc_const_decl @value [concrete] {}
@@ -481,7 +481,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//int, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//int, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.87c: %I.assoc_type = import_ref Main//int, loc5_12, loaded [concrete = constants.%assoc0.905]
-// CHECK:STDOUT:   %Main.import_ref.304: %i32 = import_ref Main//int, loc10_30, loaded [concrete = constants.%int_8]
+// CHECK:STDOUT:   %Main.import_ref.304: %i32 = import_ref Main//int, loc10_13, loaded [concrete = constants.%int_8]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.304), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.c4e: %i32 = import_ref Main//int, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %i32 = assoc_const_decl @value [concrete] {}
@@ -532,7 +532,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//int_literal, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//int_literal, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.07d: %I.assoc_type = import_ref Main//int_literal, loc5_12, loaded [concrete = constants.%assoc0.fa7]
-// CHECK:STDOUT:   %Main.import_ref.bc3: Core.IntLiteral = import_ref Main//int_literal, loc10_30, loaded [concrete = constants.%int_7]
+// CHECK:STDOUT:   %Main.import_ref.bc3: Core.IntLiteral = import_ref Main//int_literal, loc10_13, loaded [concrete = constants.%int_7]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.bc3), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.c4c: Core.IntLiteral = import_ref Main//int_literal, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: Core.IntLiteral = assoc_const_decl @value [concrete] {}
@@ -588,7 +588,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//uint, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//uint, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.b5a: %I.assoc_type = import_ref Main//uint, loc5_12, loaded [concrete = constants.%assoc0.454]
-// CHECK:STDOUT:   %Main.import_ref.399: %u32 = import_ref Main//uint, loc10_30, loaded [concrete = constants.%int_8]
+// CHECK:STDOUT:   %Main.import_ref.399: %u32 = import_ref Main//uint, loc10_13, loaded [concrete = constants.%int_8]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.399), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.ca7: %u32 = import_ref Main//uint, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %u32 = assoc_const_decl @value [concrete] {}

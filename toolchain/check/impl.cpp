@@ -557,7 +557,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId impl_loc_id,
   }
 
   table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
-      context, impl_loc_id,
+      context, assign_loc_id,
       {.type_id = context.insts().Get(value_id).type_id(),
        .inst_id = value_id});
 }
