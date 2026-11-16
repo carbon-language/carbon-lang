@@ -642,14 +642,6 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId impl_loc_id,
     SubstWithImplWitness callbacks(&context, &impl, witness_inst_id);
     auto rhs =
         rewrite.rhs.SubstIdentifiedWitnesses(context, impl_loc_id, callbacks);
-
-    // We don't want to leak `.Self` into the witness table, since it loses its
-    // meaning outside of the impl declaration. Replace any use of `.Self` here
-    // with the impl's self type.
-    //
-    // TODO: This is redundant now with the SubstIdentifiedWitnesses above?
-    rhs = SubstPeriodSelf(context, impl_loc_id, rhs,
-                          context.constant_values().Get(impl.self_id));
     SetTableEntry(context, impl_loc_id, constraint_loc_id, impl, interface,
                   table, access.index, rhs);
   }
