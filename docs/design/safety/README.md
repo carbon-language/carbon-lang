@@ -279,24 +279,24 @@ how they approach both temporal and data-race safety.
 Carbon uses a combination of language mechanisms to enforce memory safety, each
 of which will have its own document that goes into greater detail:
 
--   Places and place sets: give compile-time names to runtime object locations,
-    and track what is known about those locations at compile-time.
--   Alias tracking: is how the signatures of functions and type definitions
+-   _Places_ and _place sets_ give compile-time names to runtime object
+    locations, and track what is known about those locations at compile-time.
+-   _Alias tracking_ is how the signatures of functions and type definitions
     allow the compiler to determine which pointers and references could point to
     which places and place sets.
--   Safety effects: are annotations on a function's return to mark that callers
+-   _Safety effects_ are annotations on a function's return to mark that callers
     must update their safety tracking state.
--   Ownership: allows an owner to be responsible for data that can still have
+-   _Ownership_ allows an owner to be responsible for data that can still have
     independent fate (unlike fields), such as the items in a container. Carbon
     supports both single and multiple (reference-counted) ownership.
--   Type and place capabilities: restrict what can be done with an object based
-    on its type or place, and prevent uses of objects that have capabilities
-    that would allow them to violate safety invariants.
--   Flow-sensitivity: allows omitting some safety annotations within a function
+-   _Type capabilities_ and _place capabilities_ restrict what can be done with
+    an object based on its type or place, and prevent uses of objects that have
+    capabilities that would allow them to violate safety invariants.
+-   _Flow-sensitivity_ allows omitting some safety annotations within a function
     body, to be more concise and to allow them to be different at different
     points in the function as determined by the compiler's analysis to have
     greater precision.
--   Erasure of safety information before lowering: allows separate compilation
+-   _Erasure_ of safety information before lowering allows separate compilation
     and interop with unsafe code including C++.
 
 ### Type safety
@@ -316,7 +316,7 @@ invalidate any existing pointers into contained data.
 ### Initialization safety
 
 To prevent reading uninitialized or moved-from memory without requiring every
-variable to be initialized at declaration, Carbon defines an _unformed state_
+variable to be initialized at declaration, Carbon defines an _[unformed state]_
 that types can opt into for objects before initialization or after a move:
 
 -   Such types allow specific operations, such as assignment and destruction,
@@ -343,6 +343,8 @@ potentially unformed objects to operations valid in that state:
 Safety effects on function signatures mark functions that definitely initialize
 an object or that may leave an object in an unformed state (such as by moving
 from it).
+
+[unformed state]: /docs/design/README.md#unformed-state
 
 ### Spatial safety
 
@@ -380,8 +382,8 @@ ingredients:
 -   The allocation will have an owner.
 -   Owners have a place set that the allocations live in.
 -   Pointers have a place set that says which places the pointer can point to.
--   Local pointers may omit that place set and have it determined by the
-    compiler with flow sensitivity.
+    -   Local pointers may omit that place set and have it determined by the
+        compiler with flow sensitivity.
 -   Operations that can free or reallocate the allocation require write access
     to the owner and are marked with an `invalidate` effect.
 -   An `invalidate` effect includes a place set specifying what is invalidated

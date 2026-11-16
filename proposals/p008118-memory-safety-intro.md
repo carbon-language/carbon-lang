@@ -75,8 +75,9 @@ This solves the three core requirements from the ["problem" section](#problem):
     data-race safety, along with immutability of borrowed values, are enforced
     at compile time without requiring reference counting or a runtime garbage
     collector. Initialization safety combines compile-time tracking with
-    per-type unformed states, and spatial safety uses low-overhead runtime
-    bounds checking in standard library types.
+    per-type [unformed states](/docs/design/README.md#unformed-state), and
+    spatial safety uses low-overhead runtime bounds checking in standard library
+    types.
 -   **Expressivity for C++ migration**: Restricting exclusivity to single
     ownership rather than mutable pointer types allows non-exclusive mutable
     pointers without multiplying incompatible pointer kinds. Flow-sensitivity
