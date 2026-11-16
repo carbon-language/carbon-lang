@@ -1496,20 +1496,17 @@ struct WhereExpr {
 using WhereAssignmentIntroducer =
     LeafNode<NodeKind::WhereAssignmentIntroducer, Lex::WhereTokenIndex>;
 
-struct WhereAssignmentOperator {
-  static constexpr auto Kind =
-      NodeKind::WhereAssignmentOperator.Define({.child_count = 2});
-  IdentifierNameNotBeforeSignatureId lhs;
-  Lex::EqualTokenIndex token;
-  AnyExprId rhs;
-};
+using WhereAssignmentOperator =
+    LeafNode<NodeKind::WhereAssignmentOperator, Lex::EqualTokenIndex>;
 
 struct WhereAssignmentDecl {
   static constexpr auto Kind = NodeKind::WhereAssignmentDecl.Define(
       {.category = NodeCategory::Decl,
        .bracketed_by = WhereAssignmentIntroducer::Kind});
   WhereAssignmentIntroducerId introducer;
+  IdentifierNameNotBeforeSignatureId lhs;
   WhereAssignmentOperatorId op;
+  AnyExprId rhs;
   Lex::SemiTokenIndex token;
 };
 
