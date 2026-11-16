@@ -642,15 +642,10 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  auto core_interface_id =
-      GetCoreInterfaceId(context, loc_id, info.interface_name);
-  if (!core_interface_id.has_value()) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return MakeBuiltinOperatorFunction(context, loc_id, arg_type_ids,
-                                     return_type_id, info.op_name,
-                                     info.builtin_kind, core_interface_id);
+  return MakeBuiltinOperatorFunction(
+      context, loc_id, arg_type_ids, return_type_id, info.op_name,
+      info.builtin_kind,
+      GetCoreInterfaceId(context, loc_id, info.interface_name));
 }
 
 namespace {
