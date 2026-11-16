@@ -1042,6 +1042,10 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, *format);
 }
 
+// Builds a custom witness for `Core.TrivialDestroy` and returns its `InstId` if
+// `Self` has trivial destruction. Returns `InstId::None` if we should defer
+// building the witness, and `std::nullopt` if the object doesn't have trivial
+// destruction.
 static auto MakeTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,

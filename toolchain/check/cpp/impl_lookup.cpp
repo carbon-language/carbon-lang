@@ -277,6 +277,8 @@ static auto BuildCppSubobjectDestroyWitness(
                             query_specific_interface, {fn_id});
 }
 
+// Attempts to build a witness a trivially destructible C++ type. Returns
+// `SemIR::InstId::None` if the type isn't trivially destructible.
 static auto BuildCppTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
