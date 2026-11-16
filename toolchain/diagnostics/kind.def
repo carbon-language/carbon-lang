@@ -206,6 +206,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingIdentifier)
 CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingEquals)
 CARBON_DIAGNOSTIC_KIND(WhereAssignmentInWrongScope)
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentRuntimeValue)
 
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)

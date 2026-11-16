@@ -447,7 +447,122 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
   SemIR::InstId impl_witness_id_;
 };
 
-auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
+static auto SetTableEntry(Context& context, SemIR::LocId impl_loc_id,
+                          SemIR::LocId assign_loc_id, const SemIR::Impl& impl,
+                          const SemIR::Interface& interface,
+                          llvm::MutableArrayRef<SemIR::InstId> table,
+                          SemIR::ElementIndex index,
+                          SemIR::ConstantId value_const_id) -> void {
+  CARBON_CHECK(interface.is_complete());
+
+  auto& table_entry = table[index.index];
+  if (value_const_id == SemIR::ErrorInst::ConstantId) {
+    table_entry = SemIR::ErrorInst::InstId;
+    return;
+  }
+
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+  LoadImportRef(context, assoc_entities[index.index]);
+  auto decl_id =
+      context.constant_values().GetConstantInstId(assoc_entities[index.index]);
+  CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+
+  if (decl_id == SemIR::ErrorInst::InstId) {
+    table_entry = SemIR::ErrorInst::InstId;
+    return;
+  }
+
+  auto value_id = context.constant_values().GetInstId(value_const_id);
+
+  auto assoc_constant_decl =
+      context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id);
+  if (!assoc_constant_decl) {
+    auto type_id = context.insts().Get(decl_id).type_id();
+    auto type_inst = context.types().GetAsInst(type_id);
+    auto fn_type = type_inst.As<SemIR::FunctionType>();
+    const auto& fn = context.functions().Get(fn_type.function_id);
+    CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
+                      "assigning to associated function {0}", SemIR::NameId);
+    context.emitter().Emit(assign_loc_id, RewriteForAssociatedFunction,
+                           fn.name_id);
+    table_entry = SemIR::ErrorInst::InstId;
+    return;
+  }
+
+  // If the associated constant has a symbolic type, convert the rewrite
+  // value to that type now we know the value of `Self`.
+  SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
+  if (assoc_const_type_id.is_symbolic()) {
+    auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+        context, impl_loc_id, interface.generic_id,
+        interface.generic_with_self_id, impl.interface.specific_id,
+        context.constant_values().Get(impl.self_id));
+
+    // Get the type of the associated constant in this interface with this
+    // value for `Self`.
+    assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
+        context, interface_with_self_specific_id, decl_id);
+    // Perform the conversion of the value to the type. We skipped this when
+    // forming the facet type because the type of the associated constant
+    // was symbolic.
+    auto converted_inst_id = ConvertToValueOfType(
+        context, assign_loc_id, value_id, assoc_const_type_id);
+    // Canonicalize the converted constant value.
+    converted_inst_id =
+        context.constant_values().GetConstantInstId(converted_inst_id);
+    // The result of conversion can be non-constant even if the original
+    // value was constant.
+    if (converted_inst_id.has_value()) {
+      value_id = converted_inst_id;
+    } else {
+      const auto& assoc_const = context.associated_constants().Get(
+          assoc_constant_decl->assoc_const_id);
+      CARBON_DIAGNOSTIC(
+          AssociatedConstantNotConstantAfterConversion, Error,
+          "associated constant {0} given value {1} that is not constant "
+          "after conversion to {2}",
+          SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
+      context.emitter().Emit(
+          assign_loc_id, AssociatedConstantNotConstantAfterConversion,
+          assoc_const.name_id, value_id, assoc_const_type_id);
+      value_id = SemIR::ErrorInst::InstId;
+    }
+  }
+
+  CARBON_CHECK(
+      value_id == context.constant_values().GetConstantInstId(value_id),
+      "value for associated constant is not canonical.");
+
+  // The same entry may be written by a named constraint and the impl, or by
+  // two named constraints, etc. They need to all match.
+  if (table_entry != SemIR::InstId::ImplWitnessTablePlaceholder) {
+    if (context.constant_values().Get(table_entry) !=
+        context.constant_values().Get(value_id)) {
+      if (table_entry != SemIR::ErrorInst::InstId) {
+        const auto& assoc_const = context.associated_constants().Get(
+            assoc_constant_decl->assoc_const_id);
+        CARBON_DIAGNOSTIC(
+            AssociatedConstantGivenDifferentValues, Error,
+            "associated constant {0} given value {1} that is different from "
+            "previously given value {2}",
+            SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
+        context.emitter().Emit(assign_loc_id,
+                               AssociatedConstantGivenDifferentValues,
+                               assoc_const.name_id, value_id, table_entry);
+      }
+      table_entry = SemIR::ErrorInst::InstId;
+    }
+    return;
+  }
+
+  table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
+      context, impl_loc_id,
+      {.type_id = context.insts().Get(value_id).type_id(),
+       .inst_id = value_id});
+}
+
+auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId impl_loc_id,
                                   SemIR::LocId constraint_loc_id,
                                   const SemIR::Impl& impl,
                                   IdentifiedFacetTypeId identified_id,
@@ -459,11 +574,11 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     // The witness table is not needed until the definition. Make a placeholder
     // for the declaration.
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-        context, loc_id,
+        context, impl_loc_id,
         {.elements_id = context.inst_blocks().AddPlaceholder(),
          .impl_id = SemIR::ImplId::None});
     return AddInst<SemIR::ImplWitness>(
-        context, loc_id,
+        context, impl_loc_id,
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
@@ -479,12 +594,6 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
 
   auto assoc_entities =
       context.inst_blocks().Get(interface.associated_entities_id);
-  // TODO: When this function is used for things other than just impls, may want
-  // to only load the specific associated entities that are mentioned in rewrite
-  // rules.
-  for (auto decl_id : assoc_entities) {
-    LoadImportRef(context, decl_id);
-  }
 
   SemIR::InstId witness_inst_id = SemIR::InstId::None;
   llvm::MutableArrayRef<SemIR::InstId> table;
@@ -497,11 +606,11 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     }
 
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
-        context, loc_id,
+        context, impl_loc_id,
         {.elements_id = elements_id, .impl_id = SemIR::ImplId::None});
 
     witness_inst_id = AddInst<SemIR::ImplWitness>(
-        context, loc_id,
+        context, impl_loc_id,
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
          .witness_table_id = witness_table_inst_id,
          .specific_id = self_specific_id});
@@ -531,115 +640,18 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     // also possible when an associated constant is used from the impl
     // declaration but is not set in the declaration.
     SubstWithImplWitness callbacks(&context, &impl, witness_inst_id);
-    auto rhs = rewrite.rhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
-
-    auto rewrite_inst_id = context.constant_values().GetInstId(rhs);
-    if (rewrite_inst_id == SemIR::ErrorInst::InstId) {
-      table_entry = SemIR::ErrorInst::InstId;
-      continue;
-    }
+    auto rhs =
+        rewrite.rhs.SubstIdentifiedWitnesses(context, impl_loc_id, callbacks);
 
     // We don't want to leak `.Self` into the witness table, since it loses its
     // meaning outside of the impl declaration. Replace any use of `.Self` here
     // with the impl's self type.
-    rewrite_inst_id = context.constant_values().GetInstId(SubstPeriodSelf(
-        context, loc_id, context.constant_values().Get(rewrite_inst_id),
-        context.constant_values().Get(impl.self_id)));
-
-    auto decl_id = context.constant_values().GetConstantInstId(
-        assoc_entities[access.index.index]);
-    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (decl_id == SemIR::ErrorInst::InstId) {
-      table_entry = SemIR::ErrorInst::InstId;
-      continue;
-    }
-
-    auto assoc_constant_decl =
-        context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id);
-    if (!assoc_constant_decl) {
-      auto type_id = context.insts().Get(decl_id).type_id();
-      auto type_inst = context.types().GetAsInst(type_id);
-      auto fn_type = type_inst.As<SemIR::FunctionType>();
-      const auto& fn = context.functions().Get(fn_type.function_id);
-      CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
-                        "rewrite specified for associated function {0}",
-                        SemIR::NameId);
-      context.emitter().Emit(constraint_loc_id, RewriteForAssociatedFunction,
-                             fn.name_id);
-      table_entry = SemIR::ErrorInst::InstId;
-      continue;
-    }
-
-    // If the associated constant has a symbolic type, convert the rewrite
-    // value to that type now we know the value of `Self`.
-    SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
-    if (assoc_const_type_id.is_symbolic()) {
-      auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-          context, loc_id, interface.generic_id, interface.generic_with_self_id,
-          impl.interface.specific_id,
-          context.constant_values().Get(impl.self_id));
-
-      // Get the type of the associated constant in this interface with this
-      // value for `Self`.
-      assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
-          context, interface_with_self_specific_id, decl_id);
-      // Perform the conversion of the value to the type. We skipped this when
-      // forming the facet type because the type of the associated constant
-      // was symbolic.
-      auto converted_inst_id = ConvertToValueOfType(
-          context, constraint_loc_id, rewrite_inst_id, assoc_const_type_id);
-      // Canonicalize the converted constant value.
-      converted_inst_id =
-          context.constant_values().GetConstantInstId(converted_inst_id);
-      // The result of conversion can be non-constant even if the original
-      // value was constant.
-      if (converted_inst_id.has_value()) {
-        rewrite_inst_id = converted_inst_id;
-      } else {
-        const auto& assoc_const = context.associated_constants().Get(
-            assoc_constant_decl->assoc_const_id);
-        CARBON_DIAGNOSTIC(
-            AssociatedConstantNotConstantAfterConversion, Error,
-            "associated constant {0} given value {1} that is not constant "
-            "after conversion to {2}",
-            SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
-        context.emitter().Emit(
-            constraint_loc_id, AssociatedConstantNotConstantAfterConversion,
-            assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
-        rewrite_inst_id = SemIR::ErrorInst::InstId;
-      }
-    }
-
-    CARBON_CHECK(rewrite_inst_id == context.constant_values().GetConstantInstId(
-                                        rewrite_inst_id),
-                 "Rewritten value for associated constant is not canonical.");
-
-    // The same entry may be written by a named constraint and the impl, or by
-    // two named constraints, etc. They need to all match.
-    if (table_entry != SemIR::InstId::ImplWitnessTablePlaceholder) {
-      if (context.constant_values().Get(table_entry) !=
-          context.constant_values().Get(rewrite_inst_id)) {
-        if (table_entry != SemIR::ErrorInst::InstId) {
-          const auto& assoc_const = context.associated_constants().Get(
-              assoc_constant_decl->assoc_const_id);
-          CARBON_DIAGNOSTIC(
-              AssociatedConstantGivenDifferentValues, Error,
-              "associated constant {0} given value {1} that is different from "
-              "previously given value {2}",
-              SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
-          context.emitter().Emit(
-              constraint_loc_id, AssociatedConstantGivenDifferentValues,
-              assoc_const.name_id, rewrite_inst_id, table_entry);
-        }
-        table_entry = SemIR::ErrorInst::InstId;
-      }
-      continue;
-    }
-
-    table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
-        context, loc_id,
-        {.type_id = context.insts().Get(rewrite_inst_id).type_id(),
-         .inst_id = rewrite_inst_id});
+    //
+    // TODO: This is redundant now with the SubstIdentifiedWitnesses above?
+    rhs = SubstPeriodSelf(context, impl_loc_id, rhs,
+                          context.constant_values().Get(impl.self_id));
+    SetTableEntry(context, impl_loc_id, constraint_loc_id, impl, interface,
+                  table, access.index, rhs);
   }
   return witness_inst_id;
 }
@@ -1085,6 +1097,60 @@ auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
   auto inst = context.constant_values().GetInstAs<SemIR::ImplSelfWitness>(
       interface_in_specific);
   return context.specific_interfaces().Get(inst.specific_interface_id);
+}
+
+auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
+                              const SemIR::Impl& impl,
+                              SemIR::NameId lhs_name_id,
+                              SemIR::InstId rhs_inst_id) -> void {
+  if (impl.witness_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  // If not complete, an error would already be emitted, and the witness would
+  // be an ErrorInst.
+  CARBON_CHECK(interface.is_complete());
+
+  llvm::SmallVector<LookupScope> scopes;
+  auto lookup_const_id =
+      context.constant_values().Get(interface.latest_decl_id());
+  auto self_const_id = context.constant_values().Get(impl.self_id);
+  if (!AppendLookupScopesForConstant(context, loc_id, lookup_const_id,
+                                     self_const_id, false, &scopes)) {
+    CARBON_FATAL("no lookup scope for interface: {0}", interface);
+  }
+
+  auto result = LookupQualifiedName(context, loc_id, lhs_name_id, scopes,
+                                    /*required=*/true);
+  if (result.scope_result.target_inst_id() == SemIR::ErrorInst::InstId) {
+    return;
+  }
+  auto assoc_entity = context.insts().TryGetAs<SemIR::AssociatedEntity>(
+      result.scope_result.target_inst_id());
+  if (!assoc_entity) {
+    CARBON_FATAL(
+        "interface contains `{0}` for name `{1}`; expected an associated "
+        "entity",
+        context.insts().Get(result.scope_result.target_inst_id()),
+        context.names().GetFormatted(lhs_name_id));
+  }
+
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
+  auto table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto table_block = context.inst_blocks().GetMutable(table.elements_id);
+
+  auto value_const_id = context.constant_values().Get(rhs_inst_id);
+  if (!value_const_id.is_constant()) {
+    CARBON_DIAGNOSTIC(WhereAssignmentRuntimeValue, Error,
+                      "runtime value assigned to an associated constant");
+    context.emitter().Emit(loc_id, WhereAssignmentRuntimeValue);
+    value_const_id = SemIR::ErrorInst::ConstantId;
+  }
+
+  SetTableEntry(context, SemIR::LocId(impl.latest_decl_id()), loc_id, impl,
+                interface, table_block, assoc_entity->index, value_const_id);
 }
 
 }  // namespace Carbon::Check

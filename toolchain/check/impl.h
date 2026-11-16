@@ -51,7 +51,7 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 // associated constant members of that interface by rewrite constraints in the
 // constraint facet type. `self_specific_id` will be the `specific_id` of the
 // resulting witness.
-auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
+auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId impl_loc_id,
                                   SemIR::LocId constraint_loc_id,
                                   const SemIR::Impl& impl,
                                   IdentifiedFacetTypeId identified_id,
@@ -113,6 +113,14 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
 auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,
                                 SemIR::SpecificId specific_id)
     -> SemIR::SpecificInterface;
+
+// Sets a single entry in the impl's witness table. If the entry name is
+// invalid, the entry is already set to a different value, or the value is of
+// the wrong type, then an error will be diagnosed.
+auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
+                              const SemIR::Impl& impl,
+                              SemIR::NameId lhs_name_id,
+                              SemIR::InstId rhs_inst_id) -> void;
 
 }  // namespace Carbon::Check
 

@@ -9,6 +9,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/identified_facet_type.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
@@ -658,7 +659,10 @@ auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
     return true;
   }
 
-  return context.TODO(node_id, "where assignment decl");
+  auto impl_decl = context.insts().GetAs<SemIR::ImplDecl>(scope_inst_id);
+  const auto& impl = context.impls().Get(impl_decl.impl_id);
+  SetImplWitnessTableEntry(context, node_id, impl, lhs_name_id, rhs_inst_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

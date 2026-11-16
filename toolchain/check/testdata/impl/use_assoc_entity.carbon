@@ -267,17 +267,11 @@ interface J {
 class A {}
 
 impl A as J {
-  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:13
+  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:13
   // CHECK:STDERR: ->     │   where U = T;
   // CHECK:STDERR:        ·             ┳
   // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
   // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
-  // CHECK:STDERR: ->     │   where U = T;
-  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
-  // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `where assignment decl` [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where U = T;
