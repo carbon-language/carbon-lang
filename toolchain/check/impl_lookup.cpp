@@ -73,7 +73,7 @@ static auto FindAssociatedImportIRs(
         import_ir_inst_id.has_value()) {
       result.push_back(
           sem_ir->import_ir_insts().Get(import_ir_inst_id).ir_id());
-    } else if (import_ir_inst.ir_id().has_value()) {
+    } else if (import_ir_inst.ir_id() != SemIR::ImportIRId::Local) {
       result.push_back(import_ir_inst.ir_id());
     }
   };

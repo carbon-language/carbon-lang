@@ -73,6 +73,14 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
                expected_import_ir_id);
 }
 
+auto SetLocalIR(Context& context) -> void {
+  SetSpecialImportIR(context,
+                     {.decl_id = SemIR::InstId::None,
+                      .is_export = false,
+                      .sem_ir = &context.sem_ir()},
+                     SemIR::ImportIRId::Local);
+}
+
 auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
   SetSpecialImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
   SetSpecialImportIR(context,
@@ -114,14 +122,11 @@ static auto GetCanonicalImportIRInst(Context& context,
   auto [canonical_ir, canonical_inst_id] =
       GetCanonicalFileAndInstId(target_ir, target_inst_id);
 
-  auto ir_id = SemIR::ImportIRId::None;
-  if (canonical_ir != &context.sem_ir()) {
-    // This uses AddImportIR in case it was indirectly found, which can
-    // happen with two or more steps of exports.
-    ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::None,
-                                  .is_export = false,
-                                  .sem_ir = canonical_ir});
-  }
+  // This uses AddImportIR in case it was indirectly found, which can
+  // happen with two or more steps of exports.
+  auto ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::None,
+                                     .is_export = false,
+                                     .sem_ir = canonical_ir});
   return SemIR::ImportIRInst(ir_id, canonical_inst_id);
 }
 
@@ -159,7 +164,10 @@ class ImportContext {
   explicit ImportContext(Context* context, SemIR::ImportIRId import_ir_id)
       : context_(context),
         import_ir_id_(import_ir_id),
-        import_ir_(*context_->import_irs().Get(import_ir_id).sem_ir) {}
+        import_ir_(*context_->import_irs().Get(import_ir_id).sem_ir) {
+    CARBON_CHECK(import_ir_id.has_value() &&
+                 import_ir_id != SemIR::ImportIRId::Local);
+  }
 
   // Returns the file we are importing from.
   auto import_ir() -> const SemIR::File& { return import_ir_; }

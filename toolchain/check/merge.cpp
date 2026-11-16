@@ -99,7 +99,7 @@ auto DiagnoseIfInvalidRedecl(Context& context, Lex::TokenKind decl_kind,
                              SemIR::NameId name_id, RedeclInfo new_decl,
                              RedeclInfo prev_decl,
                              SemIR::ImportIRId import_ir_id) -> void {
-  if (!import_ir_id.has_value()) {
+  if (import_ir_id == SemIR::ImportIRId::Local) {
     // Check for disallowed redeclarations in the same file.
     if (!new_decl.is_definition) {
       DiagnoseRedundant(context, decl_kind, name_id, new_decl.loc_id,
@@ -743,7 +743,7 @@ auto TryMergeRedecl(Context& context,
 
   auto prev_entity_id = MergeRedeclEntityInfo<EntityT>::EntityIdT::None;
   auto prev_type_id = SemIR::TypeId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
+  auto prev_import_ir_id = SemIR::ImportIRId::Local;
   CARBON_KIND_SWITCH(prev) {
     case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
       if constexpr (IsFunction) {
@@ -882,7 +882,7 @@ auto TryMergeRedecl(Context& context,
     prev_entity.MergeDefinition(entity_info.new_entity);
   }
 
-  auto replace_prev_inst = prev_import_ir_id.has_value();
+  auto replace_prev_inst = prev_import_ir_id != SemIR::ImportIRId::Local;
   if constexpr (IsClass) {
     replace_prev_inst |=
         prev_entity.is_extern && !entity_info.new_entity.is_extern;

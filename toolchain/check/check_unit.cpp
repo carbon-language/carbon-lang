@@ -45,7 +45,8 @@ namespace Carbon::Check {
 
 // Returns the number of imported IRs, to assist in Context construction.
 static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
-  int count = 0;
+  // 1 for `ImportIRId::Local`.
+  int count = 1;
   for (auto& package_imports : unit_and_imports->package_imports) {
     count += package_imports.imports.size();
   }
@@ -107,6 +108,7 @@ auto CheckUnit::Run() -> void {
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {
+  SetLocalIR(context_);
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
       GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
