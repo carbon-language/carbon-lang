@@ -181,9 +181,9 @@ impl C as Z {
 // CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Z'
 // CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─WhereAssignmentIntroducer 'where'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Z1'
-// CHECK:STDOUT:   │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'Z1'
 // CHECK:STDOUT:   │ │ ├─WhereAssignmentOperator '='
+// CHECK:STDOUT:   │ │ ├─IntLiteral '1'
 // CHECK:STDOUT:   │ ├─WhereAssignmentDecl ';' has_error
 // CHECK:STDOUT:   ├─ImplDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
