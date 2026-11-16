@@ -180,7 +180,7 @@ Disadvantages:
     a single reference kind could not cleanly express different methods on an
     object requiring different capabilities from its fields.
 
-These led to worries about code compositionality. So we put this idea on hold to
+These led to worries about code composability. So we put this idea on hold to
 be used as a backup in case other ideas did not pan out. If we were to revisit
 this approach, we would consider something like
 [The Algebra of Loans in Rust](https://nadrieril.github.io/blog/2025/12/21/the-algebra-of-loans-in-rust.html),
