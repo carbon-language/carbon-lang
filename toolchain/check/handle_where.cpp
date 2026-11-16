@@ -649,8 +649,8 @@ auto HandleParseNode(Context& /*context*/,
 
 auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
     -> bool {
-  [[maybe_unused]] auto rhs_inst_id = context.node_stack().PopExpr();
-  [[maybe_unused]] auto lhs_name_id =
+  auto [rhs_node_id, rhs_inst_id] = context.node_stack().PopExprWithNodeId();
+  auto lhs_name_id =
       context.node_stack()
           .Pop<Parse::NodeKind::IdentifierNameNotBeforeSignature>();
   auto scope_inst_id =

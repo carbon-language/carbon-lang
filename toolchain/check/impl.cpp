@@ -1118,8 +1118,13 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   if (result.scope_result.target_inst_id() == SemIR::ErrorInst::InstId) {
     return;
   }
-  auto assoc_entity = context.insts().TryGetAs<SemIR::AssociatedEntity>(
-      result.scope_result.target_inst_id());
+
+  auto specific_target =
+      SemIR::GetConstantValueInSpecific(context.sem_ir(), result.specific_id,
+                                        result.scope_result.target_inst_id());
+  auto assoc_entity =
+      context.constant_values().TryGetInstAs<SemIR::AssociatedEntity>(
+          specific_target);
   if (!assoc_entity) {
     CARBON_FATAL(
         "interface contains `{0}` for name `{1}`; expected an associated "
@@ -1132,6 +1137,13 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   auto table =
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
   auto table_block = context.inst_blocks().GetMutable(table.elements_id);
+
+  // Convert the RHS to a value of the associated entity's type, inside the
+  // specific interface with the impl's self, so that it's always concrete.
+  auto assoc_entity_type_id =
+      context.insts().Get(assoc_entity->decl_id).type_id();
+  rhs_inst_id = ConvertToValueOfType(context, SemIR::LocId(rhs_inst_id),
+                                     rhs_inst_id, assoc_entity_type_id);
 
   auto value_const_id = context.constant_values().Get(rhs_inst_id);
   if (!value_const_id.is_constant()) {
