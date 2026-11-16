@@ -82,6 +82,42 @@ let Z1: type = type;
 // CHECK:STDERR:
 where Z1 = type;
 
+// --- fail_fn_invalid_scope.carbon
+library "[[@TEST_NAME]]";
+
+let Z1: type = type;
+fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_fn_invalid_scope.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   where Z1 = type;
+  // CHECK:STDERR:        ·   ┳━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `where` assignment declaration found in invalid scope; must be in
+  // CHECK:STDERR:        ·      ┃        `impl` definition
+  // CHECK:STDERR:        ·      ┃        [WhereAssignmentInWrongScope]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  where Z1 = type;
+}
+
+// --- fail_region_invalid_scope.carbon
+library "[[@TEST_NAME]]";
+
+let Z1: type = type;
+fn F() {
+  // If blocks have a scope that has no declaration scope inst associated with
+  // them.
+  if (true) {
+    // CHECK:STDERR:        ╭─┤ fail_region_invalid_scope.carbon:[[@LINE+8]]:5
+    // CHECK:STDERR: ->     │     where Z1 = type;
+    // CHECK:STDERR:        ·     ┳━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: `where` assignment declaration found in invalid scope; must be
+    // CHECK:STDERR:        ·        ┃        in `impl` definition
+    // CHECK:STDERR:        ·        ┃        [WhereAssignmentInWrongScope]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
+    where Z1 = type;
+  }
+}
+
 // --- fail_class_invalid_scope.carbon
 library "[[@TEST_NAME]]";
 
