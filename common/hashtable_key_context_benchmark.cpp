@@ -43,7 +43,7 @@ constexpr ssize_t NumIds = 1024;
 // sizes in a random order. This is long enough that branch predictors can't
 // learn the sequence of sizes, as AMD's Zen 3 does when the same 1024 pairs are
 // compared in the same order each time.
-constexpr ssize_t NumPairs = 64 * 1024;
+constexpr ssize_t NumPairs = ssize_t{64} * 1024;
 
 struct StringPair {
   llvm::StringRef lhs;

@@ -132,7 +132,7 @@ alignas(64) static constexpr std::array<uint64_t, 9> SizeMasks8 = [] {
 // use it.
 static auto NeOverread1To8(const std::byte* lhs, const std::byte* rhs,
                            size_t size) -> uint64_t {
-  uint64_t ne_bits = XorBytes<uint64_t>(lhs, rhs);
+  auto ne_bits = XorBytes<uint64_t>(lhs, rhs);
 #if defined(__BMI2__)
   ne_bits = _bzhi_u64(ne_bits, 8 * size);
   // Keep `size` in its register past the computation of `8 * size`. Otherwise
@@ -279,8 +279,8 @@ static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
 #if defined(__AVX2__)
 [[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeOver64(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
-  __m256i head_xor = XorBytes<__m256i>(lhs, rhs);
-  __m256i second_xor = XorBytes<__m256i>(lhs + 32, rhs + 32);
+  auto head_xor = XorBytes<__m256i>(lhs, rhs);
+  auto second_xor = XorBytes<__m256i>(lhs + 32, rhs + 32);
   if (size <= 128) {
     __m256i rest_xor = second_xor |
                        XorBytes<__m256i>(lhs + size - 64, rhs + size - 64) |
