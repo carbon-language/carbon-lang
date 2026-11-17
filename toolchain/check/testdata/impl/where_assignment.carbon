@@ -202,7 +202,7 @@ impl () as Z {
   // CHECK:STDERR: ->     │   where Y = type;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: member name `Y` not found in `Z`
-  // CHECK:STDERR:        ·             ┃        [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ·             ┃        [WhereAssignmentNameNotFound]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where Y = type;
@@ -355,6 +355,30 @@ impl () as Z {
   where F = fn()=>();
 
   fn F() {}
+}
+
+// --- fail_set_through_extend_require.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {
+  let Y1: type;
+}
+
+interface Z {
+  extend require impls Y;
+}
+
+impl () as Y where .Y1 = {} {}
+
+impl () as Z {
+  // CHECK:STDERR:        ╭─┤ fail_set_through_extend_require.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   where Y1 = ();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: member name `Y1` not found in `Z`
+  // CHECK:STDERR:        ·             ┃        [WhereAssignmentNameNotFound]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  where Y1 = ();
 }
 
 // CHECK:STDOUT: --- basic.carbon = $basic

@@ -1111,36 +1111,38 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   // be an ErrorInst.
   CARBON_CHECK(interface.is_complete());
 
-  llvm::SmallVector<LookupScope> scopes;
-  auto lookup_const_id = GetInterfaceType(context, impl.interface.interface_id,
-                                          impl.interface.specific_id)
-                             .AsConstantId();
-  auto self_const_id = context.constant_values().Get(impl.self_id);
-  if (!AppendLookupScopesForConstant(context, loc_id, lookup_const_id,
-                                     self_const_id, false, &scopes)) {
-    CARBON_FATAL("no lookup scope for interface: {0}", interface);
+  auto& scope = context.name_scopes().Get(interface.scope_with_self_id);
+  auto result = LookupNameInExactScope(context, loc_id, lhs_name_id,
+                                       interface.scope_with_self_id, scope);
+  if (!result.is_found()) {
+    CARBON_DIAGNOSTIC(WhereAssignmentNameNotFound, Error,
+                      "member name `{0}` not found in `{1}`", SemIR::NameId,
+                      SemIR::SpecificInterface);
+    context.emitter().Emit(loc_id, WhereAssignmentNameNotFound, lhs_name_id,
+                           impl.interface);
+    return;
   }
-
-  auto result = LookupQualifiedName(context, loc_id, lhs_name_id, scopes,
-                                    /*required=*/true);
-  if (result.scope_result.target_inst_id() == SemIR::ErrorInst::InstId) {
+  if (result.target_inst_id() == SemIR::ErrorInst::InstId) {
     return;
   }
 
   auto assoc_entity = context.insts().TryGetAs<SemIR::AssociatedEntity>(
-      result.scope_result.target_inst_id());
+      result.target_inst_id());
   if (!assoc_entity) {
     CARBON_FATAL(
         "interface contains `{0}` for name `{1}`; expected an associated "
         "entity",
-        context.insts().Get(result.scope_result.target_inst_id()),
+        context.insts().Get(result.target_inst_id()),
         context.names().GetFormatted(lhs_name_id));
   }
 
   // Convert the RHS to a value of the associated entity's type, inside the
   // specific interface with the impl's self, so that it's always concrete.
+  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+      context, loc_id, interface.generic_id, interface.generic_with_self_id,
+      impl.interface.specific_id, context.constant_values().Get(impl.self_id));
   auto assoc_const_type_id = SemIR::GetTypeOfInstInSpecific(
-      context.sem_ir(), result.specific_id, assoc_entity->decl_id);
+      context.sem_ir(), interface_with_self_specific_id, assoc_entity->decl_id);
   auto converted_inst_id = ConvertToValueOfType(
       context, SemIR::LocId(rhs_inst_id), rhs_inst_id, assoc_const_type_id);
 
