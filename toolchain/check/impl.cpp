@@ -1127,7 +1127,7 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   }
 
   auto assoc_entity = context.insts().TryGetAs<SemIR::AssociatedEntity>(
-      result.target_inst_id());
+      context.constant_values().GetConstantInstId(result.target_inst_id()));
   if (!assoc_entity) {
     CARBON_FATAL(
         "interface contains `{0}` for name `{1}`; expected an associated "
@@ -1141,6 +1141,7 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
       context, loc_id, interface.generic_id, interface.generic_with_self_id,
       impl.interface.specific_id, context.constant_values().Get(impl.self_id));
+  LoadImportRef(context, assoc_entity->decl_id);
   auto assoc_const_type_id = SemIR::GetTypeOfInstInSpecific(
       context.sem_ir(), interface_with_self_specific_id, assoc_entity->decl_id);
   auto converted_inst_id = ConvertToValueOfType(

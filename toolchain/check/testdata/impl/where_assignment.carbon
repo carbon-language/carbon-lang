@@ -381,6 +381,21 @@ impl () as Z {
   where Y1 = ();
 }
 
+// --- import_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+
+// --- import_interface.impl.carbon
+impl library "[[@TEST_NAME]]";
+
+class C {}
+impl C as Z {
+  where Z1 = type;
+}
+
 // CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
