@@ -1119,12 +1119,8 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
     return;
   }
 
-  auto specific_target =
-      SemIR::GetConstantValueInSpecific(context.sem_ir(), result.specific_id,
-                                        result.scope_result.target_inst_id());
-  auto assoc_entity =
-      context.constant_values().TryGetInstAs<SemIR::AssociatedEntity>(
-          specific_target);
+  auto assoc_entity = context.insts().TryGetAs<SemIR::AssociatedEntity>(
+      result.scope_result.target_inst_id());
   if (!assoc_entity) {
     CARBON_FATAL(
         "interface contains `{0}` for name `{1}`; expected an associated "
@@ -1133,15 +1129,10 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
         context.names().GetFormatted(lhs_name_id));
   }
 
-  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
-  auto table =
-      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
-  auto table_block = context.inst_blocks().GetMutable(table.elements_id);
-
   // Convert the RHS to a value of the associated entity's type, inside the
   // specific interface with the impl's self, so that it's always concrete.
-  auto assoc_entity_type_id =
-      context.insts().Get(assoc_entity->decl_id).type_id();
+  auto assoc_entity_type_id = SemIR::GetTypeOfInstInSpecific(
+      context.sem_ir(), result.specific_id, assoc_entity->decl_id);
   rhs_inst_id = ConvertToValueOfType(context, SemIR::LocId(rhs_inst_id),
                                      rhs_inst_id, assoc_entity_type_id);
 
@@ -1152,6 +1143,11 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, WhereAssignmentRuntimeValue);
     value_const_id = SemIR::ErrorInst::ConstantId;
   }
+
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
+  auto table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto table_block = context.inst_blocks().GetMutable(table.elements_id);
 
   SetTableEntry(context, SemIR::LocId(impl.latest_decl_id()), loc_id, impl,
                 interface, table_block, assoc_entity->index, value_const_id);

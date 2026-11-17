@@ -55,7 +55,7 @@ impl () as Z {
   where Z1 = ({} as C);
 }
 
-// --- fail_todo_symbolic_type.carbon
+// --- symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -63,17 +63,6 @@ interface Z {
 }
 
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_todo_symbolic_type.carbon:[[@LINE+11]]:14
-  // CHECK:STDERR: ->     │   where Z1 = ();
-  // CHECK:STDERR:        ·              ┳━
-  // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `()` to
-  // CHECK:STDERR:        ·              │  ┃        `Self`
-  // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·              ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                   │ `Core.ImplicitAs(Self)`
-  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   where Z1 = ();
 }
 
