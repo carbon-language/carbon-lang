@@ -18,7 +18,7 @@ interface I {
 }
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `AssociatedEntityType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(I.F) as Core.SubobjectDestroy;
   // typeof(I.F) as Core.Destroy;
   // typeof(I.F) as Core.TrivialDestroy;
@@ -30,7 +30,7 @@ library "[[@TEST_NAME]]";
 interface GenericInterface(T: type) {}
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `GenericInterfaceType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(GenericInterface) as Core.SubobjectDestroy;
   // typeof(GenericInterface) as Core.Destroy;
   // typeof(GenericInterface) as Core.TrivialDestroy;
@@ -39,13 +39,13 @@ fn Test() {
 // --- todo_trivial_generic_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
-constraint GenericConstraint(T: type) {}
+constraint GenericNamedConstraint(T: type) {}
 
 fn Test() {
-  // TODO: fix crash
-  // typeof(GenericConstraint) as Core.SubobjectDestroy;
-  // typeof(GenericConstraint) as Core.Destroy;
-  // typeof(GenericConstraint) as Core.TrivialDestroy;
+  // TODO: add `GenericNamedConstraintType` to the set of types that can be destroyed with O(1) lookup.
+  // typeof(GenericNamedConstraint) as Core.SubobjectDestroy;
+  // typeof(GenericNamedConstraint) as Core.Destroy;
+  // typeof(GenericNamedConstraint) as Core.TrivialDestroy;
 }
 
 // --- todo_trivial_namespace.carbon
@@ -54,7 +54,7 @@ library "[[@TEST_NAME]]";
 namespace N;
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `NamespaceType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(N) as Core.SubobjectDestroy;
   // typeof(N) as Core.Destroy;
   // typeof(N) as Core.TrivialDestroy;
@@ -63,10 +63,10 @@ fn Test() {
 // --- todo_trivial_parameterised_class.carbon
 library "[[@TEST_NAME]]";
 
-class GenericClass(T: type) {}
+class ParameterizedClass(T: type) {}
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `ParameterizedClassType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(GenericClass) as Core.SubobjectDestroy;
   // typeof(GenericClass) as Core.Destroy;
   // typeof(GenericClass) as Core.TrivialDestroy;
@@ -82,7 +82,7 @@ class C {
 }
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `UnboundElementType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(C.x) as Core.SubobjectDestroy;
   // typeof(C.x) as Core.Destroy;
   // typeof(C.x) as Core.TrivialDestroy;
@@ -136,7 +136,7 @@ fn Test(generic T: type) {
 library "[[@TEST_NAME]]";
 
 fn Test(unused generic T: (type, type)) {
-  // TODO: fix crash
+  // TODO: add `TupleAccessType` to the set of types that can be destroyed with O(1) lookup.
   // typeof(T.0) as Core.SubobjectDestroy;
   // typeof(T.0) as Core.Destroy;
   // typeof(T.0) as Core.TrivialDestroy;

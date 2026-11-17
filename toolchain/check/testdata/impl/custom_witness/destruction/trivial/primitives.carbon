@@ -46,7 +46,7 @@ fn Test(c: C) {
 library "[[@TEST_NAME]]";
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `CharLiteralType` to the set of types that can be destroyed with O(1) lookup.
   //@dump-sem-ir-begin
   // Core.CharLiteral as Core.SubobjectDestroy;
   // Core.CharLiteral as Core.Destroy;
@@ -73,7 +73,7 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 fn Test() {
-  // TODO: fix crash
+  // TODO: add `FloatLiteralType` to the set of types that can be destroyed with O(1) lookup.
   //@dump-sem-ir-begin
   // Core.FloatLiteral as Core.SubobjectDestroy;
   // Core.FloatLiteral as Core.Destroy;
@@ -147,7 +147,7 @@ fn Make() -> FnWithSelf;
 
 fn Test() {
   //@dump-sem-ir-begin
-  // TODO: fix crash
+  // TODO: add `FnWithSelfType` to the set of types that can be destroyed with O(1) lookup.
   // FnWithSelf as Core.SubobjectDestroy;
   // FnWithSelf as Core.Destroy;
   // FnWithSelf as Core.TrivialDestroy;
