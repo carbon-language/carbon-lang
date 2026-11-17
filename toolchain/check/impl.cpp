@@ -447,6 +447,18 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
   SemIR::InstId impl_witness_id_;
 };
 
+static auto DiagnoseAssociatedConstantWithRuntimeValue(
+    Context& context, SemIR::LocId loc_id, SemIR::NameId assoc_name_id,
+    SemIR::InstId value_id, SemIR::TypeId assoc_const_type_id) {
+  CARBON_DIAGNOSTIC(
+      AssociatedConstantNotConstantAfterConversion, Error,
+      "associated constant {0} given value {1} that is not constant "
+      "after conversion to {2}",
+      SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
+  context.emitter().Emit(loc_id, AssociatedConstantNotConstantAfterConversion,
+                         assoc_name_id, value_id, assoc_const_type_id);
+}
+
 static auto SetTableEntry(Context& context, SemIR::LocId impl_loc_id,
                           SemIR::LocId assign_loc_id, const SemIR::Impl& impl,
                           const SemIR::Interface& interface,
@@ -518,14 +530,9 @@ static auto SetTableEntry(Context& context, SemIR::LocId impl_loc_id,
     } else {
       const auto& assoc_const = context.associated_constants().Get(
           assoc_constant_decl->assoc_const_id);
-      CARBON_DIAGNOSTIC(
-          AssociatedConstantNotConstantAfterConversion, Error,
-          "associated constant {0} given value {1} that is not constant "
-          "after conversion to {2}",
-          SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
-      context.emitter().Emit(
-          assign_loc_id, AssociatedConstantNotConstantAfterConversion,
-          assoc_const.name_id, value_id, assoc_const_type_id);
+      DiagnoseAssociatedConstantWithRuntimeValue(context, assign_loc_id,
+                                                 assoc_const.name_id, value_id,
+                                                 assoc_const_type_id);
       value_id = SemIR::ErrorInst::InstId;
     }
   }
@@ -1131,17 +1138,16 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
 
   // Convert the RHS to a value of the associated entity's type, inside the
   // specific interface with the impl's self, so that it's always concrete.
-  auto assoc_entity_type_id = SemIR::GetTypeOfInstInSpecific(
+  auto assoc_const_type_id = SemIR::GetTypeOfInstInSpecific(
       context.sem_ir(), result.specific_id, assoc_entity->decl_id);
-  rhs_inst_id = ConvertToValueOfType(context, SemIR::LocId(rhs_inst_id),
-                                     rhs_inst_id, assoc_entity_type_id);
+  auto converted_inst_id = ConvertToValueOfType(
+      context, SemIR::LocId(rhs_inst_id), rhs_inst_id, assoc_const_type_id);
 
-  auto value_const_id = context.constant_values().Get(rhs_inst_id);
-  if (!value_const_id.is_constant()) {
-    CARBON_DIAGNOSTIC(WhereAssignmentRuntimeValue, Error,
-                      "runtime value assigned to an associated constant");
-    context.emitter().Emit(loc_id, WhereAssignmentRuntimeValue);
-    value_const_id = SemIR::ErrorInst::ConstantId;
+  auto converted_const_id = context.constant_values().Get(converted_inst_id);
+  if (!converted_const_id.is_constant()) {
+    DiagnoseAssociatedConstantWithRuntimeValue(
+        context, loc_id, lhs_name_id, rhs_inst_id, assoc_const_type_id);
+    converted_const_id = SemIR::ErrorInst::ConstantId;
   }
 
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
@@ -1150,7 +1156,8 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   auto table_block = context.inst_blocks().GetMutable(table.elements_id);
 
   SetTableEntry(context, SemIR::LocId(impl.latest_decl_id()), loc_id, impl,
-                interface, table_block, assoc_entity->index, value_const_id);
+                interface, table_block, assoc_entity->index,
+                converted_const_id);
 }
 
 }  // namespace Carbon::Check

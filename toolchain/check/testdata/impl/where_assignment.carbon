@@ -183,11 +183,12 @@ interface Z {
 }
 
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   where Z1 = Runtime;
-  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
-  // CHECK:STDERR:        ·            ┗━━┫ error: runtime value assigned to an associated constant
-  // CHECK:STDERR:        ·               ┃        [WhereAssignmentRuntimeValue]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: associated constant Z1 given value `Runtime` that is not constant
+  // CHECK:STDERR:        ·      ┃        after conversion to `type`
+  // CHECK:STDERR:        ·      ┃        [AssociatedConstantNotConstantAfterConversion]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where Z1 = Runtime;
@@ -203,11 +204,12 @@ interface Z {
 }
 
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_runtime_fn.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_fn.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   where Z1 = Runtime();
-  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━━
-  // CHECK:STDERR:        ·             ┗━━┫ error: runtime value assigned to an associated constant
-  // CHECK:STDERR:        ·                ┃        [WhereAssignmentRuntimeValue]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: associated constant Z1 given value `Runtime()` that is not
+  // CHECK:STDERR:        ·      ┃        constant after conversion to `type`
+  // CHECK:STDERR:        ·      ┃        [AssociatedConstantNotConstantAfterConversion]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where Z1 = Runtime();
