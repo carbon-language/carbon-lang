@@ -55,6 +55,19 @@ impl () as Z {
   where Z1 = ({} as C);
 }
 
+// --- generic.carbon
+library "[[@TEST_NAME]]";
+
+interface Z(T: type) {
+  let Z1: type;
+}
+
+//@dump-sem-ir-begin
+impl () as Z(()) {
+  where Z1 = type;
+}
+//@dump-sem-ir-end
+
 // --- symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
@@ -64,6 +77,20 @@ interface Z {
 
 impl () as Z {
   where Z1 = ();
+}
+
+// --- symbolic_impl_self_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+class C(T: Y) { adapt {}; }
+
+interface Z(T: type) {
+  let Z1: T;
+}
+
+impl forall [T: Y] T as Z(C(T)) {
+  where Z1 = ({} as C(T));
 }
 
 // --- fail_invalid_scope.carbon
@@ -329,6 +356,42 @@ impl () as Z {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %Z.ref
+// CHECK:STDOUT:   witness = %Z.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- generic.carbon = $generic
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type.c39: type = generic_interface_type @Z [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %Z.generic: %Z.type.c39 = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %Z.type.cf0: type = facet_type <@Z, @Z(%empty_tuple.type)> [concrete]
+// CHECK:STDOUT:   %.87d: <witness> = impl_self_witness %empty_tuple.type, @Z, @Z(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z.impl.%Z.impl_witness_table [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z.impl [concrete] {} {
+// CHECK:STDOUT:     %.loc8_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_7.2: type = converted %.loc8_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Z.ref: %Z.type.c39 = name_ref Z, file.%Z.decl [concrete = constants.%Z.generic]
+// CHECK:STDOUT:     %.loc8_15: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_16: type = converted %.loc8_15, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Z.type: type = facet_type <@Z, @Z(constants.%empty_tuple.type)> [concrete = constants.%Z.type.cf0]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @empty_tuple.type.as.Z.impl.%.loc8_7.2, @Z, @Z(constants.%empty_tuple.type) [concrete = constants.%.87d]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc8_7.2 as %Z.type {
+// CHECK:STDOUT:   %.loc9: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %impl_witness_assoc_constant: type = impl_witness_assoc_constant type [concrete = type]
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @empty_tuple.type.as.Z.impl [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z.type
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

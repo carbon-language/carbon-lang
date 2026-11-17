@@ -1112,8 +1112,9 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(interface.is_complete());
 
   llvm::SmallVector<LookupScope> scopes;
-  auto lookup_const_id =
-      context.constant_values().Get(interface.latest_decl_id());
+  auto lookup_const_id = GetInterfaceType(context, impl.interface.interface_id,
+                                          impl.interface.specific_id)
+                             .AsConstantId();
   auto self_const_id = context.constant_values().Get(impl.self_id);
   if (!AppendLookupScopesForConstant(context, loc_id, lookup_const_id,
                                      self_const_id, false, &scopes)) {
