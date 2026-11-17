@@ -2,14 +2,15 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/sem_ir/expr_info.h"
 #ifndef NDEBUG
+
+#include "toolchain/sem_ir/dump.h"
 
 #include <string>
 
 #include "clang/AST/DeclBase.h"
 #include "common/raw_string_ostream.h"
-#include "toolchain/sem_ir/dump.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
