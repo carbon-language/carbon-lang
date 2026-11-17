@@ -539,6 +539,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %require_complete.e45: <witness> = require_complete_type %C.128 [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.9bb: type = fn_type @Inner.WithSelf.F, @Inner.WithSelf(%T.67d, %Inner.type.ebc) [symbolic]
+// CHECK:STDOUT:   %Inner.WithSelf.F.a03: %Inner.WithSelf.F.type.9bb = struct_value () [symbolic]
 // CHECK:STDOUT:   %Inner.lookup_impl_witness: <witness> = lookup_impl_witness %C.128, @Inner, @Inner(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Inner.facet.d73: %Inner.type.ebc = facet_value %C.128, (%Inner.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Inner.WithSelf.F.type.001: type = fn_type @Inner.WithSelf.F, @Inner.WithSelf(%T.67d, %Inner.facet.d73) [symbolic]
@@ -582,6 +584,8 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.e4b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C.785 = struct_value () [concrete]
+// CHECK:STDOUT:   %Inner.WithSelf.F.type.628: type = fn_type @Inner.WithSelf.F, @Inner.WithSelf(%i32, %Inner.type.b91) [concrete]
+// CHECK:STDOUT:   %Inner.WithSelf.F.726: %Inner.WithSelf.F.type.628 = struct_value () [concrete]
 // CHECK:STDOUT:   %.1b6: <witness> = impl_self_witness %C.785, @Inner, @Inner(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.impl_witness.728: <witness> = impl_witness @C.as.Inner.impl.%Inner.impl_witness_table, @C.as.Inner.impl(%i32) [concrete]
 // CHECK:STDOUT:   %Inner.facet.e46: %Inner.type.b91 = facet_value %C.785, (%Inner.impl_witness.728) [concrete]
@@ -876,7 +880,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:     %self.ref: @C.as.Inner.impl.F.%C (%C.128) = name_ref self, %self
 // CHECK:STDOUT:     %.loc11_41: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%T.67d) [symbolic = %Inner.type (constants.%Inner.type.ebc)]
 // CHECK:STDOUT:     %Inner.ref: type = name_ref Inner, %.loc11_41 [symbolic = %Inner.type (constants.%Inner.type.ebc)]
-// CHECK:STDOUT:     %.loc11_46: @C.as.Inner.impl.F.%Inner.assoc_type (%Inner.assoc_type.feb) = specific_constant @Inner.WithSelf.%assoc0.loc6_20.1, @Inner.WithSelf(constants.%T.67d, constants.%Self.6a1) [symbolic = %assoc0 (constants.%assoc0.3e8)]
+// CHECK:STDOUT:     %.loc11_46: @C.as.Inner.impl.F.%Inner.assoc_type (%Inner.assoc_type.feb) = specific_constant @Inner.WithSelf.%assoc0.loc6_20.1, @Inner.WithSelf(constants.%T.67d, constants.%Inner.type.ebc) [symbolic = %assoc0 (constants.%assoc0.3e8)]
 // CHECK:STDOUT:     %F.ref: @C.as.Inner.impl.F.%Inner.assoc_type (%Inner.assoc_type.feb) = name_ref F, %.loc11_46 [symbolic = %assoc0 (constants.%assoc0.3e8)]
 // CHECK:STDOUT:     %impl.elem0.loc11_39.1: @C.as.Inner.impl.F.%.loc11_39 (%.bab) = impl_witness_access constants.%Inner.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_39.2 (constants.%impl.elem0.eb0)]
 // CHECK:STDOUT:     %bound_method.loc11_39: <bound method> = bound_method %self.ref, %impl.elem0.loc11_39.1
@@ -915,7 +919,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %Outer.loc24: type = class_type @Outer, @Outer(constants.%i32) [concrete = constants.%Outer.7d3]
 // CHECK:STDOUT:   %.loc24_23: type = specific_constant @Outer.%Inner.decl, @Outer(constants.%i32) [concrete = constants.%Inner.type.b91]
 // CHECK:STDOUT:   %Inner.ref: type = name_ref Inner, %.loc24_23 [concrete = constants.%Inner.type.b91]
-// CHECK:STDOUT:   %.loc24_29: %Inner.assoc_type.0c1 = specific_constant @Inner.WithSelf.%assoc0.loc6_20.1, @Inner.WithSelf(constants.%i32, constants.%Self.6a1) [concrete = constants.%assoc0.1ea]
+// CHECK:STDOUT:   %.loc24_29: %Inner.assoc_type.0c1 = specific_constant @Inner.WithSelf.%assoc0.loc6_20.1, @Inner.WithSelf(constants.%i32, constants.%Inner.type.b91) [concrete = constants.%assoc0.1ea]
 // CHECK:STDOUT:   %F.ref: %Inner.assoc_type.0c1 = name_ref F, %.loc24_29 [concrete = constants.%assoc0.1ea]
 // CHECK:STDOUT:   %impl.elem0: %.0c4 = impl_witness_access constants.%Inner.impl_witness.728, element0 [concrete = constants.%C.as.Inner.impl.F.e15]
 // CHECK:STDOUT:   %bound_method.loc24_11: <bound method> = bound_method %c.ref, %impl.elem0
@@ -1031,6 +1035,17 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %return.patt.loc6_16.2 => constants.%return.patt.b39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner.WithSelf(constants.%T.67d, constants.%Inner.type.ebc) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T.67d
+// CHECK:STDOUT:   %Inner.type => constants.%Inner.type.ebc
+// CHECK:STDOUT:   %Self => constants.%Inner.type.ebc
+// CHECK:STDOUT:   %Inner.WithSelf.F.type => constants.%Inner.WithSelf.F.type.9bb
+// CHECK:STDOUT:   %Inner.WithSelf.F => constants.%Inner.WithSelf.F.a03
+// CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.feb
+// CHECK:STDOUT:   %assoc0.loc6_20.2 => constants.%assoc0.3e8
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Inner.WithSelf(constants.%T.67d, constants.%Inner.facet.d73) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T.67d
@@ -1110,6 +1125,17 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %pattern_type.loc6_19 => constants.%pattern_type.d94
 // CHECK:STDOUT:   %return.param_patt.loc6_19.2 => constants.%return.param_patt.299
 // CHECK:STDOUT:   %return.patt.loc6_16.2 => constants.%return.patt.6fa
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Inner.WithSelf(constants.%i32, constants.%Inner.type.b91) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%i32
+// CHECK:STDOUT:   %Inner.type => constants.%Inner.type.b91
+// CHECK:STDOUT:   %Self => constants.%Inner.type.b91
+// CHECK:STDOUT:   %Inner.WithSelf.F.type => constants.%Inner.WithSelf.F.type.628
+// CHECK:STDOUT:   %Inner.WithSelf.F => constants.%Inner.WithSelf.F.726
+// CHECK:STDOUT:   %Inner.assoc_type => constants.%Inner.assoc_type.0c1
+// CHECK:STDOUT:   %assoc0.loc6_20.2 => constants.%assoc0.1ea
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.Inner.impl(constants.%i32) {

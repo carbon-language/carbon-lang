@@ -279,6 +279,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %NonInstance1.WithSelf.F1.50e: %NonInstance1.WithSelf.F1.type.5d1 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1.type: type = fn_type @NonInstanceCall1 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall1: %NonInstanceCall1.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type.ebf: type = fn_type @NonInstance1.WithSelf.F1, @NonInstance1.WithSelf(%NonInstance1.type) [concrete]
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.76e: %NonInstance1.WithSelf.F1.type.ebf = struct_value () [concrete]
 // CHECK:STDOUT:   %.ffe: type = fn_type_with_self_type %NonInstance1.WithSelf.F1.type.5d1, %NonInstance1.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -366,6 +368,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance1.WithSelf.F1(constants.%NonInstance1.facet) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance1.WithSelf(constants.%NonInstance1.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance1.type
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1.type => constants.%NonInstance1.WithSelf.F1.type.ebf
+// CHECK:STDOUT:   %NonInstance1.WithSelf.F1 => constants.%NonInstance1.WithSelf.F1.76e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non-instance.carbon = $fail_non-instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -391,6 +400,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %n.patt: %pattern_type.d5c = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %NonInstanceCall2.type: type = fn_type @NonInstanceCall2 [concrete]
 // CHECK:STDOUT:   %NonInstanceCall2: %NonInstanceCall2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type.fb6: type = fn_type @NonInstance2.WithSelf.F2, @NonInstance2.WithSelf(%NonInstance2.type) [concrete]
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.4f4: %NonInstance2.WithSelf.F2.type.fb6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
@@ -415,6 +426,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.113: %ImplicitAs.WithSelf.Convert.type.9d9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.f59: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance2.type) [concrete]
 // CHECK:STDOUT:   %assoc0.b94: %ImplicitAs.assoc_type.f59 = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.2a6: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%NonInstance2.type, %ImplicitAs.type.3af) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.9da: %ImplicitAs.WithSelf.Convert.type.2a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.3a5: %ImplicitAs.assoc_type.07d = assoc_entity element0, imports.%Core.import_ref.9e1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -560,6 +573,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance2.WithSelf.F2(constants.%NonInstance2.facet) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance2.WithSelf(constants.%NonInstance2.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance2.type
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2.type => constants.%NonInstance2.WithSelf.F2.type.fb6
+// CHECK:STDOUT:   %NonInstance2.WithSelf.F2 => constants.%NonInstance2.WithSelf.F2.4f4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -601,6 +621,17 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.b94
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%NonInstance2.type, constants.%ImplicitAs.type.3af) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Dest => constants.%NonInstance2.type
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.3af
+// CHECK:STDOUT:   %Self => constants.%ImplicitAs.type.3af
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.2a6
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.9da
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.f59
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.b94
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_non-instance_indirect.carbon = $fail_non-instance_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -627,6 +658,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %p.patt: %pattern_type.5f5 = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %NonInstanceCallIndirect.type: type = fn_type @NonInstanceCallIndirect [concrete]
 // CHECK:STDOUT:   %NonInstanceCallIndirect: %NonInstanceCallIndirect.type = struct_value () [concrete]
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type.dd0: type = fn_type @NonInstance3.WithSelf.F3, @NonInstance3.WithSelf(%NonInstance3.type) [concrete]
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.095: %NonInstance3.WithSelf.F3.type.dd0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %Dest: type = symbolic_binding Dest, 0 [symbolic]
@@ -651,6 +684,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.93c: %ImplicitAs.WithSelf.Convert.type.f23 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.c22: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%NonInstance3.type) [concrete]
 // CHECK:STDOUT:   %assoc0.7ad: %ImplicitAs.assoc_type.c22 = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.68c: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%NonInstance3.type, %ImplicitAs.type.5ab) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.e0e: %ImplicitAs.WithSelf.Convert.type.68c = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.3a5: %ImplicitAs.assoc_type.07d = assoc_entity element0, imports.%Core.import_ref.9e1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -798,6 +833,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance3.WithSelf.F3(constants.%NonInstance3.facet) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance3.WithSelf(constants.%NonInstance3.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance3.type
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3.type => constants.%NonInstance3.WithSelf.F3.type.dd0
+// CHECK:STDOUT:   %NonInstance3.WithSelf.F3 => constants.%NonInstance3.WithSelf.F3.095
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%Dest) {
 // CHECK:STDOUT:   %Dest.patt => constants.%Dest.patt
 // CHECK:STDOUT:   %Dest => constants.%Dest
@@ -839,6 +881,17 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.7ad
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%NonInstance3.type, constants.%ImplicitAs.type.5ab) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Dest => constants.%NonInstance3.type
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.5ab
+// CHECK:STDOUT:   %Self => constants.%ImplicitAs.type.5ab
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.68c
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.e0e
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.c22
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.7ad
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- instance_success.carbon = $instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -870,6 +923,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %n.patt: %pattern_type.515 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Instance1.WithSelf.G1.type.cfe: type = fn_type @Instance1.WithSelf.G1, @Instance1.WithSelf(%Instance1.type) [concrete]
+// CHECK:STDOUT:   %Instance1.WithSelf.G1.eb2: %Instance1.WithSelf.G1.type.cfe = struct_value () [concrete]
 // CHECK:STDOUT:   %.aa7: type = fn_type_with_self_type %Instance1.WithSelf.G1.type.e80, %Instance1.facet [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %struct_type.d [concrete]
 // CHECK:STDOUT:   %pattern_type.8d6: type = pattern_type %ptr [concrete]
@@ -1039,6 +1094,13 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.6f9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Instance1.WithSelf(constants.%Instance1.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Instance1.type
+// CHECK:STDOUT:   %Instance1.WithSelf.G1.type => constants.%Instance1.WithSelf.G1.type.cfe
+// CHECK:STDOUT:   %Instance1.WithSelf.G1 => constants.%Instance1.WithSelf.G1.eb2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_instance.carbon = $fail_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1068,6 +1130,8 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %Instance2.WithSelf.G2.cb7: %Instance2.WithSelf.G2.type.b3f = struct_value () [concrete]
 // CHECK:STDOUT:   %InstanceCallFail.type: type = fn_type @InstanceCallFail [concrete]
 // CHECK:STDOUT:   %InstanceCallFail: %InstanceCallFail.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Instance2.WithSelf.G2.type.9f6: type = fn_type @Instance2.WithSelf.G2, @Instance2.WithSelf(%Instance2.type) [concrete]
+// CHECK:STDOUT:   %Instance2.WithSelf.G2.3af: %Instance2.WithSelf.G2.type.9f6 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1184,5 +1248,12 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.efd
 // CHECK:STDOUT:   %self.param_patt.loc4_9.2 => constants.%self.param_patt.5cd
 // CHECK:STDOUT:   %self.patt.loc4_9.2 => constants.%self.patt.f18
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Instance2.WithSelf(constants.%Instance2.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Instance2.type
+// CHECK:STDOUT:   %Instance2.WithSelf.G2.type => constants.%Instance2.WithSelf.G2.type.9f6
+// CHECK:STDOUT:   %Instance2.WithSelf.G2 => constants.%Instance2.WithSelf.G2.3af
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

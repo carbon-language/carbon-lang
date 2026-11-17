@@ -1014,12 +1014,9 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Y.type.cb4: type = generic_interface_type @Y [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Y.generic: %Y.type.cb4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Y.type.6ed: type = facet_type <@Y, @Y(%T.67d)> [symbolic]
-// CHECK:STDOUT:   %Self.71c: %Y.type.6ed = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.d87: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.d87 [symbolic]
@@ -1118,7 +1115,7 @@ constraint N {
 // CHECK:STDOUT:     %T.as_type.loc16_9: type = facet_access_type %T.ref.loc16_8 [symbolic = %T.as_type.loc13_23.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc16_9: type = converted %T.ref.loc16_8, %T.as_type.loc16_9 [symbolic = %T.as_type.loc13_23.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %Y.type.loc16: type = facet_type <@Y, @Y(constants.%T.as_type)> [symbolic = %Y.type.loc15 (constants.%Y.type.a55)]
-// CHECK:STDOUT:     %.loc16_10: @F.%Y.assoc_type (%Y.assoc_type.18b) = specific_constant @Y.WithSelf.%assoc0.loc4_10.1, @Y.WithSelf(constants.%T.as_type, constants.%Self.71c) [symbolic = %assoc0 (constants.%assoc0.eff)]
+// CHECK:STDOUT:     %.loc16_10: @F.%Y.assoc_type (%Y.assoc_type.18b) = specific_constant @Y.WithSelf.%assoc0.loc4_10.1, @Y.WithSelf(constants.%T.as_type, constants.%Y.type.a55) [symbolic = %assoc0 (constants.%assoc0.eff)]
 // CHECK:STDOUT:     %YY.ref.loc16: @F.%Y.assoc_type (%Y.assoc_type.18b) = name_ref YY, %.loc16_10 [symbolic = %assoc0 (constants.%assoc0.eff)]
 // CHECK:STDOUT:     %T.as_type.loc16_4: type = facet_access_type %T.ref.loc16_3 [symbolic = %T.as_type.loc13_23.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %Y.facet.loc16: @F.%Y.type.loc15 (%Y.type.a55) = facet_value %T.as_type.loc16_4, (constants.%Y.lookup_impl_witness) [symbolic = %Y.facet.loc15 (constants.%Y.facet)]

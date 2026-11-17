@@ -832,7 +832,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: @F.%T.as_type.loc14_26.1 (%T.as_type) = name_ref t, %t
 // CHECK:STDOUT:     %ImplicitAs.type.loc26_23.1: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%impl.elem0.5bb)> [symbolic = %ImplicitAs.type.loc26_23.2 (constants.%ImplicitAs.type.64b)]
-// CHECK:STDOUT:     %.loc26_23.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.1b5) = specific_constant imports.%Core.import_ref.383, @ImplicitAs.WithSelf(constants.%impl.elem0.5bb, constants.%Self.862) [symbolic = %assoc0 (constants.%assoc0.e44)]
+// CHECK:STDOUT:     %.loc26_23.1: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.1b5) = specific_constant imports.%Core.import_ref.383, @ImplicitAs.WithSelf(constants.%impl.elem0.5bb, constants.%ImplicitAs.type.64b) [symbolic = %assoc0 (constants.%assoc0.e44)]
 // CHECK:STDOUT:     %Convert.ref: @F.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.1b5) = name_ref Convert, %.loc26_23.1 [symbolic = %assoc0 (constants.%assoc0.e44)]
 // CHECK:STDOUT:     %.loc26_23.2: @F.%impl.elem0.loc26_18.2 (%impl.elem0.5bb) = converted %t.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:     %.loc26_18.1: type = splice_block %impl.elem0.loc26_18.1 [symbolic = %impl.elem0.loc26_18.2 (constants.%impl.elem0.5bb)] {
@@ -1179,6 +1179,10 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Ptr.WithSelf(constants.%Ptr.facet.7955f3.1) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Ptr.WithSelf(constants.%Ptr.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1689,6 +1693,10 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Ptr.WithSelf(constants.%Ptr.facet.795) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Ptr.WithSelf(constants.%Ptr.type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

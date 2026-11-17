@@ -78,6 +78,8 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %c.var_patt: %pattern_type.98b = var_pattern %c.patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.30d: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.c3f: %I.WithSelf.F.type.30d = struct_value () [concrete]
 // CHECK:STDOUT:   %.136: type = fn_type_with_self_type %I.WithSelf.F.type.42f, %I.facet [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
@@ -229,6 +231,13 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.a34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.type
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.30d
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.c3f
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet) {
 // CHECK:STDOUT:   %Self => constants.%I.facet
 // CHECK:STDOUT:   %Self.as_type.loc7_25.1 => constants.%C
@@ -272,6 +281,10 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.f4d: %I.WithSelf.F.type.713 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G.type.05e: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet.510) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G.c19: %I.WithSelf.G.type.05e = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.12e: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.e40: %I.WithSelf.F.type.12e = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.type.4fe: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.f43: %I.WithSelf.G.type.4fe = struct_value () [concrete]
 // CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness.e63: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %I.facet.b01: %I.type = facet_value %empty_tuple.type, (%I.impl_witness.e63) [concrete]
@@ -407,6 +420,15 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.f4d
 // CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.05e
 // CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.c19
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.type
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.12e
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.e40
+// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.4fe
+// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.f43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.I.impl(constants.%empty_tuple.type) {

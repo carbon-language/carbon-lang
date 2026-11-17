@@ -324,7 +324,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %IndirectIndexWith.ref.loc8: %IndirectIndexWith.type.841 = name_ref IndirectIndexWith, imports.%Core.IndirectIndexWith [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT:   %SubscriptType.ref.loc8: type = name_ref SubscriptType, imports.%Main.SubscriptType [concrete = constants.%SubscriptType.f8f]
 // CHECK:STDOUT:   %IndirectIndexWith.type.loc8: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(constants.%SubscriptType.f8f)> [concrete = constants.%IndirectIndexWith.type.c10]
-// CHECK:STDOUT:   %.loc8_43: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%Self.2fa) [concrete = constants.%assoc1.b1d]
+// CHECK:STDOUT:   %.loc8_43: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%IndirectIndexWith.type.c10) [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %Ref.ref.loc8: %IndirectIndexWith.assoc_type.688 = name_ref Ref, %.loc8_43 [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %impl.elem1.loc8: %.edc = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %bound_method.loc8_4: <bound method> = bound_method %c.ref.loc8, %impl.elem1.loc8
@@ -341,7 +341,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %IndirectIndexWith.ref.loc9: %IndirectIndexWith.type.841 = name_ref IndirectIndexWith, imports.%Core.IndirectIndexWith [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT:   %SubscriptType.ref.loc9: type = name_ref SubscriptType, imports.%Main.SubscriptType [concrete = constants.%SubscriptType.f8f]
 // CHECK:STDOUT:   %IndirectIndexWith.type.loc9: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(constants.%SubscriptType.f8f)> [concrete = constants.%IndirectIndexWith.type.c10]
-// CHECK:STDOUT:   %.loc9: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%Self.2fa) [concrete = constants.%assoc1.b1d]
+// CHECK:STDOUT:   %.loc9: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%IndirectIndexWith.type.c10) [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %Ref.ref.loc9: %IndirectIndexWith.assoc_type.688 = name_ref Ref, %.loc9 [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %impl.elem1.loc9: %.edc = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %c.ref.loc9, %impl.elem1.loc9
@@ -400,7 +400,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %IndirectIndexWith.ref: %IndirectIndexWith.type.841 = name_ref IndirectIndexWith, imports.%Core.IndirectIndexWith [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT:   %SubscriptType.ref.loc8: type = name_ref SubscriptType, imports.%Main.SubscriptType [concrete = constants.%SubscriptType.f8f]
 // CHECK:STDOUT:   %IndirectIndexWith.type: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(constants.%SubscriptType.f8f)> [concrete = constants.%IndirectIndexWith.type.c10]
-// CHECK:STDOUT:   %.loc8: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%Self.2fa) [concrete = constants.%assoc1.b1d]
+// CHECK:STDOUT:   %.loc8: %IndirectIndexWith.assoc_type.688 = specific_constant imports.%Core.import_ref.25c, @IndirectIndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%IndirectIndexWith.type.c10) [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %Ref.ref: %IndirectIndexWith.assoc_type.688 = name_ref Ref, %.loc8 [concrete = constants.%assoc1.b1d]
 // CHECK:STDOUT:   %impl.elem1: %.e4b = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem1
@@ -485,7 +485,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %IndexWith.ref: %IndexWith.type.df6 = name_ref IndexWith, imports.%Core.IndexWith [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT:   %SubscriptType.ref.loc8: type = name_ref SubscriptType, imports.%Main.SubscriptType [concrete = constants.%SubscriptType.f8f]
 // CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%SubscriptType.f8f)> [concrete = constants.%IndexWith.type.a14]
-// CHECK:STDOUT:   %.loc8: %IndexWith.assoc_type.e71 = specific_constant imports.%Core.import_ref.211, @IndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%Self.ad4) [concrete = constants.%assoc1.0c5]
+// CHECK:STDOUT:   %.loc8: %IndexWith.assoc_type.e71 = specific_constant imports.%Core.import_ref.211, @IndexWith.WithSelf(constants.%SubscriptType.f8f, constants.%IndexWith.type.a14) [concrete = constants.%assoc1.0c5]
 // CHECK:STDOUT:   %At.ref: %IndexWith.assoc_type.e71 = name_ref At, %.loc8 [concrete = constants.%assoc1.0c5]
 // CHECK:STDOUT:   %impl.elem1: %.646 = impl_witness_access constants.%IndexWith.impl_witness.8ae, element1 [concrete = constants.%T.as_type.as.IndexWith.impl.At.a13]
 // CHECK:STDOUT:   %bound_method.loc8_11: <bound method> = bound_method %c.ref, %impl.elem1

@@ -66,6 +66,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.patt: %pattern_type.d94 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.G.type.9f7: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Simple.type) [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.G.d93: %Simple.WithSelf.G.type.9f7 = struct_value () [concrete]
 // CHECK:STDOUT:   %.20e: type = fn_type_with_self_type %Simple.WithSelf.G.type.34c, %Simple.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,5 +219,12 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.d94
 // CHECK:STDOUT:   %self.param_patt.loc16_8.2 => constants.%self.param_patt.f52
 // CHECK:STDOUT:   %self.patt.loc16_8.2 => constants.%self.patt.835
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Simple.type
+// CHECK:STDOUT:   %Simple.WithSelf.G.type => constants.%Simple.WithSelf.G.type.9f7
+// CHECK:STDOUT:   %Simple.WithSelf.G => constants.%Simple.WithSelf.G.d93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

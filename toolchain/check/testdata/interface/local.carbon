@@ -50,6 +50,8 @@ fn F() {
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.G.type.83e: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.G.7ef: %I.WithSelf.G.type.83e = struct_value () [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.type.664: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.df8: %I.WithSelf.G.type.664 = struct_value () [concrete]
 // CHECK:STDOUT:   %.81a: type = fn_type_with_self_type %I.WithSelf.G.type.83e, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT: }
@@ -169,5 +171,12 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.cb1
 // CHECK:STDOUT:   %self.param_patt.loc17_10.2 => constants.%self.param_patt.154
 // CHECK:STDOUT:   %self.patt.loc17_10.2 => constants.%self.patt.462
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.type
+// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.664
+// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.df8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

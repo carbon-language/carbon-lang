@@ -192,6 +192,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %y.patt: %pattern_type.98b = wrapper_binding_pattern y, %y.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Add.WithSelf.Op.type.b7b: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Add.type) [concrete]
+// CHECK:STDOUT:   %Add.WithSelf.Op.1ae: %Add.WithSelf.Op.type.b7b = struct_value () [concrete]
 // CHECK:STDOUT:   %Add.assoc_type: type = assoc_entity_type @Add [concrete]
 // CHECK:STDOUT:   %assoc0: %Add.assoc_type = assoc_entity element0, imports.%Main.import_ref.4c8 [concrete]
 // CHECK:STDOUT:   %.89b: type = fn_type_with_self_type %Add.WithSelf.Op.type.dd6, %Add.facet [concrete]
@@ -376,5 +378,12 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %.1 => constants.%.a44
 // CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.89a
 // CHECK:STDOUT:   %return.patt => constants.%return.patt.18a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Add.WithSelf(constants.%Add.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Add.type
+// CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.b7b
+// CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.1ae
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

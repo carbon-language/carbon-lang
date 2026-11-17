@@ -1463,7 +1463,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: @AddWith.loc124.%T.as_type.loc124_29.1 (%T.as_type.d2e) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @AddWith.loc124.%U.as_type.loc123_35.1 (%U.as_type.0bd) = name_ref y, %y
 // CHECK:STDOUT:     %AddWith.type.loc126: type = facet_type <@AddWith.1, @AddWith.1(constants.%U.as_type.0bd)> [symbolic = %AddWith.type.loc123_35.1 (constants.%AddWith.type.4f5)]
-// CHECK:STDOUT:     %.loc126_5.1: @AddWith.loc124.%AddWith.assoc_type (%AddWith.assoc_type.71f) = specific_constant imports.%Core.import_ref.5c64, @AddWith.WithSelf(constants.%U.as_type.0bd, constants.%Self.958) [symbolic = %assoc1 (constants.%assoc1.f40)]
+// CHECK:STDOUT:     %.loc126_5.1: @AddWith.loc124.%AddWith.assoc_type (%AddWith.assoc_type.71f) = specific_constant imports.%Core.import_ref.5c64, @AddWith.WithSelf(constants.%U.as_type.0bd, constants.%AddWith.type.4f5) [symbolic = %assoc1 (constants.%assoc1.f40)]
 // CHECK:STDOUT:     %Op.ref: @AddWith.loc124.%AddWith.assoc_type (%AddWith.assoc_type.71f) = name_ref Op, %.loc126_5.1 [symbolic = %assoc1 (constants.%assoc1.f40)]
 // CHECK:STDOUT:     %impl.elem1.loc126_5.1: @AddWith.loc124.%.loc126_5.6 (%.a11) = impl_witness_access constants.%AddWith.lookup_impl_witness.206, element1 [symbolic = %impl.elem1.loc126_5.2 (constants.%impl.elem1.fe2)]
 // CHECK:STDOUT:     %bound_method.loc126_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc126_5.1
@@ -1501,7 +1501,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: @SubWith.loc135.%T.as_type.loc135_29.1 (%T.as_type.4b7) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @SubWith.loc135.%U.as_type.loc134_35.1 (%U.as_type.0bd) = name_ref y, %y
 // CHECK:STDOUT:     %SubWith.type.loc137: type = facet_type <@SubWith.1, @SubWith.1(constants.%U.as_type.0bd)> [symbolic = %SubWith.type.loc134_35.1 (constants.%SubWith.type.769)]
-// CHECK:STDOUT:     %.loc137_5.1: @SubWith.loc135.%SubWith.assoc_type (%SubWith.assoc_type.5f0) = specific_constant imports.%Core.import_ref.5fe, @SubWith.WithSelf(constants.%U.as_type.0bd, constants.%Self.18a) [symbolic = %assoc1 (constants.%assoc1.a86)]
+// CHECK:STDOUT:     %.loc137_5.1: @SubWith.loc135.%SubWith.assoc_type (%SubWith.assoc_type.5f0) = specific_constant imports.%Core.import_ref.5fe, @SubWith.WithSelf(constants.%U.as_type.0bd, constants.%SubWith.type.769) [symbolic = %assoc1 (constants.%assoc1.a86)]
 // CHECK:STDOUT:     %Op.ref: @SubWith.loc135.%SubWith.assoc_type (%SubWith.assoc_type.5f0) = name_ref Op, %.loc137_5.1 [symbolic = %assoc1 (constants.%assoc1.a86)]
 // CHECK:STDOUT:     %impl.elem1.loc137_5.1: @SubWith.loc135.%.loc137_5.6 (%.47a6) = impl_witness_access constants.%SubWith.lookup_impl_witness.725, element1 [symbolic = %impl.elem1.loc137_5.2 (constants.%impl.elem1.415)]
 // CHECK:STDOUT:     %bound_method.loc137_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc137_5.1
@@ -1539,7 +1539,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: @MulWith.loc146.%T.as_type.loc146_29.1 (%T.as_type.639) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @MulWith.loc146.%U.as_type.loc145_35.1 (%U.as_type.0bd) = name_ref y, %y
 // CHECK:STDOUT:     %MulWith.type.loc148: type = facet_type <@MulWith.1, @MulWith.1(constants.%U.as_type.0bd)> [symbolic = %MulWith.type.loc145_35.1 (constants.%MulWith.type.b0b)]
-// CHECK:STDOUT:     %.loc148_5.1: @MulWith.loc146.%MulWith.assoc_type (%MulWith.assoc_type.2e5) = specific_constant imports.%Core.import_ref.0a8, @MulWith.WithSelf(constants.%U.as_type.0bd, constants.%Self.742) [symbolic = %assoc1 (constants.%assoc1.4eb)]
+// CHECK:STDOUT:     %.loc148_5.1: @MulWith.loc146.%MulWith.assoc_type (%MulWith.assoc_type.2e5) = specific_constant imports.%Core.import_ref.0a8, @MulWith.WithSelf(constants.%U.as_type.0bd, constants.%MulWith.type.b0b) [symbolic = %assoc1 (constants.%assoc1.4eb)]
 // CHECK:STDOUT:     %Op.ref: @MulWith.loc146.%MulWith.assoc_type (%MulWith.assoc_type.2e5) = name_ref Op, %.loc148_5.1 [symbolic = %assoc1 (constants.%assoc1.4eb)]
 // CHECK:STDOUT:     %impl.elem1.loc148_5.1: @MulWith.loc146.%.loc148_5.6 (%.7f0) = impl_witness_access constants.%MulWith.lookup_impl_witness.50b, element1 [symbolic = %impl.elem1.loc148_5.2 (constants.%impl.elem1.334)]
 // CHECK:STDOUT:     %bound_method.loc148_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc148_5.1
@@ -1577,7 +1577,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: @DivWith.loc157.%T.as_type.loc157_29.1 (%T.as_type.6cf) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @DivWith.loc157.%U.as_type.loc156_35.1 (%U.as_type.0bd) = name_ref y, %y
 // CHECK:STDOUT:     %DivWith.type.loc159: type = facet_type <@DivWith.1, @DivWith.1(constants.%U.as_type.0bd)> [symbolic = %DivWith.type.loc156_35.1 (constants.%DivWith.type.71d)]
-// CHECK:STDOUT:     %.loc159_5.1: @DivWith.loc157.%DivWith.assoc_type (%DivWith.assoc_type.e65) = specific_constant imports.%Core.import_ref.972, @DivWith.WithSelf(constants.%U.as_type.0bd, constants.%Self.5b3) [symbolic = %assoc1 (constants.%assoc1.ed1)]
+// CHECK:STDOUT:     %.loc159_5.1: @DivWith.loc157.%DivWith.assoc_type (%DivWith.assoc_type.e65) = specific_constant imports.%Core.import_ref.972, @DivWith.WithSelf(constants.%U.as_type.0bd, constants.%DivWith.type.71d) [symbolic = %assoc1 (constants.%assoc1.ed1)]
 // CHECK:STDOUT:     %Op.ref: @DivWith.loc157.%DivWith.assoc_type (%DivWith.assoc_type.e65) = name_ref Op, %.loc159_5.1 [symbolic = %assoc1 (constants.%assoc1.ed1)]
 // CHECK:STDOUT:     %impl.elem1.loc159_5.1: @DivWith.loc157.%.loc159_5.6 (%.0f9) = impl_witness_access constants.%DivWith.lookup_impl_witness.e1e, element1 [symbolic = %impl.elem1.loc159_5.2 (constants.%impl.elem1.44e)]
 // CHECK:STDOUT:     %bound_method.loc159_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc159_5.1
@@ -1615,7 +1615,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: @ModWith.loc168.%T.as_type.loc168_29.1 (%T.as_type.73e) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @ModWith.loc168.%U.as_type.loc167_35.1 (%U.as_type.0bd) = name_ref y, %y
 // CHECK:STDOUT:     %ModWith.type.loc170: type = facet_type <@ModWith.1, @ModWith.1(constants.%U.as_type.0bd)> [symbolic = %ModWith.type.loc167_35.1 (constants.%ModWith.type.68a)]
-// CHECK:STDOUT:     %.loc170_5.1: @ModWith.loc168.%ModWith.assoc_type (%ModWith.assoc_type.9c3) = specific_constant imports.%Core.import_ref.ea5e3, @ModWith.WithSelf(constants.%U.as_type.0bd, constants.%Self.c18) [symbolic = %assoc1 (constants.%assoc1.3d6)]
+// CHECK:STDOUT:     %.loc170_5.1: @ModWith.loc168.%ModWith.assoc_type (%ModWith.assoc_type.9c3) = specific_constant imports.%Core.import_ref.ea5e3, @ModWith.WithSelf(constants.%U.as_type.0bd, constants.%ModWith.type.68a) [symbolic = %assoc1 (constants.%assoc1.3d6)]
 // CHECK:STDOUT:     %Op.ref: @ModWith.loc168.%ModWith.assoc_type (%ModWith.assoc_type.9c3) = name_ref Op, %.loc170_5.1 [symbolic = %assoc1 (constants.%assoc1.3d6)]
 // CHECK:STDOUT:     %impl.elem1.loc170_5.1: @ModWith.loc168.%.loc170_5.6 (%.100) = impl_witness_access constants.%ModWith.lookup_impl_witness.c4b, element1 [symbolic = %impl.elem1.loc170_5.2 (constants.%impl.elem1.b51)]
 // CHECK:STDOUT:     %bound_method.loc170_5.1: <bound method> = bound_method %x.ref, %impl.elem1.loc170_5.1
@@ -1651,7 +1651,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @AddAssignWith.loc225.%T.as_type.loc225_60.1 (%T.as_type.415) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @AddAssignWith.loc225.%U.loc225_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %AddAssignWith.type.loc227: type = facet_type <@AddAssignWith.1, @AddAssignWith.1(constants.%U.67d)> [symbolic = %AddAssignWith.type.loc225_50.1 (constants.%AddAssignWith.type.3a470e.2)]
-// CHECK:STDOUT:     %.loc227_5.1: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.08473b.2) = specific_constant imports.%Core.import_ref.36d, @AddAssignWith.WithSelf(constants.%U.67d, constants.%Self.73bb96.1) [symbolic = %assoc0 (constants.%assoc0.0fc488.2)]
+// CHECK:STDOUT:     %.loc227_5.1: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.08473b.2) = specific_constant imports.%Core.import_ref.36d, @AddAssignWith.WithSelf(constants.%U.67d, constants.%AddAssignWith.type.3a470e.2) [symbolic = %assoc0 (constants.%assoc0.0fc488.2)]
 // CHECK:STDOUT:     %Op.ref: @AddAssignWith.loc225.%AddAssignWith.assoc_type (%AddAssignWith.assoc_type.08473b.2) = name_ref Op, %.loc227_5.1 [symbolic = %assoc0 (constants.%assoc0.0fc488.2)]
 // CHECK:STDOUT:     %impl.elem0.loc227_5.1: @AddAssignWith.loc225.%.loc227_5.2 (%.643) = impl_witness_access constants.%AddAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc227_5.2 (constants.%impl.elem0.20b)]
 // CHECK:STDOUT:     %bound_method.loc227_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc227_5.1
@@ -1681,7 +1681,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @SubAssignWith.loc231.%T.as_type.loc231_60.1 (%T.as_type.540) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @SubAssignWith.loc231.%U.loc231_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %SubAssignWith.type.loc233: type = facet_type <@SubAssignWith.1, @SubAssignWith.1(constants.%U.67d)> [symbolic = %SubAssignWith.type.loc231_50.1 (constants.%SubAssignWith.type.0c61b3.2)]
-// CHECK:STDOUT:     %.loc233_5.1: @SubAssignWith.loc231.%SubAssignWith.assoc_type (%SubAssignWith.assoc_type.8211d1.2) = specific_constant imports.%Core.import_ref.1f6, @SubAssignWith.WithSelf(constants.%U.67d, constants.%Self.0dd047.1) [symbolic = %assoc0 (constants.%assoc0.0ba1dc.2)]
+// CHECK:STDOUT:     %.loc233_5.1: @SubAssignWith.loc231.%SubAssignWith.assoc_type (%SubAssignWith.assoc_type.8211d1.2) = specific_constant imports.%Core.import_ref.1f6, @SubAssignWith.WithSelf(constants.%U.67d, constants.%SubAssignWith.type.0c61b3.2) [symbolic = %assoc0 (constants.%assoc0.0ba1dc.2)]
 // CHECK:STDOUT:     %Op.ref: @SubAssignWith.loc231.%SubAssignWith.assoc_type (%SubAssignWith.assoc_type.8211d1.2) = name_ref Op, %.loc233_5.1 [symbolic = %assoc0 (constants.%assoc0.0ba1dc.2)]
 // CHECK:STDOUT:     %impl.elem0.loc233_5.1: @SubAssignWith.loc231.%.loc233_5.2 (%.dcf) = impl_witness_access constants.%SubAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc233_5.2 (constants.%impl.elem0.8f6)]
 // CHECK:STDOUT:     %bound_method.loc233_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc233_5.1
@@ -1711,7 +1711,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @MulAssignWith.loc237.%T.as_type.loc237_60.1 (%T.as_type.3e8) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @MulAssignWith.loc237.%U.loc237_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %MulAssignWith.type.loc239: type = facet_type <@MulAssignWith.1, @MulAssignWith.1(constants.%U.67d)> [symbolic = %MulAssignWith.type.loc237_50.1 (constants.%MulAssignWith.type.2339fd.2)]
-// CHECK:STDOUT:     %.loc239_5.1: @MulAssignWith.loc237.%MulAssignWith.assoc_type (%MulAssignWith.assoc_type.5adc6f.2) = specific_constant imports.%Core.import_ref.575, @MulAssignWith.WithSelf(constants.%U.67d, constants.%Self.9e408c.1) [symbolic = %assoc0 (constants.%assoc0.42a576.2)]
+// CHECK:STDOUT:     %.loc239_5.1: @MulAssignWith.loc237.%MulAssignWith.assoc_type (%MulAssignWith.assoc_type.5adc6f.2) = specific_constant imports.%Core.import_ref.575, @MulAssignWith.WithSelf(constants.%U.67d, constants.%MulAssignWith.type.2339fd.2) [symbolic = %assoc0 (constants.%assoc0.42a576.2)]
 // CHECK:STDOUT:     %Op.ref: @MulAssignWith.loc237.%MulAssignWith.assoc_type (%MulAssignWith.assoc_type.5adc6f.2) = name_ref Op, %.loc239_5.1 [symbolic = %assoc0 (constants.%assoc0.42a576.2)]
 // CHECK:STDOUT:     %impl.elem0.loc239_5.1: @MulAssignWith.loc237.%.loc239_5.2 (%.66e) = impl_witness_access constants.%MulAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc239_5.2 (constants.%impl.elem0.1f5)]
 // CHECK:STDOUT:     %bound_method.loc239_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc239_5.1
@@ -1741,7 +1741,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @DivAssignWith.loc243.%T.as_type.loc243_60.1 (%T.as_type.cf7) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @DivAssignWith.loc243.%U.loc243_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %DivAssignWith.type.loc245: type = facet_type <@DivAssignWith.1, @DivAssignWith.1(constants.%U.67d)> [symbolic = %DivAssignWith.type.loc243_50.1 (constants.%DivAssignWith.type.4b7503.2)]
-// CHECK:STDOUT:     %.loc245_5.1: @DivAssignWith.loc243.%DivAssignWith.assoc_type (%DivAssignWith.assoc_type.4e8a63.2) = specific_constant imports.%Core.import_ref.5dd, @DivAssignWith.WithSelf(constants.%U.67d, constants.%Self.5bbd7a.1) [symbolic = %assoc0 (constants.%assoc0.ce2908.2)]
+// CHECK:STDOUT:     %.loc245_5.1: @DivAssignWith.loc243.%DivAssignWith.assoc_type (%DivAssignWith.assoc_type.4e8a63.2) = specific_constant imports.%Core.import_ref.5dd, @DivAssignWith.WithSelf(constants.%U.67d, constants.%DivAssignWith.type.4b7503.2) [symbolic = %assoc0 (constants.%assoc0.ce2908.2)]
 // CHECK:STDOUT:     %Op.ref: @DivAssignWith.loc243.%DivAssignWith.assoc_type (%DivAssignWith.assoc_type.4e8a63.2) = name_ref Op, %.loc245_5.1 [symbolic = %assoc0 (constants.%assoc0.ce2908.2)]
 // CHECK:STDOUT:     %impl.elem0.loc245_5.1: @DivAssignWith.loc243.%.loc245_5.2 (%.caf) = impl_witness_access constants.%DivAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc245_5.2 (constants.%impl.elem0.c50)]
 // CHECK:STDOUT:     %bound_method.loc245_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc245_5.1
@@ -1771,7 +1771,7 @@ fn TestUnaryOperators(a: Cpp.Int16, b: Cpp.Int32) {
 // CHECK:STDOUT:     %x.ref: ref @ModAssignWith.loc249.%T.as_type.loc249_60.1 (%T.as_type.739) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref: @ModAssignWith.loc249.%U.loc249_19.1 (%U.67d) = name_ref y, %y
 // CHECK:STDOUT:     %ModAssignWith.type.loc251: type = facet_type <@ModAssignWith.1, @ModAssignWith.1(constants.%U.67d)> [symbolic = %ModAssignWith.type.loc249_50.1 (constants.%ModAssignWith.type.3a0f29.2)]
-// CHECK:STDOUT:     %.loc251_5.1: @ModAssignWith.loc249.%ModAssignWith.assoc_type (%ModAssignWith.assoc_type.01d13e.2) = specific_constant imports.%Core.import_ref.1a2, @ModAssignWith.WithSelf(constants.%U.67d, constants.%Self.cc0e96.1) [symbolic = %assoc0 (constants.%assoc0.a11270.2)]
+// CHECK:STDOUT:     %.loc251_5.1: @ModAssignWith.loc249.%ModAssignWith.assoc_type (%ModAssignWith.assoc_type.01d13e.2) = specific_constant imports.%Core.import_ref.1a2, @ModAssignWith.WithSelf(constants.%U.67d, constants.%ModAssignWith.type.3a0f29.2) [symbolic = %assoc0 (constants.%assoc0.a11270.2)]
 // CHECK:STDOUT:     %Op.ref: @ModAssignWith.loc249.%ModAssignWith.assoc_type (%ModAssignWith.assoc_type.01d13e.2) = name_ref Op, %.loc251_5.1 [symbolic = %assoc0 (constants.%assoc0.a11270.2)]
 // CHECK:STDOUT:     %impl.elem0.loc251_5.1: @ModAssignWith.loc249.%.loc251_5.2 (%.99f) = impl_witness_access constants.%ModAssignWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc251_5.2 (constants.%impl.elem0.46a)]
 // CHECK:STDOUT:     %bound_method.loc251_5.1: <bound method> = bound_method %x.ref, %impl.elem0.loc251_5.1

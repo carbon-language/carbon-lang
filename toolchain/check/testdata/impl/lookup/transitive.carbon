@@ -335,6 +335,8 @@ fn Call() {
 // CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %Self.as_type.b38 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.58e: %pattern_type.b3a = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.b4c: %pattern_type.b3a = wrapper_binding_pattern self, %self.param_patt.58e [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.12e: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.e40: %I.WithSelf.F.type.12e = struct_value () [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, imports.%Main.import_ref.c77 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness imports.%I.impl_witness_table [concrete]
@@ -470,6 +472,13 @@ fn Call() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.58e
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.b4c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.type
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.12e
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.e40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {

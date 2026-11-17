@@ -41,6 +41,8 @@ fn G(c: C) {
 // CHECK:STDOUT:   %HasF.assoc_type: type = assoc_entity_type @HasF [concrete]
 // CHECK:STDOUT:   %assoc0: %HasF.assoc_type = assoc_entity element0, @HasF.WithSelf.%HasF.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %HasF.WithSelf.F.type.3a6: type = fn_type @HasF.WithSelf.F, @HasF.WithSelf(%HasF.type) [concrete]
+// CHECK:STDOUT:   %HasF.WithSelf.F.d11: %HasF.WithSelf.F.type.3a6 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.ba1: <witness> = impl_self_witness %C, @HasF [concrete]
@@ -151,6 +153,13 @@ fn G(c: C) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf.F(constants.%Self) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%HasF.type
+// CHECK:STDOUT:   %HasF.WithSelf.F.type => constants.%HasF.WithSelf.F.type.3a6
+// CHECK:STDOUT:   %HasF.WithSelf.F => constants.%HasF.WithSelf.F.d11
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HasF.WithSelf(constants.%HasF.facet) {
 // CHECK:STDOUT: !definition:

@@ -414,20 +414,18 @@ struct ProhibitedAccessInfo {
 static auto GetSelfFacetForInterfaceFromLookupSelfType(
     Context& context, const SemIR::GenericId generic_with_self_id,
     SemIR::ConstantId self_type_const_id) -> SemIR::ConstantId {
-  if (self_type_const_id.has_value() &&
-      !context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
+  if (self_type_const_id.has_value()) {
     // Extended name lookup into the type of `x`, such as in a member access
-    // `x.F`. We can find a facet type extended scope from the type of `x`.
+    // `x.F`. We can find a facet type extended scope from the type of `x`. Note
+    // the self type may be a facet type, like `Y.(Z.Z1)` if `Y impls Z` even
+    // though `Y` is an interface. Or `Z.Z1` in which case the self `Z` has the
+    // same type as `Self` in the interface's self specific.
     return self_type_const_id;
   }
 
   // If `self_type_const_id` is None, we are doing lookup into a non-lexical
-  // scope. If it is a `FacetType`, then we are doing lookup directly on a facet
-  // type, such as `I.F` on an interface `I`.
-  //
-  // In these cases, there is no self-type from the lookup for the
-  // interface-with-self specific. So the self-type we use is the abstract
-  // symbolic Self from the self specific of the interface-with-self.
+  // scope. The self-type we use is the abstract symbolic Self from the self
+  // specific of the interface-with-self.
   auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
       context.generics().GetSelfSpecific(generic_with_self_id));
   auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);

@@ -467,6 +467,8 @@ let n: type = i32;
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.a7f: %ImplicitAs.WithSelf.Convert.type.56a = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.cbb: type = assoc_entity_type @ImplicitAs, @ImplicitAs(type) [concrete]
 // CHECK:STDOUT:   %assoc0.8e3: %ImplicitAs.assoc_type.cbb = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.329: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %ImplicitAs.type.a78) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.3ff: %ImplicitAs.WithSelf.Convert.type.329 = struct_value () [concrete]
 // CHECK:STDOUT:   %assoc0.3a5: %ImplicitAs.assoc_type.07d = assoc_entity element0, imports.%Core.import_ref.9e1 [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.type.319: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
 // CHECK:STDOUT:   %Self.777: %ImplicitAs.type.319 = symbolic_binding Self, 1 [symbolic]
@@ -474,6 +476,8 @@ let n: type = i32;
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.ef9: %ImplicitAs.WithSelf.Convert.type.b16 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type.59e: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%X) [concrete]
 // CHECK:STDOUT:   %assoc0.839: %ImplicitAs.assoc_type.59e = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a9c: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %ImplicitAs.type.319) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.db7: %ImplicitAs.WithSelf.Convert.type.a9c = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -639,6 +643,17 @@ let n: type = i32;
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.8e3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(type, constants.%ImplicitAs.type.a78) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => type
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.a78
+// CHECK:STDOUT:   %Self => constants.%ImplicitAs.type.a78
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.329
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.3ff
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.cbb
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8e3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%X) {
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%X
@@ -655,6 +670,17 @@ let n: type = i32;
 // CHECK:STDOUT:   %Self => constants.%Self.862
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.b16
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.ef9
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.59e
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%X, constants.%ImplicitAs.type.319) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%X
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.319
+// CHECK:STDOUT:   %Self => constants.%ImplicitAs.type.319
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.a9c
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.db7
 // CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.59e
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
 // CHECK:STDOUT: }

@@ -53,6 +53,8 @@ fn H() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %I.type.184 [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.468: type = fn_type @I.WithSelf.F, @I.WithSelf(%T, %I.type.184) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.637: %I.WithSelf.F.type.468 = struct_value () [symbolic]
 // CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
 // CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -159,7 +161,7 @@ fn H() {
 // CHECK:STDOUT:     %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc19_15.2 [symbolic = %T.loc19_15.1 (constants.%T)]
 // CHECK:STDOUT:     %I.type.loc23_6.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc23_6.2 (constants.%I.type.184)]
-// CHECK:STDOUT:     %.loc23: @G.%I.assoc_type (%I.assoc_type.a2b) = specific_constant @I.WithSelf.%assoc0.loc16_29.1, @I.WithSelf(constants.%T, constants.%Self.c5d) [symbolic = %assoc0 (constants.%assoc0.e82)]
+// CHECK:STDOUT:     %.loc23: @G.%I.assoc_type (%I.assoc_type.a2b) = specific_constant @I.WithSelf.%assoc0.loc16_29.1, @I.WithSelf(constants.%T, constants.%I.type.184) [symbolic = %assoc0 (constants.%assoc0.e82)]
 // CHECK:STDOUT:     %F.ref: @G.%I.assoc_type (%I.assoc_type.a2b) = name_ref F, %.loc23 [symbolic = %assoc0 (constants.%assoc0.e82)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -207,6 +209,17 @@ fn H() {
 // CHECK:STDOUT: specific @G(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc19_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc19_15.1 => constants.%T
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%T, constants.%I.type.184) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %I.type => constants.%I.type.184
+// CHECK:STDOUT:   %Self => constants.%I.type.184
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.468
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.637
+// CHECK:STDOUT:   %I.assoc_type => constants.%I.assoc_type.a2b
+// CHECK:STDOUT:   %assoc0.loc16_29.2 => constants.%assoc0.e82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%empty_struct_type) {

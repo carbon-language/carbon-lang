@@ -443,7 +443,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc6: @EqWith.loc4.%T.as_type.loc4_42.1 (%T.as_type.b9f) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc6: @EqWith.loc4.%U.loc4_12.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %EqWith.type.loc6: type = facet_type <@EqWith.1, @EqWith.1(constants.%U)> [symbolic = %EqWith.type.loc4_36.1 (constants.%EqWith.type.686248.2)]
-// CHECK:STDOUT:     %.loc6_5.1: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = specific_constant imports.%Core.import_ref.f86, @EqWith.WithSelf(constants.%U, constants.%Self.bd18d5.1) [symbolic = %assoc0 (constants.%assoc0.5a05b6.2)]
+// CHECK:STDOUT:     %.loc6_5.1: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = specific_constant imports.%Core.import_ref.f86, @EqWith.WithSelf(constants.%U, constants.%EqWith.type.686248.2) [symbolic = %assoc0 (constants.%assoc0.5a05b6.2)]
 // CHECK:STDOUT:     %Equal.ref: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = name_ref Equal, %.loc6_5.1 [symbolic = %assoc0 (constants.%assoc0.5a05b6.2)]
 // CHECK:STDOUT:     %impl.elem0.loc6_5.1: @EqWith.loc4.%.loc6_5.2 (%.161b4c.2) = impl_witness_access constants.%EqWith.lookup_impl_witness.ae2c3a.2, element0 [symbolic = %impl.elem0.loc6_5.2 (constants.%impl.elem0.52b4ea.2)]
 // CHECK:STDOUT:     %bound_method.loc6_5.1: <bound method> = bound_method %x.ref.loc6, %impl.elem0.loc6_5.1
@@ -453,7 +453,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc7: @EqWith.loc4.%T.as_type.loc4_42.1 (%T.as_type.b9f) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc7: @EqWith.loc4.%U.loc4_12.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %EqWith.type.loc7: type = facet_type <@EqWith.1, @EqWith.1(constants.%U)> [symbolic = %EqWith.type.loc4_36.1 (constants.%EqWith.type.686248.2)]
-// CHECK:STDOUT:     %.loc7_5.1: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = specific_constant imports.%Core.import_ref.91b, @EqWith.WithSelf(constants.%U, constants.%Self.bd18d5.1) [symbolic = %assoc1 (constants.%assoc1.09a898.2)]
+// CHECK:STDOUT:     %.loc7_5.1: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = specific_constant imports.%Core.import_ref.91b, @EqWith.WithSelf(constants.%U, constants.%EqWith.type.686248.2) [symbolic = %assoc1 (constants.%assoc1.09a898.2)]
 // CHECK:STDOUT:     %NotEqual.ref: @EqWith.loc4.%EqWith.assoc_type (%EqWith.assoc_type.92e927.2) = name_ref NotEqual, %.loc7_5.1 [symbolic = %assoc1 (constants.%assoc1.09a898.2)]
 // CHECK:STDOUT:     %impl.elem1.loc7_5.1: @EqWith.loc4.%.loc7_5.2 (%.814) = impl_witness_access constants.%EqWith.lookup_impl_witness.ae2c3a.2, element1 [symbolic = %impl.elem1.loc7_5.2 (constants.%impl.elem1.eb2)]
 // CHECK:STDOUT:     %bound_method.loc7_5.1: <bound method> = bound_method %x.ref.loc7, %impl.elem1.loc7_5.1
@@ -498,7 +498,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc13: @OrderedWith.loc11.%T.as_type.loc11_52.1 (%T.as_type.62a) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc13: @OrderedWith.loc11.%U.loc11_17.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %OrderedWith.type.loc13: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc11_46.1 (constants.%OrderedWith.type.507fad.2)]
-// CHECK:STDOUT:     %.loc13_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.8cd, @OrderedWith.WithSelf(constants.%U, constants.%Self.635006.1) [symbolic = %assoc0 (constants.%assoc0.10837a.2)]
+// CHECK:STDOUT:     %.loc13_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.8cd, @OrderedWith.WithSelf(constants.%U, constants.%OrderedWith.type.507fad.2) [symbolic = %assoc0 (constants.%assoc0.10837a.2)]
 // CHECK:STDOUT:     %Less.ref: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = name_ref Less, %.loc13_5.1 [symbolic = %assoc0 (constants.%assoc0.10837a.2)]
 // CHECK:STDOUT:     %impl.elem0.loc13_5.1: @OrderedWith.loc11.%.loc13_5.2 (%.236) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_5.2 (constants.%impl.elem0.935)]
 // CHECK:STDOUT:     %bound_method.loc13_5.1: <bound method> = bound_method %x.ref.loc13, %impl.elem0.loc13_5.1
@@ -508,7 +508,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc14: @OrderedWith.loc11.%T.as_type.loc11_52.1 (%T.as_type.62a) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc14: @OrderedWith.loc11.%U.loc11_17.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %OrderedWith.type.loc14: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc11_46.1 (constants.%OrderedWith.type.507fad.2)]
-// CHECK:STDOUT:     %.loc14_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.010, @OrderedWith.WithSelf(constants.%U, constants.%Self.635006.1) [symbolic = %assoc1 (constants.%assoc1.4f4378.2)]
+// CHECK:STDOUT:     %.loc14_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.010, @OrderedWith.WithSelf(constants.%U, constants.%OrderedWith.type.507fad.2) [symbolic = %assoc1 (constants.%assoc1.4f4378.2)]
 // CHECK:STDOUT:     %LessOrEquivalent.ref: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = name_ref LessOrEquivalent, %.loc14_5.1 [symbolic = %assoc1 (constants.%assoc1.4f4378.2)]
 // CHECK:STDOUT:     %impl.elem1.loc14_5.1: @OrderedWith.loc11.%.loc14_5.2 (%.0de) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc14_5.2 (constants.%impl.elem1.19b)]
 // CHECK:STDOUT:     %bound_method.loc14_5.1: <bound method> = bound_method %x.ref.loc14, %impl.elem1.loc14_5.1
@@ -518,7 +518,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc15: @OrderedWith.loc11.%T.as_type.loc11_52.1 (%T.as_type.62a) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc15: @OrderedWith.loc11.%U.loc11_17.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %OrderedWith.type.loc15: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc11_46.1 (constants.%OrderedWith.type.507fad.2)]
-// CHECK:STDOUT:     %.loc15_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.16b, @OrderedWith.WithSelf(constants.%U, constants.%Self.635006.1) [symbolic = %assoc2 (constants.%assoc2.60074a.2)]
+// CHECK:STDOUT:     %.loc15_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.16b, @OrderedWith.WithSelf(constants.%U, constants.%OrderedWith.type.507fad.2) [symbolic = %assoc2 (constants.%assoc2.60074a.2)]
 // CHECK:STDOUT:     %Greater.ref: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = name_ref Greater, %.loc15_5.1 [symbolic = %assoc2 (constants.%assoc2.60074a.2)]
 // CHECK:STDOUT:     %impl.elem2.loc15_5.1: @OrderedWith.loc11.%.loc15_5.2 (%.5e7) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc15_5.2 (constants.%impl.elem2)]
 // CHECK:STDOUT:     %bound_method.loc15_5.1: <bound method> = bound_method %x.ref.loc15, %impl.elem2.loc15_5.1
@@ -528,7 +528,7 @@ fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
 // CHECK:STDOUT:     %x.ref.loc16: @OrderedWith.loc11.%T.as_type.loc11_52.1 (%T.as_type.62a) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc16: @OrderedWith.loc11.%U.loc11_17.1 (%U) = name_ref y, %y
 // CHECK:STDOUT:     %OrderedWith.type.loc16: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc11_46.1 (constants.%OrderedWith.type.507fad.2)]
-// CHECK:STDOUT:     %.loc16_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.d00, @OrderedWith.WithSelf(constants.%U, constants.%Self.635006.1) [symbolic = %assoc3 (constants.%assoc3.4e66f6.2)]
+// CHECK:STDOUT:     %.loc16_5.1: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = specific_constant imports.%Core.import_ref.d00, @OrderedWith.WithSelf(constants.%U, constants.%OrderedWith.type.507fad.2) [symbolic = %assoc3 (constants.%assoc3.4e66f6.2)]
 // CHECK:STDOUT:     %GreaterOrEquivalent.ref: @OrderedWith.loc11.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = name_ref GreaterOrEquivalent, %.loc16_5.1 [symbolic = %assoc3 (constants.%assoc3.4e66f6.2)]
 // CHECK:STDOUT:     %impl.elem3.loc16_5.1: @OrderedWith.loc11.%.loc16_5.2 (%.489) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc16_5.2 (constants.%impl.elem3)]
 // CHECK:STDOUT:     %bound_method.loc16_5.1: <bound method> = bound_method %x.ref.loc16, %impl.elem3.loc16_5.1

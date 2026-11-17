@@ -375,6 +375,10 @@ fn Works() {
 // CHECK:STDOUT:   %S.loc8_42.1 => constants.%S
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @J.WithSelf(constants.%J.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%V) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
@@ -417,6 +421,8 @@ fn Works() {
 // CHECK:STDOUT:   %V: %K1.type = symbolic_binding V, 0 [symbolic]
 // CHECK:STDOUT:   %Compound2.type: type = fn_type @Compound2 [concrete]
 // CHECK:STDOUT:   %Compound2: %Compound2.type = struct_value () [concrete]
+// CHECK:STDOUT:   %K1.WithSelf.Q1.type.a11: type = fn_type @K1.WithSelf.Q1, @K1.WithSelf(%K1.type) [concrete]
+// CHECK:STDOUT:   %K1.WithSelf.Q1.5b0: %K1.WithSelf.Q1.type.a11 = struct_value () [concrete]
 // CHECK:STDOUT:   %K1.lookup_impl_witness.27af5e.2: <witness> = lookup_impl_witness %V, @K1 [symbolic]
 // CHECK:STDOUT:   %K1.WithSelf.Q1.type.725c6e.2: type = fn_type @K1.WithSelf.Q1, @K1.WithSelf(%V) [symbolic]
 // CHECK:STDOUT:   %K1.WithSelf.Q1.f908e2.2: %K1.WithSelf.Q1.type.725c6e.2 = struct_value () [symbolic]
@@ -557,6 +563,13 @@ fn Works() {
 // CHECK:STDOUT:   %V.loc13_23.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @K1.WithSelf(constants.%K1.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%K1.type
+// CHECK:STDOUT:   %K1.WithSelf.Q1.type => constants.%K1.WithSelf.Q1.type.a11
+// CHECK:STDOUT:   %K1.WithSelf.Q1 => constants.%K1.WithSelf.Q1.5b0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @K1.WithSelf(constants.%V) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%V
@@ -603,6 +616,8 @@ fn Works() {
 // CHECK:STDOUT:   %Compound3.type: type = fn_type @Compound3 [concrete]
 // CHECK:STDOUT:   %Compound3: %Compound3.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.041d4e.2: <witness> = require_complete_type %V.as_type [symbolic]
+// CHECK:STDOUT:   %K2.WithSelf.Q2.type.9c8: type = fn_type @K2.WithSelf.Q2, @K2.WithSelf(%K2.type) [concrete]
+// CHECK:STDOUT:   %K2.WithSelf.Q2.996: %K2.WithSelf.Q2.type.9c8 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -767,6 +782,13 @@ fn Works() {
 // CHECK:STDOUT:   %y.patt.loc14_30.2 => constants.%y.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @K2.WithSelf(constants.%K2.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%K2.type
+// CHECK:STDOUT:   %K2.WithSelf.Q2.type => constants.%K2.WithSelf.Q2.type.9c8
+// CHECK:STDOUT:   %K2.WithSelf.Q2 => constants.%K2.WithSelf.Q2.996
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- instance.carbon = $instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -832,6 +854,10 @@ fn Works() {
 // CHECK:STDOUT:   %Compound4: %Compound4.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.770490.2: <witness> = require_complete_type %V.as_type [symbolic]
 // CHECK:STDOUT:   %require_complete.0d59a1.2: <witness> = require_complete_type %ptr.ed22b9.2 [symbolic]
+// CHECK:STDOUT:   %L1.WithSelf.R1.type.859: type = fn_type @L1.WithSelf.R1, @L1.WithSelf(%L1.type) [concrete]
+// CHECK:STDOUT:   %L1.WithSelf.R1.396: %L1.WithSelf.R1.type.859 = struct_value () [concrete]
+// CHECK:STDOUT:   %L1.WithSelf.S1.type.10a: type = fn_type @L1.WithSelf.S1, @L1.WithSelf(%L1.type) [concrete]
+// CHECK:STDOUT:   %L1.WithSelf.S1.5f0: %L1.WithSelf.S1.type.10a = struct_value () [concrete]
 // CHECK:STDOUT:   %L1.lookup_impl_witness.cca206.2: <witness> = lookup_impl_witness %V, @L1 [symbolic]
 // CHECK:STDOUT:   %L1.WithSelf.R1.type.e73d51.2: type = fn_type @L1.WithSelf.R1, @L1.WithSelf(%V) [symbolic]
 // CHECK:STDOUT:   %L1.WithSelf.R1.e6f120.2: %L1.WithSelf.R1.type.e73d51.2 = struct_value () [symbolic]
@@ -1162,6 +1188,15 @@ fn Works() {
 // CHECK:STDOUT:   %p.patt.loc15_36.2 => constants.%p.patt.0298e1.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @L1.WithSelf(constants.%L1.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%L1.type
+// CHECK:STDOUT:   %L1.WithSelf.R1.type => constants.%L1.WithSelf.R1.type.859
+// CHECK:STDOUT:   %L1.WithSelf.R1 => constants.%L1.WithSelf.R1.396
+// CHECK:STDOUT:   %L1.WithSelf.S1.type => constants.%L1.WithSelf.S1.type.10a
+// CHECK:STDOUT:   %L1.WithSelf.S1 => constants.%L1.WithSelf.S1.5f0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @L1.WithSelf(constants.%V) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%V
@@ -1226,6 +1261,10 @@ fn Works() {
 // CHECK:STDOUT:   %V: %L2.type = symbolic_binding V, 0 [symbolic]
 // CHECK:STDOUT:   %Compound5.type: type = fn_type @Compound5 [concrete]
 // CHECK:STDOUT:   %Compound5: %Compound5.type = struct_value () [concrete]
+// CHECK:STDOUT:   %L2.WithSelf.R2.type.0eb: type = fn_type @L2.WithSelf.R2, @L2.WithSelf(%L2.type) [concrete]
+// CHECK:STDOUT:   %L2.WithSelf.R2.234: %L2.WithSelf.R2.type.0eb = struct_value () [concrete]
+// CHECK:STDOUT:   %L2.WithSelf.S2.type.cea: type = fn_type @L2.WithSelf.S2, @L2.WithSelf(%L2.type) [concrete]
+// CHECK:STDOUT:   %L2.WithSelf.S2.fb1: %L2.WithSelf.S2.type.cea = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1417,6 +1456,15 @@ fn Works() {
 // CHECK:STDOUT:   %V.loc38_23.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @L2.WithSelf(constants.%L2.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%L2.type
+// CHECK:STDOUT:   %L2.WithSelf.R2.type => constants.%L2.WithSelf.R2.type.0eb
+// CHECK:STDOUT:   %L2.WithSelf.R2 => constants.%L2.WithSelf.R2.234
+// CHECK:STDOUT:   %L2.WithSelf.S2.type => constants.%L2.WithSelf.S2.type.cea
+// CHECK:STDOUT:   %L2.WithSelf.S2 => constants.%L2.WithSelf.S2.fb1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_combine_non_instance.carbon = $fail_combine_non_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1451,6 +1499,8 @@ fn Works() {
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %A.type, %type.as.BitAndWith.impl.Op [concrete]
+// CHECK:STDOUT:   %A.WithSelf.G.type.8c5: type = fn_type @A.WithSelf.G, @A.WithSelf(%A.type) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.G.a85: %A.WithSelf.G.type.8c5 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1609,6 +1659,13 @@ fn Works() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.G(constants.%A.facet) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @A.WithSelf(constants.%A.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%A.type
+// CHECK:STDOUT:   %A.WithSelf.G.type => constants.%A.WithSelf.G.type.8c5
+// CHECK:STDOUT:   %A.WithSelf.G => constants.%A.WithSelf.G.a85
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- allowed_combine_non_instance.carbon = $allowed_combine_non_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1642,6 +1699,8 @@ fn Works() {
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %A.type, %type.as.BitAndWith.impl.Op [concrete]
+// CHECK:STDOUT:   %A.WithSelf.G.type.8c5: type = fn_type @A.WithSelf.G, @A.WithSelf(%A.type) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.G.a85: %A.WithSelf.G.type.8c5 = struct_value () [concrete]
 // CHECK:STDOUT:   %.044: type = fn_type_with_self_type %A.WithSelf.G.type.f4d, %A.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1783,4 +1842,11 @@ fn Works() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.G(constants.%A.facet) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A.WithSelf(constants.%A.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%A.type
+// CHECK:STDOUT:   %A.WithSelf.G.type => constants.%A.WithSelf.G.type.8c5
+// CHECK:STDOUT:   %A.WithSelf.G => constants.%A.WithSelf.G.a85
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

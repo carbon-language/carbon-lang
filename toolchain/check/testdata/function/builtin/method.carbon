@@ -79,6 +79,8 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.94f, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.5c4: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_1.68a: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.type.12e: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.type) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.F.e40: %I.WithSelf.F.type.12e = struct_value () [concrete]
 // CHECK:STDOUT:   %.bf3: type = fn_type_with_self_type %I.WithSelf.F.type.091, %I.facet [concrete]
 // CHECK:STDOUT:   %i32.as.I.impl.F.bound: <bound method> = bound_method %int_1.68a, %i32.as.I.impl.F [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
@@ -350,5 +352,12 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %.loc16_30.1 => constants.%.0b3
 // CHECK:STDOUT:   %return.param_patt.loc16_30.2 => constants.%return.param_patt.299
 // CHECK:STDOUT:   %return.patt.loc16_27.2 => constants.%return.patt.6fa
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%I.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%I.type
+// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.12e
+// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.e40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

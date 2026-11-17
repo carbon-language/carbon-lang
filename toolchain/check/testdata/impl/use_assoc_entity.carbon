@@ -573,6 +573,8 @@ fn F() {
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.type.b54: type = fn_type @Int.as.Negate.impl.Op, @Int.as.Negate.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.c54: %Int.as.Negate.impl.Op.type.b54 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Negate.impl.Op.c54, @Int.as.Negate.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %J.WithSelf.F.type.b3e: type = fn_type @J.WithSelf.F, @J.WithSelf(%J.type) [concrete]
+// CHECK:STDOUT:   %J.WithSelf.F.700: %J.WithSelf.F.type.b3e = struct_value () [concrete]
 // CHECK:STDOUT:   %.42a: type = fn_type_with_self_type %J.WithSelf.F.type.42a, %J.facet.77b [concrete]
 // CHECK:STDOUT:   %int_40.f80: Core.IntLiteral = int_value 40 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
@@ -827,6 +829,13 @@ fn F() {
 // CHECK:STDOUT:   %.loc6_23.1 => constants.%.0b3
 // CHECK:STDOUT:   %return.param_patt.loc6_23.2 => constants.%return.param_patt.299
 // CHECK:STDOUT:   %return.patt.loc6_20.2 => constants.%return.patt.6fa
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J.WithSelf(constants.%J.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%J.type
+// CHECK:STDOUT:   %J.WithSelf.F.type => constants.%J.WithSelf.F.type.b3e
+// CHECK:STDOUT:   %J.WithSelf.F => constants.%J.WithSelf.F.700
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet.0da) {

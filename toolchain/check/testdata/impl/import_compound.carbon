@@ -342,6 +342,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Self: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %NonInstance.WithSelf.F.type.669: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %NonInstance.WithSelf.F.7f7: %NonInstance.WithSelf.F.type.669 = struct_value () [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type.8d7: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%NonInstance.type) [concrete]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.c6a: %NonInstance.WithSelf.F.type.8d7 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.825 [concrete]
 // CHECK:STDOUT:   %NonInstance.impl_witness: <witness> = impl_witness imports.%NonInstance.impl_witness_table [concrete]
@@ -427,6 +429,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%NonInstance.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance.type
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.8d7
+// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.c6a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%NonInstance.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%NonInstance.facet
@@ -448,8 +457,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstanceCallImportFail: %NonInstanceCallImportFail.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
 // CHECK:STDOUT:   %Self.002: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%Self.002) [symbolic]
-// CHECK:STDOUT:   %NonInstance.WithSelf.F: %NonInstance.WithSelf.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type.669: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%Self.002) [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.7f7: %NonInstance.WithSelf.F.type.669 = struct_value () [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type.8d7: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%NonInstance.type) [concrete]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.c6a: %NonInstance.WithSelf.F.type.8d7 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0.dae: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.825 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
@@ -468,7 +479,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ad11e.2: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.002]
 // CHECK:STDOUT:   %Main.import_ref.61e = import_ref Main//lib, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
+// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type.669) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F.7f7)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -520,11 +531,18 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self.002) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.002
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.669
+// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.7f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%NonInstance.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance.type
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.8d7
+// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.c6a
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon = $fail_import_non-instance_indirect
 // CHECK:STDOUT:
@@ -541,8 +559,10 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstanceCallIndirectImport: %NonInstanceCallIndirectImport.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.type: type = facet_type <@NonInstance> [concrete]
 // CHECK:STDOUT:   %Self.002: %NonInstance.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%Self.002) [symbolic]
-// CHECK:STDOUT:   %NonInstance.WithSelf.F: %NonInstance.WithSelf.F.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type.669: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%Self.002) [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.7f7: %NonInstance.WithSelf.F.type.669 = struct_value () [symbolic]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type.8d7: type = fn_type @NonInstance.WithSelf.F, @NonInstance.WithSelf(%NonInstance.type) [concrete]
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.c6a: %NonInstance.WithSelf.F.type.8d7 = struct_value () [concrete]
 // CHECK:STDOUT:   %NonInstance.assoc_type: type = assoc_entity_type @NonInstance [concrete]
 // CHECK:STDOUT:   %assoc0.dae: %NonInstance.assoc_type = assoc_entity element0, imports.%Main.import_ref.825 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
@@ -561,7 +581,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ad11e.2: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.002]
 // CHECK:STDOUT:   %Main.import_ref.61e = import_ref Main//lib, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
+// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type.669) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F.7f7)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -615,11 +635,18 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self.002) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.002
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.669
+// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.7f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%NonInstance.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%NonInstance.type
+// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.8d7
+// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.c6a
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_instance_success.carbon = $import_instance_success
 // CHECK:STDOUT:
@@ -641,6 +668,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %pattern_type.77c: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.1d5: %pattern_type.77c = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.11a: %pattern_type.77c = wrapper_binding_pattern self, %self.param_patt.1d5 [symbolic]
+// CHECK:STDOUT:   %Instance.WithSelf.G.type.68d: type = fn_type @Instance.WithSelf.G, @Instance.WithSelf(%Instance.type) [concrete]
+// CHECK:STDOUT:   %Instance.WithSelf.G.1c1: %Instance.WithSelf.G.type.68d = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, imports.%Main.import_ref.fa6 [concrete]
 // CHECK:STDOUT:   %Instance.impl_witness: <witness> = impl_witness imports.%Instance.impl_witness_table [concrete]
@@ -784,6 +813,13 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.11a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Instance.WithSelf(constants.%Instance.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Instance.type
+// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.68d
+// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.1c1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Instance.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Instance.facet
@@ -802,12 +838,14 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %struct_type.i: type = struct_type {.i: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %Instance.type: type = facet_type <@Instance> [concrete]
 // CHECK:STDOUT:   %Self: %Instance.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Instance.WithSelf.G.type: type = fn_type @Instance.WithSelf.G, @Instance.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %Instance.WithSelf.G: %Instance.WithSelf.G.type = struct_value () [symbolic]
+// CHECK:STDOUT:   %Instance.WithSelf.G.type.080: type = fn_type @Instance.WithSelf.G, @Instance.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %Instance.WithSelf.G.074: %Instance.WithSelf.G.type.080 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [symbolic]
+// CHECK:STDOUT:   %Instance.WithSelf.G.type.68d: type = fn_type @Instance.WithSelf.G, @Instance.WithSelf(%Instance.type) [concrete]
+// CHECK:STDOUT:   %Instance.WithSelf.G.1c1: %Instance.WithSelf.G.type.68d = struct_value () [concrete]
 // CHECK:STDOUT:   %Instance.assoc_type: type = assoc_entity_type @Instance [concrete]
 // CHECK:STDOUT:   %assoc0: %Instance.assoc_type = assoc_entity element0, imports.%Main.import_ref.fa6 [concrete]
 // CHECK:STDOUT: }
@@ -823,7 +861,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a85b8b.2: %Instance.type = import_ref Main//lib, loc11_20, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.2cd = import_ref Main//lib, loc11_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fa6: @Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type) = import_ref Main//lib, loc12_13, loaded [symbolic = @Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G)]
+// CHECK:STDOUT:   %Main.import_ref.fa6: @Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type.080) = import_ref Main//lib, loc12_13, loaded [symbolic = @Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G.074)]
 // CHECK:STDOUT:   %Main.import_ref.fa7 = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.fd3: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -878,8 +916,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type
-// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G
+// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.080
+// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.074
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf.G(constants.%Self) {
@@ -888,5 +926,12 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
 // CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt => constants.%self.patt
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Instance.WithSelf(constants.%Instance.type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %Self => constants.%Instance.type
+// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.68d
+// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.1c1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

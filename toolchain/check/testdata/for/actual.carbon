@@ -706,7 +706,7 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:     %.loc13_23.1: ref @IntRange.as.Iterate.impl.Next.%Int.loc11_41.1 (%Int.d4bbe0.1) = class_element_access %self.ref, element1
 // CHECK:STDOUT:     %.loc13_23.2: @IntRange.as.Iterate.impl.Next.%Int.loc11_41.1 (%Int.d4bbe0.1) = acquire_value %.loc13_23.1
 // CHECK:STDOUT:     %OrderedWith.type.loc13_17.1: type = facet_type <@OrderedWith, @OrderedWith(constants.%Int.d4bbe0.1)> [symbolic = %OrderedWith.type.loc13_17.2 (constants.%OrderedWith.type.a49)]
-// CHECK:STDOUT:     %.loc13_17.1: @IntRange.as.Iterate.impl.Next.%OrderedWith.assoc_type (%OrderedWith.assoc_type.e39) = specific_constant imports.%Core.import_ref.8cd, @OrderedWith.WithSelf(constants.%Int.d4bbe0.1, constants.%Self.635) [symbolic = %assoc0 (constants.%assoc0.5ea)]
+// CHECK:STDOUT:     %.loc13_17.1: @IntRange.as.Iterate.impl.Next.%OrderedWith.assoc_type (%OrderedWith.assoc_type.e39) = specific_constant imports.%Core.import_ref.8cd, @OrderedWith.WithSelf(constants.%Int.d4bbe0.1, constants.%OrderedWith.type.a49) [symbolic = %assoc0 (constants.%assoc0.5ea)]
 // CHECK:STDOUT:     %Less.ref: @IntRange.as.Iterate.impl.Next.%OrderedWith.assoc_type (%OrderedWith.assoc_type.e39) = name_ref Less, %.loc13_17.1 [symbolic = %assoc0 (constants.%assoc0.5ea)]
 // CHECK:STDOUT:     %impl.elem0.loc13: @IntRange.as.Iterate.impl.Next.%.loc13_17.2 (%.31f) = impl_witness_access constants.%OrderedWith.impl_witness.2aa, element0 [symbolic = %Int.as.OrderedWith.impl.Less (constants.%Int.as.OrderedWith.impl.Less.546)]
 // CHECK:STDOUT:     %bound_method.loc13_17.1: <bound method> = bound_method %value.ref.loc13, %impl.elem0.loc13
