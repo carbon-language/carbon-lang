@@ -421,7 +421,6 @@ TEST(HashingTest, TupleRecursion) {
   llvm::APInt one_64(/*numBits=*/64, /*val=*/1);
   llvm::APInt two_64(/*numBits=*/64, /*val=*/2);
   llvm::APInt one_128(/*numBits=*/128, /*val=*/1);
-  llvm::APInt two_128(/*numBits=*/128, /*val=*/2);
   EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
               Eq(HashValue(std::pair{one_64, one_128})));
   EXPECT_THAT(HashValue(std::pair{one_64, one_128}),
