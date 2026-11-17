@@ -22,7 +22,7 @@ fn F(generic T: I(.Self) where .I1 = ()) -> T.I1 {
 
 fn G(generic _: I(.Self) where .I1 = ()) {}
 
-// CHECK:STDOUT: --- self_in_interface_param.carbon
+// CHECK:STDOUT: --- self_in_interface_param.carbon = $self_in_interface_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -20,6 +20,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -116,6 +117,79 @@ static auto GetGenericForInst(Context& context, SemIR::InstId inst_id)
   return SemIR::GenericId::None;
 }
 
+// Returns whether `inst_id` is, or is imported from, a `WrapperBinding`.
+static auto IsWrapperBinding(Context& context, SemIR::InstId inst_id) -> bool {
+  auto [canonical_ir, canonical_inst_id] =
+      SemIR::GetCanonicalFileAndInstId(&context.sem_ir(), inst_id);
+  return canonical_ir->insts().Is<SemIR::WrapperBinding>(canonical_inst_id);
+}
+
+auto TryGetLookupResultInCurrentScope(Context& context, SemIR::LocId loc_id,
+                                      SemIR::NameId name_id,
+                                      LookupResult& result) -> bool {
+  if (!result.scope_result.is_found()) {
+    return false;
+  }
+
+  auto target_inst_id = result.scope_result.target_inst_id();
+  if (SemIR::GetConstantValueInSpecific(context.sem_ir(), result.specific_id,
+                                        target_inst_id)
+          .is_constant()) {
+    // Constants don't need any special logic to access them.
+    return true;
+  }
+
+  auto type_id = context.insts().Get(target_inst_id).type_id();
+  if (type_id == SemIR::ErrorInst::TypeId) {
+    return false;
+  }
+
+  if (result.lexical_scope_index.has_value()) {
+    // A non-constant entity in a lexical scope is a local.
+    switch (context.scope_stack().GetNonConstantAccess(
+        result.lexical_scope_index)) {
+      case ScopeStack::NonConstantAccess::Permitted:
+      case ScopeStack::NonConstantAccess::Unevaluated:
+        return true;
+
+      case ScopeStack::NonConstantAccess::Disallowed: {
+        CARBON_DIAGNOSTIC(
+            UncapturedLocal, Error,
+            "cannot reference local `{0}` declared in enclosing scope",
+            SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(UncapturedLocalDecl, Info, "declared here");
+        context.emitter()
+            .Build(loc_id, UncapturedLocal, name_id)
+            .Attach(target_inst_id, UncapturedLocalDecl)
+            .Emit();
+        return false;
+      }
+
+      case ScopeStack::NonConstantAccess::Captured:
+        // TODO: Record the capture and build an instruction to access it.
+        context.TODO(loc_id, "capture of enclosing local");
+        return false;
+    }
+  }
+
+  // A non-constant entity in a non-lexical scope is a global or static
+  // binding.
+  CARBON_DCHECK(IsWrapperBinding(context, target_inst_id),
+                "Unexpected non-constant entity in non-lexical scope: {0}",
+                context.insts().Get(target_inst_id));
+
+  if (result.specific_id.has_value()) {
+    context.TODO(loc_id, "non-constant `let` binding in generic");
+    return false;
+  }
+
+  auto global_ref_id = AddInst<SemIR::GlobalRef>(
+      context, loc_id, {.type_id = type_id, .inst_id = target_inst_id});
+  result.scope_result = SemIR::ScopeLookupResult::MakeFound(
+      global_ref_id, result.scope_result.access_kind());
+  return true;
+}
+
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required)
     -> LookupResult {
@@ -123,9 +197,10 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
 
   // Find the results from ancestor lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
-  auto [lexical_result, non_lexical_scopes] =
+  auto [lexical_lookup_result, non_lexical_scopes] =
       context.scope_stack().LookupInLexicalScopes(
           name_id, loc_id, IsCurrentPositionReachable(context));
+  auto lexical_result = lexical_lookup_result.inst_id;
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :
@@ -187,9 +262,11 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
     if (decl_generic_id.has_value() && decl_generic_id != current_generic_id) {
       specific_id = context.generics().GetSelfSpecific(decl_generic_id);
     }
+
     return {.specific_id = specific_id,
             .scope_result = SemIR::ScopeLookupResult::MakeFound(
-                lexical_result, SemIR::AccessKind::Public)};
+                lexical_result, SemIR::AccessKind::Public),
+            .lexical_scope_index = lexical_lookup_result.scope_index};
   }
 
   // We didn't find anything at all.

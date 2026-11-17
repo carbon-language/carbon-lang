@@ -28,7 +28,7 @@ fn Test(x: i32) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- var_param.carbon
+// CHECK:STDOUT: --- var_param.carbon = $var_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

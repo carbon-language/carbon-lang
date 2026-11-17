@@ -37,7 +37,7 @@ fn G() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- copy_enum.carbon
+// CHECK:STDOUT: --- copy_enum.carbon = $copy_enum
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

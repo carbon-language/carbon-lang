@@ -6,6 +6,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
@@ -115,19 +116,19 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
 
+  if (InNonStaticFieldDecl(context)) {
+    CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
+                      "tuple pattern in field declaration");
+    context.emitter().Emit(node_id, FieldWithTuplePattern);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    BeginExprRegionForPattern(context);
+    return true;
+  }
+
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    if (InNonStaticFieldDecl(context)) {
-      CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
-                        "found tuple pattern in class `var` decl");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             FieldWithTuplePattern);
-
-      return false;
-    }
-
     auto type_id = ExtractScrutineeType(context.sem_ir(),
                                         context.insts().Get(inst).type_id());
     type_inst_ids.push_back(context.types().GetTypeInstId(type_id));
@@ -153,20 +154,6 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
     EndExprRegionForPattern(context, context.node_stack());
   }
 
-  // TODO: Reject StructPatterns in classes during Parse, or treat patterns in a
-  // class scope as patterns and generate the FieldDecl insts in a later
-  // pattern-matching step.
-  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
-    bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
-    CARBON_DIAGNOSTIC(
-        FieldWithStructPattern, Error,
-        "found struct pattern in class member {0:var|let} declaration",
-        Diagnostics::BoolAsSelect);
-    context.emitter().Emit(node_id, FieldWithStructPattern, is_var);
-
-    return false;
-  }
-
   if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
     // Remove the last parameter from the node stack before collecting names.
     context.param_and_arg_refs_stack().EndNoPop(
@@ -184,8 +171,13 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructPatternStart>();
 
-  if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
-                             StructKind::StructPattern)) {
+  if (InNonStaticFieldDecl(context)) {
+    CARBON_DIAGNOSTIC(FieldWithStructPattern, Error,
+                      "struct pattern in field declaration");
+    context.emitter().Emit(node_id, FieldWithStructPattern);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  } else if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                                    StructKind::StructPattern)) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto type_id = GetPatternType(

@@ -108,7 +108,7 @@ fn G() {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- imported_callee.impl.carbon
+// CHECK:STDOUT: --- imported_callee.impl.carbon = $imported_callee.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -167,7 +167,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_6.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_defaults_fully_specified.carbon
+// CHECK:STDOUT: --- tuple_defaults_fully_specified.carbon = $tuple_defaults_fully_specified
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -297,7 +297,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_6.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- single_argument.carbon
+// CHECK:STDOUT: --- single_argument.carbon = $single_argument
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

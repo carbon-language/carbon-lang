@@ -69,7 +69,7 @@ interface I {}
 // CHECK:STDERR:
 impl {.a: bool} as type where .Self impls I {}
 
-// CHECK:STDOUT: --- fail_impl_as_false.carbon
+// CHECK:STDOUT: --- fail_impl_as_false.carbon = $fail_impl_as_false
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -111,7 +111,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type.carbon
+// CHECK:STDOUT: --- fail_impl_as_type.carbon = $fail_impl_as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -143,7 +143,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where.carbon = $fail_impl_as_type_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -193,7 +193,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon = $fail_impl_as_type_where_impls_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

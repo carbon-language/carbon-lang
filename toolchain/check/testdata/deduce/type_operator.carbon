@@ -72,7 +72,7 @@ fn G(p: C*) -> const C {
   return F(p);
 }
 
-// CHECK:STDOUT: --- pointer.carbon
+// CHECK:STDOUT: --- pointer.carbon = $pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -250,7 +250,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_36.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- const.carbon
+// CHECK:STDOUT: --- const.carbon = $const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -435,7 +435,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_42.2 => constants.%F.specific_fn.c73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nonconst_from_const.carbon
+// CHECK:STDOUT: --- nonconst_from_const.carbon = $nonconst_from_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -616,7 +616,7 @@ fn G(p: C*) -> const C {
 // CHECK:STDOUT:   %F.specific_fn.loc6_36.2 => constants.%F.specific_fn.016
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_const_from_nonconst.carbon
+// CHECK:STDOUT: --- fail_const_from_nonconst.carbon = $fail_const_from_nonconst
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

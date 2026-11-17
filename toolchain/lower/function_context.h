@@ -200,6 +200,11 @@ class FunctionContext {
   auto StoreObject(TypeInFile type, llvm::Value* value, llvm::Value* addr)
       -> void;
 
+  // Emits an object representation copy for type `type` from `source` to
+  // `dest`, which must be pointers to `type` objects.
+  auto CopyObject(TypeInFile type, llvm::Value* source, llvm::Value* dest)
+      -> void;
+
   // Emits the instructions necessary to initialize the storage at `dest_id`
   // from the repr-initializing expression `source_id`. This assumes the
   // instructions for `source_id` have already been emitted, so it's a no-op if
@@ -235,6 +240,9 @@ class FunctionContext {
   // When fingerprinting for a specific of a template, adds the given
   // instruction.
   auto AddInstToCurrentFingerprint(SemIR::InstId inst_id) -> void;
+
+  // When fingerprinting for a specific, adds the global.
+  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
   // Emits the final function fingerprints. Only called when function lowering
   // is complete.
@@ -326,9 +334,6 @@ class FunctionContext {
   // objects.
   auto CopyObject(TypeInFile type, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
-
-  // When fingerprinting for a specific, adds the global.
-  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
   // Context for lowering in the file that contains this function's
   // instructions.

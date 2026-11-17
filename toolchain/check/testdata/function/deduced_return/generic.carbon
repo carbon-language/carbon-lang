@@ -148,7 +148,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
   return var;
 }
 
-// CHECK:STDOUT: --- generic_definition.carbon
+// CHECK:STDOUT: --- generic_definition.carbon = $generic_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -256,7 +256,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %x.patt.loc4_21.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -334,7 +334,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_from_generic.carbon
+// CHECK:STDOUT: --- call_from_generic.carbon = $call_from_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -479,7 +479,7 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %F.specific_fn.loc6_40.2 => constants.%F.specific_fn.37a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_type_from_definition.carbon
+// CHECK:STDOUT: --- return_type_from_definition.carbon = $return_type_from_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -45,8 +45,8 @@ fn Run() {
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!35}
+// CHECK:STDOUT: !llvm.module.flags = !{!28, !29, !30, !31, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!36}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -58,12 +58,13 @@ fn Run() {
 // CHECK:STDOUT: !25 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !18, line: 8, type: !22, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !26 = !DILocation(line: 9, column: 3, scope: !25)
 // CHECK:STDOUT: !27 = !DILocation(line: 8, column: 1, scope: !25)
-// CHECK:STDOUT: !28 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !29 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !30 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !31 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !32 = !{!"omnipotent char", !31, i64 0}
-// CHECK:STDOUT: !33 = !{!"int", !32, i64 0}
-// CHECK:STDOUT: !34 = !{!"__libc_errno", !33, i64 0}
-// CHECK:STDOUT: !35 = !{!34, !33, i64 0}
+// CHECK:STDOUT: !28 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !29 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !30 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !31 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !32 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !33 = !{!"omnipotent char", !32, i64 0}
+// CHECK:STDOUT: !34 = !{!"int", !33, i64 0}
+// CHECK:STDOUT: !35 = !{!"__libc_errno", !34, i64 0}
+// CHECK:STDOUT: !36 = !{!35, !34, i64 0}
 // CHECK:STDOUT:

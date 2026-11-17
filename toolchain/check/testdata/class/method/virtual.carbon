@@ -589,7 +589,7 @@ class T2(G2: type) {
 }
 
 
-// CHECK:STDOUT: --- modifiers.carbon
+// CHECK:STDOUT: --- modifiers.carbon = $modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -681,7 +681,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: virtual fn @Abstract.K(%self.param: %Abstract);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- override_import.carbon
+// CHECK:STDOUT: --- override_import.carbon = $override_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -885,7 +885,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init.carbon
+// CHECK:STDOUT: --- init.carbon = $init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -982,7 +982,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_members.carbon
+// CHECK:STDOUT: --- init_members.carbon = $init_members
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1205,7 +1205,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_impl.carbon
+// CHECK:STDOUT: --- abstract_impl.carbon = $abstract_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1277,7 +1277,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- virtual_impl.carbon
+// CHECK:STDOUT: --- virtual_impl.carbon = $virtual_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1349,7 +1349,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_conversion.carbon
+// CHECK:STDOUT: --- impl_conversion.carbon = $impl_conversion
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1458,7 +1458,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc23_28.2(%self.param: ref %T2) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_with_virtual.carbon
+// CHECK:STDOUT: --- generic_with_virtual.carbon = $generic_with_virtual
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1546,7 +1546,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- with_dependent_arg.carbon
+// CHECK:STDOUT: --- with_dependent_arg.carbon = $with_dependent_arg
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1655,7 +1655,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   %require_complete.loc6_37 => constants.%require_complete.944
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_generic_specifically.carbon
+// CHECK:STDOUT: --- impl_generic_specifically.carbon = $impl_generic_specifically
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1740,7 +1740,7 @@ class T2(G2: type) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_generic_generic.carbon
+// CHECK:STDOUT: --- impl_generic_generic.carbon = $impl_generic_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

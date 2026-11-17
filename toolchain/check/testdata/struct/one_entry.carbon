@@ -15,7 +15,7 @@
 var x: {.a: i32} = {.a = 4};
 var y: {.a: i32} = x;
 
-// CHECK:STDOUT: --- one_entry.carbon
+// CHECK:STDOUT: --- one_entry.carbon = $one_entry
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

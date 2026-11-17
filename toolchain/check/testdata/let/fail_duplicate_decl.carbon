@@ -28,7 +28,7 @@ fn F() {
   let unused a: i32 = 2;
 }
 
-// CHECK:STDOUT: --- fail_duplicate_decl.carbon
+// CHECK:STDOUT: --- fail_duplicate_decl.carbon = $fail_duplicate_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

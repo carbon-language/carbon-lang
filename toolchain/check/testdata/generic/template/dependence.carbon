@@ -35,7 +35,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- type.carbon
+// CHECK:STDOUT: --- type.carbon = $type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -255,7 +255,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %.loc6_12.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mixed.carbon
+// CHECK:STDOUT: --- mixed.carbon = $mixed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

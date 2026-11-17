@@ -108,7 +108,7 @@ class X {
 }
 
 
-// CHECK:STDOUT: --- fail_impl_as_file_scope.carbon
+// CHECK:STDOUT: --- fail_impl_as_file_scope.carbon = $fail_impl_as_file_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -176,7 +176,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_function_scope.carbon
+// CHECK:STDOUT: --- fail_impl_as_function_scope.carbon = $fail_impl_as_function_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -244,7 +244,7 @@ class X {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_self_interface.carbon
+// CHECK:STDOUT: --- fail_impl_as_self_interface.carbon = $fail_impl_as_self_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -573,7 +573,7 @@ class X {
 // CHECK:STDOUT:   %self.patt.loc5_13.2 => constants.%self.patt.5e8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_other_interface.carbon
+// CHECK:STDOUT: --- fail_impl_as_other_interface.carbon = $fail_impl_as_other_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

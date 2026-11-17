@@ -68,9 +68,13 @@ static auto HandleIntroducer(Context& context, Parse::NodeId node_id) -> bool {
   // Push a bracketing node and pattern block to establish the pattern context.
   context.node_stack().Push(node_id);
   context.pattern_block_stack().Push();
-  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>() &&
-      Kind == Lex::TokenKind::Var) {
-    context.full_pattern_stack().PushClassScopeVarDecl();
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    if constexpr (Kind == Lex::TokenKind::Var) {
+      context.full_pattern_stack().PushClassScopeVarDecl();
+    } else {
+      static_assert(Kind == Lex::TokenKind::Let);
+      context.full_pattern_stack().PushClassScopeLetDecl();
+    }
   } else {
     context.full_pattern_stack().PushNameBindingDecl();
   }
@@ -129,6 +133,7 @@ auto HandleParseNode(Context& context, Parse::VariablePatternId node_id)
           context, node_id,
           {.type_id = type_id, .subpattern_id = subpattern_id});
       break;
+    case FullPatternStack::Kind::ClassScopeLetDecl:
     case FullPatternStack::Kind::NameBindingDecl:
       pattern_id = add_local_var();
       break;
@@ -316,7 +321,6 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
-  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -351,6 +355,11 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   }
 
   context.full_pattern_stack().PopFullPattern();
+
+  // Keep the introducer on the stack until we've finished processing the
+  // declaration so we can detect when we're processing an initializer for a
+  // global let or var.
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   return true;
 }
 

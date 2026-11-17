@@ -49,7 +49,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- use_i32_typedef.carbon
+// CHECK:STDOUT: --- use_i32_typedef.carbon = $use_i32_typedef
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -182,7 +182,7 @@ fn H(var c: Cpp.C, var d: Cpp.D) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_class_typedef.carbon
+// CHECK:STDOUT: --- use_class_typedef.carbon = $use_class_typedef
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

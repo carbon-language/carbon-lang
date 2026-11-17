@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Green tests](#green-tests)
 -   [Always use pull requests (with review) rather than pushing directly](#always-use-pull-requests-with-review-rather-than-pushing-directly)
 -   [Small, incremental changes](#small-incremental-changes)
+    -   [Dependent pull requests](#dependent-pull-requests)
 -   [Linear history](#linear-history)
 -   [Merging a pull request](#merging-a-pull-request)
 
@@ -101,6 +102,38 @@ While the default is to squash pull requests into a single commit, _during_ the
 review you typically want to leave the development history undisturbed until the
 end so that comments on any particular increment aren't lost. We typically use
 the GitHub squash-and-merge functionality to land things.
+
+### Dependent pull requests
+
+When splitting work into a series of changes that build on each other, open each
+pull request against `trunk` with the commits from earlier unmerged pull
+requests included in its branch.
+
+The `PR dependencies check` status tracks these dependencies based on shared
+commits:
+
+-   While a pull request depends on other open pull requests, the check adds the
+    `dependent` label, posts a comment linking to the diff of just that pull
+    request's commits, and leaves its status `pending` so it doesn't merge
+    before its dependencies.
+-   Once those pull requests merge, the check removes the `dependent` label,
+    updates the comment, and marks the status `success`.
+
+If the check becomes stale, editing the pull request description runs it again.
+Contributors with write access can also re-run the workflow job from the check's
+`Details` link, or use the `dependent` label:
+
+-   **Re-check**: Adding the label drops any override and recomputes the open
+    dependencies from the current commits. If the label is already present,
+    remove and re-add it.
+-   **Override**: Removing the label ignores the currently detected dependencies
+    and marks the status `success`.
+
+Both are also available by manually running the
+[`Check Dependent PRs` workflow](https://github.com/carbon-language/carbon-lang/actions/workflows/check_dependent_pr.yaml)
+with the `recheck` or `override` mode. Hiding the check's comment discards all
+of its tracked state, including merged dependencies, so the next check starts
+from scratch.
 
 ## Linear history
 

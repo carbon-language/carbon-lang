@@ -26,7 +26,7 @@ interface I {}
 // CHECK:STDERR:
 impl true as I {}
 
-// CHECK:STDOUT: --- fail_impl_bad_type.carbon
+// CHECK:STDOUT: --- fail_impl_bad_type.carbon = $fail_impl_bad_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

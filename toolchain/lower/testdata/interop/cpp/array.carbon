@@ -101,8 +101,8 @@ int H() {
 // CHECK:STDOUT: attributes #4 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!25}
-// CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!55}
+// CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !54, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!56}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -134,9 +134,10 @@ int H() {
 // CHECK:STDOUT: !48 = !{!47, !47, i64 0}
 // CHECK:STDOUT: !49 = !{}
 // CHECK:STDOUT: !50 = !{i64 4}
-// CHECK:STDOUT: !51 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !52 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !53 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !54 = !{!"__libc_errno", !45, i64 0}
-// CHECK:STDOUT: !55 = !{!54, !45, i64 0}
+// CHECK:STDOUT: !51 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !52 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !53 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !54 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !55 = !{!"__libc_errno", !45, i64 0}
+// CHECK:STDOUT: !56 = !{!55, !45, i64 0}
 // CHECK:STDOUT:

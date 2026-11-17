@@ -193,7 +193,7 @@ impl alias B = Class;
 // CHECK:STDERR:
 extern alias C = Class;
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- alias.carbon = $alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -210,7 +210,7 @@ extern alias C = Class;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_of_alias.carbon
+// CHECK:STDOUT: --- alias_of_alias.carbon = $alias_of_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -230,13 +230,8 @@ extern alias C = Class;
 // CHECK:STDOUT:   %b: type = alias_binding b, %a.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = alias_binding c, %b.ref [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc10_13.1: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc10_13.2: init %C to %.loc10_13.1 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.3: init %C = converted @__global_init.%.loc10, %.loc10_13.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc10_13.4: ref %C = temporary %.loc10_13.1, %.loc10_13.3 [concrete = constants.%.115]
-// CHECK:STDOUT:   %.loc10_13.5: %C = acquire_value %.loc10_13.4 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
-// CHECK:STDOUT:   %d: %C = wrapper_binding d, %.loc10_13.5
+// CHECK:STDOUT:   %d: %C = wrapper_binding d, @__global_init.%.loc10_13.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -244,11 +239,16 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_13.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_13.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc10_13.3: init %C to %.loc10_13.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc10_13.4: init %C = converted %.loc10_13.1, %.loc10_13.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc10_13.5: ref %C = temporary %.loc10_13.2, %.loc10_13.4 [concrete = constants.%.115]
+// CHECK:STDOUT:   %.loc10_13.6: %C = acquire_value %.loc10_13.5 [concrete = constants.%C.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_to_generic.carbon
+// CHECK:STDOUT: --- alias_to_generic.carbon = $alias_to_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

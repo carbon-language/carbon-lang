@@ -49,7 +49,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- from_struct.carbon
+// CHECK:STDOUT: --- from_struct.carbon = $from_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -398,7 +398,7 @@ fn InitFromAdaptedSpecific(x: i32) -> i32 {
 // CHECK:STDOUT:   %return.patt.loc9_69.2 => constants.%return.patt.f44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt.carbon
+// CHECK:STDOUT: --- adapt.carbon = $adapt
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

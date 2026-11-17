@@ -99,7 +99,7 @@ fn F(template T: type) {
 
 fn G() { F({}); }
 
-// CHECK:STDOUT: --- implicit_return.carbon
+// CHECK:STDOUT: --- implicit_return.carbon = $implicit_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -221,7 +221,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_scope.carbon
+// CHECK:STDOUT: --- nested_scope.carbon = $nested_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -351,7 +351,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- temp.carbon
+// CHECK:STDOUT: --- temp.carbon = $temp
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -448,7 +448,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc12(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_class.carbon
+// CHECK:STDOUT: --- generic_class.carbon = $generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -517,7 +517,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_3.2(%self.param: ref %D.89e) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_use_inside_generic.carbon
+// CHECK:STDOUT: --- generic_use_inside_generic.carbon = $generic_use_inside_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -649,7 +649,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.2 => constants.%SelfDestruct.specific_fn.055
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_use_inside_template.carbon
+// CHECK:STDOUT: --- generic_use_inside_template.carbon = $generic_use_inside_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

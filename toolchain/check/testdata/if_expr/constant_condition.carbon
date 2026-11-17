@@ -35,7 +35,7 @@ fn PartiallyConstant(t: type) -> i32 {
   return *w;
 }
 
-// CHECK:STDOUT: --- constant_condition.carbon
+// CHECK:STDOUT: --- constant_condition.carbon = $constant_condition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

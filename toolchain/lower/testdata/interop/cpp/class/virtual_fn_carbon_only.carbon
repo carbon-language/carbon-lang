@@ -178,8 +178,8 @@ fn F() {
 // CHECK:STDOUT: attributes #6 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!13}
-// CHECK:STDOUT: !llvm.module.flags = !{!76, !77, !78, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!81}
+// CHECK:STDOUT: !llvm.module.flags = !{!76, !77, !78, !79, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!82}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -238,10 +238,11 @@ fn F() {
 // CHECK:STDOUT: !71 = !{!70, !70, i64 0}
 // CHECK:STDOUT: !72 = !{!"p1 _ZTSN6Carbon4Main1ZE", !67, i64 0}
 // CHECK:STDOUT: !73 = !{!72, !72, i64 0}
-// CHECK:STDOUT: !76 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !77 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !78 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !79 = !{!"int", !66, i64 0}
-// CHECK:STDOUT: !80 = !{!"__libc_errno", !79, i64 0}
-// CHECK:STDOUT: !81 = !{!80, !79, i64 0}
+// CHECK:STDOUT: !76 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !77 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !78 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !79 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !80 = !{!"int", !66, i64 0}
+// CHECK:STDOUT: !81 = !{!"__libc_errno", !80, i64 0}
+// CHECK:STDOUT: !82 = !{!81, !80, i64 0}
 // CHECK:STDOUT:

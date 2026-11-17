@@ -84,7 +84,7 @@ fn CallIndirect() {
 }
 
 
-// CHECK:STDOUT: --- generic_method_fewer_params.carbon
+// CHECK:STDOUT: --- generic_method_fewer_params.carbon = $generic_method_fewer_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -936,7 +936,7 @@ fn CallIndirect() {
 // CHECK:STDOUT:   %return.patt.loc6_32.2 => constants.%return.patt.8bb
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_method_more_params.carbon
+// CHECK:STDOUT: --- generic_method_more_params.carbon = $generic_method_more_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

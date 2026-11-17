@@ -102,7 +102,7 @@ fn F(generic T: type where .Self impls W) {
   T.YF();
 }
 
-// CHECK:STDOUT: --- facet_type_extends_and_constraint_extends.carbon
+// CHECK:STDOUT: --- facet_type_extends_and_constraint_extends.carbon = $facet_type_extends_and_constraint_extends
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -193,7 +193,7 @@ fn F(generic T: type where .Self impls W) {
 // CHECK:STDOUT:   %T.loc12_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- facet_type_does_not_extend_and_constraint_extends.carbon
+// CHECK:STDOUT: --- facet_type_does_not_extend_and_constraint_extends.carbon = $facet_type_does_not_extend_and_constraint_extends
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

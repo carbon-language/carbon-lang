@@ -83,11 +83,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class ClassWithMethod(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   fn M(unused ref self) {}
-  // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━━
-  // CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
-  // CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn M(unused ref self) {}

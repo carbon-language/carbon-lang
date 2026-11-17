@@ -202,6 +202,11 @@ CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierForFriend)
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
 
+// Where assignment declaration diagnostics.
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingIdentifier)
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentMissingEquals)
+CARBON_DIAGNOSTIC_KIND(WhereAssignmentInWrongScope)
+
 // Where requirement diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedRequirementOperator)
 CARBON_DIAGNOSTIC_KIND(RequirementEqualAfterNonDesignator)
@@ -424,6 +429,7 @@ CARBON_DIAGNOSTIC_KIND(EvalRequiresConstantValue)
 CARBON_DIAGNOSTIC_KIND(FormExprEvaluationFailure)
 CARBON_DIAGNOSTIC_KIND(NameDeclDuplicate)
 CARBON_DIAGNOSTIC_KIND(NameUseBeforeDecl)
+CARBON_DIAGNOSTIC_KIND(UncapturedLocal)
 CARBON_DIAGNOSTIC_KIND(RepeatedConst)
 CARBON_DIAGNOSTIC_KIND(CharTooLargeForType)
 CARBON_DIAGNOSTIC_KIND(InvalidCharLiteralValue)

@@ -51,7 +51,7 @@ fn Call() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_call_too_few_args.carbon
+// CHECK:STDOUT: --- fail_call_too_few_args.carbon = $fail_call_too_few_args
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -24,7 +24,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
 
-      - uses: actions/stale@28ca1036281a5e5922ead5184a1bbf96e5fc984e # v9.0.0
+      - uses: actions/stale@4391f3da665fdf50b6810c1a66712fb9ba21aa93 # v11.0.0
         with:
           stale-issue-message: >
             We triage inactive PRs and issues in order to make it easier to find

@@ -21,7 +21,7 @@
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: --- fail_unresolved_scope.carbon
+// CHECK:STDOUT: --- fail_unresolved_scope.carbon = $fail_unresolved_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

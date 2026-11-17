@@ -195,7 +195,7 @@ let a: i32 = Add(0x7FFFFFFF, 0);
 // CHECK:STDERR:
 let b: i32 = Add(0x7FFFFFFF, 1);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

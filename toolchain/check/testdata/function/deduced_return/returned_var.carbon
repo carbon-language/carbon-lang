@@ -122,7 +122,7 @@ fn F(b: bool) -> auto {
   return var;
 }
 
-// CHECK:STDOUT: --- returned_var.carbon
+// CHECK:STDOUT: --- returned_var.carbon = $returned_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -213,7 +213,7 @@ fn F(b: bool) -> auto {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc5(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- returned_var_after_return.carbon
+// CHECK:STDOUT: --- returned_var_after_return.carbon = $returned_var_after_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -332,7 +332,7 @@ fn F(b: bool) -> auto {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- returned_var_in_place.carbon
+// CHECK:STDOUT: --- returned_var_in_place.carbon = $returned_var_in_place
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

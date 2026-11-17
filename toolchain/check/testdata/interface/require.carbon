@@ -452,7 +452,7 @@ interface Z(T: type) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_todo_extend.carbon
+// CHECK:STDOUT: --- fail_todo_extend.carbon = $fail_todo_extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -512,7 +512,7 @@ interface Z(T: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_extend_with_self.carbon
+// CHECK:STDOUT: --- fail_todo_extend_with_self.carbon = $fail_todo_extend_with_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -592,7 +592,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon
+// CHECK:STDOUT: --- fail_todo_implicit_self_impls.carbon = $fail_todo_implicit_self_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -642,7 +642,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_explicit_self_impls.carbon
+// CHECK:STDOUT: --- fail_todo_explicit_self_impls.carbon = $fail_todo_explicit_self_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -694,7 +694,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_self_specific_impls.carbon
+// CHECK:STDOUT: --- explicit_self_specific_impls.carbon = $explicit_self_specific_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -755,7 +755,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.4f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_impls_where.carbon
+// CHECK:STDOUT: --- require_impls_where.carbon = $require_impls_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -843,7 +843,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2 => constants.%Y_where.type.bc8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_impls_self_specific.carbon
+// CHECK:STDOUT: --- require_impls_self_specific.carbon = $require_impls_self_specific
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -940,7 +940,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Z.type.loc5_25.2 => constants.%Z.type.833
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_self_in_requirement.carbon
+// CHECK:STDOUT: --- require_self_in_requirement.carbon = $require_self_in_requirement
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1029,7 +1029,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3 => constants.%Y_where.type.061
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_same.carbon
+// CHECK:STDOUT: --- require_same.carbon = $require_same
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

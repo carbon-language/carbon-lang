@@ -28,7 +28,7 @@ interface I { let T: type; }
 // CHECK:STDERR:
 impl () as I {}
 
-// CHECK:STDOUT: --- fail_impl_bad_assoc_const.carbon
+// CHECK:STDOUT: --- fail_impl_bad_assoc_const.carbon = $fail_impl_bad_assoc_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

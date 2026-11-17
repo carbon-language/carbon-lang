@@ -879,7 +879,7 @@ constraint N {
   require impls Z where .Z1 = .Z2 and .Z2 = .Z1;
 }
 
-// CHECK:STDOUT: --- extend.carbon
+// CHECK:STDOUT: --- extend.carbon = $extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1010,7 +1010,7 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_with_self.carbon
+// CHECK:STDOUT: --- extend_with_self.carbon = $extend_with_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1181,7 +1181,7 @@ constraint N {
 // CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.7e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_self_impls.carbon
+// CHECK:STDOUT: --- implicit_self_impls.carbon = $implicit_self_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1241,7 +1241,7 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_self_impls.carbon
+// CHECK:STDOUT: --- explicit_self_impls.carbon = $explicit_self_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1303,7 +1303,7 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_self_specific_impls.carbon
+// CHECK:STDOUT: --- explicit_self_specific_impls.carbon = $explicit_self_specific_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1363,7 +1363,7 @@ constraint N {
 // CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.f15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_impls_where.carbon
+// CHECK:STDOUT: --- require_impls_where.carbon = $require_impls_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1452,7 +1452,7 @@ constraint N {
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2 => constants.%Y_where.type.11e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_incomplete_constraint.carbon
+// CHECK:STDOUT: --- fail_require_impls_incomplete_constraint.carbon = $fail_require_impls_incomplete_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1478,7 +1478,7 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_require_impls_without_self.carbon
+// CHECK:STDOUT: --- fail_require_impls_without_self.carbon = $fail_require_impls_without_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1534,7 +1534,7 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%T, constants.%Self.22b) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_self_in_requirement.carbon
+// CHECK:STDOUT: --- require_self_in_requirement.carbon = $require_self_in_requirement
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1624,7 +1624,7 @@ constraint N {
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3 => constants.%Y_where.type.4d3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_with_period_self_impls.carbon
+// CHECK:STDOUT: --- require_with_period_self_impls.carbon = $require_with_period_self_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1724,7 +1724,7 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.8a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- require_with_specific_period_self.carbon
+// CHECK:STDOUT: --- require_with_specific_period_self.carbon = $require_with_specific_period_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

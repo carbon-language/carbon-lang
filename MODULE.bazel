@@ -20,23 +20,28 @@ of:
         `MODULE.bazel.lock`; create a PR with those changes in order to include
         the host platform.
 
+`bazel mod deps` evaluates every module extension, but reuses results recorded
+in `MODULE.bazel.lock`. Re-evaluating some extensions can be expensive; for
+example, the Rust crates newer protobuf versions depend on require downloading
+a Rust toolchain.
+
 For updates, run `scripts/query_module_versions.py` to list the latest package
 versions.
 """
 
 module(name = "carbon")
 
-bazel_dep(name = "abseil-cpp", version = "20260107.1")
-bazel_dep(name = "bazel_skylib", version = "1.9.0")
+bazel_dep(name = "abseil-cpp", version = "20260817.0")
+bazel_dep(name = "bazel_skylib", version = "1.9.2")
 bazel_dep(name = "boost.unordered", version = "1.90.0.bcr.1")
-bazel_dep(name = "google_benchmark", version = "1.9.5")
-bazel_dep(name = "googletest", version = "1.17.0.bcr.2")
+bazel_dep(name = "google_benchmark", version = "1.10.0")
+bazel_dep(name = "googletest", version = "1.18.0.bcr.1")
 bazel_dep(name = "libpfm", version = "4.13.0")
 bazel_dep(name = "re2", version = "2025-11-05.bcr.1")
-bazel_dep(name = "rules_cc", version = "0.2.25")
-bazel_dep(name = "rules_pkg", version = "1.2.0")
+bazel_dep(name = "rules_cc", version = "0.2.27")
+bazel_dep(name = "rules_pkg", version = "1.3.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
-bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
+bazel_dep(name = "tcmalloc", version = "0.0.0-20260818-15db23d")
 bazel_dep(name = "tree-sitter-bazel", version = "0.26.5")
 
 bazel_dep(name = "wolfd_bazel_compile_commands", version = "0.5.2", dev_dependency = True)
@@ -67,11 +72,11 @@ register_toolchains("@bazel_cc_toolchain//:all")
 register_toolchains("//toolchain/install:all")
 
 # Required for llvm-project.
-bazel_dep(name = "libxml2", version = "2.15.2")
-bazel_dep(name = "platforms", version = "1.0.0")
-bazel_dep(name = "protobuf", version = "34.0.bcr.1", repo_name = "com_google_protobuf")
-bazel_dep(name = "zlib-ng", version = "2.3.3", repo_name = "llvm_zlib")
-bazel_dep(name = "zstd", version = "1.5.7.bcr.1", repo_name = "llvm_zstd")
+bazel_dep(name = "libxml2", version = "2.15.3")
+bazel_dep(name = "platforms", version = "1.1.0")
+bazel_dep(name = "protobuf", version = "36.2", repo_name = "com_google_protobuf")
+bazel_dep(name = "zlib-ng", version = "2.3.3.bcr.2", repo_name = "llvm_zlib")
+bazel_dep(name = "zstd", version = "1.5.7.bcr.3", repo_name = "llvm_zstd")
 bazel_dep(name = "xz", version = "5.4.5.bcr.9", repo_name = "llvm_xz")
 
 ###############################################################################
@@ -85,17 +90,14 @@ git_override(
     build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
-    # HEAD as of 2026-10-08.
-    commit = "b08e005995ed29a2f89aa9a3f599a9d45db65523",
+    # HEAD as of 2026-11-02.
+    commit = "c744694c6ae1d12bbf7d0447b4bc91ee94a1904c",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [
         "//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
-        "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
-        "//bazel/llvm_project:0006_Add_more_libc_math_excludes.patch",
         "//bazel/llvm_project:0012_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
+        "//bazel/llvm_project:0013_Exclude_additional_libc_math_builtins.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )
@@ -111,7 +113,7 @@ use_repo(llvm_project, "llvm-project")
 # Python
 ###############################################################################
 
-bazel_dep(name = "rules_python", version = "1.9.0")
+bazel_dep(name = "rules_python", version = "2.4.5")
 
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(

@@ -17,7 +17,7 @@ fn F(b: bool, n: i32, m: i32) -> i32 {
   return if b then x[m] else x[n];
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

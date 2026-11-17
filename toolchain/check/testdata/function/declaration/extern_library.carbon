@@ -198,7 +198,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 extern library "extern_library_owner" fn F() {}
 
-// CHECK:STDOUT: --- extern_library.carbon
+// CHECK:STDOUT: --- extern_library.carbon = $extern_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -215,7 +215,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_library_owner.carbon
+// CHECK:STDOUT: --- extern_library_owner.carbon = $extern_library_owner
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -233,7 +233,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_nonowner.carbon
+// CHECK:STDOUT: --- fail_extern_library_nonowner.carbon = $fail_extern_library_nonowner
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -251,7 +251,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_nonextern.carbon
+// CHECK:STDOUT: --- fail_extern_library_nonextern.carbon = $fail_extern_library_nonextern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -269,7 +269,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_redecl.carbon
+// CHECK:STDOUT: --- fail_extern_library_redecl.carbon = $fail_extern_library_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -287,7 +287,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_library_copy.carbon
+// CHECK:STDOUT: --- extern_library_copy.carbon = $extern_library_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -304,7 +304,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_collision.carbon
+// CHECK:STDOUT: --- fail_extern_library_collision.carbon = $fail_extern_library_collision
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.F = import_ref Main//extern_library, F, unloaded
@@ -317,7 +317,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_library_mismatch.carbon
+// CHECK:STDOUT: --- extern_library_mismatch.carbon = $extern_library_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -334,9 +334,9 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_mismatch_owner.carbon
+// CHECK:STDOUT: --- fail_extern_library_mismatch_owner.carbon = $fail_extern_library_mismatch_owner
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_self_library.carbon
+// CHECK:STDOUT: --- fail_extern_self_library.carbon = $fail_extern_self_library
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -353,7 +353,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_of_import.carbon
+// CHECK:STDOUT: --- extern_of_import.carbon = $extern_of_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -370,7 +370,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_of_import_redecl.carbon
+// CHECK:STDOUT: --- fail_extern_of_import_redecl.carbon = $fail_extern_of_import_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -388,7 +388,7 @@ extern library "extern_library_owner" fn F() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "extern_of_import.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_on_definition.carbon
+// CHECK:STDOUT: --- fail_extern_library_on_definition.carbon = $fail_extern_library_on_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

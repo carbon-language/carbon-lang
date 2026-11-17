@@ -54,7 +54,7 @@ fn DifferentScopes() -> i32 {
   return 0;
 }
 
-// CHECK:STDOUT: --- fail_returned_var_shadow.carbon
+// CHECK:STDOUT: --- fail_returned_var_shadow.carbon = $fail_returned_var_shadow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

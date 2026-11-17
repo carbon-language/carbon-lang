@@ -35,7 +35,7 @@ fn F() {
   HandleAnimal({} as Goat, {} as Grass);
 }
 
-// CHECK:STDOUT: --- convert_facet_value_value_to_generic_facet_value_value.carbon
+// CHECK:STDOUT: --- convert_facet_value_value_to_generic_facet_value_value.carbon = $convert_facet_value_value_to_generic_facet_value_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

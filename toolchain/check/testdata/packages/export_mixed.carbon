@@ -120,7 +120,7 @@ import library "export_import";
 var c: C = {.x = ()};
 var d: D = {.y = ()};
 
-// CHECK:STDOUT: --- base.carbon
+// CHECK:STDOUT: --- base.carbon = $base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -171,7 +171,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   .y = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_import.carbon
+// CHECK:STDOUT: --- export_import.carbon = $export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//base, C, unloaded
@@ -186,7 +186,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_import_then_name.carbon
+// CHECK:STDOUT: --- export_import_then_name.carbon = $export_import_then_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -221,7 +221,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_name.carbon
+// CHECK:STDOUT: --- export_name.carbon = $export_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -256,7 +256,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- export_name_then_import.carbon
+// CHECK:STDOUT: --- export_name_then_import.carbon = $export_name_then_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//export_name, C, unloaded
@@ -269,7 +269,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_import_then_name.carbon
+// CHECK:STDOUT: --- use_export_import_then_name.carbon = $use_export_import_then_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -330,7 +330,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_export_name_then_import.carbon
+// CHECK:STDOUT: --- use_export_name_then_import.carbon = $use_export_name_then_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -391,7 +391,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_both.carbon
+// CHECK:STDOUT: --- use_both.carbon = $use_both
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +452,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nonexport_use_both.carbon
+// CHECK:STDOUT: --- fail_nonexport_use_both.carbon = $fail_nonexport_use_both
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -490,7 +490,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_both_reversed.carbon
+// CHECK:STDOUT: --- use_both_reversed.carbon = $use_both_reversed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -551,7 +551,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_both_and_export_import.carbon
+// CHECK:STDOUT: --- use_both_and_export_import.carbon = $use_both_and_export_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

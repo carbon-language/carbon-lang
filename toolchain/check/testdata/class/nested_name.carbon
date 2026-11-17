@@ -26,7 +26,7 @@ fn G(o: Outer) {
   var unused i: o.Inner;
 }
 
-// CHECK:STDOUT: --- nested_name.carbon
+// CHECK:STDOUT: --- nested_name.carbon = $nested_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

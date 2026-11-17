@@ -28,7 +28,7 @@ import Cpp library "declaration.h";
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon = $import_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
