@@ -481,7 +481,7 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
     case SemIR::SymbolicBinding::Kind:
       return DestroyFormat::NoDestroy;
 
-    // We can't work it out from the kind alone
+    // We can't work it out from the kind alone.
     default:
       return std::nullopt;
   }
@@ -499,11 +499,11 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
 // This function returns `std::nullopt` if a toolchain error occurred (e.g.
 // failed to look up `Core.SubobjectDestroy`).
 //
-// That this algorithm is recursive because we haven't found a clean and simple
-// way to make it iterative. The algorithm determines a type's destroy format by
-// looking up the definitions for its subobjects, and deriving the answer from
-// those. Best-case lookup for a non-trivial type happens when all of its
-// subobjects' types to have already generated witnesses for
+// Note that this algorithm is recursive because we haven't found a clean and
+// simple way to make it iterative. The algorithm determines a type's destroy
+// format by looking up the definitions for its subobjects, and deriving the
+// answer from those. Best-case lookup for a non-trivial type happens when all
+// of its subobjects' types to have already generated witnesses for
 // `Core.SubobjectDestroy` and `Core.Destroy`, as this is constant lookup.
 // Worst-case lookup for a non-trivial type happens when none of its subobjects'
 // types have generated witnesses, as this could end up with a substantial
