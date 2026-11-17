@@ -87,7 +87,7 @@ fn F(x: i512) {
   // CHECK:STDERR:        ·              ┃        [CppCallArgTypeNotSupported]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ min_prelude/parts/int.carbon:10:1
+  // CHECK:STDERR:        ╭─┤ min_prelude/parts/int.carbon:11:1
   // CHECK:STDERR: ->     │ class Int(N: IntLiteral) {
   // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `interop with non-identifier package name`

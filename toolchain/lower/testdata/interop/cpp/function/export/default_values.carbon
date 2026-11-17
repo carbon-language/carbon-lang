@@ -35,54 +35,54 @@ void CallF() {
 // CHECK:STDOUT: source_filename = "first_function.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.FirstFunction(i32 %i) #0 !dbg !27 {
+// CHECK:STDOUT: define void @_CF.FirstFunction(i32 %i) #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !30
+// CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!23}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!25}
 // CHECK:STDOUT: !llvm.module.flags = !{!6, !7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !22 = !DIFile(filename: "first_function.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !22, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !25 = !{null, !24}
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "F", linkageName: "_CF.FirstFunction", scope: null, file: !22, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !31)
-// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !27, type: !24)
-// CHECK:STDOUT: !30 = !DILocation(line: 2, column: 1, scope: !27)
-// CHECK:STDOUT: !31 = !{!28}
+// CHECK:STDOUT: !24 = !DIFile(filename: "first_function.carbon", directory: "")
+// CHECK:STDOUT: !25 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !24, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !{null, !26}
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "F", linkageName: "_CF.FirstFunction", scope: null, file: !24, line: 2, type: !28, spFlags: DISPFlagDefinition, unit: !25, retainedNodes: !33)
+// CHECK:STDOUT: !30 = !DILocalVariable(arg: 1, scope: !29, type: !26)
+// CHECK:STDOUT: !32 = !DILocation(line: 2, column: 1, scope: !29)
+// CHECK:STDOUT: !33 = !{!30}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'other_function.carbon'
 // CHECK:STDOUT: source_filename = "other_function.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.OtherFunction(i32 %i) #0 !dbg !34 {
+// CHECK:STDOUT: define void @_CF.OtherFunction(i32 %i) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!33}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
 // CHECK:STDOUT: !llvm.module.flags = !{!6, !7}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !25 = !{null, !24}
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !32 = !DIFile(filename: "other_function.carbon", directory: "")
-// CHECK:STDOUT: !33 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !32, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "F", linkageName: "_CF.OtherFunction", scope: null, file: !32, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !33, retainedNodes: !38)
-// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !24)
-// CHECK:STDOUT: !37 = !DILocation(line: 2, column: 1, scope: !34)
-// CHECK:STDOUT: !38 = !{!35}
+// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !{null, !26}
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !34 = !DIFile(filename: "other_function.carbon", directory: "")
+// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "F", linkageName: "_CF.OtherFunction", scope: null, file: !34, line: 2, type: !28, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !40)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !26)
+// CHECK:STDOUT: !39 = !DILocation(line: 2, column: 1, scope: !36)
+// CHECK:STDOUT: !40 = !{!37}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
@@ -125,29 +125,29 @@ void CallF() {
 // CHECK:STDOUT: declare void @_CF.OtherFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.OtherFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.OtherFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !43
-// CHECK:STDOUT:   call void @_CF.OtherFunction(i32 %.1), !dbg !43
-// CHECK:STDOUT:   ret void, !dbg !43
+// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !45
+// CHECK:STDOUT:   call void @_CF.OtherFunction(i32 %.1), !dbg !45
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CF.FirstFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.FirstFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.FirstFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !47
-// CHECK:STDOUT:   call void @_CF.FirstFunction(i32 %.1), !dbg !47
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !49
+// CHECK:STDOUT:   call void @_CF.FirstFunction(i32 %.1), !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #3 !dbg !51 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #3 !dbg !53 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 23, ptr @_C__carbon_default_value__CF.OtherFunction_0.Main, align 4
 // CHECK:STDOUT:   store i32 0, ptr @_C__carbon_default_value__CF.FirstFunction_0.Main, align 4
-// CHECK:STDOUT:   ret void, !dbg !52
+// CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -155,9 +155,9 @@ void CallF() {
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!40}
-// CHECK:STDOUT: !llvm.module.flags = !{!53, !54, !55, !56, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!58}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!42}
+// CHECK:STDOUT: !llvm.module.flags = !{!55, !56, !57, !58, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!60}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -165,29 +165,29 @@ void CallF() {
 // CHECK:STDOUT: !3 = !{!2, !2, i64 0}
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !22 = !DIFile(filename: "first_function.carbon", directory: "")
-// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !25 = !{null, !24}
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !32 = !DIFile(filename: "other_function.carbon", directory: "")
-// CHECK:STDOUT: !39 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !40 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !39, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.OtherFunction", scope: null, file: !32, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !44)
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !24)
-// CHECK:STDOUT: !43 = !DILocation(line: 2, column: 1, scope: !41)
-// CHECK:STDOUT: !44 = !{!42}
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.FirstFunction", scope: null, file: !22, line: 2, type: !26, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !48)
-// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !45, type: !24)
-// CHECK:STDOUT: !47 = !DILocation(line: 2, column: 1, scope: !45)
-// CHECK:STDOUT: !48 = !{!46}
-// CHECK:STDOUT: !49 = !{null}
-// CHECK:STDOUT: !50 = !DISubroutineType(types: !49)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !39, type: !50, spFlags: DISPFlagDefinition, unit: !40)
-// CHECK:STDOUT: !52 = !DILocation(line: 0, scope: !51)
-// CHECK:STDOUT: !53 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !54 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !55 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !56 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !57 = !{!"__libc_errno", !2, i64 0}
-// CHECK:STDOUT: !58 = !{!57, !2, i64 0}
+// CHECK:STDOUT: !24 = !DIFile(filename: "first_function.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !{null, !26}
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !34 = !DIFile(filename: "other_function.carbon", directory: "")
+// CHECK:STDOUT: !41 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !42 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !41, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.OtherFunction", scope: null, file: !34, line: 2, type: !28, spFlags: DISPFlagDefinition, unit: !42, retainedNodes: !46)
+// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !26)
+// CHECK:STDOUT: !45 = !DILocation(line: 2, column: 1, scope: !43)
+// CHECK:STDOUT: !46 = !{!44}
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "F__carbon_thunk", linkageName: "_CF__carbon_thunk.FirstFunction", scope: null, file: !24, line: 2, type: !28, spFlags: DISPFlagDefinition, unit: !42, retainedNodes: !50)
+// CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !26)
+// CHECK:STDOUT: !49 = !DILocation(line: 2, column: 1, scope: !47)
+// CHECK:STDOUT: !50 = !{!48}
+// CHECK:STDOUT: !51 = !{null}
+// CHECK:STDOUT: !52 = !DISubroutineType(types: !51)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !41, type: !52, spFlags: DISPFlagDefinition, unit: !42)
+// CHECK:STDOUT: !54 = !DILocation(line: 0, scope: !53)
+// CHECK:STDOUT: !55 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !56 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !57 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !58 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !59 = !{!"__libc_errno", !2, i64 0}
+// CHECK:STDOUT: !60 = !{!59, !2, i64 0}
 // CHECK:STDOUT:

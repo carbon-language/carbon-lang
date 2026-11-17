@@ -44,25 +44,25 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #1 !dbg !27 {
+// CHECK:STDOUT: define i32 @main() #1 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Get.call = call i32 @_Z3Getv(), !dbg !30
-// CHECK:STDOUT:   ret i32 %Get.call, !dbg !31
+// CHECK:STDOUT:   %Get.call = call i32 @_Z3Getv(), !dbg !32
+// CHECK:STDOUT:   ret i32 %Get.call, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !34 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #1 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 poison, ptr @_Cx.Main, align 4, !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   store i32 poison, ptr @_Cx.Main, align 4, !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!23}
-// CHECK:STDOUT: !llvm.module.flags = !{!37, !38, !39, !40, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!42}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!25}
+// CHECK:STDOUT: !llvm.module.flags = !{!39, !40, !41, !42, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!44}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -70,23 +70,23 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !3 = !{!2, !2, i64 0}
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !22 = !DIFile(filename: "var_export.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !22, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !25 = !{!24}
-// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !22, line: 13, type: !26, spFlags: DISPFlagDefinition, unit: !23)
-// CHECK:STDOUT: !30 = !DILocation(line: 14, column: 10, scope: !27)
-// CHECK:STDOUT: !31 = !DILocation(line: 14, column: 3, scope: !27)
-// CHECK:STDOUT: !32 = !{null}
-// CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !22, type: !33, spFlags: DISPFlagDefinition, unit: !23)
-// CHECK:STDOUT: !35 = !DILocation(line: 5, column: 1, scope: !34)
-// CHECK:STDOUT: !36 = !DILocation(line: 0, scope: !34)
-// CHECK:STDOUT: !37 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !38 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !39 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !40 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !41 = !{!"__libc_errno", !2, i64 0}
-// CHECK:STDOUT: !42 = !{!41, !2, i64 0}
+// CHECK:STDOUT: !24 = !DIFile(filename: "var_export.carbon", directory: "")
+// CHECK:STDOUT: !25 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !24, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !26 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !27 = !{!26}
+// CHECK:STDOUT: !28 = !DISubroutineType(types: !27)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "Run", linkageName: "main", scope: null, file: !24, line: 13, type: !28, spFlags: DISPFlagDefinition, unit: !25)
+// CHECK:STDOUT: !32 = !DILocation(line: 14, column: 10, scope: !29)
+// CHECK:STDOUT: !33 = !DILocation(line: 14, column: 3, scope: !29)
+// CHECK:STDOUT: !34 = !{null}
+// CHECK:STDOUT: !35 = !DISubroutineType(types: !34)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !24, type: !35, spFlags: DISPFlagDefinition, unit: !25)
+// CHECK:STDOUT: !37 = !DILocation(line: 5, column: 1, scope: !36)
+// CHECK:STDOUT: !38 = !DILocation(line: 0, scope: !36)
+// CHECK:STDOUT: !39 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"__libc_errno", !2, i64 0}
+// CHECK:STDOUT: !44 = !{!43, !2, i64 0}
 // CHECK:STDOUT:

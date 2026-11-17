@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/bool.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
@@ -10,6 +11,7 @@
 
 package Core library "prelude/parts/int";
 
+export import library "prelude/parts/bool";
 export import library "prelude/parts/copy";
 export import library "prelude/parts/destroy";
 export import library "prelude/parts/int_literal";
@@ -50,4 +52,33 @@ final impl forall [From: IntLiteral] Int(From) as As(IntLiteral) {
 final impl forall [N: IntLiteral]
     Int(N) as Negate where .Result = Self {
   fn Op(self) -> Self = "int.snegate";
+}
+
+// Arithmetic.
+
+interface SubAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
+}
+
+impl forall [N: IntLiteral, U: ImplicitAs(Int(N))]
+    Int(N) as SubAssignWith(U) {
+  fn Op(ref self, other: Self) = "int.ssub_assign";
+}
+
+// Compare.
+
+interface OrderedWith(Other: type) {
+  // Compare.
+  fn Less(self, other: Other) -> bool;
+  fn LessOrEquivalent(self, other: Other) -> bool;
+  fn Greater(self, other: Other) -> bool;
+  fn GreaterOrEquivalent(self, other: Other) -> bool;
+}
+
+impl forall [N: IntLiteral, T: ImplicitAs(Int(N))] Int(N) as OrderedWith(T) {
+  // TODO: fn Compare
+  fn Less(self, other: Self) -> bool = "int.less";
+  fn LessOrEquivalent(self, other: Self) -> bool = "int.less_eq";
+  fn Greater(self, other: Self) -> bool = "int.greater";
+  fn GreaterOrEquivalent(self, other: Self) -> bool = "int.greater_eq";
 }

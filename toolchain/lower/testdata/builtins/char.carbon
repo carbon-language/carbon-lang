@@ -30,17 +30,11 @@ fn Example() -> char {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !12
 // CHECK:STDOUT:   store i8 97, ptr %c.var, align 1, !dbg !12
 // CHECK:STDOUT:   %.loc6 = load i8, ptr %c.var, align 1, !dbg !14
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.00174ca91d483df7(ptr %c.var), !dbg !12
-// CHECK:STDOUT:   ret i8 %.loc6, !dbg !17
+// CHECK:STDOUT:   ret i8 %.loc6, !dbg !15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.00174ca91d483df7(ptr %t) #0 !dbg !19 {
-// CHECK:STDOUT:   ret void, !dbg !24
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -58,12 +52,5 @@ fn Example() -> char {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !4, line: 4, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DILocation(line: 5, column: 3, scope: !9)
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 10, scope: !9)
-// CHECK:STDOUT: !15 = !{null, !6}
-// CHECK:STDOUT: !16 = !DISubroutineType(types: !15)
-// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 3, scope: !9)
-// CHECK:STDOUT: !18 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.00174ca91d483df7", scope: null, file: !18, line: 36, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
-// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !19, type: !6)
-// CHECK:STDOUT: !24 = !DILocation(line: 36, column: 1, scope: !19)
-// CHECK:STDOUT: !25 = !{!20}
+// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 3, scope: !9)
 // CHECK:STDOUT:

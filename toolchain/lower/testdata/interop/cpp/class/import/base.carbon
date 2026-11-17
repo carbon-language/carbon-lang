@@ -65,56 +65,56 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CConvertPtr.Main(ptr %p) #0 !dbg !26 {
+// CHECK:STDOUT: define ptr @_CConvertPtr.Main(ptr %p) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.2.base = getelementptr inbounds nuw [8 x i8], ptr %p, i32 0, i32 0, !dbg !32
-// CHECK:STDOUT:   ret ptr %.loc7_11.2.base, !dbg !32
+// CHECK:STDOUT:   %.loc7_11.2.base = getelementptr inbounds nuw [8 x i8], ptr %p, i32 0, i32 0, !dbg !34
+// CHECK:STDOUT:   ret ptr %.loc7_11.2.base, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CAcceptVal.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CConvertVal.Main(ptr %b) #0 !dbg !34 {
+// CHECK:STDOUT: define void @_CConvertVal.Main(ptr %b) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_13.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !37
-// CHECK:STDOUT:   call void @_CAcceptVal.Main(ptr %.loc13_13.1.base), !dbg !38
-// CHECK:STDOUT:   ret void, !dbg !39
+// CHECK:STDOUT:   %.loc13_13.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   call void @_CAcceptVal.Main(ptr %.loc13_13.1.base), !dbg !40
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!41, !42, !43, !44, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!49}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
+// CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !46, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!51}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !18 = !DIFile(filename: "convert.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{!21, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !24 = !{null, !21}
+// CHECK:STDOUT: !20 = !DIFile(filename: "convert.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !24 = !{!23, !23}
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "ConvertPtr", linkageName: "_CConvertPtr.Main", scope: null, file: !18, line: 6, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !33)
-// CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !26, type: !21)
-// CHECK:STDOUT: !32 = !DILocation(line: 7, column: 3, scope: !26)
-// CHECK:STDOUT: !33 = !{!27}
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "ConvertVal", linkageName: "_CConvertVal.Main", scope: null, file: !18, line: 12, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !40)
-// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !21)
-// CHECK:STDOUT: !37 = !DILocation(line: 13, column: 13, scope: !34)
-// CHECK:STDOUT: !38 = !DILocation(line: 13, column: 3, scope: !34)
-// CHECK:STDOUT: !39 = !DILocation(line: 12, column: 1, scope: !34)
-// CHECK:STDOUT: !40 = !{!35}
-// CHECK:STDOUT: !41 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !42 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !43 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !44 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !45 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !46 = !{!"omnipotent char", !45, i64 0}
-// CHECK:STDOUT: !47 = !{!"int", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!"__libc_errno", !47, i64 0}
-// CHECK:STDOUT: !49 = !{!48, !47, i64 0}
+// CHECK:STDOUT: !26 = !{null, !23}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "ConvertPtr", linkageName: "_CConvertPtr.Main", scope: null, file: !20, line: 6, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !35)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !28, type: !23)
+// CHECK:STDOUT: !34 = !DILocation(line: 7, column: 3, scope: !28)
+// CHECK:STDOUT: !35 = !{!29}
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "ConvertVal", linkageName: "_CConvertVal.Main", scope: null, file: !20, line: 12, type: !27, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !42)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !23)
+// CHECK:STDOUT: !39 = !DILocation(line: 13, column: 13, scope: !36)
+// CHECK:STDOUT: !40 = !DILocation(line: 13, column: 3, scope: !36)
+// CHECK:STDOUT: !41 = !DILocation(line: 12, column: 1, scope: !36)
+// CHECK:STDOUT: !42 = !{!37}
+// CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
+// CHECK:STDOUT: !49 = !{!"int", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!"__libc_errno", !49, i64 0}
+// CHECK:STDOUT: !51 = !{!50, !49, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'access_field.carbon'
@@ -123,42 +123,42 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessVal.Main(ptr %b) #0 !dbg !54 {
+// CHECK:STDOUT: define i32 @_CAccessVal.Main(ptr %b) #0 !dbg !56 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !59
-// CHECK:STDOUT:   %.loc7_11.3.a = getelementptr inbounds nuw [4 x i8], ptr %.loc7_11.1.base, i32 0, i32 0, !dbg !59
-// CHECK:STDOUT:   %.loc7_11.4 = load i32, ptr %.loc7_11.3.a, align 4, !dbg !59
-// CHECK:STDOUT:   ret i32 %.loc7_11.4, !dbg !60
+// CHECK:STDOUT:   %.loc7_11.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !61
+// CHECK:STDOUT:   %.loc7_11.3.a = getelementptr inbounds nuw [4 x i8], ptr %.loc7_11.1.base, i32 0, i32 0, !dbg !61
+// CHECK:STDOUT:   %.loc7_11.4 = load i32, ptr %.loc7_11.3.a, align 4, !dbg !61
+// CHECK:STDOUT:   ret i32 %.loc7_11.4, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!51}
-// CHECK:STDOUT: !llvm.module.flags = !{!41, !42, !43, !44, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!49}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!53}
+// CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !46, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!51}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !41 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !42 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !43 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !44 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !45 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !46 = !{!"omnipotent char", !45, i64 0}
-// CHECK:STDOUT: !47 = !{!"int", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!"__libc_errno", !47, i64 0}
-// CHECK:STDOUT: !49 = !{!48, !47, i64 0}
-// CHECK:STDOUT: !50 = !DIFile(filename: "access_field.carbon", directory: "")
-// CHECK:STDOUT: !51 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !50, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !52 = !{!20, !21}
-// CHECK:STDOUT: !53 = !DISubroutineType(types: !52)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "AccessVal", linkageName: "_CAccessVal.Main", scope: null, file: !50, line: 6, type: !53, spFlags: DISPFlagDefinition, unit: !51, retainedNodes: !61)
-// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !21)
-// CHECK:STDOUT: !59 = !DILocation(line: 7, column: 10, scope: !54)
-// CHECK:STDOUT: !60 = !DILocation(line: 7, column: 3, scope: !54)
-// CHECK:STDOUT: !61 = !{!55}
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
+// CHECK:STDOUT: !49 = !{!"int", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!"__libc_errno", !49, i64 0}
+// CHECK:STDOUT: !51 = !{!50, !49, i64 0}
+// CHECK:STDOUT: !52 = !DIFile(filename: "access_field.carbon", directory: "")
+// CHECK:STDOUT: !53 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !52, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !54 = !{!22, !23}
+// CHECK:STDOUT: !55 = !DISubroutineType(types: !54)
+// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "AccessVal", linkageName: "_CAccessVal.Main", scope: null, file: !52, line: 6, type: !55, spFlags: DISPFlagDefinition, unit: !53, retainedNodes: !63)
+// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !56, type: !23)
+// CHECK:STDOUT: !61 = !DILocation(line: 7, column: 10, scope: !56)
+// CHECK:STDOUT: !62 = !DILocation(line: 7, column: 3, scope: !56)
+// CHECK:STDOUT: !63 = !{!57}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'call_method.carbon'
@@ -169,18 +169,18 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: $_ZN1A1fEv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCall.Main(ptr %b) #0 !dbg !64 {
+// CHECK:STDOUT: define void @_CCall.Main(ptr %b) #0 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !67
-// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc7_4.2.base), !dbg !67
-// CHECK:STDOUT:   ret void, !dbg !68
+// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !69
+// CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc7_4.2.base), !dbg !69
+// CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1A1fEv(ptr noundef nonnull align 4 dereferenceable(4) %this) #1 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !72
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !74
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -188,32 +188,32 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!63}
-// CHECK:STDOUT: !llvm.module.flags = !{!41, !42, !43, !44, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!49}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!65}
+// CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !46, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!51}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !24 = !{null, !21}
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
-// CHECK:STDOUT: !41 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !42 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !43 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !44 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !45 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !46 = !{!"omnipotent char", !45, i64 0}
-// CHECK:STDOUT: !47 = !{!"int", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!"__libc_errno", !47, i64 0}
-// CHECK:STDOUT: !49 = !{!48, !47, i64 0}
-// CHECK:STDOUT: !62 = !DIFile(filename: "call_method.carbon", directory: "")
-// CHECK:STDOUT: !63 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !62, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !62, line: 6, type: !25, spFlags: DISPFlagDefinition, unit: !63, retainedNodes: !69)
-// CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !64, type: !21)
-// CHECK:STDOUT: !67 = !DILocation(line: 7, column: 3, scope: !64)
-// CHECK:STDOUT: !68 = !DILocation(line: 6, column: 1, scope: !64)
-// CHECK:STDOUT: !69 = !{!65}
-// CHECK:STDOUT: !70 = !{!"any pointer", !46, i64 0}
-// CHECK:STDOUT: !71 = !{!"p1 _ZTS1A", !70, i64 0}
-// CHECK:STDOUT: !72 = !{!71, !71, i64 0}
+// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !26 = !{null, !23}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !43 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
+// CHECK:STDOUT: !49 = !{!"int", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!"__libc_errno", !49, i64 0}
+// CHECK:STDOUT: !51 = !{!50, !49, i64 0}
+// CHECK:STDOUT: !64 = !DIFile(filename: "call_method.carbon", directory: "")
+// CHECK:STDOUT: !65 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !64, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !64, line: 6, type: !27, spFlags: DISPFlagDefinition, unit: !65, retainedNodes: !71)
+// CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !23)
+// CHECK:STDOUT: !69 = !DILocation(line: 7, column: 3, scope: !66)
+// CHECK:STDOUT: !70 = !DILocation(line: 6, column: 1, scope: !66)
+// CHECK:STDOUT: !71 = !{!67}
+// CHECK:STDOUT: !72 = !{!"any pointer", !48, i64 0}
+// CHECK:STDOUT: !73 = !{!"p1 _ZTS1A", !72, i64 0}
+// CHECK:STDOUT: !74 = !{!73, !73, i64 0}
 // CHECK:STDOUT:

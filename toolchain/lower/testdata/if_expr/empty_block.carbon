@@ -56,18 +56,18 @@ fn Select(b: bool, c: bool, d: bool) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!36}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !34 = !DIFile(filename: "empty_block.carbon", directory: "")
-// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !35 = !DIFile(filename: "empty_block.carbon", directory: "")
+// CHECK:STDOUT: !36 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !35, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !37 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !38 = !{!36, !37, !37, !37}
+// CHECK:STDOUT: !38 = !{!6, !37, !37, !37}
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !38)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Select", linkageName: "_CSelect.Main", scope: null, file: !34, line: 13, type: !39, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !56)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Select", linkageName: "_CSelect.Main", scope: null, file: !35, line: 13, type: !39, spFlags: DISPFlagDefinition, unit: !36, retainedNodes: !56)
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !37)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 2, scope: !40, type: !37)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 3, scope: !40, type: !37)

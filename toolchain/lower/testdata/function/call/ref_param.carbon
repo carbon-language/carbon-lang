@@ -22,56 +22,45 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "ref_param.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDoNothing.Main(ptr %_) #0 !dbg !25 {
+// CHECK:STDOUT: define void @_CDoNothing.Main(ptr %_) #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !28
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !30 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !31
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !31
-// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !31
-// CHECK:STDOUT:   call void @_CDoNothing.Main(ptr %a.var), !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %a.var), !dbg !31
-// CHECK:STDOUT:   ret void, !dbg !36
+// CHECK:STDOUT:   %a.var = alloca i32, align 4, !dbg !33
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !33
+// CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !33
+// CHECK:STDOUT:   call void @_CDoNothing.Main(ptr %a.var), !dbg !37
+// CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !37 {
-// CHECK:STDOUT:   ret void, !dbg !42
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
-// CHECK:STDOUT: !18 = !DIFile(filename: "ref_param.carbon", directory: "")
-// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !21 = !{null, !20}
-// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
-// CHECK:STDOUT: !23 = !{null}
+// CHECK:STDOUT: !20 = !DIFile(filename: "ref_param.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !22 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{null, !22}
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "DoNothing", linkageName: "_CDoNothing.Main", scope: null, file: !18, line: 13, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !29)
-// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !20)
-// CHECK:STDOUT: !28 = !DILocation(line: 13, column: 1, scope: !25)
-// CHECK:STDOUT: !29 = !{!26}
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !18, line: 15, type: !24, spFlags: DISPFlagDefinition, unit: !19)
-// CHECK:STDOUT: !31 = !DILocation(line: 16, column: 3, scope: !30)
-// CHECK:STDOUT: !35 = !DILocation(line: 17, column: 3, scope: !30)
-// CHECK:STDOUT: !36 = !DILocation(line: 15, column: 1, scope: !30)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !43)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !20)
-// CHECK:STDOUT: !42 = !DILocation(line: 32, column: 1, scope: !37)
-// CHECK:STDOUT: !43 = !{!38}
+// CHECK:STDOUT: !25 = !{null}
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "DoNothing", linkageName: "_CDoNothing.Main", scope: null, file: !20, line: 13, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !31)
+// CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !27, type: !22)
+// CHECK:STDOUT: !30 = !DILocation(line: 13, column: 1, scope: !27)
+// CHECK:STDOUT: !31 = !{!28}
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !20, line: 15, type: !26, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !33 = !DILocation(line: 16, column: 3, scope: !32)
+// CHECK:STDOUT: !37 = !DILocation(line: 17, column: 3, scope: !32)
+// CHECK:STDOUT: !38 = !DILocation(line: 15, column: 1, scope: !32)
 // CHECK:STDOUT:
