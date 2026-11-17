@@ -43,15 +43,15 @@ auto HandleWhereAssignment(Context& context) -> void {
     return;
   }
 
-  state.token = *eq_token;
-  context.PushState(state, StateKind::WhereAssignmentDecl);
+  context.AddNode(NodeKind::WhereAssignmentOperator, *eq_token,
+                  state.has_error);
+
+  context.PushState(StateKind::WhereAssignmentDecl);
   context.PushStateForExpr(PrecedenceGroup::ForRequirements());
 }
 
 auto HandleWhereAssignmentDecl(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::WhereAssignmentOperator, state.token,
-                  state.has_error);
   context.AddNodeExpectingDeclSemi(state, NodeKind::WhereAssignmentDecl,
                                    Lex::TokenKind::Where,
                                    /*is_def_allowed=*/false);

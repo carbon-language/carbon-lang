@@ -629,7 +629,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
 auto HandleParseNode(Context& context,
                      Parse::WhereAssignmentIntroducerId node_id) -> bool {
   auto scope_inst_id = context.scope_stack().PeekInstId();
-  if (!context.insts().Is<SemIR::ImplDecl>(scope_inst_id)) {
+  if (!context.insts().TryGetAsIfValid<SemIR::ImplDecl>(scope_inst_id)) {
     CARBON_DIAGNOSTIC(WhereAssignmentInWrongScope, Error,
                       "`where` assignment declaration found in invalid scope; "
                       "must be in `impl` definition");
