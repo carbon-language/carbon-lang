@@ -68,6 +68,35 @@ impl () as Z(()) {
 }
 //@dump-sem-ir-end
 
+// --- fail_todo_assoc_const_refers_to_previous.carbon
+library "[[@TEST_NAME]]";
+
+class C(T: type) {}
+interface Z {
+  let Z1: type;
+  // TODO: It's impossible to form the interface's specific to get
+  // the type of Z1 without also resolving the type of Z2 which accesses
+  // Z1 before its set. Each assoc constant needs its own generic to
+  // allow each one to be resolved independently.
+  let Z2: C(Z1);
+}
+
+impl () as Z {
+  // CHECK:STDERR:        ╭─┤ fail_todo_assoc_const_refers_to_previous.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   let Z2: C(Z1);
+  // CHECK:STDERR:        ·             ─┬
+  // CHECK:STDERR:        ·              ╰──┤ accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·                 │ [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   where Z1 = {};
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `Z` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  where Z1 = {};
+  where Z2 = ({} as C({}));
+}
+
 // --- symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
