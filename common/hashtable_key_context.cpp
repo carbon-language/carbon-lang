@@ -79,7 +79,13 @@ static auto Read8StaysInPage(const std::byte* bytes) -> bool {
 }
 
 #if !defined(__BMI2__)
-// Little-endian masks keeping the first `size` of 8 bytes, for `size` in 0..8.
+// Little-endian masks keeping the first `size` bytes of an 8-byte load, indexed
+// directly by `size` for `size` in 1..8.
+//
+// Element 0 is unused padding (and omitted from the loop because shifting a
+// 64-bit integer by 64 bits is undefined) so lookups can index by `size` rather
+// than `size - 1`: on AArch64, `ldr` can't combine a scaled register index with
+// a byte offset, so `size - 1` would cost an extra `add`.
 alignas(64) static constexpr std::array<uint64_t, 9> SizeMasks8 = [] {
   std::array<uint64_t, 9> masks = {};
   for (size_t size = 1; size <= 8; ++size) {
@@ -164,32 +170,16 @@ static auto Ne9To16(const std::byte* lhs, const std::byte* rhs, size_t size)
 
 #if CARBON_STRING_BYTES_NE_AARCH64
 
-// Compares 32 bytes as 128-bit integers in general registers (`ldp` + `cmp` +
-// `ccmp`). LLVM would vectorize the equivalent 64-bit comparisons.
-static auto Ne32(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
-  return (XorBytes<__uint128_t>(lhs, rhs) |
-          XorBytes<__uint128_t>(lhs + 16, rhs + 16)) != 0;
-}
-
-// Compares 32 bytes using Neon.
-static auto Ne32Neon(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
-  uint8x16_t eq_bytes =
-      vceqq_u8(Load<uint8x16_t>(lhs), Load<uint8x16_t>(rhs)) &
-      vceqq_u8(Load<uint8x16_t>(lhs + 16), Load<uint8x16_t>(rhs + 16));
-  // The pairwise minimum of the 32-bit lanes has all of its low 64 bits set
-  // exactly when all the bytes are equal.
-  uint32x4_t lanes = vreinterpretq_u32_u8(eq_bytes);
-  uint32x4_t min_lanes = vpminq_u32(lanes, lanes);
-  return ~vgetq_lane_u64(vreinterpretq_u64_u32(min_lanes), 0);
-}
-
 static auto Ne17To32(const std::byte* lhs, const std::byte* rhs, size_t size)
     -> uint64_t {
-  // The two halves are combined with `|` rather than `||`: on AArch64, LLVM can
-  // lower a chain of `&&` or `||` to early exits that route every size class's
-  // return through a shared block, adding a branch and a register copy to each.
+  // Comparing `__uint128_t` keeps the loads and compares in general registers
+  // (`ldp` + `cmp` + `ccmp`), avoiding the latency of moving a result from Neon
+  // to general registers; LLVM would vectorize 64-bit comparisons into Neon.
   //
-  // TODO: File an LLVM bug about this.
+  // Combining the two halves with `|` rather than `||` loads both halves
+  // unconditionally and folds all four 64-bit compares into a single branchless
+  // `cmp` and `ccmp` chain, rather than splitting them across an early-exit
+  // branch.
   //
   // The tails are addressed from the ends of the inputs, rather than with a
   // shared `size - 16` offset. LLVM computes that offset as part of the
@@ -200,11 +190,28 @@ static auto Ne17To32(const std::byte* lhs, const std::byte* rhs, size_t size)
           XorBytes<__uint128_t>(lhs + size - 16, rhs + size - 16)) != 0;
 }
 
-// `Ne33To64` and `NeOver64` use `Ne32Neon` for their early-exit checks and
-// `Ne32` for the final 32 bytes that produce the return value: `Ne32Neon` has
-// higher throughput, while `Ne32` avoids the latency of moving a result from
-// Neon to general registers on the final comparison, and the early-exit
-// latency is hidden by the subsequent comparison when predicted.
+// `Ne33To64` and `NeOver64` pair two 32-byte comparisons:
+// - `Ne32Neon` for predicted early-exit checks, where Neon's higher throughput
+//   wins and its Neon-to-general-register latency is hidden by the next check.
+// - `Ne32` when producing the final return value, where `__uint128_t` keeps the
+//   comparison in general registers (`ldp` + `cmp` + `ccmp`) to avoid that
+//   Neon-to-general-register latency (LLVM would vectorize 64-bit comparisons).
+
+static auto Ne32(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
+  return (XorBytes<__uint128_t>(lhs, rhs) |
+          XorBytes<__uint128_t>(lhs + 16, rhs + 16)) != 0;
+}
+
+static auto Ne32Neon(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
+  uint8x16_t eq_bytes =
+      vceqq_u8(Load<uint8x16_t>(lhs), Load<uint8x16_t>(rhs)) &
+      vceqq_u8(Load<uint8x16_t>(lhs + 16), Load<uint8x16_t>(rhs + 16));
+  // The pairwise minimum of the 32-bit lanes has all of its low 64 bits set
+  // exactly when all the bytes are equal.
+  uint32x4_t lanes = vreinterpretq_u32_u8(eq_bytes);
+  uint32x4_t min_lanes = vpminq_u32(lanes, lanes);
+  return ~vgetq_lane_u64(vreinterpretq_u64_u32(min_lanes), 0);
+}
 
 static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
     -> uint64_t {
