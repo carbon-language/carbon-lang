@@ -58,8 +58,6 @@ jobs:
           - runner: 'macos-26'
             tier: 'continuous'
     runs-on: ${{ matrix.runner }}
-    env:
-      BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
@@ -146,6 +144,7 @@ jobs:
           # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
           BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
           BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
         run: |
           ./toolchain/benchmarking/run_bencher.py run \
             --ci \
@@ -162,6 +161,7 @@ jobs:
         env:
           BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
           BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
           RUNNER: ${{ matrix.runner }}
           TARGET_SHA:
             ${{ github.event_name == 'workflow_run' &&
