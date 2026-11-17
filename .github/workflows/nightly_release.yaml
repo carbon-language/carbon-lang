@@ -121,8 +121,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create \
+            --target "$GITHUB_SHA" \
             --title "Nightly build ${nightly_date}" \
             --generate-notes \
             --prerelease \
-            v${release_version} \
+            "v${release_version}" \
             "bazel-bin/toolchain/install/carbon_toolchain-${release_version}.tar.gz"
