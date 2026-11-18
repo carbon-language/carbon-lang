@@ -10,6 +10,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/nontrivial/partial.carbon
 
+// TODO: implement case for `PartialType` in `MakeSubobjectDestroyOpBody`.
+
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
