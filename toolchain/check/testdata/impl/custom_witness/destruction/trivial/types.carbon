@@ -10,6 +10,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/types.carbon
 
+// TODO: implement `Core.TrivialDestroy`.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
+
 // --- todo_trivial_associated_entity.carbon
 library "[[@TEST_NAME]]";
 

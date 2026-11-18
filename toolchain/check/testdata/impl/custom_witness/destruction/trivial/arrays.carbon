@@ -10,6 +10,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/arrays.carbon
 
+// TODO: implement `Core.TrivialDestroy`.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
+// TODO: builtin array type destruction should be trivial, and defer to
+// `Core.Array as Core.Destroy`.
+
 // --- types.carbon
 library "[[@TEST_NAME]]";
 

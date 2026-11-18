@@ -10,6 +10,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/maybe_unformed.carbon
 
+// TODO: implement `Core.TrivialDestroy`.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
+// TODO: implement case for `MaybeUnformedType` in `MakeSubobjectDestroyOpBody`.
+
 // --- todo_trivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
