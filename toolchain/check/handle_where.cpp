@@ -291,7 +291,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
   // Rewrites always contain a designator since the LHS must be one. This is
   // checked elsewhere.
 
-  // TODO: Diagnose if the LHS if an associated function instead of an
+  // TODO: Diagnose if the LHS is an associated function instead of an
   // associated constant decl.
 
   // Convert rhs to type of lhs.

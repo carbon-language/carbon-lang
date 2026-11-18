@@ -447,11 +447,10 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
   SemIR::InstId impl_witness_id_;
 };
 
-// Sets the `table` entry at `index` to `value_const_id`.
+// Sets the `table` entry at `index` to `value_id`.
 //
-// If `convert_symbolic_only` is false, the `value_const_id` is assumed to be
-// already converted to the type of the associated constant when that type is
-// concrete.
+// If `convert_symbolic_only` is true, the `value_id` is assumed to be already
+// converted to the type of the associated constant when that type is concrete.
 static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
                           const SemIR::Impl& impl,
                           const SemIR::Interface& interface,
@@ -528,7 +527,8 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
       context.emitter().Emit(
           loc_id, AssociatedConstantNotConstantAfterConversion,
           assoc_const.name_id, value_id, assoc_const_type_id);
-      value_id = SemIR::ErrorInst::InstId;
+      table_entry = SemIR::ErrorInst::InstId;
+      return;
     }
   }
 
@@ -1116,11 +1116,13 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
   auto result = LookupNameInExactScope(context, loc_id, lhs_name_id,
                                        interface.scope_with_self_id, scope);
   if (!result.is_found()) {
-    CARBON_DIAGNOSTIC(WhereAssignmentNameNotFound, Error,
-                      "member name `{0}` not found in `{1}`", SemIR::NameId,
-                      SemIR::SpecificInterface);
-    context.emitter().Emit(loc_id, WhereAssignmentNameNotFound, lhs_name_id,
-                           impl.interface);
+    if (!scope.has_error()) {
+      CARBON_DIAGNOSTIC(WhereAssignmentNameNotFound, Error,
+                        "member name `{0}` not found in `{1}`", SemIR::NameId,
+                        SemIR::SpecificInterface);
+      context.emitter().Emit(loc_id, WhereAssignmentNameNotFound, lhs_name_id,
+                             impl.interface);
+    }
     return;
   }
   if (result.target_inst_id() == SemIR::ErrorInst::InstId) {

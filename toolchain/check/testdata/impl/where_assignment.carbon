@@ -71,9 +71,9 @@ impl () as Z(()) {
 // --- fail_todo_assoc_const_refers_to_previous.carbon
 library "[[@TEST_NAME]]";
 
-class C(T: type) {}
+class C[T: type](V: T) {}
 interface Z {
-  let Z1: type;
+  let Z1: Self;
   // TODO: It's impossible to form the interface's specific to get
   // the type of Z1 without also resolving the type of Z2 which accesses
   // Z1 before its set. Each assoc constant needs its own generic to
@@ -88,12 +88,12 @@ impl () as Z {
   // CHECK:STDERR:        ·              ╰──┤ accessing member from impl before it has a defined value
   // CHECK:STDERR:        ·                 │ [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   where Z1 = {};
+  // CHECK:STDERR: ->     │   where Z1 = ();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `Z` [ResolvingSpecificHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  where Z1 = {};
+  where Z1 = ();
   where Z2 = ({} as C({}));
 }
 
@@ -185,6 +185,52 @@ class C {
   // CHECK:STDERR:        ·      ┃        [WhereAssignmentInWrongScope]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
+  where Z1 = type;
+}
+
+// --- fail_name_not_found.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+}
+
+impl () as Z {
+  // CHECK:STDERR:        ╭─┤ fail_name_not_found.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   where Y = type;
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: member name `Y` not found in `Z`
+  // CHECK:STDERR:        ·             ┃        [WhereAssignmentNameNotFound]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  where Y = type;
+  where Z1 = type;
+}
+
+// --- fail_name_not_found_with_name_scope_error.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  // CHECK:STDERR:        ╭─┤ fail_name_not_found_with_name_scope_error.carbon:[[@LINE+14]]:9
+  // CHECK:STDERR: ->     │   let Z1;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `:` in associated constant declaration
+  // CHECK:STDERR:        ·            ┃        [ExpectedAssociatedConstantColon]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_name_not_found_with_name_scope_error.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   let Z1;
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  let Z1;
+}
+
+impl () as Z {
+  // Don't diagnose the missing `Z1` name when the interface's name scope is
+  // already erroneous.
   where Z1 = type;
 }
 
