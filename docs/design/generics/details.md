@@ -2374,6 +2374,10 @@ argument.
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update calling associated functions directly to generalize deducing
+> `Self` for form interfaces, as proposed in
+> [proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389).
 
 ## Associated facets
 

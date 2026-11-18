@@ -322,8 +322,12 @@ In short, this proposal introduces:
         `Core.IndexValWith` and `Core.IndexRefWith`. `Core.IndexWith` can't be
         implemented directly, implement `Core.IndexValWith` and
         `Core.IndexRefWith` separately instead.
--   a change to the interfaces used for member binding introduced in
-    [proposal #3720](https://github.com/carbon-language/carbon-lang/pull/3720).
+-   a change to the
+    [member binding interfaces](/docs/design/expressions/member_access.md#member-binding-interfaces)
+    (introduced in
+    [proposal #3720](https://github.com/carbon-language/carbon-lang/pull/3720)
+    and updated in
+    [proposal #7697](https://github.com/carbon-language/carbon-lang/pull/7697)).
     Those type interfaces are replaced with named constraints that
     `extend require` `MemberBind`, a single form interface that is used for all
     cases.
@@ -665,13 +669,14 @@ interface I {
 // to give a type to `x`.
 fn A[T: I](x: T) {
   x.F();
-  // - Looks in the type of `x` for a `F`
-  // - Type of `x` is `T`, which is symbolic, so look in its type instead
-  // - Type of `T` is `I`, has a member `F`, namely `I.F`
-  // - Now evaluate `x.(I.F)`
-  //   - `I.F` has signature `I(Self: type).fn F(self)`
+  // - Evaluates `typeof(x).F`, which is `T.F`:
+  //   - `T` is a facet of type `I`, so look in `I` for `F`, finding `I.F`
+  //     (which has signature `I(Self: type).fn F(self)`)
+  //   - Since `I.F` is an associated entity, perform `impl` lookup with
+  //     `Self = T as type`
   // - Requires that the type of `x` implements `I`
-  // - Satisfied by the bindings `x: T` and `T: I`
+  //   - Satisfied by the bindings `x: T` and `T: I`, giving `T.impl(I.F)`
+  // - Performs instance binding of `x` to that member, then calls it
 }
 ```
 
@@ -686,17 +691,18 @@ Now look at how this works analogously with the `Core.Form` interface
 // right of a `:?` to give a form to `c`.
 fn InvokeCallback[CF: Callback](c:? CF) {
   c.Go();
-  // - Looks in the type part of the form of `c` for `Go`
+  // - Looks up `Go` using the form of `c`:
   //   - If the form is a paren form, allow `.0`, `.1` access
   //   - If the form is a curly brace form, allow `.x`, `.c` access
   //   - If the form is primitive, look in its type (as above)
-  //   - Since the form `CF` is symbolic, instead we look at `CF`'s type.
-  // - Type of `CF` is `Callback`, has a member `Go`, namely `Callback.Go`
-  // - Now evaluate `c.(Callback.Go)`
-  //   - `Callback.Go` has signature
-  //     `Callback(Self: Core.Form).fn Go(self:? Self)`
+  //   - Since the form `CF` is symbolic, look in `CF`'s type (`Callback`),
+  //     finding `Callback.Go` (which has signature
+  //     `Callback(Self: Core.Form).fn Go(self:? Self)`)
+  //   - Since `Callback.Go` is an associated entity, perform `impl` lookup
+  //     using the *form* of `c` (`CF as Core.Form`) as `Self`
   // - Requires the *form* of `c` to implement `Callback`
-  // - Satisfied by the bindings `c:? CF` and `CF: Callback`.
+  //   - Satisfied by the bindings `c:? CF` and `CF: Callback`
+  // - Performs instance binding of `c` to that member, then calls it
 }
 ```
 
@@ -1861,11 +1867,14 @@ Switching the indexing interface to forms was
 
 ### Primitive member binding interface
 
-Proposal
-[#3720: Member binding operators](https://github.com/carbon-language/carbon-lang/pull/3720)
-also introduced multiple interfaces in order to handle different expression
-categories. We can now redefine them as named constraints, in terms of a general
-`MemberBind` interface:
+[Member binding](/docs/design/expressions/member_access.md#member-binding-interfaces)
+(introduced in
+[proposal #3720](https://github.com/carbon-language/carbon-lang/pull/3720) and
+updated in
+[proposal #7697](https://github.com/carbon-language/carbon-lang/pull/7697)) also
+uses multiple interfaces (`Bind`, `BindToValue`, and `BindToRef`) in order to
+handle different expression categories. We can now redefine them as named
+constraints, in terms of a general `MemberBind` interface:
 
 ```carbon
 interface MemberBind(implicit_into LHS: Core.Form) {
@@ -1887,35 +1896,24 @@ constraint BindToRef(T: type) {
       MemberBind(form(ref T))
       where .ResultForm = form(ref Result);
 }
-
-constraint BindToType(T: type) {
-  let Result: type;
-  extend require impls
-      MemberBind(formof(T))
-      where .ResultForm = form(val Result);
-}
 ```
 
-Observe that this replicates the semantics of `BindToValue`, `BindToRef`, and
-`BindToType` from #3720, including:
-
--   `BindToType` uses the value of the left argument, not the type.
--   The [`implicit_into` variance](#implicit_into-interface-parameter-variance)
-    of the `LHS` parameter supports
-    [implicit conversions](p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
+Observe that this replicates the semantics of `BindToValue` and `BindToRef`: in
+particular, the
+[`implicit_into` variance](#implicit_into-interface-parameter-variance) of the
+`LHS` parameter supports
+[implicit conversions](/docs/design/expressions/member_access.md#inheritance-and-other-implicit-conversions).
 
 However, there are a few differences:
 
 -   There is no longer a `Bind` interface used to guarantee that the result type
-    of `BindToVal` and `BindToRef` would be the same. In fact the result type
-    can vary for a type when using `BindToType`.
+    of `BindToVal` and `BindToRef` would be the same.
 -   `BindToVal` will be used for reference expressions if `BindToRef` is not
     implemented, avoiding the need to routinely implement both.
 
 In the future, `MemberBind` could be made into a form interface, but currently
 there is no motivation to use anything other than the type of `Self` for `impl`
-selection. Also the `ResultForm` used in `BindToType` should be marked
-compile-time [once that is supported](#compile-time-calls).
+selection.
 
 ### Primitive conversion interfaces
 
@@ -2365,10 +2363,9 @@ The implicit conversion of `poodle` to type `Dog` does not happen because of the
 [`Core.CallPrimitive` interface](#primitive-call-interface). That interface
 declares its `Self` parameter as `implicit_into anchor`, which means it won't
 look for different types as part of `impl` lookup, which is important for
-coherence. Instead, that implicit conversion happens as a result of the binding
-of `poodle` to `Dog.Bark`, as part of the process described by
-[proposal #3720: "Member binding operators"](https://github.com/carbon-language/carbon-lang/pull/3720)
-when calling the `Op` method of the
+coherence. Instead, that implicit conversion happens as a result of the
+[instance binding](/docs/design/expressions/member_access.md#instance-binding)
+of `poodle` to `Dog.Bark`, when calling the `Op` method of the
 [member binding interface](#primitive-member-binding-interface). In fact, there
 is another conversion after that, to an adapter of `Dog` that implements
 `Core.CallPrimitive` with the body of the `Dog.Bark` method.
@@ -2408,7 +2405,7 @@ the `CallPrimitive` implementation looked up as part of resolving the `()`
 operation. That lookup will only find calls where the type of `Self` is `Dog`.
 
 This works with
-[our approach of allowing implicit conversions with the `self` parameter](p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
+[our approach of allowing implicit conversions with the `self` parameter](/docs/design/expressions/member_access.md#inheritance-and-other-implicit-conversions).
 See extension methods
 [leads issue #1345: "How is the type of me restricted, and where can methods be declared?"](https://github.com/carbon-language/carbon-lang/issues/1345)
 and
