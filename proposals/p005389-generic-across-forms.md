@@ -643,7 +643,7 @@ facet type) rather than to `type`.
 An ordinary "type" interface acts as if `Self` is declared `Self: type` as the
 first parameter in `(`...`)`, and `Self: type` may also be written explicitly.
 Other `type` facet types (such as another interface, named constraint, or
-`where` expression) are not allowed as the type of `Self`, express such
+`where` expression) are not allowed as the type of `Self`; express such
 requirements with `require` declarations in the body instead (see
 [the alternative considered](#replace-require-for-interface-interface-requirements)).
 
@@ -2549,7 +2549,7 @@ impl form(val OverloadedCallable) as
   // `Self` is a `Core.Form` value equal to
   // `form(val OverloadedCallable)` so
   // `self:? Self` is the same as
-  // `self: OverloadedCallbale`.
+  // `self: OverloadedCallable`.
   fn Op(self:? Self) -> i32 {
     return self.x;
   }
@@ -2680,7 +2680,7 @@ Deduced(l);
 
 var v: i32 = 4;
 // Deduces PF = form(ref i32).
-Deduced(v);
+Deduced(ref v);
 
 // A call to `Make()` is an initializing expression.
 fn Make() -> i32;
@@ -2693,7 +2693,7 @@ Deduced(7);
 
 fn SymbolicN(generic N: i32) {
   // Deduces PF = formof(N).
-  F(N);
+  Deduced(N);
 }
 ```
 
@@ -2963,10 +2963,10 @@ fn GenericCaller[PF: call() -> i32]
 }
 
 Assert(GenericCaller(CallbackNoMutation) == 4);
-Assert(GenericCaller(counter) == 1);
+Assert(GenericCaller(ref counter) == 1);
 ```
 
-Alternatively, we can have the function takes its argument by value, and make a
+Alternatively, we can have the function take its argument by value, and make a
 wrapper that holds a pointer to make the call:
 
 ```carbon
@@ -3103,9 +3103,9 @@ argument lists using tuple patterns, such as this definition of `ApplySum`
 // Multiple variadic parameters have to be passed as tuples.
 fn ApplySum[... each ArgF: Core.NoVarForm,
             Fn: call(... _:? each ArgF) -> i32 & Core.NoVarForm]
-           (f: Fn,
+           (f:? Fn,
             (... each a:? each ArgF),
-            (... each b:? each Argf)) -> i32 {
+            (... each b:? each ArgF)) -> i32 {
   return f(... each a) + f(... each b);
 }
 ```
@@ -3520,8 +3520,7 @@ downsides:
 -   This would cause semantic changes when concatenating files, for example to
     make a bug report. In particular, more types could then be used as anchors
     for satisfying the orphan rule. This is against the
-    ["file concatenation should preserve meaning" (proposed) principle](https://github.com/carbon-language/carbon-lang/pull/6031).
-    FIXME: update link when merged.
+    ["file concatenation should preserve meaning" principle](/docs/project/principles/file_concatenation.md).
 
 This was
 [discussed on 2025-05-28](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.9pvtvm7atpo5).
