@@ -45,7 +45,7 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
 // placeholder witness table is created, to be replaced in the impl definition.
 //
 // Adds and returns an `ImplWitness` instruction (created with location set to
-// `loc_id`) that shows the "`Self` type" (from a facet in `impl.self_id`)
+// `impl_loc_id`) that shows the "`Self` type" (from a facet in `impl.self_id`)
 // implements an identified interface (from a facet type in
 // `impl.constraint_id`). This witness reflects the values assigned to
 // associated constant members of that interface by rewrite constraints in the
