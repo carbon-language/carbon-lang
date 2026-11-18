@@ -55,6 +55,32 @@ impl () as Z {
   where Z1 = ({} as C);
 }
 
+// --- fail_convert_failed.carbon
+library "[[@TEST_NAME]]";
+
+class B {}
+class C {}
+
+interface Z {
+  let Z1: B;
+}
+
+
+//@dump-sem-ir-begin
+impl () as Z {
+  // CHECK:STDERR:        ╭─┤ fail_convert_failed.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   where Z1 = ({} as C);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type `C` to `B`
+  // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·             ╰────┤ type `C` does not implement interface `Core.ImplicitAs(B)`
+  // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  where Z1 = ({} as C);
+}
+//@dump-sem-ir-end
+
 // --- generic.carbon
 library "[[@TEST_NAME]]";
 
@@ -465,6 +491,47 @@ impl C as Z {
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z.ref
+// CHECK:STDOUT:   witness = %Z.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_convert_failed.carbon = $fail_convert_failed
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %.78e: <witness> = impl_self_witness %empty_tuple.type, @Z [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @empty_tuple.type.as.Z.impl.%Z.impl_witness_table [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   impl_decl @empty_tuple.type.as.Z.impl [concrete] {} {
+// CHECK:STDOUT:     %.loc12_7.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @empty_tuple.type.as.Z.impl.%.loc12_7.2, @Z [concrete = constants.%.78e]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc12_7.2 as %Z.ref {
+// CHECK:STDOUT:   %.loc22_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc22_16.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc22_16.3: init %C to %.loc22_16.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc22_18: init %C = converted %.loc22_16.1, %.loc22_16.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc22_23: %B = converted %.loc22_18, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (<error>), @empty_tuple.type.as.Z.impl [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT:   extend %Z.ref
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }

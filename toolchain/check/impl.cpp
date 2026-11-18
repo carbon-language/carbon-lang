@@ -510,6 +510,10 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
     // conversion can be non-constant even if the original value was constant.
     if (converted_inst_id.has_value()) {
       value_id = converted_inst_id;
+      if (value_id == SemIR::ErrorInst::InstId) {
+        table_entry = SemIR::ErrorInst::InstId;
+        return;
+      }
     } else {
       const auto& assoc_const = context.associated_constants().Get(
           assoc_constant_decl->assoc_const_id);
