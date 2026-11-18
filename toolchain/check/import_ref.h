@@ -11,18 +11,16 @@
 
 namespace Carbon::Check {
 
-// Sets the IR for `ImportIRId::Local`. Must be called before
-// `SetSpecialImportIRs` and `AddImportIR` in order to ensure the correct IDs
-// are assigned.
-auto SetLocalIR(Context& context) -> void;
-
 // Sets the IRs for `ImportIRId::ApiForImpl` from `import_ir`, and
-// `ImportIRId::Cpp` from defaults. Must be called after `SetLocalIR` and before
-// `AddImportIR` in order to ensure the correct IDs are assigned.
+// `ImportIRId::Local` and `ImportIRId::Cpp` from defaults. Must be called
+// before `AddImportIR` in order to ensure the correct IDs are assigned.
 auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void;
 
-// Adds an ImportIR, returning the ID. May use an existing ID if already added.
-auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
+// Adds `import_ir` to `context.import_irs`, or treats `import_ir` as a
+// partial update to an existing entry with the same `sem_ir` field, and
+// returns its ID. In the update case, `is_export` will be true if it was
+// true for either of the inputs; `decl_id` is not updated.
+auto GetOrAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId;
 
 // Adds an import_ref instruction for the specified instruction in the

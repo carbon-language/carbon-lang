@@ -61,7 +61,7 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
     -> void {
   auto ir_id = SemIR::ImportIRId::None;
   if (import_ir.sem_ir != nullptr) {
-    ir_id = AddImportIR(context, import_ir);
+    ir_id = GetOrAddImportIR(context, import_ir);
   } else {
     // We don't have a check_ir_id, so add without touching check_ir_map.
     context.import_ir_constant_values().push_back(
@@ -73,22 +73,19 @@ static auto SetSpecialImportIR(Context& context, SemIR::ImportIR import_ir,
                expected_import_ir_id);
 }
 
-auto SetLocalIR(Context& context) -> void {
+auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
   SetSpecialImportIR(context,
                      {.decl_id = SemIR::InstId::None,
                       .is_export = false,
                       .sem_ir = &context.sem_ir()},
                      SemIR::ImportIRId::Local);
-}
-
-auto SetSpecialImportIRs(Context& context, SemIR::ImportIR import_ir) -> void {
   SetSpecialImportIR(context, import_ir, SemIR::ImportIRId::ApiForImpl);
   SetSpecialImportIR(context,
                      {.decl_id = SemIR::InstId::None, .is_export = false},
                      SemIR::ImportIRId::Cpp);
 }
 
-auto AddImportIR(Context& context, SemIR::ImportIR import_ir)
+auto GetOrAddImportIR(Context& context, SemIR::ImportIR import_ir)
     -> SemIR::ImportIRId {
   auto& ir_id = context.check_ir_map().Get(import_ir.sem_ir->check_ir_id());
   if (!ir_id.has_value()) {
@@ -122,11 +119,9 @@ static auto GetCanonicalImportIRInst(Context& context,
   auto [canonical_ir, canonical_inst_id] =
       GetCanonicalFileAndInstId(target_ir, target_inst_id);
 
-  // This uses AddImportIR in case it was indirectly found, which can
-  // happen with two or more steps of exports.
-  auto ir_id = AddImportIR(context, {.decl_id = SemIR::InstId::None,
-                                     .is_export = false,
-                                     .sem_ir = canonical_ir});
+  auto ir_id = GetOrAddImportIR(context, {.decl_id = SemIR::InstId::None,
+                                          .is_export = false,
+                                          .sem_ir = canonical_ir});
   return SemIR::ImportIRInst(ir_id, canonical_inst_id);
 }
 
@@ -5157,9 +5152,9 @@ auto ImportRefResolver::FindResolvedConstId(SemIR::InstId inst_id)
 
     cursor_ir = cursor_ir->import_irs().Get(ir_inst.ir_id()).sem_ir;
     auto cursor_ir_id =
-        AddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
-                                      .is_export = false,
-                                      .sem_ir = cursor_ir});
+        GetOrAddImportIR(local_context(), {.decl_id = SemIR::InstId::None,
+                                           .is_export = false,
+                                           .sem_ir = cursor_ir});
     cursor_inst_id = ir_inst.inst_id();
 
     CARBON_CHECK(cursor_ir != prev_ir || cursor_inst_id != prev_inst_id, "{0}",
@@ -5224,9 +5219,9 @@ static auto GetInstForLoad(Context& context,
         cursor_ir->import_ir_insts().Get(import_ref->import_ir_inst_id);
     cursor_ir = cursor_ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
     import_ir_insts.push_back(SemIR::ImportIRInst(
-        AddImportIR(context, {.decl_id = SemIR::InstId::None,
-                              .is_export = false,
-                              .sem_ir = cursor_ir}),
+        GetOrAddImportIR(context, {.decl_id = SemIR::InstId::None,
+                                   .is_export = false,
+                                   .sem_ir = cursor_ir}),
         import_ir_inst.inst_id()));
   }
 }

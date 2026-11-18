@@ -108,7 +108,6 @@ auto CheckUnit::Run() -> void {
 }
 
 auto CheckUnit::InitPackageScopeAndImports() -> void {
-  SetLocalIR(context_);
   // Importing makes many namespaces, so only canonicalize the type once.
   auto namespace_type_id =
       GetSingletonType(context_, SemIR::NamespaceType::TypeInstId);
