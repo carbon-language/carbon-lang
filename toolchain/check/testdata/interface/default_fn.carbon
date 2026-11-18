@@ -65,7 +65,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.c83: %I.WithSelf.F.type.2e1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %.c3e: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %.c3e: <witness> = impl_self_witness %C, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.42f: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet) [concrete]
@@ -147,7 +147,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [concrete = constants.%.c3e]
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @C.as.I.impl.%C.ref, @I [symbolic_self = constants.%.c3e]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -272,7 +272,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.f4d: %I.WithSelf.F.type.713 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G.type.05e: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet.510) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.G.c19: %I.WithSelf.G.type.05e = struct_value () [symbolic]
-// CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
+// CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.e63: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %I.facet.b01: %I.type = facet_value %empty_tuple.type, (%I.impl_witness.e63) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.0a9: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.b01) [concrete]

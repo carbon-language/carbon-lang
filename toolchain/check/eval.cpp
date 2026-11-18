@@ -25,6 +25,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/generic_region_stack.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
@@ -948,8 +949,17 @@ auto AddImportedConstant(Context& context, SemIR::Inst inst)
   EvalContext eval_context(&context, SemIR::LocId::None);
   CARBON_CHECK(inst.kind().has_type(), "Can't import untyped instructions: {0}",
                inst.kind());
-  Phase phase = GetPhase(context.constant_values(),
-                         context.types().GetConstantId(inst.type_id()));
+  Phase phase;
+  if (inst.kind().implied_period_self()) {
+    // These instructions implicitly carry a reference to `.Self` and always
+    // eval as symbolic. Ensure the same when importing.
+    phase = Phase::PeriodSelfSymbolic;
+  } else {
+    phase = Phase::Concrete;
+  }
+  phase = LatestPhase(phase,
+                      GetPhase(context.constant_values(),
+                               context.types().GetConstantId(inst.type_id())));
   // We ignore the return value of ReplaceAllFieldsWithConstantValues and just
   // propagate runtime and error constant values into the resulting ConstantId.
   ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase);
@@ -3013,7 +3023,12 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
   } else {
     // Build a constant instruction by replacing each non-constant operand with
     // its constant value.
-    Phase phase = Phase::Concrete;
+    Phase phase;
+    if constexpr (InstT::Kind.implied_period_self()) {
+      phase = Phase::PeriodSelfSymbolic;
+    } else {
+      phase = Phase::Concrete;
+    }
     if ((SemIR::Internal::HasTypeIdMember<InstT> &&
          !ReplaceTypeWithConstantValue(eval_context, inst_id, &inst, &phase)) ||
         !ReplaceAllFieldsWithConstantValues(eval_context, &inst, &phase)) {
@@ -3032,11 +3047,18 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
     } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
+      // Even if we're resolving an `identified` specific, we don't want
+      // template evaluation to see that we're identifying. The `identified`
+      // state only applies to existing instructions, not the creation of new
+      // ones instantiating a template.
+      CheckedSaveAndRestore eval_identified(
+          eval_context.context().eval_impl_lookup_to_identified_witness(), 0);
       auto result_inst_id = PerformDelayedAction(
           eval_context.context(), eval_context.specific_id(),
           SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
+        static_assert(!SemIR::InstValue::Kind.implied_period_self());
         return MakeConstantResult(
             eval_context.context(),
             SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
@@ -3048,10 +3070,17 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                                 Phase::TemplateSymbolic);
     } else if constexpr (ConstantKind ==
                          SemIR::InstConstantKind::MultiInstAction) {
+      // Even if we're resolving an `identified` specific, we don't want
+      // template evaluation to see that we're identifying. The `identified`
+      // state only applies to existing instructions, not the creation of new
+      // ones instantiating a template.
+      CheckedSaveAndRestore eval_identified(
+          eval_context.context().eval_impl_lookup_to_identified_witness(), 0);
       auto result_inst_ids = PerformDelayedAction(
           eval_context.context(), eval_context.specific_id(),
           SemIR::LocId(inst_id), inst.As<InstT>());
       if (!result_inst_ids.empty()) {
+        static_assert(!SemIR::InstValue::Kind.implied_period_self());
         // The result is a tuple of instruction values.
         for (auto& result_inst_id : result_inst_ids) {
           result_inst_id =
@@ -3061,6 +3090,7 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
                                    .inst_id = result_inst_id},
                   Phase::Concrete));
         }
+        static_assert(!SemIR::TupleValue::Kind.implied_period_self());
         return MakeConstantResult(
             eval_context.context(),
             SemIR::TupleValue{
@@ -3106,20 +3136,6 @@ auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
                                    SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   return MakeConstantForCall(eval_context, inst_id, inst.As<SemIR::Call>());
-}
-
-// `typeof` evaluates to the type of its operand. The operand is in a separate
-// region that is not evaluated, so we look at the type of the region's result
-// directly rather than evaluating any operands; this specialization avoids us
-// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
-template <>
-auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
-                                     SemIR::InstId /*inst_id*/,
-                                     SemIR::Inst inst) -> SemIR::ConstantId {
-  auto region = eval_context.sem_ir().expr_regions().Get(
-      inst.As<SemIR::TypeOf>().operand_region_id);
-  return eval_context.types().GetConstantId(
-      eval_context.GetTypeOfInst(region.result_id));
 }
 
 // ImportRefLoaded can have a constant value, but it's owned and maintained by
@@ -3180,6 +3196,20 @@ auto TryEvalTypedInst<SemIR::Temporary>(EvalContext& eval_context,
   }
 
   return MakeConstantResult(eval_context.context(), temporary, phase);
+}
+
+// `typeof` evaluates to the type of its operand. The operand is in a separate
+// region that is not evaluated, so we look at the type of the region's result
+// directly rather than evaluating any operands; this specialization avoids us
+// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
+template <>
+auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto region = eval_context.sem_ir().expr_regions().Get(
+      inst.As<SemIR::TypeOf>().operand_region_id);
+  return eval_context.types().GetConstantId(
+      eval_context.GetTypeOfInst(region.result_id));
 }
 
 static auto AddRequirementBase(Context& context,
@@ -3862,6 +3892,13 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   }
 
   if (specific_id.has_value()) {
+    // Even if we're calling a function with an `identified` specific, we don't
+    // want the evaluation to see that we're identifying. That leads to
+    // inconsistent behaviour for the evaluation of a function based on where it
+    // is called.
+    CheckedSaveAndRestore eval_identified(
+        outer_eval_context.context().eval_impl_lookup_to_identified_witness(),
+        0);
     ResolveSpecificDefinition(outer_eval_context.context(), loc_id,
                               specific_id);
   }

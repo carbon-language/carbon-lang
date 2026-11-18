@@ -1367,7 +1367,7 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type.as.Y.impl.Y1.call: init type = call %empty_tuple.type.as.Y.impl.Y1.specific_fn.700() [symbolic_self]
 // CHECK:STDOUT:   %Z_where.type.b3e: type = facet_type <@Z where %impl.elem0.ff0 = %empty_tuple.type.as.Y.impl.Y1.call> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.Y.impl.Y1.specific_fn.c56: <specific function> = specific_function %empty_tuple.type.as.Y.impl.Y1, @empty_tuple.type.as.Y.impl.Y1(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %.78e: <witness> = impl_self_witness %empty_tuple.type, @Z [concrete]
+// CHECK:STDOUT:   %.78e: <witness> = impl_self_witness %empty_tuple.type, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness.a55: <witness> = impl_witness @T.as_type.as.Z.impl.%Z.impl_witness_table, @T.as_type.as.Z.impl(%Y.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

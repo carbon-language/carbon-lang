@@ -797,7 +797,7 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %DefaultFn.type: type = facet_type <@DefaultFn> [concrete]
-// CHECK:STDOUT:   %.1d8: <witness> = impl_self_witness %C, @DefaultFn [concrete]
+// CHECK:STDOUT:   %.1d8: <witness> = impl_self_witness %C, @DefaultFn [symbolic_self]
 // CHECK:STDOUT:   %DefaultFn.impl_witness: <witness> = impl_witness @C.as.DefaultFn.impl.%DefaultFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DefaultFn.facet: %DefaultFn.type = facet_value %C, (%DefaultFn.impl_witness) [concrete]
 // CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.01d: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%DefaultFn.facet) [concrete]
@@ -837,7 +837,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultFn.ref: type = name_ref DefaultFn, imports.%Main.DefaultFn [concrete = constants.%DefaultFn.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.DefaultFn.impl.%Self.ref, @DefaultFn [concrete = constants.%.1d8]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.DefaultFn.impl.%Self.ref, @DefaultFn [symbolic_self = constants.%.1d8]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -863,7 +863,7 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %DefaultMethod.type: type = facet_type <@DefaultMethod> [concrete]
-// CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [concrete]
+// CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [symbolic_self]
 // CHECK:STDOUT:   %DefaultMethod.impl_witness: <witness> = impl_witness @C.as.DefaultMethod.impl.%DefaultMethod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DefaultMethod.facet: %DefaultMethod.type = facet_value %C, (%DefaultMethod.impl_witness) [concrete]
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.524: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%DefaultMethod.facet) [concrete]
@@ -921,7 +921,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultMethod.ref: type = name_ref DefaultMethod, imports.%Main.DefaultMethod [concrete = constants.%DefaultMethod.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.DefaultMethod.impl.%Self.ref, @DefaultMethod [concrete = constants.%.3e0]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.DefaultMethod.impl.%Self.ref, @DefaultMethod [symbolic_self = constants.%.3e0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -973,7 +973,7 @@ interface C {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultFn.type: type = facet_type <@DefaultFn> [concrete]
-// CHECK:STDOUT:   %.1d8: <witness> = impl_self_witness %C, @DefaultFn [concrete]
+// CHECK:STDOUT:   %.1d8: <witness> = impl_self_witness %C, @DefaultFn [symbolic_self]
 // CHECK:STDOUT:   %DefaultFn.impl_witness: <witness> = impl_witness @C.as.DefaultFn.impl.%DefaultFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.DefaultFn.impl.F.type: type = fn_type @C.as.DefaultFn.impl.F [concrete]
 // CHECK:STDOUT:   %C.as.DefaultFn.impl.F: %C.as.DefaultFn.impl.F.type = struct_value () [concrete]
@@ -1015,7 +1015,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultFn.ref: type = name_ref DefaultFn, imports.%Main.DefaultFn [concrete = constants.%DefaultFn.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.DefaultFn.impl.%Self.ref, @DefaultFn [concrete = constants.%.1d8]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.DefaultFn.impl.%Self.ref, @DefaultFn [symbolic_self = constants.%.1d8]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1062,7 +1062,7 @@ interface C {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultMethod.type: type = facet_type <@DefaultMethod> [concrete]
-// CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [concrete]
+// CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [symbolic_self]
 // CHECK:STDOUT:   %DefaultMethod.impl_witness: <witness> = impl_witness @C.as.DefaultMethod.impl.%DefaultMethod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %self.patt.36a3f7.2: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
 // CHECK:STDOUT:   %C.as.DefaultMethod.impl.M.type: type = fn_type @C.as.DefaultMethod.impl.M [concrete]
@@ -1135,7 +1135,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %DefaultMethod.ref: type = name_ref DefaultMethod, imports.%Main.DefaultMethod [concrete = constants.%DefaultMethod.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.DefaultMethod.impl.%Self.ref, @DefaultMethod [concrete = constants.%.3e0]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.DefaultMethod.impl.%Self.ref, @DefaultMethod [symbolic_self = constants.%.3e0]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1199,7 +1199,7 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %FinalFn.type: type = facet_type <@FinalFn> [concrete]
-// CHECK:STDOUT:   %.55e: <witness> = impl_self_witness %C, @FinalFn [concrete]
+// CHECK:STDOUT:   %.55e: <witness> = impl_self_witness %C, @FinalFn [symbolic_self]
 // CHECK:STDOUT:   %FinalFn.impl_witness: <witness> = impl_witness @C.as.FinalFn.impl.%FinalFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %FinalFn.facet: %FinalFn.type = facet_value %C, (%FinalFn.impl_witness) [concrete]
 // CHECK:STDOUT:   %FinalFn.WithSelf.F.type.db5: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%FinalFn.facet) [concrete]
@@ -1239,7 +1239,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %FinalFn.ref: type = name_ref FinalFn, imports.%Main.FinalFn [concrete = constants.%FinalFn.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.FinalFn.impl.%Self.ref, @FinalFn [concrete = constants.%.55e]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.FinalFn.impl.%Self.ref, @FinalFn [symbolic_self = constants.%.55e]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -1265,7 +1265,7 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %FinalMethod.type: type = facet_type <@FinalMethod> [concrete]
-// CHECK:STDOUT:   %.864: <witness> = impl_self_witness %C, @FinalMethod [concrete]
+// CHECK:STDOUT:   %.864: <witness> = impl_self_witness %C, @FinalMethod [symbolic_self]
 // CHECK:STDOUT:   %FinalMethod.impl_witness: <witness> = impl_witness @C.as.FinalMethod.impl.%FinalMethod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %FinalMethod.facet: %FinalMethod.type = facet_value %C, (%FinalMethod.impl_witness) [concrete]
 // CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.8d7: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%FinalMethod.facet) [concrete]
@@ -1323,7 +1323,7 @@ interface C {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %FinalMethod.ref: type = name_ref FinalMethod, imports.%Main.FinalMethod [concrete = constants.%FinalMethod.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.FinalMethod.impl.%Self.ref, @FinalMethod [concrete = constants.%.864]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.FinalMethod.impl.%Self.ref, @FinalMethod [symbolic_self = constants.%.864]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

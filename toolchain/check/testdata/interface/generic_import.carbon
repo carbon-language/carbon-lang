@@ -119,7 +119,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:   %AddWith.WithSelf.F.type.206: type = fn_type @AddWith.WithSelf.F, @AddWith.WithSelf(%T, %Self.cca) [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.F.b6b: %AddWith.WithSelf.F.type.206 = struct_value () [symbolic]
 // CHECK:STDOUT:   %AddWith.type.5e1: type = facet_type <@AddWith, @AddWith(%C)> [concrete]
-// CHECK:STDOUT:   %.9ca: <witness> = impl_self_witness %C, @AddWith, @AddWith(%C) [concrete]
+// CHECK:STDOUT:   %.9ca: <witness> = impl_self_witness %C, @AddWith, @AddWith(%C) [symbolic_self]
 // CHECK:STDOUT:   %AddWith.impl_witness: <witness> = impl_witness @C.as.AddWith.impl.%AddWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.656: %AddWith.type.5e1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %AddWith.WithSelf.F.type.906: type = fn_type @AddWith.WithSelf.F, @AddWith.WithSelf(%C, %Self.cca) [symbolic]
@@ -157,7 +157,7 @@ impl C as AddWith(C) {
 // CHECK:STDOUT:     %C.ref.loc7_19: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %AddWith.type: type = facet_type <@AddWith, @AddWith(constants.%C)> [concrete = constants.%AddWith.type.5e1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.AddWith.impl.%C.ref.loc7_6, @AddWith, @AddWith(constants.%C) [concrete = constants.%.9ca]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @C.as.AddWith.impl.%C.ref.loc7_6, @AddWith, @AddWith(constants.%C) [symbolic_self = constants.%.9ca]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @AddWith(imports.%Main.import_ref.b3bc94.3: type) [from "a.carbon"] {

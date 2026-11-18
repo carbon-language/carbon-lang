@@ -76,7 +76,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %I.WithSelf.F.20b: %I.WithSelf.F.type.de2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0.e24: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
-// CHECK:STDOUT:   %.cb2: <witness> = impl_self_witness bool, @I [concrete]
+// CHECK:STDOUT:   %.cb2: <witness> = impl_self_witness bool, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.c3b: <witness> = impl_witness @bool.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet.31d: %I.type = facet_value bool, (%I.impl_witness.c3b) [concrete]
 // CHECK:STDOUT:   %C.820: type = class_type @C, @C(%I.type, %I.facet.31d) [concrete]
@@ -91,7 +91,7 @@ impl i32 as I {
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [concrete]
+// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.f53: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.patt.cb8: %pattern_type.9a5 = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %C.fef: type = class_type @C, @C(type, %i32) [concrete]
@@ -153,12 +153,12 @@ impl i32 as I {
 // CHECK:STDOUT:     %.loc22: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @bool.as.I.impl.%.loc22, @I [concrete = constants.%.cb2]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @bool.as.I.impl.%.loc22, @I [symbolic_self = constants.%.cb2]
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness @i32.as.I.impl.%i32, @I [concrete = constants.%.c43]
+// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness @i32.as.I.impl.%i32, @I [symbolic_self = constants.%.c43]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
