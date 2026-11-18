@@ -452,11 +452,8 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 // If `convert_symbolic_only` is false, the `value_const_id` is assumed to be
 // already converted to the type of the associated constant when that type is
 // concrete.
-//
-// If the specific for `interface` fails monomorphization, `specific_loc_id`
-// will be used for the resulting diagnostics.
-static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
-                          SemIR::LocId assign_loc_id, const SemIR::Impl& impl,
+static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
+                          const SemIR::Impl& impl,
                           const SemIR::Interface& interface,
                           llvm::MutableArrayRef<SemIR::InstId> table,
                           SemIR::ElementIndex index, SemIR::InstId value_id,
@@ -490,8 +487,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
     const auto& fn = context.functions().Get(fn_type.function_id);
     CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
                       "assigning to associated function {0}", SemIR::NameId);
-    context.emitter().Emit(assign_loc_id, RewriteForAssociatedFunction,
-                           fn.name_id);
+    context.emitter().Emit(loc_id, RewriteForAssociatedFunction, fn.name_id);
     table_entry = SemIR::ErrorInst::InstId;
     return;
   }
@@ -501,8 +497,8 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
   SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
   if (assoc_const_type_id.is_symbolic() || !convert_symbolic_only) {
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-        context, specific_loc_id, interface.generic_id,
-        interface.generic_with_self_id, impl.interface.specific_id,
+        context, loc_id, interface.generic_id, interface.generic_with_self_id,
+        impl.interface.specific_id,
         context.constant_values().Get(impl.self_id));
 
     // Get the type of the associated constant in this interface with this
@@ -512,8 +508,8 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
     // Perform the conversion of the value to the type. We skipped this when
     // forming the facet type because the type of the associated constant
     // was symbolic.
-    auto converted_inst_id = ConvertToValueOfType(
-        context, assign_loc_id, value_id, assoc_const_type_id);
+    auto converted_inst_id =
+        ConvertToValueOfType(context, loc_id, value_id, assoc_const_type_id);
     // Canonicalize the converted constant value.
     converted_inst_id =
         context.constant_values().GetConstantInstId(converted_inst_id);
@@ -530,7 +526,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
           "after conversion to {2}",
           SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
       context.emitter().Emit(
-          assign_loc_id, AssociatedConstantNotConstantAfterConversion,
+          loc_id, AssociatedConstantNotConstantAfterConversion,
           assoc_const.name_id, value_id, assoc_const_type_id);
       value_id = SemIR::ErrorInst::InstId;
     }
@@ -553,8 +549,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
             "associated constant {0} given value {1} that is different from "
             "previously given value {2}",
             SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
-        context.emitter().Emit(assign_loc_id,
-                               AssociatedConstantGivenDifferentValues,
+        context.emitter().Emit(loc_id, AssociatedConstantGivenDifferentValues,
                                assoc_const.name_id, value_id, table_entry);
       }
       table_entry = SemIR::ErrorInst::InstId;
@@ -563,7 +558,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId specific_loc_id,
   }
 
   table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
-      context, assign_loc_id,
+      context, loc_id,
       {.type_id = context.insts().Get(value_id).type_id(),
        .inst_id = value_id});
 }
@@ -652,8 +647,8 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId impl_loc_id,
     // concrete. This happens when checking the facet type (in handle_where.cpp)
     // which happens before we know the full interface specific in order to
     // convert.
-    SetTableEntry(context, impl_loc_id, constraint_loc_id, impl, interface,
-                  table, access.index, context.constant_values().GetInstId(rhs),
+    SetTableEntry(context, constraint_loc_id, impl, interface, table,
+                  access.index, context.constant_values().GetInstId(rhs),
                   /*convert_symbolic_only=*/true);
   }
   return witness_inst_id;
@@ -1147,7 +1142,7 @@ auto SetImplWitnessTableEntry(Context& context, SemIR::LocId loc_id,
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
   auto table_block = context.inst_blocks().GetMutable(table.elements_id);
 
-  SetTableEntry(context, loc_id, loc_id, impl, interface, table_block,
+  SetTableEntry(context, loc_id, impl, interface, table_block,
                 assoc_entity->index, rhs_inst_id,
                 /*convert_symbolic_only=*/false);
 }
