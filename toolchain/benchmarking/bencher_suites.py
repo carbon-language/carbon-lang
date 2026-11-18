@@ -12,10 +12,31 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 
+# Linux runner labels used for continuous runs and historical backfills.
+LINUX_RUNNERS: tuple[str, ...] = ("ubuntu-22.04", "ubuntu-22.04-arm")
+
 
 class Tier(Enum):
     CONTINUOUS = "continuous"
     NIGHTLY = "nightly"
+
+    @property
+    def bencher_branch(self) -> str:
+        """Returns the canonical Bencher branch name for this tier."""
+        match self:
+            case Tier.CONTINUOUS:
+                return "trunk"
+            case Tier.NIGHTLY:
+                return "nightly"
+
+    @property
+    def runners(self) -> tuple[str, ...]:
+        """Returns the allowed GitHub Actions runner labels for this tier."""
+        match self:
+            case Tier.CONTINUOUS:
+                return LINUX_RUNNERS
+            case Tier.NIGHTLY:
+                return (*LINUX_RUNNERS, "macos-26")
 
 
 @dataclass(frozen=True)

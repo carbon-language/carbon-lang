@@ -45,7 +45,7 @@ jobs:
         ${{ github.workflow }}-${{ github.event_name }}-${{ matrix.runner }}-${{
         github.ref }}
       cancel-in-progress: false
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -92,6 +92,7 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.astral.sh:443
             releases.bazel.build:443
+            results-receiver.actions.githubusercontent.com:443
             static.crates.io:443
             static.rust-lang.org:443
             storage.googleapis.com:443
@@ -152,6 +153,19 @@ jobs:
             --output="$BMF_FILE" \
             --github-output="$GITHUB_OUTPUT"
 
+      # Archive BMF JSON encoded with `<tier>-<runner>-<sha>` so saved results
+      # can be re-uploaded in chronological commit order by
+      # `benchmarks_backfill.yaml` without re-running benchmarks.
+      - name: Upload BMF artifact
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name:
+            bencher-bmf-${{ matrix.tier }}-${{ matrix.runner }}-${{
+            (github.event_name == 'workflow_run' &&
+            github.event.workflow_run.head_sha) || github.sha }}
+          path: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+
       - name: Install Bencher CLI
         if: steps.run-bencher.outputs.has_benchmarks == 'true'
         uses: bencherdev/bencher@7de3c69a85380826613050826b4bce062be2f07d # v0.6.16
@@ -183,11 +197,13 @@ jobs:
             done <<<"$threshold_output"
           fi
 
+          commit_epoch="$(git show -s --format=%ct HEAD)"
           bencher run \
             --project carbon-lang \
             --branch "$bencher_branch" \
             --hash "$TARGET_SHA" \
             --testbed "$RUNNER" \
+            --backdate "$commit_epoch" \
             --adapter json \
             --file "$BMF_FILE" \
             "${extra_args[@]}"

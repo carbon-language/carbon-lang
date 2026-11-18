@@ -6,7 +6,7 @@
 # Keep this module stdlib-only: Bazel `py_test` and CI workflows without `uv`
 # invoke it directly under `python3`.
 
-"""Builds, runs, and validates Bencher Metric Format (BMF) benchmark suites."""
+"""Builds, runs, validates, and replays Bencher Metric Format (BMF) suites."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -15,11 +15,16 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+import io
 import json
 import math
+import os
 import re
 import subprocess
 import sys
+import tempfile
+import uuid
+import zipfile
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Optional
@@ -39,6 +44,12 @@ from toolchain.benchmarking.bencher_suites import (  # noqa: E402
 # Safety bound per report to stay well below Bencher Cloud's 65,535/day limit.
 MAX_METRICS_PER_REPORT = 500
 MAX_BENCHMARK_NAME_LEN = 256
+MAX_BMF_FILE_BYTES = 1024 * 1024
+DEFAULT_GITHUB_REPO = "carbon-language/carbon-lang"
+DEFAULT_REPLAY_WORKFLOWS: tuple[str, ...] = (
+    "benchmarks.yaml",
+    "benchmarks_backfill.yaml",
+)
 # Maximum page size accepted by `bencher measure list --per-page`.
 _MEASURE_PAGE_SIZE = 255
 
@@ -54,6 +65,10 @@ _BENCHER_IGNORE_SUFFIXES = (
     "_bencher_ignore",
     "BencherIgnore",
     "-bencher-ignore",
+)
+_SAFE_REV_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/~^-]*$")
+_REPLAY_ALLOWED_EVENTS = frozenset(
+    {"push", "workflow_run", "workflow_dispatch"}
 )
 
 
@@ -319,6 +334,227 @@ def sync_measure_units(
     return updated
 
 
+def _gh_api_json_lines(endpoint: str, jq_expr: str) -> list[dict[str, Any]]:
+    """Queries `gh api --paginate` and parses newline-delimited JSON objects."""
+    proc = subprocess.run(
+        ["gh", "api", "--paginate", endpoint, "--jq", jq_expr],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return [
+        json.loads(line) for line in proc.stdout.splitlines() if line.strip()
+    ]
+
+
+def _extract_bmf_from_zip(zip_bytes: bytes) -> bytes:
+    """Extracts and validates the single BMF JSON file inside `zip_bytes`."""
+    if len(zip_bytes) > MAX_BMF_FILE_BYTES:
+        raise BmfValidationError("Artifact zip exceeds size limit.")
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+            infos = zf.infolist()
+            if len(infos) != 1 or infos[0].file_size > MAX_BMF_FILE_BYTES:
+                raise BmfValidationError(
+                    "Expected a single bounded BMF file in artifact zip."
+                )
+            bmf_bytes = zf.read(infos[0].filename)
+        validate_bmf(json.loads(bmf_bytes.decode("utf-8")))
+    except (UnicodeDecodeError, json.JSONDecodeError, zipfile.BadZipFile) as e:
+        raise BmfValidationError(f"Invalid BMF artifact zip: {e}") from e
+    return bmf_bytes
+
+
+def replay_artifacts(
+    tier: Tier,
+    repo: str = DEFAULT_GITHUB_REPO,
+    workflows: Iterable[str] = DEFAULT_REPLAY_WORKFLOWS,
+    project: str = "carbon-lang",
+    git_ref: str = "HEAD",
+    since_ref: Optional[str] = None,
+    reset_branch: bool = False,
+    dry_run: bool = False,
+    repo_root: Path = _REPO_ROOT,
+) -> list[tuple[str, list[str]]]:
+    """Downloads, orders (`oldest -> newest`), and uploads saved BMF artifacts.
+
+    Artifacts are matched by name (`bencher-bmf-<tier>-<runner>-<sha>`) across
+    trusted runs of `workflows` and ordered along `git_ref`'s first-parent
+    history. Returns `[(sha, [runner, ...]), ...]` in upload order.
+    """
+    for rev in (git_ref, since_ref):
+        if rev is not None and (not _SAFE_REV_RE.fullmatch(rev) or ".." in rev):
+            raise ValueError(f"Invalid git revision: {rev!r}")
+
+    log_proc = subprocess.run(
+        [
+            "git",
+            "log",
+            "--first-parent",
+            "--reverse",
+            "--format=%H:%ct",
+            git_ref,
+        ],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    commits: dict[str, tuple[int, int]] = {}
+    for idx, line in enumerate(log_proc.stdout.splitlines()):
+        if line.strip():
+            sha, epoch_str = line.strip().split(":", 1)
+            commits[sha] = (idx, int(epoch_str))
+    if not commits:
+        raise BmfValidationError(f"No commits found on {git_ref!r}.")
+
+    min_idx = 0
+    if since_ref is not None:
+        since_sha = subprocess.run(
+            ["git", "rev-parse", "--verify", f"{since_ref}^{{commit}}"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        if since_sha not in commits:
+            raise BmfValidationError(
+                f"`--since-ref` ({since_ref}) is not on {git_ref} first-parent."
+            )
+        min_idx = commits[since_sha][0]
+
+    runners_alt = "|".join(re.escape(r) for r in tier.runners)
+    artifact_re = re.compile(
+        rf"^bencher-bmf-{re.escape(tier.value)}-({runners_alt})-([0-9a-f]{{40}})$"
+    )
+    current_run_id = os.environ.get("GITHUB_RUN_ID")
+    run_ids: set[int] = set()
+    for workflow in workflows:
+        runs = _gh_api_json_lines(
+            f"repos/{repo}/actions/workflows/{workflow}/runs?per_page=100",
+            ".workflow_runs[] | {id, event, status, conclusion, "
+            "head_repo: .head_repository.full_name}",
+        )
+        for run in runs:
+            if run.get("head_repo") != repo:
+                continue
+            if run.get("status") != "completed":
+                if str(run.get("id")) != current_run_id:
+                    print(
+                        f"WARNING: `{workflow}` run {run.get('id')} is still "
+                        "active; wait before `--reset-branch`.",
+                        file=sys.stderr,
+                    )
+                continue
+            event = run.get("event")
+            if (
+                run.get("conclusion") != "success"
+                or event not in _REPLAY_ALLOWED_EVENTS
+                or (event == "push" and tier != Tier.CONTINUOUS)
+                or (event == "workflow_run" and tier != Tier.NIGHTLY)
+            ):
+                continue
+            run_ids.add(int(run["id"]))
+
+    # Select the newest run (`highest run_id`) per `(sha, runner)` before
+    # downloading any artifact zips.
+    selected: dict[tuple[str, str], tuple[int, int]] = {}
+    for run_id in sorted(run_ids):
+        artifacts = _gh_api_json_lines(
+            f"repos/{repo}/actions/runs/{run_id}/artifacts?per_page=100",
+            ".artifacts[] | {id, name, expired}",
+        )
+        for art in artifacts:
+            if art.get("expired"):
+                continue
+            m = artifact_re.fullmatch(art.get("name", ""))
+            if m is None:
+                continue
+            runner, sha = m.group(1), m.group(2)
+            if sha not in commits or commits[sha][0] < min_idx:
+                continue
+            selected[(sha, runner)] = (run_id, int(art["id"]))
+
+    if not selected:
+        raise BmfValidationError(
+            f"No `{tier.value}` BMF artifacts found to replay."
+        )
+
+    ordered_shas = sorted(
+        {sha for sha, _ in selected}, key=lambda sha: commits[sha][0]
+    )
+    plan = [
+        (sha, [r for r in tier.runners if (sha, r) in selected])
+        for sha in ordered_shas
+    ]
+    branch = tier.bencher_branch
+    print(
+        f"Prepared {len(plan)} commit(s) for Bencher branch {branch!r} "
+        f"(tier={tier.value}, reset_branch={reset_branch}, dry_run={dry_run}):",
+        file=sys.stderr,
+    )
+    for idx, (sha, runners) in enumerate(plan, start=1):
+        print(
+            f"  [{idx}/{len(plan)}] {sha} (epoch={commits[sha][1]}, "
+            f"runners={runners})",
+            file=sys.stderr,
+        )
+    if dry_run:
+        return plan
+
+    reset_key = str(uuid.uuid4()) if reset_branch else None
+    threshold_args = format_threshold_args(TRUNK_THRESHOLDS)
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_root = Path(tmp_dir)
+        for commit_idx, (sha, runners) in enumerate(plan):
+            epoch = str(commits[sha][1])
+            for runner in runners:
+                _, artifact_id = selected[(sha, runner)]
+                zip_bytes = subprocess.run(
+                    [
+                        "gh",
+                        "api",
+                        f"repos/{repo}/actions/artifacts/{artifact_id}/zip",
+                    ],
+                    capture_output=True,
+                    check=True,
+                ).stdout
+                bmf_path = tmp_root / f"{sha}-{runner}.json"
+                bmf_path.write_bytes(_extract_bmf_from_zip(zip_bytes))
+                cmd = [
+                    "bencher",
+                    "run",
+                    "--project",
+                    project,
+                    "--branch",
+                    branch,
+                    "--hash",
+                    sha,
+                    "--testbed",
+                    runner,
+                    "--backdate",
+                    epoch,
+                    "--adapter",
+                    "json",
+                    "--file",
+                    str(bmf_path),
+                    "--thresholds-reset",
+                    *threshold_args,
+                ]
+                if commit_idx == 0 and reset_key is not None:
+                    cmd.extend(
+                        [
+                            "--start-point-reset",
+                            "--start-point-idempotency-key",
+                            reset_key,
+                        ]
+                    )
+                subprocess.run(cmd, check=True)
+
+    sync_measure_units(project=project)
+    return plan
+
+
 def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="subcommand", required=True)
@@ -364,6 +600,50 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         help="Bencher project slug or UUID.",
     )
 
+    replay_p = subparsers.add_parser(
+        "replay-artifacts",
+        help="Download, order, and upload saved BMF artifacts to Bencher.",
+    )
+    replay_p.add_argument(
+        "--tier",
+        required=True,
+        choices=[t.value for t in Tier],
+        help=(
+            "Tier to replay (`continuous` -> `trunk`, `nightly` -> `nightly`)."
+        ),
+    )
+    replay_p.add_argument(
+        "--repo",
+        default=os.environ.get("GITHUB_REPOSITORY") or DEFAULT_GITHUB_REPO,
+        help="GitHub `<owner>/<repo>` to query for workflow artifacts.",
+    )
+    replay_p.add_argument(
+        "--project",
+        default="carbon-lang",
+        help="Bencher project slug or UUID.",
+    )
+    replay_p.add_argument(
+        "--git-ref",
+        default="HEAD",
+        help="Git ref whose first-parent history defines commit order.",
+    )
+    replay_p.add_argument(
+        "--since-ref",
+        help="Optional oldest commit ref along `--git-ref` to include.",
+    )
+    replay_p.add_argument(
+        "--reset-branch",
+        action="store_true",
+        help=(
+            "Reset the Bencher branch head before uploading the oldest commit."
+        ),
+    )
+    replay_p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the ordered replay plan without downloading or uploading.",
+    )
+
     return parser.parse_args(args=args)
 
 
@@ -377,6 +657,17 @@ def main(args: Optional[list[str]] = None) -> int:
         return 0
     if parsed_args.subcommand == "sync-measures":
         sync_measure_units(project=parsed_args.project)
+        return 0
+    if parsed_args.subcommand == "replay-artifacts":
+        replay_artifacts(
+            tier=Tier(parsed_args.tier),
+            repo=parsed_args.repo,
+            project=parsed_args.project,
+            git_ref=parsed_args.git_ref,
+            since_ref=parsed_args.since_ref,
+            reset_branch=parsed_args.reset_branch,
+            dry_run=parsed_args.dry_run,
+        )
         return 0
     raise AssertionError(f"Unhandled subcommand: {parsed_args.subcommand}")
 
