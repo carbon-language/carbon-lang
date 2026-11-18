@@ -10,9 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/nontrivial/maybe_unformed.carbon
 
-// TODO: implement case for `MaybeUnformedType` in `MakeSubobjectDestroyOpBody`.
-
-// --- todo_nontrivial_maybe_unformed.carbon
+// --- nontrivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 // `HasNonTrivialDestruction.(SubobjectDestroy.Op)` is a no-op because it
@@ -35,7 +33,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_maybe_unformed_member.carbon
+// --- nontrivial_maybe_unformed_member.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -61,7 +59,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_maybe_unformed_of_const.carbon
+// --- nontrivial_maybe_unformed_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -88,7 +86,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_const_maybe_unformed.carbon
+// --- nontrivial_const_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -115,7 +113,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_maybe_unformed.carbon = $todo_nontrivial_maybe_unformed
+// CHECK:STDOUT: --- nontrivial_maybe_unformed.carbon = $nontrivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -209,7 +207,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc16_17.4(%self.param: ref %MaybeUnformed.10a) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_maybe_unformed_member.carbon = $todo_nontrivial_maybe_unformed_member
+// CHECK:STDOUT: --- nontrivial_maybe_unformed_member.carbon = $nontrivial_maybe_unformed_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -336,7 +334,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc19_17.6(%self.param: ref %MaybeUnformed.fce) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_maybe_unformed_of_const.carbon = $todo_nontrivial_maybe_unformed_of_const
+// CHECK:STDOUT: --- nontrivial_maybe_unformed_of_const.carbon = $nontrivial_maybe_unformed_of_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -489,7 +487,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_17.8(%self.param: ref %MaybeUnformed.941) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_const_maybe_unformed.carbon = $todo_nontrivial_const_maybe_unformed
+// CHECK:STDOUT: --- nontrivial_const_maybe_unformed.carbon = $nontrivial_const_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

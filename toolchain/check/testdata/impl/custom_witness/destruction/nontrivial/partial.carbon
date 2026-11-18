@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/nontrivial/partial.carbon
 
-// TODO: implement case for `PartialType` in `MakeSubobjectDestroyOpBody`.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -35,7 +33,7 @@ abstract class Abstract {
   var y: AlsoHasNonTrivialDestruction;
 }
 
-// --- todo_nontrivial_member.carbon
+// --- nontrivial_member.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -57,7 +55,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_impls_destroy.carbon
+// --- nontrivial_impls_destroy.carbon
 library "[[@TEST_NAME]]";
 
 base class Base {
@@ -79,7 +77,7 @@ fn Test() {
 }
 
 
-// --- todo_nontrivial_abstract.carbon
+// --- nontrivial_abstract.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -96,7 +94,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_derived.carbon
+// --- nontrivial_derived.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -122,7 +120,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_member.carbon = $todo_nontrivial_member
+// CHECK:STDOUT: --- nontrivial_member.carbon = $nontrivial_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -248,7 +246,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_impls_destroy.carbon = $todo_nontrivial_impls_destroy
+// CHECK:STDOUT: --- nontrivial_impls_destroy.carbon = $nontrivial_impls_destroy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -335,7 +333,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_11.2(%self.param: ref %.edf) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_abstract.carbon = $todo_nontrivial_abstract
+// CHECK:STDOUT: --- nontrivial_abstract.carbon = $nontrivial_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -461,7 +459,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_derived.carbon = $todo_nontrivial_derived
+// CHECK:STDOUT: --- nontrivial_derived.carbon = $nontrivial_derived
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/nontrivial/adapters.carbon
 
-// --- todo_nontrivial_class_adapter.carbon
+// --- nontrivial_class_adapter.carbon
 library "[[@TEST_NAME]]";
 
 // `HasNonTrivialDestruction.(SubobjectDestroy.Op)` is a no-op because it
@@ -36,7 +36,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_destroy_adapter_with_destroy_impl.carbon
+// --- nontrivial_destroy_adapter_with_destroy_impl.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -60,7 +60,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_struct_adapter.carbon
+// --- nontrivial_struct_adapter.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -84,7 +84,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_nontrivial_tuple_adapter.carbon
+// --- nontrivial_nontrivial_tuple_adapter.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -110,7 +110,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_class_adapter.carbon = $todo_nontrivial_class_adapter
+// CHECK:STDOUT: --- nontrivial_class_adapter.carbon = $nontrivial_class_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -194,7 +194,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc19_11.3(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_destroy_adapter_with_destroy_impl.carbon = $todo_nontrivial_destroy_adapter_with_destroy_impl
+// CHECK:STDOUT: --- nontrivial_destroy_adapter_with_destroy_impl.carbon = $nontrivial_destroy_adapter_with_destroy_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -273,7 +273,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_11.3(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_struct_adapter.carbon = $todo_nontrivial_struct_adapter
+// CHECK:STDOUT: --- nontrivial_struct_adapter.carbon = $nontrivial_struct_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -374,7 +374,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_nontrivial_tuple_adapter.carbon = $todo_nontrivial_nontrivial_tuple_adapter
+// CHECK:STDOUT: --- nontrivial_nontrivial_tuple_adapter.carbon = $nontrivial_nontrivial_tuple_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

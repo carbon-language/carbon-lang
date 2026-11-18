@@ -24,7 +24,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_nontrivial_one_element.carbon
+// --- nontrivial_one_element.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -41,7 +41,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_multiple_elements.carbon
+// --- nontrivial_multiple_elements.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -58,7 +58,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_array_one_element_both.carbon
+// --- nontrivial_array_of_array_one_element_both.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -75,7 +75,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_array_one_element_inner.carbon
+// --- nontrivial_array_of_array_one_element_inner.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -92,7 +92,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_array_one_element_outer.carbon
+// --- nontrivial_array_of_array_one_element_outer.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -109,7 +109,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_array_multiple_elements_both.carbon
+// --- nontrivial_array_of_array_multiple_elements_both.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -126,7 +126,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_adapter_one_element.carbon
+// --- nontrivial_array_adapter_one_element.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `adapters.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -148,7 +148,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_adapter_multiple_elements.carbon
+// --- nontrivial_array_adapter_multiple_elements.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `adapters.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -170,7 +170,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_const_array_one_element.carbon
+// --- nontrivial_const_array_one_element.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -189,7 +189,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_const_array_multiple_elements.carbon
+// --- nontrivial_const_array_multiple_elements.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `consnt.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -208,7 +208,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_const_one_element.carbon
+// --- nontrivial_array_of_const_one_element.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -227,7 +227,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_nontrivial_array_of_const_multiple_elements.carbon
+// --- nontrivial_array_of_const_multiple_elements.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -246,7 +246,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_nontrivial_one_element.carbon = $todo_nontrivial_one_element
+// CHECK:STDOUT: --- nontrivial_one_element.carbon = $nontrivial_one_element
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -353,7 +353,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_multiple_elements.carbon = $todo_nontrivial_multiple_elements
+// CHECK:STDOUT: --- nontrivial_multiple_elements.carbon = $nontrivial_multiple_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -469,7 +469,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_array_one_element_both.carbon = $todo_nontrivial_array_of_array_one_element_both
+// CHECK:STDOUT: --- nontrivial_array_of_array_one_element_both.carbon = $nontrivial_array_of_array_one_element_both
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -596,7 +596,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_array_one_element_inner.carbon = $todo_nontrivial_array_of_array_one_element_inner
+// CHECK:STDOUT: --- nontrivial_array_of_array_one_element_inner.carbon = $nontrivial_array_of_array_one_element_inner
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -750,7 +750,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_array_one_element_outer.carbon = $todo_nontrivial_array_of_array_one_element_outer
+// CHECK:STDOUT: --- nontrivial_array_of_array_one_element_outer.carbon = $nontrivial_array_of_array_one_element_outer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -904,7 +904,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_array_multiple_elements_both.carbon = $todo_nontrivial_array_of_array_multiple_elements_both
+// CHECK:STDOUT: --- nontrivial_array_of_array_multiple_elements_both.carbon = $nontrivial_array_of_array_multiple_elements_both
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1433,7 +1433,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_adapter_one_element.carbon = $todo_nontrivial_array_adapter_one_element
+// CHECK:STDOUT: --- nontrivial_array_adapter_one_element.carbon = $nontrivial_array_adapter_one_element
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1543,7 +1543,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_adapter_multiple_elements.carbon = $todo_nontrivial_array_adapter_multiple_elements
+// CHECK:STDOUT: --- nontrivial_array_adapter_multiple_elements.carbon = $nontrivial_array_adapter_multiple_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1671,7 +1671,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_const_array_one_element.carbon = $todo_nontrivial_const_array_one_element
+// CHECK:STDOUT: --- nontrivial_const_array_one_element.carbon = $nontrivial_const_array_one_element
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1792,7 +1792,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_const_array_multiple_elements.carbon = $todo_nontrivial_const_array_multiple_elements
+// CHECK:STDOUT: --- nontrivial_const_array_multiple_elements.carbon = $nontrivial_const_array_multiple_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1964,7 +1964,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_const_one_element.carbon = $todo_nontrivial_array_of_const_one_element
+// CHECK:STDOUT: --- nontrivial_array_of_const_one_element.carbon = $nontrivial_array_of_const_one_element
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2074,7 +2074,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_nontrivial_array_of_const_multiple_elements.carbon = $todo_nontrivial_array_of_const_multiple_elements
+// CHECK:STDOUT: --- nontrivial_array_of_const_multiple_elements.carbon = $nontrivial_array_of_const_multiple_elements
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
