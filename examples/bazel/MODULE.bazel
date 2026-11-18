@@ -47,7 +47,7 @@ registry, this file will work with an updated version out of the box.
 
 module(name = "example")
 
-bazel_dep(name = "rules_cc", version = "0.2.14")
+bazel_dep(name = "rules_cc", version = "0.2.17")
 
 # Declare the `carbon_toolchain` module. This is needed even if it will be
 # overridden with a local path or archive.
