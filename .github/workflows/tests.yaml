@@ -122,7 +122,7 @@ jobs:
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test ${{ matrix.config.flags }} \
-            --target_pattern_file=$TARGETS_FILE
+            --target_pattern_file="$TARGETS_FILE"
 
       # See "Disk space before build" in `test-setup`.
       - name: Disk space after build
