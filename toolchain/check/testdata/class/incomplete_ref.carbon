@@ -13,7 +13,7 @@
 class Class;
 
 class IncompleteRefSelf {
-  fn F[ref self: Class]();
+  fn F(ref self: Class);
 }
 
 fn CallIncompleteRefSelf(p: Class*) {

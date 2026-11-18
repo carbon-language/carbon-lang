@@ -29,11 +29,13 @@ auto HandleImplAfterIntroducer(Context& context) -> void {
     context.PushState(StateKind::ImplAfterForall);
     context.AddLeafNode(NodeKind::Forall, context.Consume());
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-      context.PushState(StateKind::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit, *context.position(),
+                        BindingContext::DeducedParam);
     } else {
       CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
                         "expected `[` after `forall` in `impl` declaration");
-      context.emitter().Emit(*context.position(), ImplExpectedAfterForall);
+      context.emitter().Emit(context.OpeningBracketInsertionPoint(),
+                             ImplExpectedAfterForall);
       context.ReturnErrorOnState();
       // If we aren't producing a node from the PatternListAsImplicit state,
       // we still need to create a node to be the child of the `ImplForall`
@@ -68,7 +70,7 @@ auto HandleImplBeforeAs(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ImplExpectedAs, Error,
                         "expected `as` in `impl` declaration");
-      context.emitter().Emit(*context.position(), ImplExpectedAs);
+      context.emitter().Emit(context.PointAfterPreviousToken(), ImplExpectedAs);
     }
     context.ReturnErrorOnState();
   }

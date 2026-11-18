@@ -19,6 +19,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -39,7 +40,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
     -> SemIR::ElementIndex {
   auto element_inst = context.insts().Get(element_id);
   if (auto field = element_inst.TryAs<SemIR::FieldDecl>()) {
-    return field->index;
+    return context.fields().Get(field->field_id).index;
   }
   if (auto base = element_inst.TryAs<SemIR::BaseDecl>()) {
     return base->index;
@@ -48,7 +49,7 @@ static auto GetClassElementIndex(Context& context, SemIR::InstId element_id)
 }
 
 // Returns whether `function_id` is an instance method: in other words, whether
-// it has an implicit `self` parameter.
+// it has a `self` parameter (the first explicit parameter).
 static auto IsInstanceMethod(const SemIR::File& sem_ir,
                              SemIR::FunctionId function_id) -> bool {
   const auto& function = sem_ir.functions().Get(function_id);
@@ -78,7 +79,12 @@ static auto GetSelfIfInstanceMethod(const SemIR::File& sem_ir,
       // `instance.(Class.StaticMethod)()` like we do in pure Carbon code.
       return overload.self_id;
     }
-
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer _): {
+      // We model a function pointer callee as a method, but it can't be
+      // accessed via instance binding, so for this purpose it's not an instance
+      // method.
+      return std::nullopt;
+    }
     case CARBON_KIND(SemIR::CalleeError _): {
       return std::nullopt;
     }
@@ -98,26 +104,13 @@ static auto IsInstanceType(Context& context, SemIR::TypeId type_id) -> bool {
   return false;
 }
 
-auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
+auto GetHighestAllowedAccess(Context& context,
                              SemIR::ConstantId name_scope_const_id)
     -> SemIR::AccessKind {
-  SemIR::ScopeLookupResult lookup_result =
-      LookupUnqualifiedName(context, loc_id, SemIR::NameId::SelfType,
-                            /*required=*/false)
-          .scope_result;
-  CARBON_CHECK(!lookup_result.is_poisoned());
-  if (!lookup_result.is_found()) {
+  SemIR::NameScopeId access_context_scope_id = context.access_context();
+  if (!access_context_scope_id.has_value()) {
     return SemIR::AccessKind::Public;
   }
-
-  // TODO: Support other types for `Self`.
-  auto self_class_type = context.insts().TryGetAs<SemIR::ClassType>(
-      lookup_result.target_inst_id());
-  if (!self_class_type) {
-    return SemIR::AccessKind::Public;
-  }
-
-  auto self_class_info = context.classes().Get(self_class_type->class_id);
 
   // TODO: Support other types.
   if (auto class_type =
@@ -125,27 +118,36 @@ auto GetHighestAllowedAccess(Context& context, SemIR::LocId loc_id,
               name_scope_const_id)) {
     auto class_info = context.classes().Get(class_type->class_id);
 
-    if (self_class_info.self_type_id == class_info.self_type_id) {
-      return SemIR::AccessKind::Private;
+    // Check if private access is allowed.
+    while (access_context_scope_id.has_value()) {
+      if (class_info.scope_id == access_context_scope_id ||
+          access_context_scope_id ==
+              SemIR::NameScopeId::AllowHighestAccessLevel) {
+        return SemIR::AccessKind::Private;
+      }
+      auto& access_context_scope =
+          context.name_scopes().Get(access_context_scope_id);
+      auto access_const_id =
+          context.constant_values().Get(access_context_scope.inst_id());
+      if (class_info.friend_scopes.Lookup(access_const_id)) {
+        return SemIR::AccessKind::Private;
+      }
+
+      const auto& scope = context.name_scopes().Get(access_context_scope_id);
+      access_context_scope_id = scope.parent_scope_id();
     }
 
-    // If the `type_id` of `Self` does not match with the one we're currently
-    // accessing, try checking if this class is of the parent type of `Self`.
-    if (auto base_type_id = self_class_info.GetBaseType(
-            context.sem_ir(), self_class_type->specific_id);
-        base_type_id.has_value()) {
-      if (context.types().GetConstantId(base_type_id) == name_scope_const_id) {
+    // Check if protected access is allowed.
+    access_context_scope_id = context.access_context();
+    const auto& scope = context.name_scopes().Get(access_context_scope_id);
+    for (auto extended_scope_id : scope.extended_scopes()) {
+      auto const_id = context.constant_values().Get(extended_scope_id);
+      if (const_id == name_scope_const_id) {
         return SemIR::AccessKind::Protected;
       }
-      // TODO: Also check whether this base class has a base class of its own.
-    } else if (auto adapt_type_id = self_class_info.GetAdaptedType(
-                   context.sem_ir(), self_class_type->specific_id);
-               adapt_type_id.has_value()) {
-      if (context.types().GetConstantId(adapt_type_id) == name_scope_const_id) {
-        // TODO: Should we be allowed to access protected fields of a type we
-        // are adapting? The design doesn't allow this.
-        return SemIR::AccessKind::Protected;
-      }
+
+      // TODO: also check indirectly-extended scopes, as well as extended
+      // scopes of parent scopes of the access context.
     }
   }
 
@@ -160,22 +162,21 @@ static auto ScopeNeedsImplLookup(Context& context,
   SemIR::InstId inst_id =
       context.constant_values().GetInstId(name_scope_const_id);
   CARBON_CHECK(inst_id.has_value());
-  SemIR::Inst inst = context.insts().Get(inst_id);
 
-  if (inst.Is<SemIR::FacetType>()) {
-    // Don't perform impl lookup if an associated entity is named as a member of
-    // a facet type.
-    return false;
-  }
-  if (inst.Is<SemIR::Namespace>()) {
+  if (context.insts().Is<SemIR::Namespace>(inst_id)) {
     // Don't perform impl lookup if an associated entity is named as a namespace
     // member.
     // TODO: This case is not yet listed in the design.
     return false;
   }
+
+  auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
+  // Don't perform impl lookup if an associated entity is named as a member of
+  // a constrained facet type.
+  //
   // Any other kind of scope is assumed to be a type that implements the
   // interface containing the associated entity, and impl lookup is performed.
-  return true;
+  return !context.types().IsConstrainedFacetType(type_id);
 }
 
 static auto PerformImplWitnessAccessAndSubstitute(
@@ -185,7 +186,7 @@ static auto PerformImplWitnessAccessAndSubstitute(
       GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
 
   if (!context.where_stack().empty()) {
-    if (auto result = context.where_stack().back().rewrites.Lookup(
+    if (auto result = context.where_stack().Peek().rewrites.Lookup(
             context.constant_values().Get(access_id))) {
       return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
           context, loc_id,
@@ -317,7 +318,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
   AccessInfo access_info = {
       .constant_id = name_scope_const_id,
       .highest_allowed_access =
-          GetHighestAllowedAccess(context, loc_id, name_scope_const_id),
+          GetHighestAllowedAccess(context, name_scope_const_id),
   };
   LookupResult result = LookupQualifiedName(
       context, loc_id, name_id, lookup_scopes, required, access_info);
@@ -326,7 +327,11 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  // TODO: This duplicates the work that HandleNameAsExpr does. Factor this out.
+  if (!TryGetLookupResultInCurrentScope(context, loc_id, name_id, result)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  // TODO: Find a way to use `WrapInstForSpecific` here.
   auto type_id =
       SemIR::GetTypeOfInstInSpecific(context.sem_ir(), result.specific_id,
                                      result.scope_result.target_inst_id());
@@ -406,11 +411,18 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
   if (auto unbound_element_type =
           context.types().TryGetAs<SemIR::UnboundElementType>(
               context.insts().Get(member_id).type_id())) {
+    auto base_type_id = context.insts().Get(base_id).type_id();
+    auto [unqualified_base_type_id, qualifiers] =
+        context.types().GetUnqualifiedTypeAndQualifiers(base_type_id);
+
     // Convert the base to the type of the element if necessary.
-    base_id = ConvertToValueOrRefOfType(
-        context, loc_id, base_id,
-        context.types().GetTypeIdForTypeInstId(
-            unbound_element_type->class_type_inst_id));
+    auto element_class_type_id =
+        GetQualifiedType(context,
+                         context.types().GetTypeIdForTypeInstId(
+                             unbound_element_type->class_type_inst_id),
+                         qualifiers);
+    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
+                                        element_class_type_id);
 
     // Find the specified element, which could be either a field or a base
     // class, and build an element access expression.
@@ -419,12 +431,18 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                  "Non-constant value {0} of unbound element type",
                  context.insts().Get(member_id));
     auto index = GetClassElementIndex(context, element_id);
+    // Only propagate the `partial` qualifier to the `base` field.
+    if (!context.insts().Is<SemIR::BaseDecl>(element_id)) {
+      qualifiers.Remove(SemIR::TypeQualifiers::Partial);
+    }
+    auto access_type_id =
+        GetQualifiedType(context,
+                         context.types().GetTypeIdForTypeInstId(
+                             unbound_element_type->element_type_inst_id),
+                         qualifiers);
     auto access_id = GetOrAddInst<SemIR::ClassElementAccess>(
         context, loc_id,
-        {.type_id = context.types().GetTypeIdForTypeInstId(
-             unbound_element_type->element_type_inst_id),
-         .base_id = base_id,
-         .index = index});
+        {.type_id = access_type_id, .base_id = base_id, .index = index});
     if (SemIR::GetExprCategory(context.sem_ir(), base_id) ==
             SemIR::ExprCategory::Value &&
         SemIR::GetExprCategory(context.sem_ir(), access_id) !=
@@ -489,9 +507,8 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId base_id, SemIR::NameId name_id,
                                 bool required) -> SemIR::InstId {
   // Unwrap the facet value in `base_id` if possible.
-  if (auto facet_value = TryGetCanonicalFacetValue(context, base_id);
-      facet_value.has_value()) {
-    base_id = facet_value;
+  if (auto facet = TryGetCanonicalFacet(context, base_id); facet.has_value()) {
+    base_id = facet;
   }
 
   // If the base is a name scope, such as a class or namespace, perform lookup
@@ -514,7 +531,7 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
     // `base_id` (as part the class case above), as the `base_id` facet should
     // have member names that directly name members of the `impl`.
     auto base_type_id = context.insts().Get(base_id).type_id();
-    if (context.types().Is<SemIR::FacetType>(base_type_id)) {
+    if (context.types().IsConstrainedFacetType(base_type_id)) {
       // Name lookup into a facet requires the facet type to be complete, so
       // that any names available through the facet type are known for the
       // facet.
@@ -525,12 +542,12 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
       // scopes directly on the facet type.
       if (!RequireCompleteType(
               context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    IncompleteTypeInMemberAccessOfFacet, Context,
+                CARBON_DIAGNOSTIC_CONTEXT(
+                    IncompleteTypeInMemberAccessOfFacet,
                     "member access into facet of incomplete type {0}",
                     SemIR::TypeId);
-                builder.Context(base_id, IncompleteTypeInMemberAccessOfFacet,
-                                base_type_id);
+                builder.Attach(base_id, IncompleteTypeInMemberAccessOfFacet,
+                               base_type_id);
               })) {
         // If the scope is invalid in AppendLookupScopesForConstant we still
         // return true and proceed with lookup, just ignoring that scope.
@@ -569,11 +586,11 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   // done to give a better error than "invalid use of" an incomplete type?
   if (!RequireCompleteType(
           context, base_type_id, SemIR::LocId(base_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                IncompleteTypeInMemberAccess, Context,
+            CARBON_DIAGNOSTIC_CONTEXT(
+                IncompleteTypeInMemberAccess,
                 "member access into object of incomplete type {0}",
                 TypeOfInstId);
-            builder.Context(base_id, IncompleteTypeInMemberAccess, base_id);
+            builder.Attach(base_id, IncompleteTypeInMemberAccess, base_id);
           })) {
     return SemIR::ErrorInst::InstId;
   }
@@ -582,17 +599,21 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   base_id = ConvertToValueOrRefExpr(context, base_id);
   base_type_id = context.insts().Get(base_id).type_id();
 
-  auto lookup_const_id = context.types().GetConstantId(base_type_id);
+  // If the type has qualifiers, use the unqualified type for lookup.
+  auto unqualified_base_type_id =
+      context.types().GetUnqualifiedTypeAndQualifiers(base_type_id).first;
+  auto lookup_const_id =
+      context.types().GetConstantId(unqualified_base_type_id);
 
-  // TODO: If the type is a facet, we look through it into the facet's type (a
-  // FacetType) for names. According to the design, we shouldn't need to do
-  // this, as the facet should have member names that directly name members of
-  // the `impl`.
-  auto base_type_as_facet = GetCanonicalFacetOrTypeValue(
-      context, context.types().GetTypeInstId(base_type_id));
+  // TODO: If the type is a constrained facet, we look through it into the
+  // facet's type (a FacetType) for names. According to the design, we shouldn't
+  // need to do this, as the facet should have member names that directly name
+  // members of the `impl`.
+  auto base_type_as_facet =
+      GetCanonicalFacet(context, context.types().GetTypeInstId(base_type_id));
   auto base_type_facet_type_id =
       context.insts().Get(base_type_as_facet).type_id();
-  if (context.types().Is<SemIR::FacetType>(base_type_facet_type_id)) {
+  if (context.types().IsConstrainedFacetType(base_type_facet_type_id)) {
     lookup_const_id = context.types().GetConstantId(base_type_facet_type_id);
   }
 
@@ -601,11 +622,12 @@ static auto PerformActionHelper(Context& context, SemIR::LocId loc_id,
   if (AppendLookupScopesForConstant(
           context, loc_id, lookup_const_id,
           // The `self_type_const_id` should be the type of `base_id` even if
-          // it's a facet.
+          // it's a constrained facet.
           //
           // TODO: This can be replaced with `lookup_const_id` once we stop
-          // having to look through the facet at its type for the scope.
-          context.types().GetConstantId(base_type_id), /*extended_scope=*/false,
+          // having to look through the constrained facet at its type for the
+          // scope.
+          base_type_id.AsConstantId(), /*extended_scope=*/false,
           &lookup_scopes)) {
     auto member_id = LookupMemberNameInScope(
         context, loc_id, base_id, name_id, lookup_const_id, lookup_scopes,
@@ -747,10 +769,11 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                                 specific_interface);
 }
 
-auto PerformCompoundMemberAccess(
+static auto PerformCompoundMemberAccessAction(
     Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
-    SemIR::InstId member_expr_id, bool diagnose,
-    DiagnosticContextFn missing_impl_diagnostic_context) -> SemIR::InstId {
+    SemIR::InstId member_expr_id, bool diagnose = true,
+    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+    -> SemIR::InstId {
   auto base_type_id = context.insts().Get(base_id).type_id();
   auto base_type_const_id = context.types().GetConstantId(base_type_id);
 
@@ -819,6 +842,31 @@ auto PerformCompoundMemberAccess(
   }
 
   return member_id;
+}
+
+auto PerformCompoundMemberAccess(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
+    SemIR::InstId member_expr_id, bool diagnose,
+    DiagnosticContextFn missing_impl_diagnostic_context) -> SemIR::InstId {
+  if (auto splice_inst_id = AddActionSpliceIfDependent(
+          context, loc_id, SemIR::TypeInstId::None,
+          SemIR::CompoundMemberAccessAction{.type_id = SemIR::InstType::TypeId,
+                                            .base_id = base_id,
+                                            .member_expr_id = member_expr_id});
+      splice_inst_id.has_value()) {
+    // TODO: CHECK-fail if diagnose is false. The caller shouldn't be asking us
+    // to check whether a template-dependent compound member access is valid.
+    return splice_inst_id;
+  }
+  return PerformCompoundMemberAccessAction(context, loc_id, base_id,
+                                           member_expr_id, diagnose,
+                                           missing_impl_diagnostic_context);
+}
+
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::CompoundMemberAccessAction action) -> SemIR::InstId {
+  return PerformCompoundMemberAccessAction(context, loc_id, action.base_id,
+                                           action.member_expr_id);
 }
 
 auto PerformTupleAccess(Context& context, SemIR::LocId loc_id,

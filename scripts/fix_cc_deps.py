@@ -1,4 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# ///
+
 
 """Automatically fixes bazel C++ dependencies.
 
@@ -78,6 +83,7 @@ EXTERNAL_REPOS: dict[str, ExternalRepo] = {
 IGNORE_SOURCE_FILE_REGEX = re.compile(
     r"^(third_party/clangd.*|common/version.*\.cpp"
     r"|.*_autogen_manifest\.cpp"
+    r"|utils/tree_sitter/.*"
     r"|toolchain/base/llvm_tools.def"
     r"|toolchain/base/runtimes_build_info.h)$"
 )
@@ -108,7 +114,10 @@ def remap_file(label: str) -> str:
     return EXTERNAL_REPOS[repo].remap(path)
 
 
-def get_bazel_list(list_child: ElementTree.Element, is_file: bool) -> set[str]:
+def get_bazel_list(
+    list_child: ElementTree.Element,  # ty: ignore[missing-type-argument]
+    is_file: bool,
+) -> set[str]:
     """Returns the contents of a bazel list.
 
     The return will normally be the full label, unless `is_file` is set, in
@@ -243,9 +252,7 @@ def get_missing_deps(
                 if is_system_include:
                     # Don't error for unexpected system includes.
                     continue
-                exit(
-                    f"Missing rule for " f"'{full_include}' in '{source_file}'"
-                )
+                exit(f"Missing rule for '{full_include}' in '{source_file}'")
             rule_choice = header_to_rule_map[header]
             if not rule_choice.rules.intersection(rule.deps):
                 if len(rule_choice.rules) > 1:

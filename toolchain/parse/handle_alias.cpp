@@ -15,7 +15,8 @@ auto HandleAlias(Context& context) -> void {
   auto state = context.PopState();
 
   context.PushState(state, StateKind::AliasAfterName);
-  context.PushState(StateKind::DeclNameAndParams, state.token);
+  context.PushState(StateKind::DeclNameAndParams, state.token,
+                    BindingContext::CompileTimeEntityParam);
 }
 
 auto HandleAliasAfterName(Context& context) -> void {
@@ -34,7 +35,8 @@ auto HandleAliasAfterName(Context& context) -> void {
   } else {
     CARBON_DIAGNOSTIC(ExpectedAliasInitializer, Error,
                       "`alias` requires a `=` for the source");
-    context.emitter().Emit(*context.position(), ExpectedAliasInitializer);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedAliasInitializer);
     context.RecoverFromDeclError(state, NodeKind::Alias,
                                  /*skip_past_likely_end=*/true);
   }

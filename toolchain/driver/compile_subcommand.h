@@ -6,73 +6,32 @@
 #define CARBON_TOOLCHAIN_DRIVER_COMPILE_SUBCOMMAND_H_
 
 #include "common/command_line.h"
-#include "common/error.h"
-#include "common/ostream.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
-#include "toolchain/check/check.h"
-#include "toolchain/driver/codegen_options.h"
+#include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
 #include "toolchain/driver/driver_subcommand.h"
-#include "toolchain/lower/options.h"
 
 namespace Carbon {
 
 // Options for the compile subcommand.
-//
-// See the implementation of `Build` for documentation on members.
-struct CompileOptions {
-  enum class Phase : int8_t {
-    Lex,
-    Parse,
-    Check,
-    Lower,
-    Optimize,
-    CodeGen,
-  };
+struct CompileSubcommandOptions {
+  auto Build(CommandLine::CommandBuilder& b) -> void {
+    compile_options.BuildForCompileSubcommand(b, &codegen_options);
+    b.AddFlag(
+        {
+            .name = "output-last-input-only",
+            .help = R"""(
+Only write output for the last input file, ignoring all others.
 
-  friend auto operator<<(llvm::raw_ostream& out, Phase phase)
-      -> llvm::raw_ostream&;
+TODO: This is a temporary workaround and should be removed once separate
+compilation is better implemented.
+)""",
+        },
+        [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
+  }
 
-  auto Build(CommandLine::CommandBuilder& b) -> void;
-
-  Lower::OptimizationLevel opt_level = Lower::OptimizationLevel::Debug;
   CodegenOptions codegen_options;
-
-  Phase phase;
-  Check::CheckParseTreesOptions::DumpSemIRRanges dump_sem_ir_ranges;
-
-  llvm::StringRef output_filename;
-  llvm::SmallVector<llvm::StringRef> input_filenames;
-  llvm::SmallVector<llvm::StringRef> clang_args;
-
-  bool asm_output = false;
-  bool force_obj_output = false;
-  bool custom_core = false;
-  bool dump_shared_values = false;
-  bool dump_tokens = false;
-  bool omit_file_boundary_tokens = false;
-  bool dump_parse_tree = false;
-  bool dump_raw_sem_ir = false;
-  bool dump_sem_ir = false;
-  bool dump_cpp_ast = false;
-  bool dump_llvm_ir = false;
-  bool dump_asm = false;
-  bool dump_mem_usage = false;
-  bool dump_timings = false;
-  bool stream_errors = false;
-  bool preorder_parse_tree = false;
-  bool builtin_sem_ir = false;
-  bool prelude_import = false;
-  bool include_debug_info = true;
+  CompileOptions compile_options;
   bool output_last_input_only = false;
-  bool run_llvm_verifier = true;
-
-  llvm::SmallVector<llvm::StringRef> exclude_dump_file_prefixes;
-
-  llvm::StringRef sem_ir_crash_dump;
-
-  bool mangle_string_fingerprint = false;
 };
 
 // Implements the compile subcommand of the driver.
@@ -87,12 +46,7 @@ class CompileSubcommand : public DriverSubcommand {
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
-  // Does custom validation of the compile-subcommand options structure beyond
-  // what the command line parsing library supports. Diagnoses and returns false
-  // on failure.
-  auto ValidateOptions(Diagnostics::NoLocEmitter& emitter) const -> bool;
-
-  CompileOptions options_;
+  CompileSubcommandOptions options_;
 };
 
 }  // namespace Carbon

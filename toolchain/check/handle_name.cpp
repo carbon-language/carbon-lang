@@ -9,7 +9,6 @@
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
-#include "toolchain/check/name_ref.h"
 #include "toolchain/check/pointer_dereference.h"
 #include "toolchain/check/type.h"
 #include "toolchain/lex/token_kind.h"
@@ -111,6 +110,9 @@ static auto GetIdentifierAsNameId(
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
   auto result = LookupUnqualifiedName(context, node_id, name_id);
+  if (!TryGetLookupResultInCurrentScope(context, node_id, name_id, result)) {
+    return SemIR::ErrorInst::InstId;
+  }
   return BuildNameRef(context, node_id, name_id,
                       result.scope_result.target_inst_id(), result.specific_id);
 }
@@ -210,10 +212,10 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
       // note to the current "name `.Self` not found" message.
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context.emitter(), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                NoPeriodSelfForDesignator, Note,
+            CARBON_DIAGNOSTIC_LABEL(
+                NoPeriodSelfForDesignator, Info,
                 "designator may only be used when `.Self` is in scope");
-            builder.Note(SemIR::LocId::None, NoPeriodSelfForDesignator);
+            builder.Attach(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

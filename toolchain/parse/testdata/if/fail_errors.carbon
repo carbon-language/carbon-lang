@@ -9,66 +9,76 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_errors.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:6: error: expected `(` after `if` [ExpectedParenAfter]
-  // CHECK:STDERR:   if a {}
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   if a {}
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if a {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:7: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   if () {}
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   if () {}
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if () {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-  // CHECK:STDERR:   if (b c) {}
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   if (b c) {}
+  // CHECK:STDERR:        ·      ┬  ┳
+  // CHECK:STDERR:        ·      │  ┗━━┫ error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR:        ·      ╰───────┤ matching this `(` [GroupOpenedHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if (b c) {}
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   if (d)
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+8]]:1: error: expected braced code block [ExpectedCodeBlock]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: fail_errors.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: 'if', has_error: yes},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: 'if', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IfConditionStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:         {kind: 'IfCondition', text: ')', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '}', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ExprStatement', text: ')', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'IfStatement', text: 'if', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 32},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart 'if' has_error
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ ╭─IfCondition 'if' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   │ │   ╭─IfConditionStart '('
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │ ╭─IfCondition ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '}' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement ')' has_error
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}' has_error
+// CHECK:STDOUT:   │ ├─IfStatement 'if'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

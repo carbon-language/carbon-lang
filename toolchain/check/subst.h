@@ -29,6 +29,9 @@ class SubstInstCallbacks {
     FullySubstituted,
     // Attempt to substitute into the operands of the instruction.
     SubstOperands,
+    // Attempt to substitute into the operands of the instruction, but omit the
+    // instruction's `type_id` if it has one.
+    SubstOperandsSkipType,
     // Attempt to substitute again on the resulting instruction, acting like
     // recursion on the instruction itself.
     SubstAgain,
@@ -75,6 +78,12 @@ class SubstInstCallbacks {
   virtual auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId {
     return orig_inst_id;
   }
+
+  // Rebuilds a specific given the original specific's ID and the new
+  // arguments. By default this just calls GetOrAdd to make the specific, but
+  // does not resolve the specific's decl block.
+  virtual auto RebuildSpecific(SemIR::SpecificId orig_specific_id,
+                               SemIR::InstBlockId args_id) -> SemIR::SpecificId;
 
   // Builds a new constant by evaluating `new_inst`, and returns its `InstId`.
   //

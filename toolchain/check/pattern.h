@@ -10,32 +10,43 @@
 
 namespace Carbon::Check {
 
-// Marks the start of a region of insts in a pattern context that might contain
-// an expression. Typically this is called when handling a parse node that can
-// immediately precede a subpattern (such as `let` or a `,` in a pattern list).
-// `End[Empty]Subpattern` should be called later by the consumer of the
-// subpattern.
-auto BeginSubpattern(Context& context) -> void;
+// The following functions are used to mark the start and end of a time interval
+// during pattern handling, in which we may build an `ExprRegion` to represent
+// an expression. During one of these intervals, we say that an `ExprRegion` is
+// _pending_. Any insts added to `inst_block_stack` while an `ExprRegion` is
+// pending are treated as part of the expression. These intervals do not nest:
+// we can't start an interval if an `ExprRegion` is already pending.
+//
+// To ensure that each start has a matching end, without nesting, callers should
+// maintain the invariant that an `ExprRegion` is pending before handling the
+// start of a pattern, and after handling the end of a pattern.
 
-// Consumes the expression in a region started by the most recent
-// BeginSubpattern, and returns the ID of the region. The region will not yet
-// have any control-flow edges into or out of it.
-auto ConsumeSubpatternExpr(Context& context, SemIR::InstId result_id)
+// Marks the start of a pending `ExprRegion` (see above).
+auto BeginExprRegionForPattern(Context& context) -> void;
+
+// Finishes building the pending `ExprRegion`, and returns its ID. It will not
+// yet have any control-flow edges into or out of it. An empty `ExprRegion` will
+// still be pending after the call, so `End[Empty]ExprRegionForPattern` must be
+// called separately after this.
+auto ConsumeExprRegionForPattern(Context& context, SemIR::InstId result_id)
     -> SemIR::ExprRegionId;
 
-// Ends a region started by BeginSubpattern (in stack order), asserting that
-// it either had no expression content or the expression has been consumed.
-auto EndEmptySubpattern(Context& context) -> void;
+// Ends the pending `ExprRegion`, and asserts that it is empty.
+auto EndEmptyExprRegionForPattern(Context& context) -> void;
 
-// Ends a region started by BeginSubpattern (in stack order). If the top of the
-// node stack is an expression, the subpattern region is consumed and converted
-// to an expression pattern, which replaces the expression on the node stack.
-// Otherwise, the top of the node stack should be a pattern, in which case this
-// asserts that the subpattern region is either empty or has been consumed.
+// Ends the pending `ExprRegion`. If the top of the node stack is an expression,
+// the `ExprRegion` is consumed and converted to an expression pattern, which
+// replaces the expression on the node stack. Otherwise, the top of the node
+// stack should be a pattern, in which case this asserts that the pending region
+// is empty, and discards it.
 //
 // The node stack is passed explicitly as a reminder that this function affects
-// the node stack, unlike the other *Subpattern functions.
-auto EndSubpattern(Context& context, NodeStack& node_stack) -> void;
+// the node stack, unlike the other `*ExprRegionForPattern` functions.
+auto EndExprRegionForPattern(Context& context, NodeStack& node_stack) -> void;
+
+// Builds and returns an empty `ExprRegion`.
+auto MakeEmptyRegion(Context& context, SemIR::InstId result_id)
+    -> SemIR::ExprRegionId;
 
 // Information about a created binding pattern.
 struct BindingPatternInfo {
@@ -47,22 +58,35 @@ struct BindingPatternInfo {
 enum class BindingPhase { Template, Symbolic, Runtime };
 
 // Creates an entity name for a binding pattern with the given properties.
+// `type_inst_id` is the declared type of the binding as written, if known; see
+// `SemIR::EntityName::type_inst_id`.
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::InstId form_id, bool is_unused,
-                          BindingPhase phase) -> SemIR::EntityNameId;
+                          SemIR::TypeInstId type_inst_id, SemIR::InstId form_id,
+                          bool is_unused, BindingPhase phase)
+    -> SemIR::EntityNameId;
 
 // Creates a binding pattern and the associated binding inst, and returns their
-// IDs. `type_region_id` is the region representing the binding's type
-// expression.
+// IDs. `scrutinee_type_id` is the type of the binding, and `type_region_id` is
+// the region representing that type expression. The binding is added to
+// `context.bind_name_map()`, with a placeholder value.
 auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::ExprRegionId type_region_id,
+                       SemIR::TypeId scrutinee_type_id,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo;
 
-// Creates storage for `var` patterns nested within the given pattern at the
-// current location in the output SemIR. For a `returned var`, this
-// reuses the function's return slot when present.
-auto AddPatternVarStorage(Context& context, SemIR::InstBlockId pattern_block_id,
-                          bool is_returned_var) -> void;
+// Creates a binding inst with the given type and value, to represent the result
+// of matching the given binding pattern. The binding is not added to any block,
+// or to `context.bind_name_map()`.
+auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
+                          SemIR::AnyBindingPattern pattern,
+                          SemIR::TypeId binding_type_id, SemIR::InstId value_id)
+    -> SemIR::InstId;
+
+// Returns a VarStorage inst for the given `var` pattern. `is_returned_var`
+// indicates whether the pattern is the `var` part of a `returned var`; if so,
+// this reuses the return parameter, and otherwise it adds a new inst.
+auto GetOrAddVarStorage(Context& context, SemIR::InstId var_pattern_id,
+                        bool is_returned_var) -> SemIR::InstId;
 
 // Kinds of parameters that can be added by `AddParamPattern`.
 enum class ParamPatternKind {
@@ -73,6 +97,10 @@ enum class ParamPatternKind {
   // A variable parameter, `var x: T`.
   Var,
 };
+
+// Returns the `ParamPatternKind` of the parameter instruction `param_inst_id`.
+auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
+    -> ParamPatternKind;
 
 // Adds a parameter pattern with the specified name and type information. The
 // pattern emulates `x: T`, `ref x: T`, or `var x: T` depending on the value of
@@ -85,6 +113,13 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::ExprRegionId type_expr_region_id,
                      SemIR::TypeId type_id, ParamPatternKind kind)
     -> SemIR::InstId;
+
+// Given any parameter pattern `InstId`, returns the constant value of the
+// associated default value for that parameter, or `None` if no default value
+// was supplied.
+auto ExtractParameterDefault(Context& context,
+                             SemIR::InstId param_pattern_inst_id)
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

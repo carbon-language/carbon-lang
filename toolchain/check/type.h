@@ -15,6 +15,11 @@ namespace Carbon::Check {
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
                      SemIR::IntType result) -> bool;
 
+// Enforces that an array type has a valid bound. Diagnostics are emitted at
+// `loc_id`.
+auto ValidateArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::ArrayType result) -> bool;
+
 // Enforces that a float type has a valid bit width. If the `float_kind` field
 // is `None`, sets it to a suitable kind for the bit width.
 auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
@@ -22,7 +27,7 @@ auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
 
 // Gets the type to use for an unbound associated entity declared in this
 // interface. For example, this is the type of `I.T` after
-// `interface I { let T:! type; }`. The name of the interface is used for
+// `interface I { let T: type; }`. The name of the interface is used for
 // diagnostics.
 // TODO: Should we use a different type for each such entity, or the same type
 // for all associated entities?
@@ -47,6 +52,11 @@ auto GetQualifiedType(Context& context, SemIR::TypeId type_id,
 auto GetClassType(Context& context, SemIR::ClassId class_id,
                   SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
+// Gets a C++ function pointer type. The returned type will be complete.
+auto GetCppFunctionPointerType(Context& context,
+                               SemIR::ClangFunctionPointerTypeId clang_type_id)
+    -> SemIR::TypeId;
+
 // Gets a C++ overload set type. The returned type will be complete.
 auto GetCppOverloadSetType(Context& context,
                            SemIR::CppOverloadSetId overload_set_id,
@@ -70,22 +80,22 @@ auto GetFunctionTypeWithSelfType(Context& context,
                                  SemIR::InstId self_id) -> SemIR::TypeId;
 
 // Gets a generic class type, which is the type of a name of a generic class,
-// such as the type of `Vector` given `class Vector(T:! type)`. The returned
+// such as the type of `Vector` given `class Vector(T: type)`. The returned
 // type will be complete.
-auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
-                         SemIR::SpecificId enclosing_specific_id)
+auto GetParameterizedClassType(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId;
 
 // Gets a generic interface type, which is the type of a name of a generic
 // interface, such as the type of `AddWith` given
-// `interface AddWith(T:! type)`. The returned type will be complete.
+// `interface AddWith(T: type)`. The returned type will be complete.
 auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                              SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId;
 
 // Gets a generic named constraint type, which is the type of a name of a
 // generic named constraint, such as the type of `AddWith` given `constraint
-// AddWith(T:! type)`. The returned type will be complete.
+// AddWith(T: type)`. The returned type will be complete.
 auto GetGenericNamedConstraintType(Context& context,
                                    SemIR::NamedConstraintId named_constraint_id,
                                    SemIR::SpecificId enclosing_specific_id)
@@ -100,8 +110,9 @@ auto GetNamedConstraintType(Context& context,
                             SemIR::NamedConstraintId named_constraint_id,
                             SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
-// Gets the facet type for the given `info`.
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+// Gets the facet type for the given `declared_facet_type`.
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId;
 
 // Gets the type contained within the given facet value.
@@ -112,6 +123,12 @@ auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
 // type will be complete.
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
+
+// If `type_id` is `Core.Array(T, N)` or a primitive array type, returns the
+// primitive array type that it is or adapts. Otherwise, returns `std::nullopt`.
+auto TryGetAsArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::TypeId type_id)
+    -> std::optional<SemIR::ArrayType>;
 
 // Returns a struct type with the given fields.
 auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
@@ -133,35 +150,32 @@ auto GetTypeComponent(Context& context, SemIR::InstId form_inst_id)
 auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                            SemIR::TypeInstId element_type_id) -> SemIR::TypeId;
 
-// Given a facet value or a type value, get the canonical facet value if
-// possible, or return the canonical value of the input type expression if it
-// has no canonical facet value.
+// Given a facet, returns its canonical facet representation.
 //
-// A facet value can be appear in two ways: as a facet value of type
-// `FacetType`, or through an `as type` conversion which has type `TypeType` but
-// still refers to the original facet value. While both have canonical values of
-// their own, in cases that want to work with the facet value when possible,
-// this collapses the two cases back together by undoing the `as type`
-// conversion.
+// Facet values can be converted to `type` by wrapping them in an `as type`
+// conversion. While this wraps the facet in an additional instruction, it does
+// not destroy access to the underlying facet. This operation unwraps the
+// `as type` conversion if present so that there's only one (canonical) way to
+// represent the underlying facet, and returns the canonical inst from the
+// facet's constant value.
 //
-// This extra canonicalization step is important for constant comparison of
-// facet values, when the `as type` conversion is not required to compare as a
-// different value.
+// This extra canonicalization step of unwrapping `as type` is important for
+// constant comparison of facet values, when the `as type` conversion is not
+// required to compare as a different value.
 //
-// For type expressions other than `<facet value> as type`, the canonical type
-// value is returned.
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+// For all facets other than `<facet> as type`, the canonical inst from the
+// facet's constant value is returned.
+auto GetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
+auto GetCanonicalFacet(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId;
 
-// If `inst_id` is a type value which wraps a facet value, return that canonical
-// facet value. Otherwise, return None.
+// If `inst_id` is a `facet as type`, return that canonical facet inside the
+// conversion. Otherwise, return None.
 //
 // In particular, this returns None for non-canonical instructions if no
-// transformation was needed to return a facet value, to preserve source
-// locations in the caller.
-auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+// conversion was unwrapped, to preserve source locations in the caller.
+auto TryGetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check

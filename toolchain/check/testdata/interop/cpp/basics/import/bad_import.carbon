@@ -9,37 +9,33 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/basics/import/bad_import.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/bad_import.carbon
+// CHECK:STDERR:        ╭─┤ <carbon Cpp imports>:1:2
+// CHECK:STDERR: ->     │ ;
+// CHECK:STDERR:        ·  ┳
+// CHECK:STDERR:        ·  ┗━━┫ error: expected '}' [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_unterminated_import_inline.carbon
+// CHECK:STDERR:        │ void f() {
+// CHECK:STDERR:        ·          ┬
+// CHECK:STDERR:        ·          ╰──┤ to match this '{' [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 
-// --- fail_import_cpp_library_empty.carbon
+// --- fail_unterminated_import_inline.carbon
 
 library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+4]]:10: error: empty filename [CppInteropParseError]
-// CHECK:STDERR:     8 | #include ""
-// CHECK:STDERR:       |          ^
-// CHECK:STDERR:
-import Cpp library "";
-
-// --- fail_import_cpp_library_file_with_quotes.carbon
-
-library "[[@TEST_NAME]]";
-
-// CHECK:STDERR: fail_import_cpp_library_file_with_quotes.carbon:[[@LINE+4]]:10: error: '\"foo.h\"' file not found [CppInteropParseError]
-// CHECK:STDERR:     8 | #include "\"foo.h\""
-// CHECK:STDERR:       |          ^~~~~~~~~~~
-// CHECK:STDERR:
-import Cpp library "\"foo.h\"";
-
-// --- todo_fail_unterminated_import_inline.carbon
 
 import Cpp inline '''c++
 void f() {
 ''';
 
-// TODO: We should diagnose that the inline C++ code didn't leave us at the top
-// level.
-
 import Cpp inline '''c++
+// CHECK:STDERR:        ╭─┤ fail_unterminated_import_inline.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: extraneous closing brace ('}') [CppInteropParseError]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 }
 ''';
 
@@ -47,13 +43,21 @@ import Cpp inline '''c++
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_without_name_and_inline_without_content.carbon:[[@LINE+8]]:20: error: expected a string literal to specify the library name [ExpectedLibraryName]
-// CHECK:STDERR: import Cpp library inline;
-// CHECK:STDERR:                    ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_without_name_and_inline_without_content.carbon:[[@LINE+16]]:19
+// CHECK:STDERR: ->     │ import Cpp library inline;
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: expected a string literal to specify the library
+// CHECK:STDERR:        ·                      ┃        name
+// CHECK:STDERR:        ·                      ┃        [ExpectedLibraryName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_without_name_and_inline_without_content.carbon:[[@LINE+4]]:20: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library inline;
-// CHECK:STDERR:                    ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_without_name_and_inline_without_content.carbon:[[@LINE+8]]:20
+// CHECK:STDERR: ->     │ import Cpp library inline;
+// CHECK:STDERR:        ·                    ┳━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·                       ┃        `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                       ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library inline;
 
@@ -61,13 +65,19 @@ import Cpp library inline;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_with_name_and_inline_without_content.carbon:[[@LINE+8]]:28: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: import Cpp library "foo.h" inline;
-// CHECK:STDERR:                            ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_with_name_and_inline_without_content.carbon:[[@LINE+14]]:27
+// CHECK:STDERR: ->     │ import Cpp library "foo.h" inline;
+// CHECK:STDERR:        ·                           ┳
+// CHECK:STDERR:        ·                           ┗━━┫ error: `import` declarations must end with a `;`
+// CHECK:STDERR:        ·                              ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_with_name_and_inline_without_content.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library "foo.h" inline;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_with_name_and_inline_without_content.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import Cpp library "foo.h" inline;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library "foo.h" inline;
 
@@ -75,13 +85,21 @@ import Cpp library "foo.h" inline;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_without_name_and_inline_with_content.carbon:[[@LINE+8]]:20: error: expected a string literal to specify the library name [ExpectedLibraryName]
-// CHECK:STDERR: import Cpp library inline "";
-// CHECK:STDERR:                    ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_without_name_and_inline_with_content.carbon:[[@LINE+16]]:19
+// CHECK:STDERR: ->     │ import Cpp library inline "";
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: expected a string literal to specify the library
+// CHECK:STDERR:        ·                      ┃        name
+// CHECK:STDERR:        ·                      ┃        [ExpectedLibraryName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_without_name_and_inline_with_content.carbon:[[@LINE+4]]:20: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library inline "";
-// CHECK:STDERR:                    ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_without_name_and_inline_with_content.carbon:[[@LINE+8]]:20
+// CHECK:STDERR: ->     │ import Cpp library inline "";
+// CHECK:STDERR:        ·                    ┳━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·                       ┃        `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                       ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library inline "";
 
@@ -89,12 +107,18 @@ import Cpp library inline "";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_with_name_and_inline_with_content.carbon:[[@LINE+8]]:28: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: import Cpp library "foo.h" inline "";
-// CHECK:STDERR:                            ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_with_name_and_inline_with_content.carbon:[[@LINE+14]]:27
+// CHECK:STDERR: ->     │ import Cpp library "foo.h" inline "";
+// CHECK:STDERR:        ·                           ┳
+// CHECK:STDERR:        ·                           ┗━━┫ error: `import` declarations must end with a `;`
+// CHECK:STDERR:        ·                              ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_import_cpp_library_with_name_and_inline_with_content.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library "foo.h" inline "";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_with_name_and_inline_with_content.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import Cpp library "foo.h" inline "";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library "foo.h" inline "";

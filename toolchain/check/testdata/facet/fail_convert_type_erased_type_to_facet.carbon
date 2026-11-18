@@ -17,20 +17,26 @@ interface Animal {}
 class Goat {}
 impl Goat as Animal {}
 
-fn WalkAnimal(unused a:! Animal) {}
+fn WalkAnimal(unused generic a: Animal) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:7: error: semantics TODO: `local `let :!` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let x:! type = Goat;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_convert_type_erased_type_to_facet.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic x: type = Goat;
+  // CHECK:STDERR:        ·               ━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  let x:! type = Goat;
+  let generic x: type = Goat;
   WalkAnimal(x);
 }
 
-// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon
+// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon = $fail_convert_type_erased_type_to_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]
@@ -38,6 +44,8 @@ fn F() {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Animal.impl_witness: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}}.loc18_21 [concrete]
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %Goat, (%Animal.impl_witness) [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -69,7 +77,8 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%Goat
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_23: %Animal.type) {
+// CHECK:STDOUT: generic fn @WalkAnimal(<unexpected>.inst{{[0-9A-F]+}}.loc20_31: %Animal.type) {
+// CHECK:STDOUT:   %a.patt.loc20_31.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_31.2 (constants.%a.patt)]
 // CHECK:STDOUT:   %a: %Animal.type = symbolic_binding a, 0 [symbolic = %a (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -91,6 +100,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WalkAnimal(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc20_31.2 => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

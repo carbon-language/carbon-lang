@@ -26,31 +26,41 @@ fn Call(ref a: i32, b: i32) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.umod_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.umod_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_unsized.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.umod_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "int.umod_assign"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn Builtin(ref a: Core.IntLiteral(), b: Core.IntLiteral()) = "int.umod_assign";
+fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.umod_assign";
 
 // --- fail_bad_decl.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.umod_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotRef(a: i32, b: i32) = "int.umod_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NotRef(a: i32, b: i32) = "int.umod_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "int.umod_assign"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotRef(a: i32, b: i32) = "int.umod_assign";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.umod_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedTypes(ref a: i32, b: i64) = "int.umod_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedTypes(ref a: i32, b: i64) = "int.umod_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "int.umod_assign"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedTypes(ref a: i32, b: i64) = "int.umod_assign";
 
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -64,7 +74,7 @@ fn MixedTypes(ref a: i32, b: i64) = "int.umod_assign";
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %.loc8: %i32 = ref_tag %a.ref
 // CHECK:STDOUT:   %b.ref: %i32 = name_ref b, %b
-// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%.loc8, %b.ref)
+// CHECK:STDOUT:   %Builtin.call: init %empty_tuple.type = call %Builtin.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

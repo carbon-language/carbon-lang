@@ -14,23 +14,27 @@
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+7]]:6: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: impl true as I {}
-// CHECK:STDERR:      ^~~~
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+4]]:6: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: impl true as I {}
-// CHECK:STDERR:      ^~~~
+// CHECK:STDERR:        ╭─┤ fail_impl_bad_type.carbon:[[@LINE+10]]:6
+// CHECK:STDERR: ->     │ impl true as I {}
+// CHECK:STDERR:        ·      ┳━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert non-type value of type `bool` to
+// CHECK:STDERR:        ·      │  ┃        `type`
+// CHECK:STDERR:        ·      │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·      ╰────┤ type `bool` does not implement interface `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl true as I {}
 
-// CHECK:STDOUT: --- fail_impl_bad_type.carbon
+// CHECK:STDOUT: --- fail_impl_bad_type.carbon = $fail_impl_bad_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.cd6: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.37e: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -39,7 +43,7 @@ impl true as I {}
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -51,13 +55,14 @@ impl true as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @<error>.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc24: type = converted %true, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc27: type = converted %true, <error> [concrete = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc27: <witness> = impl_self_witness <error>, @I [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
-// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.cd6]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self.37e]
 // CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -73,5 +78,5 @@ impl true as I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.cd6) {}
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.37e) {}
 // CHECK:STDOUT:

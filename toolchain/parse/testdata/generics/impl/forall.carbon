@@ -8,46 +8,45 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/impl/forall.carbon
 
-impl forall [T:! type] T as Interface;
+impl forall [T: type] T as Interface;
 
-impl forall [T:! type, U:! Interface] U as Interface(T) {
+impl forall [T: type, U: Interface] U as Interface(T) {
 }
 
 // CHECK:STDOUT: - filename: forall.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'Forall', text: 'forall'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'Forall', text: 'forall'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':!', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 11},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:           {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'CallExpr', text: ')', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 21},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ ├─Forall 'forall'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   ├─ImplDecl ';'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   ├─Forall 'forall'
+// CHECK:STDOUT:   │   │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameExpr 'U'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │   │ ╭─CallExprStart '('
+// CHECK:STDOUT:   │   │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │   ├─CallExpr ')'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

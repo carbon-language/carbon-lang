@@ -8,6 +8,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<dict>
     <key>contactName</key>
     <string>Carbon Developers</string>
 
@@ -15,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     <string>Support for Carbon Language</string>
 
     <key>name</key>
-    <string>carbon</string>
+    <string>Carbon</string>
 
     <key>ordering</key>
     <array>
@@ -24,4 +25,5 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
     <key>uuid</key>
     <string>6152A817-84AE-47A8-96DB-0B50DF2EEC10</string>
+</dict>
 </plist>

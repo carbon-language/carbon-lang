@@ -8,16 +8,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_no_name.carbon
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+4]]:7: error: expected identifier or `library` after `import` [ExpectedIdentifierAfterImport]
-// CHECK:STDERR: import;
-// CHECK:STDERR:       ^
+// CHECK:STDERR:        ╭─┤ fail_no_name.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ import;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: expected identifier or `library` after `import`
+// CHECK:STDERR:        ·          ┃        [ExpectedIdentifierAfterImport]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import;
 
 // CHECK:STDOUT: - filename: fail_no_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

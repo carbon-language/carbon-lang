@@ -14,16 +14,22 @@ class Class {
   fn F() -> ();
 }
 
-// TODO: Use `:!` here once it is available.
+// TODO: Use `generic` here once local generic `let` bindings are supported.
 let T: type = Class;
 
 // The class name is required to be written in the same way as in the class
 // declaration. An expression that evaluates to the class name is not accepted.
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE+7]]:4: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: fn T.F() {}
-// CHECK:STDERR:    ^
-// CHECK:STDERR: fail_member_of_let.carbon:[[@LINE-7]]:5: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
-// CHECK:STDERR: let T: type = Class;
-// CHECK:STDERR:     ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_member_of_let.carbon:[[@LINE+13]]:4
+// CHECK:STDERR:        │ let T: type = Class;
+// CHECK:STDERR:        ·     ───┬───
+// CHECK:STDERR:        ·        ╰──┤ referenced non-scope entity declared here
+// CHECK:STDERR:        ·           │ [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn T.F() {}
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: name qualifiers are only allowed for entities that provide a
+// CHECK:STDERR:        ·       ┃        scope
+// CHECK:STDERR:        ·       ┃        [QualifiedNameInNonScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn T.F() {}

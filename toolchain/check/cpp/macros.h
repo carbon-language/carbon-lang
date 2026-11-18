@@ -7,14 +7,19 @@
 
 #include "toolchain/check/context.h"
 
+namespace clang {
+class IdentifierInfo;
+class MacroInfo;
+}  // namespace clang
+
 namespace Carbon::Check {
 
 // Tries to evaluate the given macro. The macro will be evaluated as a
 // constant if possible. Returns an `InstId` on success or
 // `SemIR::ErrorInst::InstId` otherwise.
 auto TryEvaluateMacro(Context& context, SemIR::LocId loc_id,
-                      SemIR::NameId name_id, clang::MacroInfo* macro_info)
-    -> SemIR::InstId;
+                      clang::IdentifierInfo* identifier_info,
+                      clang::MacroInfo* macro_info) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

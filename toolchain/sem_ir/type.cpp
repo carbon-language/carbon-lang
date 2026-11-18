@@ -47,6 +47,16 @@ auto TypeStore::TryGetTypeIdForTypeConstantId(ConstantId constant_id) const
   return TypeId::ForTypeConstant(constant_id);
 }
 
+auto TypeStore::GetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeInstId {
+  return GetTypeInstId(GetTypeIdForTypeConstantId(constant_id));
+}
+
+auto TypeStore::TryGetTypeInstIdForTypeConstantId(ConstantId constant_id) const
+    -> TypeInstId {
+  return GetTypeInstId(TryGetTypeIdForTypeConstantId(constant_id));
+}
+
 auto TypeStore::GetTypeIdForTypeInstId(InstId inst_id) const -> TypeId {
   auto constant_id = file_->constant_values().Get(inst_id);
   CheckTypeOfConstantIsTypeType(*file_, constant_id);
@@ -199,6 +209,30 @@ auto ExtractScrutineeType(const File& sem_ir, TypeId type_id) -> TypeId {
                "Inst kind doesn't have scrutinee type: {0}",
                sem_ir.types().GetAsInst(type_id).kind());
   return type_id;
+}
+
+auto TypeStore::OutputYaml() const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+    for (auto type_id : complete_types_) {
+      auto info = GetCompleteTypeInfo(type_id);
+      map.Add(
+          PrintToString(type_id),
+          Yaml::OutputMapping([&](Yaml::OutputMapping::Map map2) {
+            map2.Add("value_repr", Yaml::OutputScalar(info.value_repr));
+            map2.Add(
+                "object_layout",
+                Yaml::OutputMapping([&](Yaml::OutputMapping::Map map3) {
+                  map3.Add("size", Yaml::OutputScalar(info.object_layout.size));
+                  map3.Add("alignment",
+                           Yaml::OutputScalar(info.object_layout.alignment));
+                }));
+            if (info.abstract_class_id.has_value()) {
+              map2.Add("abstract_class_id",
+                       Yaml::OutputScalar(info.abstract_class_id));
+            }
+          }));
+    }
+  });
 }
 
 }  // namespace Carbon::SemIR

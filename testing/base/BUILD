@@ -37,12 +37,21 @@ cc_library(
     testonly = 1,
     srcs = ["benchmark_main.cpp"],
     deps = [
+        ":benchmark_helpers",
         ":global_exe_path",
         "//common:init_llvm",
         "@abseil-cpp//absl/flags:parse",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "benchmark_helpers",
+    testonly = 1,
+    srcs = ["benchmark_helpers.cpp"],
+    hdrs = ["benchmark_helpers.h"],
+    deps = ["//common:check"],
 )
 
 cc_library(
@@ -92,9 +101,9 @@ cc_test(
 )
 
 cc_library(
-    name = "unified_diff_matcher",
+    name = "unified_diff",
     testonly = 1,
-    hdrs = ["unified_diff_matcher.h"],
+    hdrs = ["unified_diff.h"],
     deps = [
         "//common:check",
         "@googletest//:gtest",
@@ -103,12 +112,12 @@ cc_library(
 )
 
 cc_test(
-    name = "unified_diff_matcher_test",
+    name = "unified_diff_test",
     size = "small",
-    srcs = ["unified_diff_matcher_test.cpp"],
+    srcs = ["unified_diff_test.cpp"],
     deps = [
         ":gtest_main",
-        ":unified_diff_matcher",
+        ":unified_diff",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

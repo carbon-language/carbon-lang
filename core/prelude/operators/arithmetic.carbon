@@ -4,12 +4,14 @@
 
 package Core library "prelude/operators/arithmetic";
 
+import library "prelude/types/char_literal";
 import library "prelude/types/int_literal";
+import library "prelude/types/float_literal";
 
 // TODO: Per the design, the associated type `Result` in each of these
 // interfaces should have a default value of `Self`:
 //
-//   default let Result:! type = Self;
+//   default let Result: type = Self;
 
 // TODO: Per the design, for each *With interface there should also be a
 // non-With named constraint, such as:
@@ -19,99 +21,133 @@ import library "prelude/types/int_literal";
 //   }
 
 // Addition: `a + b`.
-interface AddWith(Other:! type) {
-  let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+interface AddWith(Other: type) {
+  let Result: type;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Addition with assignment: `a += b`.
-interface AddAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+interface AddAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
 }
 
 // Increment: `++a`.
 interface Inc {
-  fn Op[ref self: Self]();
+  fn Op(ref self);
 }
 
 // Negation: `-a`.
 interface Negate {
-  let Result:! type;
-  fn Op[self: Self]() -> Result;
+  let Result: type;
+  fn Op(self) -> Result;
 }
 
 // Subtraction: `a - b`.
-interface SubWith(Other:! type) {
-  let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+interface SubWith(Other: type) {
+  let Result: type;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Subtraction with assignment: `a -= b`.
-interface SubAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+interface SubAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
 }
 
 // Decrement: `--a`.
 interface Dec {
-  fn Op[ref self: Self]();
+  fn Op(ref self);
 }
 
 // Multiplication: `a * b`.
-interface MulWith(Other:! type) {
-  let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+interface MulWith(Other: type) {
+  let Result: type;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Multiplication with assignment: `a *= b`.
-interface MulAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+interface MulAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
 }
 
 // Division: `a / b`.
-interface DivWith(Other:! type) {
-  let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+interface DivWith(Other: type) {
+  let Result: type;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Division with assignment: `a /= b`.
-interface DivAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+interface DivAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
 }
 
 // Modulo: `a % b`.
-interface ModWith(Other:! type) {
-  let Result:! type;
-  fn Op[self: Self](other: Other) -> Result;
+interface ModWith(Other: type) {
+  let Result: type;
+  fn Op(self, other: Other) -> Result;
 }
 
 // Modulo with assignment: `a %= b`.
-interface ModAssignWith(Other:! type) {
-  fn Op[ref self: Self](other: Other);
+interface ModAssignWith(Other: type) {
+  fn Op(ref self, other: Other);
 }
 
 
 // Operations for IntLiteral. These need to be here because IntLiteral has no
 // associated library of its own.
-impl IntLiteral() as AddWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.sadd";
+impl IntLiteral as AddWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "int.sadd";
 }
 
-impl IntLiteral() as DivWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.sdiv";
+impl IntLiteral as DivWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "int.sdiv";
 }
 
-impl IntLiteral() as ModWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.smod";
+impl IntLiteral as ModWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "int.smod";
 }
 
-impl IntLiteral() as MulWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.smul";
+impl IntLiteral as MulWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "int.smul";
 }
 
-impl IntLiteral() as Negate where .Result = Self {
-  fn Op[self: Self]() -> Self = "int.snegate";
+impl IntLiteral as Negate where .Result = Self {
+  fn Op(self) -> Self = "int.snegate";
 }
 
-impl IntLiteral() as SubWith(Self) where .Result = Self {
-  fn Op[self: Self](other: Self) -> Self = "int.ssub";
+impl IntLiteral as SubWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "int.ssub";
+}
+
+
+// Operations for CharLiteral. These need to be here because CharLiteral has no
+// associated library of its own.
+impl CharLiteral as AddWith(IntLiteral) where .Result = CharLiteral {
+  fn Op(self, other: IntLiteral) -> CharLiteral = "char_literal.add";
+}
+
+impl IntLiteral as AddWith(CharLiteral) where .Result = CharLiteral {
+  fn Op(self, other: CharLiteral) -> CharLiteral = "int.add_char_literal";
+}
+
+impl CharLiteral as SubWith(IntLiteral) where .Result = CharLiteral {
+  fn Op(self, other: IntLiteral) -> CharLiteral = "char_literal.sub_int";
+}
+
+impl CharLiteral as SubWith(Self) where .Result = IntLiteral {
+  fn Op(self, other: Self) -> IntLiteral = "char_literal.sub_char";
+}
+
+
+// Operations for FloatLiteral. These need to be here because FloatLiteral has no
+// associated library of its own.
+impl FloatLiteral as AddWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "float.add";
+}
+
+impl FloatLiteral as Negate where .Result = Self {
+  fn Op(self) -> Self = "float.negate";
+}
+
+impl FloatLiteral as SubWith(Self) where .Result = Self {
+  fn Op(self, other: Self) -> Self = "float.sub";
 }

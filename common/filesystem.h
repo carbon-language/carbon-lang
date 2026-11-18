@@ -219,6 +219,24 @@ namespace Internal {
 class FileRefBase;
 }  // namespace Internal
 
+// Convenience type defs for the three access combinations.
+using ReadFileRef = FileRef<OpenAccess::ReadOnly>;
+using WriteFileRef = FileRef<OpenAccess::WriteOnly>;
+using ReadWriteFileRef = FileRef<OpenAccess::ReadWrite>;
+
+// Returns constant references to the standard streams the process is started
+// with.
+//
+// The returned references are non-owning: the process shares these descriptors
+// with whatever started it, closing them is never correct, and unrelated code
+// throughout the process may be reading or writing the same descriptor.
+//
+// Their descriptor numbers are fixed by the platform rather than discovered at
+// runtime, so these are constant expressions.
+consteval auto Stdin() -> ReadFileRef;
+consteval auto Stdout() -> WriteFileRef;
+consteval auto Stderr() -> WriteFileRef;
+
 // Returns a constant `Dir` object that models the open current working
 // directory.
 //
@@ -348,7 +366,13 @@ class Internal::FileRefBase {
   FileRefBase() = default;
 
   // Returns true if this refers to a valid open file, and false otherwise.
-  auto is_valid() const -> bool { return fd_ != -1; }
+  constexpr auto is_valid() const -> bool { return fd_ != -1; }
+
+  // Non-portable API only available on Unix-like systems. Returns the
+  // underlying file descriptor, for the platform calls this type doesn't wrap,
+  // such as `isatty` and `ioctl`. The descriptor remains owned by whatever owns
+  // this file.
+  constexpr auto unix_fd() const -> int { return fd_; }
 
   // Reads the file status.
   //
@@ -405,6 +429,24 @@ class Internal::FileRefBase {
   auto WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
       -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>;
 
+  // Writes the complete contents of the provided buffer.
+  //
+  // Unlike `WriteFromBuffer`, this doesn't return until every byte has been
+  // written or an error occurs. It repeats `WriteFromBuffer` over whatever is
+  // left, so each write is issued for as much of the buffer as remains and the
+  // whole is written in as few writes as the file allows. Anything else writing
+  // to the same file can only interleave between those writes, which leaves no
+  // room to interleave at all when the file accepts the buffer in one write.
+  //
+  // On an error, an unspecified prefix of the buffer has already been written
+  // and can't be un-written. How much isn't reported; a caller that needs to
+  // know should drive `WriteFromBuffer` itself.
+  //
+  // This method retries `EINTR` on Unix-like systems and returns other errors
+  // to the caller.
+  auto WriteCompleteBuffer(llvm::ArrayRef<std::byte> buffer)
+      -> ErrorOr<Success, FdError>;
+
   // Returns an LLVM `raw_fd_ostream` that writes to this file.
   //
   // Note that this doesn't expose any write errors here, those will surface
@@ -458,7 +500,7 @@ class Internal::FileRefBase {
                Duration poll_interval = {}) -> ErrorOr<FileLock, FdError>;
 
  protected:
-  explicit FileRefBase(int fd) : fd_(fd) {}
+  explicit constexpr FileRefBase(int fd) : fd_(fd) {}
 
   // Note: this should only be used or made part of the public API by subclasses
   // that provide *ownership* of the open file. It is implemented here to
@@ -536,6 +578,9 @@ class FileRef : public Internal::FileRefBase {
   auto WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
       -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>
     requires Writeable;
+  auto WriteCompleteBuffer(llvm::ArrayRef<std::byte> buffer)
+      -> ErrorOr<Success, FdError>
+    requires Writeable;
   auto WriteStream() -> llvm::raw_fd_ostream
     requires Writeable;
   auto ReadFileToString() -> ErrorOr<std::string, FdError>
@@ -546,15 +591,13 @@ class FileRef : public Internal::FileRefBase {
  protected:
   friend File<A>;
   friend DirRef;
+  friend consteval auto Stdin() -> ReadFileRef;
+  friend consteval auto Stdout() -> WriteFileRef;
+  friend consteval auto Stderr() -> WriteFileRef;
 
   // Other constructors from the base are also available, but remain protected.
   using FileRefBase::FileRefBase;
 };
-
-// Convenience type defs for the three access combinations.
-using ReadFileRef = FileRef<OpenAccess::ReadOnly>;
-using WriteFileRef = FileRef<OpenAccess::WriteOnly>;
-using ReadWriteFileRef = FileRef<OpenAccess::ReadWrite>;
 
 // An owning handle to an open file.
 //
@@ -1320,6 +1363,10 @@ inline auto DurationToTimespec(Duration d) -> timespec {
 
 }  // namespace Internal
 
+consteval auto Stdin() -> ReadFileRef { return ReadFileRef(STDIN_FILENO); }
+consteval auto Stdout() -> WriteFileRef { return WriteFileRef(STDOUT_FILENO); }
+consteval auto Stderr() -> WriteFileRef { return WriteFileRef(STDERR_FILENO); }
+
 consteval auto Cwd() -> Dir { return Dir(AT_FDCWD); }
 
 inline auto FileLock::Destroy() -> void {
@@ -1431,6 +1478,14 @@ inline auto Internal::FileRefBase::WriteFromBuffer(
   }
 }
 
+inline auto Internal::FileRefBase::WriteCompleteBuffer(
+    llvm::ArrayRef<std::byte> buffer) -> ErrorOr<Success, FdError> {
+  while (!buffer.empty()) {
+    CARBON_ASSIGN_OR_RETURN(buffer, WriteFromBuffer(buffer));
+  }
+  return Success();
+}
+
 inline auto Internal::FileRefBase::WriteStream() -> llvm::raw_fd_ostream {
   return llvm::raw_fd_ostream(fd_, /*shouldClose=*/false);
 }
@@ -1493,6 +1548,14 @@ auto FileRef<A>::WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
   requires Writeable
 {
   return FileRefBase::WriteFromBuffer(buffer);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteCompleteBuffer(llvm::ArrayRef<std::byte> buffer)
+    -> ErrorOr<Success, FdError>
+  requires Writeable
+{
+  return FileRefBase::WriteCompleteBuffer(buffer);
 }
 
 template <OpenAccess A>

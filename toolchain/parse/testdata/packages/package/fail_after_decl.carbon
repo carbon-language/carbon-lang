@@ -10,24 +10,27 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+7]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
-// CHECK:STDERR: package B;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~
+// CHECK:STDERR:        ╭─┤ fail_after_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ package B;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: the `package` declaration must be the first non-comment line
+// CHECK:STDERR:        ·       ┃        [PackageTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package B;
 
 // CHECK:STDOUT: - filename: fail_after_decl.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'A'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

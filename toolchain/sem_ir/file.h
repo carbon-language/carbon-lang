@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_FILE_H_
 
 #include "common/error.h"
+#include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/Allocator.h"
@@ -22,10 +23,10 @@
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/cpp_file.h"
-#include "toolchain/sem_ir/cpp_global_var.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_name.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
@@ -37,6 +38,7 @@
 #include "toolchain/sem_ir/name.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/named_constraint.h"
+#include "toolchain/sem_ir/observe.h"
 #include "toolchain/sem_ir/require_impls.h"
 #include "toolchain/sem_ir/singleton_insts.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -45,6 +47,10 @@
 #include "toolchain/sem_ir/type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/vtable.h"
+
+namespace clang {
+class Type;
+}  // namespace clang
 
 namespace Carbon::SemIR {
 
@@ -163,12 +169,14 @@ class File : public Printable<File> {
 
   auto entity_names() -> EntityNameStore& { return entity_names_; }
   auto entity_names() const -> const EntityNameStore& { return entity_names_; }
-  auto cpp_global_vars() -> CppGlobalVarStore& { return cpp_global_vars_; }
-  auto cpp_global_vars() const -> const CppGlobalVarStore& {
-    return cpp_global_vars_;
-  }
   auto functions() -> FunctionStore& { return functions_; }
   auto functions() const -> const FunctionStore& { return functions_; }
+  auto generated_functions() -> GeneratedFunctionStore& {
+    return generated_functions_;
+  }
+  auto generated_functions() const -> const GeneratedFunctionStore& {
+    return generated_functions_;
+  }
   auto cpp_overload_sets() -> CppOverloadSetStore& {
     return cpp_overload_sets_;
   }
@@ -179,6 +187,8 @@ class File : public Printable<File> {
   auto thunks() const -> const ThunkStore& { return thunks_; }
   auto classes() -> ClassStore& { return classes_; }
   auto classes() const -> const ClassStore& { return classes_; }
+  auto fields() -> FieldStore& { return fields_; }
+  auto fields() const -> const FieldStore& { return fields_; }
   auto interfaces() -> InterfaceStore& { return interfaces_; }
   auto interfaces() const -> const InterfaceStore& { return interfaces_; }
   auto named_constraints() -> NamedConstraintStore& {
@@ -197,21 +207,39 @@ class File : public Printable<File> {
   auto require_impls_blocks() const -> const RequireImplsBlockStore& {
     return require_impls_blocks_;
   }
+  auto observes() -> ObserveStore& { return observes_; }
+  auto observes() const -> const ObserveStore& { return observes_; }
+  auto observe_blocks() -> ObserveBlockStore& { return observe_blocks_; }
+  auto observe_blocks() const -> const ObserveBlockStore& {
+    return observe_blocks_;
+  }
   auto associated_constants() -> AssociatedConstantStore& {
     return associated_constants_;
   }
   auto associated_constants() const -> const AssociatedConstantStore& {
     return associated_constants_;
   }
-  // TODO: Rename these to `facet_type_infos`.
-  auto facet_types() -> FacetTypeInfoStore& { return facet_types_; }
-  auto facet_types() const -> const FacetTypeInfoStore& { return facet_types_; }
-  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
+  auto declared_facet_types() -> DeclaredFacetTypeStore& {
+    return declared_facet_types_;
   }
-  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
+  auto declared_facet_types() const -> const DeclaredFacetTypeStore& {
+    return declared_facet_types_;
   }
+
+  // If `class_id` is an imported C++ class, appends the Clang mangled name of
+  // its type to `out` and returns true. Otherwise returns false and leaves
+  // `out` unchanged.
+  //
+  // A Carbon class is uniquely identified by its name and parent scope, but
+  // that is not true of imported C++ classes: different class template
+  // specializations (and other cases such as types in anonymous namespaces)
+  // can share a Carbon name and scope. The Clang mangled name is the canonical
+  // identity of the C++ type, used to tell such classes apart when
+  // fingerprinting -- and hence mangling -- them. It is computed on demand
+  // rather than stored.
+  auto AppendCppMangledTypeName(ClassId class_id, llvm::raw_ostream& out) const
+      -> bool;
+
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto specific_interfaces() -> SpecificInterfaceStore& {
@@ -277,8 +305,11 @@ class File : public Printable<File> {
   auto expr_regions() -> ExprRegionStore& { return expr_regions_; }
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
+  // A C++ location is a range, the way a parse node is a subtree: the extent is
+  // what a diagnostic underlines. Most of them are a single position, stored as
+  // a range that begins and ends there.
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
+      ValueStore<ClangSourceLocId, clang::SourceRange, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
@@ -289,9 +320,23 @@ class File : public Printable<File> {
   auto bundles() -> BundleStore& { return bundles_; }
   auto bundles() const -> const BundleStore& { return bundles_; }
 
+  auto clang_function_pointer_types() -> ClangFunctionPointerTypeStore& {
+    return clang_function_pointer_types_;
+  }
+  auto clang_function_pointer_types() const
+      -> const ClangFunctionPointerTypeStore& {
+    return clang_function_pointer_types_;
+  }
+
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
+  }
+  auto default_value_globals_exported_to_cpp() const -> InstBlockId {
+    return default_value_globals_exported_to_cpp_;
+  }
+  auto set_default_value_globals_exports_to_cpp(InstBlockId block_id) -> void {
+    default_value_globals_exported_to_cpp_ = block_id;
   }
   auto global_ctor_id() const -> FunctionId { return global_ctor_id_; }
   auto set_global_ctor_id(FunctionId function_id) -> void {
@@ -302,6 +347,9 @@ class File : public Printable<File> {
   auto has_errors() const -> bool { return has_errors_; }
   auto set_has_errors(bool has_errors) -> void { has_errors_ = has_errors; }
 
+  auto is_complete() const -> bool { return is_complete_; }
+  auto set_complete() -> void { is_complete_ = true; }
+
   auto filename() const -> llvm::StringRef { return filename_; }
 
   auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
@@ -311,6 +359,9 @@ class File : public Printable<File> {
 
   // True if parts of the IR may be invalid.
   bool has_errors_ = false;
+
+  // True if this file is complete, i.e. no further mutations are expected.
+  bool is_complete_ = false;
 
   // The file's ID.
   CheckIRId check_ir_id_;
@@ -334,11 +385,12 @@ class File : public Printable<File> {
   // Storage for EntityNames.
   EntityNameStore entity_names_;
 
-  // For imported C++ global variables, the Clang decl to use for mangling.
-  CppGlobalVarStore cpp_global_vars_;
-
   // Storage for callable objects.
   FunctionStore functions_;
+
+  // Provides canonical ids for Generated special functions which map to a
+  // canonical FunctionId.
+  GeneratedFunctionStore generated_functions_;
 
   // Storage for CppOverloadSet.
   CppOverloadSetStore cpp_overload_sets_;
@@ -348,6 +400,9 @@ class File : public Printable<File> {
 
   // Storage for classes.
   ClassStore classes_;
+
+  // Storage for class fields.
+  FieldStore fields_;
 
   // Storage for interfaces.
   InterfaceStore interfaces_;
@@ -361,14 +416,17 @@ class File : public Printable<File> {
   // Storage for blocks of RequireImpls.
   RequireImplsBlockStore require_impls_blocks_;
 
+  // Storage for observes.
+  ObserveStore observes_;
+
+  // Storage for blocks of Observe.
+  ObserveBlockStore observe_blocks_;
+
   // Storage for associated constants.
   AssociatedConstantStore associated_constants_;
 
-  // Storage for facet types.
-  FacetTypeInfoStore facet_types_;
-
-  // Storage for identified facet types.
-  IdentifiedFacetTypeStore identified_facet_types_;
+  // Storage for declared facet types.
+  DeclaredFacetTypeStore declared_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;
@@ -421,6 +479,10 @@ class File : public Printable<File> {
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::None;
 
+  // An instruction block for storing any global variables used for exporting
+  // default values for function parameters to C++.
+  InstBlockId default_value_globals_exported_to_cpp_ = InstBlockId::None;
+
   // The global constructor function id.
   FunctionId global_ctor_id_ = FunctionId::None;
 
@@ -446,6 +508,9 @@ class File : public Printable<File> {
 
   // Storage for instruction argument bundles.
   BundleStore bundles_;
+
+  // Cache of thunks for C++ function pointer types.
+  ClangFunctionPointerTypeStore clang_function_pointer_types_;
 };
 
 }  // namespace Carbon::SemIR
@@ -453,13 +518,16 @@ class File : public Printable<File> {
 namespace Carbon {
 extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                                  Tag<SemIR::CheckIRId>>;
-extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                                  Tag<SemIR::CheckIRId>>;
 extern template class ValueStore<SemIR::CustomLayoutId,
                                  llvm::MutableArrayRef<SemIR::ObjectSize>,
                                  Tag<SemIR::CheckIRId>>;
 extern template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
                                       Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::ClangFunctionPointerTypeId, const clang::Type*,
+    Tag<SemIR::CheckIRId>, SemIR::ClangFunctionPointerTypeInfo>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FILE_H_

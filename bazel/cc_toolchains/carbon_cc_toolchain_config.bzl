@@ -11,6 +11,7 @@ load(
     "flag_group",
     "flag_set",
     "tool",
+    "tool_path",
 )
 load(
     "@rules_cc//cc:defs.bzl",
@@ -142,9 +143,14 @@ def _carbon_cc_toolchain_config_impl(ctx):
     # Only use a sysroot if a non-trivial one is set in Carbon's config.
     builtin_sysroot = None
     sysroot_include_search = []
+    sdk_settings = []
     if clang_sysroot != "None" and clang_sysroot != "/":
         builtin_sysroot = clang_sysroot
         sysroot_include_search = ["%sysroot%/usr/include"]
+
+        # On MacOS, the compiler depends on this file at the root of the SDK,
+        # and it ends up in the `.d` files.
+        sdk_settings = ["%sysroot%/SDKSettings.json"]
 
     runtimes_path = None
     if ctx.attr.runtimes:
@@ -162,6 +168,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
         ctx.attr.target_cpu,
         ctx.attr.target_os,
     )
+
     return cc_common.create_cc_toolchain_config_info(
         ctx = ctx,
         features = clang_cc_toolchain_features(
@@ -184,7 +191,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
             "runtimes/libcxxabi/include",
             "{}/include".format(clang_resource_dir),
             "runtimes/clang_resource_dir/include",
-        ] + _compute_clang_system_include_dirs() + sysroot_include_search,
+        ] + _compute_clang_system_include_dirs() + sysroot_include_search + sdk_settings,
         builtin_sysroot = builtin_sysroot,
 
         # This configuration only supports local non-cross builds so derive
@@ -197,7 +204,7 @@ def _carbon_cc_toolchain_config_impl(ctx):
 
         # Pass in our tool paths to expose Make variables like $(NM) and
         # $(OBJCOPY).
-        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir),
+        tool_paths = llvm_tool_paths(llvm_bindir, clang_bindir) + [tool_path(name = "carbon-busybox", path = "carbon-busybox")],
     )
 
 carbon_cc_toolchain_config = rule(

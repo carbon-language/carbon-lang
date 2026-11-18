@@ -5,7 +5,6 @@
 // https://adventofcode.com/2024/day/1
 
 import Core library "io";
-import Core library "range";
 
 import library "day1_common";
 import library "sort";

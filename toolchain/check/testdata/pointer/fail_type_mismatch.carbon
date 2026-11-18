@@ -13,32 +13,41 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_type_mismatch.carbon
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `const {}*` to `const ({}*)` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:3: note: type `const {}*` does not implement interface `Core.ImplicitAs(const ({}*))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   return p;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `const {}*` to
+  // CHECK:STDERR:        ·   │  ┃        `const ({}*)`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `const {}*` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(const ({}*))`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
-// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_type_mismatch.carbon = $fail_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %const.c48: type = const_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %ptr.bf9: type = ptr_type %const.c48 [concrete]
 // CHECK:STDOUT:   %pattern_type.db0: type = pattern_type %ptr.bf9 [concrete]
+// CHECK:STDOUT:   %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type.db0 = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %ptr.c28: type = ptr_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %const.987: type = const_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %.45c: Core.Form = init_form %const.987 [concrete]
 // CHECK:STDOUT:   %pattern_type.3c6: type = pattern_type %const.987 [concrete]
+// CHECK:STDOUT:   %return.param_patt.b04: %pattern_type.3c6 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.f8c: %pattern_type.3c6 = return_slot_pattern %return.param_patt.b04, %const.987 [concrete]
 // CHECK:STDOUT:   %ConstMismatch.type: type = fn_type @ConstMismatch [concrete]
 // CHECK:STDOUT:   %ConstMismatch: %ConstMismatch.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.649: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.649 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -47,7 +56,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.649 = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -57,10 +66,10 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ConstMismatch.decl: %ConstMismatch.type = fn_decl @ConstMismatch [concrete = constants.%ConstMismatch] {
-// CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete]
-// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = at_binding_pattern p, %p.param_patt [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern %return.param_patt, %const.loc15_35 [concrete]
+// CHECK:STDOUT:     %p.param_patt: %pattern_type.db0 = value_param_pattern [concrete = constants.%p.param_patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type.db0 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.3c6 = out_param_pattern [concrete = constants.%return.param_patt.b04]
+// CHECK:STDOUT:     %return.patt: %pattern_type.3c6 = return_slot_pattern %return.param_patt, %const.loc15_35 [concrete = constants.%return.patt.f8c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_43: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_44: type = converted %.loc15_43, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -74,7 +83,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT:       %const.loc15_21: type = const_type %.loc15_21 [concrete = constants.%const.c48]
 // CHECK:STDOUT:       %ptr.loc15_29: type = ptr_type %const.loc15_21 [concrete = constants.%ptr.bf9]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %p: %ptr.bf9 = value_binding p, %p.param
+// CHECK:STDOUT:     %p: %ptr.bf9 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %const.987 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %const.987 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -83,7 +92,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9) -> out %return.param: %const.987 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc23: %const.987 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc27: %const.987 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

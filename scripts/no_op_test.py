@@ -1,9 +1,9 @@
-#!/usr/bin/env python3
-
 """No-op test that should always pass.
 
 This is designed to have the fewest avoidable dependencies to make no-op build
 and test runs in CI as inexpensive as possible.
+
+Note that this is not designed for direct execution and is only for Bazel's use.
 """
 
 __copyright__ = """

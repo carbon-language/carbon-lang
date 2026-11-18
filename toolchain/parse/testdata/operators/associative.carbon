@@ -13,21 +13,20 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: associative.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:               {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:         {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │       ╭─ShortCircuitOperandAnd 'and'
+// CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │     ╭─ShortCircuitOperatorAnd 'and'
+// CHECK:STDOUT:   │ │   ╭─ShortCircuitOperandAnd 'and'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │ ╭─ShortCircuitOperatorAnd 'and'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

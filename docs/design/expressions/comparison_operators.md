@@ -112,7 +112,7 @@ if (m > 1 == n > 1) {
 
 ### Built-in comparisons and implicit conversions
 
-Built-in comparisons are permitted in three cases:
+Built-in comparisons are permitted in the following cases:
 
 1.  When both operands are of standard Carbon integer types (`Int(n)` or
     `Unsigned(n)`).
@@ -120,6 +120,7 @@ Built-in comparisons are permitted in three cases:
 3.  When one operand is of floating-point type and the other is of integer type,
     if all values of the integer type can be exactly represented in the
     floating-point type.
+4.  When both operands are of type `char` or `Core.CharLiteral`.
 
 In each case, the result is the mathematically-correct answer. This applies even
 when comparing `Int(n)` with `Unsigned(m)`.
@@ -208,8 +209,8 @@ if (integer as f64 == float) {
 ```
 
 The two kinds of mixed-type comparison may be
-[less efficient](/proposals/p0702.md#performance) than the other kinds due to
-the slightly wider domain.
+[less efficient](/proposals/p000702-comparison-operators.md#performance) than
+the other kinds due to the slightly wider domain.
 
 Note that this approach diverges from C++, which would convert both operands to
 a common type first, sometimes performing a lossy conversion potentially giving
@@ -225,7 +226,7 @@ We permit the following comparisons involving constants:
 -   Any two constants can be compared, even if there is no type that can
     represent both.
 
-As described in [implicit conversions](implicit_conversions.md#data-types),
+As described in [implicit conversions](implicit_conversions.md#numeric-types),
 integer constants can be implicitly converted to any integer or floating-point
 type that can represent their value, and floating-point constants can be
 implicitly converted to any floating-point type that can represent their value.
@@ -255,14 +256,14 @@ The `EqWithPrimitive` interface is used to define the semantics of the `==` and
 
 ```
 interface EqWithPrimitive(
-    implicit_into Self:! Core.Form,
-    implicit_into U:! Core.Form) {
+    implicit_into Self: Core.Form,
+    implicit_into U: Core.Form) {
   fn Equal(self:? Self, u:? U) -> bool;
   default fn NotEqual(self:? Self, u:? U) -> bool {
     return not (self == u);
   }
 }
-constraint EqWith(U:! type) {
+constraint EqWith(U: type) {
   extend require impls
       ValSelf(EqWithPrimitive(form(val U)));
 }
@@ -366,8 +367,8 @@ choice Ordering {
   Incomparable
 }
 interface OrderedWithPrimitive(
-    implicit_into Self:! Core.Form,
-    implicit_into U:! Core.Form) {
+    implicit_into Self: Core.Form,
+    implicit_into U: Core.Form) {
   fn Compare(self:? Self, u:? U) -> Ordering;
   default fn Less(self:? Self, u:? U) -> bool {
     return self.Compare(u) == Ordering.Less;
@@ -388,7 +389,7 @@ interface OrderedWithPrimitive(
         or c == Ordering.Equivalent;
   }
 }
-constraint OrderedWith(U:! type) {
+constraint OrderedWith(U: type) {
   extend require impls
       ValSelf(OrderedWithPrimitive(form(val U)));
 }
@@ -458,8 +459,8 @@ implemented. The behaviors of such overrides should follow those of the above
 default implementations, and the members of an `OrderedWith` implementation
 should have no observable side-effects.
 
-`OrderedWith` implementations should be _transitive_. That is, given `V:! type`,
-`U:! OrderedWith(V)`, `T:! OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
+`OrderedWith` implementations should be _transitive_. That is, given `V: type`,
+`U: OrderedWith(V)`, `T: OrderedWith(U) & OrderedWith(V)`, `a: T`, `b: U`,
 `c: V`, then:
 
 -   If `a <= b` and `b <= c` then `a <= c`, and moreover if either `a < b` or
@@ -537,12 +538,12 @@ in general. That decision is left to a future proposal.
 
 ## Alternatives considered
 
--   [Alternative symbols](/proposals/p0702.md#alternative-symbols)
--   [Chained comparisons](/proposals/p0702.md#chained-comparisons-1)
--   [Convert operands like C++](/proposals/p0702.md#convert-operands-like-c)
--   [Provide a three-way comparison operator](/proposals/p0702.md#provide-a-three-way-comparison-operator)
--   [Allow comparisons as the operand of `not`](/proposals/p0702.md#allow-comparisons-as-the-operand-of-not)
--   [Rename `OrderedWith` to `ComparableWith`](/proposals/p1178.md#use-comparablewith-instead-of-orderedwith)
+-   [Alternative symbols](/proposals/p000702-comparison-operators.md#alternative-symbols)
+-   [Chained comparisons](/proposals/p000702-comparison-operators.md#chained-comparisons-1)
+-   [Convert operands like C++](/proposals/p000702-comparison-operators.md#convert-operands-like-c)
+-   [Provide a three-way comparison operator](/proposals/p000702-comparison-operators.md#provide-a-three-way-comparison-operator)
+-   [Allow comparisons as the operand of `not`](/proposals/p000702-comparison-operators.md#allow-comparisons-as-the-operand-of-not)
+-   [Rename `OrderedWith` to `ComparableWith`](/proposals/p001178-rework-operator-interfaces.md#use-comparablewith-instead-of-orderedwith)
 
 ## References
 
@@ -554,3 +555,5 @@ in general. That decision is left to a future proposal.
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
 -   Proposal
     [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+-   Proposal
+    [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

@@ -22,40 +22,42 @@ fn F() {
   let unused local_vehicle: VehicleType = VehicleType.Car;
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @VehicleType.val.88f = internal constant { i2 } zeroinitializer
-// CHECK:STDOUT: @VehicleType.val.74a = internal constant { i2 } { i2 1 }
-// CHECK:STDOUT: @VehicleType.val.b0a = internal constant { i2 } { i2 -2 }
-// CHECK:STDOUT: @VehicleType.val.74a.loc15_6.10 = internal constant { i2 } { i2 1 }
-// CHECK:STDOUT: @VehicleType.val.88f.loc14_7.10 = internal constant { i2 } zeroinitializer
+// CHECK:STDOUT: @VehicleType.val.c4d = internal constant { i2 } zeroinitializer
+// CHECK:STDOUT: @VehicleType.val.df0 = internal constant { i2 } { i2 1 }
+// CHECK:STDOUT: @VehicleType.val.8cc = internal constant { i2 } { i2 -2 }
+// CHECK:STDOUT: @_Cglobal_vehicle.Main = constant { i2 } zeroinitializer
+// CHECK:STDOUT: @VehicleType.val.df0.Car.ref = internal constant { i2 } { i2 1 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !25 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !8 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!2}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!21}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !3, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !3 = !DIFile(filename: "basic.carbon", directory: "")
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !3, line: 21, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 21, column: 1, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !3, type: !5, spFlags: DISPFlagDefinition, unit: !2)
-// CHECK:STDOUT: !9 = !DILocation(line: 0, scope: !8)
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !20 = !DIFile(filename: "basic.carbon", directory: "")
+// CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !23 = !{null}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !20, line: 21, type: !24, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !28 = !DILocation(line: 21, column: 1, scope: !25)
+// CHECK:STDOUT: !29 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !20, type: !24, spFlags: DISPFlagDefinition, unit: !21)
+// CHECK:STDOUT: !30 = !DILocation(line: 0, scope: !29)
+// CHECK:STDOUT:

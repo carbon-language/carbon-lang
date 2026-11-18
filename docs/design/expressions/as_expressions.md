@@ -128,8 +128,9 @@ var e: i32 as GetType();
 
 ### Data types
 
-In addition to the [implicit conversions](implicit_conversions.md#data-types),
-the following numeric conversions are supported by `as`:
+In addition to the
+[implicit conversions](implicit_conversions.md#numeric-types), the following
+numeric conversions are supported by `as`:
 
 -   `iN`, `uN`, or `fN` -> `fM`, for any `N` and `M`. Values that cannot be
     exactly represented are suitably rounded to one of the two nearest
@@ -152,7 +153,7 @@ Lossy conversions between `iN` or `uN` and `iM` or `uM` are not supported with
 The following conversion is supported by `as`:
 
 -   `T` -> `U` if `T` is
-    [compatible](../generics/terminology.md#compatible-types) with `U`.
+    [compatible](/docs/design/classes.md#compatible-types) with `U`.
 
 This conversion preserves category. In this example,
 
@@ -175,21 +176,21 @@ permitted by this rule may only be allowed in certain contexts.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `AsPrimitive` form interface or
-`As` named constraint:
+[classes](/docs/design/classes.md) by implementing the `AsPrimitive` form
+interface or `As` named constraint:
 
 ```carbon
 package Core;
 
-interface AsPrimitive(implicit_into Self:! Form,
-                      Dest:! type) {
+interface AsPrimitive(implicit_into Self: Form,
+                      Dest: type) {
   // FIXME: Need to get the unqualified version
   // of `Dest` without `const`/`partial` here.
-  let implicit_from ResultForm:! Form where .type = Dest;
+  let implicit_from ResultForm: Form where .type = Dest;
   fn Convert(self:? Self)
       ->? ResultForm;
 }
-constraint As(Dest:! type) {
+constraint As(Dest: type) {
   extend require form(val Self) as
       AsPrimitive(Dest)
       where .ResultForm = form(var Dest);
@@ -207,11 +208,11 @@ type `type`. The program is invalid if this conversion is not possible.
 
 ## Alternatives considered
 
--   [Allow `as` to perform some unsafe conversions](/proposals/p0845.md#allow-as-to-perform-some-unsafe-conversions)
--   [Allow `as` to perform two's complement truncation](/proposals/p0845.md#allow-as-to-perform-twos-complement-truncation)
--   [`as` only performs implicit conversions](/proposals/p0845.md#as-only-performs-implicit-conversions)
--   [Integer to bool conversions](/proposals/p0845.md#integer-to-bool-conversions)
--   [Bool to integer conversions](/proposals/p0845.md#bool-to-integer-conversions)
+-   [Allow `as` to perform some unsafe conversions](/proposals/p000845-as-expressions.md#allow-as-to-perform-some-unsafe-conversions)
+-   [Allow `as` to perform two's complement truncation](/proposals/p000845-as-expressions.md#allow-as-to-perform-twos-complement-truncation)
+-   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
+-   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
+-   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
 
 ## References
 

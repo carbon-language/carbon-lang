@@ -7,11 +7,16 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Sema/MultiplexExternalSemaSource.h"
+#include "clang/Sema/Sema.h"
 #include "common/check.h"
 #include "common/map.h"
 #include "common/pretty_stack_trace_function.h"
 #include "toolchain/check/check_unit.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/diagnostic_emitter.h"
 #include "toolchain/check/diagnostic_helpers.h"
@@ -21,8 +26,10 @@
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/tree.h"
+#include "toolchain/sem_ir/cpp_domain.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/formatter.h"
+#include "toolchain/sem_ir/read_only_ast_source.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -116,9 +123,9 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
         !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "library imported more than once");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
+      CARBON_DIAGNOSTIC_LABEL(FirstImported, Info, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_result.value(), FirstImported)
+          .Attach(insert_result.value(), FirstImported)
           .Emit();
       return;
     }
@@ -304,20 +311,17 @@ static auto BuildApiMapAndDiagnosePackaging(
       bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
       auto want_ext = is_impl ? ImplExt : ApiExt;
       if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+        // The diagnostic is about the file rather than anything in it, so
+        // there is no range to mark and the hint goes in the message: a label
+        // would have no location of its own to be drawn at.
         CARBON_DIAGNOSTIC(
             IncorrectExtension, Error,
-            "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
-            Diagnostics::BoolAsSelect);
-        auto diag = unit_info.emitter.Build(
+            "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}"
+            "{1:; `.impl.carbon` names an `impl` file|}",
+            Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
+        unit_info.emitter.Emit(
             packaging ? packaging->names.node_id : Parse::NodeId::None,
-            IncorrectExtension, is_impl);
-        if (is_api_with_impl_ext) {
-          CARBON_DIAGNOSTIC(
-              IncorrectExtensionImplNote, Note,
-              "file extension of `.impl.carbon` only allowed for `impl`");
-          diag.Note(Parse::NodeId::None, IncorrectExtensionImplNote);
-        }
-        diag.Emit();
+            IncorrectExtension, is_impl, is_api_with_impl_ext);
       }
     }
   }
@@ -326,8 +330,10 @@ static auto BuildApiMapAndDiagnosePackaging(
 
 // Handles printing of formatted SemIR.
 static auto MaybeDumpFormattedSemIR(
-    const SemIR::File& sem_ir, int total_ir_count,
-    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter, bool include_in_dumps,
+    const SemIR::File& sem_ir,
+    Parse::GetTreeAndSubtreesFn tree_and_subtrees_getter,
+    const SemIR::ShortFileNameStore& short_file_names,
+    const SemIR::GetInstNamersStore& inst_namer_getters, bool include_in_dumps,
     const CheckParseTreesOptions& options) -> void {
   bool dump = options.dump_stream && include_in_dumps;
   if (!options.vlog_stream && !dump) {
@@ -345,8 +351,9 @@ static auto MaybeDumpFormattedSemIR(
       options.dump_sem_ir_ranges !=
           CheckParseTreesOptions::DumpSemIRRanges::Ignore &&
       tokens.has_dump_sem_ir_ranges();
-  SemIR::Formatter formatter(&sem_ir, total_ir_count, tree_and_subtrees_getter,
-                             options.include_in_dumps, use_dump_sem_ir_ranges);
+  SemIR::Formatter formatter(&sem_ir, &short_file_names, inst_namer_getters,
+                             tree_and_subtrees_getter, options.include_in_dumps,
+                             use_dump_sem_ir_ranges);
   formatter.Format();
   if (options.vlog_stream) {
     CARBON_VLOG_TO(options.vlog_stream, "*** SemIR::File ***\n");
@@ -361,6 +368,8 @@ static auto MaybeDumpFormattedSemIR(
 static auto MaybeDumpSemIR(
     llvm::ArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const SemIR::ShortFileNameStore& short_file_names,
+    const SemIR::GetInstNamersStore& inst_namer_getters,
     const CheckParseTreesOptions& options) -> void {
   if (!options.vlog_stream && !options.dump_stream &&
       !options.raw_dump_stream) {
@@ -381,9 +390,8 @@ static auto MaybeDumpSemIR(
     }
 
     MaybeDumpFormattedSemIR(
-        *unit.sem_ir, units.size(),
-        tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
-        include_in_dumps, options);
+        *unit.sem_ir, tree_and_subtrees_getters.Get(unit.sem_ir->check_ir_id()),
+        short_file_names, inst_namer_getters, include_in_dumps, options);
   }
 }
 
@@ -407,9 +415,17 @@ static auto MaybeDumpCppAST(llvm::ArrayRef<Unit> units,
 auto CheckParseTrees(
     llvm::MutableArrayRef<Unit> units,
     const Parse::GetTreeAndSubtreesStore& tree_and_subtrees_getters,
+    const SemIR::ShortFileNameStore& short_file_names,
+    const SemIR::GetInstNamersStore& inst_namer_getters,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
     const CheckParseTreesOptions& options,
     std::shared_ptr<clang::CompilerInvocation> clang_invocation) -> void {
+  // C++ domains used across files. When compiling with a single ASTContext
+  // (`options.share_cpp_ast`), there is only a single shared domain. This
+  // variable is created early so the domains outlive the `UnitAndImports` that
+  // reference them.
+  llvm::SmallVector<std::unique_ptr<SemIR::CppDomain>> cpp_domains;
+
   // UnitAndImports is big due to its SmallVectors, so we default to 0 on the
   // stack.
   llvm::SmallVector<UnitAndImports, 0> unit_infos(
@@ -458,13 +474,25 @@ auto CheckParseTrees(
 
     // Add the prelude import. It's added to explicit_import_map so that it can
     // conflict with an explicit import of the prelude.
+    // We add the prelude to every Carbon unit except for the prelude itself.
     if (options.prelude_import &&
-        !(packaging && packaging->names.package_id == PackageNameId::Core)) {
+        (!packaging || packaging->names.package_id != PackageNameId::Core ||
+         packaging->names.library_id == StringLiteralValueId::None ||
+         !unit_info.unit->value_stores->string_literal_values()
+              .Get(packaging->names.library_id)
+              .starts_with("prelude"))) {
       auto prelude_id =
           unit_info.unit->value_stores->string_literal_values().Add("prelude");
+      // Adding the prelude to the non-prelude parts of Core requires different
+      // semantics because it is not valid to mention the name of the package
+      // for a library import from the same package.
+      auto package_id =
+          (packaging && packaging->names.package_id == PackageNameId::Core)
+              ? PackageNameId::None
+              : PackageNameId::Core;
       TrackImport(api_map, &explicit_import_map, unit_info,
                   {.node_id = Parse::NoneNodeId(),
-                   .package_id = PackageNameId::Core,
+                   .package_id = package_id,
                    .library_id = prelude_id},
                   options.fuzzing);
     }
@@ -480,14 +508,51 @@ auto CheckParseTrees(
     }
   }
 
+  // Create C++ domains for Cpp imports.
+  if (options.share_cpp_ast) {
+    bool any_cpp_imports = false;
+    llvm::SmallVector<SemIR::CppInputFile> inputs;
+    for (auto& unit_info : unit_infos) {
+      any_cpp_imports |= !unit_info.cpp_imports.empty();
+      inputs.push_back({.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
+                        .filename = unit_info.unit->sem_ir->filename(),
+                        .is_lowered = unit_info.unit->is_lowered});
+    }
+    if (any_cpp_imports) {
+      // TODO: Remove dependence on properties of the first unit here.
+      if (auto cpp_domain = InitializeCppDomain(
+              unit_infos.front().err_tracker, inputs, fs,
+              unit_infos.front().unit->llvm_context, clang_invocation)) {
+        cpp_domains.push_back(std::move(cpp_domain));
+        for (auto& unit_info : unit_infos) {
+          unit_info.cpp_domain = cpp_domains.back().get();
+        }
+      }
+    }
+  } else {
+    for (auto& unit_info : unit_infos) {
+      if (unit_info.cpp_imports.empty()) {
+        continue;
+      }
+      if (auto cpp_domain = InitializeCppDomain(
+              unit_info.err_tracker,
+              {{.check_ir_id = unit_info.unit->sem_ir->check_ir_id(),
+                .filename = unit_info.unit->sem_ir->filename(),
+                .is_lowered = unit_info.unit->is_lowered}},
+              fs, unit_info.unit->llvm_context, clang_invocation)) {
+        cpp_domains.push_back(std::move(cpp_domain));
+        unit_info.cpp_domain = cpp_domains.back().get();
+      }
+    }
+  }
+
   // Check everything with no dependencies. Earlier entries with dependencies
   // will be checked as soon as all their dependencies have been checked.
   for (int check_index = 0;
        check_index < static_cast<int>(ready_to_check.size()); ++check_index) {
     auto* unit_info = ready_to_check[check_index];
-    CheckUnit(unit_info, &tree_and_subtrees_getters, fs,
-              unit_info->unit->llvm_context, clang_invocation,
-              options.vlog_stream, options.mangle_string_fingerprint)
+    CheckUnit(unit_info, &tree_and_subtrees_getters, options.vlog_stream,
+              options.mangle_string_fingerprint)
         .Run();
     for (auto* incoming_import : unit_info->incoming_imports) {
       --incoming_import->imports_remaining;
@@ -535,15 +600,20 @@ auto CheckParseTrees(
     // incomplete imports.
     for (auto& unit_info : unit_infos) {
       if (unit_info.imports_remaining > 0) {
-        CheckUnit(&unit_info, &tree_and_subtrees_getters, fs,
-                  unit_info.unit->llvm_context, clang_invocation,
-                  options.vlog_stream, options.mangle_string_fingerprint)
+        CheckUnit(&unit_info, &tree_and_subtrees_getters, options.vlog_stream,
+                  options.mangle_string_fingerprint)
             .Run();
       }
     }
   }
 
-  MaybeDumpSemIR(units, tree_and_subtrees_getters, options);
+  // Finalize all C++ domains at the end of checking.
+  for (const auto& domain : cpp_domains) {
+    FinalizeCppDomain(*domain);
+  }
+
+  MaybeDumpSemIR(units, tree_and_subtrees_getters, short_file_names,
+                 inst_namer_getters, options);
   MaybeDumpCppAST(units, options);
 }
 

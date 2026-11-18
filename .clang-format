@@ -7,6 +7,7 @@ BasedOnStyle: Google
 AllowShortBlocksOnASingleLine: 'false'
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: 'false'
+AttributeMacros: ['CARBON_PRESERVE_NONE']
 DerivePointerAlignment: 'false'
 ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'

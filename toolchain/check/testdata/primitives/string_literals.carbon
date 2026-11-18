@@ -15,9 +15,12 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_no_string.carbon:[[@LINE+4]]:3: error: name `Core.String` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:   "hello";
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_no_string.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   "hello";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: name `Core.String` implicitly referenced here, but not found
+  // CHECK:STDERR:        ·         ┃        [CoreNameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "hello";
 }
@@ -37,9 +40,12 @@ class String {
 
 import Core library "unusual_string";
 
-// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+4]]:14: error: unexpected representation for type `str` [StringLiteralTypeUnexpected]
-// CHECK:STDERR: let x: str = "hello";
-// CHECK:STDERR:              ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_use_unusual_string.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let x: str = "hello";
+// CHECK:STDERR:        ·              ━━━┳━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: unexpected representation for type `str`
+// CHECK:STDERR:        ·                    ┃        [StringLiteralTypeUnexpected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: str = "hello";
 
@@ -56,12 +62,16 @@ library "[[@TEST_NAME]]";
 import Core library "incomplete_string";
 
 fn F() {
-  // CHECK:STDERR: fail_use_incomplete_string.carbon:[[@LINE+7]]:3: error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
-  // CHECK:STDERR:   "hello";
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: incomplete_string.carbon:4:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class String;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_use_incomplete_string.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   "hello";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ incomplete_string.carbon
+  // CHECK:STDERR:        │ class String;
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "hello";
 }
@@ -96,9 +106,11 @@ library "[[@TEST_NAME]]";
 import Core library "small_string";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_overfill_small_string.carbon:[[@LINE+4]]:14: error: string literal is too long [StringLiteralTooLong]
-// CHECK:STDERR: let x: str = '''
-// CHECK:STDERR:              ^~~
+// CHECK:STDERR:        ╭─┤ fail_overfill_small_string.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let x: str = '''
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: string literal is too long [StringLiteralTooLong]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: str = '''
 A string so long its size does not fit in `u8`. This results in an error,
@@ -113,57 +125,61 @@ This string contains 256 characters. Among them are:
 ''';
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_small_string.carbon
+// CHECK:STDOUT: --- use_small_string.carbon = $use_small_string
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %str.91f: type = class_type @String [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %str.3d4: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.cb7: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %str.91f [concrete]
-// CHECK:STDOUT:   %str.5de: %ptr.cb7 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %ptr.22f: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %str.5d7: %ptr.22f = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %str.91f = struct_value (%str.5de, %int_5) [concrete]
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.5d7, %int_5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
+// CHECK:STDOUT:   %x: %str.3d4 = wrapper_binding x, @__global_init.%String.val
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.ff8 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %str: type = type_literal constants.%str.91f [concrete = constants.%str.91f]
-// CHECK:STDOUT:   %x: %str.91f = value_binding x, @__global_init.%String.val
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.cb7 = string_literal "hello" [concrete = constants.%str.5de]
+// CHECK:STDOUT:   %str: %ptr.22f = string_literal "hello" [concrete = constants.%str.5d7]
 // CHECK:STDOUT:   %int_5: %u8 = int_value 5 [concrete = constants.%int_5]
-// CHECK:STDOUT:   %String.val: %str.91f = struct_value (%str, %int_5) [concrete = constants.%String.val]
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_overfill_small_string.carbon
+// CHECK:STDOUT: --- fail_overfill_small_string.carbon = $fail_overfill_small_string
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %str.91f: type = class_type @String [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %str.3d4: type = class_type @String [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.cb7: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %str.91f [concrete]
-// CHECK:STDOUT:   %str.512: %ptr.cb7 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
+// CHECK:STDOUT:   %ptr.22f: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.adf = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %str.18e: %ptr.22f = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
+// CHECK:STDOUT:   %x: %str.3d4 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.ff8 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:     %x.patt: %pattern_type.adf = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %str: type = type_literal constants.%str.91f [concrete = constants.%str.91f]
-// CHECK:STDOUT:   %x: %str.91f = value_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.cb7 = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete = constants.%str.512]
+// CHECK:STDOUT:   %str: %ptr.22f = string_literal "A string so long its size does not fit in `u8`. This results in an error,\nbecause we can't form a `Core.String` value that describes this string.\n\nThis string contains 256 characters. Among them are:\n\n* 6 `g`s,\n* 21 `s`s,\n* 9 newlines,\n* and only one `p`.\n" [concrete = constants.%str.18e]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -27,9 +27,10 @@ fn Derived.H() {
   F();
 }
 
-// CHECK:STDOUT: --- base_function_unqualified.carbon
+// CHECK:STDOUT: --- base_function_unqualified.carbon = $base_function_unqualified
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
 // CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -43,7 +44,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %Derived.H.type: type = fn_type @Derived.H [concrete]
 // CHECK:STDOUT:   %Derived.H: %Derived.H.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.base: type = struct_type {.base: %Base} [concrete]
-// CHECK:STDOUT:   %complete_type.4e8: <witness> = complete_type_witness %struct_type.base [concrete]
+// CHECK:STDOUT:   %complete_type.c02: <witness> = complete_type_witness %struct_type.base [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -80,7 +81,7 @@ fn Derived.H() {
 // CHECK:STDOUT:   %.loc20: %Derived.elem = base_decl %Base.ref, element0 [concrete]
 // CHECK:STDOUT:   %Derived.G.decl: %Derived.G.type = fn_decl @Derived.G [concrete = constants.%Derived.G] {} {}
 // CHECK:STDOUT:   %Derived.H.decl: %Derived.H.type = fn_decl @Derived.H [concrete = constants.%Derived.H] {} {}
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.4e8]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base [concrete = constants.%complete_type.c02]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

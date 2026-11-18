@@ -11,13 +11,12 @@ inputs:
 runs:
   using: composite
   steps:
-    # Setup Python and related tools.
-    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+    # Setup Python and related tools with uv.
+    - name: Set up uv and Python
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
       with:
-        # Match the min version listed in docs/project/contribution_tools.md
-        # or the oldest version available on the OS.
-        python-version:
-          ${{ inputs.matrix_runner == 'macos-14' && '3.11' || '3.10' }}
+        enable-cache: true
+        version: '0.11.15'
 
     - uses: ./.github/actions/build-setup-macos
       if: startsWith(inputs.matrix_runner, 'macos')
@@ -38,9 +37,10 @@ runs:
         bazelisk --version
         echo '*** run_bazel.py'
         ./scripts/run_bazel.py --version
-        echo '*** python'
-        which python
-        python --version
+        echo '*** uv'
+        which uv
+        uv --version
+        uv python list --only-installed
         echo '*** clang'
         which clang
         clang --version
@@ -135,8 +135,9 @@ runs:
         # more reliably succeed without retrying "permanent" errors.
         #
         # Disable lockfile updates, because some actions want to see
-        # differences.
-        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
-          mod --lockfile_mode=off deps
+        # differences. This avoids `bazel mod deps`, which evaluates every
+        # module extension; without the lockfile, that includes expensive ones
+        # that builds don't use, like the Rust crates newer protobuf versions
+        # depend on.
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
           cquery --lockfile_mode=off //... | wc -l

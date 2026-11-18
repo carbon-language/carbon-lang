@@ -151,11 +151,21 @@ var String: invalid = '''
   ''';
 ```
 
-A _file type indicator_ is any sequence of non-whitespace characters other than
-`'` or `#`. The file type indicator has no semantic meaning to the Carbon
-compiler, but some file type indicators are understood by the language tooling
-(for example, syntax highlighter, code formatter) as indicating the structure of
-the string literal's content.
+A _file type indicator_ is the text following the `'''` on the introducer line,
+with surrounding whitespace removed; it may not contain `'`, `#`, or `"`. A
+[trailing comment](comments.md) may follow the file type indicator on the
+introducer line. It is an ordinary comment, and tools treat it as one; like the
+surrounding whitespace it is not part of the indicator, and so it may contain
+characters that the indicator may not. The file type indicator has no semantic
+meaning to the Carbon compiler, but some file type indicators are understood by
+the language tooling (for example, syntax highlighter, code formatter) as
+indicating the structure of the string literal's content.
+
+Because a [character literal](character_literals.md) is never empty, `''` can
+only occur as the start of the `'''` that begins or ends a block string
+literal. A `'''` whose introducer line does not have the required form, such
+as the single-line `'''foo'''`, is an error; it is never interpreted as a
+sequence of character literals.
 
 ```carbon
 // This is a block string literal. Its first two characters are spaces, and its
@@ -326,18 +336,18 @@ string in the type system. In such string literals, we should consider rejecting
 
 ## Alternatives considered
 
--   [Block string literals](/proposals/p0199.md#block-string-literals)
-    -   [Leading whitespace removal](/proposals/p0199.md#leading-whitespace-removal)
-    -   [Terminating newline](/proposals/p0199.md#terminating-newline)
--   [Escape sequences](/proposals/p0199.md#escape-sequences-1)
+-   [Block string literals](/proposals/p000199-string-literals.md#block-string-literals)
+    -   [Leading whitespace removal](/proposals/p000199-string-literals.md#leading-whitespace-removal)
+    -   [Terminating newline](/proposals/p000199-string-literals.md#terminating-newline)
+-   [Escape sequences](/proposals/p000199-string-literals.md#escape-sequences-1)
     -   Unicode escape sequences:
-        -   [Allow zero digits](/proposals/p2040.md#allow-zero-digits)
-        -   [Allow any number of hexadecimal characters](/proposals/p2040.md#allow-any-number-of-hexadecimal-characters)
-        -   [Limiting to 6 digits versus 8](/proposals/p2040.md#limiting-to-6-digits-versus-8)
--   [Raw string literals](/proposals/p0199.md#raw-string-literals-1)
-    -   [Trailing whitespace](/proposals/p0199.md#trailing-whitespace)
-    -   [Line separators](/proposals/p0199.md#line-separators)
--   [Internal whitespace](/proposals/p0199.md#internal-whitespace)
+        -   [Allow zero digits](/proposals/p002040-unicode-escape-code-length.md#allow-zero-digits)
+        -   [Allow any number of hexadecimal characters](/proposals/p002040-unicode-escape-code-length.md#allow-any-number-of-hexadecimal-characters)
+        -   [Limiting to 6 digits versus 8](/proposals/p002040-unicode-escape-code-length.md#limiting-to-6-digits-versus-8)
+-   [Raw string literals](/proposals/p000199-string-literals.md#raw-string-literals-1)
+    -   [Trailing whitespace](/proposals/p000199-string-literals.md#trailing-whitespace)
+    -   [Line separators](/proposals/p000199-string-literals.md#line-separators)
+-   [Internal whitespace](/proposals/p000199-string-literals.md#internal-whitespace)
 -   [Different restrictions for file type indicators](https://github.com/carbon-language/carbon-lang/issues/2140)
 
 ## References
@@ -346,3 +356,5 @@ string in the type system. In such string literals, we should consider rejecting
     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 -   Proposal
     [#2040: Unicode escape code length](https://github.com/carbon-language/carbon-lang/pull/2040)
+-   Proposal
+    [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)

@@ -13,12 +13,12 @@
 // --- symbolic_call_to_eval_fn.carbon
 library "[[@TEST_NAME]]";
 
-eval fn F(B:! bool) -> type {
+eval fn F(generic B: bool) -> type {
   if (B) { return (); }
   return ({}, {});
 }
 
-fn G(B:! bool) {
+fn G(generic B: bool) {
   let unused n: F(B) = ({}, {});
 }
 
@@ -30,21 +30,28 @@ fn H() {
 // --- fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon
 library "[[@TEST_NAME]]";
 
-eval fn F(B:! bool) -> type {
+eval fn F(generic B: bool) -> type {
   if (B) { return (); }
   return ({}, {});
 }
 
-fn G(B:! bool) {
+fn G(generic B: bool) {
   let unused n: F(B) = ({}, {});
 }
 
 // TODO: Provide a location for the "cannot initialize" error message.
 fn H() {
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+5]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
-  // CHECK:STDERR:   G(true);
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
+  // CHECK:STDERR:        ╭─┤ fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   let unused n: F(B) = ({}, {});
+  // CHECK:STDERR:        ·                        ┬───────
+  // CHECK:STDERR:        ·                        ╰──┤ cannot initialize tuple of 0 elements from tuple
+  // CHECK:STDERR:        ·                           │ with 2 elements
+  // CHECK:STDERR:        ·                           │ [TupleInitElementCountMismatch]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   G(true);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(true);
 }
@@ -55,7 +62,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 impl {} as Z {}
 
-eval fn E(U:! Z) -> type {
+eval fn E(generic U: Z) -> type {
   // This makes a FacetAccessType(U) instruction, for which we have to get a
   // constant value from the definition in the called function's specific. This
   // requires that the called function has its specific definition resolved.
@@ -68,56 +75,200 @@ fn F() {
   E({});
 }
 
-// CHECK:STDOUT: --- dependent_symbolic_instruction.carbon
+// --- fail_print_call_in_diagnostic.carbon
+library "[[@TEST_NAME]]";
+
+eval fn F(generic B: bool) -> type {
+  if (B) { return (); }
+  return bool;
+}
+
+eval fn G(generic B: bool, (a: bool, b: bool)) -> type {
+  if (B and a and b) { return (); }
+  return bool;
+}
+
+// A redeclaration with a mismatched parameter type prints the symbolic call as
+// the type of the parameter. The argument for the generic parameter is found
+// in the specific for the callee, not in the arguments of the SemIR `call`.
+fn UseF(generic B: bool, x: F(B));
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+15]]:26
+// CHECK:STDERR:        │ fn UseF(generic B: bool, x: F(B));
+// CHECK:STDERR:        ·                          ┬──────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseF(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type `<pattern for F(B)>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn UseF(generic B: bool, x: bool);
+
+// The arguments of the SemIR `call` are flattened by the nested tuple pattern
+// in the signature of `G`, and are regrouped here to match the source.
+fn UseG(generic B: bool, x: G(B, (true, false)));
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseG(generic B: bool, x: G(B, (true, false)));
+// CHECK:STDERR:        ·                          ┬─────────────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseG(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for G(B, (true, false))>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn UseG(generic B: bool, x: bool);
+
+// A one-element tuple pattern needs a trailing comma.
+eval fn H(generic B: bool, (a: bool,)) -> type {
+  if (B and a) { return (); }
+  return bool;
+}
+
+fn UseH(generic B: bool, x: H(B, (true,)));
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseH(generic B: bool, x: H(B, (true,)));
+// CHECK:STDERR:        ·                          ┬───────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseH(generic B: bool, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for H(B, (true,))>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn UseH(generic B: bool, x: bool);
+
+// The `self` argument is the first argument of the SemIR `call`, but is printed
+// before the name of the method, as it was written.
+class C {
+  // CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+6]]:13
+  // CHECK:STDERR: ->     │   eval fn M(self: Self, b: bool) -> type {
+  // CHECK:STDERR:        ·             ━━━━━┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ warning: binding `self` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  eval fn M(self: Self, b: bool) -> type {
+    if (b) { return (); }
+    return bool;
+  }
+}
+
+fn UseM(generic c: C, x: c.M(true));
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+14]]:23
+// CHECK:STDERR:        │ fn UseM(generic c: C, x: c.M(true));
+// CHECK:STDERR:        ·                       ──┬─────────
+// CHECK:STDERR:        ·                         ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                            │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseM(generic c: C, x: bool);
+// CHECK:STDERR:        ·                       ┳━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                          ┃        redeclaration differs from previous parameter
+// CHECK:STDERR:        ·                          ┃        type `<pattern for (c).M(true)>`
+// CHECK:STDERR:        ·                          ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn UseM(generic c: C, x: bool);
+
+// Parentheses are added around the `self` argument if needed.
+interface J {
+  eval fn N(self: Self) -> type;
+}
+impl type as J {
+  eval fn N(self: Self) -> type { return self; }
+}
+
+fn UseN(generic T: type, x: (const T).(J.N)());
+// CHECK:STDERR:        ╭─┤ fail_print_call_in_diagnostic.carbon:[[@LINE+16]]:26
+// CHECK:STDERR:        │ fn UseN(generic T: type, x: (const T).(J.N)());
+// CHECK:STDERR:        ·                          ┬───────────────────
+// CHECK:STDERR:        ·                          ╰──┤ previous declaration's corresponding parameter
+// CHECK:STDERR:        ·                             │ here
+// CHECK:STDERR:        ·                             │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn UseN(generic T: type, x: bool);
+// CHECK:STDERR:        ·                          ┳━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: type `<pattern for bool>` of parameter 2 in
+// CHECK:STDERR:        ·                             ┃        redeclaration differs from previous
+// CHECK:STDERR:        ·                             ┃        parameter type
+// CHECK:STDERR:        ·                             ┃        `<pattern for (const T).N()>`
+// CHECK:STDERR:        ·                             ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn UseN(generic T: type, x: bool);
+
+// CHECK:STDOUT: --- dependent_symbolic_instruction.carbon = $dependent_symbolic_instruction
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @empty_struct_type.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %empty_struct_type, (%Z.impl_witness) [concrete]
-// CHECK:STDOUT:   %U.d93: %Z.type = symbolic_binding U, 0 [symbolic]
-// CHECK:STDOUT:   %U.as_type.3b3: type = facet_access_type %U.d93 [symbolic]
+// CHECK:STDOUT:   %pattern_type.5d7: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %U.patt.4a7: %pattern_type.5d7 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %U.013: %Z.type = symbolic_binding U, 0 [symbolic]
+// CHECK:STDOUT:   %U.as_type.ff1: type = facet_access_type %U.013 [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.592: <witness> = impl_witness imports.%Copy.impl_witness_table.fbd [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.592) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b33: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.173: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b33, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.f3e: <witness> = impl_witness imports.%Copy.impl_witness_table.aa5 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f3e) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ca9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.cd2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ca9, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.bound.b9d: <bound method> = bound_method %U.as_type.3b3, %type.as.Copy.impl.Op [symbolic]
+// CHECK:STDOUT:   %type.as.Copy.impl.Op.bound.05d: <bound method> = bound_method %U.as_type.ff1, %type.as.Copy.impl.Op [symbolic]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound.57f: <bound method> = bound_method %empty_struct_type, %type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.41e: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:   %Copy.impl_witness_table.fbd = impl_witness_table (%Core.import_ref.41e), @type.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.9c3: %type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.aa5 = impl_witness_table (%Core.import_ref.9c3), @type.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @E(%U.loc6_12.2: %Z.type) {
+// CHECK:STDOUT: generic fn @E(%U.loc6_20.2: %Z.type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %U.as_type.loc11_11.2: type = facet_access_type %U.loc6_12.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.3b3)]
-// CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %U.as_type.loc11_11.2, constants.%type.as.Copy.impl.Op [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.b9d)]
+// CHECK:STDOUT:   %U.as_type.loc11_11.2: type = facet_access_type %U.loc6_20.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
+// CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %U.as_type.loc11_11.2, constants.%type.as.Copy.impl.Op [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: type {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_12.2 [symbolic = %U.loc6_12.1 (constants.%U.d93)]
-// CHECK:STDOUT:     %U.as_type.loc11_11.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.3b3)]
-// CHECK:STDOUT:     %.loc11: type = converted %U.ref, %U.as_type.loc11_11.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.3b3)]
-// CHECK:STDOUT:     %impl.elem0: %.173 = impl_witness_access constants.%Copy.impl_witness.592, element0 [concrete = constants.%type.as.Copy.impl.Op]
-// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc11, %impl.elem0 [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.b9d)]
-// CHECK:STDOUT:     %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc11) [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.3b3)]
+// CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_20.2 [symbolic = %U.loc6_20.1 (constants.%U.013)]
+// CHECK:STDOUT:     %U.as_type.loc11_11.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
+// CHECK:STDOUT:     %.loc11: type = converted %U.ref, %U.as_type.loc11_11.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
+// CHECK:STDOUT:     %impl.elem0: %.cd2 = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc11, %impl.elem0 [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
+// CHECK:STDOUT:     %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc11) [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @E(constants.%U.d93) {
-// CHECK:STDOUT:   %U.loc6_12.1 => constants.%U.d93
+// CHECK:STDOUT: specific @E(constants.%U.013) {
+// CHECK:STDOUT:   %U.patt.loc6_20.2 => constants.%U.patt.4a7
+// CHECK:STDOUT:   %U.loc6_20.1 => constants.%U.013
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @E(constants.%Z.facet) {
-// CHECK:STDOUT:   %U.loc6_12.1 => constants.%Z.facet
+// CHECK:STDOUT:   %U.patt.loc6_20.2 => constants.%U.patt.4a7
+// CHECK:STDOUT:   %U.loc6_20.1 => constants.%Z.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %U.as_type.loc11_11.2 => constants.%empty_struct_type

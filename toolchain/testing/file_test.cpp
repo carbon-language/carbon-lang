@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "absl/strings/str_replace.h"
+#include "common/check.h"
 #include "common/error.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -47,6 +48,9 @@ struct SharedTestData {
   // Files in the prelude.
   llvm::SmallVector<std::string> prelude_files;
 
+  // Files in core not in the prelude.
+  llvm::SmallVector<std::string> core_files;
+
   // The installed files that tests can use.
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> file_system =
       new llvm::vfs::InMemoryFileSystem();
@@ -60,6 +64,12 @@ static auto GetSharedTestData(llvm::StringRef exe_path)
     CARBON_ASSIGN_OR_RETURN(data.prelude_files,
                             data.installation.ReadPreludeManifest());
     for (const auto& file : data.prelude_files) {
+      CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
+    }
+
+    CARBON_ASSIGN_OR_RETURN(data.core_files,
+                            data.installation.ReadCarbonCoreManifest());
+    for (const auto& file : data.core_files) {
       CARBON_RETURN_IF_ERROR(AddFile(*data.file_system, file));
     }
 
@@ -163,9 +173,11 @@ auto ToolchainFileTest::Run(
   overlay_fs->pushOverlay(fs);
 
   llvm::SmallVector<llvm::StringRef> filtered_test_args;
-  if (component_ == "check" || component_ == "lower") {
+  if (component_ == "check" || component_ == "lower" ||
+      component_ == "diagnostics") {
     filtered_test_args.reserve(test_args.size());
     bool found_prelude_flag = false;
+    bool found_include_core_flag = false;
     for (auto arg : test_args) {
       bool driver_flag = arg == "--custom-core" || arg == "--no-prelude-import";
       // A flag specified by a test prelude to indicate the intention to include
@@ -174,7 +186,9 @@ auto ToolchainFileTest::Run(
       if (driver_flag || full_prelude) {
         found_prelude_flag = true;
       }
-      if (!full_prelude) {
+      bool include_core = arg == "--include-carbon-core";
+      found_include_core_flag |= include_core;
+      if (!full_prelude && !include_core) {
         filtered_test_args.push_back(arg);
       }
     }
@@ -183,8 +197,47 @@ auto ToolchainFileTest::Run(
           "Include a prelude from //toolchain/testing/testdata/min_prelude "
           "to specify what should be imported into the test.");
     }
+    // The compile driver includes the carbon-core by default, but we invert
+    // this logic for the check and lower phases, meaning we detect the presence
+    // of `--include-carbon-core` in the arguments, and unless that is there
+    // we automatically append the `--no-include-carbon-core` flag.
+    if (!found_include_core_flag) {
+      filtered_test_args.push_back("--no-include-carbon-core");
+    }
   } else {
     filtered_test_args = test_args;
+  }
+
+  // Tests pass `--diagnostic-line-numbers=first`, so the only line number in a
+  // frame is its first location row's, which autoupdate rewrites as a
+  // `[[@LINE...]]` offset. Adding a `CHECK` line above a diagnostic then
+  // doesn't change its frame. A test that sets a snippet or line-number option
+  // in its `ARGS` gets the driver's defaults for the other options, which is
+  // how toolchain/diagnostics/testdata keeps every line number. This is added
+  // here and not in `GetDefaultArgs`, so that a test with its own `ARGS` line
+  // still gets it.
+  bool chooses_rendering =
+      llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
+        return arg == "--diagnostic-snippets" ||
+               arg == "--no-diagnostic-snippets" ||
+               arg == "--diagnostic-line-numbers" ||
+               arg.starts_with("--diagnostic-line-numbers=");
+      });
+  if (!chooses_rendering) {
+    filtered_test_args.insert(filtered_test_args.begin(),
+                              "--diagnostic-line-numbers=first");
+  }
+
+  // Goldens capture box drawing, which nearly every terminal gets, so that
+  // they show the line weights a user sees. A test about the ASCII form asks
+  // for `--terminal-unicode=never` in its `ARGS`.
+  bool chooses_charset =
+      llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
+        return arg.starts_with("--terminal-unicode");
+      });
+  if (!chooses_charset) {
+    filtered_test_args.insert(filtered_test_args.begin(),
+                              "--terminal-unicode=always");
   }
 
   Driver driver(overlay_fs, &data_->installation, input_stream, &output_stream,
@@ -244,13 +297,15 @@ auto ToolchainFileTest::GetDefaultArgs() const
     args.insert(args.end(), {"format", "%s"});
     return args;
   } else if (component_ == "language_server") {
-    args.insert(args.end(), {"language-server"});
+    args.insert(args.end(), {"language-server", "--no-prelude-import"});
     return args;
   }
 
   args.insert(args.end(), {
                               "compile",
-                              "--phase=" + component_.str(),
+                              "--phase=" + (component_ == "diagnostics"
+                                                ? std::string("check")
+                                                : component_.str()),
                               // Use the install path to exclude prelude files.
                               "--exclude-dump-file-prefix=" +
                                   data_->installation.core_package().native(),
@@ -263,10 +318,12 @@ auto ToolchainFileTest::GetDefaultArgs() const
     args.insert(args.end(), {"--no-prelude-import", "--dump-parse-tree"});
   } else if (component_ == "check") {
     args.insert(args.end(), {"--dump-sem-ir", "--dump-sem-ir-ranges=only"});
+  } else if (component_ == "diagnostics") {
+    // Nothing to dump: these tests are only about the rendered diagnostics.
   } else if (component_ == "lower") {
     args.insert(args.end(), {"--dump-llvm-ir", "--target=x86_64-linux-gnu"});
   } else if (component_ == "codegen") {
-    // codegen tests specify flags as needed.
+    args.insert(args.end(), {"--no-include-carbon-core"});
   } else {
     CARBON_FATAL("Unexpected test component {0}: {1}", component_, test_name());
   }
@@ -308,9 +365,11 @@ static auto DoClangASTCheckReplacements(std::string& check_line) -> void {
     return;
   }
 
-  // Filter out references to builtins.
+  // Filter out references to builtins. The `__`-prefixed identifier may be
+  // namespace-qualified, such as the AArch64 `std::__va_list`, so a preceding
+  // `:` also anchors the match.
   static const RE2 is_builtin_referring_re(
-      R"(`-BuiltinType |[ ']__[a-zA-Z]|\| `\-PointerType 0x[a-f0-9]+ 'char \*'$)");
+      R"(`-BuiltinType |[ ':]__[a-zA-Z]|\| `\-PointerType 0x[a-f0-9]+ 'char \*'$)");
   if (RE2::PartialMatch(check_line, is_builtin_referring_re)) {
     check_line.clear();
     return;
@@ -367,7 +426,41 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
 auto ToolchainFileTest::FinalizeCheckLines(CheckLineArray& check_lines,
                                            bool is_stderr) const -> void {
   if (is_stderr) {
-    static const RE2 is_new_diagnostic_re(R"(.*:\d*:\d*: (error|warning): )");
+    // A blank row ends each diagnostic. Within one, the rows before the first
+    // row with a line number, such as a frame's path rows, take that row's
+    // location, so that they stay with the frame instead of attaching to
+    // whatever came before it. Later rows without a location follow the rows
+    // before them, as they always do.
+    //
+    // TODO: A frame whose first location row names only a file, or a file
+    // outside the test such as the prelude, has no line number here, so it is
+    // placed after the diagnostic before it, sometimes in another file's split.
+    // Matching the file name in such a location row against the test's files
+    // would at least place it in that file's split.
+    llvm::SmallVector<FileTestAutoupdater::CheckLine*> unplaced_rows;
+    bool block_placed = false;
+    for (auto& check_line : check_lines) {
+      if (check_line.line() == "// CHECK:STDERR:") {
+        unplaced_rows.clear();
+        block_placed = false;
+      } else if (block_placed) {
+        // Trailing rows are placed by the rows before them.
+      } else if (check_line.line_number() == -1) {
+        unplaced_rows.push_back(&check_line);
+      } else {
+        for (FileTestAutoupdater::CheckLine* row : unplaced_rows) {
+          row->set_location(check_line.file_number(), check_line.line_number());
+        }
+        unplaced_rows.clear();
+        block_placed = true;
+      }
+    }
+
+    // This matches the message's line in the compact form, which starts with
+    // its location when it has one, and that location can end with the extent
+    // of its range as `-<end>`. No row of a frame matches.
+    static const RE2 is_new_diagnostic_re(
+        R"(^// CHECK:STDERR: (?:.*:\d*:\d*(?:-\d+)?: )?(?:error|warning): )");
     // If a diagnostic isn't attached to a line, try to position it with its
     // first note.
     FileTestAutoupdater::CheckLine* diagnostic_without_loc = nullptr;

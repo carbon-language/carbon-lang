@@ -7,6 +7,7 @@
 
 #include "common/array_stack.h"
 #include "common/map.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -26,15 +27,15 @@ using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
 //
 // We split a generic into two regions -- declaration and definition -- because
 // these are in general introduced separately, and substituted into separately.
-// For example, for `class C(T:! type, N:! T) { var x: T; }`, a use such as
+// For example, for `class C(T: type, N: T) { var x: T; }`, a use such as
 // `C(i32, 0)*` substitutes into just the declaration, whereas a use such as
 // `var x: C(i32, 0) = {.x = 0};` also substitutes into the definition.
 class GenericRegionStack {
  public:
   explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
       : vlog_stream_(vlog_stream) {
-    // Reserve a large enough stack that we typically won't need to reallocate.
-    constants_in_generic_stack_.reserve(4);
+    // Trigger the allocation of the first capacity specified in the type.
+    constants_in_generic_stack_.Reserve(1);
   }
 
   struct PendingGeneric {
@@ -96,7 +97,16 @@ class GenericRegionStack {
   // instructions for the current generic.
   auto PeekConstantsInGenericMap() -> ConstantsInGenericMap& {
     CARBON_CHECK(!Empty());
-    return constants_in_generic_stack_.back();
+    return constants_in_generic_stack_.Peek();
+  }
+
+  // Returns the total number of instructions tracked by all pending generic
+  // regions. Pushing and then popping a region leaves this unchanged, so this
+  // can be used to check that an operation didn't add anything to any of the
+  // regions that were pending when it started.
+  auto num_tracked_insts() const -> size_t {
+    return dependent_inst_stack_.all_values_size() +
+           pending_eval_block_stack_.all_values_size();
   }
 
   // Runs verification that the processing cleanly finished.
@@ -122,7 +132,9 @@ class GenericRegionStack {
   // Mapping from constant InstIds to the corresponding InstIds in the eval
   // blocks for each enclosing generic. We reserve this to a suitable size in
   // the constructor.
-  llvm::SmallVector<ConstantsInGenericMap, 0> constants_in_generic_stack_;
+  //
+  // We choose an initial capacity that typically won't need to allocate again.
+  StableStack<ConstantsInGenericMap, 8> constants_in_generic_stack_;
 };
 
 }  // namespace Carbon::Check

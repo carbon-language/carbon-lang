@@ -267,4 +267,4 @@ and minimizing cache impact.
 
 ## Relevant proposal
 
--   [Proposal p4105](/proposals/p4105.md)
+-   [Proposal #4105](/proposals/p004105-establish-toolchain-and-language-versioning.md)

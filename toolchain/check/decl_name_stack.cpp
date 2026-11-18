@@ -13,6 +13,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -60,11 +61,14 @@ auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
   return context;
 }
 
-auto DeclNameStack::PushScopeAndStartName() -> void {
+auto DeclNameStack::PushScopeAndStartName(
+    ScopeStack::NonConstantAccess non_constant_access) -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
 
   // Create a scope for any parameters introduced in this name.
-  context_->scope_stack().PushForDeclName();
+  context_->scope_stack().PushForDeclName(non_constant_access);
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
@@ -93,6 +97,8 @@ auto DeclNameStack::PopScope(bool check_unused) -> void {
   context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index,
                                 check_unused);
   decl_name_stack_.pop_back();
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::Suspend() -> SuspendedName {
@@ -108,6 +114,9 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   CARBON_CHECK(scope_stack.PeekIndex() == scope_index,
                "Scope index {0} does not enclose the current scope {1}",
                scope_index, scope_stack.PeekIndex());
+
+  UpdateAccessContext();
+
   return result;
 }
 
@@ -131,6 +140,8 @@ auto DeclNameStack::Restore(SuspendedName&& sus) -> void {
 
     context_->scope_stack().Restore(std::move(suspended_scope));
   }
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
@@ -239,7 +250,7 @@ static auto GetAssociatedEntityScope(Context& context,
 }
 
 // Push a scope corresponding to a name qualifier. For example, for
-// `fn Class(T:! type).F(n: i32)` we will push the scope for `Class(T:! type)`
+// `fn Class(T: type).F(n: i32)` we will push the scope for `Class(T: type)`
 // between the scope containing the declaration of `T` and the scope
 // containing the declaration of `n`.
 //
@@ -311,6 +322,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
     name_context.parent_scope_id = PushNameQualifierScope(
         *context_, name_context.loc_id, scope_id, generic_id,
         context_->name_scopes().Get(scope_id).has_error());
+    UpdateAccessContext();
   } else {
     name_context.state = NameContext::State::Error;
   }
@@ -382,11 +394,11 @@ static auto DiagnoseQualifiedDeclInIncompleteClassScope(Context& context,
     -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInIncompleteClassScope, Context,
-                          "cannot declare a member of incomplete class {0}",
-                          SemIR::TypeId);
-        builder.Context(loc_id, QualifiedDeclInIncompleteClassScope,
-                        context.classes().Get(class_id).self_type_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            QualifiedDeclInIncompleteClassScope,
+            "cannot declare a member of incomplete class {0}", SemIR::TypeId);
+        builder.Attach(loc_id, QualifiedDeclInIncompleteClassScope,
+                       context.classes().Get(class_id).self_type_id);
       });
   DiagnoseIncompleteClass(context, class_id);
 }
@@ -398,11 +410,11 @@ static auto DiagnoseQualifiedDeclInUndefinedInterfaceScope(
     SemIR::InstId interface_inst_id) -> void {
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(QualifiedDeclInUndefinedInterfaceScope, Context,
-                          "cannot declare a member of undefined interface {0}",
-                          InstIdAsType);
-        builder.Context(loc_id, QualifiedDeclInUndefinedInterfaceScope,
-                        interface_inst_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            QualifiedDeclInUndefinedInterfaceScope,
+            "cannot declare a member of undefined interface {0}", InstIdAsType);
+        builder.Attach(loc_id, QualifiedDeclInUndefinedInterfaceScope,
+                       interface_inst_id);
       });
   DiagnoseIncompleteInterface(context, interface_id);
 }
@@ -415,11 +427,11 @@ static auto DiagnoseQualifiedDeclInImportedPackage(Context& context,
     -> void {
   CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackage, Error,
                     "imported packages cannot be used for declarations");
-  CARBON_DIAGNOSTIC(QualifiedDeclOutsidePackageSource, Note,
-                    "package imported here");
+  CARBON_DIAGNOSTIC_LABEL(QualifiedDeclOutsidePackageSource, Info,
+                          "package imported here");
   context.emitter()
       .Build(use_loc_id, QualifiedDeclOutsidePackage)
-      .Note(import_loc_id, QualifiedDeclOutsidePackageSource)
+      .Attach(import_loc_id, QualifiedDeclOutsidePackageSource)
       .Emit();
 }
 
@@ -431,11 +443,11 @@ static auto DiagnoseQualifiedDeclInNonScope(
   CARBON_DIAGNOSTIC(QualifiedNameInNonScope, Error,
                     "name qualifiers are only allowed for entities that "
                     "provide a scope");
-  CARBON_DIAGNOSTIC(QualifiedNameNonScopeEntity, Note,
-                    "referenced non-scope entity declared here");
+  CARBON_DIAGNOSTIC_LABEL(QualifiedNameNonScopeEntity, Info,
+                          "referenced non-scope entity declared here");
   context.emitter()
       .Build(use_loc_id, QualifiedNameInNonScope)
-      .Note(non_scope_entity_loc_id, QualifiedNameNonScopeEntity)
+      .Attach(non_scope_entity_loc_id, QualifiedNameNonScopeEntity)
       .Emit();
 }
 
@@ -488,7 +500,7 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
             name_context.resolved_inst_id);
         return InvalidResult;
       }
-      // The scope and generic of an `I(T:! type)` is the outer
+      // The scope and generic of an `I(T: type)` is the outer
       // interface-without-self. That is the generic where parameters appear.
       // However when moving to the next qualifier, we need to move to the
       // interface-with-self for the associated entity name.
@@ -520,6 +532,14 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
           SemIR::LocId(name_context.resolved_inst_id));
       return InvalidResult;
     }
+  }
+}
+
+auto DeclNameStack::UpdateAccessContext() const -> void {
+  if (decl_name_stack_.empty()) {
+    context_->access_context() = SemIR::NameScopeId::None;
+  } else {
+    context_->access_context() = decl_name_stack_.back().parent_scope_id;
   }
 }
 

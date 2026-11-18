@@ -201,6 +201,6 @@ approach.
 
 ## Alternatives considered
 
--   [PR5543 More closely mimic the Clang compilation](/proposals/p6641.md#pr5543-more-closely-mimic-the-clang-compilation)
--   [Status Quo with Improvements](/proposals/p6641.md#status-quo-with-improvements)
--   [Upstream Clang Changes to use Phase Based Lowering](/proposals/p6641.md#upstream-clang-changes-to-use-phase-based-lowering)
+-   [PR5543 More closely mimic the Clang compilation](/proposals/p006641-clang-irgen-in-carbon.md#pr5543-more-closely-mimic-the-clang-compilation)
+-   [Status Quo with Improvements](/proposals/p006641-clang-irgen-in-carbon.md#status-quo-with-improvements)
+-   [Upstream Clang Changes to use Phase Based Lowering](/proposals/p006641-clang-irgen-in-carbon.md#upstream-clang-changes-to-use-phase-based-lowering)

@@ -15,40 +15,53 @@
 interface Eats {}
 interface Animal {}
 
-fn Feed[T:! Eats](unused e: T) {}
+fn Feed[T: Eats](unused e: T) {}
 
-// CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+7]]:37: error: cannot convert type `T` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
-// CHECK:STDERR: fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
-// CHECK:STDERR:                                     ^~~~~~~
-// CHECK:STDERR: fail_convert_facet_value_to_missing_impl.carbon:[[@LINE-5]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn Feed[T:! Eats](unused e: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+14]]:36
+// CHECK:STDERR:        │ fn Feed[T: Eats](unused e: T) {}
+// CHECK:STDERR:        · ───────────────┬───────────────
+// CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
+// CHECK:STDERR:        ·                                    ┳━━━━━━
+// CHECK:STDERR:        ·                                    ┗━━┫ error: cannot convert type `T` that
+// CHECK:STDERR:        ·                                       ┃        implements `Animal` into type
+// CHECK:STDERR:        ·                                       ┃        implementing `Eats`
+// CHECK:STDERR:        ·                                       ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
+fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 
-// CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon
+// CHECK:STDOUT: --- fail_convert_facet_value_to_missing_impl.carbon = $fail_convert_facet_value_to_missing_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Eats.type: type = facet_type <@Eats> [concrete]
-// CHECK:STDOUT:   %Self.24a: %Eats.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.23e: %Eats.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
-// CHECK:STDOUT:   %Self.d73: %Animal.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.42a: type = pattern_type %Eats.type [concrete]
-// CHECK:STDOUT:   %T.ad0: %Eats.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.f11: type = facet_access_type %T.ad0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.434: type = pattern_type %T.as_type.f11 [symbolic]
+// CHECK:STDOUT:   %Self.f00: %Animal.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.880: type = pattern_type %Eats.type [concrete]
+// CHECK:STDOUT:   %T.patt.9e8: %pattern_type.880 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.672: %Eats.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.422: type = facet_access_type %T.672 [symbolic]
+// CHECK:STDOUT:   %pattern_type.aed: type = pattern_type %T.as_type.422 [symbolic]
+// CHECK:STDOUT:   %e.param_patt: %pattern_type.aed = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %e.patt: %pattern_type.aed = wrapper_binding_pattern e, %e.param_patt [symbolic]
 // CHECK:STDOUT:   %Feed.type: type = fn_type @Feed [concrete]
 // CHECK:STDOUT:   %Feed: %Feed.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.5df: <witness> = require_complete_type %T.as_type.f11 [symbolic]
-// CHECK:STDOUT:   %pattern_type.69f: type = pattern_type %Animal.type [concrete]
-// CHECK:STDOUT:   %T.123: %Animal.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.6eb: type = facet_access_type %T.123 [symbolic]
-// CHECK:STDOUT:   %pattern_type.106: type = pattern_type %T.as_type.6eb [symbolic]
+// CHECK:STDOUT:   %require_complete.c4d: <witness> = require_complete_type %T.as_type.422 [symbolic]
+// CHECK:STDOUT:   %pattern_type.333: type = pattern_type %Animal.type [concrete]
+// CHECK:STDOUT:   %T.patt.e44: %pattern_type.333 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.443: %Animal.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.01d: type = facet_access_type %T.443 [symbolic]
+// CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %T.as_type.01d [symbolic]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [symbolic]
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.284: <witness> = require_complete_type %T.as_type.6eb [symbolic]
+// CHECK:STDOUT:   %require_complete.db4: <witness> = require_complete_type %T.as_type.01d [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -70,45 +83,45 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %Eats.decl: type = interface_decl @Eats [concrete = constants.%Eats.type] {} {}
 // CHECK:STDOUT:   %Animal.decl: type = interface_decl @Animal [concrete = constants.%Animal.type] {} {}
 // CHECK:STDOUT:   %Feed.decl: %Feed.type = fn_decl @Feed [concrete = constants.%Feed] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.42a = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %e.param_patt: @Feed.%pattern_type (%pattern_type.434) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %e.patt: @Feed.%pattern_type (%pattern_type.434) = at_binding_pattern e, %e.param_patt [concrete]
+// CHECK:STDOUT:     %T.patt.loc18_10.1: %pattern_type.880 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_10.2 (constants.%T.patt.9e8)]
+// CHECK:STDOUT:     %e.param_patt.loc18_26.1: @Feed.%pattern_type (%pattern_type.aed) = value_param_pattern [symbolic = %e.param_patt.loc18_26.2 (constants.%e.param_patt)]
+// CHECK:STDOUT:     %e.patt.loc18_26.1: @Feed.%pattern_type (%pattern_type.aed) = wrapper_binding_pattern e, %e.param_patt.loc18_26.1 [symbolic = %e.patt.loc18_26.2 (constants.%e.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18_13: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc18_12: type = splice_block %Eats.ref [concrete = constants.%Eats.type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Eats.ref: type = name_ref Eats, file.%Eats.decl [concrete = constants.%Eats.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc18_10.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc18_10.1 (constants.%T.ad0)]
-// CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc18_29.1 (%T.as_type.f11) = value_param call_param0
-// CHECK:STDOUT:     %.loc18_29.1: type = splice_block %.loc18_29.2 [symbolic = %T.as_type.loc18_29.1 (constants.%T.as_type.f11)] {
-// CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc18_10.2 [symbolic = %T.loc18_10.1 (constants.%T.ad0)]
-// CHECK:STDOUT:       %T.as_type.loc18_29.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_29.1 (constants.%T.as_type.f11)]
-// CHECK:STDOUT:       %.loc18_29.2: type = converted %T.ref, %T.as_type.loc18_29.2 [symbolic = %T.as_type.loc18_29.1 (constants.%T.as_type.f11)]
+// CHECK:STDOUT:     %T.loc18_10.2: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc18_10.1 (constants.%T.672)]
+// CHECK:STDOUT:     %e.param: @Feed.%T.as_type.loc18_28.1 (%T.as_type.422) = value_param call_param0
+// CHECK:STDOUT:     %.loc18_28.1: type = splice_block %.loc18_28.2 [symbolic = %T.as_type.loc18_28.1 (constants.%T.as_type.422)] {
+// CHECK:STDOUT:       %T.ref: %Eats.type = name_ref T, %T.loc18_10.2 [symbolic = %T.loc18_10.1 (constants.%T.672)]
+// CHECK:STDOUT:       %T.as_type.loc18_28.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc18_28.1 (constants.%T.as_type.422)]
+// CHECK:STDOUT:       %.loc18_28.2: type = converted %T.ref, %T.as_type.loc18_28.2 [symbolic = %T.as_type.loc18_28.1 (constants.%T.as_type.422)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %e: @Feed.%T.as_type.loc18_29.1 (%T.as_type.f11) = value_binding e, %e.param
+// CHECK:STDOUT:     %e: @Feed.%T.as_type.loc18_28.1 (%T.as_type.422) = wrapper_binding e, %e.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HandleAnimal.decl: %HandleAnimal.type = fn_decl @HandleAnimal [concrete = constants.%HandleAnimal] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.69f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %a.param_patt: @HandleAnimal.%pattern_type (%pattern_type.106) = value_param_pattern [concrete]
-// CHECK:STDOUT:     %a.patt: @HandleAnimal.%pattern_type (%pattern_type.106) = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:     %T.patt.loc34_18.1: %pattern_type.333 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc34_18.2 (constants.%T.patt.e44)]
+// CHECK:STDOUT:     %a.param_patt.loc34_29.1: @HandleAnimal.%pattern_type (%pattern_type.e90) = value_param_pattern [symbolic = %a.param_patt.loc34_29.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:     %a.patt.loc34_29.1: @HandleAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc34_29.1 [symbolic = %a.patt.loc34_29.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc27_21: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc34_20: type = splice_block %Animal.ref [concrete = constants.%Animal.type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Animal.ref: type = name_ref Animal, file.%Animal.decl [concrete = constants.%Animal.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc27_18.2: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc27_18.1 (constants.%T.123)]
-// CHECK:STDOUT:     %a.param: @HandleAnimal.%T.as_type.loc27_32.1 (%T.as_type.6eb) = value_param call_param0
-// CHECK:STDOUT:     %.loc27_32.1: type = splice_block %.loc27_32.2 [symbolic = %T.as_type.loc27_32.1 (constants.%T.as_type.6eb)] {
-// CHECK:STDOUT:       %T.ref: %Animal.type = name_ref T, %T.loc27_18.2 [symbolic = %T.loc27_18.1 (constants.%T.123)]
-// CHECK:STDOUT:       %T.as_type.loc27_32.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc27_32.1 (constants.%T.as_type.6eb)]
-// CHECK:STDOUT:       %.loc27_32.2: type = converted %T.ref, %T.as_type.loc27_32.2 [symbolic = %T.as_type.loc27_32.1 (constants.%T.as_type.6eb)]
+// CHECK:STDOUT:     %T.loc34_18.2: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc34_18.1 (constants.%T.443)]
+// CHECK:STDOUT:     %a.param: @HandleAnimal.%T.as_type.loc34_31.1 (%T.as_type.01d) = value_param call_param0
+// CHECK:STDOUT:     %.loc34_31.1: type = splice_block %.loc34_31.2 [symbolic = %T.as_type.loc34_31.1 (constants.%T.as_type.01d)] {
+// CHECK:STDOUT:       %T.ref: %Animal.type = name_ref T, %T.loc34_18.2 [symbolic = %T.loc34_18.1 (constants.%T.443)]
+// CHECK:STDOUT:       %T.as_type.loc34_31.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc34_31.1 (constants.%T.as_type.01d)]
+// CHECK:STDOUT:       %.loc34_31.2: type = converted %T.ref, %T.as_type.loc34_31.2 [symbolic = %T.as_type.loc34_31.1 (constants.%T.as_type.01d)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: @HandleAnimal.%T.as_type.loc27_32.1 (%T.as_type.6eb) = value_binding a, %a.param
+// CHECK:STDOUT:     %a: @HandleAnimal.%T.as_type.loc34_31.1 (%T.as_type.01d) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Eats {
-// CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.24a]
+// CHECK:STDOUT:   %Self: %Eats.type = symbolic_binding Self, 0 [symbolic = constants.%Self.23e]
 // CHECK:STDOUT:   %Eats.WithSelf.decl = interface_with_self_decl @Eats [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -119,7 +132,7 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Animal {
-// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.d73]
+// CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic = constants.%Self.f00]
 // CHECK:STDOUT:   %Animal.WithSelf.decl = interface_with_self_decl @Animal [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -130,52 +143,60 @@ fn HandleAnimal[T:! Animal](a: T) { Feed(a); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Feed(%T.loc18_10.2: %Eats.type) {
-// CHECK:STDOUT:   %T.loc18_10.1: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc18_10.1 (constants.%T.ad0)]
-// CHECK:STDOUT:   %T.as_type.loc18_29.1: type = facet_access_type %T.loc18_10.1 [symbolic = %T.as_type.loc18_29.1 (constants.%T.as_type.f11)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc18_29.1 [symbolic = %pattern_type (constants.%pattern_type.434)]
+// CHECK:STDOUT:   %T.patt.loc18_10.2: %pattern_type.880 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_10.2 (constants.%T.patt.9e8)]
+// CHECK:STDOUT:   %T.loc18_10.1: %Eats.type = symbolic_binding T, 0 [symbolic = %T.loc18_10.1 (constants.%T.672)]
+// CHECK:STDOUT:   %T.as_type.loc18_28.1: type = facet_access_type %T.loc18_10.1 [symbolic = %T.as_type.loc18_28.1 (constants.%T.as_type.422)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc18_28.1 [symbolic = %pattern_type (constants.%pattern_type.aed)]
+// CHECK:STDOUT:   %e.param_patt.loc18_26.2: @Feed.%pattern_type (%pattern_type.aed) = value_param_pattern [symbolic = %e.param_patt.loc18_26.2 (constants.%e.param_patt)]
+// CHECK:STDOUT:   %e.patt.loc18_26.2: @Feed.%pattern_type (%pattern_type.aed) = wrapper_binding_pattern e, %e.param_patt.loc18_26.2 [symbolic = %e.patt.loc18_26.2 (constants.%e.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc18_29.1 [symbolic = %require_complete (constants.%require_complete.5df)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc18_28.1 [symbolic = %require_complete (constants.%require_complete.c4d)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%e.param: @Feed.%T.as_type.loc18_29.1 (%T.as_type.f11)) {
+// CHECK:STDOUT:   fn(%e.param: @Feed.%T.as_type.loc18_28.1 (%T.as_type.422)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @HandleAnimal(%T.loc27_18.2: %Animal.type) {
-// CHECK:STDOUT:   %T.loc27_18.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc27_18.1 (constants.%T.123)]
-// CHECK:STDOUT:   %T.as_type.loc27_32.1: type = facet_access_type %T.loc27_18.1 [symbolic = %T.as_type.loc27_32.1 (constants.%T.as_type.6eb)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc27_32.1 [symbolic = %pattern_type (constants.%pattern_type.106)]
+// CHECK:STDOUT: generic fn @HandleAnimal(%T.loc34_18.2: %Animal.type) {
+// CHECK:STDOUT:   %T.patt.loc34_18.2: %pattern_type.333 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc34_18.2 (constants.%T.patt.e44)]
+// CHECK:STDOUT:   %T.loc34_18.1: %Animal.type = symbolic_binding T, 0 [symbolic = %T.loc34_18.1 (constants.%T.443)]
+// CHECK:STDOUT:   %T.as_type.loc34_31.1: type = facet_access_type %T.loc34_18.1 [symbolic = %T.as_type.loc34_31.1 (constants.%T.as_type.01d)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.as_type.loc34_31.1 [symbolic = %pattern_type (constants.%pattern_type.e90)]
+// CHECK:STDOUT:   %a.param_patt.loc34_29.2: @HandleAnimal.%pattern_type (%pattern_type.e90) = value_param_pattern [symbolic = %a.param_patt.loc34_29.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:   %a.patt.loc34_29.2: @HandleAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc34_29.2 [symbolic = %a.patt.loc34_29.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc27_32.1 [symbolic = %require_complete (constants.%require_complete.284)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc34_31.1 [symbolic = %require_complete (constants.%require_complete.db4)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.as_type.loc27_32.1 (%T.as_type.6eb)) {
+// CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.as_type.loc34_31.1 (%T.as_type.01d)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %Feed.ref: %Feed.type = name_ref Feed, file.%Feed.decl [concrete = constants.%Feed]
-// CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc27_32.1 (%T.as_type.6eb) = name_ref a, %a
+// CHECK:STDOUT:     %a.ref: @HandleAnimal.%T.as_type.loc34_31.1 (%T.as_type.01d) = name_ref a, %a
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.24a) {
-// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: specific @Eats.WithSelf(constants.%Self.23e) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.f00) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Feed(constants.%T.672) {
+// CHECK:STDOUT:   %T.patt.loc18_10.2 => constants.%T.patt.9e8
+// CHECK:STDOUT:   %T.loc18_10.1 => constants.%T.672
+// CHECK:STDOUT:   %T.as_type.loc18_28.1 => constants.%T.as_type.422
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.aed
+// CHECK:STDOUT:   %e.param_patt.loc18_26.2 => constants.%e.param_patt
+// CHECK:STDOUT:   %e.patt.loc18_26.2 => constants.%e.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Animal.WithSelf(constants.%Self.d73) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @Feed(constants.%T.ad0) {
-// CHECK:STDOUT:   %T.loc18_10.1 => constants.%T.ad0
-// CHECK:STDOUT:   %T.as_type.loc18_29.1 => constants.%T.as_type.f11
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.434
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HandleAnimal(constants.%T.123) {
-// CHECK:STDOUT:   %T.loc27_18.1 => constants.%T.123
-// CHECK:STDOUT:   %T.as_type.loc27_32.1 => constants.%T.as_type.6eb
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.106
+// CHECK:STDOUT: specific @HandleAnimal(constants.%T.443) {
+// CHECK:STDOUT:   %T.patt.loc34_18.2 => constants.%T.patt.e44
+// CHECK:STDOUT:   %T.loc34_18.1 => constants.%T.443
+// CHECK:STDOUT:   %T.as_type.loc34_31.1 => constants.%T.as_type.01d
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e90
+// CHECK:STDOUT:   %a.param_patt.loc34_29.2 => constants.%a.param_patt
+// CHECK:STDOUT:   %a.patt.loc34_29.2 => constants.%a.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

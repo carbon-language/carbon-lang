@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <string>
 #include <utility>
 
 #include "common/check.h"
@@ -14,6 +15,7 @@
 #include "common/filesystem.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/install_paths.h"
 
@@ -36,15 +38,13 @@ namespace Carbon {
 // build of these components into their designated subdirectories, including
 // synchronizing between different threads or processes trying to build the same
 // component.
-//
-// TODO: Add libc++ to the runtimes tree.
-// TODO: Add the Core library to the runtimes tree.
 class Runtimes {
  public:
   class Builder;
   class Cache;
 
   enum Component {
+    CarbonCore,
     ClangResourceDir,
     LibUnwind,
     Libcxx,
@@ -153,6 +153,8 @@ class Runtimes {
   // This uses `std::string_view` to simply using with paths.
   static constexpr auto ComponentPath(Component component) -> std::string_view {
     switch (component) {
+      case CarbonCore:
+        return "core";
       case ClangResourceDir:
         return "clang_resource_dir";
       case LibUnwind:
@@ -234,9 +236,20 @@ class Runtimes::Cache {
   // The features of a cached runtimes directory.
   //
   // TODO: Add support for more build flags that we want to enable when building
-  // runtimes such as sanitizers and CPU-specific optimizations.
+  // runtimes such as sanitizers.
   struct Features {
+    // The target triple to build runtimes for.
     std::string target;
+
+    // The canonical target CPU name (from `clang::TargetOptions::CPU`).
+    std::string cpu = {};
+
+    // The canonical tune CPU name (from `clang::TargetOptions::TuneCPU`).
+    std::string tune_cpu = {};
+
+    // The canonical sorted target features (`+<feature>` / `-<feature>` from
+    // `clang::TargetOptions::Features`).
+    llvm::SmallVector<std::string> target_features = {};
   };
 
   Cache() = default;

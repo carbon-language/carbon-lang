@@ -5,7 +5,6 @@
 // https://adventofcode.com/2024/day/10
 
 import Core library "io";
-import Core library "range";
 
 import library "day10_common";
 import library "io_utils";
@@ -40,7 +39,7 @@ class Reachable {
     return var;
   }
 
-  fn AddLevel[ref self: Self](terrain: Terrain, level: i32) {
+  fn AddLevel(ref self, terrain: Terrain, level: i32) {
     let adj: array((i32, i32), 4) = ((-1, 0), (0, -1), (1, 0), (0, 1));
     for (y: i32 in Core.Range(43)) {
       for (x: i32 in Core.Range(43)) {
@@ -63,7 +62,7 @@ class Reachable {
     }
   }
 
-  fn Count[self: Self](terrain: Terrain, level: i32) -> i32 {
+  fn Count(self, terrain: Terrain, level: i32) -> i32 {
     var total: i32 = 0;
     for (y: i32 in Core.Range(43)) {
       for (x: i32 in Core.Range(43)) {

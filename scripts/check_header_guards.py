@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+
+# /// script
+# requires-python = ">=3.12"
+# ///
 
 """Checks for missing or incorrect header guards."""
 
@@ -8,10 +12,10 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from collections.abc import Iterable
-from pathlib import Path
 import re
 import sys
+from collections.abc import Iterable
+from pathlib import Path
 from typing import NamedTuple, Optional
 
 

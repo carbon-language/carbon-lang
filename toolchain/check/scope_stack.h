@@ -25,10 +25,38 @@ class ScopeStack {
  public:
   explicit ScopeStack(Context& context);
 
+  // The kind of cleanup scope that is associated with a scope. A cleanup scope
+  // contains the destructor calls that are necessary to perform when leaving a
+  // scope.
+  enum class CleanupScopeKind : uint8_t {
+    // This scope is not used for runtime expression evaluation, so should only
+    // contain constants. Any cleanups introduced here can be discarded.
+    // TODO: Is this the behavior we want for such scopes? Should we check that
+    // the cleanups themselves are constant?
+    None,
+    // This scope is associated with a subexpression, not a full-expression, so
+    // its cleanup scope is inherited from the parent scope.
+    Inherited,
+    // This scope is associated with a statement, so it owns a cleanup scope,
+    // and its cleanups must be run or explicitly discarded when exiting this
+    // scope.
+    Owned,
+  };
+
+  // An index for the distance to the bottom of the cleanup stack.
+  struct CleanupScopeDepth : public IndexBase<CleanupScopeDepth> {
+    static constexpr llvm::StringLiteral Label = "cleanup_scope_depth";
+
+    using IndexBase::IndexBase;
+  };
+
   // A scope in which `break` and `continue` can be used.
   struct BreakContinueScope {
     SemIR::InstBlockId break_target;
+    CleanupScopeDepth break_depth;
     SemIR::InstBlockId continue_target;
+    CleanupScopeDepth continue_depth;
+    SemIR::InstId return_scope_decl_id;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -43,12 +71,36 @@ class ScopeStack {
     SemIR::SpecificId specific_id;
   };
 
+  // How a scope affects access to non-constant values in enclosing lexical
+  // scopes.
+  enum class NonConstantAccess : uint8_t {
+    // Non-constant locals in enclosing scopes can be used if permitted by the
+    // parent scope (e.g. `if`, `for`, block scopes, and function body scopes
+    // accessing their own parameter scope).
+    Permitted,
+    // Non-constant locals in enclosing scopes cannot be used (e.g. `class` or,
+    // for now, nested `fn` scopes).
+    Disallowed,
+    // Non-constant locals in enclosing scopes can be used if captured.
+    // TODO: This will eventually be used for `fn` scopes that have captures,
+    // but is unused for now.
+    Captured,
+    // Non-constant locals in enclosing scopes can be used unconditionally
+    // because the scope is unevaluated (e.g. `typeof(...)`).
+    Unevaluated,
+  };
+
   // Information about a scope that has been temporarily removed from the stack.
   // This type is large, so moves of this type should be avoided.
   struct SuspendedScope;
 
   // Pushes a scope for a declaration name's parameters.
-  auto PushForDeclName() -> void;
+  //
+  // `non_constant_access` specifies whether lookups in this scope are allowed
+  // to find and use non-constant locals in the enclosing scope. For most kinds
+  // of nested declaration, this is not allowed.
+  auto PushForDeclName(NonConstantAccess non_constant_access =
+                           NonConstantAccess::Disallowed) -> void;
 
   // Pushes a non-function entity scope. Functions must use
   // `PushForFunctionBody` instead.
@@ -59,7 +111,15 @@ class ScopeStack {
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,
   // this is used by struct literals and code blocks.
-  auto PushForSameRegion() -> void;
+  //
+  // `non_constant_access` specifies whether lookups in this scope are allowed
+  // to find and use non-constant locals in the enclosing scope. This is
+  // typically allowed since the nested scope is in the same region as the
+  // enclosing scope.
+  auto PushForSameRegion(
+      CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::Inherited,
+      NonConstantAccess non_constant_access = NonConstantAccess::Permitted)
+      -> void;
 
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
@@ -109,6 +169,19 @@ class ScopeStack {
            !return_scope_stack_.back().nested_scope_index.has_value();
   }
 
+  // Merges the innermost scope into its grandparent scope, and pops the
+  // now-empty scope. This is used when handling a `for` statement. Given:
+  //
+  //   for (var a: i32 in MakeTempRange()) {
+  //
+  // we have an outer scope containing `var a: i32` and an inner scope
+  // containing `MakeTempRange()`, and we want them the other way around, so we
+  // create an extra enclosing scope in advance and merge the inner scope into
+  // it.
+  //
+  // Requires that no names were introduced in the innermost scope.
+  auto MergeTopScopeIntoGrandparentAndPop() -> void;
+
   // Returns the current scope, if it is of the specified kind. Otherwise,
   // returns nullopt.
   template <typename InstT>
@@ -149,6 +222,44 @@ class ScopeStack {
     return return_scope_stack_.back().decl_id;
   }
 
+  // A `return` statement in a function whose return type is being deduced.
+  // Initialization of the return value is deferred until the return type is
+  // known.
+  struct PendingReturn {
+    // The returned expression, before conversion to the return type.
+    SemIR::InstId expr_id;
+    // A placeholder `SpliceBlock` producing `expr_id`, to be replaced by the
+    // conversion of `expr_id` to the return type.
+    SemIR::InstId splice_id;
+    // The `ReturnExpr` instruction. Its destination is set once the return
+    // type is known.
+    SemIR::InstId return_inst_id;
+  };
+
+  // Adds a `return` statement in the current function whose initialization is
+  // waiting for the return type to be deduced.
+  auto AddPendingReturn(PendingReturn pending_return) -> void {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    pending_return_stack_.AppendToTop(pending_return);
+  }
+
+  // Returns the `return` statements in the current function whose
+  // initialization is waiting for the return type to be deduced.
+  auto PeekPendingReturns() const -> llvm::ArrayRef<PendingReturn> {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    return pending_return_stack_.PeekArray();
+  }
+
+  // Removes and returns the `return` statements in the current function whose
+  // initialization is waiting for the return type to be deduced.
+  auto TakePendingReturns() -> llvm::SmallVector<PendingReturn> {
+    auto pending_returns = llvm::to_vector(PeekPendingReturns());
+    // Leave an empty array for the current function.
+    pending_return_stack_.PopArray();
+    pending_return_stack_.PushArray();
+    return pending_returns;
+  }
+
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
   // do not look past `scope_index`. Returns the existing lookup result, if any.
   // If `use_loc_id` is specified, the name is marked as used at that location.
@@ -157,6 +268,11 @@ class ScopeStack {
                                    SemIR::LocId use_loc_id, bool is_reachable)
       -> SemIR::InstId;
 
+  struct LexicalResult {
+    SemIR::InstId inst_id;
+    ScopeIndex scope_index;
+  };
+
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
   // list of non-lexical scopes in which lookup should also be performed,
@@ -164,7 +280,14 @@ class ScopeStack {
   // name is marked as used at that location.
   auto LookupInLexicalScopes(SemIR::NameId name_id, SemIR::LocId use_loc_id,
                              bool is_reachable)
-      -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
+      -> std::pair<LexicalResult, llvm::ArrayRef<NonLexicalScope>>;
+
+  // Classifies how a non-constant local declared in `target_scope_index` can be
+  // referenced from the current scope. Returns the access kind of the innermost
+  // intervening scope that doesn't permit direct access, or `Permitted` if
+  // there is no such scope.
+  auto GetNonConstantAccess(ScopeIndex target_scope_index) const
+      -> NonConstantAccess;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
@@ -198,12 +321,69 @@ class ScopeStack {
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void;
 
-  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
-    return break_continue_stack_;
+  // Returns whether this is a scope in which cleanups are tracked.
+  auto IsCleanupScope() const -> bool {
+    return Peek().cleanup_scope_kind != CleanupScopeKind::None;
   }
 
-  auto destroy_id_stack() -> ArrayStack<SemIR::InstId>& {
-    return destroy_id_stack_;
+  // Registers a cleanup for `inst_id` within the current cleanup scope.
+  auto PushCleanupFor(SemIR::InstId inst_id) -> void {
+    CARBON_CHECK(IsCleanupScope());
+    destroy_id_stack_.push_back(inst_id);
+  }
+
+  // Returns all values on `destroy_id_stack_` added since `depth`.
+  auto GetCleanupsSince(CleanupScopeDepth depth) const
+      -> llvm::ArrayRef<SemIR::InstId> {
+    return llvm::ArrayRef(destroy_id_stack_).slice(depth.index);
+  }
+
+  // Add all cleanups created so far in this scope to the ambient state of the
+  // scope. This causes them to be deferred until the scope is exited.
+  auto DeferCleanups() -> void {
+    CARBON_CHECK(IsCleanupScope() ||
+                 static_cast<size_t>(Peek().cleanup_scope_depth.index) ==
+                     destroy_id_stack_.size());
+    scope_stack_.back().cleanup_scope_depth =
+        CleanupScopeDepth(destroy_id_stack_.size());
+  }
+
+  // Discards cleanups after the given depth, which must be within the current
+  // scope.
+  auto DiscardCleanupsSince(CleanupScopeDepth depth) -> void {
+    auto enclosing = enclosing_cleanup_scope_depth();
+    CARBON_CHECK(depth >= enclosing);
+    destroy_id_stack_.truncate(depth.index);
+    if (scope_stack_.back().cleanup_scope_depth.index > depth.index) {
+      // We have discarded ambient cleanups. Reduce the ambient cleanup depth to
+      // match. This happens when exiting the scope.
+      scope_stack_.back().cleanup_scope_depth = depth;
+    }
+  }
+
+  // Returns the current depth of the cleanup stack.
+  auto cleanup_scope_depth() const -> CleanupScopeDepth {
+    return CleanupScopeDepth(destroy_id_stack_.size());
+  }
+
+  // Returns the ambient depth of the cleanup stack in the current scope.
+  auto ambient_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return Peek().cleanup_scope_depth;
+  }
+
+  // Returns the depth of the cleanup stack enclosing the current scope.
+  auto enclosing_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return scope_stack_.size() < 2 ? CleanupScopeDepth(0)
+                                   : Peek(1).cleanup_scope_depth;
+  }
+
+  // Returns the depth of the cleanup stack enclosing this function scope.
+  auto function_cleanup_scope_depth() const -> CleanupScopeDepth {
+    return return_scope_stack_.back().cleanup_scope_depth;
+  }
+
+  auto break_continue_stack() -> llvm::SmallVector<BreakContinueScope>& {
+    return break_continue_stack_;
   }
 
   auto compile_time_binding_stack() -> ArrayStack<SemIR::InstId>& {
@@ -249,12 +429,22 @@ class ScopeStack {
     // unregistered when the scope ends.
     bool has_returned_var = false;
 
+    // The kind of cleanup scope that is associated with this scope.
+    CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
+
+    // How this scope affects access to non-constant locals in outer scopes.
+    NonConstantAccess non_constant_access = NonConstantAccess::Disallowed;
+
+    // The ambient cleanup scope depth in this scope. This is the depth that we
+    // will return to at the end of a statement in this scope.
+    CleanupScopeDepth cleanup_scope_depth;
+
     // Whether there are any ids in the `names` set.
     int num_names = 0;
 
     // Names which are registered with lexical_lookup_, and will need to be
     // unregistered when the scope ends.
-    Set<SemIR::NameId> names = {};
+    Set<SemIR::NameId, 16> names = {};
   };
 
   // A scope in which `return` can be used.
@@ -265,6 +455,9 @@ class ScopeStack {
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
+
+    // The cleanup stack depth when entering the function body.
+    CleanupScopeDepth cleanup_scope_depth;
 
     // When a nested scope interrupts a return scope, this is the index of the
     // outermost interrupting scope (the one closest to the function scope).
@@ -283,8 +476,9 @@ class ScopeStack {
   // lexical_lookup_has_load_error is used to limit diagnostics when a given
   // namespace may contain a mix of both successful and failed name imports.
   auto Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
-            SemIR::SpecificId specific_id, bool lexical_lookup_has_load_error)
-      -> void;
+            SemIR::SpecificId specific_id, CleanupScopeKind cleanup_scope_kind,
+            NonConstantAccess non_constant_access,
+            bool lexical_lookup_has_load_error) -> void;
 
   auto Peek(int drop = 0) const -> const ScopeStackEntry& {
     CARBON_DCHECK(drop < static_cast<int>(scope_stack_.size()));
@@ -323,6 +517,10 @@ class ScopeStack {
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
 
+  // For each entry in `return_scope_stack_`, the `return` statements whose
+  // initialization is waiting for the function's return type to be deduced.
+  ArrayStack<PendingReturn> pending_return_stack_;
+
   // A stack of `break` and `continue` targets.
   llvm::SmallVector<BreakContinueScope> break_continue_stack_;
 
@@ -331,7 +529,7 @@ class ScopeStack {
 
   // A stack of instances to destroy. This only has entries inside of function
   // bodies, where destruction on scope exit is required.
-  ArrayStack<SemIR::InstId> destroy_id_stack_;
+  llvm::SmallVector<SemIR::InstId> destroy_id_stack_;
 
   // Information about non-lexical scopes. This is a subset of the entries and
   // the information in scope_stack_.

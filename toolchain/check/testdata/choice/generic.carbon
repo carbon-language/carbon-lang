@@ -11,19 +11,20 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/choice/generic.carbon
 
 //@dump-sem-ir-begin
-choice Always(T:! type) {
+choice Always(T: type) {
   Sunny
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- generic.carbon
+// CHECK:STDOUT: --- generic.carbon = $generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Always.type: type = generic_class_type @Always [concrete]
+// CHECK:STDOUT:   %Always.type: type = parameterized_class_name_type @Always [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Always.generic: %Always.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T) [symbolic]
@@ -33,29 +34,30 @@ choice Always(T:! type) {
 // CHECK:STDOUT:   %struct: %struct_type.discriminant = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic]
 // CHECK:STDOUT:   %Always.val: %Always = struct_value (%empty_tuple) [symbolic]
-// CHECK:STDOUT:   %.78f: ref %Always = temporary invalid, %Always.val [symbolic]
+// CHECK:STDOUT:   %.f82: ref %Always = temporary invalid, %Always.val [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Always.decl: %Always.type = class_decl @Always [concrete = constants.%Always.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc14_16.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %.loc14_19.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc14_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc14_18.1: type = splice_block %.loc14_18.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc14_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc14_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc14_16.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @Always(%T.loc14_16.2: type) {
+// CHECK:STDOUT:   %T.patt.loc14_16.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc14_16.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc14_16.1: type = symbolic_binding T, 0 [symbolic = %T.loc14_16.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Always: type = class_type @Always, @Always(%T.loc14_16.1) [symbolic = %Always (constants.%Always)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %Always [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %Always.val: @Always.%Always (%Always) = struct_value (constants.%empty_tuple) [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:   %.loc16_1.13: ref @Always.%Always (%Always) = temporary invalid, %Always.val [symbolic = %.loc16_1.13 (constants.%.78f)]
+// CHECK:STDOUT:   %.loc16_1.13: ref @Always.%Always (%Always) = temporary invalid, %Always.val [symbolic = %.loc16_1.13 (constants.%.f82)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.discriminant [concrete = constants.%complete_type]
@@ -70,9 +72,9 @@ choice Always(T:! type) {
 // CHECK:STDOUT:     %.loc16_1.8: init %empty_tuple.type to %.loc16_1.5 = in_place_init %.loc16_1.7 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc16_1.9: init @Always.%Always (%Always) to %.loc16_1.4 = class_init (%.loc16_1.8) [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     %.loc16_1.10: init @Always.%Always (%Always) = converted %.loc16_1.3, %.loc16_1.9 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.78f)]
+// CHECK:STDOUT:     %.loc16_1.11: ref @Always.%Always (%Always) = temporary %.loc16_1.4, %.loc16_1.10 [symbolic = %.loc16_1.13 (constants.%.f82)]
 // CHECK:STDOUT:     %.loc16_1.12: @Always.%Always (%Always) = acquire_value %.loc16_1.11 [symbolic = %Always.val (constants.%Always.val)]
-// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = value_binding Sunny, %.loc16_1.12
+// CHECK:STDOUT:     %Sunny: @Always.%Always (%Always) = alias_binding Sunny, %.loc16_1.12 [symbolic = %Always.val (constants.%Always.val)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -82,6 +84,7 @@ choice Always(T:! type) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Always(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc14_16.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc14_16.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

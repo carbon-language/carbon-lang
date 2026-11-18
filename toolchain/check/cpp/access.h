@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_ACCESS_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_ACCESS_H_
 
+#include "clang/AST/DeclAccessPair.h"
+#include "clang/Basic/Specifiers.h"
 #include "toolchain/sem_ir/name_scope.h"
 
 namespace Carbon::Check {

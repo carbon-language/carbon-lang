@@ -46,113 +46,114 @@ var c: Core.Char = 'c';
 var test_str: str = "Test";
 
 // CHECK:STDOUT: - filename: int_literals.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'ints'},
-// CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '5'},
-// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '8'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '9'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0x8'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0b1000'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '39999999999999999993'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 24},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'ints'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
+// CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '5'
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─IntLiteral '8'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─IntLiteral '9'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0x8'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0b1000'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─IntLiteral '39999999999999999993'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: real_literals.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'reals'},
-// CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f64'},
-// CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '7'},
-// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '0.9'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '8.0'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '80.0'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '1.0e7'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '1.0e8'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '1.0e-8'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:         {kind: 'RealLiteral', text: '39999999999999999993.0e39999999999999999993'},
-// CHECK:STDOUT:         {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:       {kind: 'TupleLiteral', text: ')', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 28},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'reals'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
+// CHECK:STDOUT:   │ │   │ ├─FloatTypeLiteral 'f64'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '7'
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ ├─RealLiteral '0.9'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '8.0'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '80.0'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '1.0e7'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '1.0e8'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '1.0e-8'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ ├─RealLiteral '39999999999999999993.0e39999999999999999993'
+// CHECK:STDOUT:   │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: bool_literal.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'f'},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'BoolLiteralFalse', text: 'false'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 't'},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'f'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─BoolLiteralFalse 'false'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 't'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: char_literal.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:             {kind: 'CoreNameExpr', text: 'Core'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Char'},
-// CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'CharLiteral', text: ''c''},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─CoreNameExpr 'Core'
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameNotBeforeSignature 'Char'
+// CHECK:STDOUT:   │ │   ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─CharLiteral ''c''
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: string_literal.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'test_str'},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'StringLiteral', text: '"Test"'},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'test_str'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ ├─StringLiteral '"Test"'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

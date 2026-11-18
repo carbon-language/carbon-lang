@@ -17,7 +17,7 @@
 
 namespace Carbon::Lex {
 
-using DiagnosticEmitter = Diagnostics::Emitter<const char*>;
+using DiagnosticEmitter = Diagnostics::Emitter<SourceLoc>;
 
 static constexpr char MultiLineIndicator[] = R"(''')";
 static constexpr char DoubleQuotedMultiLineIndicator[] = R"(""")";
@@ -30,6 +30,10 @@ struct StringLiteral::Introducer {
   // The length of the introducer, including the file type indicator and
   // newline for a multi-line string literal.
   int prefix_size;
+  // Whether the introducer is valid. Only a `'''` introducer with a malformed
+  // introducer line is invalid; `prefix_size` then covers that line without
+  // its newline.
+  bool is_valid = true;
 
   // Lex the introducer for a string literal, after any '#'s.
   static auto Lex(llvm::StringRef source_text) -> std::optional<Introducer>;
@@ -52,15 +56,56 @@ auto StringLiteral::Introducer::Lex(llvm::StringRef source_text)
   }
 
   if (kind != Kind::SingleLine) {
-    // The rest of the line must be a valid file type indicator: a sequence of
-    // characters containing neither '#' nor '"' followed by a newline.
-    auto prefix_end = source_text.find_first_of("#\n\"", indicator.size());
-    if (prefix_end != llvm::StringRef::npos &&
-        source_text[prefix_end] == '\n') {
-      // Include the newline in the prefix size.
-      return Introducer{.kind = kind,
-                        .terminator = indicator,
-                        .prefix_size = static_cast<int>(prefix_end + 1)};
+    // The rest of the opening line is an optional file type indicator, which
+    // may be followed by a trailing comment. The line must be terminated by a
+    // newline; the string literal's content begins on the following line.
+    size_t line_end = source_text.find('\n', indicator.size());
+    if (line_end != llvm::StringRef::npos) {
+      llvm::StringRef rest = source_text.slice(indicator.size(), line_end);
+      // Strip a trailing comment, if present. A `//` followed by whitespace or
+      // the end of the line begins one; it is treated like trailing whitespace
+      // and is not part of the file type indicator. Because it is removed
+      // here, it may contain `'`, `#`, or `"`, which the indicator itself may
+      // not.
+      // TODO: Surface this comment through the lexer's comment records rather
+      // than only carrying it within the string literal token's spelling.
+      for (size_t slashes = rest.find("//"); slashes != llvm::StringRef::npos;
+           slashes = rest.find("//", slashes + 1)) {
+        llvm::StringRef after_slashes = rest.drop_front(slashes + 2);
+        if (after_slashes.empty() || after_slashes.starts_with(' ') ||
+            after_slashes.starts_with('\t')) {
+          rest = rest.take_front(slashes);
+          break;
+        }
+      }
+      // The file type indicator is the remaining text with surrounding
+      // whitespace trimmed. It must not contain `'`, `#`, or `"`, which would
+      // be ambiguous with the closing delimiter and the hash and double-quoted
+      // string introducers.
+      // TODO: Diagnose a `//` within the indicator: `//` not followed by
+      // whitespace is reserved here as everywhere, rather than being valid
+      // indicator text.
+      llvm::StringRef file_type = rest.trim(" \t");
+      if (file_type.find_first_of("'#\"") == llvm::StringRef::npos) {
+        // Include the newline in the prefix size.
+        return Introducer{.kind = kind,
+                          .terminator = indicator,
+                          .prefix_size = static_cast<int>(line_end + 1)};
+      }
+    }
+    if (kind == Kind::MultiLine) {
+      // The introducer line is malformed. A character literal is never empty,
+      // so the leading `''` cannot begin one and there is no other way to lex
+      // this text; return an invalid introducer for diagnosis. A `"""`
+      // introducer falls through instead: `""` is a valid empty string
+      // literal.
+      return Introducer{
+          .kind = kind,
+          .terminator = indicator,
+          .prefix_size = static_cast<int>(line_end == llvm::StringRef::npos
+                                              ? source_text.size()
+                                              : line_end),
+          .is_valid = false};
     }
   }
 
@@ -118,6 +163,17 @@ auto StringLiteral::Lex(llvm::StringRef source_text)
 
   cursor += introducer->prefix_size;
   const int prefix_len = cursor;
+
+  if (!introducer->is_valid) {
+    // A malformed `'''` introducer line: return an invalid literal covering
+    // the introducer line so the caller can diagnose it.
+    llvm::StringRef text = source_text.take_front(prefix_len);
+    return StringLiteral(text, /*content=*/llvm::StringRef(),
+                         /*content_needs_validation=*/false, hash_level,
+                         introducer->kind,
+                         /*is_terminated=*/false,
+                         /*has_invalid_introducer=*/true);
+  }
 
   llvm::SmallString<16> terminator(introducer->terminator);
   llvm::SmallString<16> escape("\\");
@@ -228,7 +284,9 @@ static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
         ContentBeforeStringTerminator, Error,
         "only whitespace is permitted before the closing `'''` of a "
         "multi-line string");
-    emitter.Emit(indent.end(), ContentBeforeStringTerminator);
+    emitter.Build(indent.end(), ContentBeforeStringTerminator)
+        .Attach(SourceLoc::Range(indent.end(), content.end()))
+        .Emit();
   }
 
   return indent;
@@ -246,7 +304,9 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
     CARBON_DIAGNOSTIC(UnicodeEscapeTooLarge, Error,
                       "code point specified by `\\u{{...}}` escape is greater "
                       "than 0x10FFFF");
-    emitter.Emit(digits.begin(), UnicodeEscapeTooLarge);
+    emitter.Build(digits.begin(), UnicodeEscapeTooLarge)
+        .Attach(SourceLoc::Range(digits))
+        .Emit();
     return false;
   }
 
@@ -254,7 +314,9 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
     CARBON_DIAGNOSTIC(UnicodeEscapeSurrogate, Error,
                       "code point specified by `\\u{{...}}` escape is a "
                       "surrogate character");
-    emitter.Emit(digits.begin(), UnicodeEscapeSurrogate);
+    emitter.Build(digits.begin(), UnicodeEscapeSurrogate)
+        .Attach(SourceLoc::Range(digits))
+        .Emit();
     return false;
   }
 
@@ -292,10 +354,18 @@ static auto AppendFrontOfContents(char*& buffer_cursor,
 // `result` string. `content` is the string content, starting from the first
 // character after the escape sequence introducer (for example, the `n` in
 // `\n`), and will be updated to remove the leading escape sequence.
+// `escape_begin` points at the `\` that starts the introducer, which a raw
+// string follows with its `#`s.
 static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
+                                           const char* escape_begin,
                                            llvm::StringRef& content,
                                            char*& buffer_cursor) -> void {
   CARBON_CHECK(!content.empty(), "should have escaped closing delimiter");
+  // A diagnostic about the escape marks it from the `\` through as much of it
+  // as was consumed when the problem was found.
+  auto escape_through = [&](const char* end) {
+    return SourceLoc::Range(escape_begin, end);
+  };
   char first = content.front();
   content = content.drop_front(1);
 
@@ -325,11 +395,13 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
             DecimalEscapeSequence, Error,
             "decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
             "of `\\0` if the next character is a digit");
-        emitter.Emit(content.begin(), DecimalEscapeSequence);
+        emitter.Build(escape_begin, DecimalEscapeSequence)
+            .Attach(escape_through(content.begin() + 1))
+            .Emit();
         return;
       }
       return;
-    case 'x':
+    case 'x': {
       if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
           IsUpperHexDigit(content[1])) {
         AppendChar(buffer_cursor, static_cast<char>(llvm::hexFromNibbles(
@@ -340,8 +412,16 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       CARBON_DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
                         "escape sequence `\\x` must be followed by two "
                         "uppercase hexadecimal digits, for example `\\x0F`");
-      emitter.Emit(content.begin(), HexadecimalEscapeMissingDigits);
+      // The digit that is missing or wrong is where the escape needs fixing.
+      const char* bad_digit =
+          content.begin() +
+          content.take_front(2).take_while(IsUpperHexDigit).size();
+      emitter
+          .Build(SourceLoc::Before(bad_digit), HexadecimalEscapeMissingDigits)
+          .Attach(escape_through(bad_digit))
+          .Emit();
       break;
+    }
     case 'u': {
       llvm::StringRef remaining = content;
       if (remaining.consume_front("{")) {
@@ -359,13 +439,21 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
           UnicodeEscapeMissingBracedDigits, Error,
           "escape sequence `\\u` must be followed by a braced sequence of "
           "uppercase hexadecimal digits, for example `\\u{{70AD}}`");
-      emitter.Emit(content.begin(), UnicodeEscapeMissingBracedDigits);
+      // `remaining` starts at the part of `{...}` that is missing or wrong,
+      // which is where the escape needs fixing.
+      emitter
+          .Build(SourceLoc::Before(remaining.begin()),
+                 UnicodeEscapeMissingBracedDigits)
+          .Attach(escape_through(remaining.begin()))
+          .Emit();
       break;
     }
     default:
       CARBON_DIAGNOSTIC(UnknownEscapeSequence, Error,
                         "unrecognized escape sequence `{0}`", char);
-      emitter.Emit(content.begin() - 1, UnknownEscapeSequence, first);
+      emitter.Build(escape_begin, UnknownEscapeSequence, first)
+          .Attach(escape_through(content.begin()))
+          .Emit();
       break;
   }
 
@@ -397,7 +485,14 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
             MismatchedIndentInString, Error,
             "indentation does not match that of the closing `'''` in "
             "multi-line string literal");
-        emitter.Emit(line_start, MismatchedIndentInString);
+        CARBON_DIAGNOSTIC_LABEL(ClosingDelimiterIndent, Info,
+                                "closing `'''` is indented to here");
+        auto diag = emitter.Build(line_start, MismatchedIndentInString);
+        // A line with no leading whitespace has no indent to mark.
+        if (contents.begin() != line_start) {
+          diag.Attach(SourceLoc::Range(line_start, contents.begin()));
+        }
+        diag.Attach(SourceLoc::Range(indent), ClosingDelimiterIndent).Emit();
       }
     }
 
@@ -444,13 +539,13 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         auto after_space = contents.find_if_not(IsHorizontalWhitespace);
         if (after_space == llvm::StringRef::npos ||
             contents[after_space] != '\n') {
-          // TODO: Include the source range of the whitespace up to
-          // `contents.begin() + after_space` in the diagnostic.
           CARBON_DIAGNOSTIC(
               InvalidHorizontalWhitespaceInString, Error,
               "whitespace other than plain space must be expressed with an "
               "escape sequence in a string literal");
-          emitter.Emit(contents.begin(), InvalidHorizontalWhitespaceInString);
+          emitter.Build(contents.begin(), InvalidHorizontalWhitespaceInString)
+              .Attach(SourceLoc::Range(contents.take_front(after_space)))
+              .Emit();
           // Include the whitespace in the string contents for error recovery.
           AppendFrontOfContents(buffer_cursor, contents, after_space);
         }
@@ -458,6 +553,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         continue;
       }
 
+      const char* escape_begin = contents.begin();
       if (!contents.consume_front(escape)) {
         // This is not an escape sequence, just a raw `\`.
         AppendChar(buffer_cursor, contents.front());
@@ -472,7 +568,8 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
       }
 
       // Handle this escape sequence.
-      ExpandAndConsumeEscapeSequence(emitter, contents, buffer_cursor);
+      ExpandAndConsumeEscapeSequence(emitter, escape_begin, contents,
+                                     buffer_cursor);
       buffer_last_escape = buffer_cursor;
     }
   }
@@ -484,7 +581,7 @@ static auto IsControlCharacter(llvm::UTF32 c) -> bool {
 }
 
 auto StringLiteral::ComputeCharLiteralValue(
-    Diagnostics::Emitter<const char*>& emitter) const
+    Diagnostics::Emitter<SourceLoc>& emitter) const
     -> std::optional<CharLiteralValue> {
   CARBON_DCHECK(kind_ == Kind::Char);
   CARBON_DCHECK(is_terminated_);
@@ -492,7 +589,9 @@ auto StringLiteral::ComputeCharLiteralValue(
   if (hash_level_ != 0) {
     CARBON_DIAGNOSTIC(CharLiteralRaw, Error,
                       "unexpected `#` before character literal");
-    emitter.Emit(text_.begin(), CharLiteralRaw);
+    emitter.Build(text_.begin(), CharLiteralRaw)
+        .Attach(SourceLoc::Range(text_))
+        .Emit();
   }
 
   // Allocate a buffer sized to the content. Note it's possible this could be
@@ -521,7 +620,10 @@ auto StringLiteral::ComputeCharLiteralValue(
     case llvm::conversionOK: {
       if (target_cursor == target) {
         CARBON_DIAGNOSTIC(CharLiteralEmpty, Error, "empty character literal");
-        emitter.Emit(text_.begin(), CharLiteralEmpty);
+        // The character goes between the quotes.
+        emitter.Build(SourceLoc::Before(content_.begin()), CharLiteralEmpty)
+            .Attach(SourceLoc::Range(text_))
+            .Emit();
         return std::nullopt;
       }
 
@@ -537,7 +639,9 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "control character in character literal; specify as "
                           "escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
-        emitter.Emit(text_.begin(), CharLiteralControlCharacter, result);
+        emitter.Build(text_.begin(), CharLiteralControlCharacter, result)
+            .Attach(SourceLoc::Range(text_))
+            .Emit();
         return std::nullopt;
       }
 
@@ -546,7 +650,9 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "escape sequence `\\x` in character literal; specify "
                           "as escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
-        emitter.Emit(text_.begin(), CharLiteralHexEscape, result);
+        emitter.Build(text_.begin(), CharLiteralHexEscape, result)
+            .Attach(SourceLoc::Range(text_))
+            .Emit();
         return std::nullopt;
       }
 
@@ -554,18 +660,24 @@ auto StringLiteral::ComputeCharLiteralValue(
     }
     case llvm::sourceExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralUnderflow, Error, "incomplete UTF-8");
-      emitter.Emit(text_.begin(), CharLiteralUnderflow);
+      emitter.Build(text_.begin(), CharLiteralUnderflow)
+          .Attach(SourceLoc::Range(text_))
+          .Emit();
       return std::nullopt;
     }
     case llvm::targetExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralOverflow, Error, "too many characters");
-      emitter.Emit(text_.begin(), CharLiteralOverflow);
+      emitter.Build(text_.begin(), CharLiteralOverflow)
+          .Attach(SourceLoc::Range(text_))
+          .Emit();
       return std::nullopt;
     }
     case llvm::sourceIllegal: {
       CARBON_DIAGNOSTIC(CharLiteralInvalidUTF8, Error,
                         "invalid UTF-8 character");
-      emitter.Emit(text_.begin(), CharLiteralInvalidUTF8);
+      emitter.Build(text_.begin(), CharLiteralInvalidUTF8)
+          .Attach(SourceLoc::Range(text_))
+          .Emit();
       return std::nullopt;
     }
   }
@@ -581,7 +693,9 @@ auto StringLiteral::ComputeStringValue(llvm::BumpPtrAllocator& allocator,
     CARBON_DIAGNOSTIC(
         MultiLineStringWithDoubleQuotes, Error,
         "use `'''` delimiters for a multi-line string literal, not `\"\"\"`");
-    emitter.Emit(text_.begin(), MultiLineStringWithDoubleQuotes);
+    emitter.Build(text_.begin(), MultiLineStringWithDoubleQuotes)
+        .Attach(SourceLoc::Range(text_.take_front(hash_level_ + 3)))
+        .Emit();
   }
   llvm::StringRef indent = IsMultiLine(kind_)
                                ? CheckIndent(emitter, text_, content_)

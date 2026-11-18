@@ -4,31 +4,46 @@
 
 #include "toolchain/lower/context.h"
 
+#include "clang/Basic/SourceManager.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "common/check.h"
 #include "common/growing_range.h"
 #include "common/raw_string_ostream.h"
 #include "common/vlog.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/lower/file_context.h"
 #include "toolchain/sem_ir/inst_namer.h"
 
 namespace Carbon::Lower {
 
+static auto CheckOrAddModuleFlag(llvm::Module& llvm_module,
+                                 llvm::Module::ModFlagBehavior behavior,
+                                 llvm::StringRef key, uint32_t value) -> void {
+  if (auto* flag = llvm_module.getModuleFlag(key)) {
+    CARBON_CHECK(llvm::cast<llvm::ConstantInt>(
+                     llvm::cast<llvm::ConstantAsMetadata>(flag)->getValue())
+                         ->getZExtValue() == value,
+                 "Module flag mismatch for {0}", key);
+  } else {
+    llvm_module.addModuleFlag(behavior, key, value);
+  }
+}
+
 Context::Context(
     llvm::LLVMContext* llvm_context,
     llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs, bool want_debug_info,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    clang::CodeGenerator* clang_code_generator, llvm::StringRef module_name,
+    clang::CodeGenerator* cpp_code_generator, llvm::StringRef module_name,
     int total_ir_count, Lower::OptimizationLevel opt_level,
     bool mangle_string_fingerprint, llvm::raw_ostream* vlog_stream)
     : llvm_context_(llvm_context),
-      clang_code_generator_(clang_code_generator),
-      llvm_module_owner_(
-          clang_code_generator_
-              ? nullptr
-              : std::make_unique<llvm::Module>(module_name, *llvm_context)),
+      cpp_code_generator_(cpp_code_generator),
+      llvm_module_owner_(cpp_code_generator_ ? nullptr
+                                             : std::make_unique<llvm::Module>(
+                                                   module_name, *llvm_context)),
       llvm_module_(llvm_module_owner_ ? llvm_module_owner_.get()
-                                      : clang_code_generator_->GetModule()),
+                                      : cpp_code_generator_->GetModule()),
       file_system_(std::move(fs)),
       opt_level_(opt_level),
       di_builder_(*llvm_module_),
@@ -73,18 +88,21 @@ auto Context::Finalize() && -> std::unique_ptr<llvm::Module> {
     }
   }
 
-  return clang_code_generator_ ? std::unique_ptr<llvm::Module>(
-                                     clang_code_generator_->ReleaseModule())
-                               : std::move(llvm_module_owner_);
+  if (di_compile_unit_) {
+    CheckOrAddModuleFlag(*llvm_module_, llvm::Module::Max, "Dwarf Version", 5);
+    CheckOrAddModuleFlag(*llvm_module_, llvm::Module::Warning,
+                         "Debug Info Version", llvm::DEBUG_METADATA_VERSION);
+  }
+
+  return cpp_code_generator_ ? std::unique_ptr<llvm::Module>(
+                                   cpp_code_generator_->ReleaseModule())
+                             : std::move(llvm_module_owner_);
 }
 
 auto Context::BuildDICompileUnit(llvm::StringRef module_name,
-                                 llvm::Module& llvm_module,
+                                 llvm::Module& /*llvm_module*/,
                                  llvm::DIBuilder& di_builder)
     -> llvm::DICompileUnit* {
-  llvm_module.addModuleFlag(llvm::Module::Max, "Dwarf Version", 5);
-  llvm_module.addModuleFlag(llvm::Module::Warning, "Debug Info Version",
-                            llvm::DEBUG_METADATA_VERSION);
   // TODO: Include directory path in the compile_unit_file.
   llvm::DIFile* compile_unit_file = di_builder.createFile(module_name, "");
   // TODO: Introduce a new language code for Carbon. C++ works well for now
@@ -100,7 +118,9 @@ auto Context::GetLocForDI(SemIR::AbsoluteNodeRef abs_node_id) -> LocForDI {
     const SemIR::File* file = abs_node_id.file();
     // TODO: Consider asking our cpp_code_generator to map the location to a
     // debug location, in order to use Clang's rules for (eg) macro handling.
-    auto loc = file->clang_source_locs().Get(abs_node_id.clang_source_loc_id());
+    auto loc = file->clang_source_locs()
+                   .Get(abs_node_id.clang_source_loc_id())
+                   .getBegin();
     auto presumed_loc = file->cpp_file()->source_manager().getPresumedLoc(loc);
     return {
         .filename = presumed_loc.getFilename(),

@@ -6,7 +6,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import sys
 from collections import defaultdict
-from typing import TextIO, Dict, List
+from typing import Dict, List, TextIO
 
 
 def parse_diff(stream: TextIO) -> None:

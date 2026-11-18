@@ -119,37 +119,24 @@ enum ComputedExprCategory : int8_t {
   DependsOnOperands = -4,
 };
 
+// A tag type that specifies the category of the inst that will be produced by
+// a given kind of action. This also implicitly specifies the category of the
+// action itself, because all actions have category `Value`.
+struct ActionExprCategory {
+  // The category of insts produced by this kind of action. This should be
+  // `Dependent` if the action can produce insts with different categories.
+  ExprCategory category;
+
+  friend constexpr auto operator==(const ActionExprCategory& lhs,
+                                   const ActionExprCategory& rhs)
+      -> bool = default;
+};
+
 // What kind of expression category an instruction kind produces. The expression
 // category in general may depend on the operands of the instruction, but we can
 // handle most cases based on the instruction kind alone.
-class InstExprCategory {
- public:
-  constexpr explicit(false) InstExprCategory(ExprCategory cat)
-      : kind_(static_cast<int8_t>(cat)) {}
-  constexpr explicit(false) InstExprCategory(ComputedExprCategory kind)
-      : kind_(static_cast<int8_t>(kind)) {}
-
-  // If this instruction always has the same category, returns that category.
-  // Otherwise returns nullopt.
-  constexpr auto TryAsFixedCategory() const -> std::optional<ExprCategory> {
-    return kind_ >= 0 ? std::optional(static_cast<ExprCategory>(kind_))
-                      : std::nullopt;
-  }
-
-  // If the category of this instruction depends on its operands, returns the
-  // kind of computation to use to determine the category. Otherwise returns
-  // nullopt.
-  constexpr auto TryAsComputedCategory() const
-      -> std::optional<ComputedExprCategory> {
-    return kind_ < 0 ? std::optional(static_cast<ComputedExprCategory>(kind_))
-                     : std::nullopt;
-  }
-
- private:
-  // A value from either the `ExprCategory` or `ComputedExprCategory`
-  // enumerations.
-  int8_t kind_;
-};
+using InstExprCategory =
+    std::variant<ExprCategory, ComputedExprCategory, ActionExprCategory>;
 
 // Whether an instruction defines a type.
 enum class InstIsType : int8_t {
@@ -193,16 +180,22 @@ enum class InstConstantKind : int8_t {
   // symbolic constant inst when applied to a symbolic constant, and can be a
   // concrete reference constant inst when applied to a reference constant.
   SymbolicOrReference,
+  // This instruction can be a template constant inst, depending on its
+  // operands, but never a concrete constant inst.
+  TemplateOnly,
   // This instruction is a metaprogramming or template instantiation action that
-  // generates an instruction. Like `SymbolicOnly`, it may be a symbolic
-  // constant inst depending on its operands, but never a concrete constant
-  // inst. The instruction may or may not have a concrete constant value that is
-  // a generated instruction. Constant evaluation support for types with this
-  // constant kind is provided automatically, by calling `PerformDelayedAction`.
+  // generates and returns a tuple containing one or more instruction values.
+  // Like `SymbolicOnly`, it may be a symbolic constant inst depending on its
+  // operands, but never a concrete constant inst. The instruction may or may
+  // not have a concrete constant value that is a tuple of generated
+  // instructions. Constant evaluation support for types with this constant kind
+  // is provided automatically, by calling `PerformDelayedAction`.
+  MultiInstAction,
+  // This instruction is a metaprogramming or template instantiation action that
+  // generates and returns an instruction value. Like `MultiInstAction`, but
+  // optimized for the common case where the result is only a single
+  // instruction, in order to avoid creating an unnecessary 1-tuple.
   InstAction,
-  // Equivalent to InstAction, but this instruction is guaranteed to have a
-  // constant value.
-  ConstantInstAction,
   // This instruction's operands determine whether it has a constant value,
   // whether it is a constant inst, and/or whether it results in a compile-time
   // error, in ways not expressed by the other InstConstantKinds. For example,
@@ -290,6 +283,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
         constant_kind == InstConstantKind::AlwaysUnique
             ? InstConstantNeedsInstIdKind::Permanent
             : InstConstantNeedsInstIdKind::No;
+    bool action_needs_specific_id = false;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
     bool deduce_through = false;
@@ -324,7 +318,7 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   }
 
   // Returns the category of expression represented by this instruction kind.
-  auto expr_category() const -> InstExprCategory {
+  auto expr_category() const -> const InstExprCategory& {
     return definition_info(*this).expr_category;
   }
 
@@ -337,6 +331,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {
     return definition_info(*this).constant_kind;
+  }
+
+  // Returns whether this instruction kind is an action instruction.
+  auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
   }
 
   // Returns whether we need an `InstId` referring to the instruction to
@@ -353,6 +353,12 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // its operands.
   auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return definition_info(*this).constant_needs_inst_id;
+  }
+
+  // Returns whether this is an action whose `PerformAction` function needs the
+  // `SpecificId` for the specific that is being generated.
+  auto action_needs_specific_id() const -> bool {
+    return definition_info(*this).action_needs_specific_id;
   }
 
   // Returns whether this instruction kind is a code block terminator, such as
@@ -439,7 +445,8 @@ class InstKind::Definition : public InstKind {
     // kind is always symbolic when it's a value, then it's always symbolic when
     // it's a type.
     return is_type() != InstIsType::Never &&
-           (constant_kind() == InstConstantKind::SymbolicOnly ||
+           (constant_kind() == InstConstantKind::Indirect ||
+            constant_kind() == InstConstantKind::SymbolicOnly ||
             constant_kind() == InstConstantKind::SymbolicOrReference);
   }
 
@@ -448,9 +455,20 @@ class InstKind::Definition : public InstKind {
     return info_.constant_kind;
   }
 
+  // Returns whether this instruction kind is an action instruction.
+  constexpr auto is_action() const -> bool {
+    return constant_kind() == InstConstantKind::InstAction ||
+           constant_kind() == InstConstantKind::MultiInstAction;
+  }
+
   // Returns whether constant evaluation of this instruction needs an InstId.
   constexpr auto constant_needs_inst_id() const -> InstConstantNeedsInstIdKind {
     return info_.constant_needs_inst_id;
+  }
+
+  // Returns whether this is an action whose `PerformAction` needs a SpecificId.
+  constexpr auto action_needs_specific_id() const -> bool {
+    return info_.action_needs_specific_id;
   }
 
   // Returns whether this instruction kind is a code block terminator. See
@@ -483,6 +501,8 @@ namespace Internal {
 
 // Storage for `internal_allowed_node_kinds` where there's a list of kinds.
 template <Parse::NodeKind::RawEnumType... T>
+// False positive: https://github.com/llvm/llvm-project/issues/222793
+// NOLINTNEXTLINE(google-readability-casting)
 constexpr std::array<Parse::NodeKind::RawEnumType, sizeof...(T)> Kinds = {T...};
 
 // `NoneNodeId` uses should never have a node associated; it's mainly for

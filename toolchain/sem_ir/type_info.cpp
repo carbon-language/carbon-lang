@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/file.h"
 
@@ -145,7 +146,8 @@ auto NumericTypeLiteralInfo::PrintLiteral(const File& file,
 // Returns whether this kind of recognized type should have a generic argument
 // list.
 static auto ExpectsArgs(RecognizedTypeInfo::Kind kind) -> bool {
-  return kind == RecognizedTypeInfo::Optional;
+  return kind == RecognizedTypeInfo::Optional ||
+         kind == RecognizedTypeInfo::Array;
 }
 
 auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
@@ -183,6 +185,7 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
 
   if (!parent_scope_name_id.has_value()) {
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
+                    .Case("Array", Array)
                     .Case("Char", Char)
                     .Case("Optional", Optional)
                     .Case("String", Str)
@@ -197,7 +200,9 @@ auto RecognizedTypeInfo::ForType(const File& file, ClassType class_type)
   if (parent_name_ident == "CppCompat") {
     Kind kind = llvm::StringSwitch<Kind>(*name_ident)
                     .Case("Long32", CppLong32)
+                    .Case("Long64", CppLong64)
                     .Case("ULong32", CppULong32)
+                    .Case("ULong64", CppULong64)
                     .Case("LongLong64", CppLongLong64)
                     .Case("ULongLong64", CppULongLong64)
                     .Case("NullptrT", CppNullptrT)
@@ -243,8 +248,14 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
     case CppLong32:
       return PrintCppCompatLiteral(file, &clang::ASTContext::LongTy, 32, "long",
                                    out);
+    case CppLong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::LongTy, 64, "long",
+                                   out);
     case CppULong32:
       return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongTy, 32,
+                                   "unsigned_long", out);
+    case CppULong64:
+      return PrintCppCompatLiteral(file, &clang::ASTContext::UnsignedLongTy, 64,
                                    "unsigned_long", out);
     case CppLongLong64:
       return PrintCppCompatLiteral(file, &clang::ASTContext::LongLongTy, 64,
@@ -265,6 +276,9 @@ auto RecognizedTypeInfo::PrintLiteral(const File& file,
       }
       break;
     case Optional:
+    case Array:
+      // Printing these requires stringifying the arguments, which is handled
+      // by the caller.
       break;
     case Str:
       out << "str";

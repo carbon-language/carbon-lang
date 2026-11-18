@@ -109,8 +109,20 @@ class FunctionContext {
   auto GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
       -> llvm::PHINode*;
 
+  // Returns whether the given instruction is treated as a constant in this
+  // function. For template-dependent instructions this requires looking in the
+  // specific, as we do not discover whether they are actually constant until
+  // instantiation.
+  auto IsConstant(SemIR::InstId) -> bool;
+
   // Returns a value for the given instruction.
-  auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
+  //
+  // If `require_value` is true, the instruction is required to have emitted a
+  // value or have a concrete constant in the current specific, and will CHECK
+  // if these conditions are not met. If `require_value` is false, `nullptr`
+  // will be returned instead if there is no value for the instruction.
+  auto GetValue(SemIR::InstId inst_id, bool require_value = true)
+      -> llvm::Value*;
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
@@ -125,6 +137,14 @@ class FunctionContext {
     auto* llvm_type = GetFileContext(type.file).GetType(type.type_id);
     AddTypeToCurrentFingerprint(llvm_type);
     return llvm_type;
+  }
+
+  // Returns the alignment of the given type_id. This adds the alignment to the
+  // fingerprint.
+  auto GetAlignment(TypeInFile type) -> llvm::Align {
+    auto align = GetFileContext(type.file).GetAlignment(type.type_id);
+    AddIntToCurrentFingerprint(align.value());
+    return align;
   }
 
   // Returns the type of the given instruction in the current specific.
@@ -166,7 +186,7 @@ class FunctionContext {
 
   // Creates an alloca instruction of the given type, adds it to the entry
   // block, and starts the lifetime of the corresponding storage.
-  auto CreateAlloca(llvm::Type* type, const llvm::Twine& name = llvm::Twine())
+  auto CreateAlloca(TypeInFile type, const llvm::Twine& name = llvm::Twine())
       -> llvm::AllocaInst*;
 
   // Returns the debug location to associate with the specified instruction.
@@ -178,6 +198,11 @@ class FunctionContext {
 
   // Emits a store of an object representation of type `type`.
   auto StoreObject(TypeInFile type, llvm::Value* value, llvm::Value* addr)
+      -> void;
+
+  // Emits an object representation copy for type `type` from `source` to
+  // `dest`, which must be pointers to `type` objects.
+  auto CopyObject(TypeInFile type, llvm::Value* source, llvm::Value* dest)
       -> void;
 
   // Emits the instructions necessary to initialize the storage at `dest_id`
@@ -211,6 +236,13 @@ class FunctionContext {
 
   // When fingerprinting for a specific, adds the type.
   auto AddTypeToCurrentFingerprint(llvm::Type* type) -> void;
+
+  // When fingerprinting for a specific of a template, adds the given
+  // instruction.
+  auto AddInstToCurrentFingerprint(SemIR::InstId inst_id) -> void;
+
+  // When fingerprinting for a specific, adds the global.
+  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
   // Emits the final function fingerprints. Only called when function lowering
   // is complete.
@@ -265,7 +297,7 @@ class FunctionContext {
   }
 
   auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id) const
-      -> llvm::GlobalVariable* {
+      -> llvm::Constant* {
     return file_context_->GetVtable(vtable_id, specific_id);
   }
 
@@ -280,11 +312,10 @@ class FunctionContext {
     // Sets the instruction we are currently emitting.
     auto SetCurrentInstId(SemIR::InstId inst_id) -> void { inst_id_ = inst_id; }
 
-   private:
     auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,
-                      llvm::BasicBlock::iterator insert_pt) const
-        -> void override;
+                      llvm::BasicBlock::iterator insert_pt) const -> void;
 
+   private:
     // The instruction namer.
     const SemIR::InstNamer* inst_namer_;
 
@@ -303,9 +334,6 @@ class FunctionContext {
   // objects.
   auto CopyObject(TypeInFile type, SemIR::InstId source_id,
                   SemIR::InstId dest_id) -> void;
-
-  // When fingerprinting for a specific, adds the global.
-  auto AddGlobalToCurrentFingerprint(llvm::Value* global) -> void;
 
   // Context for lowering in the file that contains this function's
   // instructions.
@@ -359,13 +387,42 @@ class FunctionContext {
   Map<SemIR::InstId, llvm::Value*> locals_;
 };
 
-// Provides handlers for instructions that occur in a FunctionContext. Although
-// this is declared for all instructions, it should only be defined for
-// instructions which are non-constant and not always typed. See
-// `FunctionContext::LowerInst` for how this is used.
-#define CARBON_SEM_IR_INST_KIND(Name)                              \
-  auto HandleInst(FunctionContext& context, SemIR::InstId inst_id, \
-                  SemIR::Name inst) -> void;
+namespace Internal {
+// Determines whether InstT should have a `HandleInst` function.
+template <typename InstT>
+constexpr bool HasHandleInst =
+    // is_lowered() == false indicates lowering should never see this inst kind.
+    InstT::Kind.is_lowered() &&
+    // Constant instructions never need to be explicitly lowered.
+    InstT::Kind.constant_kind() != SemIR::InstConstantKind::Always &&
+    InstT::Kind.constant_kind() != SemIR::InstConstantKind::AlwaysUnique &&
+    // Instructions that always produce types don't need a `HandleInst` even if
+    // they're not constant, because `type` has an empty runtime representation
+    // and we assume that `InstIsType::Always` implies a lack of side effects.
+    InstT::Kind.is_type() != SemIR::InstIsType::Always;
+
+// Computes the function type to use for HandleInst for InstT.
+template <typename InstT>
+using FunctionTypeForHandleInst = std::conditional_t<
+    HasHandleInst<InstT>,
+    auto(FunctionContext& context, SemIR::InstId inst_id, InstT inst)->void,
+    auto()->void>;
+}  // namespace Internal
+
+// Explicitly delete the overload generated for non-lowered instructions.
+// These all produce the same signature, so we only need to delete it once.
+auto HandleInst() -> void = delete;
+
+// Provides handlers for instructions that occur in a FunctionContext. This
+// should be defined for instructions for which `Internal::HasHandleInst<InstT>`
+// is true. See `FunctionContext::LowerInst` for how this is used.
+//
+// The signature of an overload is:
+//
+//   auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+//                   InstT inst) -> void;
+#define CARBON_SEM_IR_INST_KIND(Name) \
+  Internal::FunctionTypeForHandleInst<SemIR::Name> HandleInst;
 #include "toolchain/sem_ir/inst_kind.def"
 
 }  // namespace Carbon::Lower

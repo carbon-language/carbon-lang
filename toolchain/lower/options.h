@@ -40,6 +40,9 @@ struct LowerToLLVMOptions {
 
   // Whether to use the string form of the fingerprint for mangling.
   bool mangle_string_fingerprint = false;
+
+  // Whether to generate names for LLVM instructions.
+  bool generate_inst_names = false;
 };
 
 }  // namespace Carbon::Lower

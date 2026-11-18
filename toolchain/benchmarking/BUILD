@@ -6,6 +6,7 @@
 # tolochain. Infrastructure libraries may be depended on by focused benchmarks
 # in various other parts of the toolchain.
 
+load("@rules_python//python:defs.bzl", "py_library", "py_test")
 load("@rules_shell//shell:sh_test.bzl", "sh_test")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load("//bazel/cc_toolchains:defs.bzl", "cc_env")
@@ -32,14 +33,20 @@ cc_test(
     name = "source_gen_test",
     size = "small",
     srcs = ["source_gen_test.cpp"],
+    data = ["//toolchain/install:install_data"],
+    shard_count = 8,
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
+        "//common:error",
+        "//common:raw_string_ostream",
         "//common:set",
+        "//testing/base:capture_std_streams",
         "//testing/base:global_exe_path",
         "//testing/base:gtest_main",
         "//toolchain/base:install_paths_test_helpers",
         "//toolchain/driver",
+        "//toolchain/driver:clang_runner",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -63,11 +70,16 @@ cc_binary(
     name = "compile_benchmark",
     testonly = 1,
     srcs = ["compile_benchmark.cpp"],
+    # The subprocess benchmarks execute the installed toolchain binaries.
+    data = ["//toolchain/install:install_data"],
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
+        "//common:filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
         "//toolchain/base:install_paths_test_helpers",
         "//toolchain/driver",
         "//toolchain/driver:clang_runner",
@@ -83,8 +95,55 @@ sh_test(
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=/256$$",
+        # Dry-run the smallest case of every benchmark. Also run just the lex
+        # benchmark that executes a subprocess to reduce the overhead and reduce
+        # timeouts. The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^(BM_CompileApiFile(DenseDecls|RealisticHeader).*/256|BM_CompileImplFile.*/1024|BM_CompileExec.*Phase::Lex.*/256/real_time)$$",
     ],
     env = cc_env(),
+)
+
+cc_binary(
+    name = "prelude_benchmark",
+    testonly = 1,
+    srcs = ["prelude_benchmark.cpp"],
+    deps = [
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//testing/base:benchmark_helpers",
+        "//testing/base:benchmark_main",
+        "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
+        "//toolchain/base:install_paths_test_helpers",
+        "//toolchain/base:mem_usage",
+        "//toolchain/driver",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "prelude_benchmark_test",
+    size = "small",
+    srcs = [":prelude_benchmark"],
+    # No `--benchmark_filter` is needed (unlike `compile_benchmark_test`): the
+    # benchmarks aren't `Range()`-parameterized, so a dry run is already cheap.
+    args = ["--benchmark_dry_run"],
+    env = cc_env(),
+)
+
+py_library(
+    name = "run_bencher",
+    srcs = [
+        "bencher_suites.py",
+        "run_bencher.py",
+    ],
+    data = ["//scripts:bench_runner.py"],
+)
+
+py_test(
+    name = "run_bencher_test",
+    size = "small",
+    srcs = ["run_bencher_test.py"],
+    deps = [":run_bencher"],
 )

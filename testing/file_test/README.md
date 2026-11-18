@@ -84,6 +84,9 @@ they have an associated error. An exception is that the main test file may omit
 
 ## Content replacement
 
+<!-- TODO: Re-enable once rumdl's bugs with complex nested lists are fixed. -->
+<!-- rumdl-disable -->
+
 Some keywords can be inserted for content:
 
 -   ```
@@ -281,6 +284,13 @@ Supported comment markers are:
     Output line matchers may contain `[[@LINE+offset]` and `{{regex}}` syntaxes,
     similar to `FileCheck`.
 
+    When the file uses an `AUTOUPDATE-SPLIT`, only `CHECK` lines in that split
+    are matchers; elsewhere they are ordinary content. This is what allows a
+    split to hold a test file that itself contains `CHECK` lines, as the
+    language server's SemIR tests do. Note that such a split still can't contain
+    a `// ---` line, which would split the enclosing file; write the `/`
+    characters as `[[@0x2f]]` to avoid that.
+
 -   ```
     // TIP: <tip>
     ```
@@ -288,6 +298,8 @@ Supported comment markers are:
     Tips like this are added by autoupdate, for example providing commands to
     run the test directly. Tips have no impact on validation; the marker informs
     autoupdate that it can update or remove them as needed.
+
+<!-- rumdl-enable -->
 
 <!--
 {% endraw %}

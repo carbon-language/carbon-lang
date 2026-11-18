@@ -25,6 +25,10 @@ load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
 
+CARBON_CORE_SRCS_FILEGROUPS = [
+    "//core:prelude_files",
+]
+
 CRT_FILES = {
     "crtbegin_src": "@llvm-project//compiler-rt:builtins_crtbegin_src",
     "crtend_src": "@llvm-project//compiler-rt:builtins_crtend_src",
@@ -72,6 +76,7 @@ RUNTIMES_PREFIXES = {
     "libcxxabi_textual_srcs": "runtimes/libcxxabi/",
     "libunwind_hdrs": "runtimes/libunwind/",
     "libunwind_srcs": "runtimes/libunwind/",
+    "prelude_files": "core/",
 }
 
 def _get_name(target):
@@ -143,6 +148,7 @@ def _get_substitutions(ctx):
             RUNTIMES_PREFIXES[name],
         )
         for name in [_get_name(g) for g in (
+            CARBON_CORE_SRCS_FILEGROUPS +
             RUNTIMES_HDRS_FILEGROUPS + RUNTIMES_SRCS_FILEGROUPS +
             RUNTIMES_TEXTUAL_SRCS_FILEGROUPS
         )]
@@ -154,6 +160,7 @@ _common_runtimes_rule_attrs = {
 } | {
     "_" + _get_name(g): attr.label_list(default = [g], allow_files = True)
     for g in (
+        CARBON_CORE_SRCS_FILEGROUPS +
         BUILTINS_SRCS_FILEGROUPS +
         BUILTINS_TEXTUAL_SRCS_FILEGROUPS +
         RUNTIMES_HDRS_FILEGROUPS +

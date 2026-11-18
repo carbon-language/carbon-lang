@@ -8,56 +8,78 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/package_expr/fail_in_name.carbon
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:14: error: unexpected expression before : in binding pattern [ExpectedBindingName]
-// CHECK:STDERR: var package.n: i32;
-// CHECK:STDERR:              ^
+// CHECK:STDERR:        ╭─┤ fail_in_name.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ var package.n: i32;
+// CHECK:STDERR:        ·     ━━━━┳━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: unexpected expression before `:` in binding pattern
+// CHECK:STDERR:        ·            ┃        [ExpectedBindingName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var package.n: i32;
 
 // `val` is a keyword, but during error recovery we treat it as an identifier.
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+8]]:13: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
-// CHECK:STDERR: var package.val: i32;
-// CHECK:STDERR:             ^~~
+// CHECK:STDERR:        ╭─┤ fail_in_name.carbon:[[@LINE+15]]:13
+// CHECK:STDERR: ->     │ var package.val: i32;
+// CHECK:STDERR:        ·             ┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: expected identifier after `.`; prefix reserved word with
+// CHECK:STDERR:        ·                ┃        `r#` to form a valid identifier
+// CHECK:STDERR:        ·                ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:16: error: unexpected expression before : in binding pattern [ExpectedBindingName]
-// CHECK:STDERR: var package.val: i32;
-// CHECK:STDERR:                ^
+// CHECK:STDERR:        ╭─┤ fail_in_name.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ var package.val: i32;
+// CHECK:STDERR:        ·     ━━━━━┳━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: unexpected expression before `:` in binding pattern
+// CHECK:STDERR:        ·             ┃        [ExpectedBindingName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var package.val: i32;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:11: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: namespace package.NS;
-// CHECK:STDERR:           ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_in_name.carbon:[[@LINE+8]]:11
+// CHECK:STDERR: ->     │ namespace package.NS;
+// CHECK:STDERR:        ·           ┳━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: `namespace` introducer should be followed by a name;
+// CHECK:STDERR:        ·              ┃        prefix reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace package.NS;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+4]]:7: error: `class` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: class package.C {
-// CHECK:STDERR:       ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_in_name.carbon:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ class package.C {
+// CHECK:STDERR:        ·       ┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: `class` introducer should be followed by a name; prefix
+// CHECK:STDERR:        ·          ┃        reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class package.C {
 }
 
 // CHECK:STDOUT: - filename: fail_in_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'val', has_error: yes},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: 'package', has_error: yes},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'val'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'package'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'NS'
+// CHECK:STDOUT:   ├─Namespace ';'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameNotBeforeSignature 'package'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

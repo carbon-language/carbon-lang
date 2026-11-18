@@ -72,8 +72,6 @@ language are well explained, justified, and reviewed by the community.
 
     -   Send the proposal as a broad RFC to the community.
 
-    -   Add the "proposal rfc" label for tracking.
-
 -   Contributors are encouraged to react with a _thumbs-up_ to proposal PRs if
     they are generally interested and supportive of the high-level direction
     based on title and summary. Similarly, other reactions are encouraged to
@@ -143,8 +141,6 @@ issues for longer discussion:
 
     -   Send the proposal as a broad RFC to the community.
 
-    -   Add the "proposal rfc" label for tracking.
-
 -   Address comments where you can and they make sense.
 
 -   If you don't see an obvious way to address comments, that's OK.
@@ -165,7 +161,6 @@ issues for longer discussion:
 -   When you both have
     [approval](/docs/project/code_review.md#approving-the-change) from the
     assigned lead and the last blocking issue is addressed, merge!
-
     -   If you end up making significant changes when incorporating resolved
         issues after the approval from the assigned lead, circle back for a
         fresh approval before merging, just like you would with code review.
@@ -173,7 +168,7 @@ issues for longer discussion:
 #### Community
 
 -   We use the
-    ["proposal rfc" label](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+label%3A%22proposal+rfc%22)
+    ["proposal" label on non-draft PRs](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse+label%3Aproposal)
     to track proposals that are in RFC.
 
     -   Anyone that is interested can participate once a proposal is ready for
@@ -201,7 +196,6 @@ issues for longer discussion:
 -   If there is an open question or a critical blocking issue that needs to get
     resolved, move it to its own issue that the PR depends on, and focus the
     discussion there.
-
     -   The issue should focus on surfacing the important aspects of the
         tradeoff represented by the issue or open question, not on advocacy.
 
@@ -276,8 +270,11 @@ edit both as necessary to ensure they give the best high-level understanding of
 the proposal possible.
 
 A proposal PR will include a "P-numbered" _proposal document_,
-`proposals/pNNNN.md`, where `NNNN` is the pull request number. This file should
-be based on the [proposal template file](/proposals/scripts/template.md).
+`proposals/p######-slug.md`, where `######` is the pull request number (padded
+to 6 digits) and `slug` is a robust
+["slug"-compatible](https://en.wikipedia.org/wiki/Clean_URL#Slug) version of the
+title. This file should be based on the
+[proposal template file](/proposals/scripts/template.md).
 
 When writing a proposal, try to keep it brief and focused to maximize the
 community's engagement in it. Beyond the above structure, try to use
@@ -326,7 +323,7 @@ date, and can easily find out what has changed. For example:
 
 ```md
 > **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-> [p5366](/proposals/p5366.md).
+> [#5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
 ```
 
 See the `docs/design` changes in

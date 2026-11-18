@@ -45,9 +45,9 @@ files to NFC as necessary.
 
 ## Alternatives considered
 
--   [Character encoding](/proposals/p0142.md#character-encoding-1)
--   [Byte order marks](/proposals/p0142.md#byte-order-marks)
--   [Normalization forms](/proposals/p0142.md#normalization-forms)
+-   [Character encoding](/proposals/p000142-unicode-source-files.md#character-encoding-1)
+-   [Byte order marks](/proposals/p000142-unicode-source-files.md#byte-order-marks)
+-   [Normalization forms](/proposals/p000142-unicode-source-files.md#normalization-forms)
 
 ## References
 

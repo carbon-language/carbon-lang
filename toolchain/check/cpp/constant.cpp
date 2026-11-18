@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/constant.h"
 
+#include "clang/Basic/DiagnosticSema.h"
+#include "clang/Sema/Sema.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
@@ -77,10 +79,10 @@ static auto MapLValueToConstant(Context& context, SemIR::LocId loc_id,
 
       const SemIR::FieldDecl& field_decl_inst =
           context.insts().GetAs<SemIR::FieldDecl>(field_inst_id);
+      const auto& field = context.fields().Get(field_decl_inst.field_id);
 
       qual_type = field_decl->getType();
-      inst_id = PerformMemberAccess(context, loc_id, inst_id,
-                                    field_decl_inst.name_id);
+      inst_id = PerformMemberAccess(context, loc_id, inst_id, field.name_id);
     }
   }
 
@@ -219,29 +221,12 @@ static auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
 }
 
 auto EvalCppCall(Context& context, SemIR::LocId loc_id,
-                 SemIR::ClangDeclId clang_decl_id, SemIR::InstBlockId args_id)
+                 const SemIR::ClangDecl& clang_decl, SemIR::InstBlockId args_id)
     -> SemIR::ConstantId {
   const auto& args = context.inst_blocks().Get(args_id);
 
-  auto* decl = context.clang_decls().Get(clang_decl_id).GetAsKey().decl;
-
-  auto* function_decl = cast<clang::FunctionDecl>(decl);
-
-  // Create expr for the function declaration.
-  auto* decl_ref_expr = clang::DeclRefExpr::Create(
-      context.ast_context(), /*QualifierLoc=*/clang::NestedNameSpecifierLoc(),
-      /*TemplateKWLoc=*/clang::SourceLocation(), function_decl,
-      /*RefersToEnclosingVariableOrCapture=*/false,
-      /*NameLoc=*/GetCppLocation(context, loc_id), function_decl->getType(),
-      clang::VK_LValue);
-
-  // Cast to a function pointer type.
-  auto function_ptr_type =
-      context.ast_context().getPointerType(function_decl->getType());
-  auto* implicit_cast_expr = clang::ImplicitCastExpr::Create(
-      context.ast_context(), function_ptr_type,
-      clang::CK_FunctionToPointerDecay, decl_ref_expr, nullptr,
-      clang::VK_PRValue, clang::FPOptionsOverride());
+  auto* function_decl = cast<clang::FunctionDecl>(clang_decl.decl());
+  auto loc = GetCppLocation(context, loc_id);
 
   // Convert the arguments to exprs.
   clang::SmallVector<clang::Expr*> arg_exprs;
@@ -256,11 +241,36 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
   }
 
   // Create an expr to call the function.
-  auto* call_expr = clang::CallExpr::Create(
-      context.ast_context(), implicit_cast_expr, arg_exprs,
-      function_decl->getCallResultType(), clang::VK_PRValue,
-      /*RParenLoc=*/GetCppLocation(context, loc_id),
-      clang::FPOptionsOverride());
+  clang::Expr* call_expr;
+  if (auto* ctor = dyn_cast<clang::CXXConstructorDecl>(function_decl)) {
+    // Constructor: generate a direct constructor call expression.
+    call_expr = clang::CXXConstructExpr::Create(
+        context.ast_context(), function_decl->getCallResultType(), loc, ctor,
+        /*Elidable=*/false, arg_exprs, /*HadMultipleCandidates=*/false,
+        /*ListInitialization=*/false, /*StdInitListInitialization=*/false,
+        /*ZeroInitialization=*/false, clang::CXXConstructionKind::Complete,
+        clang::SourceRange(loc));
+  } else {
+    // Create expr for the function declaration.
+    auto* decl_ref_expr = clang::DeclRefExpr::Create(
+        context.ast_context(), /*QualifierLoc=*/clang::NestedNameSpecifierLoc(),
+        /*TemplateKWLoc=*/clang::SourceLocation(), function_decl,
+        /*RefersToEnclosingVariableOrCapture=*/false,
+        /*NameLoc=*/loc, function_decl->getType(), clang::VK_LValue);
+
+    // Cast to a function pointer type.
+    // TODO: For a non-static member function, we should create a member access.
+    auto function_ptr_type =
+        context.ast_context().getPointerType(function_decl->getType());
+    auto* implicit_cast_expr = clang::ImplicitCastExpr::Create(
+        context.ast_context(), function_ptr_type,
+        clang::CK_FunctionToPointerDecay, decl_ref_expr, nullptr,
+        clang::VK_PRValue, clang::FPOptionsOverride());
+    call_expr = clang::CallExpr::Create(
+        context.ast_context(), implicit_cast_expr, arg_exprs,
+        function_decl->getCallResultType(), clang::VK_PRValue,
+        /*RParenLoc=*/loc, clang::FPOptionsOverride());
+  }
 
   // Evaluate the expr as a constant and map that to Carbon constant.
   clang::SmallVector<clang::PartialDiagnosticAt> notes;
@@ -303,11 +313,17 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
             .GetAs<SemIR::FunctionDecl>(thunk_callee_inst_id)
             .function_id);
 
-    function_decl =
-        cast<clang::FunctionDecl>(context.clang_decls()
-                                      .Get(thunk_callee_function.clang_decl_id)
-                                      .GetAsKey()
-                                      .decl);
+    const auto* clang_decl_info =
+        context.clang_decls().Lookup(thunk_callee_function.first_decl_id());
+    if (clang_decl_info == nullptr) {
+      // The `__invoke` thunk for a function pointer doesn't have a declared
+      // C++ callee.
+      return;
+    }
+    function_decl = cast<clang::FunctionDecl>(
+        context.clang_decls()
+            .Lookup(thunk_callee_function.first_decl_id())
+            ->decl());
 
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
       return;

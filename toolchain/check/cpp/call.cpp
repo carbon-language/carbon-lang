@@ -7,6 +7,7 @@
 #include "clang/Sema/Sema.h"
 #include "clang/Sema/Template.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/action.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/cpp/import.h"
@@ -29,10 +30,9 @@ namespace Carbon::Check {
 static auto IsTemplateArg(Context& context, SemIR::InstId arg_id) -> bool {
   auto arg_type_id = context.insts().Get(arg_id).type_id();
   auto arg_type = context.types().GetAsInst(arg_type_id);
-  return arg_type
-      .IsOneOf<SemIR::TypeType, SemIR::FacetType, SemIR::CppTemplateNameType,
-               SemIR::GenericClassType, SemIR::GenericInterfaceType,
-               SemIR::GenericNamedConstraintType>();
+  return arg_type.IsOneOf<
+      SemIR::FacetType, SemIR::CppTemplateNameType, SemIR::GenericInterfaceType,
+      SemIR::GenericNamedConstraintType, SemIR::ParameterizedClassType>();
 }
 
 // Splits a call argument list into a list of template arguments followed by a
@@ -52,6 +52,7 @@ static auto SplitCallArgumentList(Context& context,
 }
 
 auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
+                              SemIR::InstId callee_expr_id,
                               SemIR::CppOverloadSetId overload_set_id,
                               SemIR::InstId self_id,
                               llvm::ArrayRef<SemIR::InstId> arg_ids,
@@ -59,8 +60,9 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
   auto [template_arg_ids, function_arg_ids] =
       SplitCallArgumentList(context, arg_ids);
   auto callee_id = PerformCppOverloadResolution(
-      context, loc_id, context.cpp_overload_sets().Get(overload_set_id),
-      template_arg_ids, self_id, function_arg_ids);
+      context, loc_id, callee_expr_id,
+      context.cpp_overload_sets().Get(overload_set_id), template_arg_ids,
+      self_id, function_arg_ids);
   SemIR::Callee callee = GetCallee(context.sem_ir(), callee_id);
   CARBON_KIND_SWITCH(callee) {
     case CARBON_KIND(SemIR::CalleeError _): {
@@ -79,6 +81,9 @@ auto PerformCallToCppFunction(Context& context, SemIR::LocId loc_id,
       CARBON_FATAL("overloads can't be recursive");
     }
     case CARBON_KIND(SemIR::CalleeNonFunction _): {
+      CARBON_FATAL("overloads should produce functions");
+    }
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer _): {
       CARBON_FATAL("overloads should produce functions");
     }
   }
@@ -140,7 +145,7 @@ static auto ConvertArgToTemplateArg(
             context.types().TryGetAs<SemIR::CppTemplateNameType>(
                 inst.type_id())) {
       clang::TemplateName name(cast<clang::TemplateDecl>(
-          context.clang_decls().Get(template_name_type->decl_id).key.decl));
+          context.clang_decls().Get(template_name_type->decl_id).decl()));
       return clang::TemplateArgumentLoc(
           context.ast_context(), clang::TemplateArgument(name),
           /*TemplateKWLoc=*/clang::SourceLocation(),
@@ -346,7 +351,7 @@ auto PerformCallToCppTemplateName(Context& context, SemIR::LocId loc_id,
                                   llvm::ArrayRef<SemIR::InstId> arg_ids)
     -> SemIR::InstId {
   auto* template_decl = dyn_cast<clang::TemplateDecl>(
-      context.clang_decls().Get(template_decl_id).key.decl);
+      context.clang_decls().Get(template_decl_id).decl());
   auto loc = GetCppLocation(context, loc_id);
 
   // Form a template argument list for this template.

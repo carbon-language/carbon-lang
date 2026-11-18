@@ -6,6 +6,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/TextNodeDumper.h"
+#include "common/hashtable_key_context.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/canonical_value_store_impl.h"
@@ -57,6 +58,21 @@ auto ClangDeclSignature::Print(llvm::raw_ostream& out) const -> void {
   out << "}";
 }
 
+auto ClangDeclKey::ForFunctionDecl(clang::FunctionDecl* decl,
+                                   ClangDeclSignatureId signature_id)
+    -> ClangDeclKey {
+  return ClangDeclKey(decl, signature_id, UncheckedTag());
+}
+
+auto ClangDeclKey::ForNonFunctionDecl(clang::Decl* decl) -> ClangDeclKey {
+  CARBON_CHECK(!isa<clang::FunctionDecl>(decl));
+  return ClangDeclKey(decl, ClangDeclSignatureId::None, UncheckedTag());
+}
+
+ClangDeclKey::ClangDeclKey(clang::Decl* decl, ClangDeclSignatureId signature_id,
+                           UncheckedTag /*_*/)
+    : decl(decl->getCanonicalDecl()), signature_id(signature_id) {}
+
 auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
   RawStringOstream decl_stream;
   auto policy = decl->getASTContext().getPrintingPolicy();
@@ -75,24 +91,60 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {
-  out << "{key: " << key << ", inst_id: " << inst_id << "}";
+  out << "{key: " << key << ", inst_id: " << inst_id;
+  if (specific_id.has_value()) {
+    out << ", specific_id: " << specific_id;
+  }
+  if (var_storage_inst_id.has_value()) {
+    out << ", var_storage_inst_id: " << var_storage_inst_id;
+  }
+  out << ", is_imported: " << (is_imported ? "true" : "false");
+  out << "}";
 }
+
+class ClangDeclStore::KeyContext : public TranslatingKeyContext<KeyContext> {
+ public:
+  // A lookup key for a clang declaration.
+  struct Key {
+    InstId inst_id;
+    SpecificId specific_id;
+
+    friend auto operator==(const Key&, const Key&) -> bool = default;
+  };
+
+  explicit KeyContext(const ClangDeclStore* store) : store_(store) {}
+
+  auto TranslateKey(ClangDeclId id) const -> Key {
+    const auto& clang_decl = store_->Get(id);
+    return {.inst_id = clang_decl.inst_id,
+            .specific_id = clang_decl.specific_id};
+  }
+
+ private:
+  const ClangDeclStore* store_;
+};
 
 ClangDeclStore::ClangDeclStore(CheckIRId check_ir_id) : values_(check_ir_id) {}
 
 auto ClangDeclStore::Add(ClangDecl value) -> ClangDeclId {
   auto id = values_.Add(value);
-  inst_id_to_clang_decl_id_.Insert(value.inst_id, id);
+  reverse_lookup_.Insert(
+      KeyContext::Key{.inst_id = value.inst_id,
+                      .specific_id = value.specific_id},
+      [&] { return id; }, KeyContext(this));
   return id;
 }
 
-auto ClangDeclStore::Lookup(ClangDeclKey key) const -> ClangDeclId {
+auto ClangDeclStore::LookupId(ClangDeclKey key) const -> ClangDeclId {
   return values_.Lookup(key);
 }
 
-auto ClangDeclStore::Lookup(InstId inst_id) const -> ClangDeclId {
-  if (auto result = inst_id_to_clang_decl_id_.Lookup(inst_id)) {
-    return result.value();
+auto ClangDeclStore::LookupId(InstId inst_id, SpecificId specific_id) const
+    -> ClangDeclId {
+  if (auto result = reverse_lookup_.Lookup(
+          KeyContext::Key{.inst_id = inst_id, .specific_id = specific_id},
+          KeyContext(this))) {
+    return result.key();
   }
   return ClangDeclId::None;
 }
@@ -104,8 +156,8 @@ auto ClangDeclStore::OutputYaml() const -> Yaml::OutputMapping {
 auto ClangDeclStore::CollectMemUsage(MemUsage& mem_usage,
                                      llvm::StringRef label) const -> void {
   values_.CollectMemUsage(mem_usage, label);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_id_to_clang_decl_id_"),
-                    inst_id_to_clang_decl_id_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "reverse_lookup_"),
+                    reverse_lookup_, KeyContext(this));
 }
 
 }  // namespace Carbon::SemIR

@@ -10,14 +10,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/fail_type_param_mismatch.carbon
 
-fn F(T:! type, U:! type) {
+fn F(generic T: type, generic U: type) {
   var p: T*;
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+7]]:21: error: cannot implicitly convert expression of type `T` to `U` [ConversionFailure]
-  // CHECK:STDERR:   let unused n: U = *p;
-  // CHECK:STDERR:                     ^~
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+4]]:21: note: type `T` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let unused n: U = *p;
-  // CHECK:STDERR:                     ^~
+  // CHECK:STDERR:        ╭─┤ fail_type_param_mismatch.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   let unused n: U = *p;
+  // CHECK:STDERR:        ·                     ┳━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type `T`
+  // CHECK:STDERR:        ·                     │  ┃        to `U`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `T` does not implement interface
+  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(U)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused n: U = *p;
 }

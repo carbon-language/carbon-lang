@@ -18,9 +18,12 @@ fn Success() {
 // --- fail_numeric_designator.carbon
 
 fn FailNumeric() {
-  // CHECK:STDERR: fail_numeric_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-  // CHECK:STDERR:   .1;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:        ╭─┤ fail_numeric_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .1;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .1;
 }
@@ -28,9 +31,13 @@ fn FailNumeric() {
 // --- fail_keyword_designator.carbon
 
 fn FailKeyword() {
-  // CHECK:STDERR: fail_keyword_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-  // CHECK:STDERR:   .base;
-  // CHECK:STDERR:    ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword_designator.carbon:[[@LINE+8]]:4
+  // CHECK:STDERR: ->     │   .base;
+  // CHECK:STDERR:        ·    ┳━━━
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`; prefix reserved word
+  // CHECK:STDERR:        ·       ┃        with `r#` to form a valid identifier
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .base;
 }
@@ -38,9 +45,12 @@ fn FailKeyword() {
 // --- fail_empty_designator.carbon
 
 fn FailEmpty() {
-  // CHECK:STDERR: fail_empty_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-  // CHECK:STDERR:   .;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:        ╭─┤ fail_empty_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .;
 }
@@ -48,110 +58,114 @@ fn FailEmpty() {
 // --- fail_star_designator.carbon
 
 fn FailStar() {
-  // CHECK:STDERR: fail_star_designator.carbon:[[@LINE+4]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-  // CHECK:STDERR:   .*;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:        ╭─┤ fail_star_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .*;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .*;
 }
 
 // --- fail_designator_eof.carbon
 
+// CHECK:STDERR:        ╭─┤ fail_designator_eof.carbon:[[@LINE+14]]:15
+// CHECK:STDERR: ->     │ var x: i32 = .
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: expected identifier or `Self` after `.`
+// CHECK:STDERR:        ·                  ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╭─┤ fail_designator_eof.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ var x: i32 = .
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                  ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 var x: i32 = .
 
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+95]]:21: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
-// CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+91]]:21: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: designator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Success'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:         {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'SelfTypeName', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'Success'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─SelfTypeName 'Self'
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_numeric_designator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FailNumeric'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '1', has_error: yes},
-// CHECK:STDOUT:         {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'FailNumeric'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse '1' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_keyword_designator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FailKeyword'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'base', has_error: yes},
-// CHECK:STDOUT:         {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'FailKeyword'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'base' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_empty_designator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FailEmpty'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'FailEmpty'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_star_designator.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FailStar'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '*', has_error: yes},
-// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'FailStar'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─InvalidParse '*' has_error
+// CHECK:STDOUT:   │ │   ╭─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   │ │ ╭─PostfixOperatorStar '*' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_designator_eof.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:       {kind: 'DesignatorExpr', text: '.', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: '.', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─InvalidParse '' has_error
+// CHECK:STDOUT:   │ ├─DesignatorExpr '.' has_error
+// CHECK:STDOUT:   ├─VariableDecl '.' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

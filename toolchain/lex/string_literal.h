@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/token_info.h"
 
 namespace Carbon::Lex {
@@ -41,7 +42,7 @@ class StringLiteral {
   // Expand any escape sequences and compute the resulting character. This
   // handles error recovery internally, but can return nullopt for an invalid
   // character.
-  auto ComputeCharLiteralValue(Diagnostics::Emitter<const char*>& emitter) const
+  auto ComputeCharLiteralValue(Diagnostics::Emitter<SourceLoc>& emitter) const
       -> std::optional<CharLiteralValue>;
 
   // Expand any escape sequences in the given string literal and compute the
@@ -51,7 +52,7 @@ class StringLiteral {
   // deal with, this can return the content directly. Otherwise, the allocator
   // will be used for the StringRef.
   auto ComputeStringValue(llvm::BumpPtrAllocator& allocator,
-                          Diagnostics::Emitter<const char*>& emitter) const
+                          Diagnostics::Emitter<SourceLoc>& emitter) const
       -> llvm::StringRef;
 
   // Get the text corresponding to this literal.
@@ -63,18 +64,27 @@ class StringLiteral {
   // Returns true if the string has a valid terminator.
   auto is_terminated() const -> bool { return is_terminated_; }
 
+  // Returns true if this is a multi-line string literal whose introducer line
+  // is malformed. Such a literal covers just the introducer line and is never
+  // terminated.
+  auto has_invalid_introducer() const -> bool {
+    return has_invalid_introducer_;
+  }
+
  private:
   struct Introducer;
 
   explicit StringLiteral(llvm::StringRef text, llvm::StringRef content,
                          bool content_needs_validation, int hash_level,
-                         Kind kind, bool is_terminated)
+                         Kind kind, bool is_terminated,
+                         bool has_invalid_introducer = false)
       : text_(text),
         content_(content),
         content_needs_validation_(content_needs_validation),
         hash_level_(hash_level),
         kind_(kind),
-        is_terminated_(is_terminated) {}
+        is_terminated_(is_terminated),
+        has_invalid_introducer_(has_invalid_introducer) {}
 
   // The complete text of the string literal.
   llvm::StringRef text_;
@@ -98,6 +108,9 @@ class StringLiteral {
 
   // Whether the literal is valid, or should only be used for errors.
   bool is_terminated_;
+
+  // Whether this is a multi-line literal whose introducer line is malformed.
+  bool has_invalid_introducer_;
 };
 
 }  // namespace Carbon::Lex

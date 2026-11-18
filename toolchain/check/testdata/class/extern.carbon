@@ -49,12 +49,16 @@ class C {}
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE+7]]:4: error: cannot declare a member of incomplete class `C` [QualifiedDeclInIncompleteClassScope]
-// CHECK:STDERR: fn C.F();
-// CHECK:STDERR:    ^
-// CHECK:STDERR: fail_decl_fn_in_extern.carbon:[[@LINE-4]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_decl_fn_in_extern.carbon:[[@LINE+11]]:4
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn C.F();
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: cannot declare a member of incomplete class `C`
+// CHECK:STDERR:        ·       ┃        [QualifiedDeclInIncompleteClassScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C.F();
 
@@ -69,12 +73,15 @@ extern class C {}
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extern_decl_after_extern_decl.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
@@ -83,12 +90,15 @@ extern class C;
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_decl_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_decl_after_extern_decl.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C;
 
@@ -97,9 +107,12 @@ class C;
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_extern_member_class.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
-  // CHECK:STDERR:   extern class D;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_extern_member_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   extern class D;
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `extern` not allowed; requires file or namespace scope
+  // CHECK:STDERR:        ·         ┃        [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extern class D;
 }
@@ -109,12 +122,16 @@ class C {
 library "[[@TEST_NAME]]";
 
 extern class C;
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE+7]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_def_after_extern_decl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_def_after_extern_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ class C {}
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C {}
 
@@ -123,12 +140,93 @@ class C {}
 library "[[@TEST_NAME]]";
 
 class C;
-// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE+7]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_decl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extern_decl_after_decl.carbon:[[@LINE+88]]:1
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_extern_decl_then_decl.carbon [InImport]
+// CHECK:STDERR:        ├─┤ decl.carbon:4:1
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_decl_then_extern_decl.carbon [InImport]
+// CHECK:STDERR:        ├─┤ extern_decl.carbon:4:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·           ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl.carbon
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_extern_decl_then_def.carbon [InImport]
+// CHECK:STDERR:        ├─┤ def.carbon:4:1
+// CHECK:STDERR: ->     │ class C {}
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
+// CHECK:STDERR:        ├─┤ decl.carbon:4:1
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
+// CHECK:STDERR:        ├─┤ def.carbon:4:1
+// CHECK:STDERR: ->     │ class C {}
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── imported from: fail_todo_import_extern_decl_copy.carbon [InImport]
+// CHECK:STDERR:        ├─┤ extern_decl_copy.carbon:4:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·           ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
@@ -136,15 +234,6 @@ extern class C;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_import_extern_decl_then_decl.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import library "extern_decl";
 import library "decl";
 
@@ -152,15 +241,6 @@ import library "decl";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_then_extern_decl.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 import library "decl";
 import library "extern_decl";
 
@@ -168,15 +248,6 @@ import library "extern_decl";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_import_extern_decl_then_def.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import library "extern_decl";
 import library "def";
 
@@ -184,24 +255,6 @@ import library "def";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+18]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+14]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_import_ownership_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import library "extern_decl";
 import library "decl";
 import library "def";
@@ -210,15 +263,6 @@ import library "def";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl_copy.carbon:4:1: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_import_extern_decl_copy.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR:
 import library "extern_decl";
 import library "extern_decl_copy";
 
@@ -228,13 +272,16 @@ library "[[@TEST_NAME]]";
 
 import library "extern_decl";
 
-// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: extern_decl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extern_decl_after_import_extern_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_decl.carbon
+// CHECK:STDERR:        │ extern class C;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
@@ -244,13 +291,17 @@ library "[[@TEST_NAME]]";
 
 import library "decl";
 
-// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_decl_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: decl.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_decl_after_import_extern_decl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl.carbon
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
@@ -260,13 +311,17 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_def_after_import_extern_decl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_def_after_import_extern_decl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ def.carbon
+// CHECK:STDERR:        │ class C {}
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
@@ -276,19 +331,24 @@ library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE+8]]:1: error: redeclarations of `class C` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_decl_after_import_def.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extern_decl_after_import_def.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclarations of `class C` must match use of `extern`
+// CHECK:STDERR:        ·           ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ def.carbon
+// CHECK:STDERR:        │ class C {}
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
-// CHECK:STDOUT: --- decl.carbon
+// CHECK:STDOUT: --- decl.carbon = $decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -301,9 +361,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_decl.carbon
+// CHECK:STDOUT: --- extern_decl.carbon = $extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -316,9 +377,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_decl_copy.carbon
+// CHECK:STDOUT: --- extern_decl_copy.carbon = $extern_decl_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -331,9 +393,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -354,9 +417,10 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_fn_in_extern.carbon
+// CHECK:STDOUT: --- fail_decl_fn_in_extern.carbon = $fail_decl_fn_in_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -374,9 +438,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_def.carbon
+// CHECK:STDOUT: --- extern_def.carbon = $extern_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -397,9 +462,10 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_extern_decl.carbon = $fail_extern_decl_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -408,30 +474,32 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc15: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_decl_after_extern_decl.carbon = $fail_decl_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:     .C = %C.decl.loc15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc15: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_member_class.carbon
+// CHECK:STDOUT: --- fail_extern_member_class.carbon = $fail_extern_member_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -457,9 +525,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_def_after_extern_decl.carbon = $fail_def_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -467,10 +536,10 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .C = %C.decl.loc12
+// CHECK:STDOUT:     .C = %C.decl.loc16
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc16: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
@@ -481,9 +550,10 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_decl.carbon = $fail_extern_decl_after_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -492,12 +562,12 @@ extern class C;
 // CHECK:STDOUT:     .C = %C.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl.loc4: type = class_decl @C [concrete = constants.%C] {} {}
-// CHECK:STDOUT:   %C.decl.loc12: type = class_decl @C [concrete = constants.%C] {} {}
+// CHECK:STDOUT:   %C.decl.loc93: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon
+// CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon = $fail_import_extern_decl_then_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -510,7 +580,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon
+// CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon = $fail_import_decl_then_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//decl, C, unloaded
@@ -523,7 +593,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon
+// CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon = $fail_import_extern_decl_then_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -536,7 +606,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
+// CHECK:STDOUT: --- fail_import_ownership_conflict.carbon = $fail_import_ownership_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -549,7 +619,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
+// CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon = $fail_todo_import_extern_decl_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -562,9 +632,10 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_import_extern_decl.carbon = $fail_extern_decl_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -576,11 +647,12 @@ extern class C;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
+// CHECK:STDOUT: class @C [from "extern_decl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_decl_after_import_extern_decl.carbon = $fail_decl_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -592,11 +664,12 @@ extern class C;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C;
+// CHECK:STDOUT: class @C [from "decl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_def_after_import_extern_decl.carbon = $fail_def_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -604,7 +677,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.532 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -615,16 +688,17 @@ extern class C;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "def.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.532
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_import_def.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_import_def.carbon = $fail_extern_decl_after_import_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -632,7 +706,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//def, loc4_10, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Main.import_ref.532 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -643,10 +717,10 @@ extern class C;
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "def.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.532
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

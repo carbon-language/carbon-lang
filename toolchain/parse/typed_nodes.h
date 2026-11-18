@@ -43,7 +43,7 @@ struct LeafNode {
 //
 // Each of these types should start with a `static constexpr Kind` member
 // initialized by calling `Define` on the corresponding `NodeKind`, and passing
-// in the `NodeCategory` of that kind.  This will both associate the category
+// in the `NodeCategory` of that kind. This will both associate the category
 // with the node kind and create the necessary kind object for the typed node.
 //
 // This should be followed by field declarations that describe the child nodes,
@@ -128,7 +128,7 @@ using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
 // A name that may be immediately followed by a signature (i.e. parameter lists
-// and/or a return declaration). There may be false positives, because we make
+// and/or a return specifier). There may be false positives, because we make
 // this determination based on the context and a single token of lookahead.
 using IdentifierNameMaybeBeforeSignature =
     LeafNode<NodeKind::IdentifierNameMaybeBeforeSignature,
@@ -136,7 +136,7 @@ using IdentifierNameMaybeBeforeSignature =
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name that is known not to be immediately followed by a signature (i.e.
-// parameter lists and/or a return declaration).
+// parameter lists and/or a return specifier).
 using IdentifierNameNotBeforeSignature =
     LeafNode<NodeKind::IdentifierNameNotBeforeSignature,
              Lex::IdentifierTokenIndex,
@@ -169,8 +169,12 @@ using UnderscoreName =
     LeafNode<NodeKind::UnderscoreName, Lex::UnderscoreTokenIndex,
              NodeCategory::NonExprName>;
 
-// A name qualifier with parameters, such as `A(T:! type).` or `A[T:! type](N:!
-// T).`.
+// The `_` token, when used as the field in a struct pattern.
+using PatternListUnderscoreField =
+    LeafNode<NodeKind::PatternListUnderscoreField, Lex::UnderscoreTokenIndex>;
+
+// A name qualifier with parameters, such as `A(T: type).` or
+// `A[T: type](N: T).`.
 struct IdentifierNameQualifierWithParams {
   static constexpr auto Kind =
       NodeKind::IdentifierNameQualifierWithParams.Define(
@@ -192,7 +196,7 @@ struct IdentifierNameQualifierWithoutParams {
   Lex::PeriodTokenIndex token;
 };
 
-// A complete name in a declaration: `A.C(T:! type).F(n: i32)`.
+// A complete name in a declaration: `A.C(T: type).F(n: i32)`.
 // Note that this includes the parameters of the entity itself.
 struct DeclName {
   llvm::SmallVector<NodeIdOneOf<IdentifierNameQualifierWithParams,
@@ -319,6 +323,31 @@ struct ExportDecl {
   Lex::SemiTokenIndex token;
 };
 
+// MatchFirst nodes
+// ---------------
+
+using MatchFirstIntroducer =
+    LeafNode<NodeKind::MatchFirstIntroducer, Lex::MatchFirstTokenIndex>;
+
+struct MatchFirstDefinitionStart {
+  static constexpr auto Kind = NodeKind::MatchFirstDefinitionStart.Define(
+      {.bracketed_by = MatchFirstIntroducer::Kind});
+  MatchFirstIntroducerId introducer;
+  llvm::SmallVector<AnyModifierId> modifiers;
+  Lex::OpenCurlyBraceTokenIndex token;
+};
+
+// A match_first block: `match_first { ... }`.
+struct MatchFirst {
+  static constexpr auto Kind = NodeKind::MatchFirst.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = MatchFirstDefinitionStart::Kind});
+
+  MatchFirstDefinitionStartId start;
+  llvm::SmallVector<AnyDeclId> members;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
 // Namespace nodes
 // ---------------
 
@@ -348,6 +377,29 @@ struct UnusedPattern {
   AnyPatternId inner;
 };
 
+using DefaultValueUnspecified =
+    LeafNode<NodeKind::DefaultValueUnspecified, Lex::UnderscoreTokenIndex,
+             NodeCategory::Expr>;
+
+struct DefaultValueExprStart {
+  static constexpr auto Kind =
+      NodeKind::DefaultValueExprStart.Define({.child_count = 0});
+  // This is a virtual token. The `=` token is owned by the
+  // DefaultValuePattern node.
+  Lex::EqualTokenIndex token;
+};
+
+// A pattern with a default value specified: `pattern = expr`.
+struct DefaultValuePattern {
+  static constexpr auto Kind = NodeKind::DefaultValuePattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 3});
+
+  AnyPatternId pattern;
+  Lex::EqualTokenIndex token;
+  DefaultValueExprStartId start;
+  AnyExprId default_value_expr;
+};
+
 // A ref binding name: `ref name`.
 struct RefBindingName {
   static constexpr auto Kind =
@@ -357,25 +409,64 @@ struct RefBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
+// An explicit `runtime` keyword on a runtime binding: `runtime name`. The
+// keyword is preserved so its token is accounted for and the check phase can
+// see that the binding's phase was written explicitly. It is only meaningful
+// where it overrides a generic contextual default; where it is redundant or
+// invalid it is diagnosed (by the parser or by the check phase), but the
+// binding remains well-formed.
+struct RuntimeBindingName {
+  static constexpr auto Kind =
+      NodeKind::RuntimeBindingName.Define({.child_count = 1});
+
+  Lex::RuntimeTokenIndex token;
+  AnyRuntimeBindingPatternName name;
+};
+
+struct BindingPatternTypeStart {
+  static constexpr auto Kind =
+      NodeKind::BindingPatternTypeStart.Define({.child_count = 0});
+  // This is a virtual token. The `:` or `:?` token is owned by the enclosing
+  // BindingPattern node.
+  Lex::TokenIndex token;
+};
+
 // A binding pattern, such as `name: Type`, that isn't inside a `var` pattern.
 struct LetBindingPattern {
   static constexpr auto Kind = NodeKind::LetBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
-              RefBindingName>
+              RefBindingName, RuntimeBindingName>
       name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
+};
+
+// A `self` binding whose type is omitted, such as `fn F(self)` or
+// `fn F(ref self)`. The type is implicitly `Self`; checking treats this exactly
+// like a `self: Self` binding. There is no type node, so the whole binding
+// sits on the one `self` token.
+struct SelfBindingPattern {
+  static constexpr auto Kind = NodeKind::SelfBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 1});
+
+  Lex::SelfValueIdentifierTokenIndex token;
+  NodeIdOneOf<SelfValueName, RefBindingName> name;
 };
 
 // A binding pattern, such as `name: Type`, that is inside a `var` pattern.
 struct VarBindingPattern {
   static constexpr auto Kind = NodeKind::VarBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
-  AnyRuntimeBindingPatternName name;
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RuntimeBindingName>
+      name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonTokenIndex token;
   AnyExprId type;
 };
@@ -383,9 +474,10 @@ struct VarBindingPattern {
 // A form binding pattern, such as `name:? Form`.
 struct FormBindingPattern {
   static constexpr auto Kind = NodeKind::FormBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
+      {.category = NodeCategory::Pattern, .child_count = 3});
 
   AnyRuntimeBindingPatternName name;
+  BindingPatternTypeStartId introducer;
   Lex::ColonQuestionTokenIndex token;
   AnyExprId type;
 };
@@ -399,25 +491,27 @@ struct TemplateBindingName {
   AnyRuntimeBindingPatternName name;
 };
 
-struct CompileTimeBindingPatternStart {
+struct CompileTimeBindingPatternTypeStart {
   static constexpr auto Kind =
-      NodeKind::CompileTimeBindingPatternStart.Define({.child_count = 1});
+      NodeKind::CompileTimeBindingPatternTypeStart.Define({.child_count = 0});
+  // This is a virtual token. The `:` token is owned by the
+  // CompileTimeBindingPattern node.
+  Lex::ColonTokenIndex token;
+};
+
+// `name: Type` in a context where the binding is a checked or template generic
+// (for example, a deduced `[]` parameter, a parameter of a compile-time entity,
+// or an explicit parameter marked `generic`/`template`).
+struct CompileTimeBindingPattern {
+  static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
+      {.category = NodeCategory::Pattern, .child_count = 3});
+
   // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
   NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
               TemplateBindingName>
       name;
-  // This is a virtual token. The `:!` token is owned by the
-  // CompileTimeBindingPattern node.
-  Lex::ColonExclaimTokenIndex token;
-};
-
-// `name:! Type`
-struct CompileTimeBindingPattern {
-  static constexpr auto Kind = NodeKind::CompileTimeBindingPattern.Define(
-      {.category = NodeCategory::Pattern, .child_count = 2});
-
-  CompileTimeBindingPatternStartId introducer;
-  Lex::ColonExclaimTokenIndex token;
+  CompileTimeBindingPatternTypeStartId introducer;
+  Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
@@ -465,7 +559,7 @@ struct ExplicitParamList {
 using ImplicitParamListStart = LeafNode<NodeKind::ImplicitParamListStart,
                                         Lex::OpenSquareBracketTokenIndex>;
 
-// An implicit parameter list: `[T:! type, self: Self]`.
+// An implicit parameter list: `[T: type]`.
 struct ImplicitParamList {
   static constexpr auto Kind = NodeKind::ImplicitParamList.Define(
       {.bracketed_by = ImplicitParamListStart::Kind});
@@ -484,7 +578,7 @@ using FunctionIntroducer =
 // A return type: `-> i32`.
 struct ReturnType {
   static constexpr auto Kind = NodeKind::ReturnType.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterTokenIndex token;
   AnyExprId type;
@@ -493,7 +587,7 @@ struct ReturnType {
 // A return form: `->? form(var i32)`
 struct ReturnForm {
   static constexpr auto Kind = NodeKind::ReturnForm.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterQuestionTokenIndex token;
   AnyExprId type;
@@ -509,15 +603,15 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<AnyReturnDeclId> return_type;
+  std::optional<AnyReturnSpecifierId> return_type;
   TokenKind token;
 };
 
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
                                        Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart, Lex::TokenIndex,
-                      NodeCategory::None>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart,
+                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -530,14 +624,18 @@ struct FunctionDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-// A terse function definition: `fn F() -> i32 => expr;`.
+using FunctionTerseDefinitionStart =
+    FunctionSignature<NodeKind::FunctionTerseDefinitionStart,
+                      Lex::EqualGreaterTokenIndex, NodeCategory::None>;
+
+// A terse function definition: `fn F() => expr;`.
 struct FunctionTerseDefinition {
   static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
       {.category = NodeCategory::Decl,
-       .bracketed_by = FunctionDefinitionStart::Kind});
+       .bracketed_by = FunctionTerseDefinitionStart::Kind,
+       .child_count = 2});
 
-  FunctionDefinitionStartId signature;
-  TerseBodyArrowId arrow;
+  FunctionTerseDefinitionStartId signature;
   AnyExprId body;
   Lex::SemiTokenIndex token;
 };
@@ -619,11 +717,11 @@ struct AssociatedConstantNameAndType {
       {.category = NodeCategory::Pattern, .child_count = 2});
 
   AnyRuntimeBindingPatternName name;
-  Lex::ColonExclaimTokenIndex token;
+  Lex::ColonTokenIndex token;
   AnyExprId type;
 };
 
-// An associated constant declaration: `let a:! i32;`.
+// An associated constant declaration: `let a: i32;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind = NodeKind::AssociatedConstantDecl.Define(
       {.category = NodeCategory::Decl,
@@ -686,9 +784,6 @@ struct VariablePattern {
 using CodeBlockStart =
     LeafNode<NodeKind::CodeBlockStart, Lex::OpenCurlyBraceTokenIndex>;
 
-using TerseBodyArrow =
-    LeafNode<NodeKind::TerseBodyArrow, Lex::EqualGreaterTokenIndex>;
-
 // A code block: `{ statement; statement; ... }`.
 struct CodeBlock {
   static constexpr auto Kind =
@@ -702,19 +797,44 @@ struct CodeBlock {
 using LambdaIntroducer =
     LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
 
-struct Lambda {
-  static constexpr auto Kind = NodeKind::Lambda.Define(
-      {.category = NodeCategory::Expr, .bracketed_by = LambdaIntroducer::Kind});
+template <const NodeKind& KindT, typename TokenKind>
+struct LambdaSignature {
+  static constexpr auto Kind =
+      KindT.Define({.bracketed_by = LambdaIntroducer::Kind});
 
   LambdaIntroducerId introducer;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> explicit_params;
-  std::optional<ReturnTypeId> return_type;
-  std::optional<TerseBodyArrowId> arrow;
-  NodeId body;
-  // Use a generic token index because the token might be `}` or part of an
-  // expression.
-  Lex::TokenIndex token;
+  std::optional<AnyReturnSpecifierId> return_type;
+  TokenKind token;
+};
+
+using LambdaDefinitionStart = LambdaSignature<NodeKind::LambdaDefinitionStart,
+                                              Lex::OpenCurlyBraceTokenIndex>;
+
+struct Lambda {
+  static constexpr auto Kind =
+      NodeKind::Lambda.Define({.category = NodeCategory::Expr,
+                               .bracketed_by = LambdaDefinitionStart::Kind});
+
+  LambdaDefinitionStartId signature;
+  llvm::SmallVector<AnyStatementId> body;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
+using LambdaTerseDefinitionStart =
+    LambdaSignature<NodeKind::LambdaTerseDefinitionStart,
+                    Lex::EqualGreaterTokenIndex>;
+
+struct LambdaTerseDefinition {
+  static constexpr auto Kind = NodeKind::LambdaTerseDefinition.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = LambdaTerseDefinitionStart::Kind,
+       .child_count = 2});
+
+  LambdaTerseDefinitionStartId signature;
+  AnyExprId body;
+  Lex::FnTokenIndex token;
 };
 
 // An expression statement: `F(x);`.
@@ -862,6 +982,25 @@ struct WhileStatement {
   Lex::WhileTokenIndex token;
   WhileConditionId head;
   CodeBlockId body;
+};
+
+// The start of a pack expansion: `...`. This marks the beginning of the
+// expanded region.
+using PackExpansionStart =
+    LeafNode<NodeKind::PackExpansionStart, Lex::PeriodPeriodPeriodTokenIndex>;
+
+// A statement pack expansion: `... statement`.
+struct PackExpansionStatement {
+  static constexpr auto Kind = NodeKind::PackExpansionStatement.Define(
+      {.category = NodeCategory::Statement,
+       .bracketed_by = PackExpansionStart::Kind,
+       .child_count = 2});
+
+  PackExpansionStartId start;
+  AnyStatementId body;
+  // This is a virtual token. The `...` token is owned by the
+  // PackExpansionStart node.
+  Lex::PeriodPeriodPeriodTokenIndex token;
 };
 
 using MatchConditionStart =
@@ -1018,6 +1157,25 @@ struct FormLiteral {
   FormLiteralKeywordId keyword;
   FormLiteralOpenParenId start;
   AnyPrimitiveFormIdId category;
+  Lex::CloseParenTokenIndex token;
+};
+
+using TypeOfExprKeyword =
+    LeafNode<NodeKind::TypeOfExprKeyword, Lex::TypeOfTokenIndex>;
+
+using TypeOfExprOpenParen =
+    LeafNode<NodeKind::TypeOfExprOpenParen, Lex::OpenParenTokenIndex>;
+
+// A `typeof` expression: `typeof(expr)`.
+struct TypeOfExpr {
+  static constexpr auto Kind =
+      NodeKind::TypeOfExpr.Define({.category = NodeCategory::Expr,
+                                   .bracketed_by = NodeKind::TypeOfExprKeyword,
+                                   .child_count = 3});
+
+  TypeOfExprKeywordId keyword;
+  TypeOfExprOpenParenId start;
+  AnyExprId operand;
   Lex::CloseParenTokenIndex token;
 };
 
@@ -1332,6 +1490,26 @@ struct WhereExpr {
   CommaSeparatedList<AnyRequirementId, RequirementAndId> requirements;
 };
 
+// Where assignment declaration nodes
+// --------------------------------
+
+using WhereAssignmentIntroducer =
+    LeafNode<NodeKind::WhereAssignmentIntroducer, Lex::WhereTokenIndex>;
+
+using WhereAssignmentOperator =
+    LeafNode<NodeKind::WhereAssignmentOperator, Lex::EqualTokenIndex>;
+
+struct WhereAssignmentDecl {
+  static constexpr auto Kind = NodeKind::WhereAssignmentDecl.Define(
+      {.category = NodeCategory::Decl,
+       .bracketed_by = WhereAssignmentIntroducer::Kind});
+  WhereAssignmentIntroducerId introducer;
+  IdentifierNameNotBeforeSignatureId lhs;
+  WhereAssignmentOperatorId op;
+  AnyExprId rhs;
+  Lex::SemiTokenIndex token;
+};
+
 // Choice nodes
 // ------------
 
@@ -1434,6 +1612,70 @@ struct StructTypeLiteral {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
+// Struct Patterns
+// ----------------------------------------
+
+using StructPatternStart =
+    LeafNode<NodeKind::StructPatternStart, Lex::OpenCurlyBraceTokenIndex>;
+
+// shorthand let binding in a struct pattern such as `let {a: i32}`.
+struct StructPatternFieldLetBindingPattern {
+  static constexpr auto Kind =
+      NodeKind::StructPatternFieldLetBindingPattern.Define(
+          {.category = NodeCategory::Pattern, .child_count = 3});
+
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RefBindingName, RuntimeBindingName>
+      name;
+  BindingPatternTypeStartId introducer;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+// shorthand var binding in a struct pattern such as `var {a: i32}`.
+struct StructPatternFieldVarBindingPattern {
+  static constexpr auto Kind =
+      NodeKind::StructPatternFieldVarBindingPattern.Define(
+          {.category = NodeCategory::Pattern, .child_count = 3});
+
+  // TODO: is there some way to reuse AnyRuntimeBindingPatternName here?
+  NodeIdOneOf<IdentifierNameNotBeforeSignature, SelfValueName, UnderscoreName,
+              RuntimeBindingName>
+      name;
+  BindingPatternTypeStartId introducer;
+  Lex::ColonTokenIndex token;
+  AnyExprId type;
+};
+
+// `.a = pattern`
+struct StructPatternDesignatedField {
+  static constexpr auto Kind = NodeKind::StructPatternDesignatedField.Define(
+      {.bracketed_by = StructFieldDesignator::Kind, .child_count = 2});
+
+  StructFieldDesignatorId name;
+  Lex::EqualTokenIndex token;
+  AnyPatternId pattern;
+};
+
+using StructPatternFieldId =
+    NodeIdOneOf<StructPatternDesignatedField,
+                StructPatternFieldLetBindingPattern, VariablePattern,
+                StructPatternFieldVarBindingPattern, UnusedPattern,
+                PatternListUnderscoreField, DefaultValuePattern>;
+
+struct StructPattern {
+  static constexpr auto Kind = NodeKind::StructPattern.Define(
+      {.category = NodeCategory::Pattern,
+       .bracketed_by = StructPatternStart::Kind});
+
+  StructPatternStartId left_brace;
+
+  CommaSeparatedList<StructPatternFieldId, PatternListCommaId> fields;
+
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
 // `class` declarations and definitions
 // ------------------------------------
 
@@ -1505,6 +1747,25 @@ struct BaseDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   BaseColonId colon;
   AnyExprId base_class;
+  Lex::SemiTokenIndex token;
+};
+
+// Friend declaration
+// ------------------
+
+using FriendIntroducer =
+    LeafNode<NodeKind::FriendIntroducer, Lex::FriendTokenIndex>;
+
+struct FriendDecl {
+  static constexpr auto Kind = NodeKind::FriendDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = FriendIntroducer::Kind});
+
+  FriendIntroducerId introducer;
+
+  // TODO: figure out the more general syntax for the name part of a friend
+  // declaration.
+  IdentifierNameExprId name;
+
   Lex::SemiTokenIndex token;
 };
 
@@ -1722,6 +1983,11 @@ struct NamedConstraintDefinition {
   llvm::SmallVector<AnyDeclId> members;
   Lex::CloseCurlyBraceTokenIndex token;
 };
+
+// `$0`
+using PositionalParamExpr =
+    LeafNode<NodeKind::PositionalParamExpr, Lex::DollarIntLiteralTokenIndex,
+             NodeCategory::Expr>;
 
 // ---------------------------------------------------------------------------
 

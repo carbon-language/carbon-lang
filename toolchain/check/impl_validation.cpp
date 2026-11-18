@@ -31,6 +31,7 @@ struct ImplInfo {
   SemIR::TypeInstId self_id;
   SemIR::InstId latest_decl_id;
   SemIR::SpecificInterface interface;
+  SemIR::InstId match_first_id;
   // Whether the `impl` decl was imported or from the local file.
   bool is_local;
   // If imported, the IR from which the `impl` decl was imported.
@@ -90,6 +91,7 @@ static auto GetImplInfo(Context& context, SemIR::ImplId impl_id) -> ImplInfo {
           .self_id = impl.self_id,
           .latest_decl_id = impl.latest_decl_id(),
           .interface = impl.interface,
+          .match_first_id = impl.match_first_id,
           .is_local = !ir_id.has_value(),
           .ir_id = ir_id,
           .library_id = library_id,
@@ -167,14 +169,16 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
     using Step = SemIR::TypeIterator::Step;
     CARBON_KIND_SWITCH(step.any) {
       case CARBON_KIND(Step::ClassStart start): {
-        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        auto inst_id =
+            context.classes().Get(start.class_id).first_owning_decl_id;
         if (IsSameLibrary(context, inst_id)) {
           return true;
         }
         break;
       }
       case CARBON_KIND(Step::ClassStartOnly start): {
-        auto inst_id = context.classes().Get(start.class_id).definition_id;
+        auto inst_id =
+            context.classes().Get(start.class_id).first_owning_decl_id;
         if (IsSameLibrary(context, inst_id)) {
           return true;
         }
@@ -187,9 +191,9 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
         // type, but the specific also contains the callable's type which is one
         // of these.
         CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
-          case CARBON_KIND(SemIR::GenericClassType class_type): {
-            auto class_id = class_type.class_id;
-            auto inst_id = context.classes().Get(class_id).definition_id;
+          case CARBON_KIND(SemIR::ParameterizedClassType param_class_type): {
+            auto class_id = param_class_type.class_id;
+            auto inst_id = context.classes().Get(class_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
@@ -197,7 +201,8 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
           }
           case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
             auto interface_id = interface_type.interface_id;
-            auto inst_id = context.interfaces().Get(interface_id).definition_id;
+            auto inst_id =
+                context.interfaces().Get(interface_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
@@ -205,8 +210,9 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
           }
           case CARBON_KIND(SemIR::GenericNamedConstraintType constraint_type): {
             auto constraint_id = constraint_type.named_constraint_id;
-            auto inst_id =
-                context.named_constraints().Get(constraint_id).definition_id;
+            auto inst_id = context.named_constraints()
+                               .Get(constraint_id)
+                               .first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
             }
@@ -236,22 +242,24 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
 }
 
 // The type structure each non-final `impl` must differ from all other non-final
-// `impl` for the same interface visible from the file.
+// `impl` for the same interface visible from the file. However, if the `impl`s
+// are associated with the same match_first block, then they are allowed to have
+// the same type structure.
 //
 // Returns true if an error was diagnosed.
-static auto DiagnoseNonFinalImplsWithSameTypeStructure(Context& context,
-                                                       const ImplInfo& impl_a,
-                                                       const ImplInfo& impl_b)
-    -> bool {
-  if (impl_a.type_structure == impl_b.type_structure) {
+static auto DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
+    Context& context, const ImplInfo& impl_a, const ImplInfo& impl_b) -> bool {
+  if (impl_a.type_structure == impl_b.type_structure &&
+      !(impl_a.match_first_id.has_value() &&
+        impl_a.match_first_id == impl_b.match_first_id)) {
     CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructure, Error,
                       "found non-final `impl` with the same type "
                       "structure as another non-final `impl`");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            ImplNonFinalSameTypeStructure);
-    CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructureNote, Note,
-                      "other `impl` here");
-    builder.Note(impl_a.latest_decl_id, ImplNonFinalSameTypeStructureNote);
+    CARBON_DIAGNOSTIC_LABEL(ImplNonFinalSameTypeStructureNote, Info,
+                            "other `impl` here");
+    builder.Attach(impl_a.latest_decl_id, ImplNonFinalSameTypeStructureNote);
     builder.Emit();
     return true;
   }
@@ -277,10 +285,10 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(Context& context,
                         "`impl` will never be used");
       auto builder = context.emitter().Build(query_impl.latest_decl_id,
                                              ImplFinalOverlapsNonFinal);
-      CARBON_DIAGNOSTIC(
-          ImplFinalOverlapsNonFinalNote, Note,
+      CARBON_DIAGNOSTIC_LABEL(
+          ImplFinalOverlapsNonFinalNote, Info,
           "`final impl` declared here would always be used instead");
-      builder.Note(final_impl.latest_decl_id, ImplFinalOverlapsNonFinalNote);
+      builder.Attach(final_impl.latest_decl_id, ImplFinalOverlapsNonFinalNote);
       builder.Emit();
       return true;
     }
@@ -308,17 +316,17 @@ static auto DiagnoseFinalImplsOverlapInDifferentFiles(Context& context,
     CARBON_DIAGNOSTIC(
         FinalImplOverlapsDifferentFile, Error,
         "`final impl` overlaps with `final impl` from another file");
-    CARBON_DIAGNOSTIC(FinalImplOverlapsDifferentFileNote, Note,
-                      "imported `final impl` here");
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsDifferentFileNote, Info,
+                            "imported `final impl` here");
     if (impl_a.is_local) {
       auto builder = context.emitter().Build(impl_a.latest_decl_id,
                                              FinalImplOverlapsDifferentFile);
-      builder.Note(impl_b.latest_decl_id, FinalImplOverlapsDifferentFileNote);
+      builder.Attach(impl_b.latest_decl_id, FinalImplOverlapsDifferentFileNote);
       builder.Emit();
     } else {
       auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                              FinalImplOverlapsDifferentFile);
-      builder.Note(impl_a.latest_decl_id, FinalImplOverlapsDifferentFileNote);
+      builder.Attach(impl_a.latest_decl_id, FinalImplOverlapsDifferentFileNote);
       builder.Emit();
     }
     return true;
@@ -330,23 +338,22 @@ static auto DiagnoseFinalImplsOverlapInDifferentFiles(Context& context,
 // Two final impls in the same file can not overlap in their type
 // structure if they are not in the same match_first block.
 //
-// TODO: Support for match_first needed here when they exist in the
-// toolchain.
-//
 // Returns true if an error was diagnosed.
 static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
                                                        const ImplInfo& impl_a,
                                                        const ImplInfo& impl_b)
     -> bool {
-  if (impl_a.is_local && impl_b.is_local) {
+  if (impl_a.is_local && impl_b.is_local &&
+      !(impl_a.match_first_id.has_value() &&
+        impl_a.match_first_id == impl_b.match_first_id)) {
     CARBON_DIAGNOSTIC(FinalImplOverlapsSameFile, Error,
                       "`final impl` overlaps with `final impl` from same file "
                       "outside a `match_first` block");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            FinalImplOverlapsSameFile);
-    CARBON_DIAGNOSTIC(FinalImplOverlapsSameFileNote, Note,
-                      "other `final impl` here");
-    builder.Note(impl_a.latest_decl_id, FinalImplOverlapsSameFileNote);
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsSameFileNote, Info,
+                            "other `final impl` here");
+    builder.Attach(impl_a.latest_decl_id, FinalImplOverlapsSameFileNote);
     builder.Emit();
     return true;
   }
@@ -417,8 +424,8 @@ static auto ValidateImplsForInterface(Context& context,
           // but possibly different files, if one is in the api and one in the
           // impl file.
           if (impl_a.library_id == impl_b.library_id) {
-            if (DiagnoseNonFinalImplsWithSameTypeStructure(context, impl_a,
-                                                           impl_b)) {
+            if (DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
+                    context, impl_a, impl_b)) {
               // The same final `impl_a` may overlap with multiple `impl_b`s,
               // and we want to diagnose each `impl_b`.
               did_diagnose_non_final_impls_with_same_type_structure = true;

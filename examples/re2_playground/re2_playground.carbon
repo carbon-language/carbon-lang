@@ -16,13 +16,13 @@ class RE2 {
   fn Make(re: str) -> Self {
     return RE2(re) as Self;
   }
-  fn Match[self: Self](text: str) -> bool {
+  fn Match(self, text: str) -> bool {
     return FullMatch(text, self as Cpp.re2.RE2);
   }
 }
 
 impl str as Core.ImplicitAs(Cpp.llvm.StringRef) {
-  fn Convert[self: Self]() -> Cpp.llvm.StringRef {
+  fn Convert(self) -> Cpp.llvm.StringRef {
     return Cpp.llvm.StringRef.StringRef(self);
   }
 }

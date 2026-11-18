@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_OVERLOAD_RESOLUTION_H_
 
+#include "clang/Sema/Overload.h"
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
@@ -36,13 +37,17 @@ auto ComputeClangDeclSignatureFromBestViableFunction(
 // instruction referring to that function, or an error instruction if overload
 // resolution failed.
 //
+// `callee_expr_id` is the expression naming the overload set, which is what a
+// diagnostic about the resolution marks: the message names the callee, and what
+// each candidate was given is described by the note hanging off it.
+//
 // A set with a single non-templated function goes through the same rules for
 // overload resolution. This is to make sure that calls that have no viable
 // implicit conversion sequence are rejected even when an implicit conversion is
 // possible. Keeping the same behavior here for consistency and supporting
 // migrations so that the migrated callers from C++ remain valid.
 auto PerformCppOverloadResolution(
-    Context& context, SemIR::LocId loc_id,
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_expr_id,
     const SemIR::CppOverloadSet& overload_set,
     llvm::ArrayRef<SemIR::InstId> template_arg_ids, SemIR::InstId self_id,
     llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId;

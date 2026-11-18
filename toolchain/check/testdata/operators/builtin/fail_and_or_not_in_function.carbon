@@ -22,9 +22,14 @@ fn F(b: bool) -> type {
 }
 
 // TODO: Short-circuit operators should be permitted outside functions.
-// CHECK:STDERR: fail_and.carbon:[[@LINE+4]]:13: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var and_: F(true and true);
-// CHECK:STDERR:             ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_and.carbon:[[@LINE+9]]:13
+// CHECK:STDERR: ->     │ var and_: F(true and true);
+// CHECK:STDERR:        ·             ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var and_: F(true and true);
 
@@ -32,13 +37,23 @@ var and_: F(true and true);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_and_val.carbon:[[@LINE+8]]:21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var and_val: bool = true and true;
-// CHECK:STDERR:                     ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_and_val.carbon:[[@LINE+18]]:21
+// CHECK:STDERR: ->     │ var and_val: bool = true and true;
+// CHECK:STDERR:        ·                     ━━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_and_val.carbon:[[@LINE+4]]:21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var and_val: bool = true and true;
-// CHECK:STDERR:                     ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_and_val.carbon:[[@LINE+9]]:21
+// CHECK:STDERR: ->     │ var and_val: bool = true and true;
+// CHECK:STDERR:        ·                     ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var and_val: bool = true and true;
 
@@ -51,9 +66,14 @@ fn F(b: bool) -> type {
   return if b then i32 else f64;
 }
 
-// CHECK:STDERR: fail_or.carbon:[[@LINE+4]]:12: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var or_: F(true or true);
-// CHECK:STDERR:            ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_or.carbon:[[@LINE+9]]:12
+// CHECK:STDERR: ->     │ var or_: F(true or true);
+// CHECK:STDERR:        ·            ━━━━━━┳━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var or_: F(true or true);
 
@@ -61,13 +81,23 @@ var or_: F(true or true);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_or_val.carbon:[[@LINE+8]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var or_val: bool = true or true;
-// CHECK:STDERR:                    ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_or_val.carbon:[[@LINE+18]]:20
+// CHECK:STDERR: ->     │ var or_val: bool = true or true;
+// CHECK:STDERR:        ·                    ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_or_val.carbon:[[@LINE+4]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-// CHECK:STDERR: var or_val: bool = true or true;
-// CHECK:STDERR:                    ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_or_val.carbon:[[@LINE+9]]:20
+// CHECK:STDERR: ->     │ var or_val: bool = true or true;
+// CHECK:STDERR:        ·                    ━━━━━━┳━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var or_val: bool = true or true;
 
@@ -75,30 +105,36 @@ var or_val: bool = true or true;
 
 library "[[@TEST_NAME]]";
 
-base class C(B:! bool) {}
+base class C(B: bool) {}
 
 fn F() {
   class B {
-    // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
-    // CHECK:STDERR:     extend base: C(true or false);
-    // CHECK:STDERR:                    ^~~~~~~~~~~~~
+    // CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+9]]:20
+    // CHECK:STDERR: ->     │     extend base: C(true or false);
+    // CHECK:STDERR:        ·                    ━━━━━━┳━━━━━━
+    // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+    // CHECK:STDERR:        · ┃ error: semantics TODO:
+    // CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+    // CHECK:STDERR:        · ┃        [SemanticsTodo]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     extend base: C(true or false);
   }
 }
 
-// CHECK:STDOUT: --- fail_and.carbon
+// CHECK:STDOUT: --- fail_and.carbon = $fail_and
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.592: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.592) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b33: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.173: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b33, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.f3e: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f3e) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ca9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.cd2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ca9, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -118,26 +154,27 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.173 = impl_witness_access constants.%Copy.impl_witness.592, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.cd2 = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_and_val.carbon
+// CHECK:STDOUT: --- fail_and_val.carbon = $fail_and_val
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_or.carbon
+// CHECK:STDOUT: --- fail_or.carbon = $fail_or
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.592: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.592) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b33: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.173: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b33, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.f3e: <witness> = impl_witness <unexpected>.inst{{[0-9A-F]+}} [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f3e) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ca9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.cd2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ca9, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -157,29 +194,33 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !if.expr.result:
 // CHECK:STDOUT:   %.loc6: type = block_arg !if.expr.result
-// CHECK:STDOUT:   %impl.elem0: %.173 = impl_witness_access constants.%Copy.impl_witness.592, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.cd2 = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc6, %impl.elem0
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc6)
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_or_val.carbon
+// CHECK:STDOUT: --- fail_or_val.carbon = $fail_or_val
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nested.carbon
+// CHECK:STDOUT: --- fail_nested.carbon = $fail_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
+// CHECK:STDOUT:   %B.patt: %pattern_type = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %B.a76: bool = symbolic_binding B, 0 [symbolic]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%B.a76) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %B.d97: type = class_type @B [concrete]
+// CHECK:STDOUT:   %B.c72: type = class_type @B [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(<unexpected>.inst{{[0-9A-F]+}}.loc4_15: bool) {
+// CHECK:STDOUT:   %B.patt.loc4_15.2: %pattern_type = symbolic_binding_pattern B, 0 [symbolic = %B.patt.loc4_15.2 (constants.%B.patt)]
 // CHECK:STDOUT:   %B: bool = symbolic_binding B, 0 [symbolic = %B (constants.%B.a76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -194,21 +235,22 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
-// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_24 [concrete = constants.%C.generic]
-// CHECK:STDOUT:   %true.loc12_20: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc12: bool = not %true.loc12_20 [concrete = constants.%false]
-// CHECK:STDOUT:   %true.loc12_25: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   if %.loc12 br !or.rhs else br !or.result(%true.loc12_25)
+// CHECK:STDOUT:   %C.ref: %C.type = name_ref C, <unexpected>.inst{{[0-9A-F]+}}.loc4_23 [concrete = constants.%C.generic]
+// CHECK:STDOUT:   %true.loc17_20: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc17: bool = not %true.loc17_20 [concrete = constants.%false]
+// CHECK:STDOUT:   %true.loc17_25: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   if %.loc17 br !or.rhs else br !or.result(%true.loc17_25)
 // CHECK:STDOUT:   complete_type_witness = invalid
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = constants.%B.d97
+// CHECK:STDOUT:   .Self = constants.%B.c72
 // CHECK:STDOUT:   .C = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%B.a76) {
+// CHECK:STDOUT:   %B.patt.loc4_15.2 => constants.%B.patt
 // CHECK:STDOUT:   %B => constants.%B.a76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

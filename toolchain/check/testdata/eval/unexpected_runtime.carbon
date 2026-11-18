@@ -16,13 +16,16 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_base.carbon:[[@LINE+4]]:18: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   extend impl as x where .T = () {}
-  // CHECK:STDERR:                  ^
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_base.carbon:[[@LINE+7]]:18
+  // CHECK:STDERR: ->     │   extend impl as x where .T = () {}
+  // CHECK:STDERR:        ·                  ┳
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot evaluate type expression
+  // CHECK:STDERR:        ·                     ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as x where .T = () {}
 }
@@ -33,17 +36,25 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+8]]:18: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   extend impl as Z where x = () {}
-  // CHECK:STDERR:                  ^~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+16]]:18
+  // CHECK:STDERR: ->     │   extend impl as Z where x = () {}
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                     ┃        `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·                     ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+4]]:28: error: requirement can only use `=` after `.member` designator [RequirementEqualAfterNonDesignator]
-  // CHECK:STDERR:   extend impl as Z where x = () {}
-  // CHECK:STDERR:                            ^
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_rewrite_lhs.carbon:[[@LINE+8]]:28
+  // CHECK:STDERR: ->     │   extend impl as Z where x = () {}
+  // CHECK:STDERR:        ·                            ┳
+  // CHECK:STDERR:        ·                            ┗━━┫ error: requirement can only use `=` after
+  // CHECK:STDERR:        ·                               ┃        `.member` designator
+  // CHECK:STDERR:        ·                               ┃        [RequirementEqualAfterNonDesignator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as Z where x = () {}
 }
@@ -54,13 +65,17 @@ library "[[@TEST_NAME]]";
 var x: type;
 
 interface Z {
-  let T:! type;
+  let T: type;
 }
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_rewrite_rhs.carbon:[[@LINE+4]]:31: error: expression is runtime; expected constant [EvalRequiresConstantValue]
-  // CHECK:STDERR:   extend impl as Z where .T = x {}
-  // CHECK:STDERR:                               ^
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_rewrite_rhs.carbon:[[@LINE+8]]:31
+  // CHECK:STDERR: ->     │   extend impl as Z where .T = x {}
+  // CHECK:STDERR:        ·                               ┳
+  // CHECK:STDERR:        ·                               ┗━━┫ error: expression is runtime; expected
+  // CHECK:STDERR:        ·                                  ┃        constant
+  // CHECK:STDERR:        ·                                  ┃        [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as Z where .T = x {}
 }
@@ -70,14 +85,17 @@ library "[[@TEST_NAME]]";
 
 var x: type;
 
-interface Z {}
+interface Z(T: type) {}
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_impls_lhs.carbon:[[@LINE+4]]:29: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   extend impl as type where x impls Z {}
-  // CHECK:STDERR:                             ^
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_impls_lhs.carbon:[[@LINE+7]]:29
+  // CHECK:STDERR: ->     │   extend impl as type where x impls Z(.Self) {}
+  // CHECK:STDERR:        ·                             ┳
+  // CHECK:STDERR:        ·                             ┗━━┫ error: cannot evaluate type expression
+  // CHECK:STDERR:        ·                                ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  extend impl as type where x impls Z {}
+  extend impl as type where x impls Z(.Self) {}
 }
 
 // --- fail_unexpected_runtime_impls_rhs.carbon
@@ -88,9 +106,13 @@ var x: type;
 interface Z {}
 
 class D {
-  // CHECK:STDERR: fail_unexpected_runtime_impls_rhs.carbon:[[@LINE+4]]:41: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   extend impl as type where .Self impls x {}
-  // CHECK:STDERR:                                         ^
+  // CHECK:STDERR:        ╭─┤ fail_unexpected_runtime_impls_rhs.carbon:[[@LINE+8]]:41
+  // CHECK:STDERR: ->     │   extend impl as type where .Self impls x {}
+  // CHECK:STDERR:        ·                                         ┳
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: cannot evaluate type
+  // CHECK:STDERR:        ·                                            ┃        expression
+  // CHECK:STDERR:        ·                                            ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as type where .Self impls x {}
 }

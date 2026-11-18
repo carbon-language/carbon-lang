@@ -16,6 +16,55 @@ dependency to be added.
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 load("@rules_cc//cc/common:cc_common.bzl", "cc_common")
 
+def _carbon_prelude_impl(ctx):
+    cc_toolchain = find_cpp_toolchain(ctx)
+
+    # TODO: find a less terrible way to figure this out
+    repo_root = str(cc_toolchain.compiler_executable)
+    repo_root = repo_root.removeprefix(cc_toolchain._crosstool_top_path + "/")
+
+    # The tool path seems to be relative to the toolchain _repository_ root, so
+    # it includes the `toolchain/install` suffix, which is why we remove it here.
+    repo_root = repo_root.removesuffix("toolchain/install/llvm/bin/clang++")
+
+    carbon_busybox = repo_root + cc_toolchain._tool_paths["carbon-busybox"]
+
+    srcs = [s for s in ctx.files.srcs if s.extension == "carbon"]
+    objs = []
+    for src in srcs:
+        out = ctx.actions.declare_file("_objs/{0}/{1}o".format(
+            ctx.label.name,
+            src.short_path.removeprefix(ctx.label.package).removesuffix(src.extension),
+        ))
+        objs.append(out)
+        srcs_reordered = [s for s in srcs if s != src] + [src]
+        ctx.actions.run(
+            outputs = [out],
+            inputs = depset(direct = srcs_reordered),
+            tools = depset(transitive = [cc_toolchain.all_files]),
+            executable = carbon_busybox,
+            arguments = ["compile", "--output=" + out.path, "--output-last-input-only"] +
+                        ["--no-prelude-import"] +
+                        [s.path for s in srcs_reordered] + ctx.attr.flags,
+            mnemonic = "CarbonPrelude",
+            progress_message = "Precompiling prelude file " + src.short_path,
+        )
+
+    return DefaultInfo(files = depset(objs))
+
+carbon_prelude = rule(
+    implementation = _carbon_prelude_impl,
+    attrs = {
+        "flags": attr.string_list(),
+        "srcs": attr.label_list(allow_files = [".carbon"]),
+        "_cc_toolchain": attr.label(
+            default = Label("@bazel_tools//tools/cpp:current_cc_toolchain"),
+        ),
+    },
+    toolchains = ["@bazel_tools//tools/cpp:toolchain_type"],
+    fragments = ["cpp"],
+)
+
 def _build_crt_file(ctx, cc_toolchain, feature_configuration, crt_file, crt_copts):
     _, compilation_outputs = cc_common.compile(
         name = "{}.compile_{}".format(ctx.label.name, crt_file.basename),
@@ -48,6 +97,7 @@ CarbonRuntimesConfigInfo = provider(
     """,
     fields = [
         "builtins_archive",
+        "carbon_prelude_prebuilt",
         "clang_hdrs_prefix",
         "crt_copts",
         "crtbegin_src",
@@ -63,6 +113,7 @@ def _carbon_runtimes_config_impl(ctx):
     return [
         CarbonRuntimesConfigInfo(
             builtins_archive = ctx.files.builtins_archive[0],
+            carbon_prelude_prebuilt = ctx.files.carbon_prelude_prebuilt,
             clang_hdrs_prefix = ctx.attr.clang_hdrs_prefix,
             crt_copts = ctx.attr.crt_copts,
             crtbegin_src = ctx.files.crtbegin_src[0] if ctx.files.crtbegin_src else None,
@@ -78,6 +129,7 @@ carbon_runtimes_config = rule(
     implementation = _carbon_runtimes_config_impl,
     attrs = {
         "builtins_archive": attr.label(mandatory = True, allow_files = [".a"]),
+        "carbon_prelude_prebuilt": attr.label(allow_files = [".o"]),
         "clang_hdrs_prefix": attr.string(default = "include/"),
         "crt_copts": attr.string_list(default = []),
         "crtbegin_src": attr.label(allow_files = [".c"]),
@@ -169,6 +221,14 @@ def _carbon_runtimes_build_impl(ctx):
         )
         ctx.actions.symlink(output = out_hdr, target_file = hdr)
         outputs.append(out_hdr)
+
+    for obj in config.carbon_prelude_prebuilt:
+        rel_path = obj.path
+        out_obj = ctx.actions.declare_file(
+            "{0}/core/{1}".format(prefix, rel_path),
+        )
+        ctx.actions.symlink(output = out_obj, target_file = obj)
+        outputs.append(out_obj)
 
     return [DefaultInfo(files = depset(outputs))]
 

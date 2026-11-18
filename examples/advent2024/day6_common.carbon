@@ -43,7 +43,7 @@ class Maze {
     return var;
   }
 
-  fn Copy[self: Self]() -> Maze {
+  fn Copy(self) -> Maze {
     returned var copy: Maze;
     var y: i32 = 0;
     while (y < 130) {
@@ -59,7 +59,7 @@ class Maze {
     return var;
   }
 
-  fn Step[ref self: Self]() -> bool {
+  fn Step(ref self) -> bool {
     let x: i32 = self.loc.0 + self.dir.0;
     let y: i32 = self.loc.1 + self.dir.1;
     if (x < 0 or x >= 130 or y < 0 or y >= 130) {
@@ -77,7 +77,7 @@ class Maze {
     return true;
   }
 
-  fn AddObstacle[ref self: Self]() -> bool {
+  fn AddObstacle(ref self) -> bool {
     let x: i32 = self.loc.0 + self.dir.0;
     let y: i32 = self.loc.1 + self.dir.1;
     if (x < 0 or x >= 130 or y < 0 or y >= 130) {
@@ -90,7 +90,7 @@ class Maze {
     return true;
   }
 
-  fn CountVisited[self: Self]() -> i32 {
+  fn CountVisited(self) -> i32 {
     var total: i32 = 0;
     var y: i32 = 0;
     while (y < 130) {

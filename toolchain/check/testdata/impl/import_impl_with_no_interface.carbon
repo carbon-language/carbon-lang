@@ -13,20 +13,22 @@
 // --- fail_lib.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lib.carbon:[[@LINE+4]]:18: error: name `Undeclared` not found [NameNotFound]
-// CHECK:STDERR: impl {.i: ()} as Undeclared {
-// CHECK:STDERR:                  ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_lib.carbon:[[@LINE+6]]:18
+// CHECK:STDERR: ->     │ impl {.i: ()} as Undeclared {
+// CHECK:STDERR:        ·                  ━━━━━┳━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: name `Undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {.i: ()} as Undeclared {
   fn F() {}
 }
 
 interface Instance {
-  fn G[self: Self]();
+  fn G(self);
 }
 
 impl {.i: ()} as Instance {
-  fn G[unused self: Self]() {}
+  fn G(unused self) {}
 }
 
 // --- import_instance_success.carbon

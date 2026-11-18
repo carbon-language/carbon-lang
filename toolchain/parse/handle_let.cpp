@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
@@ -19,33 +20,64 @@ auto HandleLet(Context& context) -> void {
 
   context.PushStateForPattern(StateKind::Pattern, /*in_var_pattern=*/false,
                               /*in_unused_pattern=*/false,
+                              /*in_field_shorthand_pattern=*/false,
+                              BindingContext::ExplicitParam,
                               PrecedenceGroup::ForTopLevelPattern());
 }
 
 auto HandleAssociatedConstant(Context& context) -> void {
   auto state = context.PopState();
 
-  // Parse the associated constant pattern: identifier :! type
+  // Parse the associated constant pattern: identifier : type. The binding is a
+  // checked generic by context, so no phase keyword is used.
   auto identifier = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!identifier) {
-    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantIdentifier, Error,
-                      "expected identifier in associated constant declaration");
-    context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantIdentifier);
+    auto kind = context.PositionKind();
+    if (kind == Lex::TokenKind::Generic || kind == Lex::TokenKind::Runtime ||
+        kind == Lex::TokenKind::Template) {
+      // Diagnose a phase keyword specifically, rather than reporting a missing
+      // associated constant name.
+      CARBON_DIAGNOSTIC(
+          PhaseKeywordInAssociatedConstant, Error,
+          "phase keyword is not allowed on an associated constant");
+      context.emitter().Emit(*context.position(),
+                             PhaseKeywordInAssociatedConstant);
+      state.has_error = true;
+    } else {
+      // A word that can't be a name, followed by the `:`, was most likely
+      // meant as the name, and is what the message is about. Otherwise the
+      // name is missing, and goes after `let`.
+      bool recover_as_raw =
+          kind.is_word() &&
+          context.PositionKind(Lookahead::NextToken) == Lex::TokenKind::Colon;
+      CARBON_DIAGNOSTIC(
+          ExpectedAssociatedConstantIdentifier, Error,
+          "expected identifier in associated constant declaration"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(recover_as_raw ? DiagnosticLoc(*context.position())
+                                            : context.PointAfterPreviousToken(),
+                             ExpectedAssociatedConstantIdentifier,
+                             recover_as_raw);
+      if (recover_as_raw) {
+        identifier = context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+            context.Consume());
+      } else {
+        state.has_error = true;
+      }
+    }
+  }
+
+  auto colon = context.ConsumeIf(Lex::TokenKind::Colon);
+  if (identifier && !colon) {
+    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColon, Error,
+                      "expected `:` in associated constant declaration");
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedAssociatedConstantColon);
     state.has_error = true;
   }
 
-  auto colon_exclaim = context.ConsumeIf(Lex::TokenKind::ColonExclaim);
-  if (identifier && !colon_exclaim) {
-    CARBON_DIAGNOSTIC(ExpectedAssociatedConstantColonExclaim, Error,
-                      "found runtime binding pattern in associated constant "
-                      "declaration; expected a `:!` binding");
-    context.emitter().Emit(*context.position(),
-                           ExpectedAssociatedConstantColonExclaim);
-    state.has_error = true;
-  }
-
-  if (!identifier || !colon_exclaim) {
+  if (!identifier || !colon) {
     auto end_token = context.SkipPastLikelyEnd(*(context.position() - 1));
     context.AddNode(NodeKind::AssociatedConstantDecl, end_token,
                     /*has_error=*/true);
@@ -54,7 +86,7 @@ auto HandleAssociatedConstant(Context& context) -> void {
   }
 
   context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature, *identifier);
-  state.token = *colon_exclaim;
+  state.token = *colon;
   context.PushState(state, StateKind::LetFinishAsAssociatedConstant);
   context.PushState(state, StateKind::LetAfterPatternAsAssociatedConstant);
   context.PushState(StateKind::Expr);

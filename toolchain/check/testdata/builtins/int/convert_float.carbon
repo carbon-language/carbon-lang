@@ -1,0 +1,98 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/builtins/int/convert_float.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/builtins/int/convert_float.carbon
+
+// --- int_to_float.carbon
+library "[[@TEST_NAME]]";
+
+fn ConvertI32ToF64(a: i32) -> f64 = "int.convert_float";
+fn ConvertU32ToF64(a: u32) -> f64 = "int.convert_float";
+fn ConvertIntLiteralToF64(a: Core.IntLiteral) -> f64 = "int.convert_float";
+fn ConvertIntLiteralToFloatLiteral(a: Core.IntLiteral) -> Core.FloatLiteral = "int.convert_float";
+
+fn Negate(a: f64) -> f64 = "float.negate";
+
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
+
+// --- identity.carbon
+library "[[@TEST_NAME]]";
+import library "int_to_float";
+
+fn F() {
+  Test(ConvertI32ToF64(0)) as Expect(0.0 as f64);
+  Test(ConvertI32ToF64(1)) as Expect(1.0 as f64);
+  Test(ConvertI32ToF64(-1)) as Expect(Negate(1.0));
+  Test(ConvertI32ToF64(123456789)) as Expect(123456789.0 as f64);
+
+  Test(ConvertU32ToF64(0)) as Expect(0.0 as f64);
+  Test(ConvertU32ToF64(1)) as Expect(1.0 as f64);
+  Test(ConvertU32ToF64(4294967295)) as Expect(4294967295.0 as f64);
+
+  Test(ConvertIntLiteralToF64(1)) as Expect(1.0 as f64);
+  Test(ConvertIntLiteralToF64(-1)) as Expect(Negate(1.0));
+
+  Test(ConvertIntLiteralToFloatLiteral(1) as f64) as Expect(1.0 as f64);
+}
+
+// --- fail_overflow.carbon
+library "[[@TEST_NAME]]";
+import library "int_to_float";
+
+//@dump-sem-ir-begin
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+10]]:21
+// CHECK:STDERR: ->     │ ...t overflow: f64 = ConvertIntLiteralToF64(100000000000000000000000000000000...
+// CHECK:STDERR:        ·                      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: integer value
+// CHECK:STDERR:        · ┃        1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// CHECK:STDERR:        · ┃        too large for floating-point type `f64`
+// CHECK:STDERR:        · ┃        [IntTooLargeForFloatType]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000);
+//@dump-sem-ir-end
+
+// CHECK:STDOUT: --- fail_overflow.carbon = $fail_overflow
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.667: type = pattern_type %f64.761 [concrete]
+// CHECK:STDOUT:   %overflow.patt: %pattern_type.667 = value_binding_pattern overflow [concrete]
+// CHECK:STDOUT:   %ConvertIntLiteralToF64.type: type = fn_type @ConvertIntLiteralToF64 [concrete]
+// CHECK:STDOUT:   %ConvertIntLiteralToF64: %ConvertIntLiteralToF64.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: Core.IntLiteral = int_value 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.ConvertIntLiteralToF64: %ConvertIntLiteralToF64.type = import_ref Main//int_to_float, ConvertIntLiteralToF64, loaded [concrete = constants.%ConvertIntLiteralToF64]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
+// CHECK:STDOUT:   %overflow: %f64.761 = wrapper_binding overflow, @__global_init.%.loc15_354.2 [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %overflow.patt: %pattern_type.667 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %ConvertIntLiteralToF64.ref: %ConvertIntLiteralToF64.type = name_ref ConvertIntLiteralToF64, imports.%Main.ConvertIntLiteralToF64 [concrete = constants.%ConvertIntLiteralToF64]
+// CHECK:STDOUT:   %int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000: Core.IntLiteral = int_value 1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 [concrete = constants.%int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+// CHECK:STDOUT:   %ConvertIntLiteralToF64.call: init %f64.761 = call %ConvertIntLiteralToF64.ref(%int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_354.1: %f64.761 = value_of_initializer %ConvertIntLiteralToF64.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc15_354.2: %f64.761 = converted %ConvertIntLiteralToF64.call, %.loc15_354.1 [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

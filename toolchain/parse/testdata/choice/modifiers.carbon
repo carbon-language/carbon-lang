@@ -16,19 +16,18 @@ private choice Ordering {
 }
 
 // CHECK:STDOUT: - filename: modifiers.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'PrivateModifier', text: 'private'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Ordering'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Less'},
-// CHECK:STDOUT:       {kind: 'ChoiceAlternativeListComma', text: ','},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Equivalent'},
-// CHECK:STDOUT:       {kind: 'ChoiceAlternativeListComma', text: ','},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Greater'},
-// CHECK:STDOUT:       {kind: 'ChoiceAlternativeListComma', text: ','},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Incomparable'},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─PrivateModifier 'private'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Ordering'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Less'
+// CHECK:STDOUT:   │ ├─ChoiceAlternativeListComma ','
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Equivalent'
+// CHECK:STDOUT:   │ ├─ChoiceAlternativeListComma ','
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Greater'
+// CHECK:STDOUT:   │ ├─ChoiceAlternativeListComma ','
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Incomparable'
+// CHECK:STDOUT:   ├─ChoiceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

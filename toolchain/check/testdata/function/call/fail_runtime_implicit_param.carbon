@@ -12,19 +12,23 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/fail_runtime_implicit_param.carbon
 
-// CHECK:STDERR: fail_runtime_implicit_param.carbon:[[@LINE+4]]:6: error: implicit parameters of functions must be constant or `self` [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn F[s: ()]();
-// CHECK:STDERR:      ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_runtime_implicit_param.carbon:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ fn F[runtime s: ()]();
+// CHECK:STDERR:        ·      ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: implicit parameters of functions must be constant
+// CHECK:STDERR:        ·               ┃        [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn F[s: ()]();
+fn F[runtime s: ()]();
 
 fn Run() {
   F();
 }
 
-// CHECK:STDOUT: --- fail_runtime_implicit_param.carbon
+// CHECK:STDOUT: --- fail_runtime_implicit_param.carbon = $fail_runtime_implicit_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]

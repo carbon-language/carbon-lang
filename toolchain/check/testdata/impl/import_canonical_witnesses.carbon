@@ -14,10 +14,10 @@
 // follows (if these become the same, it means the test is no longer effective):
 //
 // SET-CHECK-SUBSET
-// CHECK:STDOUT: --- interfaces.carbon
-// CHECK:STDOUT:   %facet_type: type = facet_type <@SimpleOp & @Empty> [concrete]
-// CHECK:STDOUT: --- use.carbon
-// CHECK:STDOUT:   %facet_type: type = facet_type <@Empty & @SimpleOp> [concrete]
+// CHECK:STDOUT: --- interfaces.carbon = $interfaces
+// CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@SimpleOp & @Empty> [concrete]
+// CHECK:STDOUT: --- use.carbon = $use
+// CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@Empty & @SimpleOp> [concrete]
 //
 // This check does not strictly exclude extra facet types, although that should
 // create different instruction names. We also anticipate diagnostics should be
@@ -36,20 +36,20 @@ library "[[@TEST_NAME]]";
 
 // An interface with a trivial function and blanket impl for pointers.
 interface SimpleOp {
-  fn Op[self: Self]();
+  fn Op(self);
 }
 
-impl forall [T:! type] T as SimpleOp {
-  fn Op[unused self: Self]() {}
+impl forall [T: type] T as SimpleOp {
+  fn Op(unused self) {}
 }
 
 // An empty interface with blanket impl for pointers.
 interface Empty {}
-impl forall [T:! type] T as Empty {}
+impl forall [T: type] T as Empty {}
 
 // Class with a use of `SimpleOp.Op`.
-class InterfaceWrap(T:! SimpleOp & Empty) {
-  fn UseSimpleOp[unused self: Self](value:! T) {
+class InterfaceWrap(T: SimpleOp & Empty) {
+  fn UseSimpleOp(unused self, generic value: T) {
     value.(SimpleOp.Op)();
   }
 }
@@ -57,14 +57,14 @@ class InterfaceWrap(T:! SimpleOp & Empty) {
 // Interface combining the above for an indirect `SimpleOp` use through `C`,
 // particularly use an associated constant.
 interface CombinedFacet {
-  let T:! SimpleOp & Empty;
-  fn GetInterfaceWrap[self: Self]() -> InterfaceWrap(T);
+  let T: SimpleOp & Empty;
+  fn GetInterfaceWrap(self) -> InterfaceWrap(T);
 }
 
 // A wrapper providing `CombinedFacet`.
-class TypeWrap(T:! type) {
+class TypeWrap(T: type) {
   impl as CombinedFacet where .T = T {
-    fn GetInterfaceWrap[unused self: Self]() -> InterfaceWrap(T) {
+    fn GetInterfaceWrap(unused self) -> InterfaceWrap(T) {
       return {};
     }
   }
@@ -77,6 +77,6 @@ import library "interfaces";
 
 class C {}
 
-fn F(t: TypeWrap(C), c:! C) {
+fn F(t: TypeWrap(C), generic c: C) {
   t.(CombinedFacet.GetInterfaceWrap)().UseSimpleOp(c);
 }

@@ -8,26 +8,33 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/interface/fail_missing_open_curly.carbon
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+4]]:15: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: interface Bar Baz {}
-// CHECK:STDERR:               ^~~
+// CHECK:STDERR:        ╭─┤ fail_missing_open_curly.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ interface Bar Baz {}
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: `interface` declarations must either end with a `;` or
+// CHECK:STDERR:        ·                 ┃        have a `{ ... }` block for a definition
+// CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Bar Baz {}
 
+// CHECK:STDERR:        ╭─┤ fail_missing_open_curly.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ interface Foo
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: `interface` declarations must either end with a `;` or
+// CHECK:STDERR:        ·                 ┃        have a `{ ... }` block for a definition
+// CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 interface Foo
 
-// CHECK:STDERR: fail_missing_open_curly.carbon:[[@LINE+14]]:21: error: `interface` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_missing_open_curly.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Bar'},
-// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'InterfaceDecl', text: 'Foo', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Bar'
+// CHECK:STDOUT:   ├─InterfaceDecl '}' has_error
+// CHECK:STDOUT:   │ ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─InterfaceDecl 'Foo' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

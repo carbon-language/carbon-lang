@@ -4,8 +4,10 @@
 
 package Core library "prelude/types";
 
+export import library "prelude/types/array";
 export import library "prelude/types/bool";
 export import library "prelude/types/char";
+export import library "prelude/types/char_literal";
 export import library "prelude/types/cpp/int";
 export import library "prelude/types/cpp/nullptr";
 export import library "prelude/types/cpp/void";

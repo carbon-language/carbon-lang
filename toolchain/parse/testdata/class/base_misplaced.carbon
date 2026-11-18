@@ -19,26 +19,25 @@ fn F() {
 
 
 // CHECK:STDOUT: - filename: base_misplaced.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:       {kind: 'BaseColon', text: ':'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:     {kind: 'BaseDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─BaseModifier 'base'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ ├─BaseColon ':'
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   ├─BaseDecl ';'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ │ ├─BaseColon ':'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ ├─BaseDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

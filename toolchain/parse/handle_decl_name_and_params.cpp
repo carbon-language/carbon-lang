@@ -2,11 +2,34 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
 namespace Carbon::Parse {
+
+// Determines the binding context for an explicit `()` parameter list beginning
+// at the current position. A list that is a name qualifier (its matched `)` is
+// immediately followed by `.`) names a compile-time entity, so its parameters
+// use the compile-time-entity context; otherwise the list uses the enclosing
+// declaration's default `decl_context`.
+static auto ExplicitParamListContext(Context& context,
+                                     BindingContext decl_context)
+    -> BindingContext {
+  // A compile-time entity's parameters are compile-time whether or not this
+  // list is a name qualifier, so there is no need to look ahead for the `.`.
+  if (decl_context == BindingContext::CompileTimeEntityParam) {
+    return decl_context;
+  }
+  auto open_paren = *context.position();
+  auto close_paren = context.tokens().GetMatchedClosingToken(open_paren);
+  auto after_close = Lex::TokenIndex(close_paren.index + 1);
+  if (context.tokens().GetKind(after_close) == Lex::TokenKind::Period) {
+    return BindingContext::CompileTimeEntityParam;
+  }
+  return decl_context;
+}
 
 // Adds a leaf node for the name, and updates the state stack for parameter
 // handling.
@@ -21,21 +44,27 @@ static auto HandleName(Context& context, Context::State state,
       context.AddNode(not_before_params_qualifier_kind,
                       context.ConsumeChecked(Lex::TokenKind::Period),
                       state.has_error);
-      context.PushState(StateKind::DeclNameAndParams);
+      // Carry the declaration's binding context across the qualified name so
+      // the final parameter list uses the declaration's default phase.
+      context.PushState(StateKind::DeclNameAndParams, *context.position(),
+                        state.binding_context);
       break;
 
     case Lex::TokenKind::OpenSquareBracket:
       context.AddLeafNode(before_params_kind, name_token);
       state.kind = StateKind::DeclNameAndParamsAfterImplicit;
       context.PushState(state);
-      context.PushState(StateKind::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit, *context.position(),
+                        BindingContext::DeducedParam);
       break;
 
     case Lex::TokenKind::OpenParen:
       context.AddLeafNode(before_params_kind, name_token);
       state.kind = StateKind::DeclNameAndParamsAfterParams;
       context.PushState(state);
-      context.PushState(StateKind::PatternListAsExplicit);
+      context.PushState(
+          StateKind::PatternListAsExplicit, *context.position(),
+          ExplicitParamListContext(context, state.binding_context));
       break;
 
     case Lex::TokenKind::MinusGreater:
@@ -60,22 +89,44 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     return;
   }
 
-  Lex::TokenIndex token = *context.position();
-  if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
-    // The end of file is an unhelpful diagnostic location. Instead, use the
-    // introducer token.
-    token = state.token;
-  }
+  // A word that can't be a name, followed by a token that can follow one, was
+  // most likely meant as the name, and is what the message is about. Otherwise
+  // the name is missing, and goes after the token before it.
+  bool recover_as_raw =
+      context.PositionKind().is_word() &&
+      context.PositionKind(Lookahead::NextToken)
+          .IsOneOf({Lex::TokenKind::Period, Lex::TokenKind::OpenSquareBracket,
+                    Lex::TokenKind::OpenParen, Lex::TokenKind::MinusGreater,
+                    Lex::TokenKind::MinusGreaterQuestion, Lex::TokenKind::Semi,
+                    Lex::TokenKind::OpenCurlyBrace, Lex::TokenKind::Equal});
+  auto loc = recover_as_raw ? DiagnosticLoc(*context.position())
+                            : context.PointAfterPreviousToken();
   if (state.token == *context.position()) {
-    CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
-                      "`.` should be followed by a name");
-    context.emitter().Emit(token, ExpectedDeclNameAfterPeriod);
+    CARBON_DIAGNOSTIC(
+        ExpectedDeclNameAfterPeriod, Error,
+        "`.` should be followed by a name"
+        "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(loc, ExpectedDeclNameAfterPeriod, recover_as_raw);
   } else {
-    CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
-                      "`{0}` introducer should be followed by a name",
-                      Lex::TokenKind);
-    context.emitter().Emit(token, ExpectedDeclName,
-                           context.tokens().GetKind(state.token));
+    CARBON_DIAGNOSTIC(
+        ExpectedDeclName, Error,
+        "`{0}` introducer should be followed by a name"
+        "{1:; prefix reserved word with `r#` to form a valid identifier|}",
+        Lex::TokenKind, Diagnostics::BoolAsSelect);
+    context.emitter().Emit(loc, ExpectedDeclName,
+                           context.tokens().GetKind(state.token),
+                           recover_as_raw);
+  }
+
+  if (recover_as_raw) {
+    HandleName(context, state,
+               context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+                   context.Consume()),
+               NodeKind::IdentifierNameNotBeforeSignature,
+               NodeKind::IdentifierNameQualifierWithoutParams,
+               NodeKind::IdentifierNameMaybeBeforeSignature);
+    return;
   }
   context.ReturnErrorOnState();
   context.AddInvalidParse(*context.position());
@@ -91,7 +142,8 @@ auto HandleDeclNameAndParamsAfterImplicit(Context& context) -> void {
     return;
   }
 
-  context.PushState(StateKind::PatternListAsExplicit);
+  context.PushState(StateKind::PatternListAsExplicit, *context.position(),
+                    ExplicitParamListContext(context, state.binding_context));
 }
 
 auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
@@ -102,7 +154,8 @@ auto HandleDeclNameAndParamsAfterParams(Context& context) -> void {
                  NodeKind::IdentifierNameMaybeBeforeSignature);
     context.AddNode(NodeKind::IdentifierNameQualifierWithParams, *period,
                     state.has_error);
-    context.PushState(StateKind::DeclNameAndParams);
+    context.PushState(StateKind::DeclNameAndParams, *context.position(),
+                      state.binding_context);
   }
 }
 

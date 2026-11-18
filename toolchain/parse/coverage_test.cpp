@@ -23,8 +23,8 @@ constexpr NodeKind UntestedNodeKinds[] = {NodeKind::Placeholder};
 
 // Looks for node kinds that aren't covered by a file_test.
 TEST(Coverage, NodeKind) {
-  Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest),
-                            R"(kind: '(\w+)')", llvm::ArrayRef(NodeKinds),
+  Testing::TestKindCoverage(absl::GetFlag(FLAGS_testdata_manifest), R"(─(\w+))",
+                            llvm::ArrayRef(NodeKinds),
                             llvm::ArrayRef(UntestedNodeKinds));
 }
 

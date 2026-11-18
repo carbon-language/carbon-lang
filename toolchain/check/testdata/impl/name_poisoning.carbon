@@ -18,7 +18,7 @@ interface I {};
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-fn N.F1(x:! I);
+fn N.F1(generic x: I);
 
 class N.C {
   extend impl as I {
@@ -36,16 +36,23 @@ interface I {
 
 class B {
   impl as I {
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+11]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
-    // CHECK:STDERR:     fn A(x: B);
-    // CHECK:STDERR:             ^
+    // CHECK:STDERR:        ╭─┤ fail_impl_function_poisoned.carbon:[[@LINE+18]]:13
+    // CHECK:STDERR: ->     │     fn A(x: B);
+    // CHECK:STDERR:        ·             ┳
+    // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+    // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `<type of B in B as I>` to `type` [ConversionFailureNonTypeToFacet]
-    // CHECK:STDERR:     fn A(x: B);
-    // CHECK:STDERR:             ^
-    // CHECK:STDERR: fail_impl_function_poisoned.carbon:[[@LINE+4]]:13: note: type `<type of B in B as I>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-    // CHECK:STDERR:     fn A(x: B);
-    // CHECK:STDERR:             ^
+    // CHECK:STDERR:        ╭─┤ fail_impl_function_poisoned.carbon:[[@LINE+11]]:13
+    // CHECK:STDERR: ->     │     fn A(x: B);
+    // CHECK:STDERR:        ·             ┳
+    // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert non-type value of type
+    // CHECK:STDERR:        ·             │  ┃        `<type of B in B as I>` to `type`
+    // CHECK:STDERR:        ·             │  ┃        [ConversionFailureNonTypeToFacet]
+    // CHECK:STDERR:        ·             ╰────┤ type `<type of B in B as I>` does not implement interface
+    // CHECK:STDERR:        ·                  │ `Core.ImplicitAs(type)`
+    // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn A(x: B);
     fn B();

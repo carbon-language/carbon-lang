@@ -18,8 +18,9 @@ the "Harden Runner" steps are
 Most jobs only have a few endpoints, but due to tools which do downloads, a few
 have significantly more. These are:
 
+-   benchmarks.yaml (Bazel, Bencher)
 -   clangd_tidy.yaml (Bazel)
--   pre_commit.yaml (Bazel, pre-commit)
+-   prek.yaml (Bazel, prek)
 -   nightly_release.yaml (Bazel)
 -   tests.yaml (Bazel)
 

@@ -15,25 +15,25 @@
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
-struct A {
+struct EqA {
   int value;
 
-  friend auto operator==(A x, A y) -> bool {
+  friend auto operator==(EqA x, EqA y) -> bool {
     return x.value == y.value;
   }
 
-  friend auto operator!=(A x, A y) -> bool {
+  friend auto operator!=(EqA x, EqA y) -> bool {
     return !(x == y);
   }
 };
 ''';
 
-fn CheckEqWith[U:! type, T:! Core.EqWith(U)](x: T, y: U) {
+fn CheckEqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
 }
 
-fn Driver(x: Cpp.A, y: Cpp.A) {
+fn Driver(x: Cpp.EqA, y: Cpp.EqA) {
   CheckEqWith(x, y);
 }
 
@@ -42,152 +42,153 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
-struct A {
+struct OrderedA {
   int value;
 
-  friend auto operator<(A x, A y) -> bool {
+  friend auto operator<(OrderedA x, OrderedA y) -> bool {
     return x.value < y.value;
   }
 
-  friend auto operator>(A x, A y) -> bool {
+  friend auto operator>(OrderedA x, OrderedA y) -> bool {
     return y < x;
   }
 
-  friend auto operator<=(A x, A y) -> bool {
+  friend auto operator<=(OrderedA x, OrderedA y) -> bool {
     return !(y < x);
   }
 
-  friend auto operator>=(A x, A y) -> bool {
+  friend auto operator>=(OrderedA x, OrderedA y) -> bool {
     return !(x < y);
   }
 };
 ''';
 
-fn CheckOrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn CheckOrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x > y;
   x <= y;
   x >= y;
 }
 
-fn Driver(x: Cpp.A, y: Cpp.A) {
+fn Driver(x: Cpp.OrderedA, y: Cpp.OrderedA) {
   CheckOrderedWith(x, y);
 }
 
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'eq_with.carbon'
 // CHECK:STDOUT: source_filename = "eq_with.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type { i32 }
+// CHECK:STDOUT: %struct.EqA = type { i32 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zeq1AS_ = comdat any
+// CHECK:STDOUT: $_Zeq3EqAS_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zne1AS_ = comdat any
+// CHECK:STDOUT: $_Zne3EqAS_ = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !11 {
+// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCheckEqWith.Main.8514cfa07ba3e7b7(ptr %x, ptr %y), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
+// CHECK:STDOUT:   call void @_CCheckEqWith.Main.7152d97258755740(ptr %x, ptr %y), !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zeq1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zeq3EqAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zeq1AS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zeq3EqAS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zne1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: define internal void @_Zne3EqAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %y.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !51
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp1, i32 0, i32 0
 // CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zne1AS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zne3EqAS_(i32 %3, i32 %4)
 // CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !28 {
+// CHECK:STDOUT: define weak_odr i1 @"_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zeq1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !28
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !28
+// CHECK:STDOUT:   call void @_Zeq3EqAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !28
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !28
+// CHECK:STDOUT:   ret i1 %0, !dbg !28
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr i1 @"_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !30 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !34
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   call void @_Zne3EqAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !34
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !34
 // CHECK:STDOUT:   ret i1 %0, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CNotEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !35 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zne1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
-// CHECK:STDOUT:   ret i1 %0, !dbg !39
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCheckEqWith.Main.8514cfa07ba3e7b7(ptr %x, ptr %y) #0 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr void @_CCheckEqWith.Main.7152d97258755740(ptr %x, ptr %y) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp"(ptr %x, ptr %y), !dbg !44
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.call = call i1 @"_CNotEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp"(ptr %x, ptr %y), !dbg !45
-// CHECK:STDOUT:   ret void, !dbg !46
+// CHECK:STDOUT:   %EqWith.WithSelf.Equal.call = call i1 @"_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %x, ptr %y), !dbg !41
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.call = call i1 @"_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp"(ptr %x, ptr %y), !dbg !43
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zeq1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zeq3EqAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.EqA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.EqA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !47
-// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !47
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.EqA, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !60
+// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.EqA, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !60
 // CHECK:STDOUT:   %cmp = icmp eq i32 %0, %1
 // CHECK:STDOUT:   ret i1 %cmp
 // CHECK:STDOUT: }
@@ -196,23 +197,23 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zne1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zne3EqAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.EqA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.EqA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.EqA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.EqA, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zeq1AS_(i32 %0, i32 %1)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zeq3EqAS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   %lnot = xor i1 %call, true
 // CHECK:STDOUT:   ret i1 %lnot
 // CHECK:STDOUT: }
@@ -227,251 +228,256 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !64, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!66}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "eq_with.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !6, line: 23, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null, !14, !14}
-// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !15 = !{!16, !17}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !14)
-// CHECK:STDOUT: !18 = !DILocation(line: 24, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 23, column: 1, scope: !11)
-// CHECK:STDOUT: !20 = !{!21, !21, i64 0}
-// CHECK:STDOUT: !21 = !{!"p1 _ZTS1A", !22, i64 0}
-// CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !23 = !{!24, !24, i64 0}
-// CHECK:STDOUT: !24 = !{!"p1 bool", !22, i64 0}
-// CHECK:STDOUT: !25 = !{i64 0, i64 4, !7}
-// CHECK:STDOUT: !26 = !{!27, !27, i64 0}
-// CHECK:STDOUT: !27 = !{!"bool", !9, i64 0}
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp", scope: null, file: !6, line: 8, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !30 = !{!14, !14, !14}
-// CHECK:STDOUT: !31 = !{!32, !33}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !14)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 2, scope: !28, type: !14)
-// CHECK:STDOUT: !34 = !DILocation(line: 8, column: 15, scope: !28)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.f46538683c1a9318.Core:Cpp", scope: null, file: !6, line: 12, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
-// CHECK:STDOUT: !36 = !{!37, !38}
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !35, type: !14)
-// CHECK:STDOUT: !39 = !DILocation(line: 12, column: 15, scope: !35)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "CheckEqWith", linkageName: "_CCheckEqWith.Main.8514cfa07ba3e7b7", scope: null, file: !6, line: 18, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
-// CHECK:STDOUT: !41 = !{!42, !43}
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !14)
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 2, scope: !40, type: !14)
-// CHECK:STDOUT: !44 = !DILocation(line: 19, column: 3, scope: !40)
-// CHECK:STDOUT: !45 = !DILocation(line: 20, column: 3, scope: !40)
-// CHECK:STDOUT: !46 = !DILocation(line: 18, column: 1, scope: !40)
-// CHECK:STDOUT: !47 = !{!48, !8, i64 0}
-// CHECK:STDOUT: !48 = !{!"_ZTS1A", !8, i64 0}
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !4 = !DIFile(filename: "eq_with.carbon", directory: "")
+// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !4, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !8 = !{null, !7, !7}
+// CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
+// CHECK:STDOUT: !12 = !{!7, !7, !7}
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !4, line: 23, type: !9, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !23)
+// CHECK:STDOUT: !15 = !DILocalVariable(arg: 1, scope: !14, type: !7)
+// CHECK:STDOUT: !16 = !DILocalVariable(arg: 2, scope: !14, type: !7)
+// CHECK:STDOUT: !21 = !DILocation(line: 24, column: 3, scope: !14)
+// CHECK:STDOUT: !22 = !DILocation(line: 23, column: 1, scope: !14)
+// CHECK:STDOUT: !23 = !{!15, !16}
+// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Equal", linkageName: "_CEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp", scope: null, file: !4, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
+// CHECK:STDOUT: !25 = !DILocalVariable(arg: 1, scope: !24, type: !7)
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 2, scope: !24, type: !7)
+// CHECK:STDOUT: !28 = !DILocation(line: 8, column: 15, scope: !24)
+// CHECK:STDOUT: !29 = !{!25, !26}
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "NotEqual", linkageName: "_CNotEqual:thunk:EqWith.5fc20a8665baac18.Core:Cpp", scope: null, file: !4, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !35)
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !30, type: !7)
+// CHECK:STDOUT: !32 = !DILocalVariable(arg: 2, scope: !30, type: !7)
+// CHECK:STDOUT: !34 = !DILocation(line: 12, column: 15, scope: !30)
+// CHECK:STDOUT: !35 = !{!31, !32}
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "CheckEqWith", linkageName: "_CCheckEqWith.Main.7152d97258755740", scope: null, file: !4, line: 18, type: !9, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !7)
+// CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !36, type: !7)
+// CHECK:STDOUT: !41 = !DILocation(line: 19, column: 3, scope: !36)
+// CHECK:STDOUT: !43 = !DILocation(line: 20, column: 3, scope: !36)
+// CHECK:STDOUT: !45 = !DILocation(line: 18, column: 1, scope: !36)
+// CHECK:STDOUT: !46 = !{!37, !38}
+// CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
+// CHECK:STDOUT: !49 = !{!"any pointer", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!"p1 _ZTS3EqA", !49, i64 0}
+// CHECK:STDOUT: !51 = !{!50, !50, i64 0}
+// CHECK:STDOUT: !52 = !{!"bool", !48, i64 0}
+// CHECK:STDOUT: !53 = !{!"p1 bool", !49, i64 0}
+// CHECK:STDOUT: !54 = !{!53, !53, i64 0}
+// CHECK:STDOUT: !55 = !{!"int", !48, i64 0}
+// CHECK:STDOUT: !56 = !{!"_ZTS3EqA", !55, i64 0}
+// CHECK:STDOUT: !57 = !{!55, !55, i64 0}
+// CHECK:STDOUT: !58 = !{i64 0, i64 4, !57}
+// CHECK:STDOUT: !59 = !{!52, !52, i64 0}
+// CHECK:STDOUT: !60 = !{!56, !55, i64 0}
+// CHECK:STDOUT: !61 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !62 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !63 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !64 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !65 = !{!"__libc_errno", !55, i64 0}
+// CHECK:STDOUT: !66 = !{!65, !55, i64 0}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ordered_with.carbon'
 // CHECK:STDOUT: source_filename = "ordered_with.carbon"
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.A = type { i32 }
+// CHECK:STDOUT: %struct.OrderedA = type { i32 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zlt1AS_ = comdat any
+// CHECK:STDOUT: $_Zlt8OrderedAS_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zle1AS_ = comdat any
+// CHECK:STDOUT: $_Zle8OrderedAS_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zgt1AS_ = comdat any
+// CHECK:STDOUT: $_Zgt8OrderedAS_ = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Zge1AS_ = comdat any
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !11 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.cf2c934aa0200133(ptr %x, ptr %y), !dbg !18
-// CHECK:STDOUT:   ret void, !dbg !19
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zlt1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
-// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
-// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %3, i32 %4)
-// CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zle1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
-// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
-// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zle1AS_(i32 %3, i32 %4)
-// CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zgt1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
-// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
-// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zgt1AS_(i32 %3, i32 %4)
-// CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Zge1AS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.A, align 4
-// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !23
-// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !20
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
-// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp1, i32 0, i32 0
-// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zge1AS_(i32 %3, i32 %4)
-// CHECK:STDOUT:   %storedv = zext i1 %call to i8
-// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !26
-// CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLess:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !28 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !34
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   call void @_Zlt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !34
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !34
-// CHECK:STDOUT:   ret i1 %0, !dbg !34
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CLessOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !35 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !39
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   call void @_Zle1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !39
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !39
-// CHECK:STDOUT:   ret i1 %0, !dbg !39
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreater:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !40 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !44
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !44
-// CHECK:STDOUT:   call void @_Zgt1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !44
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !44
-// CHECK:STDOUT:   ret i1 %0, !dbg !44
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !45 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.3.temp = alloca i1, align 1, !dbg !49
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.3.temp), !dbg !49
-// CHECK:STDOUT:   call void @_Zge1AS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.3.temp), !dbg !49
-// CHECK:STDOUT:   %0 = load i1, ptr %.3.temp, align 1, !dbg !49
-// CHECK:STDOUT:   ret i1 %0, !dbg !49
-// CHECK:STDOUT: }
+// CHECK:STDOUT: $_Zge8OrderedAS_ = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.cf2c934aa0200133(ptr %x, ptr %y) #0 !dbg !50 {
+// CHECK:STDOUT: define void @_CDriver.Main(ptr %x, ptr %y) #0 !dbg !69 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %x, ptr %y), !dbg !54
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %x, ptr %y), !dbg !55
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %x, ptr %y), !dbg !56
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp"(ptr %x, ptr %y), !dbg !57
-// CHECK:STDOUT:   ret void, !dbg !58
+// CHECK:STDOUT:   call void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y), !dbg !76
+// CHECK:STDOUT:   ret void, !dbg !77
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Zlt8OrderedAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt8OrderedAS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %storedv = zext i1 %call to i8
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Zle8OrderedAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zle8OrderedAS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %storedv = zext i1 %call to i8
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Zgt8OrderedAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zgt8OrderedAS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %storedv = zext i1 %call to i8
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
+// CHECK:STDOUT: define internal void @_Zge8OrderedAS_.carbon_thunk.__(ptr noundef %x, ptr noundef %y, ptr noundef %return) #1 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %x.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %y.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %return.addr = alloca ptr, align 8
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp1 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   store ptr %x, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %y, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !54
+// CHECK:STDOUT:   %1 = load ptr, ptr %x.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %2 = load ptr, ptr %y.addr, align 8, !tbaa !119
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp1, ptr align 4 %2, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   %3 = load i32, ptr %coerce.dive, align 4
+// CHECK:STDOUT:   %coerce.dive2 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp1, i32 0, i32 0
+// CHECK:STDOUT:   %4 = load i32, ptr %coerce.dive2, align 4
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zge8OrderedAS_(i32 %3, i32 %4)
+// CHECK:STDOUT:   %storedv = zext i1 %call to i8
+// CHECK:STDOUT:   store i8 %storedv, ptr %0, align 1, !tbaa !59
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !79 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !83
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !83
+// CHECK:STDOUT:   call void @_Zlt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !83
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !83
+// CHECK:STDOUT:   ret i1 %0, !dbg !83
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !85 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !89
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !89
+// CHECK:STDOUT:   call void @_Zle8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !89
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !89
+// CHECK:STDOUT:   ret i1 %0, !dbg !89
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !91 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !95
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !95
+// CHECK:STDOUT:   call void @_Zgt8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !95
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !95
+// CHECK:STDOUT:   ret i1 %0, !dbg !95
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
+// CHECK:STDOUT: define weak_odr i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %self, ptr %other) #2 !dbg !97 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.6.temp = alloca i1, align 1, !dbg !101
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !101
+// CHECK:STDOUT:   call void @_Zge8OrderedAS_.carbon_thunk.__(ptr %self, ptr %other, ptr %.6.temp), !dbg !101
+// CHECK:STDOUT:   %0 = load i1, ptr %.6.temp, align 1, !dbg !101
+// CHECK:STDOUT:   ret i1 %0, !dbg !101
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CCheckOrderedWith.Main.b948edeb3216062b(ptr %x, ptr %y) #0 !dbg !103 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.call = call i1 @"_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !108
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.call = call i1 @"_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !110
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.call = call i1 @"_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !112
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.call = call i1 @"_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp"(ptr %x, ptr %y), !dbg !114
+// CHECK:STDOUT:   ret void, !dbg !116
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zlt1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zlt8OrderedAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
-// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !59
-// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
-// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !59
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %0 = load i32, ptr %value, align 4, !tbaa !121
+// CHECK:STDOUT:   %value2 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %1 = load i32, ptr %value2, align 4, !tbaa !121
 // CHECK:STDOUT:   %cmp = icmp slt i32 %0, %1
 // CHECK:STDOUT:   ret i1 %cmp
 // CHECK:STDOUT: }
@@ -480,66 +486,66 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zle1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zle8OrderedAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt8OrderedAS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   %lnot = xor i1 %call, true
 // CHECK:STDOUT:   ret i1 %lnot
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zgt1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zgt8OrderedAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt8OrderedAS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   ret i1 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zge1AS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local noundef zeroext i1 @_Zge8OrderedAS_(i32 %x.coerce, i32 %y.coerce) #4 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x = alloca %struct.A, align 4
-// CHECK:STDOUT:   %y = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp = alloca %struct.A, align 4
-// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.A, align 4
-// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.A, ptr %x, i32 0, i32 0
+// CHECK:STDOUT:   %x = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %y = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %agg.tmp2 = alloca %struct.OrderedA, align 4
+// CHECK:STDOUT:   %coerce.dive = getelementptr inbounds nuw %struct.OrderedA, ptr %x, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %x.coerce, ptr %coerce.dive, align 4
-// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.A, ptr %y, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive1 = getelementptr inbounds nuw %struct.OrderedA, ptr %y, i32 0, i32 0
 // CHECK:STDOUT:   store i32 %y.coerce, ptr %coerce.dive1, align 4
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !25
-// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp, i32 0, i32 0
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %x, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp2, ptr align 4 %y, i64 4, i1 false), !tbaa.struct !58
+// CHECK:STDOUT:   %coerce.dive3 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %coerce.dive3, align 4
-// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.A, ptr %agg.tmp2, i32 0, i32 0
+// CHECK:STDOUT:   %coerce.dive4 = getelementptr inbounds nuw %struct.OrderedA, ptr %agg.tmp2, i32 0, i32 0
 // CHECK:STDOUT:   %1 = load i32, ptr %coerce.dive4, align 4
-// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt1AS_(i32 %0, i32 %1)
+// CHECK:STDOUT:   %call = call noundef zeroext i1 @_Zlt8OrderedAS_(i32 %0, i32 %1)
 // CHECK:STDOUT:   %lnot = xor i1 %call, true
 // CHECK:STDOUT:   ret i1 %lnot
 // CHECK:STDOUT: }
@@ -554,68 +560,72 @@ fn Driver(x: Cpp.A, y: Cpp.A) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #4 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.module.flags = !{!0, !1, !2, !3, !4}
-// CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!68}
+// CHECK:STDOUT: !llvm.module.flags = !{!61, !62, !63, !64, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!66}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !1 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !6, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !6 = !DIFile(filename: "ordered_with.carbon", directory: "")
-// CHECK:STDOUT: !7 = !{!8, !8, i64 0}
-// CHECK:STDOUT: !8 = !{!"int", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"omnipotent char", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !11 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !6, line: 33, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !15)
-// CHECK:STDOUT: !12 = !DISubroutineType(types: !13)
-// CHECK:STDOUT: !13 = !{null, !14, !14}
-// CHECK:STDOUT: !14 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !15 = !{!16, !17}
-// CHECK:STDOUT: !16 = !DILocalVariable(arg: 1, scope: !11, type: !14)
-// CHECK:STDOUT: !17 = !DILocalVariable(arg: 2, scope: !11, type: !14)
-// CHECK:STDOUT: !18 = !DILocation(line: 34, column: 3, scope: !11)
-// CHECK:STDOUT: !19 = !DILocation(line: 33, column: 1, scope: !11)
-// CHECK:STDOUT: !20 = !{!21, !21, i64 0}
-// CHECK:STDOUT: !21 = !{!"p1 _ZTS1A", !22, i64 0}
-// CHECK:STDOUT: !22 = !{!"any pointer", !9, i64 0}
-// CHECK:STDOUT: !23 = !{!24, !24, i64 0}
-// CHECK:STDOUT: !24 = !{!"p1 bool", !22, i64 0}
-// CHECK:STDOUT: !25 = !{i64 0, i64 4, !7}
-// CHECK:STDOUT: !26 = !{!27, !27, i64 0}
-// CHECK:STDOUT: !27 = !{!"bool", !9, i64 0}
-// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp", scope: null, file: !6, line: 8, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !30)
-// CHECK:STDOUT: !30 = !{!14, !14, !14}
-// CHECK:STDOUT: !31 = !{!32, !33}
-// CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !28, type: !14)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 2, scope: !28, type: !14)
-// CHECK:STDOUT: !34 = !DILocation(line: 8, column: 15, scope: !28)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp", scope: null, file: !6, line: 16, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !36)
-// CHECK:STDOUT: !36 = !{!37, !38}
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !35, type: !14)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 2, scope: !35, type: !14)
-// CHECK:STDOUT: !39 = !DILocation(line: 16, column: 15, scope: !35)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp", scope: null, file: !6, line: 12, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
-// CHECK:STDOUT: !41 = !{!42, !43}
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !40, type: !14)
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 2, scope: !40, type: !14)
-// CHECK:STDOUT: !44 = !DILocation(line: 12, column: 15, scope: !40)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.76d9c95e44fa79ac.Core:Cpp", scope: null, file: !6, line: 20, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
-// CHECK:STDOUT: !46 = !{!47, !48}
-// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !45, type: !14)
-// CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !45, type: !14)
-// CHECK:STDOUT: !49 = !DILocation(line: 20, column: 15, scope: !45)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.cf2c934aa0200133", scope: null, file: !6, line: 26, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !51)
-// CHECK:STDOUT: !51 = !{!52, !53}
-// CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !50, type: !14)
-// CHECK:STDOUT: !53 = !DILocalVariable(arg: 2, scope: !50, type: !14)
-// CHECK:STDOUT: !54 = !DILocation(line: 27, column: 3, scope: !50)
-// CHECK:STDOUT: !55 = !DILocation(line: 28, column: 3, scope: !50)
-// CHECK:STDOUT: !56 = !DILocation(line: 29, column: 3, scope: !50)
-// CHECK:STDOUT: !57 = !DILocation(line: 30, column: 3, scope: !50)
-// CHECK:STDOUT: !58 = !DILocation(line: 26, column: 1, scope: !50)
-// CHECK:STDOUT: !59 = !{!60, !8, i64 0}
-// CHECK:STDOUT: !60 = !{!"_ZTS1A", !8, i64 0}
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !8 = !{null, !7, !7}
+// CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
+// CHECK:STDOUT: !12 = !{!7, !7, !7}
+// CHECK:STDOUT: !13 = !DISubroutineType(types: !12)
+// CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
+// CHECK:STDOUT: !49 = !{!"any pointer", !48, i64 0}
+// CHECK:STDOUT: !52 = !{!"bool", !48, i64 0}
+// CHECK:STDOUT: !53 = !{!"p1 bool", !49, i64 0}
+// CHECK:STDOUT: !54 = !{!53, !53, i64 0}
+// CHECK:STDOUT: !55 = !{!"int", !48, i64 0}
+// CHECK:STDOUT: !57 = !{!55, !55, i64 0}
+// CHECK:STDOUT: !58 = !{i64 0, i64 4, !57}
+// CHECK:STDOUT: !59 = !{!52, !52, i64 0}
+// CHECK:STDOUT: !61 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !62 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !63 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !64 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !65 = !{!"__libc_errno", !55, i64 0}
+// CHECK:STDOUT: !66 = !{!65, !55, i64 0}
+// CHECK:STDOUT: !67 = !DIFile(filename: "ordered_with.carbon", directory: "")
+// CHECK:STDOUT: !68 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !67, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "Driver", linkageName: "_CDriver.Main", scope: null, file: !67, line: 33, type: !9, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !78)
+// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !7)
+// CHECK:STDOUT: !71 = !DILocalVariable(arg: 2, scope: !69, type: !7)
+// CHECK:STDOUT: !76 = !DILocation(line: 34, column: 3, scope: !69)
+// CHECK:STDOUT: !77 = !DILocation(line: 33, column: 1, scope: !69)
+// CHECK:STDOUT: !78 = !{!70, !71}
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "Less", linkageName: "_CLess:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 8, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !84)
+// CHECK:STDOUT: !80 = !DILocalVariable(arg: 1, scope: !79, type: !7)
+// CHECK:STDOUT: !81 = !DILocalVariable(arg: 2, scope: !79, type: !7)
+// CHECK:STDOUT: !83 = !DILocation(line: 8, column: 15, scope: !79)
+// CHECK:STDOUT: !84 = !{!80, !81}
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "LessOrEquivalent", linkageName: "_CLessOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 16, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !90)
+// CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !7)
+// CHECK:STDOUT: !87 = !DILocalVariable(arg: 2, scope: !85, type: !7)
+// CHECK:STDOUT: !89 = !DILocation(line: 16, column: 15, scope: !85)
+// CHECK:STDOUT: !90 = !{!86, !87}
+// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "Greater", linkageName: "_CGreater:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 12, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !96)
+// CHECK:STDOUT: !92 = !DILocalVariable(arg: 1, scope: !91, type: !7)
+// CHECK:STDOUT: !93 = !DILocalVariable(arg: 2, scope: !91, type: !7)
+// CHECK:STDOUT: !95 = !DILocation(line: 12, column: 15, scope: !91)
+// CHECK:STDOUT: !96 = !{!92, !93}
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "GreaterOrEquivalent", linkageName: "_CGreaterOrEquivalent:thunk:OrderedWith.f3924169c098de0f.Core:Cpp", scope: null, file: !67, line: 20, type: !13, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !102)
+// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !7)
+// CHECK:STDOUT: !99 = !DILocalVariable(arg: 2, scope: !97, type: !7)
+// CHECK:STDOUT: !101 = !DILocation(line: 20, column: 15, scope: !97)
+// CHECK:STDOUT: !102 = !{!98, !99}
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "CheckOrderedWith", linkageName: "_CCheckOrderedWith.Main.b948edeb3216062b", scope: null, file: !67, line: 26, type: !9, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !117)
+// CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !7)
+// CHECK:STDOUT: !105 = !DILocalVariable(arg: 2, scope: !103, type: !7)
+// CHECK:STDOUT: !108 = !DILocation(line: 27, column: 3, scope: !103)
+// CHECK:STDOUT: !110 = !DILocation(line: 28, column: 3, scope: !103)
+// CHECK:STDOUT: !112 = !DILocation(line: 29, column: 3, scope: !103)
+// CHECK:STDOUT: !114 = !DILocation(line: 30, column: 3, scope: !103)
+// CHECK:STDOUT: !116 = !DILocation(line: 26, column: 1, scope: !103)
+// CHECK:STDOUT: !117 = !{!104, !105}
+// CHECK:STDOUT: !118 = !{!"p1 _ZTS8OrderedA", !49, i64 0}
+// CHECK:STDOUT: !119 = !{!118, !118, i64 0}
+// CHECK:STDOUT: !120 = !{!"_ZTS8OrderedA", !55, i64 0}
+// CHECK:STDOUT: !121 = !{!120, !55, i64 0}
+// CHECK:STDOUT:

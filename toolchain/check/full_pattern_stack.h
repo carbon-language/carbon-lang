@@ -8,9 +8,12 @@
 #include "common/array_stack.h"
 #include "common/check.h"
 #include "toolchain/check/lexical_lookup.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
+
+class Context;
 
 // Stack of full-patterns currently being checked (a full-pattern is a pattern
 // that is not part of an enclosing pattern). It is structured as a stack to
@@ -40,8 +43,11 @@ class FullPatternStack {
     // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
 
-    // A `var` field declaration inside a class.
+    // A `var` declaration of a field or static var inside a class.
     ClassScopeVarDecl,
+
+    // A `let` declaration inside a class.
+    ClassScopeLetDecl,
 
     // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
@@ -60,14 +66,20 @@ class FullPatternStack {
     NotInEitherParamList
   };
 
+  // Returns whether `kind` is the kind of a name binding declaration.
+  static auto IsAnyNameBindingDeclKind(Kind kind) -> bool {
+    return kind == Kind::NameBindingDecl || kind == Kind::ClassScopeVarDecl ||
+           kind == Kind::ClassScopeLetDecl;
+  }
+
   auto empty() const -> bool { return kind_stack_.empty(); }
 
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
-  // Whether the kind of the current full-pattern is a class `var` decl.
-  auto IsCurrentKindClassScopeVarDecl() -> bool {
-    return !empty() && CurrentKind() == Kind::ClassScopeVarDecl;
+  // Returns whether the kind of the current full-pattern is `kind`.
+  auto CurrentKindIs(Kind kind) -> bool {
+    return !empty() && CurrentKind() == kind;
   }
 
   // Marks the start of a new full-pattern for a parameterized entity
@@ -76,18 +88,26 @@ class FullPatternStack {
   auto PushParameterizedDecl() -> void {
     kind_stack_.push_back(Kind::NotInEitherParamList);
     bind_name_stack_.PushArray();
+    var_pattern_stack_.PushArray();
+    next_var_index_stack_.push_back(-1);
   }
 
   // Marks the start of a new full-pattern for a name binding declaration.
-  auto PushNameBindingDecl() -> void {
-    kind_stack_.push_back(Kind::NameBindingDecl);
+  auto PushNameBindingDecl(Kind kind = Kind::NameBindingDecl) -> void {
+    kind_stack_.push_back(kind);
     bind_name_stack_.PushArray();
+    var_pattern_stack_.PushArray();
+    next_var_index_stack_.push_back(-1);
   }
 
   // Marks the start of a new full-pattern for a class `var` declaration.
   auto PushClassScopeVarDecl() -> void {
-    kind_stack_.push_back(Kind::ClassScopeVarDecl);
-    bind_name_stack_.PushArray();
+    PushNameBindingDecl(Kind::ClassScopeVarDecl);
+  }
+
+  // Marks the start of a new full-pattern for a class `let` declaration.
+  auto PushClassScopeLetDecl() -> void {
+    PushNameBindingDecl(Kind::ClassScopeLetDecl);
   }
 
   // Marks the start of the current parameterized entity's implicit parameter
@@ -123,43 +143,64 @@ class FullPatternStack {
   }
 
   // Marks the start of the initializer for the current name binding decl.
-  auto StartPatternInitializer() -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
-                 kind_stack_.back() == Kind::NameBindingDecl);
-    for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
-      CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
-      auto& lookup_result = lookup_->Get(name_id);
-      if (!lookup_result.empty()) {
-        // TODO: find a way to preserve location information, so that we can
-        // provide good diagnostics for a redeclaration of `name_id` in
-        // the initializer, if that becomes possible.
-        std::swap(lookup_result.back().inst_id, inst_id);
-      }
-    }
-  }
+  auto StartPatternInitializer() -> void;
 
   // Marks the end of the initializer for the current name-binding decl.
-  auto EndPatternInitializer() -> void {
-    for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
-      auto& lookup_result = lookup_->Get(name_id);
-      if (!lookup_result.empty()) {
-        std::swap(lookup_result.back().inst_id, inst_id);
-      }
-      CARBON_CHECK(inst_id == SemIR::InstId::InitTombstone);
-    }
-  }
+  auto EndPatternInitializer() -> void;
 
-  // Marks the end of checking for the current full-pattern. This cannot be
-  // called while processing an initializer for the top pattern.
+  // Marks the end of checking and pattern matching for the current
+  // full-pattern.
   auto PopFullPattern() -> void {
     kind_stack_.pop_back();
     bind_name_stack_.PopArray();
+    int index = next_var_index_stack_.pop_back_val();
+    CARBON_CHECK(index < 0 || static_cast<size_t>(index) ==
+                                  var_pattern_stack_.PeekArray().size(),
+                 "`GetLocalVarStorage` not called for all var patterns");
+    var_pattern_stack_.PopArray();
   }
 
   // Records that `name_id` was introduced by the current full-pattern.
   auto AddBindName(SemIR::NameId name_id) -> void {
     bind_name_stack_.AppendToTop(
         {.name_id = name_id, .inst_id = SemIR::InstId::InitTombstone});
+  }
+
+  // Information about a `var` pattern.
+  struct VarInfo {
+    // The `VarPattern` inst
+    SemIR::InstId pattern_id;
+    // The corresponding `VarStorage` inst
+    SemIR::InstId storage_id;
+  };
+
+  // Records a `VarPattern` and its associated `VarStorage` as part of the
+  // current full pattern, so that the `VarStorage` can be found during pattern
+  // matching. This should only be called when the current full-pattern is a
+  // kind that can have an initializer, because in that context the `VarStorage`
+  // needs to be emitted early; otherwise the `VarStorage` should be emitted on
+  // demand during pattern matching.
+  auto AddLocalVarPattern(VarInfo var_info) -> void {
+    CARBON_CHECK(IsAnyNameBindingDeclKind(kind_stack_.back()));
+    CARBON_CHECK(next_var_index_stack_.back() < 0);
+    var_pattern_stack_.AppendToTop(var_info);
+  }
+
+  // Returns the `VarStorage` inst that was emitted for `pattern_id` by
+  // `BuildLocalVarStorage`.
+  //
+  // As an optimization, this assumes (and enforces) that it will be called
+  // exactly once for each inst pair passed to `AddLocalVarPattern`, and in the
+  // same order.
+  auto GetLocalVarStorage(SemIR::InstId var_pattern_id) -> SemIR::InstId {
+    CARBON_CHECK(IsAnyNameBindingDeclKind(kind_stack_.back()));
+    auto& index = next_var_index_stack_.back();
+    CARBON_CHECK(index >= 0);
+    auto var_info = var_pattern_stack_.PeekArray()[index];
+    CARBON_CHECK(var_info.pattern_id == var_pattern_id,
+                 "var patterns visited in unexpected order");
+    ++index;
+    return var_info.storage_id;
   }
 
   // Runs verification that the processing cleanly finished.
@@ -172,13 +213,34 @@ class FullPatternStack {
  private:
   LexicalLookup* lookup_;
 
+  // The stack of pending full-patterns is organized as a struct of arrays, with
+  // separate stacks for separate properties of a full-pattern.
+
+  // The kinds of the currently pending full patterns.
   llvm::SmallVector<Kind> kind_stack_;
 
-  struct LookupEntry {
+  // Locally stashed name-lookup information about a binding.
+  struct BindingInfo {
+    // The name of the binding.
     SemIR::NameId name_id;
+    // While handling the initializer, name lookup for `name_id` in `lookup_`
+    // temporarily resolves to `InitTombstone`. During that time, this records
+    // the inst that it resolved to before the initializer, so that it can
+    // be restored afterward. This is `InitTombstone` while not handling the
+    // initializer, or if `name_id` doesn't resolve in `lookup_`.
     SemIR::InstId inst_id;
   };
-  ArrayStack<LookupEntry> bind_name_stack_;
+
+  // The name bindings introduced by the currently pending full-patterns.
+  ArrayStack<BindingInfo> bind_name_stack_;
+
+  // The `var` patterns introduced by the currently pending full-patterns.
+  ArrayStack<VarInfo> var_pattern_stack_;
+
+  // For each full pattern, the index of the first un-consumed `VarInfo` in
+  // the corresponding frame of `var_pattern_stack_`, or -1 if the contents
+  // of that frame are not ready for consumption.
+  llvm::SmallVector<int> next_var_index_stack_;
 };
 
 }  // namespace Carbon::Check

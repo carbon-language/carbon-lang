@@ -15,10 +15,10 @@ interface Z {}
 class C {}
 impl C as Z {}
 
-fn G[T:! Z](p: T);
+fn G[T: Z](p: T);
 
 fn F() {
     G({} as C);
 }
 
-fn G[T:! Z](unused p: T) {}
+fn G[T: Z](unused p: T) {}

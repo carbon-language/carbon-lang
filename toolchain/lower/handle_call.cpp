@@ -411,6 +411,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::ArrayMakeType:
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatLiteralMakeType:
@@ -429,6 +430,33 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
                        CreateExtOrTrunc(context, context.GetValue(arg_ids[0]),
                                         context.GetTypeOfInst(inst_id),
                                         IsSignedInt(context, arg_ids[0])));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::IntConvertFloat: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, arg_ids[0]);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateSIToFP(operand, dest_type)
+                       : context.builder().CreateUIToFP(operand, dest_type));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvert: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      context.SetLocal(inst_id,
+                       context.builder().CreateFPCast(operand, dest_type));
+      return;
+    }
+    case SemIR::BuiltinFunctionKind::FloatConvertInt: {
+      auto* operand = context.GetValue(arg_ids[0]);
+      auto* dest_type = context.GetTypeOfInst(inst_id);
+      bool is_signed = IsSignedInt(context, inst_id);
+      context.SetLocal(
+          inst_id, is_signed
+                       ? context.builder().CreateFPToSI(operand, dest_type)
+                       : context.builder().CreateFPToUI(operand, dest_type));
       return;
     }
 
@@ -547,9 +575,22 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
-    case SemIR::BuiltinFunctionKind::CharConvertChecked:
+    case SemIR::BuiltinFunctionKind::CharLiteralAdd:
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertChar:
+    case SemIR::BuiltinFunctionKind::CharLiteralConvertInt:
+    case SemIR::BuiltinFunctionKind::CharLiteralEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreater:
+    case SemIR::BuiltinFunctionKind::CharLiteralGreaterEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralLess:
+    case SemIR::BuiltinFunctionKind::CharLiteralLessEq:
+    case SemIR::BuiltinFunctionKind::CharLiteralNeq:
+    case SemIR::BuiltinFunctionKind::CharLiteralSubChar:
+    case SemIR::BuiltinFunctionKind::CharLiteralSubInt:
     case SemIR::BuiltinFunctionKind::FloatConvertChecked:
-    case SemIR::BuiltinFunctionKind::IntConvertChecked: {
+    case SemIR::BuiltinFunctionKind::IntAddCharLiteral:
+    case SemIR::BuiltinFunctionKind::IntConvertCharLiteral:
+    case SemIR::BuiltinFunctionKind::IntConvertChecked:
+    case SemIR::BuiltinFunctionKind::IntConvertFloatChecked: {
       // TODO: Check this statically.
       CARBON_CHECK(builtin_kind.IsCompTimeOnly(
           context.sem_ir(), arg_ids,
@@ -609,7 +650,9 @@ static auto HandleVirtualCall(FunctionContext& context,
   auto* pointer_type =
       llvm::PointerType::get(context.llvm_context(), /* address space */ 0);
   llvm::Value* virtual_fn;
-  if (function.clang_decl_id.has_value()) {
+  const auto* clang_decl =
+      context.sem_ir().clang_decls().Lookup(function.first_decl_id());
+  if (clang_decl && clang_decl->is_imported) {
     // Use absolute vtables for clang interop - the itanium vtable contains
     // function pointers.
     auto* virtual_function_pointer_address = context.builder().CreateGEP(
@@ -650,8 +693,8 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // list.
   FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
                                         .inst_id = inst.callee_id};
-  if (auto bound_method = context.sem_ir().insts().TryGetAs<SemIR::BoundMethod>(
-          callee.inst_id)) {
+  if (auto bound_method = SemIR::TryGetCalleeAsBoundMethod(
+          context.sem_ir(), callee.inst_id, SemIR::SpecificId::None)) {
     callee.inst_id = bound_method->function_decl_id;
   }
 
@@ -668,7 +711,9 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
         callee.inst_id);
     callee.file = const_file;
     callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee.inst_id.has_value());
+    CARBON_CHECK(callee.inst_id.has_value(),
+                 "Missing callee lowering call to {0}",
+                 context.sem_ir().insts().Get(inst.callee_id));
   }
 
   auto callee_function =
@@ -680,7 +725,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
-  if (auto builtin_kind = function.builtin_function_kind();
+  if (auto builtin_kind = function.GetBuiltinFunctionKind(*callee.file);
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
@@ -702,9 +747,21 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // Lower args in the LLVM parameter order, rather than the SemIR parameter
   // order.
   std::vector<llvm::Value*> args;
+  bool args_ok = true;
+  // TODO: We should be able to use function_info->type unconditionally, but
+  // that seems to sometimes have the wrong value for C++ thunks.
+  auto* callee_type = function_info->llvm_function != nullptr
+                          ? function_info->llvm_function->getFunctionType()
+                          : function_info->type;
   for (auto index : function_info->lowered_param_indices) {
     args.push_back(context.GetValue(arg_ids[index.index]));
+
+    if (args.size() > callee_type->getNumParams() ||
+        callee_type->getParamType(args.size() - 1) != args.back()->getType()) {
+      args_ok = false;
+    }
   }
+  args_ok &= args.size() == callee_type->getNumParams();
 
   llvm::CallInst* call;
   if (function.virtual_index == -1) {
@@ -723,9 +780,16 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
       llvm_callee->print(out);
       return out.TakeStr();
     };
-    CARBON_CHECK(llvm_callee->arg_size() == args.size(),
-                 "Argument count mismatch: {0}", describe_call());
-    call = context.builder().CreateCall(llvm_callee, args);
+    CARBON_CHECK(args_ok, "Argument mismatch: {0}", describe_call());
+    if (function.special_function_kind ==
+        SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk) {
+      llvm::ArrayRef<llvm::Value*> args_ref = args;
+      llvm::Value* callee_ptr = args_ref.consume_front();
+      call =
+          context.builder().CreateCall(function_info->type, callee_ptr, args);
+    } else {
+      call = context.builder().CreateCall(llvm_callee, args);
+    }
   } else {
     call = HandleVirtualCall(context, args, function, *function_info);
   }

@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
@@ -104,9 +105,14 @@ auto HandleParseNode(Context& context, Parse::InfixOperatorEqualId node_id)
 
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
+  auto lhs_type_id = context.insts().Get(lhs_id).type_id();
+  auto lhs_quals =
+      context.types().GetUnqualifiedTypeAndQualifiers(lhs_type_id).second;
   if (auto lhs_cat = SemIR::GetExprCategory(context.sem_ir(), lhs_id);
-      lhs_cat != SemIR::ExprCategory::DurableRef &&
-      lhs_cat != SemIR::ExprCategory::Error) {
+      (lhs_cat != SemIR::ExprCategory::Dependent &&
+       lhs_cat != SemIR::ExprCategory::DurableRef &&
+       lhs_cat != SemIR::ExprCategory::Error) ||
+      lhs_quals.HasAnyOf(SemIR::TypeQualifiers::Const)) {
     CARBON_DIAGNOSTIC(AssignmentToNonAssignable, Error,
                       "expression is not assignable");
     context.emitter().Emit(lhs_node, AssignmentToNonAssignable);
@@ -259,29 +265,55 @@ auto HandleParseNode(Context& context, Parse::PostfixOperatorStarId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
-    -> bool {
-  auto value_id = context.node_stack().PopExpr();
-  auto type_id = context.insts().Get(value_id).type_id();
+auto PerformAction(Context& context, SemIR::LocId loc_id,
+                   SemIR::AddrOfAction action) -> SemIR::InstId {
+  auto value_id = action.lvalue_id;
   // Only durable reference expressions can have their address taken.
   switch (SemIR::GetExprCategory(context.sem_ir(), value_id)) {
     case SemIR::ExprCategory::DurableRef:
     case SemIR::ExprCategory::Error:
       break;
     default:
+      // TODO: If this is a dependent action the `loc_id` provided is not
+      // associated with a parse tree `node_id` and so we can't extract the
+      // token location for the `&` operator, which is the normal location to
+      // issue the error. Therefore deferred types will have the error in the
+      // less ideal location of the non-addressable expression. Repair to make
+      // these locations consistent.
       CARBON_DIAGNOSTIC(AddrOfNonRef, Error,
                         "cannot take the address of non-reference expression");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             AddrOfNonRef);
+      auto diag_loc_id = loc_id.kind() == SemIR::LocId::Kind::NodeId
+                             ? LocIdForDiagnostics::TokenOnly(loc_id.node_id())
+                             : LocIdForDiagnostics(loc_id);
+      context.emitter().Emit(diag_loc_id, AddrOfNonRef);
       value_id = SemIR::ErrorInst::InstId;
       break;
   }
+
   // TODO: Preserve spelling of type of operand where possible.
+  auto type_id = context.insts().Get(value_id).type_id();
   auto type_inst_id = context.types().GetTypeInstId(type_id);
-  AddInstAndPush<SemIR::AddrOf>(
-      context, node_id,
+  return AddInst<SemIR::AddrOf>(
+      context, loc_id,
       SemIR::AddrOf{.type_id = GetPointerType(context, type_inst_id),
                     .lvalue_id = value_id});
+}
+
+auto HandleParseNode(Context& context, Parse::PrefixOperatorAmpId node_id)
+    -> bool {
+  auto value_id = context.node_stack().PopExpr();
+  auto loc_id = SemIR::LocId(node_id);
+
+  // Determine the expected type of the AddrOf instruction.
+  auto type_id = context.insts().Get(value_id).type_id();
+  auto type_inst_id = context.types().GetTypeInstId(type_id);
+  auto expected_type_id = GetPointerType(context, type_inst_id);
+
+  // If the value is still symbolic, defer checking until monomorphization.
+  auto inst_id = HandleAction<SemIR::AddrOfAction>(
+      context, loc_id, context.types().GetTypeInstId(expected_type_id),
+      {.type_id = SemIR::InstType::TypeId, .lvalue_id = value_id});
+  context.node_stack().Push(node_id, inst_id);
   return true;
 }
 
@@ -386,10 +418,10 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
 
         // TODO: Check for any facet here, rather than only a type.
         if (not_pointer_type_id == SemIR::TypeType::TypeId) {
-          CARBON_DIAGNOSTIC(
-              DerefOfType, Note,
+          CARBON_DIAGNOSTIC_LABEL(
+              DerefOfType, Info,
               "to form a pointer type, write the `*` after the pointee type");
-          builder.Note(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
+          builder.Attach(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
         }
 
         builder.Emit();

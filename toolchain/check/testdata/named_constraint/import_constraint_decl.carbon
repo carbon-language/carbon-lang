@@ -31,7 +31,7 @@ constraint B {
 //@include-in-dumps
 impl library "[[@TEST_NAME]]";
 
-fn F(unused T:! B) {}
+fn F(unused generic T: B) {}
 
 // --- fail_import_not_identified.carbon
 library "[[@TEST_NAME]]";
@@ -39,13 +39,19 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+8]]:1: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: impl C as A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:3:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-// CHECK:STDERR: constraint A;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import_not_identified.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ impl C as A;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: facet type `A` cannot be identified in `impl as`
+// CHECK:STDERR:        ·          ┃        [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ ╭── imported from: fail_import_not_identified.carbon [InImport]
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ constraint A;
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
+// CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C as A;
 
@@ -62,7 +68,7 @@ impl C as B;
 // This requires that B is complete.
 impl C as B {}
 
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon = $a.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//a, A, unloaded
@@ -76,17 +82,18 @@ impl C as B {}
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.impl.carbon
+// CHECK:STDOUT: --- b.impl.carbon = $b.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self.f45: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
-// CHECK:STDOUT:   %Self.149: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %Self.dda: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.f45 [symbolic]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %B.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %B.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -95,12 +102,12 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref.650 = import_ref Main//b, loc5_25, unloaded
-// CHECK:STDOUT:   %Main.import_ref.cf2 = import_ref Main//b, loc3_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c15: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:   %Main.import_ref.350: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
-// CHECK:STDOUT:   %Main.import_ref.655e7e.2: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
-// CHECK:STDOUT:   %Main.import_ref.86b = import_ref Main//b, loc4_14, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae4 = import_ref Main//b, loc5_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//b, loc3_13, unloaded
+// CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
+// CHECK:STDOUT:   %Main.import_ref.c3f: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
+// CHECK:STDOUT:   %Main.import_ref.423e3a.2: %B.type = import_ref Main//b, loc4_14, loaded [symbolic = constants.%Self.f45]
+// CHECK:STDOUT:   %Main.import_ref.364 = import_ref Main//b, loc4_14, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -112,19 +119,19 @@ impl C as B {}
 // CHECK:STDOUT:   %default.import.loc2_17.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_17.2 = import <none>
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %B.ref [concrete = constants.%B.type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc4_14.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc4_22.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.cf2
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.223
 // CHECK:STDOUT:   witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
@@ -132,22 +139,23 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Main.import_ref.86b
-// CHECK:STDOUT:   extend imports.%Main.import_ref.650
+// CHECK:STDOUT:   .Self = imports.%Main.import_ref.364
+// CHECK:STDOUT:   extend imports.%Main.import_ref.ae4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @B.WithSelf.Self.as_type.impls.I.type.require {
-// CHECK:STDOUT:     require imports.%Main.import_ref.c15 impls imports.%Main.import_ref.350
+// CHECK:STDOUT:     require imports.%Main.import_ref.5f6 impls imports.%Main.import_ref.c3f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @B.WithSelf.Self.as_type.impls.I.type.require(imports.%Main.import_ref.655e7e.2: %B.type) [from "b.carbon"] {
+// CHECK:STDOUT: generic require @B.WithSelf.Self.as_type.impls.I.type.require(imports.%Main.import_ref.423e3a.2: %B.type) [from "b.carbon"] {
 // CHECK:STDOUT:   %Self: %B.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f45)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F(%T.loc4_14.2: %B.type) {
-// CHECK:STDOUT:   %T.loc4_14.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_14.1 (constants.%T)]
+// CHECK:STDOUT: generic fn @F(%T.loc4_22.2: %B.type) {
+// CHECK:STDOUT:   %T.patt.loc4_22.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc4_22.1: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -159,7 +167,7 @@ impl C as B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self.f45) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.149) {
+// CHECK:STDOUT: specific @I.WithSelf(constants.%Self.dda) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -169,6 +177,7 @@ impl C as B {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T) {
-// CHECK:STDOUT:   %T.loc4_14.1 => constants.%T
+// CHECK:STDOUT:   %T.patt.loc4_22.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc4_22.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

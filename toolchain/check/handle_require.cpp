@@ -106,7 +106,7 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 
 static auto TypeStructureReferencesSelf(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId const_id,
-    const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
+    const IdentifiedFacetType& identified_facet_type) -> bool {
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
       auto step = type_iter.Next();
@@ -151,9 +151,9 @@ static auto TypeStructureReferencesSelf(
   }
 
   bool interfaces_all_reference_self = true;
-  for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
+  for (auto req_impls : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
-    type_iter.Add(specific_interface);
+    type_iter.Add(req_impls.interface.RawValue());
     if (!find_self(type_iter)) {
       // TODO: The IdentifiedFacetType loses the location (since it's
       // canonical), but it would be nice to somehow point this diagnostic at
@@ -165,7 +165,7 @@ static auto TypeStructureReferencesSelf(
           "interface, but found interface `{0}` without a `Self` argument",
           SemIR::SpecificInterface);
       context.emitter().Emit(loc_id, RequireImplsMissingSelf,
-                             specific_interface);
+                             req_impls.interface.RawValue());
       interfaces_all_reference_self = false;
     }
   }
@@ -173,14 +173,14 @@ static auto TypeStructureReferencesSelf(
 }
 
 struct ValidateRequireResult {
-  const SemIR::IdentifiedFacetType* identified_facet_type;
+  const IdentifiedFacetType* identified_facet_type;
 };
 
 // Returns nullopt if a diagnostic has been emitted and the `require` decl is
 // not valid.
 static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
                             SemIR::LocId constraint_loc_id,
-                            SemIR::InstId self_inst_id,
+                            SemIR::TypeInstId self_inst_id,
                             SemIR::InstId constraint_inst_id,
                             SemIR::InstId scope_inst_id)
     -> std::optional<ValidateRequireResult> {
@@ -211,21 +211,22 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
   if (auto named_constraint =
           context.insts().TryGetAs<SemIR::NamedConstraintWithSelfDecl>(
               scope_inst_id)) {
-    const auto& constraint_facet_type_info =
-        context.facet_types().Get(constraint_facet_type->facet_type_id);
+    const auto& constraint_declared_facet_type =
+        context.declared_facet_types().Get(
+            constraint_facet_type->declared_facet_type_id);
     // TODO: Handle other impls named constraints for the
     // RequireImplsReferenceCycle diagnostic.
-    if (constraint_facet_type_info.other_requirements) {
+    if (constraint_declared_facet_type.other_requirements) {
       context.TODO(constraint_loc_id,
                    "facet type has constraints that we don't handle yet");
       return std::nullopt;
     }
     auto named_constraints_from_type_impls = llvm::map_range(
-        constraint_facet_type_info.type_impls_named_constraints,
+        constraint_declared_facet_type.type_impls_named_constraints,
         [](auto impls) { return impls.specific_named_constraint; });
     auto named_constraints = llvm::concat<const SemIR::SpecificNamedConstraint>(
-        constraint_facet_type_info.extend_named_constraints,
-        constraint_facet_type_info.self_impls_named_constraints,
+        constraint_declared_facet_type.extend_named_constraints,
+        constraint_declared_facet_type.self_impls_named_constraints,
         named_constraints_from_type_impls);
     for (auto c : named_constraints) {
       if (c.named_constraint_id == named_constraint->named_constraint_id) {
@@ -244,13 +245,13 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(
       context, constraint_loc_id, self_type_id.AsConstantId(),
-      *constraint_facet_type, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(
-            RequireImplsUnidentifiedFacetType, Context,
+      constraint_type_id, [&](auto& builder) {
+        CARBON_DIAGNOSTIC_CONTEXT(
+            RequireImplsUnidentifiedFacetType,
             "facet type {0} cannot be identified in `require` declaration",
             SemIR::TypeId);
-        builder.Context(constraint_loc_id, RequireImplsUnidentifiedFacetType,
-                        constraint_type_id);
+        builder.Attach(constraint_loc_id, RequireImplsUnidentifiedFacetType,
+                       constraint_type_id);
       });
   if (!identified_facet_type_id.has_value()) {
     // The constraint can't be used. A diagnostic was emitted by
@@ -350,12 +351,13 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
             context,
             context.types().GetTypeIdForTypeInstId(constraint_type_inst_id),
             constraint_node_id, [&](auto& builder) {
-              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Context,
-                                "`extend require` of incomplete facet type {0}",
-                                InstIdAsType);
-              builder.Context(constraint_node_id,
-                              RequireImplsIncompleteFacetType,
-                              constraint_type_inst_id);
+              CARBON_DIAGNOSTIC_CONTEXT(
+                  RequireImplsIncompleteFacetType,
+                  "`extend require` of incomplete facet type {0}",
+                  InstIdAsType);
+              builder.Attach(constraint_node_id,
+                             RequireImplsIncompleteFacetType,
+                             constraint_type_inst_id);
             })) {
       return true;
     }

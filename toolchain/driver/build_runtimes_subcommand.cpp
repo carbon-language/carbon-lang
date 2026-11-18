@@ -5,6 +5,7 @@
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
 #include "llvm/TargetParser/Triple.h"
+#include "toolchain/driver/carbon_runtimes.h"
 #include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/clang_runtimes.h"
 
@@ -81,8 +82,9 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
 
-  Runtimes::Cache::Features features = {
-      .target = options_.codegen_options.target.str()};
+  CARBON_ASSIGN_OR_RETURN(Runtimes::Cache::Features features,
+                          runner.ComputeRuntimesFeatures(
+                              options_.codegen_options, *driver_env.consumer));
 
   bool is_cache = options_.directory.empty();
   std::filesystem::path output_path = options_.directory.str();
@@ -97,21 +99,22 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::ClangResourceDir));
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::LibUnwind));
     CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::Libcxx));
+    CARBON_RETURN_IF_ERROR(runtimes.Remove(Runtimes::CarbonCore));
   }
 
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
-                                               llvm::Triple(features.target),
-                                               &runtimes);
+                                               &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      &runner, driver_env.thread_pool, &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      &runner, driver_env.thread_pool, &runtimes, features);
+  CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
+                                       &options_.codegen_options);
 
   CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(libcxx_builder).Wait());
+  CARBON_RETURN_IF_ERROR(std::move(prelude_builder).Build());
 
   return runtimes.base_path();
 }

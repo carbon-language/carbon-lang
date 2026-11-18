@@ -33,12 +33,19 @@ namespace Carbon {
 //                   data_.reserved_bytes());
 //     // Common library types like `Map` and `llvm::SmallVector` have
 //     // type-specific support.
-//     mem_usage.Add(MemUsage::Concat(label, "array_"), array_);
+//     mem_usage.Add(MemUsage::ConcatLabel(label, "array_"), array_);
 //     // Implementing `CollectMemUsage` allows use with the same interface.
-//     mem_usage.Collect(MemUsage::Concat(label, "obj_"), obj_);
+//     mem_usage.Collect(MemUsage::ConcatLabel(label, "obj_"), obj_);
 //   }
 class MemUsage {
  public:
+  // Memory usage for a specific label.
+  struct Entry {
+    std::string label;
+    int64_t used_bytes;
+    int64_t reserved_bytes;
+  };
+
   // Adds tracking for used and reserved bytes, paired with the given label.
   auto Add(std::string label, int64_t used_bytes, int64_t reserved_bytes)
       -> void {
@@ -47,11 +54,20 @@ class MemUsage {
                           .reserved_bytes = reserved_bytes});
   }
 
+  // Appends all entries from `other`, preserving their labels (entries with
+  // the same label are not coalesced).
+  auto Add(const MemUsage& other) -> void {
+    mem_usage_.append(other.mem_usage_);
+  }
+
   // Adds memory usage for a `llvm::BumpPtrAllocator`.
   auto Collect(std::string label, const llvm::BumpPtrAllocator& allocator)
       -> void {
-    Add(std::move(label), allocator.getBytesAllocated(),
-        allocator.getTotalMemory());
+    // LLVM's BumpPtrAllocator no longer tracks the exact number of bytes
+    // allocated to avoid overhead on the hot path. We use the total memory
+    // (the capacity of the slabs) for both.
+    auto total_memory = allocator.getTotalMemory();
+    Add(std::move(label), total_memory, total_memory);
   }
 
   // Adds memory usage for a `Map`.
@@ -88,6 +104,11 @@ class MemUsage {
     Add(std::move(label), array.size_in_bytes(), array.capacity_in_bytes());
   }
 
+  // Adds memory usage of a string's data.
+  auto Collect(std::string label, const std::string& string) -> void {
+    Add(std::move(label), string.size(), string.capacity());
+  }
+
   // Adds memory usage for an object that provides `CollectMemUsage`.
   //
   // The expected signature of `CollectMemUsage` is above, in MemUsage class
@@ -111,6 +132,11 @@ class MemUsage {
                           llvm::StringRef child_label2) -> std::string {
     return llvm::formatv("{0}.{1}.{2}", label, child_label1, child_label2);
   }
+
+  // Returns the recorded entries, in the order they were added. Entries with
+  // the same label may appear more than once when usage has been aggregated
+  // across sources via `Add`.
+  auto entries() const -> llvm::ArrayRef<Entry> { return mem_usage_; }
 
   auto OutputYaml(llvm::StringRef filename) const -> Yaml::OutputMapping {
     // Explicitly copy the filename.
@@ -136,13 +162,6 @@ class MemUsage {
   }
 
  private:
-  // Memory usage for a specific label.
-  struct Entry {
-    std::string label;
-    int64_t used_bytes;
-    int64_t reserved_bytes;
-  };
-
   // The accumulated data on memory usage.
   llvm::SmallVector<Entry> mem_usage_;
 };

@@ -13,20 +13,26 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
 
 fn Procedure() -> {} {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
-  // CHECK:STDERR:   return var;
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_return_var_no_returned_var.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   return var;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: `return var;` with no `returned var` in scope
+  // CHECK:STDERR:        ·           ┃        [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return var;
 }
 
-// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon
+// CHECK:STDOUT: --- fail_return_var_no_returned_var.carbon = $fail_return_var_no_returned_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Procedure.type: type = fn_type @Procedure [concrete]
 // CHECK:STDOUT:   %Procedure: %Procedure.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -36,8 +42,8 @@ fn Procedure() -> {} {
 // CHECK:STDOUT:     .Procedure = %Procedure.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Procedure.decl: %Procedure.type = fn_decl @Procedure [concrete = constants.%Procedure] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc15_20.2 [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc15_20.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_20.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc15_20.2: type = converted %.loc15_20.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]

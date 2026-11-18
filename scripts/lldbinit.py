@@ -9,10 +9,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 # This script is only meant to be used from LLDB.
-import lldb  # type: ignore
 import os
 import re
 from typing import Any
+
+import lldb  # type: ignore
 
 project_root = os.path.dirname(os.path.realpath(__file__))
 
@@ -21,10 +22,15 @@ result = lldb.SBCommandReturnObject()
 
 
 def RunCommand(cmd: str, print_command: bool = True) -> Any:
-    """Runs a command and prints it to the console to show that it ran."""
+    """Runs a command and prints it to the console to show that it ran.
+
+    Any errors are printed to the console."""
     if print_command:
         print(f"(lldb) {cmd}")
     ci.HandleCommand(cmd, result)
+    err = result.GetError()
+    if err:
+        print(result.GetError())
     return result.GetOutput()
 
 
@@ -58,6 +64,11 @@ Args:
        can come with a `0x` prefix, allowing easier copy-paste from raw printed
        hex values (such as via the `p/x` lldb command).
 
+Aliases:
+  dc [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
+    - Shorthand for `dump context` which is the common case where there is a
+      `context` var or method in scope.
+
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
   dump context inst_id
@@ -76,26 +87,30 @@ Example usage:
 
     # The set of "Make" functions in dump.cpp.
     id_types = {
+        "clang_decl": "SemIR::MakeClangDeclId",
+        "clang_decl_signature": "SemIR::MakeClangDeclSignatureId",
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
         "constraint": "SemIR::MakeNamedConstraintId",
-        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
+        "declared_facet_type": "SemIR::MakeDeclaredFacetTypeId",
         "entity_name": "SemIR::MakeEntityNameId",
-        "facet_type": "SemIR::MakeFacetTypeId",
         "function": "SemIR::MakeFunctionId",
+        "generated_function": "SemIR::MakeGeneratedFunctionId",
         "generic": "SemIR::MakeGenericId",
+        "identified_facet_type": "Check::MakeIdentifiedFacetTypeId",
         "impl": "SemIR::MakeImplId",
-        "inst_block": "SemIR::MakeInstBlockId",
         "inst": "SemIR::MakeInstId",
+        "inst_block": "SemIR::MakeInstBlockId",
         "interface": "SemIR::MakeInterfaceId",
+        "import_ir_inst": "SemIR::MakeImportIRInstId",
         "name": "SemIR::MakeNameId",
         "name_scope": "SemIR::MakeNameScopeId",
-        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
-        "require_block": "SemIR::MakeRequireImplsBlockId",
         "require": "SemIR::MakeRequireImplsId",
+        "require_block": "SemIR::MakeRequireImplsBlockId",
         "specific": "SemIR::MakeSpecificId",
         "specific_interface": "SemIR::MakeSpecificInterfaceId",
         "struct_type_fields": "SemIR::MakeStructTypeFieldsId",
+        "symbolic_constant": "SemIR::MakeSymbolicConstantId",
         "type": "SemIR::MakeTypeId",
     }
 
@@ -106,10 +121,6 @@ Example usage:
             # Use the `dump_re` match to print just the interesting part of the
             # dump output.
             print(m[1])
-        else:
-            # Unexpected output, show the command that was run.
-            print(f"(lldb) {cmd}")
-            print(out)
 
     # Try to find a type + id from the input args. If not, the id will be passed
     # through directly to C++, as it can be a variable name.
@@ -148,5 +159,58 @@ Example usage:
         print_dump(context, expr)
 
 
+# Returns true if sbtype is a Carbon ID type (i.e. is derived from
+# `Carbon::AnyIdBase`).
+def is_carbon_id(sbtype: lldb.SBType, internal_dict: Any) -> bool:
+    for base in sbtype.get_bases_array():
+        if "Carbon::AnyIdBase" in base.GetName():
+            return True
+        if is_carbon_id(base.type, internal_dict):
+            return True
+    return False
+
+
+# Formats a Carbon ID value to roughly match its format in raw SemIR, without
+# calling any user code.
+def format_carbon_id(
+    valobj: lldb.SBValue, internal_dict: Any, options: Any
+) -> str:
+    # TODO: It would be safer and more efficient to get these by traversing the
+    # member graph using the Python API, rather than by evaluating C++
+    # expressions. However, that doesn't seem to work in this case
+    # (`SBTypeStaticField.GetConstantValue` seems to be broken), and even if it
+    # did, it would be fairly verbose and probably more brittle.
+    label = valobj.EvaluateExpression("Label.Data")
+    label_size = valobj.EvaluateExpression("Label.Length")
+
+    # For some reason LLDB treats ID types as having an empty `Label` field
+    # when accessing an ID via a pointer, so we have to be prepared for that.
+    if label and label_size and label_size.GetValueAsUnsigned() > 0:
+        # Clamp the read size, to limit the impact of memory corruption.
+        # 40 chars should be enough for any legitimate ID label.
+        read_size = min(label_size.GetValueAsUnsigned(), 40)
+        label_data = valobj.process.ReadMemory(
+            label.GetValueAsAddress(), read_size, lldb.SBError()
+        )
+        label_str = label_data.decode("utf-8")
+    else:
+        label_str = "<unknown id>"
+
+    index_int = valobj.GetChildMemberWithName("index").GetValueAsUnsigned()
+    if index_int == 0xFFFFFFFF:
+        # We can't handle all the special cases that ID printing does, but we
+        # can at least handle the most common one.
+        index_str = "<none>"
+    else:
+        index_str = f"{index_int:X}"
+
+    return f"{label_str}{index_str}"
+
+
 def __lldb_init_module(debugger: Any, internal_dict: Any) -> None:
     RunCommand("command script add -f lldbinit.cmd_dump dump")
+    RunCommand("command alias dc dump context")
+    RunCommand(
+        "type summary add --python-function lldbinit.format_carbon_id"
+        + " --recognizer-function lldbinit.is_carbon_id"
+    )

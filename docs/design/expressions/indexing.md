@@ -61,9 +61,9 @@ Its semantics are defined in terms of the following form interface:
 package Core;
 
 interface IndexWithPrimitive(
-    implicit_into anchor Self:! Form,
-    implicit_into Subscript:! Form) {
-  let implicit_from ResultForm:! Form;
+    implicit_into anchor Self: Form,
+    implicit_into Subscript: Form) {
+  let implicit_from ResultForm: Form;
   fn Op(self:? Self, subscript:? Subscript)
       ->? ResultForm;
 }
@@ -78,8 +78,8 @@ owns the storage for its elements, like an array or C++'s `std::vector`:
 ```carbon
 // `lhs[index]` is a value expression when `lhs`
 // is a value expression.
-constraint IndexValWith(SubscriptType:! type) {
-  let ElementType:! type;
+constraint IndexValWith(SubscriptType: type) {
+  let ElementType: type;
 
   require form(val Self) impls
      IndexWithPrimitive(form(val SubscriptType))
@@ -90,8 +90,8 @@ constraint IndexValWith(SubscriptType:! type) {
 
 // `lhs[index]` is a ref expression when `lhs`
 // is a ref expression.
-constraint IndexRefWith(SubscriptType:! type) {
-  let ElementType:! type;
+constraint IndexRefWith(SubscriptType: type) {
+  let ElementType: type;
 
   require form(ref Self) impls
      IndexWithPrimitive(form(val SubscriptType))
@@ -102,8 +102,8 @@ constraint IndexRefWith(SubscriptType:! type) {
 
 // `lhs[index]` is a reference expression or value
 // depending on the category of `lhs`.
-constraint IndexWith(SubscriptType:! type) {
-  let ElementType:! type;
+constraint IndexWith(SubscriptType: type) {
+  let ElementType: type;
   match_first {
     extend require impls IndexRefWith(SubscriptType)
         where .ElementType = ElementType;
@@ -123,8 +123,8 @@ and
 ```carbon
 // `lhs[index]` is always reference expression, even
 // when `lhs` is a value.
-constraint IndirectIndexWith(SubscriptType:! type) {
-  let ElementType:! type;
+constraint IndirectIndexWith(SubscriptType: type) {
+  let ElementType: type;
 
   require form(val Self) impls
      IndexWithPrimitive(form(val SubscriptType))
@@ -145,7 +145,7 @@ result forms, and so conflict. However, a type that defines an `impl` of
 An array type could implement subscripting like so:
 
 ```
-class Array(template T:! type) {
+class Array(template T: type, template N: i64) {
   impl as IndexValWith(i64) {
     where ElementType = T;
     fn At(self, subscript: i64) -> val T;
@@ -160,7 +160,7 @@ class Array(template T:! type) {
 And a type such as `std::span` could look like this:
 
 ```
-class Span(T:! type) {
+class Span(T: type) {
   impl as IndirectIndexWith(i64) {
     where ElementType = T;
     fn Ref(self, subscript: i64) -> ref T;
@@ -170,11 +170,11 @@ class Span(T:! type) {
 
 ## Alternatives considered
 
--   [Different subscripting syntaxes](/proposals/p2274.md#different-subscripting-syntaxes)
--   [Multiple indices](/proposals/p2274.md#multiple-indices)
--   [Read-only subscripting](/proposals/p2274.md#read-only-subscripting)
--   [Rvalue-only subscripting](/proposals/p2274.md#rvalue-only-subscripting)
--   [Map-like subscripting](/proposals/p2274.md#map-like-subscripting)
+-   [Different subscripting syntaxes](/proposals/p002274-subscript-syntax-and-semantics.md#different-subscripting-syntaxes)
+-   [Multiple indices](/proposals/p002274-subscript-syntax-and-semantics.md#multiple-indices)
+-   [Read-only subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#read-only-subscripting)
+-   [Rvalue-only subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#rvalue-only-subscripting)
+-   [Map-like subscripting](/proposals/p002274-subscript-syntax-and-semantics.md#map-like-subscripting)
 
 ## References
 
@@ -184,3 +184,7 @@ class Span(T:! type) {
     [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
 -   Proposal
     [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+-   Proposal
+    [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
+-   Proposal
+    [#8110: Remove `bound`](https://github.com/carbon-language/carbon-lang/pull/8110)

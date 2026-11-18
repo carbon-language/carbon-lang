@@ -177,10 +177,10 @@ package Core;
 
 // Simple `=`.
 interface AssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint AssignWith(U:! type) {
+constraint AssignWith(U: type) {
   extend require impls
       AssignWithPrimitive(form(val U));
 }
@@ -197,10 +197,10 @@ The statement `x = y;` is rewritten to
 ```
 // Compound `+=`.
 interface AddAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint AddAssignWith(U:! type) {
+constraint AddAssignWith(U: type) {
   extend require impls
       AddAssignWithPrimitive(form(val U));
 }
@@ -212,10 +212,10 @@ constraint AddAssign {
 ```
 // Compound `-=`.
 interface SubAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint SubAssignWith(U:! type) {
+constraint SubAssignWith(U: type) {
   extend require impls
       SubAssignWithPrimitive(form(val U));
 }
@@ -227,10 +227,10 @@ constraint SubAssign {
 ```
 // Compound `*=`.
 interface MulAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint MulAssignWith(U:! type) {
+constraint MulAssignWith(U: type) {
   extend require impls
       MulAssignWithPrimitive(form(val U));
 }
@@ -242,10 +242,10 @@ constraint MulAssign {
 ```
 // Compound `/=`.
 interface DivAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint DivAssignWith(U:! type) {
+constraint DivAssignWith(U: type) {
   extend require impls
       DivAssignWithPrimitive(form(val U));
 }
@@ -257,10 +257,10 @@ constraint DivAssign {
 ```
 // Compound `%=`.
 interface ModAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint ModAssignWith(U:! type) {
+constraint ModAssignWith(U: type) {
   extend require impls
       ModAssignWithPrimitive(form(val U));
 }
@@ -272,7 +272,7 @@ constraint ModAssign {
 ```
 // Increment `++`.
 interface Inc { fn Op(ref self); }
-// Decrement `++`.
+// Decrement `--`.
 interface Dec { fn Op(ref self); }
 ```
 
@@ -296,10 +296,10 @@ These assignment statements are rewritten as follows:
 ```
 // Compound `&=`.
 interface BitAndAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint BitAndAssignWith(U:! type) {
+constraint BitAndAssignWith(U: type) {
   extend require impls
       BitAndAssignWithPrimitive(form(val U));
 }
@@ -311,10 +311,10 @@ constraint BitAndAssign {
 ```
 // Compound `|=`.
 interface BitOrAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint BitOrAssignWith(U:! type) {
+constraint BitOrAssignWith(U: type) {
   extend require impls
       BitOrAssignWithPrimitive(form(val U));
 }
@@ -326,10 +326,10 @@ constraint BitOrAssign {
 ```
 // Compound `^=`.
 interface BitXorAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint BitXorAssignWith(U:! type) {
+constraint BitXorAssignWith(U: type) {
   extend require impls
       BitXorAssignWithPrimitive(form(val U));
 }
@@ -341,10 +341,10 @@ constraint BitXorAssign {
 ```
 // Compound `<<=`.
 interface LeftShiftAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint LeftShiftAssignWith(U:! type) {
+constraint LeftShiftAssignWith(U: type) {
   extend require impls
       LeftShiftAssignWithPrimitive(form(val U));
 }
@@ -356,10 +356,10 @@ constraint LeftShiftAssign {
 ```
 // Compound `>>=`.
 interface RightShiftAssignWithPrimitive
-    (implicit_into U:! Form) {
+    (implicit_into U: Form) {
   fn Op(ref self, other:? U);
 }
-constraint RightShiftAssignWith(U:! type) {
+constraint RightShiftAssignWith(U: type) {
   extend require impls
       RightShiftAssignWithPrimitive(form(val U));
 }
@@ -395,7 +395,7 @@ This defaulting is accomplished by a parameterized implementation of
 `OpAssignWith(U)` defined in terms of `AssignWith` and `OpWith`:
 
 ```
-impl forall [U:! type, T:! OpWith(U) where .Self impls AssignWith(.Self.Result)]
+impl forall [U: type, T: OpWith(U) where .Self impls AssignWith(.Self.Result)]
     T as OpAssignWith(U) {
   fn Op(ref self, other: U) {
     // Here, `$` is the operator described by `OpWith`.
@@ -419,14 +419,14 @@ impl MyString as AddAssignWith(MyString) {
 
 ## Alternatives considered
 
--   [Allow assignment as a subexpression](/proposals/p2511.md#allow-assignment-as-a-subexpression)
--   [Allow chained assignment](/proposals/p2511.md#allow-chained-assignment)
--   [Do not provide increment and decrement](/proposals/p2511.md#do-not-provide-increment-and-decrement)
--   [Treat increment as syntactic sugar for adding `1`](/proposals/p2511.md#treat-increment-as-syntactic-sugar-for-adding-1)
--   [Define `$` in terms of `$=`](/proposals/p2511.md#define--in-terms-of-)
--   [Do not allow overloading the behavior of `=`](/proposals/p2511.md#do-not-allow-overloading-the-behavior-of-)
--   [Treat the left hand side of `=` as a pattern](/proposals/p2511.md#treat-the-left-hand-side-of--as-a-pattern)
--   [Different names for interfaces](/proposals/p2511.md#different-names-for-interfaces)
+-   [Allow assignment as a subexpression](/proposals/p002511-assignment-statements.md#allow-assignment-as-a-subexpression)
+-   [Allow chained assignment](/proposals/p002511-assignment-statements.md#allow-chained-assignment)
+-   [Do not provide increment and decrement](/proposals/p002511-assignment-statements.md#do-not-provide-increment-and-decrement)
+-   [Treat increment as syntactic sugar for adding `1`](/proposals/p002511-assignment-statements.md#treat-increment-as-syntactic-sugar-for-adding-1)
+-   [Define `$` in terms of `$=`](/proposals/p002511-assignment-statements.md#define--in-terms-of-)
+-   [Do not allow overloading the behavior of `=`](/proposals/p002511-assignment-statements.md#do-not-allow-overloading-the-behavior-of-)
+-   [Treat the left hand side of `=` as a pattern](/proposals/p002511-assignment-statements.md#treat-the-left-hand-side-of--as-a-pattern)
+-   [Different names for interfaces](/proposals/p002511-assignment-statements.md#different-names-for-interfaces)
 
 ## References
 

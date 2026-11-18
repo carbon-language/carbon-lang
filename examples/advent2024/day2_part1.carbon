@@ -15,7 +15,7 @@ class ReportState {
             .increasing = false, .safe_so_far = true};
   }
 
-  fn Add[ref self: Self](level: i32) {
+  fn Add(ref self, level: i32) {
     ++self.levels_so_far;
     if (self.levels_so_far >= 2) {
       if (not IsSafeDelta(self.previous, level)) {

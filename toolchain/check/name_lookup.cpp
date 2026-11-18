@@ -9,7 +9,6 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/cpp/import.h"
-#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/import_ref.h"
@@ -21,7 +20,9 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -70,7 +71,7 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
     //  - The name is redeclared by a parameter of the same entity:
     //
     //    fn F() {
-    //      class C(C:! type);
+    //      class C(C: type);
     //    }
     //
     // In this case, the class C is not a redeclaration of its parameter, but
@@ -96,6 +97,99 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Returns the generic that `inst_id` is attached to, if any.
+static auto GetGenericForInst(Context& context, SemIR::InstId inst_id)
+    -> SemIR::GenericId {
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (const_id.has_value() && const_id.is_symbolic()) {
+    if (auto generic_id =
+            context.constant_values().GetSymbolicConstant(const_id).generic_id;
+        generic_id.has_value()) {
+      return generic_id;
+    }
+  }
+  auto type_id = context.insts().GetAttachedType(inst_id);
+  if (type_id.has_value() && type_id.is_symbolic()) {
+    return context.constant_values()
+        .GetSymbolicConstant(context.types().GetConstantId(type_id))
+        .generic_id;
+  }
+  return SemIR::GenericId::None;
+}
+
+// Returns whether `inst_id` is, or is imported from, a `WrapperBinding`.
+static auto IsWrapperBinding(Context& context, SemIR::InstId inst_id) -> bool {
+  auto [canonical_ir, canonical_inst_id] =
+      SemIR::GetCanonicalFileAndInstId(&context.sem_ir(), inst_id);
+  return canonical_ir->insts().Is<SemIR::WrapperBinding>(canonical_inst_id);
+}
+
+auto TryGetLookupResultInCurrentScope(Context& context, SemIR::LocId loc_id,
+                                      SemIR::NameId name_id,
+                                      LookupResult& result) -> bool {
+  if (!result.scope_result.is_found()) {
+    return false;
+  }
+
+  auto target_inst_id = result.scope_result.target_inst_id();
+  if (SemIR::GetConstantValueInSpecific(context.sem_ir(), result.specific_id,
+                                        target_inst_id)
+          .is_constant()) {
+    // Constants don't need any special logic to access them.
+    return true;
+  }
+
+  auto type_id = context.insts().Get(target_inst_id).type_id();
+  if (type_id == SemIR::ErrorInst::TypeId) {
+    return false;
+  }
+
+  if (result.lexical_scope_index.has_value()) {
+    // A non-constant entity in a lexical scope is a local.
+    switch (context.scope_stack().GetNonConstantAccess(
+        result.lexical_scope_index)) {
+      case ScopeStack::NonConstantAccess::Permitted:
+      case ScopeStack::NonConstantAccess::Unevaluated:
+        return true;
+
+      case ScopeStack::NonConstantAccess::Disallowed: {
+        CARBON_DIAGNOSTIC(
+            UncapturedLocal, Error,
+            "cannot reference local `{0}` declared in enclosing scope",
+            SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(UncapturedLocalDecl, Info, "declared here");
+        context.emitter()
+            .Build(loc_id, UncapturedLocal, name_id)
+            .Attach(target_inst_id, UncapturedLocalDecl)
+            .Emit();
+        return false;
+      }
+
+      case ScopeStack::NonConstantAccess::Captured:
+        // TODO: Record the capture and build an instruction to access it.
+        context.TODO(loc_id, "capture of enclosing local");
+        return false;
+    }
+  }
+
+  // A non-constant entity in a non-lexical scope is a global or static
+  // binding.
+  CARBON_DCHECK(IsWrapperBinding(context, target_inst_id),
+                "Unexpected non-constant entity in non-lexical scope: {0}",
+                context.insts().Get(target_inst_id));
+
+  if (result.specific_id.has_value()) {
+    context.TODO(loc_id, "non-constant `let` binding in generic");
+    return false;
+  }
+
+  auto global_ref_id = AddInst<SemIR::GlobalRef>(
+      context, loc_id, {.type_id = type_id, .inst_id = target_inst_id});
+  result.scope_result = SemIR::ScopeLookupResult::MakeFound(
+      global_ref_id, result.scope_result.access_kind());
+  return true;
+}
+
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required)
     -> LookupResult {
@@ -103,9 +197,10 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
 
   // Find the results from ancestor lexical scopes. These will be combined with
   // results from non-lexical scopes such as namespaces and classes.
-  auto [lexical_result, non_lexical_scopes] =
+  auto [lexical_lookup_result, non_lexical_scopes] =
       context.scope_stack().LookupInLexicalScopes(
           name_id, loc_id, IsCurrentPositionReachable(context));
+  auto lexical_result = lexical_lookup_result.inst_id;
 
   // Walk the non-lexical scopes and perform lookups into each of them.
   for (auto [index, lookup_scope_id, specific_id] :
@@ -156,12 +251,22 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   }
 
   if (lexical_result.has_value()) {
-    // A lexical scope never needs an associated specific. If there's a
-    // lexically enclosing generic, then it also encloses the point of use of
-    // the name.
-    return {.specific_id = SemIR::SpecificId::None,
+    // If the instruction belongs to an enclosing generic rather than the
+    // current generic, pair it with the enclosing generic's self-specific.
+    auto specific_id = SemIR::SpecificId::None;
+    auto decl_generic_id = GetGenericForInst(context, lexical_result);
+    auto current_generic_id =
+        context.generic_region_stack().Empty()
+            ? SemIR::GenericId::None
+            : context.generic_region_stack().PeekPendingGeneric().generic_id;
+    if (decl_generic_id.has_value() && decl_generic_id != current_generic_id) {
+      specific_id = context.generics().GetSelfSpecific(decl_generic_id);
+    }
+
+    return {.specific_id = specific_id,
             .scope_result = SemIR::ScopeLookupResult::MakeFound(
-                lexical_result, SemIR::AccessKind::Public)};
+                lexical_result, SemIR::AccessKind::Public),
+            .lexical_scope_index = lexical_lookup_result.scope_index};
   }
 
   // We didn't find anything at all.
@@ -209,26 +314,38 @@ static auto DiagnoseInvalidQualifiedNameAccess(
     Context& context, SemIR::LocId loc_id, SemIR::LocId member_loc_id,
     SemIR::NameId name_id, SemIR::AccessKind access_kind, bool is_parent_access,
     AccessInfo access_info) -> void {
-  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
-      access_info.constant_id);
-  if (!class_type) {
-    return;
-  }
-
-  // TODO: Support scoped entities other than just classes.
-  const auto& class_info = context.classes().Get(class_type->class_id);
-
-  auto parent_type_id = class_info.self_type_id;
+  // TODO: Will an access scope always be a type? Should we support access
+  // within `impl` scopes?
+  auto scope_type_id =
+      context.types().TryGetTypeIdForTypeConstantId(access_info.constant_id);
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
+    // TODO: Do we need to support parent access for entities other than
+    // classes?
+    auto class_id = SemIR::ClassId::None;
+    auto specific_id = SemIR::SpecificId::None;
+    auto inst = context.constant_values().GetInst(access_info.constant_id);
+    if (auto class_type = inst.TryAs<SemIR::ClassType>()) {
+      class_id = class_type->class_id;
+      specific_id = class_type->specific_id;
+    } else if (auto param_class_type =
+                   context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                       context.types().GetTypeInstId(inst.type_id()))) {
+      class_id = param_class_type->class_id;
+    } else {
+      CARBON_FATAL("Expected either ClassType or ParameterizedClassType");
+    }
+
+    const auto& class_info = context.classes().Get(class_id);
+
     if (auto base_type_id =
-            class_info.GetBaseType(context.sem_ir(), class_type->specific_id);
+            class_info.GetBaseType(context.sem_ir(), specific_id);
         base_type_id.has_value()) {
-      parent_type_id = base_type_id;
-    } else if (auto adapted_type_id = class_info.GetAdaptedType(
-                   context.sem_ir(), class_type->specific_id);
+      scope_type_id = base_type_id;
+    } else if (auto adapted_type_id =
+                   class_info.GetAdaptedType(context.sem_ir(), specific_id);
                adapted_type_id.has_value()) {
-      parent_type_id = adapted_type_id;
+      scope_type_id = adapted_type_id;
     } else {
       CARBON_FATAL("Expected parent for parent access");
     }
@@ -238,19 +355,23 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
       Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(ClassMemberDeclaration, Info, "declared here");
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
-             access_kind == SemIR::AccessKind::Private, name_id, parent_type_id)
-      .Note(member_loc_id, ClassMemberDeclaration)
+             access_kind == SemIR::AccessKind::Private, name_id, scope_type_id)
+      .Attach(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
 // Returns whether the access is prohibited by the access modifiers.
-static auto IsAccessProhibited(std::optional<AccessInfo> access_info,
+static auto IsAccessProhibited(Context& context,
+                               std::optional<AccessInfo> access_info,
                                SemIR::AccessKind access_kind,
                                bool is_parent_access) -> bool {
-  if (!access_info) {
+  // Namespace members are always available within the current library;
+  // filtering of private names happens in import, not here.
+  if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
+                          access_info->constant_id)) {
     return false;
   }
 
@@ -272,7 +393,7 @@ auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(access_info, access_kind, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind, is_parent_access)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -293,50 +414,24 @@ struct ProhibitedAccessInfo {
 static auto GetSelfFacetForInterfaceFromLookupSelfType(
     Context& context, const SemIR::GenericId generic_with_self_id,
     SemIR::ConstantId self_type_const_id) -> SemIR::ConstantId {
-  if (!self_type_const_id.has_value()) {
-    // In a lookup into a non-lexical scope, there is no self-type from the
-    // lookup for the interface-with-self specific. So the self-type we use is
-    // the abstract symbolic Self from the self specific of the
-    // interface-with-self.
-    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
-        context.generics().GetSelfSpecific(generic_with_self_id));
-    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
-    return context.constant_values().Get(self_specific_args.back());
+  if (self_type_const_id.has_value() &&
+      !context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
+    // Extended name lookup into the type of `x`, such as in a member access
+    // `x.F`. We can find a facet type extended scope from the type of `x`.
+    return self_type_const_id;
   }
 
-  if (context.constant_values().InstIs<SemIR::FacetType>(self_type_const_id)) {
-    // We are looking directly in a facet type, like `I.F` for an interface `I`,
-    // which means there is no self-type from the lookup for the
-    // interface-with-self specific. So the self-type we use is the abstract
-    // symbolic Self from the self specific of the interface-with-self.
-    auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
-        context.generics().GetSelfSpecific(generic_with_self_id));
-    auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
-    return context.constant_values().Get(self_specific_args.back());
-  }
-
-  // Extended name lookup into a type, like `x.F`, can find a facet
-  // type extended scope from the type of `x`. The type of `x` maybe a
-  // facet converted to a type, so drop the `as type` conversion if
-  // so.
-  auto canonical_facet_or_type =
-      GetCanonicalFacetOrTypeValue(context, self_type_const_id);
-
-  auto type_of_canonical_facet_or_type =
-      context.insts()
-          .Get(context.constant_values().GetInstId(canonical_facet_or_type))
-          .type_id();
-  if (type_of_canonical_facet_or_type == SemIR::TypeType::TypeId) {
-    // If we still have a type, turn it into a facet for use in the
-    // interface-with-self specific.
-    return GetConstantFacetValueForType(
-        context, context.types().GetAsTypeInstId(
-                     context.constant_values().GetInstId(self_type_const_id)));
-  }
-
-  // We have a facet for the self-type (or perhaps an ErrorInst), which we can
-  // use directly in the interface-with-self specific.
-  return canonical_facet_or_type;
+  // If `self_type_const_id` is None, we are doing lookup into a non-lexical
+  // scope. If it is a `FacetType`, then we are doing lookup directly on a facet
+  // type, such as `I.F` on an interface `I`.
+  //
+  // In these cases, there is no self-type from the lookup for the
+  // interface-with-self specific. So the self-type we use is the abstract
+  // symbolic Self from the self specific of the interface-with-self.
+  auto self_specific_args_id = context.specifics().GetArgsOrEmpty(
+      context.generics().GetSelfSpecific(generic_with_self_id));
+  auto self_specific_args = context.inst_blocks().Get(self_specific_args_id);
+  return context.constant_values().Get(self_specific_args.back());
 }
 
 auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
@@ -346,26 +441,27 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                    llvm::SmallVector<LookupScope>* scopes)
     -> bool {
   auto lookup_inst_id = context.constant_values().GetInstId(lookup_const_id);
-  auto lookup = context.insts().Get(lookup_inst_id);
 
-  if (auto ns = lookup.TryAs<SemIR::Namespace>()) {
+  if (auto ns = context.insts().TryGetAs<SemIR::Namespace>(lookup_inst_id)) {
     scopes->push_back(LookupScope{.name_scope_id = ns->name_scope_id,
                                   .specific_id = SemIR::SpecificId::None,
                                   .self_const_id = SemIR::ConstantId::None});
     return true;
   }
-  if (auto class_ty = lookup.TryAs<SemIR::ClassType>()) {
+
+  if (auto class_ty =
+          context.insts().TryGetAs<SemIR::ClassType>(lookup_inst_id)) {
     if (!extended_scope) {
       // TODO: Allow name lookup into classes that are being defined even if
       // they are not complete.
       RequireCompleteType(
           context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
           loc_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
-                              "member access into incomplete class {0}",
-                              InstIdAsType);
-            builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
-                            lookup_inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(QualifiedExprInIncompleteClassScope,
+                                      "member access into incomplete class {0}",
+                                      InstIdAsType);
+            builder.Attach(loc_id, QualifiedExprInIncompleteClassScope,
+                           lookup_inst_id);
           });
     }
     auto& class_info = context.classes().Get(class_ty->class_id);
@@ -374,8 +470,14 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                   .self_const_id = self_type_const_id});
     return true;
   }
-  // Extended scopes may point to a FacetType.
-  if (auto facet_type = lookup.TryAs<SemIR::FacetType>()) {
+
+  // Extended scopes may point to a FacetType. If it has constraints, collect
+  // the extended ones as scopes.
+  auto lookup_type_id =
+      context.types().TryGetTypeIdForTypeInstId(lookup_inst_id);
+  if (lookup_type_id.has_value() &&
+      context.types().IsConstrainedFacetType(lookup_type_id)) {
+    auto facet_type = context.types().GetAs<SemIR::FacetType>(lookup_type_id);
     if (!extended_scope) {
       // TODO: Allow name lookup into facet types that are being defined even if
       // they are not complete.
@@ -383,12 +485,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
               context,
               context.types().GetTypeIdForTypeConstantId(lookup_const_id),
               loc_id, [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    QualifiedExprInIncompleteFacetTypeScope, Context,
+                CARBON_DIAGNOSTIC_CONTEXT(
+                    QualifiedExprInIncompleteFacetTypeScope,
                     "member access into incomplete facet type {0}",
                     InstIdAsType);
-                builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                                lookup_inst_id);
+                builder.Attach(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                               lookup_inst_id);
               })) {
         // Lookup into this scope should fail without producing an error since
         // `RequireCompleteFacetType` has already issued a diagnostic.
@@ -400,9 +502,10 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       }
     }
 
-    auto facet_type_info = context.facet_types().Get(facet_type->facet_type_id);
+    auto declared_facet_type =
+        context.declared_facet_types().Get(facet_type.declared_facet_type_id);
     // Name lookup into "extend" constraints but not "self impls" constraints.
-    for (const auto& extend : facet_type_info.extend_constraints) {
+    for (const auto& extend : declared_facet_type.extend_constraints) {
       auto& interface = context.interfaces().Get(extend.interface_id);
 
       // We need to build the inner interface-with-self specific. To do that
@@ -417,7 +520,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                          .specific_id = interface_with_self_specific_id,
                          .self_const_id = self_type_const_id});
     }
-    for (const auto& extend : facet_type_info.extend_named_constraints) {
+    for (const auto& extend : declared_facet_type.extend_named_constraints) {
       auto& constraint =
           context.named_constraints().Get(extend.named_constraint_id);
 
@@ -435,6 +538,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
     }
     return true;
   }
+
   if (lookup_const_id == SemIR::ErrorInst::ConstantId) {
     // Lookup into this scope should fail without producing an error.
     scopes->push_back(LookupScope{.name_scope_id = SemIR::NameScopeId::None,
@@ -442,6 +546,7 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
                                   .self_const_id = SemIR::ConstantId::None});
     return true;
   }
+
   // TODO: Per the design, if `base_id` is any kind of type, then lookup should
   // treat it as a name scope, even if it doesn't have members. For example,
   // `(i32*).X` should fail because there's no name `X` in `i32*`, not because
@@ -519,7 +624,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     }
 
     auto is_access_prohibited =
-        IsAccessProhibited(access_info, access_kind, is_parent_access);
+        IsAccessProhibited(context, access_info, access_kind, is_parent_access);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.
@@ -694,10 +799,11 @@ auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "duplicate name `{0}` being declared in the same scope",
                     SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameDeclPrevious, Info,
+                          "name is previously declared here");
   context.emitter()
       .Build(dup_def, NameDeclDuplicate, name_id)
-      .Note(prev_def, NameDeclPrevious)
+      .Attach(prev_def, NameDeclPrevious)
       .Emit();
 }
 
@@ -708,10 +814,10 @@ auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name `{0}` used before it was declared", SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameUseBeforeDeclNote, Info, "declared here");
   context.emitter()
       .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
-      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
+      .Attach(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }
 

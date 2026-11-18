@@ -12,19 +12,25 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_nested.carbon
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+4]]:19: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: var x: {.a: {}} = {.b = {}};
-// CHECK:STDERR:                   ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_assign_nested.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ var x: {.a: {}} = {.b = {}};
+// CHECK:STDERR:        ·                   ━━━━┳━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: struct `{.a: {}}` has no field named `b`
+// CHECK:STDERR:        ·                          ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a: {}} = {.b = {}};
 
-// CHECK:STDOUT: --- fail_assign_nested.carbon
+// CHECK:STDOUT: --- fail_assign_nested.carbon = $fail_assign_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.a.225: type = struct_type {.a: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %struct_type.a.225 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %struct_type.b.347: type = struct_type {.b: %empty_struct_type} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.b.347 = struct_value (%empty_struct) [concrete]
 // CHECK:STDOUT: }
@@ -33,23 +39,23 @@ var x: {.a: {}} = {.b = {}};
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {
-// CHECK:STDOUT:     %.loc19_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc19_14.2: type = converted %.loc19_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.225 = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc22_15: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.225] {
+// CHECK:STDOUT:     %.loc22_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc22_14.2: type = converted %.loc22_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %empty_struct_type} [concrete = constants.%struct_type.a.225]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.225 = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.a.225 = wrapper_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_27: %struct_type.b.347 = struct_literal (%.loc19_26) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc22_26: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc22_27: %struct_type.b.347 = struct_literal (%.loc22_26) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -13,7 +13,8 @@ static auto HandleTypeAfterIntroducer(Context& context,
     -> void {
   auto state = context.PopState();
   context.PushState(state, after_params_state_kind);
-  context.PushState(StateKind::DeclNameAndParams, state.token);
+  context.PushState(StateKind::DeclNameAndParams, state.token,
+                    BindingContext::CompileTimeEntityParam);
 }
 
 auto HandleTypeAfterIntroducerAsClass(Context& context) -> void {

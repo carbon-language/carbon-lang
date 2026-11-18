@@ -14,8 +14,8 @@ namespace Carbon::Check {
 
 class Context;
 
-// A component in a declaration name, such as `C[T:! type](N:! T)` in
-// `fn C[T:! type](N:! T).F() {}`.
+// A component in a declaration name, such as `C[T: type](N: T)` in
+// `fn C[T: type](N: T).F() {}`.
 struct NameComponent {
   // The name of the declaration.
   Parse::NodeId name_loc_id;
@@ -47,14 +47,19 @@ struct NameComponent {
 };
 
 // Pops a name component from the node stack (and pattern block stack, if it has
-// parameters).
+// parameters or a return specifier). `return_pattern_id` is the pattern
+// declared by the return specifier, if any. `has_return_specifier` indicates
+// whether there is a return specifier; this can be true even if there is no
+// return pattern, if the return type is deduced.
 auto PopNameComponent(Context& context,
-                      SemIR::InstId return_pattern_id = SemIR::InstId::None)
-    -> NameComponent;
+                      SemIR::InstId return_pattern_id = SemIR::InstId::None,
+                      bool has_return_specifier = false) -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has
-// parameters.
-auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
+// parameters. Sets `*diagnosed_params` to true when diagnosing parameters if
+// it's not null.
+auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer,
+                                   bool* diagnosed_params = nullptr)
     -> NameComponent;
 
 }  // namespace Carbon::Check

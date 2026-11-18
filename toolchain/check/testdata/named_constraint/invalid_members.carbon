@@ -16,13 +16,13 @@ library "[[@TEST_NAME]]";
 constraint E {
   // TODO: Any fn in a non-template constraint is an error.
   fn DeclaredFunction();
-  fn DeclaredMethod[self: Self](b: Self);
+  fn DeclaredMethod(self, b: Self);
 }
 
 constraint F {
   // TODO: Any fn in a non-template constraint is an error.
   fn DefinedFunction() {}
-  fn DefinedMethod[unused self: Self](unused b: Self) {}
+  fn DefinedMethod(unused self, unused b: Self) {}
 }
 
 // --- todo_fail_invalid_var.carbon
@@ -36,13 +36,18 @@ constraint E {
 // --- fail_todo_invalid_var_template.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_invalid_var_template.carbon:[[@LINE+8]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: template constraint E {
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_var_template.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_invalid_var_template.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: template constraint E {
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_var_template.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any var in a constraint is an error.
@@ -60,13 +65,18 @@ constraint E {
 // --- fail_todo_invalid_let_template.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_invalid_let_template.carbon:[[@LINE+8]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: template constraint E {
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_let_template.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_invalid_let_template.carbon:[[@LINE+4]]:1: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: template constraint E {
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_let_template.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any let in a constraint is an error.

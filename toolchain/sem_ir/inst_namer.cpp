@@ -32,6 +32,79 @@
 
 namespace Carbon::SemIR {
 
+auto TextualNamespace::Name::GetFullName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  llvm::StringMapEntry<NameResult>* value = value_;
+  while (value->second.ambiguous && value->second.fallback) {
+    value = value->second.fallback.value_;
+  }
+  return value->first();
+}
+
+auto TextualNamespace::Name::GetBaseName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  return value_->first().take_front(base_name_size_);
+}
+
+auto TextualNamespace::AllocateNameWithSuffixes(
+    std::string full_name, llvm::ArrayRef<ssize_t> name_sizes) -> Name {
+  // The best (shortest) name for this instruction so far, and the current
+  // name for it.
+  Name best;
+  Name current;
+
+  const size_t base_name_size = name_sizes[0];
+
+  // Add `name` as a name for this entity.
+  auto add_name = [&](llvm::StringRef name, bool mark_ambiguous = true) {
+    auto [it, added] = allocated_.insert({name, NameResult()});
+    Name new_name = Name(it, base_name_size);
+
+    if (!added) {
+      if (mark_ambiguous) {
+        // This name was allocated for a different instruction. Mark it as
+        // ambiguous and keep looking for a name for this instruction.
+        new_name.SetAmbiguous();
+      }
+    } else {
+      if (!best) {
+        best = new_name;
+      } else {
+        CARBON_CHECK(current);
+        current.SetFallback(new_name);
+      }
+      current = new_name;
+    }
+    return added;
+  };
+
+  int previous_size = -1;
+  for (auto name_size : name_sizes) {
+    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
+    previous_size = name_size;
+    if (name_size > 0) {
+      add_name(llvm::StringRef(full_name).take_front(name_size));
+    }
+  }
+  CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
+               "`name_sizes` doesn't end with the size of `full_name`");
+
+  // Append numbers until we find an available name.
+  full_name.push_back('.');
+  auto name_size_without_counter = full_name.size();
+  for (int counter = 1;; ++counter) {
+    full_name.resize(name_size_without_counter);
+    llvm::raw_string_ostream(full_name) << counter;
+    if (add_name(full_name, /*mark_ambiguous=*/false)) {
+      return best;
+    }
+  }
+}
+
 class InstNamer::NamingContext {
  public:
   explicit NamingContext(InstNamer* inst_namer, InstNamer::ScopeId scope_id,
@@ -52,6 +125,13 @@ class InstNamer::NamingContext {
   // its fields.
   auto AddStructTypeInstName(StructType struct_ty, llvm::StringRef type_suffix,
                              llvm::StringRef name_suffix) -> void;
+
+  // Adds the instruction's name by `EntityNameId`.
+  //
+  // Prefer this over AddInstNameId when the inst has an EntityNameId, as the
+  // resulting name may have annotations added from the EntityName.
+  auto AddInstEntityNameId(EntityNameId entity_name_id,
+                           llvm::StringRef suffix = "") -> void;
 
   // Adds the instruction's name by `NameId`.
   auto AddInstNameId(NameId name_id, llvm::StringRef suffix = "") -> void {
@@ -98,7 +178,10 @@ class InstNamer::NamingContext {
 
 InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
     : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
-  insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
+  CARBON_CHECK(sem_ir_->is_complete(),
+               "Can't create InstNamer for pending SemIR::File");
+  insts_.resize(sem_ir->insts().size(),
+                {ScopeId::None, TextualNamespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
   generic_scopes_.resize(sem_ir->generics().size(), ScopeId::None);
@@ -189,6 +272,10 @@ auto InstNamer::GetScopeIdOffset(ScopeIdTypeEnum id_enum) const -> int {
       [[fallthrough]];
     case ScopeIdTypeEnum::For<NamedConstraintWithSelfId>:
 
+      offset += sem_ir_->observes().size();
+      [[fallthrough]];
+    case ScopeIdTypeEnum::For<ObserveId>:
+
       offset += sem_ir_->require_impls().size();
       [[fallthrough]];
     case ScopeIdTypeEnum::For<RequireImplsId>:
@@ -253,7 +340,9 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name().str();
   }
-
+  if (inst_id == TypeType::TypeInstId) {
+    return "type";
+  }
   if (inst_id == SemIR::Namespace::PackageInstId) {
     return "package";
   }
@@ -311,63 +400,12 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
   return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
 }
 
-auto InstNamer::Namespace::Name::GetFullName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  llvm::StringMapEntry<NameResult>* value = value_;
-  while (value->second.ambiguous && value->second.fallback) {
-    value = value->second.fallback.value_;
-  }
-  return value->first();
-}
-
-auto InstNamer::Namespace::Name::GetBaseName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  return value_->first().take_front(base_name_size_);
-}
-
-auto InstNamer::Namespace::AllocateName(
+auto InstNamer::FileNamespace::AllocateName(
     const InstNamer& inst_namer,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint, std::string name)
     -> Name {
-  // The best (shortest) name for this instruction so far, and the current
-  // name for it.
-  Name best;
-  Name current;
-
-  const size_t base_name_size = name.size();
-
-  // Add `name` as a name for this entity.
-  auto add_name = [&](bool mark_ambiguous = true) {
-    auto [it, added] = allocated_.insert({name, NameResult()});
-    Name new_name = Name(it, base_name_size);
-
-    if (!added) {
-      if (mark_ambiguous) {
-        // This name was allocated for a different instruction. Mark it as
-        // ambiguous and keep looking for a name for this instruction.
-        new_name.SetAmbiguous();
-      }
-    } else {
-      if (!best) {
-        best = new_name;
-      } else {
-        CARBON_CHECK(current);
-        current.SetFallback(new_name);
-      }
-      current = new_name;
-    }
-    return added;
-  };
-
-  // Use the given name if it's available.
-  if (!name.empty()) {
-    add_name();
-  }
-
+  llvm::SmallVector<ssize_t, 5> name_sizes;
+  name_sizes.push_back(name.size());
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
     *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
@@ -377,11 +415,11 @@ auto InstNamer::Namespace::AllocateName(
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
           << ".loc" << tree.tokens().GetLineNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
 
       llvm::raw_string_ostream(name)
           << "_" << tree.tokens().GetColumnNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
     }
   } else {
     uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
@@ -392,21 +430,11 @@ auto InstNamer::Namespace::AllocateName(
     for (int n : llvm::seq(1, 7)) {
       out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
       if (n >= 3) {
-        add_name();
+        name_sizes.push_back(name.size());
       }
     }
   }
-
-  // Append numbers until we find an available name.
-  name += ".";
-  auto name_size_without_counter = name.size();
-  for (int counter = 1;; ++counter) {
-    name.resize(name_size_without_counter);
-    llvm::raw_string_ostream(name) << counter;
-    if (add_name(/*mark_ambiguous=*/false)) {
-      return best;
-    }
-  }
+  return AllocateNameWithSuffixes(std::move(name), name_sizes);
 }
 
 auto InstNamer::AddBlockLabel(
@@ -621,7 +649,9 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   scope.name = globals_.AllocateName(
       *this, fn_loc,
       llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
-                    sem_ir_->names().GetIRBaseName(fn.name_id)));
+                    fn.name_id.has_value()
+                        ? sem_ir_->names().GetIRBaseName(fn.name_id)
+                        : "fn"));
   if (!fn.body_block_ids.empty()) {
     AddBlockLabel(scope_id, fn.body_block_ids.front(), "entry", fn_loc);
   }
@@ -633,6 +663,36 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   }
   PushBlockId(scope_id, fn.pattern_block_id);
   PushBlockId(scope_id, fn.call_params_id);
+}
+
+auto InstNamer::PushEntity(ObserveId observe_id, ScopeId /*scope_id*/,
+                           Scope& scope) -> void {
+  const auto& observe = sem_ir_->observes().Get(observe_id);
+  LocId observe_loc(observe.decl_id);
+
+  llvm::StringRef scope_prefix;
+  CARBON_KIND_SWITCH(sem_ir_->insts().Get(observe.enclosing_scope_inst_id)) {
+    case CARBON_KIND(SemIR::InterfaceWithSelfDecl interface): {
+      scope_prefix = MaybePushEntity(interface.interface_id);
+      break;
+    }
+    case CARBON_KIND(SemIR::FunctionDecl fn): {
+      scope_prefix = MaybePushEntity(fn.function_id);
+      break;
+    }
+    default: {
+      scope_prefix = "<unexpected scope>";
+      break;
+    }
+  }
+
+  // TODO: Currently observe declarations in the same scope have the same name.
+  // Generate unique names for them like we do when we are pushing
+  // RequireImplsId entity.
+  scope.name =
+      globals_.AllocateName(*this, observe_loc,
+                            llvm::formatv("{0}{1}observe", scope_prefix,
+                                          scope_prefix.empty() ? "" : "."));
 }
 
 auto InstNamer::PushEntity(RequireImplsId require_impls_id, ScopeId scope_id,
@@ -854,6 +914,19 @@ auto InstNamer::NamingContext::AddStructTypeInstName(
   AddInstName(out.TakeStr());
 }
 
+auto InstNamer::NamingContext::AddInstEntityNameId(EntityNameId entity_name_id,
+                                                   llvm::StringRef suffix)
+    -> void {
+  RawStringOstream name;
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
+  name << sem_ir().names().GetIRBaseName(entity_name.name_id);
+  if (entity_name.is_frozen_period_self) {
+    name << ".frozen";
+  }
+  name << suffix;
+  AddInstName(name.TakeStr());
+}
+
 auto InstNamer::NamingContext::AddIntOrFloatTypeName(char type_literal_prefix,
                                                      InstId bit_width_id,
                                                      llvm::StringRef suffix)
@@ -915,15 +988,15 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND_ANY(AnyBindingOrExportDecl, inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.entity_name_id).name_id);
+      AddInstEntityNameId(inst.entity_name_id);
       return;
     }
     case CARBON_KIND_ANY(AnyBindingPattern, inst): {
-      auto name_id = NameId::Underscore;
       if (inst.entity_name_id.has_value()) {
-        name_id = sem_ir().entity_names().Get(inst.entity_name_id).name_id;
+        AddInstEntityNameId(inst.entity_name_id, ".patt");
+      } else {
+        AddInstNameId(NameId::Underscore, ".patt");
       }
-      AddInstNameId(name_id, ".patt");
       return;
     }
     case CARBON_KIND(BoolLiteral inst): {
@@ -1002,7 +1075,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(CppTemplateNameType inst): {
-      AddInstNameId(sem_ir().entity_names().Get(inst.name_id).name_id, ".type");
+      AddInstEntityNameId(inst.name_id, ".type");
       return;
     }
     case CustomWitness::Kind: {
@@ -1018,43 +1091,40 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetAccessType inst): {
-      auto name_id = SemIR::NameId::None;
       if (auto name =
               sem_ir().insts().TryGetAs<NameRef>(inst.facet_value_inst_id)) {
-        name_id = name->name_id;
+        AddInstNameId(name->name_id, ".as_type");
       } else if (auto bind = sem_ir().insts().TryGetAs<SymbolicBinding>(
                      inst.facet_value_inst_id)) {
-        name_id = sem_ir().entity_names().Get(bind->entity_name_id).name_id;
-      }
-      if (name_id.has_value()) {
-        AddInstNameId(name_id, ".as_type");
+        AddInstEntityNameId(bind->entity_name_id, ".as_type");
       } else {
         AddInstName("as_type");
       }
       return;
     }
     case CARBON_KIND(FacetType inst): {
-      const auto& facet_type_info =
-          sem_ir().facet_types().Get(inst.facet_type_id);
-      bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.self_impls_constraints.empty() ||
-                       !facet_type_info.self_impls_named_constraints.empty() ||
-                       !facet_type_info.type_impls_interfaces.empty() ||
-                       !facet_type_info.type_impls_named_constraints.empty() ||
-                       !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1 &&
-          facet_type_info.extend_named_constraints.empty()) {
+      const auto& declared_facet_type =
+          sem_ir().declared_facet_types().Get(inst.declared_facet_type_id);
+      bool has_where =
+          declared_facet_type.other_requirements ||
+          !declared_facet_type.self_impls_constraints.empty() ||
+          !declared_facet_type.self_impls_named_constraints.empty() ||
+          !declared_facet_type.type_impls_interfaces.empty() ||
+          !declared_facet_type.type_impls_named_constraints.empty() ||
+          !declared_facet_type.rewrite_constraints.empty();
+      if (declared_facet_type.extend_constraints.size() == 1 &&
+          declared_facet_type.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_constraints.front().interface_id,
+            declared_facet_type.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
-                 facet_type_info.extend_constraints.empty()) {
+      } else if (declared_facet_type.extend_named_constraints.size() == 1 &&
+                 declared_facet_type.extend_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_named_constraints.front()
+            declared_facet_type.extend_named_constraints.front()
                 .named_constraint_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty() &&
-                 facet_type_info.extend_named_constraints.empty()) {
+      } else if (declared_facet_type.extend_constraints.empty() &&
+                 declared_facet_type.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");
@@ -1064,9 +1134,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(FacetValue inst): {
       if (auto facet_type =
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
-        const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto single = facet_type_info.TryAsSingleExtend()) {
+        const auto& declared_facet_type = sem_ir().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (auto single = declared_facet_type.TryAsSingleExtend()) {
           CARBON_KIND_SWITCH(*single) {
             case CARBON_KIND(SemIR::SpecificInterface interface): {
               AddEntityNameAndMaybePush(interface.interface_id, ".facet");
@@ -1080,29 +1150,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
-        if (facet_type_info.HasNoConstraints()) {
-          if (auto class_ty =
-                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
-            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
-            return;
-          }
-          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
-                  inst.type_inst_id)) {
-            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
-              AddInstName("empty_tuple.type.facet");
-            } else {
-              AddInstName("tuple.type.facet");
-            }
-            return;
-          }
-          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
-                  inst.type_inst_id)) {
-            AddStructTypeInstName(*struct_ty, "", ".type.facet");
-            return;
-          }
-        }
       }
       AddInstName("facet_value");
+      return;
+    }
+    case CARBON_KIND(FieldDecl inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.type_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
+      }
+      AddInstName("field_decl");
       return;
     }
     case CARBON_KIND(FloatType inst): {
@@ -1132,7 +1189,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.overload_set_id, ".type");
       return;
     }
-    case CARBON_KIND(GenericClassType inst): {
+    case CARBON_KIND(ParameterizedClassType inst): {
       AddEntityNameAndMaybePush(inst.class_id, ".type");
       return;
     }
@@ -1142,6 +1199,28 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(GenericNamedConstraintType inst): {
       AddEntityNameAndMaybePush(inst.named_constraint_id, ".type");
+      return;
+    }
+    case CARBON_KIND(GlobalRef inst): {
+      EntityNameId entity_name_id = EntityNameId::None;
+      CARBON_KIND_SWITCH(sem_ir().insts().Get(inst.inst_id)) {
+        case CARBON_KIND_ANY(AnyBinding, binding):
+          entity_name_id = binding.entity_name_id;
+          break;
+        case CARBON_KIND_ANY(AnyImportRef, import_ref):
+          entity_name_id = import_ref.entity_name_id;
+          break;
+        case CARBON_KIND(ExportDecl export_decl):
+          entity_name_id = export_decl.entity_name_id;
+          break;
+        default:
+          break;
+      }
+      if (entity_name_id.has_value()) {
+        AddInstEntityNameId(entity_name_id, ".global_ref");
+      } else {
+        AddInstName("global_ref");
+      }
       return;
     }
     case CARBON_KIND(ImplDecl inst): {
@@ -1290,6 +1369,18 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstNameId(sem_ir().name_scopes().Get(inst.name_scope_id).name_id());
       return;
     }
+    case CARBON_KIND(ObserveDecl inst): {
+      AddEntityNameAndMaybePush(inst.observe_id, ".decl");
+      return;
+    }
+    case ObserveEquivalent::Kind: {
+      AddInstName("eq");
+      return;
+    }
+    case ObserveImpls::Kind: {
+      AddInstName("impls");
+      return;
+    }
     case CARBON_KIND_ANY(AnyParam, inst): {
       AddInstNameId(inst.pretty_name_id, ".param");
       return;
@@ -1318,6 +1409,22 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.require_impls_id, ".decl");
       auto require_scope_id = inst_namer_->GetScopeFor(inst.require_impls_id);
       PushBlockId(require_scope_id, inst.decl_block_id);
+      return;
+    }
+    case Carbon::SemIR::RequirementBaseFacetType::Kind: {
+      AddInstName("base_facet_type");
+      return;
+    }
+    case Carbon::SemIR::RequirementEquivalent::Kind: {
+      AddInstName("equiv");
+      return;
+    }
+    case Carbon::SemIR::RequirementImpls::Kind: {
+      AddInstName("impls");
+      return;
+    }
+    case Carbon::SemIR::RequirementRewrite::Kind: {
+      AddInstName("rewrite");
       return;
     }
     case ReturnSlotPattern::Kind: {
@@ -1360,34 +1467,38 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(StructValue inst): {
-      if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(fn_ty->function_id);
-      } else if (auto class_ty =
-                     sem_ir().types().TryGetAs<ClassType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(class_ty->class_id, ".val");
-      } else if (auto generic_class_ty =
-                     sem_ir().types().TryGetAs<GenericClassType>(
-                         inst.type_id)) {
-        AddEntityNameAndMaybePush(generic_class_ty->class_id, ".generic");
-      } else if (auto generic_interface_ty =
-                     sem_ir().types().TryGetAs<GenericInterfaceType>(
-                         inst.type_id)) {
-        AddInstNameId(sem_ir()
-                          .interfaces()
-                          .Get(generic_interface_ty->interface_id)
-                          .name_id,
-                      ".generic");
-      } else if (auto template_name_ty =
-                     sem_ir().types().TryGetAs<CppTemplateNameType>(
-                         inst.type_id)) {
-        AddInstNameId(
-            sem_ir().entity_names().Get(template_name_ty->name_id).name_id,
-            ".template");
-      } else {
-        if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
-          AddInstName("empty_struct");
-        } else {
-          AddInstName("struct");
+      CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(inst.type_id)) {
+        case CARBON_KIND(FunctionType fn_ty): {
+          AddEntityNameAndMaybePush(fn_ty.function_id);
+          break;
+        }
+        case CARBON_KIND(ClassType class_ty): {
+          AddEntityNameAndMaybePush(class_ty.class_id, ".val");
+          break;
+        }
+        case CARBON_KIND(ParameterizedClassType generic_class_ty): {
+          AddEntityNameAndMaybePush(generic_class_ty.class_id, ".generic");
+          break;
+        }
+        case CARBON_KIND(GenericInterfaceType generic_interface_ty): {
+          AddInstNameId(sem_ir()
+                            .interfaces()
+                            .Get(generic_interface_ty.interface_id)
+                            .name_id,
+                        ".generic");
+          break;
+        }
+        case CARBON_KIND(CppTemplateNameType template_name_ty): {
+          AddInstEntityNameId(template_name_ty.name_id, ".template");
+          break;
+        }
+        default: {
+          if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
+            AddInstName("empty_struct");
+          } else {
+            AddInstName("struct");
+          }
+          break;
         }
       }
       return;
@@ -1407,7 +1518,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(TupleValue inst): {
-      if (sem_ir().types().Is<ArrayType>(inst.type_id)) {
+      if (sem_ir().types().Is<ArrayType>(
+              sem_ir().types().GetTransitiveAdaptedType(inst.type_id))) {
         AddInstName("array");
       } else if (inst.elements_id == InstBlockId::Empty) {
         AddInstName("empty_tuple");
@@ -1431,6 +1543,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
             }
           }
         }
+      }
+      AddInstName("");
+      return;
+    }
+    case CARBON_KIND(TypeOf inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.operand_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
       }
       AddInstName("");
       return;

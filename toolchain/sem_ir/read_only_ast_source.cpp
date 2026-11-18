@@ -1,0 +1,158 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/sem_ir/read_only_ast_source.h"
+
+#include <optional>
+
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclContextInternals.h"
+
+namespace Carbon::SemIR {
+
+char ReadOnlyASTSource::id;
+
+auto ReadOnlyASTSource::GetCarbonOwnedDeclAsLookupContext(
+    clang::DeclContext* decl_context) const -> std::optional<ClangDecl> {
+  auto* decl = cast<clang::Decl>(
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  if (isa<clang::FunctionDecl>(decl)) {
+    // We can't perform name lookups into a function, and they don't have
+    // `ClangDeclKey`s in the abstract anyway.
+    return std::nullopt;
+  }
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
+  auto decl_id = sem_ir_.clang_decls().LookupId(key);
+  if (!decl_id.has_value()) {
+    return std::nullopt;
+  }
+  auto clang_decl = sem_ir_.clang_decls().Get(decl_id);
+  if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
+    return std::nullopt;
+  }
+  return clang_decl;
+}
+
+auto ReadOnlyASTSource::completeVisibleDeclsMap(
+    const clang::DeclContext* const_decl_context) -> void {
+  // Clang expects us to modify the DeclContext but passes it as `const`.
+  // TODO: Fix clang to pass in a mutable DeclContext.
+  auto* decl_context = const_cast<clang::DeclContext*>(const_decl_context);
+
+  if (!GetCarbonOwnedDeclAsLookupContext(decl_context)) {
+    return;
+  }
+
+  // `ASTReader::completeVisibleDeclsMap` unconditionally clears external
+  // visible storage, even for DeclContexts it does not own. Restore it for
+  // Carbon-owned DeclContexts so future lookups continue to query us.
+  auto* primary_context = decl_context->getPrimaryContext();
+  primary_context->setHasExternalVisibleStorage(true);
+
+  if (auto* lookup_map = primary_context->getLookupPtr();
+      lookup_map && !lookup_map->empty()) {
+    // `setHasExternalVisibleStorage(true)` sets
+    // `NeedToReconcileExternalVisibleStorage`, which would otherwise mark all
+    // already-resolved entries as needing another external lookup. Trigger
+    // reconciliation now and clear `hasExternalDecls` on all existing entries
+    // so we don't re-export or re-diagnose them.
+    //
+    // Note that this only clears out external decls from an AST file, despite
+    // its name. External visible decls already added by other AST sources, such
+    // as this one, are retained.
+    SetNoExternalVisibleDeclsForName(primary_context,
+                                     lookup_map->begin()->first);
+    for (auto& [_, decls] : *lookup_map) {
+      decls.removeExternalDecls();
+    }
+  }
+}
+
+// Get the field offset for each field in a class.
+//
+// Returns true on success, false if any error occurs.
+static auto CalculateCppFieldOffsets(
+    const File& sem_ir, ClassType class_type,
+    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
+  auto class_info = sem_ir.classes().Get(class_type.class_id);
+  const auto& class_scope = sem_ir.name_scopes().Get(class_info.scope_id);
+
+  auto class_layout = SemIR::ObjectLayout::Empty();
+  for (const auto& struct_field :
+       class_info.GetStructTypeFields(sem_ir, class_type.specific_id)) {
+    auto field_type_id =
+        sem_ir.types().GetTypeIdForTypeInstId(struct_field.type_inst_id);
+    auto field_layout =
+        sem_ir.types().GetCompleteTypeInfo(field_type_id).object_layout;
+
+    // Use the field's name to look up the corresponding entry in the
+    // class. If it's a `FieldDecl`, write out the offset of the
+    // corresponding `clang::FieldDecl`.
+    auto class_field =
+        LookupClassFieldByStructField(sem_ir, class_scope, struct_field);
+    if (class_field) {
+      const auto* clang_decl = sem_ir.clang_decls().Lookup(
+          class_field->inst_id, class_type.specific_id);
+      if (!clang_decl) {
+        return false;
+      }
+
+      auto* cpp_field_decl = cast<clang::FieldDecl>(clang_decl->decl());
+      field_offsets.insert(
+          {cpp_field_decl, class_layout.FieldOffset(field_layout).bits()});
+    }
+
+    class_layout.AppendField(field_layout);
+  }
+
+  return true;
+}
+
+auto ReadOnlyASTSource::layoutRecordType(
+    const clang::RecordDecl* record_decl, uint64_t& size, uint64_t& alignment,
+    llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>& base_offsets,
+    llvm::DenseMap<const clang::CXXRecordDecl*, clang::CharUnits>&
+        vbase_offsets) -> bool {
+  auto carbon_class_info = GetAsCarbonOwnedClass(sem_ir_, record_decl);
+  if (!carbon_class_info) {
+    return false;
+  }
+  auto& [class_type_id, class_type] = *carbon_class_info;
+
+  // Set the overall size and alignment. We round up the size to an integer
+  // number of bytes in order to avoid surprising Clang too much.
+  auto layout =
+      sem_ir_.types().GetCompleteTypeInfo(class_type_id).object_layout;
+  size = layout.size.bytes() * 8;
+  alignment = layout.alignment.bits();
+
+  // Fill in `field_offsets`.
+  CalculateCppFieldOffsets(sem_ir_, class_type, field_offsets);
+
+  // Add offset for base class, if any.
+  if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);
+      class_decl && !class_decl->bases().empty()) {
+    CARBON_CHECK(class_decl->getNumBases() == 1,
+                 "Carbon class with multiple bases");
+    const auto& base = *class_decl->bases_begin();
+    // TODO: If this class introduced a vptr, the base will be at an offset of
+    // `sizeof(void*)`, not 0.
+    base_offsets.insert(
+        {base.getType()->getAsCXXRecordDecl()->getCanonicalDecl(),
+         clang::CharUnits::Zero()});
+
+    // TODO: Support deriving from a C++ class with virtual bases.
+    CARBON_CHECK(class_decl->getNumVBases() == 0,
+                 "Carbon class with multiple bases");
+    static_cast<void>(vbase_offsets);
+  }
+
+  return true;
+}
+
+}  // namespace Carbon::SemIR

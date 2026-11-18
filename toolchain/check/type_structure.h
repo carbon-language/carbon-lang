@@ -183,15 +183,14 @@ class TypeStructure : public Printable<TypeStructure> {
   llvm::SmallVector<ConcreteType> concrete_types_;
 };
 
-// Constructs the TypeStructure for a self type or facet value and an interface
+// Constructs the TypeStructure for a self facet value and an interface
 // constraint (e.g. `Iface(A, B(C))`), which represents the location of unknown
 // symbolic constants in the combined signature and which is ordered by them.
 //
 // Given `impl C as Z {}` the `self_const_id` would be a `C` and the interface
 // constraint would be `Z`.
 //
-// Returns nullopt if an ErrorInst is encountered in the self type or facet
-// value.
+// Returns nullopt if an ErrorInst is encountered in the self facet.
 auto BuildTypeStructure(Context& context, SemIR::InstId self_inst_id,
                         SemIR::SpecificInterface interface)
     -> std::optional<TypeStructure>;

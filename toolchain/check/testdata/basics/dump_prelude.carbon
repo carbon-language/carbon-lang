@@ -15,5 +15,5 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/basics/dump_prelude.carbon
 
 // CHECK:STDOUT: interface @Copy {
-// CHECK:STDOUT: interface @Destroy {
+// CHECK:STDOUT: interface @SubobjectDestroy {
 // CHECK:STDOUT: fn @MakeInt(%size.param: Core.IntLiteral) -> out %return.param: type = "int.make_type_signed";

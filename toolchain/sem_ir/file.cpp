@@ -8,15 +8,20 @@
 #include <string>
 #include <utility>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/Mangle.h"
 #include "common/check.h"
-#include "llvm/ADT/STLExtras.h"
-#include "llvm/ADT/SmallVector.h"
+#include "common/error.h"
 #include "toolchain/base/block_value_store_impl.h"
-#include "toolchain/base/kind_switch.h"
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/base/yaml.h"
 #include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/constant.h"
+#include "toolchain/sem_ir/dominance.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_kind.h"
@@ -37,19 +42,23 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       value_stores_(&value_stores),
       filename_(std::move(filename)),
       entity_names_(check_ir_id),
-      cpp_global_vars_(check_ir_id),
       functions_(check_ir_id),
+      generated_functions_(check_ir_id),
       cpp_overload_sets_(check_ir_id),
       thunks_(check_ir_id),
       classes_(check_ir_id),
+      fields_(check_ir_id),
       interfaces_(check_ir_id),
       named_constraints_(check_ir_id),
       require_impls_(check_ir_id),
       // 1 reserved id for `RequireImplsBlockId::Empty`.
       require_impls_blocks_(allocator_, check_ir_id, 1),
+      observes_(check_ir_id),
+      // 1 reserved id for `ObserveBlockId::Empty`.
+      observe_blocks_(allocator_, check_ir_id, 1),
       associated_constants_(check_ir_id),
-      facet_types_(check_ir_id),
-      identified_facet_types_(check_ir_id),
+      // 1 reserved id for `DeclaredFacetTypeId::Empty`.
+      declared_facet_types_(check_ir_id, 1),
       impls_(*this),
       specific_interfaces_(check_ir_id),
       generics_(check_ir_id),
@@ -59,10 +68,9 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       import_irs_(check_ir_id, 2),
       clang_decls_(check_ir_id),
       clang_decl_signatures_(check_ir_id),
-      // The `+1` prevents adding a tag to the global `NameSpace::PackageInstId`
-      // instruction. It's not a "singleton" instruction, but it's a unique
-      // instruction id that comes right after the singletons.
-      insts_(this, SingletonInstKinds.size() + 1),
+      // We have some builtin instructions that have untagged fixed indices, and
+      // `NumBuiltinInsts` tracks how many.
+      insts_(this, NumBuiltinInsts),
       vtables_(check_ir_id),
       constant_values_(ConstantId::NotConstant, &insts_),
       inst_blocks_(allocator_, check_ir_id),
@@ -73,7 +81,8 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       custom_layouts_(allocator_, check_ir_id, 1),
       expr_regions_(check_ir_id),
       clang_source_locs_(check_ir_id),
-      bundles_(allocator_, check_ir_id) {
+      bundles_(allocator_, check_ir_id),
+      clang_function_pointer_types_(check_ir_id) {
   // `type`, `form`, and the error type are both complete & concrete types.
   // TODO: This duplicates the code in `check/type_completion.cpp`. Consider
   // requiring these types to be complete from Check initialization instead,
@@ -95,7 +104,20 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
 
-  insts_.Reserve(SingletonInstKinds.size());
+  auto empty_facet_type_id = declared_facet_types_.Add({});
+  CARBON_CHECK(empty_facet_type_id == DeclaredFacetTypeId::Empty);
+
+  insts_.Reserve(NumBuiltinInsts);
+  // Construct the `TypeType:TypeInstId` inst first, as it has InstId of 0. It
+  // goes in the `constants_` store so that all empty facet types dedupe to the
+  // singleton's constant value.
+  auto type_type_const_id = constants_.GetOrAdd(
+      FacetType{.type_id = TypeType::TypeId,
+                .declared_facet_type_id = DeclaredFacetTypeId::Empty},
+      ConstantDependence::None);
+  CARBON_CHECK(type_type_const_id == TypeType::ConstantId);
+  CARBON_CHECK(constant_values_.GetInstId(type_type_const_id) ==
+               TypeType::TypeInstId);
   for (auto kind : SingletonInstKinds) {
     auto inst_id =
         insts_.AddInNoBlock(LocIdAndInst::NoLoc(Inst::MakeSingleton(kind)));
@@ -137,8 +159,8 @@ auto File::Verify() const -> ErrorOr<Success> {
     }
   }
 
-  // TODO: Check that an instruction only references other instructions that are
-  // either global or that dominate it.
+  CARBON_RETURN_IF_ERROR(VerifyDominance(*this));
+
   return Success();
 }
 
@@ -155,7 +177,6 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("clang_decl_signatures", clang_decl_signatures_.OutputYaml());
           map.Add("name_scopes", name_scopes_.OutputYaml());
           map.Add("entity_names", entity_names_.OutputYaml());
-          map.Add("cpp_global_vars", cpp_global_vars_.OutputYaml());
           map.Add("functions", functions_.OutputYaml());
           map.Add("classes", classes_.OutputYaml());
           map.Add("interfaces", interfaces_.OutputYaml());
@@ -166,7 +187,7 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
           map.Add("specific_interfaces", specific_interfaces_.OutputYaml());
           map.Add("struct_type_fields", struct_type_fields_.OutputYaml());
           map.Add("types", types_.OutputYaml());
-          map.Add("facet_types", facet_types_.OutputYaml());
+          map.Add("declared_facet_types", declared_facet_types_.OutputYaml());
           map.Add("insts",
                   Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
                     for (auto [id, inst] : insts_.enumerate()) {
@@ -189,15 +210,32 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "filename_"), filename_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_global_vars_"),
-                    cpp_global_vars_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "generated_functions_"),
+                    generated_functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_overload_sets_"),
+                    cpp_overload_sets_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "fields_"), fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "named_constraints_"),
+                    named_constraints_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "require_impls_"),
+                    require_impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "observes_"), observes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "observe_blocks_"),
+                    observe_blocks_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "associated_constants_"),
+                    associated_constants_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "declared_facet_types_"),
+                    declared_facet_types_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "specific_interfaces_"),
+                    specific_interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "specifics_"), specifics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
@@ -206,19 +244,56 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decl_signatures_"),
                     clang_decl_signatures_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
-                    struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "vtables_"), vtables_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "name_scopes_"), name_scopes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constant_values_"),
                     constant_values_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_blocks_"), inst_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
+                    struct_type_fields_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "custom_layouts_"),
+                    custom_layouts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "expr_regions_"),
+                    expr_regions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_source_locs_"),
+                    clang_source_locs_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "bundles_"), bundles_);
+  mem_usage.Collect(
+      MemUsage::ConcatLabel(label, "clang_function_pointer_types_"),
+      clang_function_pointer_types_);
 }
 
 auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
   cpp_file_ = std::move(cpp_file);
+}
+
+auto File::AppendCppMangledTypeName(ClassId class_id,
+                                    llvm::raw_ostream& out) const -> bool {
+  // Only classes imported *from* C++ need this. A C++ scope records the Clang
+  // declaration it came from; note that a Carbon class exported *to* C++ also
+  // has an associated Clang declaration, but its scope is not a C++ scope and
+  // it is already uniquely identified by its name and parent scope.
+  auto scope_id = classes().Get(class_id).scope_id;
+  if (!scope_id.has_value()) {
+    return false;
+  }
+  const auto& scope = name_scopes().Get(scope_id);
+  if (!scope.is_cpp_scope()) {
+    return false;
+  }
+  auto clang_decl_id = scope.clang_decl_context_id();
+  if (!clang_decl_id.has_value()) {
+    return false;
+  }
+  // A C++ class's scope always maps to a Clang tag declaration.
+  auto* tag_decl =
+      clang::cast<clang::TagDecl>(clang_decls().Get(clang_decl_id).decl());
+  cpp_file_->mangle_context().mangleCanonicalTypeName(
+      cpp_file_->ast_context().getCanonicalTagType(tag_decl), out);
+  return true;
 }
 
 }  // namespace Carbon::SemIR
@@ -226,7 +301,7 @@ auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {
 namespace Carbon {
 template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                           Tag<SemIR::CheckIRId>>;
-template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                           Tag<SemIR::CheckIRId>>;
 template class ValueStore<SemIR::CustomLayoutId,
                           llvm::MutableArrayRef<SemIR::ObjectSize>,
@@ -235,4 +310,7 @@ template class BlockValueStore<SemIR::CustomLayoutId, SemIR::ObjectSize,
                                Tag<SemIR::CheckIRId>>;
 template class BlockValueStore<SemIR::RawBundleId, SemIR::AnyRawId,
                                Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<SemIR::ClangFunctionPointerTypeId,
+                                   const clang::Type*, Tag<SemIR::CheckIRId>,
+                                   SemIR::ClangFunctionPointerTypeInfo>;
 }  // namespace Carbon

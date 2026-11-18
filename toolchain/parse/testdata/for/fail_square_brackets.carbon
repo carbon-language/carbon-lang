@@ -9,48 +9,57 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_square_brackets.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+20]]:7: error: expected `(` after `for` [ExpectedParenAfter]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_square_brackets.carbon:[[@LINE+30]]:7
+  // CHECK:STDERR: ->     │   for [] {
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `(` after `for` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+16]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_square_brackets.carbon:[[@LINE+24]]:6
+  // CHECK:STDERR: ->     │   for [] {
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+12]]:7: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_square_brackets.carbon:[[@LINE+18]]:6
+  // CHECK:STDERR: ->     │   for [] {
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected braced code block [ExpectedCodeBlock]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_square_brackets.carbon:[[@LINE+12]]:7
+  // CHECK:STDERR: ->     │   for [] {
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+4]]:7: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   for [] {
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_square_brackets.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   for [] {
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   for [] {
   }
 }
 
 // CHECK:STDOUT: - filename: fail_square_brackets.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ForHeaderStart', text: 'for', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '[', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ForIn', text: 'for', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '[', has_error: yes},
-// CHECK:STDOUT:         {kind: 'ForHeader', text: 'for', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '[', has_error: yes},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: '[', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ExprStatement', text: '}', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '[', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ForHeaderStart 'for' has_error
+// CHECK:STDOUT:   │ │   │ ╭─InvalidParse '[' has_error
+// CHECK:STDOUT:   │ │   ├─ForIn 'for' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse '[' has_error
+// CHECK:STDOUT:   │ │ ╭─ForHeader 'for' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '[' has_error
+// CHECK:STDOUT:   │ │ │ │ ╭─InvalidParse '[' has_error
+// CHECK:STDOUT:   │ │ │ ├─ExprStatement '}' has_error
+// CHECK:STDOUT:   │ │ ├─CodeBlock '[' has_error
+// CHECK:STDOUT:   │ ├─ForStatement 'for'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

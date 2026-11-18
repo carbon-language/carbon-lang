@@ -4,6 +4,7 @@
 
 #include "toolchain/sem_ir/class.h"
 
+#include "clang/AST/Decl.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/generic.h"
@@ -49,6 +50,98 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
       file.constant_values()
           .GetInstAs<CompleteTypeWitness>(witness_id)
           .object_repr_type_inst_id);
+}
+
+auto Class::GetStructTypeFields(const File& sem_ir,
+                                SpecificId specific_id) const
+    -> llvm::ArrayRef<SemIR::StructTypeField> {
+  if (adapt_id.has_value()) {
+    // The representation of an adapter won't necessarily be a
+    // struct. Return an empty array since adapters can't declare
+    // fields.
+    return {};
+  }
+
+  auto object_repr_type_id = GetObjectRepr(sem_ir, specific_id);
+  if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
+    return {};
+  }
+  auto struct_type =
+      sem_ir.types().GetAs<SemIR::StructType>(object_repr_type_id);
+  return sem_ir.struct_type_fields().Get(struct_type.fields_id);
+}
+
+auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
+    -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>> {
+  // Quickly check whether we could possibly own this class. Carbon-owned
+  // classes always have external visible storage (preserved across
+  // `ASTReader::completeVisibleDeclsMap` by `ReadOnlyASTSource`).
+  if (!tag_decl->hasExternalVisibleStorage()) {
+    return std::nullopt;
+  }
+
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
+      const_cast<clang::TagDecl*>(tag_decl->getFirstDecl()));
+  auto clang_decl_id = sem_ir.clang_decls().LookupId(key);
+  if (!clang_decl_id.has_value()) {
+    return std::nullopt;
+  }
+
+  auto inst_id = sem_ir.clang_decls().Get(clang_decl_id).inst_id;
+  auto const_id = sem_ir.constant_values().Get(inst_id);
+  if (!const_id.has_value()) {
+    return std::nullopt;
+  }
+
+  auto class_type =
+      sem_ir.constant_values().TryGetInstAs<SemIR::ClassType>(const_id);
+  if (!class_type) {
+    return std::nullopt;
+  }
+
+  // Determine whether this class was imported from C++.
+  // TODO: This currently can't happen, because only Carbon classes have
+  // external lexical storage, but will happen once we support importing C++
+  // classes from AST files. Add a test once that is supported.
+  // TODO: Consider setting `extern_library_id` on classes imported from C++ to
+  // indicate the current file does not own them.
+  const auto& class_info = sem_ir.classes().Get(class_type->class_id);
+  if (class_info.parent_scope_id.has_value() &&
+      sem_ir.name_scopes().Get(class_info.parent_scope_id).is_cpp_scope()) {
+    return std::nullopt;
+  }
+
+  auto class_type_id = sem_ir.types().GetTypeIdForTypeConstantId(const_id);
+  return std::make_pair(class_type_id, *class_type);
+}
+
+auto GetClassFieldFromScopeEntry(const File& sem_ir, InstId entry_inst_id)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  // An unloaded import reference has no constant value, so we can't tell
+  // whether it's a field. Callers are responsible for loading it first.
+  CARBON_CHECK(!sem_ir.insts().Is<SemIR::ImportRefUnloaded>(entry_inst_id),
+               "Class field must be loaded before it is looked up");
+
+  // If the class was imported, the scope entry is an import reference, so use
+  // its constant value, which is the local `FieldDecl`. For a local class, this
+  // is the `FieldDecl` itself.
+  auto field_inst_id =
+      sem_ir.constant_values().GetConstantInstId(entry_inst_id);
+  if (!field_inst_id.has_value()) {
+    return std::nullopt;
+  }
+  return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
+}
+
+auto LookupClassFieldByStructField(const File& sem_ir,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
+    return GetClassFieldFromScopeEntry(
+        sem_ir, class_scope.GetEntry(*entry_id).result.target_inst_id());
+  }
+  return std::nullopt;
 }
 
 }  // namespace Carbon::SemIR

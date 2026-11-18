@@ -1,7 +1,7 @@
 {
   "name": "carbon-vscode",
   "displayName": "Carbon Language",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "publisher": "carbon-lang",
   "description": "Carbon language support for the 'Code - OSS' family of editors.",
   "repository": {
@@ -18,6 +18,16 @@
   "main": "./dist/extension.js",
   "contributes": {
     "languages": [
+      {
+        "id": "carbon-testdata",
+        "aliases": [
+          "Carbon Testdata"
+        ],
+        "filenamePatterns": [
+          "**/testdata/**/*.carbon"
+        ],
+        "configuration": "./language-configuration.json"
+      },
       {
         "id": "carbon",
         "aliases": [
@@ -40,6 +50,11 @@
     ],
     "grammars": [
       {
+        "language": "carbon-testdata",
+        "scopeName": "source.carbon-testdata",
+        "path": "./carbon-testdata.tmLanguage.json"
+      },
+      {
         "language": "carbon",
         "scopeName": "source.carbon",
         "path": "./carbon.tmLanguage.json"
@@ -48,13 +63,6 @@
         "language": "semir",
         "scopeName": "source.carbon-semir",
         "path": "./semir.tmLanguage.json"
-      },
-      {
-        "scopeName": "source.carbon-check-test",
-        "path": "./carbon-check-test.tmLanguage.json",
-        "injectTo": [
-          "source.carbon"
-        ]
       }
     ],
     "configuration": {
@@ -101,14 +109,14 @@
     "@stylistic/eslint-plugin": "^2.9.0",
     "@types/node": "^20",
     "@types/vscode": "^1.73.0",
-    "@vscode/vsce": "^3.9.1",
-    "esbuild": "^0.25.0",
-    "eslint": "^9.13.0",
+    "@vscode/vsce": "^3.9.2",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.8.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.16.0"
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1"
+    "vscode-languageclient": "^10.1.0"
   },
   "overrides": {
     "uuid": "^14.0.0"

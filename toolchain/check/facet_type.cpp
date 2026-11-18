@@ -4,42 +4,48 @@
 
 #include "toolchain/check/facet_type.h"
 
-#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/generic.h"
+#include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
 auto FacetTypeFromInterface(Context& context, SemIR::InterfaceId interface_id,
                             SemIR::SpecificId specific_id) -> SemIR::FacetType {
-  auto info = SemIR::FacetTypeInfo{};
-  info.extend_constraints.push_back({interface_id, specific_id});
-  info.Canonicalize();
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+  auto declared_facet_type = SemIR::DeclaredFacetType{};
+  declared_facet_type.extend_constraints.push_back({interface_id, specific_id});
+  declared_facet_type.Canonicalize();
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(declared_facet_type);
+  return {.type_id = SemIR::TypeType::TypeId,
+          .declared_facet_type_id = declared_facet_type_id};
 }
 
 auto FacetTypeFromNamedConstraint(Context& context,
                                   SemIR::NamedConstraintId named_constraint_id,
                                   SemIR::SpecificId specific_id)
     -> SemIR::FacetType {
-  auto info = SemIR::FacetTypeInfo{};
-  info.extend_named_constraints.push_back({named_constraint_id, specific_id});
-  info.Canonicalize();
-  SemIR::FacetTypeId facet_type_id = context.facet_types().Add(info);
-  return {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id};
+  auto declared_facet_type = SemIR::DeclaredFacetType{};
+  declared_facet_type.extend_named_constraints.push_back(
+      {named_constraint_id, specific_id});
+  declared_facet_type.Canonicalize();
+  SemIR::DeclaredFacetTypeId declared_facet_type_id =
+      context.declared_facet_types().Add(declared_facet_type);
+  return {.type_id = SemIR::TypeType::TypeId,
+          .declared_facet_type_id = declared_facet_type_id};
 }
 
-auto GetImplWitnessAccessWithoutSubstitution(Context& context,
+auto GetImplWitnessAccessWithoutSubstitution(const SemIR::File& sem_ir,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (auto inst = context.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
+  if (auto inst = sem_ir.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
           inst_id)) {
     return inst->impl_witness_access_id;
   }
@@ -146,6 +152,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
         rewrite_values_(rewrite_values) {}
 
   auto Subst(SemIR::InstId& rhs_inst_id) -> SubstResult override {
+    if (found_cycle_) {
+      return SubstResult::FullySubstituted;
+    }
+
     auto rhs_access =
         context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(rhs_inst_id);
     if (!rhs_access) {
@@ -212,6 +222,7 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
       // locations here, which may imply heap allocations.
       context().emitter().Emit(loc_id_, FacetTypeConstraintCycle, rhs_inst_id);
       rhs_inst_id = SemIR::ErrorInst::InstId;
+      found_cycle_ = true;
       return SubstResult::FullySubstituted;
     } else if (rewrite_value->state == AccessRewriteValues::FullyRewritten) {
       rhs_inst_id = rewrite_value->inst_id;
@@ -230,9 +241,23 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
     return SubstResult::SubstAgain;
   }
 
-  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
+  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    auto inst_id = RebuildNewInst(loc_id_, new_inst);
+    if (found_cycle_) {
+      return SemIR::ErrorInst::InstId;
+    }
+
+    // If we are substituting non-canonical instructions, some of them have no
+    // constant representation at all, and we want to preserve attachment of
+    // symbolic constants. So when we rebuild them, we must create a new
+    // non-canonical instruction.
+    bool is_canon = context().constant_values().GetConstantInstId(
+                        orig_inst_id) == orig_inst_id;
+    auto inst_id =
+        is_canon ? RebuildNewInst(loc_id_, new_inst)
+                 : AddInstInNoBlock(context(),
+                                    SemIR::LocIdAndInst::RuntimeVerified(
+                                        context().sem_ir(), loc_id_, new_inst));
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access =
             context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
@@ -246,6 +271,10 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   }
 
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    if (found_cycle_) {
+      return SemIR::ErrorInst::InstId;
+    }
+
     auto subst_inst_id = substs_in_progress_.pop_back_val();
     if (auto access =
             context().insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
@@ -284,11 +313,54 @@ class SubstImplWitnessAccessCallbacks : public SubstInstCallbacks {
   // Avoid heap allocations in common cases, if there are chains of instructions
   // in associated constants with a depth at most 16.
   llvm::SmallVector<SemIR::InstId, 16> substs_in_progress_;
+  // If a cycle was found, we stop trying to substitute.
+  bool found_cycle_ = false;
 };
+
+static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
+    -> bool {
+  auto access = context.insts().TryGetAs<SemIR::ImplWitnessAccess>(inst_id);
+  if (!access) {
+    return false;
+  }
+
+  if (context.insts().TryGetAs<SemIR::ImplSelfWitness>(access->witness_id)) {
+    // ImplSelfWitness represents a witness for `.Self as I` inside the
+    // declaration of `impl ... as I`.
+    return true;
+  }
+  if (auto lookup = context.insts().TryGetAs<SemIR::LookupImplWitness>(
+          access->witness_id)) {
+    return IsPeriodSelf(context, lookup->query_self_inst_id);
+  }
+
+  return false;
+}
+
+static auto TryGetRewriteAccess(Context& context, SemIR::InstId inst_id)
+    -> std::optional<SemIR::KnownInstId<SemIR::ImplWitnessAccess>> {
+  auto access_without_subst_id =
+      GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), inst_id);
+
+  // When a facet type is first constructed, the LHS of every rewrite is an
+  // access into `.Self`. But because we resolve rewrites on every evaluation,
+  // when we substitute `.Self` we can end up with other values on the LHS of
+  // the rewrite constraint. Just ignore those. The constraint has already been
+  // resolved when the facet type was constructed.
+  //
+  // TODO: We want to try move rewrite resolution into the process of
+  // identifying a facet type instead of in eval. Then we can do resolution
+  // before `.Self` is substituted and we don't need this condition.
+  if (!IsPeriodSelfAccess(context, access_without_subst_id)) {
+    return std::nullopt;
+  }
+  return context.insts().GetAsKnownInstId<SemIR::ImplWitnessAccess>(
+      access_without_subst_id);
+}
 
 auto ResolveFacetTypeRewriteConstraints(
     Context& context, SemIR::LocId loc_id,
-    llvm::SmallVector<SemIR::FacetTypeInfo::RewriteConstraint>& rewrites)
+    llvm::SmallVector<SemIR::DeclaredFacetType::RewriteConstraint>& rewrites)
     -> bool {
   if (rewrites.empty()) {
     return true;
@@ -297,25 +369,21 @@ auto ResolveFacetTypeRewriteConstraints(
   AccessRewriteValues rewrite_values;
 
   for (auto& constraint : rewrites) {
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       continue;
     }
 
-    rewrite_values.InsertNotRewritten(context, lhs_access->inst_id,
-                                      constraint.rhs_id);
+    rewrite_values.InsertNotRewritten(context, *lhs_access, constraint.rhs_id);
   }
 
   for (auto& constraint : rewrites) {
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       continue;
     }
 
-    auto* lhs_rewrite_value =
-        rewrite_values.FindRef(context, lhs_access->inst_id);
+    auto* lhs_rewrite_value = rewrite_values.FindRef(context, *lhs_access);
     // Every LHS was added with InsertNotRewritten above.
     CARBON_CHECK(lhs_rewrite_value);
     rewrite_values.SetBeingRewritten(*lhs_rewrite_value);
@@ -344,20 +412,20 @@ auto ResolveFacetTypeRewriteConstraints(
           // try to name the values in the same order they appear in the facet
           // type.
           auto source_order1 =
-              lhs_rewrite_value->inst_id.index < rhs_subst_inst_id.index
+              lhs_rewrite_value->inst_id.index < constraint.rhs_id.index
                   ? lhs_rewrite_value->inst_id
-                  : rhs_subst_inst_id;
+                  : constraint.rhs_id;
           auto source_order2 =
-              lhs_rewrite_value->inst_id.index >= rhs_subst_inst_id.index
+              lhs_rewrite_value->inst_id.index >= constraint.rhs_id.index
                   ? lhs_rewrite_value->inst_id
-                  : rhs_subst_inst_id;
+                  : constraint.rhs_id;
           // TODO: It would be nice to note the places where the values are
           // assigned but rewrite constraint instructions are from canonical
           // constant values, and have no locations. We'd need to store a
           // location along with them in the rewrite constraints.
           context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
                                  GetImplWitnessAccessWithoutSubstitution(
-                                     context, constraint.lhs_id),
+                                     context.sem_ir(), constraint.lhs_id),
                                  source_order1, source_order2);
         }
         return false;
@@ -377,14 +445,13 @@ auto ResolveFacetTypeRewriteConstraints(
   for (size_t i = 0; i < keep_size;) {
     auto& constraint = rewrites[i];
 
-    auto lhs_access = context.insts().TryGetAsWithId<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, constraint.lhs_id));
-    if (!lhs_access) {
+    auto lhs_access = TryGetRewriteAccess(context, constraint.lhs_id);
+    if (!lhs_access.has_value()) {
       ++i;
       continue;
     }
 
-    auto& rewrite_value = *rewrite_values.FindRef(context, lhs_access->inst_id);
+    auto& rewrite_value = *rewrite_values.FindRef(context, *lhs_access);
     auto rhs_id = std::exchange(rewrite_value.inst_id, SemIR::InstId::None);
     if (rhs_id == SemIR::InstId::None) {
       std::swap(rewrites[i], rewrites[keep_size - 1]);
@@ -397,28 +464,6 @@ auto ResolveFacetTypeRewriteConstraints(
   rewrites.erase(rewrites.begin() + keep_size, rewrites.end());
 
   return true;
-}
-
-auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
-  SemIR::FacetTypeId facet_type_id =
-      context.facet_types().Add(SemIR::FacetTypeInfo{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, SemIR::LocId::None,
-      {.type_id = SemIR::TypeType::TypeId, .facet_type_id = facet_type_id});
-  return context.types().GetTypeIdForTypeConstantId(const_id);
-}
-
-auto GetConstantFacetValueForType(Context& context,
-                                  SemIR::TypeInstId type_inst_id)
-    -> SemIR::ConstantId {
-  // We use an empty facet type because values of type `type` do not provide any
-  // witnesses of their own.
-  auto type_facet_type = GetEmptyFacetType(context);
-  return EvalOrAddInst<SemIR::FacetValue>(
-      context, SemIR::LocId::None,
-      {.type_id = type_facet_type,
-       .type_inst_id = type_inst_id,
-       .witnesses_block_id = SemIR::InstBlockId::Empty});
 }
 
 auto GetConstantFacetValueForTypeAndInterface(
@@ -440,6 +485,58 @@ auto GetConstantFacetValueForTypeAndInterface(
        .type_inst_id = type_inst_id,
        .witnesses_block_id = witnesses_block_id});
   return self_value_const_id;
+}
+
+auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
+  class FindWhereCallbacks : public SubstInstCallbacks {
+   public:
+    FindWhereCallbacks(Context* context, bool* found)
+        : SubstInstCallbacks(context), found_(found) {}
+
+    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+      if (*found_ || inst_id == SemIR::TypeType::TypeInstId ||
+          inst_id == SemIR::ErrorInst::InstId) {
+        return FullySubstituted;
+      }
+
+      // Facet types can contain many references to the same value. Only search
+      // a given constant one time to avoid exponential costs.
+      if (!searched_.Insert(inst_id).is_inserted()) {
+        return FullySubstituted;
+      }
+
+      if (auto facet_type =
+              context().insts().TryGetAs<SemIR::FacetType>(inst_id)) {
+        const auto& declared_facet_type = context().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (!declared_facet_type.IsExtendedOnly()) {
+          *found_ = true;
+          return FullySubstituted;
+        }
+      }
+
+      return SubstOperandsSkipType;
+    }
+
+    auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst /*new_inst*/)
+        -> SemIR::InstId override {
+      CARBON_FATAL("unexpected rebuild of inst {0}",
+                   context().insts().Get(orig_inst_id));
+    }
+
+   private:
+    bool* found_;
+    Set<SemIR::InstId, 16> searched_;
+  };
+
+  if (!const_id.is_constant()) {
+    return false;
+  }
+
+  bool found = false;
+  FindWhereCallbacks callbacks(&context, &found);
+  SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
+  return found;
 }
 
 }  // namespace Carbon::Check

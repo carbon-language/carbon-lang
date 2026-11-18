@@ -18,18 +18,23 @@ base class B {
   extend base: A;
 }
 
-// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+7]]:1: error: redefinition of `class A` [RedeclRedef]
-// CHECK:STDERR: base class A {
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE-11]]:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: base class A {
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extend_cycle.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ base class A {
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ base class A {
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redefinition of `class A` [RedeclRedef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 base class A {
   extend base: A;
-  // CHECK:STDERR: fail_extend_cycle.carbon:[[@LINE+4]]:10: error: name `C` not found [NameNotFound]
-  // CHECK:STDERR:   var c: C;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_extend_cycle.carbon:[[@LINE+6]]:10
+  // CHECK:STDERR: ->     │   var c: C;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `C` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var c: C;
 }

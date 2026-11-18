@@ -16,9 +16,13 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+4]]:8: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
-// CHECK:STDERR: var n: i32;
-// CHECK:STDERR:        ^~~
+// CHECK:STDERR:        ╭─┤ fail_missing_prelude.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ var n: i32;
+// CHECK:STDERR:        ·        ┳━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `Core.Int` implicitly referenced here, but package `Core` not
+// CHECK:STDERR:        ·           ┃        found
+// CHECK:STDERR:        ·           ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: i32;
 
@@ -32,9 +36,12 @@ library "[[@TEST_NAME]]";
 
 import Core library "prelude_empty";
 
-// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+4]]:8: error: name `Core.Int` implicitly referenced here, but not found [CoreNameNotFound]
-// CHECK:STDERR: var n: i32;
-// CHECK:STDERR:        ^~~
+// CHECK:STDERR:        ╭─┤ fail_missing_prelude_member.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var n: i32;
+// CHECK:STDERR:        ·        ━┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: name `Core.Int` implicitly referenced here, but not found
+// CHECK:STDERR:        ·            ┃        [CoreNameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: i32;
 
@@ -44,10 +51,10 @@ package Core library "[[@TEST_NAME]]";
 
 class X {}
 
-fn Int[T:! type](unused N:! T) -> X { return {}; }
+fn Int[T: type](unused generic N: T) -> X { return {}; }
 
-interface ImplicitAs(T:! type) {
-  fn Convert[self: Self]() -> T;
+interface ImplicitAs(T: type) {
+  fn Convert(self) -> T;
 }
 
 // --- fail_use_fake_int.carbon
@@ -57,19 +64,27 @@ library "[[@TEST_NAME]]";
 import Core library "prelude_fake_int";
 
 // We don't really care whether this works, but it shouldn't crash or otherwise misbehave.
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+14]]:17: error: cannot implicitly convert non-type value of type `Core.X` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: let n: Core.X = i32;
-// CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+11]]:17: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let n: Core.X = i32;
-// CHECK:STDERR:                 ^~~
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+22]]:17
+// CHECK:STDERR: ->     │ let n: Core.X = i32;
+// CHECK:STDERR:        ·                 ┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·                 │  ┃        `Core.X` to `type`
+// CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·                 ╰────┤ type `Core.X` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+7]]:17: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
-// CHECK:STDERR: let n: Core.X = i32;
-// CHECK:STDERR:                 ^~~
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+4]]:17: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let n: Core.X = i32;
-// CHECK:STDERR:                 ^~~
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+11]]:17
+// CHECK:STDERR: ->     │ let n: Core.X = i32;
+// CHECK:STDERR:        ·                 ┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type `type`
+// CHECK:STDERR:        ·                 │  ┃        to `Core.X`
+// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                 ╰────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.X)`
+// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: Core.X = i32;
 
@@ -79,7 +94,7 @@ package Core library "[[@TEST_NAME]]";
 
 // Core is not an imported package here.
 
-class Int[T:! type](unused N:! T) {}
+class Int[T: type](unused N: T) {}
 
 let n: i32 = {};
 
@@ -87,56 +102,87 @@ let n: i32 = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+8]]:11: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: namespace Core;
-// CHECK:STDERR:           ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: namespace Core;
-// CHECK:STDERR:           ^~~~
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+8]]:11
+// CHECK:STDERR: ->     │ namespace Core;
+// CHECK:STDERR:        ·           ┳━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: `namespace` introducer should be followed by a name;
+// CHECK:STDERR:        ·              ┃        prefix reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Core;
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn Core.Int[T:! type](N:! T) -> {} { return {}; }
-// CHECK:STDERR:    ^~~~
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+14]]:4
+// CHECK:STDERR: ->     │ fn Core.Int[T: type](generic N: T) -> {} { return {}; }
+// CHECK:STDERR:        ·    ┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `fn` introducer should be followed by a name; prefix reserved
+// CHECK:STDERR:        ·       ┃        word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·       ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn Core.Int[T:! type](N:! T) -> {} { return {}; }
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+6]]:30
+// CHECK:STDERR: ->     │ fn Core.Int[T: type](generic N: T) -> {} { return {}; }
+// CHECK:STDERR:        ·                              ━━┳━
+// CHECK:STDERR:        ·                                ┗━━┫ warning: binding `N` unused [UnusedBinding]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn Core.Int[T: type](generic N: T) -> {} { return {}; }
 
 // Make sure use of `i32` doesn't crash after above errors.
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+8]]:15
+// CHECK:STDERR: ->     │ let n: type = i32;
+// CHECK:STDERR:        ·               ┳━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `Core.Int` implicitly referenced here, but package
+// CHECK:STDERR:        ·                  ┃        `Core` not found
+// CHECK:STDERR:        ·                  ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 let n: type = i32;
 
 // --- fail_prelude_as_class.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+8]]:7: error: `class` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: class Core {
-// CHECK:STDERR:       ^~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: class Core {
-// CHECK:STDERR:       ^~~~
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_class.carbon:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ class Core {
+// CHECK:STDERR:        ·       ┳━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: `class` introducer should be followed by a name; prefix
+// CHECK:STDERR:        ·          ┃        reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Core {
-  fn Int[T:! type](N:! T) -> {} { return {}; }
+  fn Int[T: type](generic _: T) -> {} { return {}; }
 }
 
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_class.carbon:[[@LINE+8]]:15
+// CHECK:STDERR: ->     │ let n: type = i32;
+// CHECK:STDERR:        ·               ┳━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `Core.Int` implicitly referenced here, but package
+// CHECK:STDERR:        ·                  ┃        `Core` not found
+// CHECK:STDERR:        ·                  ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 let n: type = i32;
 
-// CHECK:STDOUT: --- fail_missing_prelude.carbon
+
+// CHECK:STDOUT: --- fail_missing_prelude.carbon = $fail_missing_prelude
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
+// CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -145,13 +191,17 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_empty.carbon
+// CHECK:STDOUT: --- prelude_empty.carbon = $prelude_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_prelude_member.carbon
+// CHECK:STDOUT: --- fail_missing_prelude_member.carbon = $fail_missing_prelude_member
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -166,13 +216,13 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete]
+// CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
+// CHECK:STDOUT:     %n.var_patt: <error> = var_pattern %n.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n.var: ref <error> = var %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc10: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: ref <error> = ref_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -181,31 +231,39 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_fake_int.carbon
+// CHECK:STDOUT: --- prelude_fake_int.carbon = $prelude_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
-// CHECK:STDOUT:   %.604: Core.Form = init_form %X [concrete]
-// CHECK:STDOUT:   %pattern_type.184: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %.7b0: Core.Form = init_form %X [concrete]
+// CHECK:STDOUT:   %pattern_type.e00: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %return.param_patt.cb6: %pattern_type.e00 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.88a: %pattern_type.e00 = return_slot_pattern %return.param_patt.cb6, %X [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.66d: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.66d = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.22c: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %ImplicitAs.type.22c = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.b02: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %ImplicitAs.type.b02 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.5fd: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %pattern_type.97b: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.97b = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.97b = wrapper_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
+// CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.b39: %pattern_type.51d = return_slot_pattern %return.param_patt.41d, %T [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T, %Self) [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert: %ImplicitAs.WithSelf.Convert.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.assoc_type: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
@@ -220,75 +278,77 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %X.decl: type = class_decl @X [concrete = constants.%X] {} {}
 // CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %N.patt: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [concrete]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.184 = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type.184 = return_slot_pattern %return.param_patt, %X.ref [concrete]
+// CHECK:STDOUT:     %T.patt.loc6_9.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_9.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc6_33.1: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_33.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.e00 = out_param_pattern [concrete = constants.%return.param_patt.cb6]
+// CHECK:STDOUT:     %return.patt: %pattern_type.e00 = return_slot_pattern %return.param_patt, %X.ref [concrete = constants.%return.patt.88a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %.loc6_35: Core.Form = init_form %X.ref [concrete = constants.%.604]
-// CHECK:STDOUT:     %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc6_9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc6_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc6_41: Core.Form = init_form %X.ref [concrete = constants.%.7b0]
+// CHECK:STDOUT:     %.loc6_11.1: type = splice_block %.loc6_11.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc6_9: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc6_11.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_9.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_29: type = splice_block %T.ref [symbolic = %T.loc6_9.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.loc6_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_35: type = splice_block %T.ref [symbolic = %T.loc6_9.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.frozen.loc6_33: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_9.2 [symbolic = %T.loc6_9.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_26.2: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_26.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc6_33.2: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_33.1 (constants.%N)]
 // CHECK:STDOUT:     %return.param: ref %X = out_param call_param0
 // CHECK:STDOUT:     %return: ref %X = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.66d = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.decl: %ImplicitAs.type.0ff = interface_decl @ImplicitAs [concrete = constants.%ImplicitAs.generic] {
+// CHECK:STDOUT:     %T.patt.loc8_23.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc8_26.1: type = splice_block %.loc8_26.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc8_26.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc8_25.1: type = splice_block %.loc8_25.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc8_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc8_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc8_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(%T.loc8_23.2: type) {
+// CHECK:STDOUT:   %T.patt.loc8_23.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_23.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc8_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc8_23.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc8_23.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.22c)]
-// CHECK:STDOUT:   %Self.loc8_32.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c) = symbolic_binding Self, 1 [symbolic = %Self.loc8_32.2 (constants.%Self)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T.loc8_23.1)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.b02)]
+// CHECK:STDOUT:   %Self.loc8_31.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02) = symbolic_binding Self, 1 [symbolic = %Self.loc8_31.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc8_32.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c) = symbolic_binding Self, 1 [symbolic = %Self.loc8_32.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc8_31.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02) = symbolic_binding Self, 1 [symbolic = %Self.loc8_31.2 (constants.%Self)]
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.decl = interface_with_self_decl @ImplicitAs [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %ImplicitAs.WithSelf.Convert.decl: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type) = fn_decl @ImplicitAs.WithSelf.Convert [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert)] {
-// CHECK:STDOUT:       %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_18 (%pattern_type.5fd) = value_param_pattern [concrete]
-// CHECK:STDOUT:       %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_18 (%pattern_type.5fd) = at_binding_pattern self, %self.param_patt [concrete]
-// CHECK:STDOUT:       %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = out_param_pattern [concrete]
-// CHECK:STDOUT:       %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_31 (%pattern_type.51d) = return_slot_pattern %return.param_patt, %T.ref [concrete]
+// CHECK:STDOUT:       %self.param_patt.loc9_14.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.97b) = value_param_pattern [symbolic = %self.param_patt.loc9_14.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc9_14.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.97b) = wrapper_binding_pattern self, %self.param_patt.loc9_14.1 [symbolic = %self.patt.loc9_14.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %return.param_patt.loc9_23.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc9_23.2 (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:       %return.patt.loc9_20.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc9_23.1, %T.ref [symbolic = %return.patt.loc9_20.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_23.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc9_31.2: Core.Form = init_form %T.ref [symbolic = %.loc9_31.1 (constants.%.184)]
-// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc9_20.1: type = splice_block %.loc9_20.3 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc9_20.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.22c) = specific_constant @ImplicitAs.%Self.loc8_32.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.22c) = name_ref Self, %.loc9_20.2 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.as_type.loc9_20.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:         %.loc9_20.3: type = converted %Self.ref, %Self.as_type.loc9_20.2 [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc9_23.2: type = specific_constant @ImplicitAs.%T.loc8_23.2, @ImplicitAs(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc9_23.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc9_23.3: Core.Form = init_form %T.ref [symbolic = %.loc9_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:       %.loc9_14.1: type = splice_block %.loc9_14.3 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:         %.loc9_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.b02) = specific_constant @ImplicitAs.%Self.loc8_31.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.b02) = name_ref Self, %.loc9_14.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.as_type.loc9_14.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:         %.loc9_14.3: type = converted %Self.ref, %Self.as_type.loc9_14.2 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type) = value_binding self, %self.param
+// CHECK:STDOUT:       %self: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ImplicitAs.WithSelf.Convert.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ImplicitAs.WithSelf.Convert.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %assoc0.loc9_32.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc9_32.2 (constants.%assoc0)]
+// CHECK:STDOUT:     %assoc0.loc9_24.1: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type) = assoc_entity element0, %ImplicitAs.WithSelf.Convert.decl [symbolic = %assoc0.loc9_24.2 (constants.%assoc0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc8_32.1
+// CHECK:STDOUT:     .Self = %Self.loc8_31.1
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .T = <poisoned>
-// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc9_32.1
+// CHECK:STDOUT:     .Convert = @ImplicitAs.WithSelf.%assoc0.loc9_24.1
 // CHECK:STDOUT:     witness = (@ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -303,41 +363,50 @@ let n: type = i32;
 // CHECK:STDOUT:   .Self = constants.%X
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Int(%T.loc6_9.2: type, %N.loc6_26.2: @Int.%T.loc6_9.1 (%T)) {
+// CHECK:STDOUT: generic fn @Int(%T.loc6_9.2: type, %N.loc6_33.2: @Int.%T.loc6_9.1 (%T)) {
+// CHECK:STDOUT:   %T.patt.loc6_9.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_9.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc6_9.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_9.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc6_26.1: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_26.1 (constants.%N)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_9.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %N.patt.loc6_33.2: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_33.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.loc6_33.1: @Int.%T.loc6_9.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_33.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %X {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %.loc6_47.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc6_47.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:     %.loc6_48: init %X = converted %.loc6_47.1, %.loc6_47.2 [concrete = constants.%X.val]
-// CHECK:STDOUT:     return %.loc6_48 to %return.param
+// CHECK:STDOUT:     %.loc6_53.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc6_53.2: init %X to %return.param = class_init () [concrete = constants.%X.val]
+// CHECK:STDOUT:     %.loc6_54: init %X = converted %.loc6_53.1, %.loc6_53.2 [concrete = constants.%X.val]
+// CHECK:STDOUT:     return %.loc6_54 to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(@ImplicitAs.%T.loc8_23.2: type, @ImplicitAs.%Self.loc8_32.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c)) {
+// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(@ImplicitAs.%T.loc8_23.2: type, @ImplicitAs.%Self.loc8_31.1: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.22c)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.22c) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc9_20.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_20.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc9_18: type = pattern_type %Self.as_type.loc9_20.1 [symbolic = %pattern_type.loc9_18 (constants.%pattern_type.5fd)]
-// CHECK:STDOUT:   %.loc9_31.1: Core.Form = init_form %T [symbolic = %.loc9_31.1 (constants.%.184)]
-// CHECK:STDOUT:   %pattern_type.loc9_31: type = pattern_type %T [symbolic = %pattern_type.loc9_31 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.b02)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.b02) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type.loc9_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type.loc9_14: type = pattern_type %Self.as_type.loc9_14.1 [symbolic = %pattern_type.loc9_14 (constants.%pattern_type.97b)]
+// CHECK:STDOUT:   %self.param_patt.loc9_14.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.97b) = value_param_pattern [symbolic = %self.param_patt.loc9_14.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc9_14.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_14 (%pattern_type.97b) = wrapper_binding_pattern self, %self.param_patt.loc9_14.2 [symbolic = %self.patt.loc9_14.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %.loc9_23.1: Core.Form = init_form %T [symbolic = %.loc9_23.1 (constants.%.184)]
+// CHECK:STDOUT:   %pattern_type.loc9_23: type = pattern_type %T [symbolic = %pattern_type.loc9_23 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt.loc9_23.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc9_23.2 (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt.loc9_20.2: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc9_23.2, %T [symbolic = %return.patt.loc9_20.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_20.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%T (%T);
+// CHECK:STDOUT:   fn(%self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type)) -> out %return.param: @ImplicitAs.WithSelf.Convert.%T (%T);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
+// CHECK:STDOUT:   %T.patt.loc6_9.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_9.1 => constants.%T
-// CHECK:STDOUT:   %N.loc6_26.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %N.patt.loc6_33.2 => constants.%N.patt
+// CHECK:STDOUT:   %N.loc6_33.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc8_23.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc8_23.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,52 +414,66 @@ let n: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.22c
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.b02
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc9_20.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc9_18 => constants.%pattern_type.5fd
-// CHECK:STDOUT:   %.loc9_31.1 => constants.%.184
-// CHECK:STDOUT:   %pattern_type.loc9_31 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %Self.as_type.loc9_14.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %pattern_type.loc9_14 => constants.%pattern_type.97b
+// CHECK:STDOUT:   %self.param_patt.loc9_14.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc9_14.2 => constants.%self.patt
+// CHECK:STDOUT:   %.loc9_23.1 => constants.%.184
+// CHECK:STDOUT:   %pattern_type.loc9_23 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %return.param_patt.loc9_23.2 => constants.%return.param_patt.41d
+// CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.b39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_fake_int.carbon
+// CHECK:STDOUT: --- fail_use_fake_int.carbon = $fail_use_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %pattern_type.184: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %pattern_type.e00: type = pattern_type %X [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.e00 = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
 // CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt.9f0: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %N.patt.94a: %pattern_type.dc0 = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function %Int, @Int(Core.IntLiteral, %int_32) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.66d: type = generic_interface_type @ImplicitAs [concrete]
-// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.66d = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.22c: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
-// CHECK:STDOUT:   %Self.224: %ImplicitAs.type.22c = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.870: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.559: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T, %Self.224) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.6d1: %ImplicitAs.WithSelf.Convert.type.559 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.224 [symbolic]
-// CHECK:STDOUT:   %pattern_type.986: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
+// CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.b02: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic]
+// CHECK:STDOUT:   %Self.862: %ImplicitAs.type.b02 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.07d: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%T) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.eae: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%T, %Self.862) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.699: %ImplicitAs.WithSelf.Convert.type.eae = struct_value () [symbolic]
+// CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.c39: %pattern_type.51d = return_slot_pattern %return.param_patt.41d, invalid [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.862 [symbolic]
+// CHECK:STDOUT:   %pattern_type.662: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.662 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.662 = wrapper_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.560: type = facet_type <@ImplicitAs, @ImplicitAs(type)> [concrete]
-// CHECK:STDOUT:   %Self.b7c: %ImplicitAs.type.560 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.960: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %Self.224) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.b07: %ImplicitAs.WithSelf.Convert.type.960 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.292: type = assoc_entity_type @ImplicitAs, @ImplicitAs(type) [concrete]
-// CHECK:STDOUT:   %assoc0.134: %ImplicitAs.assoc_type.292 = assoc_entity element0, imports.%Core.import_ref.d3c [concrete]
-// CHECK:STDOUT:   %assoc0.c7d: %ImplicitAs.assoc_type.870 = assoc_entity element0, imports.%Core.import_ref.ad3 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.type.1fb: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
-// CHECK:STDOUT:   %Self.abc: %ImplicitAs.type.1fb = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.e9b: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %Self.224) [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.af9: %ImplicitAs.WithSelf.Convert.type.e9b = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.assoc_type.8ea: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%X) [concrete]
-// CHECK:STDOUT:   %assoc0.21e: %ImplicitAs.assoc_type.8ea = assoc_entity element0, imports.%Core.import_ref.d3c [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.a78: type = facet_type <@ImplicitAs, @ImplicitAs(type)> [concrete]
+// CHECK:STDOUT:   %Self.f71: %ImplicitAs.type.a78 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.56a: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(type, %Self.862) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.a7f: %ImplicitAs.WithSelf.Convert.type.56a = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.cbb: type = assoc_entity_type @ImplicitAs, @ImplicitAs(type) [concrete]
+// CHECK:STDOUT:   %assoc0.8e3: %ImplicitAs.assoc_type.cbb = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
+// CHECK:STDOUT:   %assoc0.3a5: %ImplicitAs.assoc_type.07d = assoc_entity element0, imports.%Core.import_ref.9e1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.type.319: type = facet_type <@ImplicitAs, @ImplicitAs(%X)> [concrete]
+// CHECK:STDOUT:   %Self.777: %ImplicitAs.type.319 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.b16: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%X, %Self.862) [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.ef9: %ImplicitAs.WithSelf.Convert.type.b16 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.assoc_type.59e: type = assoc_entity_type @ImplicitAs, @ImplicitAs(%X) [concrete]
+// CHECK:STDOUT:   %assoc0.839: %ImplicitAs.assoc_type.59e = assoc_entity element0, imports.%Core.import_ref.a03 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -402,19 +485,19 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.X: type = import_ref Core//prelude_fake_int, X, loaded [concrete = constants.%X]
 // CHECK:STDOUT:   %Core.import_ref.8f2: <witness> = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [concrete = constants.%complete_type]
-// CHECK:STDOUT:   %Core.import_ref.911 = import_ref Core//prelude_fake_int, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Core.import_ref.eff = import_ref Core//prelude_fake_int, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude_fake_int, Int, loaded [concrete = constants.%Int]
 // CHECK:STDOUT:   %Core.import_ref.b3bc94.1: type = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @Int.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.import_ref.b42: @Int.%T (%T) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @Int.%N (constants.%N)]
-// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.66d = import_ref Core//prelude_fake_int, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.159: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.870) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%assoc0 (constants.%assoc0.c7d)]
+// CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude_fake_int, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
+// CHECK:STDOUT:   %Core.import_ref.383: @ImplicitAs.WithSelf.%ImplicitAs.assoc_type (%ImplicitAs.assoc_type.07d) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%assoc0 (constants.%assoc0.3a5)]
 // CHECK:STDOUT:   %Core.Convert = import_ref Core//prelude_fake_int, Convert, unloaded
-// CHECK:STDOUT:   %Core.import_ref.d3c: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type.559) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert.6d1)]
+// CHECK:STDOUT:   %Core.import_ref.a03: @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert.type (%ImplicitAs.WithSelf.Convert.type.eae) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.WithSelf.%ImplicitAs.WithSelf.Convert (constants.%ImplicitAs.WithSelf.Convert.699)]
 // CHECK:STDOUT:   %Core.import_ref.b3bc94.3: type = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.58b5dd.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Self (constants.%Self.224)]
-// CHECK:STDOUT:   %Core.import_ref.bfe = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.5e2fa1.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02) = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%Self (constants.%Self.862)]
+// CHECK:STDOUT:   %Core.import_ref.3a2 = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.b3bc94.4: type = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, loaded [symbolic = @ImplicitAs.%T (constants.%T)]
-// CHECK:STDOUT:   %Core.import_ref.ad3 = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.9e1 = import_ref Core//prelude_fake_int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -423,28 +506,28 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.184 = value_binding_pattern n [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_12: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc29: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21_17: %X = converted @__global_init.%.loc21_17.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %n: %X = value_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   %n: %X = wrapper_binding n, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.e00 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @ImplicitAs(imports.%Core.import_ref.b3bc94.4: type) [from "prelude_fake_int.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.22c)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.224)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.b02)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.862)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.bfe
-// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.159
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.3a2
+// CHECK:STDOUT:     .Convert = imports.%Core.import_ref.383
 // CHECK:STDOUT:     witness = (imports.%Core.Convert)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -455,27 +538,33 @@ let n: type = i32;
 // CHECK:STDOUT:   complete_type_witness = imports.%Core.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
-// CHECK:STDOUT:   .Self = imports.%Core.import_ref.911
+// CHECK:STDOUT:   .Self = imports.%Core.import_ref.eff
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @Int(imports.%Core.import_ref.b3bc94.1: type, imports.%Core.import_ref.b42: @Int.%T (%T)) [from "prelude_fake_int.carbon"] {
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %N: @Int.%T (%T) = symbolic_binding N, 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %N.patt: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt (constants.%N.patt.9f0)]
+// CHECK:STDOUT:   %N: @Int.%T (%T) = symbolic_binding N, 1 [symbolic = %N (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(imports.%Core.import_ref.b3bc94.3: type, imports.%Core.import_ref.58b5dd.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.22c)) [from "prelude_fake_int.carbon"] {
+// CHECK:STDOUT: generic fn @ImplicitAs.WithSelf.Convert(imports.%Core.import_ref.b3bc94.3: type, imports.%Core.import_ref.5e2fa1.2: @ImplicitAs.%ImplicitAs.type (%ImplicitAs.type.b02)) [from "prelude_fake_int.carbon"] {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.22c)]
-// CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.22c) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.224)]
+// CHECK:STDOUT:   %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(%T)> [symbolic = %ImplicitAs.type (constants.%ImplicitAs.type.b02)]
+// CHECK:STDOUT:   %Self: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.b02) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self.862)]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.986)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.662)]
+// CHECK:STDOUT:   %self.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.1 (%pattern_type.662) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.1 (%pattern_type.662) = wrapper_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt)]
 // CHECK:STDOUT:   %.1: Core.Form = init_form %T [symbolic = %.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %T [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %return.param_patt: @ImplicitAs.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt (constants.%return.param_patt.41d)]
+// CHECK:STDOUT:   %return.patt: @ImplicitAs.WithSelf.Convert.%pattern_type.2 (%pattern_type.51d) = return_slot_pattern %return.param_patt, invalid [symbolic = %return.patt (constants.%return.patt.c39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
@@ -483,102 +572,118 @@ let n: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %.loc21_17.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Int.call: init %X to %.loc21_17.1 = call %Int.specific_fn()
-// CHECK:STDOUT:   %.loc21_17.2: type = converted %Int.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc21_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_17.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Int.call: init %X to %.loc29_17.1 = call %Int.specific_fn()
+// CHECK:STDOUT:   %.loc29_17.2: type = converted %Int.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_17.4: %X = converted %.loc29_17.3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.9f0
+// CHECK:STDOUT:   %N => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => Core.IntLiteral
-// CHECK:STDOUT:   %N => constants.%int_32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dc0
+// CHECK:STDOUT:   %N.patt => constants.%N.patt.94a
+// CHECK:STDOUT:   %N => constants.%int_32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%T) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%T, constants.%Self.224) {}
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%T, constants.%Self.862) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%T, constants.%Self.224) {
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf.Convert(constants.%T, constants.%Self.862) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.22c
-// CHECK:STDOUT:   %Self => constants.%Self.224
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.b02
+// CHECK:STDOUT:   %Self => constants.%Self.862
 // CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.986
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.662
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt => constants.%self.patt
 // CHECK:STDOUT:   %.1 => constants.%.184
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
+// CHECK:STDOUT:   %return.param_patt => constants.%return.param_patt.41d
+// CHECK:STDOUT:   %return.patt => constants.%return.patt.c39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(type) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.560
-// CHECK:STDOUT:   %Self => constants.%Self.b7c
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.a78
+// CHECK:STDOUT:   %Self => constants.%Self.f71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.WithSelf(type, constants.%Self.224) {
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(type, constants.%Self.862) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => type
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.560
-// CHECK:STDOUT:   %Self => constants.%Self.224
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.960
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.b07
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.292
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.134
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.a78
+// CHECK:STDOUT:   %Self => constants.%Self.862
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.56a
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.a7f
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.cbb
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8e3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ImplicitAs(constants.%X) {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%X
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.1fb
-// CHECK:STDOUT:   %Self => constants.%Self.abc
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.319
+// CHECK:STDOUT:   %Self => constants.%Self.777
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%X, constants.%Self.224) {
+// CHECK:STDOUT: specific @ImplicitAs.WithSelf(constants.%X, constants.%Self.862) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%X
-// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.1fb
-// CHECK:STDOUT:   %Self => constants.%Self.224
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.e9b
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.af9
-// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.8ea
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.21e
+// CHECK:STDOUT:   %ImplicitAs.type => constants.%ImplicitAs.type.319
+// CHECK:STDOUT:   %Self => constants.%Self.862
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type => constants.%ImplicitAs.WithSelf.Convert.type.b16
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert => constants.%ImplicitAs.WithSelf.Convert.ef9
+// CHECK:STDOUT:   %ImplicitAs.assoc_type => constants.%ImplicitAs.assoc_type.59e
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_use_in_prelude.carbon
+// CHECK:STDOUT: --- prelude_use_in_prelude.carbon = $prelude_use_in_prelude
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt.9f0: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Int.5e5: type = class_type @Int, @Int(%T, %N) [symbolic]
+// CHECK:STDOUT:   %Int.7e3: type = class_type @Int, @Int(%T, %N) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
-// CHECK:STDOUT:   %Int.5f1: type = class_type @Int, @Int(Core.IntLiteral, %int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.b32: type = pattern_type %Int.5f1 [concrete]
+// CHECK:STDOUT:   %N.patt.94a: %pattern_type.dc0 = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %Int.3c6: type = class_type @Int, @Int(Core.IntLiteral, %int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.27f: type = pattern_type %Int.3c6 [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.27f = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %Int.val: %Int.5f1 = struct_value () [concrete]
-// CHECK:STDOUT:   %.2a6: ref %Int.5f1 = temporary invalid, %Int.val [concrete]
+// CHECK:STDOUT:   %Int.val: %Int.3c6 = struct_value () [concrete]
+// CHECK:STDOUT:   %.10c: ref %Int.3c6 = temporary invalid, %Int.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -587,36 +692,33 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Int.decl: %Int.type = class_decl @Int [concrete = constants.%Int.generic] {
-// CHECK:STDOUT:     %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [concrete]
-// CHECK:STDOUT:     %N.patt: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [concrete]
+// CHECK:STDOUT:     %T.patt.loc6_12.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_12.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc6_28.1: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_28.2 (constants.%N.patt.9f0)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc6_15.1: type = splice_block %.loc6_15.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.loc6_12: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:       %.loc6_15.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc6_14.1: type = splice_block %.loc6_14.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc6_12: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc6_14.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_12.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc6_32: type = splice_block %T.ref [symbolic = %T.loc6_12.1 (constants.%T)] {
-// CHECK:STDOUT:       %.Self.loc6_29: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.loc6_30: type = splice_block %T.ref [symbolic = %T.loc6_12.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.frozen.loc6_28: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc6_12.2 [symbolic = %T.loc6_12.1 (constants.%T)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %N.loc6_29.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]
+// CHECK:STDOUT:     %N.loc6_28.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: type = type_literal constants.%Int.3c6 [concrete = constants.%Int.3c6]
+// CHECK:STDOUT:   %n: %Int.3c6 = wrapper_binding n, @__global_init.%.loc8_15.6
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.b32 = value_binding_pattern n [concrete]
+// CHECK:STDOUT:     %n.patt: %pattern_type.27f = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.5f1 [concrete = constants.%Int.5f1]
-// CHECK:STDOUT:   %.loc8_15.1: ref %Int.5f1 = temporary_storage
-// CHECK:STDOUT:   %.loc8_15.2: init %Int.5f1 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.3: init %Int.5f1 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.4: ref %Int.5f1 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.2a6]
-// CHECK:STDOUT:   %.loc8_15.5: %Int.5f1 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %n: %Int.5f1 = value_binding n, %.loc8_15.5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_29.2: @Int.%T.loc6_12.1 (%T)) {
+// CHECK:STDOUT: generic class @Int(%T.loc6_12.2: type, %N.loc6_28.2: @Int.%T.loc6_12.1 (%T)) {
+// CHECK:STDOUT:   %T.patt.loc6_12.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_12.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc6_12.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_12.1 (constants.%T)]
-// CHECK:STDOUT:   %N.loc6_29.1: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_29.1 (constants.%N)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc6_12.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %N.patt.loc6_28.2: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc6_28.2 (constants.%N.patt.9f0)]
+// CHECK:STDOUT:   %N.loc6_28.1: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -625,31 +727,227 @@ let n: type = i32;
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Int.5e5
+// CHECK:STDOUT:     .Self = constants.%Int.7e3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_15.2: ref %Int.3c6 = temporary_storage
+// CHECK:STDOUT:   %.loc8_15.3: init %Int.3c6 to %.loc8_15.2 = class_init () [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.4: init %Int.3c6 = converted %.loc8_15.1, %.loc8_15.3 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.5: ref %Int.3c6 = temporary %.loc8_15.2, %.loc8_15.4 [concrete = constants.%.10c]
+// CHECK:STDOUT:   %.loc8_15.6: %Int.3c6 = acquire_value %.loc8_15.5 [concrete = constants.%Int.val]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
+// CHECK:STDOUT:   %T.patt.loc6_12.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_12.1 => constants.%T
-// CHECK:STDOUT:   %N.loc6_29.1 => constants.%N
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %N.patt.loc6_28.2 => constants.%N.patt.9f0
+// CHECK:STDOUT:   %N.loc6_28.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Int(Core.IntLiteral, constants.%int_32) {
+// CHECK:STDOUT:   %T.patt.loc6_12.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc6_12.1 => Core.IntLiteral
-// CHECK:STDOUT:   %N.loc6_29.1 => constants.%int_32
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.dc0
+// CHECK:STDOUT:   %N.patt.loc6_28.2 => constants.%N.patt.94a
+// CHECK:STDOUT:   %N.loc6_28.1 => constants.%int_32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
+// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon = $fail_prelude_as_namespace
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_class.carbon
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %N.patt: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
+// CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Int.type: type = fn_type @Int [concrete]
+// CHECK:STDOUT:   %Int: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.9a5 = value_binding_pattern n [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .r#Core = %Core
+// CHECK:STDOUT:     .n = %n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Int = %Int.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Int.decl: %Int.type = fn_decl @Int [concrete = constants.%Int] {
+// CHECK:STDOUT:     %T.patt.loc28_14.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc28_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %N.patt.loc28_31.1: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc28_31.2 (constants.%N.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc28_40.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc28_40.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc28_40.2: type = converted %.loc28_40.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc28_40.3: Core.Form = init_form %.loc28_40.2 [concrete = constants.%.469]
+// CHECK:STDOUT:     %.loc28_16.1: type = splice_block %.loc28_16.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc28_14: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc28_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc28_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc28_14.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc28_33: type = splice_block %T.ref [symbolic = %T.loc28_14.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.frozen.loc28_31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc28_14.2 [symbolic = %T.loc28_14.1 (constants.%T)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %N.loc28_31.2: @Int.%T.loc28_14.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc28_31.1 (constants.%N)]
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc39: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %n: type = wrapper_binding n, @__global_init.%.loc39 [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.9a5 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Int(%T.loc28_14.2: type, %N.loc28_31.2: @Int.%T.loc28_14.1 (%T)) {
+// CHECK:STDOUT:   %T.patt.loc28_14.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc28_14.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc28_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc28_14.1 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc28_14.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %N.patt.loc28_31.2: @Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc28_31.2 (constants.%N.patt)]
+// CHECK:STDOUT:   %N.loc28_31.1: @Int.%T.loc28_14.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc28_31.1 (constants.%N)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_struct_type {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc28_52.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc28_52.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc28_53: init %empty_struct_type = converted %.loc28_52.1, %.loc28_52.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     return %.loc28_53
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc39: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Int(constants.%T, constants.%N) {
+// CHECK:STDOUT:   %T.patt.loc28_14.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc28_14.1 => constants.%T
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %N.patt.loc28_31.2 => constants.%N.patt
+// CHECK:STDOUT:   %N.loc28_31.1 => constants.%N
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_prelude_as_class.carbon = $fail_prelude_as_class
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Core: type = class_type @Core [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %_.patt: %pattern_type.51d = symbolic_binding_pattern _, 1 [symbolic]
+// CHECK:STDOUT:   %_: %T = symbolic_binding _, 1 [symbolic]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %.469: Core.Form = init_form %empty_struct_type [concrete]
+// CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %empty_struct_type [concrete]
+// CHECK:STDOUT:   %Core.Int.type: type = fn_type @Core.Int [concrete]
+// CHECK:STDOUT:   %Core.Int: %Core.Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.9a5 = value_binding_pattern n [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .r#Core = %Core.decl
+// CHECK:STDOUT:     .n = %n
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.decl: type = class_decl @Core [concrete = constants.%Core] {} {}
+// CHECK:STDOUT:   %.loc24: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %n: type = wrapper_binding n, @__global_init.%.loc24 [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %n.patt: %pattern_type.9a5 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Core {
+// CHECK:STDOUT:   %Core.Int.decl: %Core.Int.type = fn_decl @Core.Int [concrete = constants.%Core.Int] {
+// CHECK:STDOUT:     %T.patt.loc13_11.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %_.patt.loc13_28.1: @Core.Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern _, 1 [symbolic = %_.patt.loc13_28.2 (constants.%_.patt)]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.a96 = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.a96 = return_slot_pattern %return.param_patt, %.loc13_37.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc13_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_37.2: type = converted %.loc13_37.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc13_37.3: Core.Form = init_form %.loc13_37.2 [concrete = constants.%.469]
+// CHECK:STDOUT:     %.loc13_13.1: type = splice_block %.loc13_13.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc13_11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc13_13.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc13_11.2: type = symbolic_binding T, 0 [symbolic = %T.loc13_11.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc13_30: type = splice_block %T.ref [symbolic = %T.loc13_11.1 (constants.%T)] {
+// CHECK:STDOUT:       %.Self.frozen.loc13_28: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc13_11.2 [symbolic = %T.loc13_11.1 (constants.%T)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %_.loc13_28.2: @Core.Int.%T.loc13_11.1 (%T) = symbolic_binding _, 1 [symbolic = %_.loc13_28.1 (constants.%_)]
+// CHECK:STDOUT:     %return.param: ref %empty_struct_type = out_param call_param0
+// CHECK:STDOUT:     %return: ref %empty_struct_type = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Core
+// CHECK:STDOUT:   .Int = %Core.Int.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Core.Int(%T.loc13_11.2: type, %_.loc13_28.2: @Core.Int.%T.loc13_11.1 (%T)) {
+// CHECK:STDOUT:   %T.patt.loc13_11.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc13_11.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc13_11.1: type = symbolic_binding T, 0 [symbolic = %T.loc13_11.1 (constants.%T)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc13_11.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
+// CHECK:STDOUT:   %_.patt.loc13_28.2: @Core.Int.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern _, 1 [symbolic = %_.patt.loc13_28.2 (constants.%_.patt)]
+// CHECK:STDOUT:   %_.loc13_28.1: @Core.Int.%T.loc13_11.1 (%T) = symbolic_binding _, 1 [symbolic = %_.loc13_28.1 (constants.%_)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() -> out %return.param: %empty_struct_type {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc13_49.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_49.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_50: init %empty_struct_type = converted %.loc13_49.1, %.loc13_49.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     return %.loc13_50
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc24: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Core.Int(constants.%T, constants.%_) {
+// CHECK:STDOUT:   %T.patt.loc13_11.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc13_11.1 => constants.%T
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
+// CHECK:STDOUT:   %_.patt.loc13_28.2 => constants.%_.patt
+// CHECK:STDOUT:   %_.loc13_28.1 => constants.%_
+// CHECK:STDOUT: }
 // CHECK:STDOUT:

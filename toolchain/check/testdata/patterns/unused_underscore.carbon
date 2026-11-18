@@ -11,15 +11,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/patterns/unused_underscore.carbon
 
 fn F() {
-  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+4]]:7: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
-  // CHECK:STDERR:   var unused _: i32 = 1;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ unused_underscore.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var unused _: i32 = 1;
+  // CHECK:STDERR:        ·       ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ warning: `unused` modifier on pattern without bindings
+  // CHECK:STDERR:        ·                ┃          [UnusedPatternNoBindings]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused _: i32 = 1;
 
-  // CHECK:STDERR: unused_underscore.carbon:[[@LINE+4]]:7: warning: `unused` modifier on pattern without bindings [UnusedPatternNoBindings]
-  // CHECK:STDERR:   let unused (_: i32, _: i32) = (1, 1);
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ unused_underscore.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   let unused (_: i32, _: i32) = (1, 1);
+  // CHECK:STDERR:        ·       ━━━━━━━━━━━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ warning: `unused` modifier on pattern without bindings
+  // CHECK:STDERR:        ·                     ┃          [UnusedPatternNoBindings]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused (_: i32, _: i32) = (1, 1);
 }

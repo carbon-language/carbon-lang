@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Typechecking](#typechecking)
     -   [Tuples, packs, segments, and shapes](#tuples-packs-segments-and-shapes)
     -   [Iterative typechecking of pack expansions](#iterative-typechecking-of-pack-expansions)
+        -   [Type versus execution semantics](#type-versus-execution-semantics)
     -   [Typechecking patterns](#typechecking-patterns)
     -   [Typechecking pattern matches](#typechecking-pattern-matches)
 -   [Appendix: Type system formalism](#appendix-type-system-formalism)
@@ -67,7 +68,7 @@ This example illustrates many of the key concepts:
 // Takes an arbitrary number of vectors with arbitrary element types, and
 // returns a vector of tuples where the i'th element of the vector is
 // a tuple of the i'th elements of the input vectors.
-fn Zip[... each ElementType:! type]
+fn Zip[... each ElementType: type]
       (... each vector: Vector(each ElementType))
       -> Vector((... each ElementType)) {
   ... var each iter: auto = each vector.Begin();
@@ -91,7 +92,7 @@ the number of values in the sequence.
 An _each-name_ consists of the keyword `each` followed by the name of a pack,
 and can only occur inside a pack expansion. On the Nth iteration of the pack
 expansion, an each-name refers to the Nth element of the named pack. As a
-result, a binding pattern with an each-name, such as `each ElementType:! type`,
+result, a binding pattern with an each-name, such as `each ElementType: type`,
 acts as a declaration of all the elements of the named pack, and thereby
 implicitly acts as a declaration of the pack itself.
 
@@ -190,7 +191,7 @@ fragment:
 
 ```
 var result: bool = true;
-for (let i:! i32 in (0, 1, 2)) {
+for (let generic i: i32 in (0, 1, 2)) {
   result = result && F(x[:i:], y[:i:]);
   if (result == false) { break; }
 }
@@ -219,6 +220,19 @@ the named pack from the Nth scrutinee. The binding pattern's type expression may
 contain an each-name (such as `each ElementType` in the `Zip` example), but if
 so, it must be a deduced parameter of the enclosing pattern.
 
+When a phase keyword (like `generic` or `template`) and/or a modifier (like
+`ref`) are used in a pack expansion pattern, the order is: `...` _phase_
+_modifier_ `each` _name_.
+
+For example:
+
+-   `... generic each T: type`
+-   `... runtime ref each x: i32` (Note: runtime parameters are the default for
+    explicit parameters so this would only come up in a hypothetical case where
+    we allow this in deduced parameters).
+
+This ensures that `each` remains most tightly attached to the binding name.
+
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 
@@ -235,7 +249,7 @@ fn SumInts(... each param: i64) -> i64 {
 
 ```carbon
 // Concatenates its arguments, which are all convertible to String
-fn StrCat[... each T:! ConvertibleToString](... each param: each T) -> String {
+fn StrCat[... each T: ConvertibleToString](... each param: each T) -> String {
   var len: i64 = 0;
   ... len += each param.Length();
   var result: String = "";
@@ -247,7 +261,7 @@ fn StrCat[... each T:! ConvertibleToString](... each param: each T) -> String {
 
 ```carbon
 // Returns the minimum of its arguments, which must all have the same type T.
-fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
+fn Min[T: Comparable & Value](first: T, ... each next: T) -> T {
   var result: T = first;
   ... if (each next < result) {
     result = each next;
@@ -258,7 +272,7 @@ fn Min[T:! Comparable & Value](first: T, ... each next: T) -> T {
 
 ```carbon
 // Invokes f, with the tuple `args` as its arguments.
-fn Apply[... each T:! type, F:! CallableWith(... each T)]
+fn Apply[... each T: type, F: Call(... each T)]
     (f: F, args: (... each T)) -> auto {
   return f(...expand args);
 }
@@ -352,7 +366,7 @@ tuple literal is a tuple literal of the types of its segments. For example,
 suppose we are trying to find the type of `z` in this code:
 
 ```carbon
-fn F[... each T:! type]((... each x: Optional(each T)), (... each y: i32)) {
+fn F[... each T: type]((... each x: Optional(each T)), (... each y: i32)) {
   let z: auto = (0 as f32, ... each x, ... each y);
 }
 ```
@@ -383,7 +397,7 @@ type of `z` is `(f32, ... Optional(each T), ... «i32; ‖each y‖»)`.
 Now, consider a modified version of that example:
 
 ```carbon
-fn F[... each T:! type]((... each x: Optional(each T)), (... each y: i32)) {
+fn F[... each T: type]((... each x: Optional(each T)), (... each y: i32)) {
   let (... each z: auto) = (0 as f32, ... each x, ... each y);
 }
 ```
@@ -478,6 +492,41 @@ expansion itself is relatively straightforward:
 
 > **TODO:** Discuss typechecking `...expand`.
 
+#### Type versus execution semantics
+
+Within a pack expansion, there's a subtle discrepancy between the type of an
+expression and its execution semantics. As discussed in the previous section, an
+expression within a pack expansion has a pack type rather than a scalar type, as
+if it were evaluated once and produced a pack value. However, as discussed
+[earlier](#expressions-and-statements), the execution of a pack expansion is
+modeled as a procedural loop that successively evaluates the expansion body for
+each element of the input pack, and expressions have scalar values within each
+iteration. In effect, the type system treats pack expansions as if they were
+SIMD code, with expressions operating on "vectors" of data in parallel, even
+though they actually execute iteratively on a series of scalar values.
+
+As a result, it can be misleading to use the type system as a guide to the
+execution semantics, because the two models disagree in some corner cases.
+For example, consider:
+
+```carbon
+fn F(i: i32) -> i64;
+
+fn G(... (each c: bool, each x: i32)) {
+  ...if each c then F(each x) else 0 as i64;
+}
+```
+
+In that code, `F(each x)` has type `«i64; ‖each x‖»`, in other words, a pack
+with the same arity as `each x`, whose elements are all `i64`. That may give the
+impression that the expression `F(each x)` evaluates to a pack of `i64` values
+with arity `‖each x‖`, and so `F` is called `‖each x‖` times, but that's not the
+case. In fact, `F(each x)` is evaluated once for each `true` value in `each c`,
+and each evaluation produces a scalar `i64` value. The results of those
+evaluations are never actually assembled into a pack, and in fact they
+_couldn't_ be, because the arity of such a pack isn't known until run time, and
+typically wouldn't match the arity of the enclosing pack expansion.
+
 ### Typechecking patterns
 
 A pack expansion pattern has _fixed arity_ if it contains at least one usage of
@@ -486,8 +535,8 @@ an each-name that is not a parameter of the enclosing
 pattern can have at most one segment with deduced arity. For example:
 
 ```carbon
-class C(... each T:! type) {
-  fn F[... each U:! type](... each t: each T, ... each u: each U);
+class C(... each T: type) {
+  fn F[... each U: type](... each t: each T, ... each u: each U);
 }
 ```
 
@@ -501,14 +550,14 @@ possible, in order to simplify the subsequent pattern matching. For example,
 consider the following function declaration:
 
 ```carbon
-fn Min[T:! type](first: T, ... each next: T) -> T;
+fn Min[T: type](first: T, ... each next: T) -> T;
 ```
 
 During typechecking, we rewrite that function signature so that it only has one
 parameter:
 
 ```carbon
-fn Min[T:! type](... each args: «T; ‖each next‖+1») -> T;
+fn Min[T: type](... each args: «T; ‖each next‖+1») -> T;
 ```
 
 (We represent the arity as `‖each next‖+1` to capture the fact that `each args`
@@ -518,7 +567,7 @@ When the pattern is heterogeneous, the merging process may be more complex. For
 example:
 
 ```carbon
-fn ZipAtLeastOne[First:! type, ... each Next:! type]
+fn ZipAtLeastOne[First: type, ... each Next: type]
     (first: Vector(First), ... each next: Vector(each Next))
     -> Vector((First, ... each Next));
 ```
@@ -526,7 +575,7 @@ fn ZipAtLeastOne[First:! type, ... each Next:! type]
 During typechecking, we transform that function signature to the following form:
 
 ```carbon
-fn ZipAtLeastOne[... ⟬First, each Next⟭:! «type; ‖each next‖+1»]
+fn ZipAtLeastOne[... ⟬First, each Next⟭: «type; ‖each next‖+1»]
     (... each __args: Vector(⟬First, each Next⟭))
     -> Vector((... ⟬First, each Next⟭));
 ```
@@ -536,7 +585,7 @@ with an invented name `each __Args`, so that the function has only one
 parameter:
 
 ```carbon
-fn ZipAtLeastOne[... each __Args:! «type; ‖each next‖+1»]
+fn ZipAtLeastOne[... each __Args: «type; ‖each next‖+1»]
     (... each __args: Vector(each __Args))
     -> Vector((... each __Args));
 ```
@@ -552,17 +601,21 @@ following conditions hold:
     declarations. For example, we can't apply this rewrite to `⟬X, each Y⟭` in
     this code, because the resulting signature would have return type `X` but no
     declaration of `X`:
+
     ```carbon
-    fn F[... ⟬X, each Y⟭:! «type; ‖each next‖+1»]
+    fn F[... ⟬X, each Y⟭: «type; ‖each next‖+1»]
         (... each __args: each ⟬X, each Y⟭) -> X;
     ```
+
 -   The pack expansions being rewritten do not contain any pack literals other
     than the name pack being replaced. For example, we can't apply this rewrite
     to `⟬X, each Y⟭` in this code, because the pack expansion in the deduced
     parameter list also contains the pack literal `⟬I, each type⟭`:
+
     ```carbon
-    fn F[... ⟬X, each Y⟭:! ⟬I, each type⟭](... each __args: each ⟬X, each Y⟭);
+    fn F[... ⟬X, each Y⟭: ⟬I, each type⟭](... each __args: each ⟬X, each Y⟭);
     ```
+
     Notice that as a corollary of this rule, all the names in the name pack must
     have the same type.
 
@@ -578,7 +631,7 @@ same arity. For example, consider this call to `ZipAtLeastOne` (as defined in
 the previous section):
 
 ```carbon
-fn F[... each T:! type](... each t: Vector(each T), u: Vector(i32)) {
+fn F[... each T: type](... each t: Vector(each T), u: Vector(i32)) {
   ZipAtLeastOne(... each t, u);
 }
 ```
@@ -637,7 +690,7 @@ expansion.
 In this formalism, deduced arities are explicit rather than implicit, so Carbon
 code must be desugared into this formalism as follows:
 
-For each pack expansion pattern, we introduce a binding pattern `__N:! Arity` as
+For each pack expansion pattern, we introduce a binding pattern `__N: Arity` as
 a deduced parameter of the enclosing full pattern, where `__N` is a name chosen
 to avoid collisions. Then, for each binding pattern of the form `each X: T`
 within that expansion, if `T` does not contain an each-name, the binding pattern
@@ -678,7 +731,7 @@ The type of an expression or pattern can be computed as follows:
 
 -   The type of `each x: auto` is `each __X`, a newly-invented deduced parameter
     of the enclosing full pattern, which behaves as if it was declared as
-    `... each __X:! type`.
+    `... each __X: type`.
 -   The type of an each-name expression is the type expression of the binding
     pattern that declared it.
 -   The type of an arity coercion `«E; S»` is `«T; S»`, where `T` is the type of
@@ -767,7 +820,7 @@ segment, and let `Ys` be a sequence of tuple segments.
 ### Equivalence, equality, and convertibility
 
 _Pack renaming:_ Let `Ns` be a sequence of names, let `⟬Ns⟭: «T; N»` be a name
-binding pattern (which may be a symbolic or template binding as well as a
+binding pattern (which may be a checked or template binding as well as a
 runtime binding), and let `__A` be an identifier that does not collide with any
 name that's visible where `⟬Ns⟭` is visible. We can rewrite all occurrences of
 `⟬Ns⟭` to `each __A` in the scope of the binding pattern (including the pattern
@@ -791,15 +844,15 @@ _Shape equality:_ Let `(S1s)`, `(S2s)`, `(S3s)`, and `(S4s)` be shapes.
 
 A full pattern is in _normal form_ if it contains no pack literals, and every
 arity coercion is fully expanded. For example,
-`[__N:! Arity](... each x: Vector(«i32; __N»))` is not in normal form, but
-`[__N:! Arity](... each x: «Vector(i32); __N»)` is. Note that all user-written
+`[__N: Arity](... each x: Vector(«i32; __N»))` is not in normal form, but
+`[__N: Arity](... each x: «Vector(i32); __N»)` is. Note that all user-written
 full patterns are in normal form. Note also that by construction, this means
 that the type of the body of every pack expansion has a single scalar component.
 The _canonical form_ of a full pattern is the unique normal form (if any) that
 is "maximally merged", meaning that every tuple pattern and tuple literal has
 the smallest number of segments. For example, the canonical form of
-`[__N:! Arity](... each x: «i32; __N», y: i32)` is
-`[__N:! Arity](... each __args: «i32; __N+1»)`.
+`[__N: Arity](... each x: «i32; __N», y: i32)` is
+`[__N: Arity](... each __args: «i32; __N+1»)`.
 
 > **TODO:** Specify algorithm for converting a full pattern to canonical form,
 > or establishing that there is no such form. See next section for a start.
@@ -831,7 +884,7 @@ parameter type.
 For example, consider the following function:
 
 ```carbon
-fn F[First:! type, Second:! type, ... each Next:! type]
+fn F[First: type, Second: type, ... each Next: type]
     (first: Vector(First), second: Vector(Second),
      ... each next: Vector(each Next)) -> (First, Second, ... each Next);
 ```
@@ -839,7 +892,7 @@ fn F[First:! type, Second:! type, ... each Next:! type]
 First, we desugar the implicit arity:
 
 ```carbon
-fn F[__N:! Arity, First:! type, Second:! type, ... each Next:! «type; __N»]
+fn F[__N: Arity, First: type, Second: type, ... each Next: «type; __N»]
     (first: Vector(First), second: Vector(Second),
      ... each next: Vector(each Next)) -> (First, Second, ... each Next);
 ```
@@ -850,32 +903,32 @@ reductions):
 
 ```carbon
 // Singular pack removal (in reverse)
-fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! «type; __N»⟭]
+fn F[__N: Arity, First: type, Second: type, ... ⟬each Next: «type; __N»⟭]
     (first: Vector(First), second: Vector(Second),
      ... each next: Vector(⟬each Next⟭)) -> (First, Second, ... ⟬each Next⟭);
 // Pack expanding
-fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! «type; __N»⟭]
+fn F[__N: Arity, First: type, Second: type, ... ⟬each Next: «type; __N»⟭]
     (first: Vector(First), second: Vector(Second),
      ... each next: ⟬Vector(each Next)⟭) -> (First, Second, ... ⟬each Next⟭);
 // Pack expanding
-fn F[__N:! Arity, First:! type, Second:! type, ... ⟬each Next:! «type; __N»⟭]
+fn F[__N: Arity, First: type, Second: type, ... ⟬each Next: «type; __N»⟭]
     (first: Vector(First), second: Vector(Second),
      ... ⟬each next: Vector(each Next)⟭) -> (First, Second, ... ⟬each Next⟭);
 // Pack expansion splitting (in reverse)
-fn F[__N:! Arity, First:! type, ... ⟬Second:! type, each Next:! «type; __N»⟭]
+fn F[__N: Arity, First: type, ... ⟬Second: type, each Next: «type; __N»⟭]
     (first: Vector(First), ... ⟬second: Vector(Second),
                                 each next: Vector(each Next)⟭)
     -> (First, ... ⟬Second, each Next⟭);
 // Pack expanding (in reverse)
-fn F[__N:! Arity, First:! type, ... ⟬Second, each Next⟭:! «type; __N+1»]
+fn F[__N: Arity, First: type, ... ⟬Second, each Next⟭: «type; __N+1»]
     (first: Vector(First), ... ⟬second, each next⟭: ⟬Vector(Second), Vector(each Next)⟭)
     -> (First, ... ⟬Second, each Next⟭);
 // Pack expanding (in reverse)
-fn F[__N:! Arity, First:! type, ... ⟬Second, each Next⟭:! «type; __N+1»]
+fn F[__N: Arity, First: type, ... ⟬Second, each Next⟭: «type; __N+1»]
     (first: Vector(First), ... ⟬second, each next⟭: Vector(⟬Second, each Next⟭))
     -> (First, ... ⟬Second, each Next⟭);
 // Pack renaming
-fn F[__N:! Arity, First:! type, ... each __A:! «type; __N+1»]
+fn F[__N: Arity, First: type, ... each __A: «type; __N+1»]
     (first: Vector(First), ... each __a: Vector(each __A))
     -> (First, ... each __A);
 ```
@@ -884,31 +937,31 @@ This brings us back to a normal form, while reducing the number of tuple
 segments. We can now repeat that process to merge the remaining parameter type:
 
 ```carbon
-fn F[__N:! Arity, First:! type, ... ⟬each __A:! «type; __N+1»⟭]
+fn F[__N: Arity, First: type, ... ⟬each __A: «type; __N+1»⟭]
     (first: Vector(First), ... each __a: Vector(⟬each __A⟭))
     -> (First, ... ⟬each __A⟭);
 // Pack expanding
-fn F[__N:! Arity, First:! type, ... ⟬each __A:! «type; __N+1»⟭]
+fn F[__N: Arity, First: type, ... ⟬each __A: «type; __N+1»⟭]
     (first: Vector(First), ... each __a: ⟬Vector(each __A)⟭)
     -> (First, ... ⟬each __A⟭);
 // Pack expanding
-fn F[__N:! Arity, First:! type, ... ⟬each __A:! «type; __N+1»⟭]
+fn F[__N: Arity, First: type, ... ⟬each __A: «type; __N+1»⟭]
     (first: Vector(First), ... ⟬each __a: Vector(each __A)⟭)
     -> (First, ... ⟬each __A⟭);
 // Pack expansion splitting (in reverse)
-fn F[__N:! Arity, ... ⟬First:! type, each __A:! «type; __N+1»⟭]
+fn F[__N: Arity, ... ⟬First: type, each __A: «type; __N+1»⟭]
     (... ⟬first: Vector(First), each __a: Vector(each __A)⟭)
     -> (... ⟬First, each __A⟭);
 // Pack expanding (in reverse)
-fn F[__N:! Arity, ... ⟬First, each __A⟭:! «type; __N+2»⟭]
+fn F[__N: Arity, ... ⟬First, each __A⟭: «type; __N+2»⟭]
     (... ⟬first, each __a⟭: ⟬Vector(First), Vector(each __A)⟭)
     -> (... ⟬First, each __A⟭);
 // Pack expanding (in reverse)
-fn F[__N:! Arity, ... ⟬First, each __A⟭:! «type; __N+2»⟭]
+fn F[__N: Arity, ... ⟬First, each __A⟭: «type; __N+2»⟭]
     (... ⟬first, each __a⟭: Vector(⟬First, each __A⟭))
     -> (... ⟬First, each __A⟭);
 // Pack renaming
-fn F[__N:! Arity, ... __B:! «type; __N+2»⟭]
+fn F[__N: Arity, ... __B: «type; __N+2»⟭]
     (... __b: Vector(__B))
     -> (... __B);
 ```
@@ -921,25 +974,25 @@ any further merging, so this must be the canonical form.
 
 ## Alternatives considered
 
--   [Member packs](/proposals/p2240.md#member-packs)
--   [Single semantic model for pack expansions](/proposals/p2240.md#single-semantic-model-for-pack-expansions)
--   [Generalize `expand`](/proposals/p2240.md#generalize-expand)
--   [Omit `expand`](/proposals/p2240.md#omit-expand)
--   [Support expanding arrays](/proposals/p2240.md#support-expanding-arrays)
--   [Omit each-names](/proposals/p2240.md#omit-each-names)
-    -   [Disallow pack-type bindings](/proposals/p2240.md#disallow-pack-type-bindings)
--   [Fold expressions](/proposals/p2240.md#fold-expressions)
--   [Allow multiple pack expansions in a tuple pattern](/proposals/p2240.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
--   [Allow nested pack expansions](/proposals/p2240.md#allow-nested-pack-expansions)
--   [Use postfix instead of prefix `...`](/proposals/p2240.md#use-postfix-instead-of-prefix-)
--   [Avoid context-sensitity in pack expansions](/proposals/p2240.md#avoid-context-sensitity-in-pack-expansions)
-    -   [Fold-like syntax](/proposals/p2240.md#fold-like-syntax)
-    -   [Variadic blocks](/proposals/p2240.md#variadic-blocks)
-    -   [Keyword syntax](/proposals/p2240.md#keyword-syntax)
--   [Require parentheses around `each`](/proposals/p2240.md#require-parentheses-around-each)
--   [Fused expansion tokens](/proposals/p2240.md#fused-expansion-tokens)
--   [No parameter merging](/proposals/p2240.md#no-parameter-merging)
--   [Exhaustive function call typechecking](/proposals/p2240.md#exhaustive-function-call-typechecking)
+-   [Member packs](/proposals/p002240-variadics.md#member-packs)
+-   [Single semantic model for pack expansions](/proposals/p002240-variadics.md#single-semantic-model-for-pack-expansions)
+-   [Generalize `expand`](/proposals/p002240-variadics.md#generalize-expand)
+-   [Omit `expand`](/proposals/p002240-variadics.md#omit-expand)
+-   [Support expanding arrays](/proposals/p002240-variadics.md#support-expanding-arrays)
+-   [Omit each-names](/proposals/p002240-variadics.md#omit-each-names)
+    -   [Disallow pack-type bindings](/proposals/p002240-variadics.md#disallow-pack-type-bindings)
+-   [Fold expressions](/proposals/p002240-variadics.md#fold-expressions)
+-   [Allow multiple pack expansions in a tuple pattern](/proposals/p002240-variadics.md#allow-multiple-pack-expansions-in-a-tuple-pattern)
+-   [Allow nested pack expansions](/proposals/p002240-variadics.md#allow-nested-pack-expansions)
+-   [Use postfix instead of prefix `...`](/proposals/p002240-variadics.md#use-postfix-instead-of-prefix-)
+-   [Avoid context-sensitity in pack expansions](/proposals/p002240-variadics.md#avoid-context-sensitity-in-pack-expansions)
+    -   [Fold-like syntax](/proposals/p002240-variadics.md#fold-like-syntax)
+    -   [Variadic blocks](/proposals/p002240-variadics.md#variadic-blocks)
+    -   [Keyword syntax](/proposals/p002240-variadics.md#keyword-syntax)
+-   [Require parentheses around `each`](/proposals/p002240-variadics.md#require-parentheses-around-each)
+-   [Fused expansion tokens](/proposals/p002240-variadics.md#fused-expansion-tokens)
+-   [No parameter merging](/proposals/p002240-variadics.md#no-parameter-merging)
+-   [Exhaustive function call typechecking](/proposals/p002240-variadics.md#exhaustive-function-call-typechecking)
 
 ## References
 

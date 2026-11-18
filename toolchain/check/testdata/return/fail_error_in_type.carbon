@@ -12,15 +12,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_error_in_type.carbon
 
-// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: fn Six() -> x;
-// CHECK:STDERR:             ^
+// CHECK:STDERR:        ╭─┤ fail_error_in_type.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ fn Six() -> x;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: name `x` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Six() -> x;
 
-// CHECK:STDOUT: --- fail_error_in_type.carbon
+// CHECK:STDOUT: --- fail_error_in_type.carbon = $fail_error_in_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [concrete]
 // CHECK:STDOUT:   %Six: %Six.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -40,7 +43,7 @@ fn Six() -> x;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
-// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete]
+// CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>

@@ -199,13 +199,13 @@ package Core;
 
 // Unary `^`.
 interface BitComplementPrimitive(
-    implicit_into anchor Self:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into anchor Self: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self) ->? ResultForm;
 }
 constraint BitComplement {
-  let Result:! type;
+  let Result: type;
   extend require form(val Self) impls
       BitComplementPrimitive
       where .ResultForm = form(var Result);
@@ -215,15 +215,15 @@ constraint BitComplement {
 ```
 // Binary `&`.
 interface BitAndWithPrimitive(
-    implicit_into Self:! Form,
-    implicit_into U:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into Self: Form,
+    implicit_into U: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
-constraint BitAndWith(U:! type) {
-  let Result:! type;
+constraint BitAndWith(U: type) {
+  let Result: type;
   extend require form(val Self) impls
       BitAndWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
@@ -236,15 +236,15 @@ constraint BitAnd {
 ```
 // Binary `|`.
 interface BitOrWithPrimitive(
-    implicit_into Self:! Form,
-    implicit_into U:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into Self: Form,
+    implicit_into U: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
-constraint BitOrWith(U:! type) {
-  let Result:! type;
+constraint BitOrWith(U: type) {
+  let Result: type;
   extend require form(val Self) impls
       BitOrWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
@@ -257,15 +257,15 @@ constraint BitOr {
 ```
 // Binary `^`.
 interface BitXorWithPrimitive(
-    implicit_into Self:! Form,
-    implicit_into U:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into Self: Form,
+    implicit_into U: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
-constraint BitXorWith(U:! type) {
-  let Result:! type;
+constraint BitXorWith(U: type) {
+  let Result: type;
   extend require form(val Self) impls
       BitXorWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
@@ -280,15 +280,15 @@ Note that the shift operators anchor on the type of the left argument.
 ```
 // Binary `<<`.
 interface LeftShiftWithPrimitive(
-    implicit_into anchor Self:! Form,
-    implicit_into U:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into anchor Self: Form,
+    implicit_into U: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
-constraint LeftShiftWith(U:! type) {
-  let Result:! type;
+constraint LeftShiftWith(U: type) {
+  let Result: type;
   extend require form(val Self) impls
       LeftShiftWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
@@ -301,15 +301,15 @@ constraint LeftShift {
 ```
 // Binary `>>`.
 interface RightShiftWithPrimitive(
-    implicit_into anchor Self:! Form,
-    implicit_into U:! Form) {
-  default let implicit_from ResultForm:! Form
+    implicit_into anchor Self: Form,
+    implicit_into U: Form) {
+  default let implicit_from ResultForm: Form
       = form(var Self.type);
   fn Op(self:? Self, other:? U)
       ->? ResultForm;
 }
-constraint RightShiftWith(U:! type) {
-  let Result:! type;
+constraint RightShiftWith(U: type) {
+  let Result: type;
   extend require form(val Self) impls
       RightShiftWithPrimitive(form(val U))
       where .ResultForm = form(var Result);
@@ -338,11 +338,11 @@ to give the semantics described above.
 
 ## Alternatives considered
 
--   [Use different symbols for bitwise operators](/proposals/p1191.md#use-different-symbols-for-bitwise-operators)
--   [Provide different operators for arithmetic and logical shifts](/proposals/p1191.md#provide-different-operators-for-arithmetic-and-logical-shifts)
--   [Provide rotate operators](/proposals/p1191.md#provide-rotate-operators)
--   [Guarantee the behavior of large shifts](/proposals/p1191.md#guarantee-behavior-of-large-shifts)
--   [Support shifting a constant by a variable](/proposals/p1191.md#support-shifting-a-constant-by-a-variable)
+-   [Use different symbols for bitwise operators](/proposals/p001191-bitwise-and-shift-operators.md#use-different-symbols-for-bitwise-operators)
+-   [Provide different operators for arithmetic and logical shifts](/proposals/p001191-bitwise-and-shift-operators.md#provide-different-operators-for-arithmetic-and-logical-shifts)
+-   [Provide rotate operators](/proposals/p001191-bitwise-and-shift-operators.md#provide-rotate-operators)
+-   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
+-   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
 
 ## References
 

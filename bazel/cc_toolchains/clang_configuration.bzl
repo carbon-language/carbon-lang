@@ -83,7 +83,11 @@ def _compute_clang_resource_dir(repository_ctx, clang):
     ).stdout
 
     # The only line printed is this path.
-    return output.splitlines()[0]
+    dir_path = repository_ctx.path(output.splitlines()[0])
+
+    # Canonicalize the path to help ensure string matching succeeds
+    # even with clang installs returning a non-canonical path.
+    return str(dir_path.realpath)
 
 def _compute_mac_os_sysroot(repository_ctx):
     """Runs `xcrun` to extract the correct sysroot."""
@@ -148,7 +152,7 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     if repository_ctx.os.name.lower().startswith("mac os"):
         if not sysroot:
             fail("Must provide a sysroot on macOS!")
-        cmd.append("--sysroot=" + sysroot)
+        cmd += ["-isysroot", sysroot]
 
     # Note that verbose output is on stderr, not stdout!
     output = _run(repository_ctx, cmd).stderr.splitlines()
@@ -184,9 +188,9 @@ def _configure_clang_toolchain_impl(repository_ctx):
     (clang, clang_version, clang_version_for_cache) = _detect_system_clang(
         repository_ctx,
     )
-    if clang_version and clang_version < 19:
+    if clang_version and clang_version < 21:
         fail("Found clang {0}. ".format(clang_version) +
-             "Carbon requires clang >=19. See " +
+             "Carbon requires clang >=21. See " +
              "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/project/contribution_tools.md#old-llvm-versions")
 
     clang_cpp = clang.dirname.get_child("clang++")

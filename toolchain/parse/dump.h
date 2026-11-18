@@ -8,20 +8,22 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(tree, id)`
+// - lldb: `dump tree id`
 // - gdb: `call Dump(tree, id)`
-//
-// The `DumpNoNewline` functions are helpers that exclude a trailing newline.
-// They're intended to be composed by `Dump` function implementations.
 
 #ifndef CARBON_TOOLCHAIN_PARSE_DUMP_H_
 #define CARBON_TOOLCHAIN_PARSE_DUMP_H_
 
 #ifndef NDEBUG
 
-#include "toolchain/parse/tree.h"
+#include <string>
+
+#include "toolchain/lex/token_index.h"
+#include "toolchain/parse/node_ids.h"
 
 namespace Carbon::Parse {
+
+class Tree;
 
 auto Dump(const Tree& tree, Lex::TokenIndex token) -> std::string;
 auto Dump(const Tree& tree, NodeId node_id) -> std::string;

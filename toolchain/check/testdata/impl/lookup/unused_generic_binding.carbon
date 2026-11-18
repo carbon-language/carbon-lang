@@ -14,21 +14,24 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
 class C {}
 
 // This impl can never deduce its implicit generic parameter `V`, which
 // should be diagnosed.
 //
-// CHECK:STDERR: fail_no_binding_used.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
-// CHECK:STDERR:             ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_no_binding_used.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ impl forall [V: type] C as I where .T = {.unmatched: ()} {}
+// CHECK:STDERR:        ·             ━━━━┳━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: `impl` with unused generic binding
+// CHECK:STDERR:        ·                    ┃        [ImplUnusedBinding]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-impl forall [V:! type] C as I where .T = {.unmatched: ()} {}
+impl forall [V: type] C as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -42,10 +45,10 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
 class C {}
 
@@ -53,11 +56,14 @@ class C {}
 // should be diagnosed.
 // https://discord.com/channels/655572317891461132/941071822756143115/1354563497731686550
 //
-// CHECK:STDERR: fail_one_binding_unused.carbon:[[@LINE+4]]:13: error: `impl` with unused generic binding [ImplUnusedBinding]
-// CHECK:STDERR: impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_one_binding_unused.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ impl forall [V: type, W: type] V as I where .T = {.unmatched: ()} {}
+// CHECK:STDERR:        ·             ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: `impl` with unused generic binding
+// CHECK:STDERR:        ·                         ┃        [ImplUnusedBinding]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-impl forall [V:! type, W:! type] V as I where .T = {.unmatched: ()} {}
+impl forall [V: type, W: type] V as I where .T = {.unmatched: ()} {}
 
 fn F() {
   // This shows that the first impl declaration was matched even though the
@@ -70,20 +76,23 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
-class C(U:! type) {
+class C(U: type) {
   // This impl can never deduce its inherited generic binding `U`, which
   // should be diagnosed.
   //
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
-  // CHECK:STDERR: fail_inherited_binding_unused.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl C(()) as I where .T = {.unmatched: ()} {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_inherited_binding_unused.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   impl C(()) as I where .T = {.unmatched: ()} {}
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: `impl` with unused generic binding
+  // CHECK:STDERR:        ·                            ┃        [ImplUnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl C(()) as I where .T = {.unmatched: ()} {}
 }
@@ -96,22 +105,25 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = () {}
+impl forall [U: type] U as I where .T = () {}
 
-class C(U:! type) {
+class C(U: type) {
   // This impl can never deduce its inherited generic binding `U`, which
   // should be diagnosed.
   //
   // TODO: We should point the diagnostic at the binding `U` in C.
   //
-  // CHECK:STDERR: fail_inherited_binding_in_forall_unused.carbon:[[@LINE+4]]:15: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
-  // CHECK:STDERR:               ^~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_inherited_binding_in_forall_unused.carbon:[[@LINE+7]]:15
+  // CHECK:STDERR: ->     │   impl forall [V: type] C(V) as I where .T = {.unmatched: ()} {}
+  // CHECK:STDERR:        ·               ━━━━┳━━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: `impl` with unused generic binding
+  // CHECK:STDERR:        ·                      ┃        [ImplUnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  impl forall [V:! type] C(V) as I where .T = {.unmatched: ()} {}
+  impl forall [V: type] C(V) as I where .T = {.unmatched: ()} {}
 }
 
 fn F() {
@@ -122,12 +134,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 interface I {
-  let T:! type;
+  let T: type;
 }
 
-impl forall [U:! type] U as I where .T = {.unmatched: ()} {}
+impl forall [U: type] U as I where .T = {.unmatched: ()} {}
 
-class C(U:! type) {
+class C(U: type) {
   // `U` can be deduced here, so no diagnostic issued.
   impl C(U) as I where .T = () {}
 }
@@ -140,15 +152,15 @@ fn F() {
 // --- inherited_binding_in_forall_used.carbon
 library "[[@TEST_NAME]]";
 
-interface I(W:! type) {
-  let T:! type;
+interface I(W: type) {
+  let T: type;
 }
 
-impl forall [U:! type] U as I(U) where .T = {.unmatched: ()} {}
+impl forall [U: type] U as I(U) where .T = {.unmatched: ()} {}
 
-class C(U:! type) {
+class C(U: type) {
   // `U` can be deduced here, so no diagnostic issued.
-  impl forall [V:! type] C(U) as I(V) where .T = () {}
+  impl forall [V: type] C(U) as I(V) where .T = () {}
 }
 
 fn F() {

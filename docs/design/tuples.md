@@ -60,7 +60,7 @@ fn Sum(x: i32, y: i32) -> i32 {
 A parenthesized template constant expression can also be used to index a tuple:
 
 ```
-fn Choose(template N:! i32) -> i32 {
+fn Choose(template N: i32) -> i32 {
   return (1, 2, 3).(N % 3);
 }
 ```
@@ -174,10 +174,10 @@ answer here:
 
 ## Alternatives considered
 
--   [Indexing with square brackets](/proposals/p3646.md#square-bracket-notation)
--   [Indexing from the end of a tuple](/proposals/p3646.md#negative-indexing-from-the-end-of-the-tuple)
--   [Restrict indexes to decimal integers](/proposals/p3646.md#decimal-indexing-restriction)
--   [Alternatives to trailing commas](/proposals/p3646.md#trailing-commas)
+-   [Indexing with square brackets](/proposals/p003646-tuples-and-tuple-indexing.md#square-bracket-notation)
+-   [Indexing from the end of a tuple](/proposals/p003646-tuples-and-tuple-indexing.md#negative-indexing-from-the-end-of-the-tuple)
+-   [Restrict indexes to decimal integers](/proposals/p003646-tuples-and-tuple-indexing.md#decimal-indexing-restriction)
+-   [Alternatives to trailing commas](/proposals/p003646-tuples-and-tuple-indexing.md#trailing-commas)
 
 ## References
 

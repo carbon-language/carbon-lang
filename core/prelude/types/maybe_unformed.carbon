@@ -10,8 +10,8 @@ import library "prelude/destroy";
 private fn MakeMaybeUnformed(t: type) -> type = "maybe_unformed.make_type";
 
 // TODO: This should probably support non-destructible types.
-class MaybeUnformed(T:! Destroy) {
+class MaybeUnformed(T: Destroy) {
   adapt MakeMaybeUnformed(T);
 }
 
-impl forall [T:! Destroy] MaybeUnformed(T) as UnformedInit {}
+impl forall [T: Destroy] MaybeUnformed(T) as UnformedInit {}

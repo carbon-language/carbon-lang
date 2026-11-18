@@ -6,8 +6,10 @@
 
 #include <optional>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
@@ -70,8 +72,6 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::ErrorInst::InstId;
   }
 
-  SemIR::InstId op_fn_id = SemIR::InstId::None;
-
   // For unary operators with a C++ class as the operand, try to import and call
   // the C++ operator.
   // TODO: Change impl lookup instead. See
@@ -80,20 +80,16 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
       llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
         return IsCppClassType(context, arg_id);
       })) {
-    op_fn_id = LookupCppOperator(context, loc_id, op, {operand_id});
-
-    // If C++ operator lookup found a non-method operator, call it with one call
-    // argument. Otherwise fall through to call it with a self argument.
-    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
-      return PerformCall(context, loc_id, op_fn_id, {operand_id},
+    if (auto cpp_op_fn_id =
+            LookupCppOperator(context, loc_id, op, {operand_id});
+        cpp_op_fn_id.has_value()) {
+      return PerformCall(context, loc_id, cpp_op_fn_id, {operand_id},
                          /*is_desugared=*/true);
     }
   }
 
-  if (!op_fn_id.has_value()) {
-    // Look up the operator function.
-    op_fn_id = GetOperatorOpFunction(context, loc_id, op);
-  }
+  // Look up the operator function.
+  auto op_fn_id = GetOperatorOpFunction(context, loc_id, op);
 
   // Form `operand.(Op)`.
   auto bound_op_id =
@@ -108,6 +104,15 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                      /*is_desugared=*/true);
 }
 
+auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
+    -> SemIR::InstId {
+  auto loc_id = context.insts().GetLocIdForDesugaring(object_id);
+  return PerformCall(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, CoreIdentifier::SelfDestruct),
+      {object_id}, /*is_desugared=*/true);
+}
+
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          bool diagnose,
@@ -118,12 +123,10 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
     return SemIR::ErrorInst::InstId;
   }
 
-  SemIR::InstId op_fn_id = SemIR::InstId::None;
-
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic
-  // constraint such as `T:! Core.Add` is satisfied by C++ class types that are
+  // constraint such as `T: Core.Add` is satisfied by C++ class types that are
   // addable. See
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and
@@ -132,21 +135,16 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
       llvm::any_of(op.interface_args_ref, [&](SemIR::InstId arg_id) {
         return IsCppClassType(context, arg_id);
       })) {
-    op_fn_id = LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
-
-    // If C++ operator lookup found a non-method operator, call it with two call
-    // arguments. Otherwise fall through to call it with a self argument and one
-    // call argument.
-    if (op_fn_id.has_value() && !IsCppOperatorMethod(context, op_fn_id)) {
-      return PerformCall(context, loc_id, op_fn_id, {lhs_id, rhs_id},
+    if (auto cpp_op_fn_id =
+            LookupCppOperator(context, loc_id, op, {lhs_id, rhs_id});
+        cpp_op_fn_id.has_value()) {
+      return PerformCall(context, loc_id, cpp_op_fn_id, {lhs_id, rhs_id},
                          /*is_desugared=*/true);
     }
   }
 
-  if (!op_fn_id.has_value()) {
-    // Look up the operator function.
-    op_fn_id = GetOperatorOpFunction(context, loc_id, op);
-  }
+  // Look up the operator function.
+  auto op_fn_id = GetOperatorOpFunction(context, loc_id, op);
 
   // Form `lhs.(Op)`.
   auto bound_op_id =

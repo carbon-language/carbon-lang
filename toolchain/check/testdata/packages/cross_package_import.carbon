@@ -26,12 +26,48 @@ fn F() {}
 
 package Other library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_todo_main_use_other_extern.carbon [InImport]
+// CHECK:STDERR:        ├─┤ other_fn_extern.carbon:[[@LINE+17]]:1
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: duplicate name `F` being declared in the same scope
+// CHECK:STDERR:        ·           ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ other_fn.carbon
+// CHECK:STDERR:        │ fn F() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_todo_main_use_other_extern.carbon
+// CHECK:STDERR:        │   Other.F();
+// CHECK:STDERR:        ·   ───┬───
+// CHECK:STDERR:        ·      ╰──┤ in name lookup for `F` [InNameLookup]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern fn F();
 
 // --- other_fn_conflict.carbon
 
 package Other library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_main_use_other_ambiguous.carbon [InImport]
+// CHECK:STDERR:        ├─┤ other_fn_conflict.carbon:[[@LINE+17]]:1
+// CHECK:STDERR: ->     │ fn F(unused x: ()) {}
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: duplicate name `F` being declared in the same scope
+// CHECK:STDERR:        ·              ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ other_fn.carbon
+// CHECK:STDERR:        │ fn F() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_main_use_other_ambiguous.carbon
+// CHECK:STDERR:        │   Other.F();
+// CHECK:STDERR:        ·   ───┬───
+// CHECK:STDERR:        ·      ╰──┤ in name lookup for `F` [InNameLookup]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn F(unused x: ()) {}
 
 // --- other_fn2.carbon
@@ -74,22 +110,10 @@ fn Run() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_extern.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
 import Other library "other_fn_extern";
 
 fn Run() {
-  // CHECK:STDERR: fail_todo_main_use_other_extern.carbon:[[@LINE+4]]:3: note: in name lookup for `F` [InNameLookup]
-  // CHECK:STDERR:   Other.F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Other.F();
 }
 
@@ -104,22 +128,10 @@ import Other library "other_fn_conflict";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: other_fn_conflict.carbon:4:1: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn F(unused x: ()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
 import Other library "other_fn";
 import Other library "other_fn_conflict";
 
 fn Run() {
-  // CHECK:STDERR: fail_main_use_other_ambiguous.carbon:[[@LINE+4]]:3: note: in name lookup for `F` [InNameLookup]
-  // CHECK:STDERR:   Other.F();
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR:
   Other.F();
 }
 
@@ -128,23 +140,30 @@ fn Run() {
 library "[[@TEST_NAME]]";
 
 import library "main_other_ns";
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-4]]:1: in import [InImport]
-// CHECK:STDERR: main_other_ns.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace Other;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_namespace_conflict.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ import Other library "other_fn";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: duplicate name `Other` being declared in the same scope
+// CHECK:STDERR:        ·                 ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ main_other_ns.carbon
+// CHECK:STDERR:        │ namespace Other;
+// CHECK:STDERR:        · ────────┬───────
+// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE+8]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fn Other.F() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_main_namespace_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: other_fn.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: fn F() {}
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_namespace_conflict.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ fn Other.F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ other_fn.carbon
+// CHECK:STDERR:        │ fn F() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Other.F() {}
 
@@ -154,12 +173,16 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE+7]]:11: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: namespace Other;
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_main_reopen_other.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_reopen_other.carbon:[[@LINE+11]]:11
+// CHECK:STDERR:        │ import Other library "other_fn";
+// CHECK:STDERR:        · ────────────────┬───────────────
+// CHECK:STDERR:        ·                 ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ namespace Other;
+// CHECK:STDERR:        ·           ━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: duplicate name `Other` being declared in the same scope
+// CHECK:STDERR:        ·                ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Other;
 
@@ -172,12 +195,16 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE+7]]:11: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
-// CHECK:STDERR: namespace Other.Nested;
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_main_reopen_other_nested.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_reopen_other_nested.carbon:[[@LINE+11]]:11
+// CHECK:STDERR:        │ import Other library "other_fn";
+// CHECK:STDERR:        · ────────────────┬───────────────
+// CHECK:STDERR:        ·                 ╰──┤ package imported here [QualifiedDeclOutsidePackageSource]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ namespace Other.Nested;
+// CHECK:STDERR:        ·           ━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: imported packages cannot be used for declarations
+// CHECK:STDERR:        ·                ┃        [QualifiedDeclOutsidePackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Other.Nested;
 
@@ -190,12 +217,16 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn";
 
-// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE+7]]:4: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
-// CHECK:STDERR: fn Other.G() {}
-// CHECK:STDERR:    ^~~~~
-// CHECK:STDERR: fail_main_add_to_other.carbon:[[@LINE-5]]:1: note: package imported here [QualifiedDeclOutsidePackageSource]
-// CHECK:STDERR: import Other library "other_fn";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_add_to_other.carbon:[[@LINE+11]]:4
+// CHECK:STDERR:        │ import Other library "other_fn";
+// CHECK:STDERR:        · ────────────────┬───────────────
+// CHECK:STDERR:        ·                 ╰──┤ package imported here [QualifiedDeclOutsidePackageSource]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn Other.G() {}
+// CHECK:STDERR:        ·    ━━┳━━
+// CHECK:STDERR:        ·      ┗━━┫ error: imported packages cannot be used for declarations
+// CHECK:STDERR:        ·         ┃        [QualifiedDeclOutsidePackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Other.G() {}
 
@@ -205,15 +236,19 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_fn_use";
 
-// CHECK:STDERR: fail_use_other_fn_use.carbon:[[@LINE+4]]:13: error: member name `F` not found in `Other` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn UseF() { Other.F(); }
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_use_other_fn_use.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ fn UseF() { Other.F(); }
+// CHECK:STDERR:        ·             ━━━┳━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: member name `F` not found in `Other`
+// CHECK:STDERR:        ·                   ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn UseF() { Other.F(); }
 
-// CHECK:STDOUT: --- other_fn.carbon
+// CHECK:STDOUT: --- other_fn.carbon = $other_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -230,9 +265,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_extern.carbon
+// CHECK:STDOUT: --- other_fn_extern.carbon = $other_fn_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -246,12 +282,15 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_conflict.carbon
+// CHECK:STDOUT: --- other_fn_conflict.carbon = $other_fn_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -261,15 +300,15 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %x.patt: %pattern_type = at_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %x.param: %empty_tuple.type = value_param call_param0
-// CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:       %.loc4_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc4_17.3: type = converted %.loc4_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc22_17.1: type = splice_block %.loc22_17.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:       %.loc22_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc22_17.3: type = converted %.loc22_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x: %empty_tuple.type = value_binding x, %x.param
+// CHECK:STDOUT:     %x: %empty_tuple.type = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -278,9 +317,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn2.carbon
+// CHECK:STDOUT: --- other_fn2.carbon = $other_fn2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F2.type: type = fn_type @F2 [concrete]
 // CHECK:STDOUT:   %F2: %F2.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -297,9 +337,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_fn_use.carbon
+// CHECK:STDOUT: --- other_fn_use.carbon = $other_fn_use
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -329,7 +370,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_other_ns.carbon
+// CHECK:STDOUT: --- main_other_ns.carbon = $main_other_ns
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -338,9 +379,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_use_other.carbon
+// CHECK:STDOUT: --- main_use_other.carbon = $main_use_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -385,9 +427,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F2 [from "other_fn2.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon
+// CHECK:STDOUT: --- fail_todo_main_use_other_extern.carbon = $fail_todo_main_use_other_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -423,7 +466,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_unused_other_ambiguous.carbon
+// CHECK:STDOUT: --- main_unused_other_ambiguous.carbon = $main_unused_other_ambiguous
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other: <namespace> = namespace file.%Other.import, [concrete] {
@@ -439,9 +482,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon
+// CHECK:STDOUT: --- fail_main_use_other_ambiguous.carbon = $fail_main_use_other_ambiguous
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Run.type: type = fn_type @Run [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Run: %Run.type = struct_value () [concrete]
@@ -477,13 +521,14 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_namespace_conflict.carbon
+// CHECK:STDOUT: --- fail_main_namespace_conflict.carbon = $fail_main_namespace_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %F.type.eab4ea.1: type = fn_type @F.1 [concrete]
-// CHECK:STDOUT:   %F.14f67d.1: %F.type.eab4ea.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type.eab4ea.2: type = fn_type @F.loc23 [concrete]
-// CHECK:STDOUT:   %F.14f67d.2: %F.type.eab4ea.2 = struct_value () [concrete]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.1: type = fn_type @F.1 [concrete]
+// CHECK:STDOUT:   %F.1be9f8.1: %F.type.2a8c71.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type.2a8c71.2: type = fn_type @F.loc30 [concrete]
+// CHECK:STDOUT:   %F.1be9f8.2: %F.type.2a8c71.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -492,7 +537,7 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:     .F = %Other.F
 // CHECK:STDOUT:     import Other//other_fn
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Other.F: %F.type.eab4ea.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.14f67d.1]
+// CHECK:STDOUT:   %Other.F: %F.type.2a8c71.1 = import_ref Other//other_fn, F, loaded [concrete = constants.%F.1be9f8.1]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -501,19 +546,20 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
-// CHECK:STDOUT:   %F.decl: %F.type.eab4ea.2 = fn_decl @F.loc23 [concrete = constants.%F.14f67d.2] {} {}
+// CHECK:STDOUT:   %F.decl: %F.type.2a8c71.2 = fn_decl @F.loc30 [concrete = constants.%F.1be9f8.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F.1 [from "other_fn.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F.loc23() {
+// CHECK:STDOUT: fn @F.loc30() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_reopen_other.carbon
+// CHECK:STDOUT: --- fail_main_reopen_other.carbon = $fail_main_reopen_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -542,9 +588,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon
+// CHECK:STDOUT: --- fail_main_reopen_other_nested.carbon = $fail_main_reopen_other_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -572,9 +619,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_add_to_other.carbon
+// CHECK:STDOUT: --- fail_main_add_to_other.carbon = $fail_main_add_to_other
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -599,9 +647,10 @@ fn UseF() { Other.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_other_fn_use.carbon
+// CHECK:STDOUT: --- fail_use_other_fn_use.carbon = $fail_use_other_fn_use
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %UseF.type: type = fn_type @UseF [concrete]
 // CHECK:STDOUT:   %UseF: %UseF.type = struct_value () [concrete]
 // CHECK:STDOUT: }

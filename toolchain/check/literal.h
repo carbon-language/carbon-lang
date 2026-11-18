@@ -58,6 +58,12 @@ auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
 // Forms a string type.
 auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr;
 
+// Forms an array type `Core.Array(T, N)` with the given `element_type_inst_id`
+// and `bound_id`.
+auto MakeArrayType(Context& context, SemIR::LocId loc_id,
+                   SemIR::InstId element_type_inst_id, SemIR::InstId bound_id)
+    -> TypeExpr;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_LITERAL_H_

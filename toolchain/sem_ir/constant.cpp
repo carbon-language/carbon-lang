@@ -37,6 +37,12 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
   return result.value();
 }
 
+auto ConstantStore::Get(Inst inst) const -> ConstantId {
+  auto result = map_.Lookup(inst);
+  CARBON_CHECK(result);
+  return result.value();
+}
+
 auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
   if (!const_id.has_value() || !const_id.is_constant()) {
     return InstId::None;
@@ -61,6 +67,24 @@ auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
   const auto& generic = file.generics().Get(symbolic_const.generic_id);
   auto block = generic.GetEvalBlock(symbolic_const.index.region());
   return file.inst_blocks().Get(block)[symbolic_const.index.index()];
+}
+
+auto ConstantValueStore::OutputYaml(bool include_singletons) const
+    -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([&, include_singletons](
+                                 Yaml::OutputMapping::Map map) {
+    map.Add("values", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+              for (auto [id, value] : values_.enumerate()) {
+                if (!include_singletons && IsSingletonInstId(id)) {
+                  continue;
+                }
+                if (!value.has_value() || value.is_constant()) {
+                  map.Add(PrintToString(id), Yaml::OutputScalar(value));
+                }
+              }
+            }));
+    map.Add("symbolic_constants", symbolic_constants_.OutputYaml());
+  });
 }
 
 }  // namespace Carbon::SemIR

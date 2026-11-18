@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 
+#include "common/hashing_llvm.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/canonical_value_store.h"
@@ -24,6 +25,9 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   using IntStore = IntStore;
   using RealStore = ValueStore<RealId, Real>;
   using FloatStore = CanonicalValueStore<FloatId, llvm::APFloat>;
+  // Note that this stores string references. The underlying string data must
+  // be stored somewhere more durable (e.g. a string literal or
+  // `clang::ASTContext::Idents`).
   using IdentifierStore = CanonicalValueStore<IdentifierId, llvm::StringRef>;
   using StringLiteralStore =
       CanonicalValueStore<StringLiteralValueId, llvm::StringRef>;
@@ -50,21 +54,7 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   }
 
   auto OutputYaml(std::optional<llvm::StringRef> filename = std::nullopt) const
-      -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&, filename](Yaml::OutputMapping::Map map) {
-      if (filename) {
-        map.Add("filename", *filename);
-      }
-      map.Add("shared_values",
-              Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                map.Add("ints", ints_.OutputYaml());
-                map.Add("reals", reals_.OutputYaml());
-                map.Add("floats", floats_.OutputYaml());
-                map.Add("identifiers", identifiers_.OutputYaml());
-                map.Add("strings", string_literals_.OutputYaml());
-              }));
-    });
-  }
+      -> Yaml::OutputMapping;
 
   // Collects memory usage for the various shared stores.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

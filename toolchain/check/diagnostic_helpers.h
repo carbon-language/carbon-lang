@@ -7,6 +7,7 @@
 
 #include <concepts>
 
+#include "clang/AST/TypeBase.h"
 #include "llvm/ADT/APSInt.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/ids.h"
@@ -50,7 +51,7 @@ using DiagnosticEmitterBase = Diagnostics::Emitter<LocIdForDiagnostics>;
 using DiagnosticBuilder = DiagnosticEmitterBase::Builder;
 using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 
-// A function that adds a Context message for a diagnostic.
+// A function that adds a context label to a diagnostic.
 using DiagnosticContextFn =
     llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
 
@@ -145,6 +146,16 @@ struct SpecificInterfaceIdAsRawType {
       : specific_interface_id(specific_interface_id) {}
 
   SemIR::SpecificInterfaceId specific_interface_id;
+};
+
+// A C++ type, for rendering in a diagnostic.
+struct CppType {
+  using DiagnosticType = Diagnostics::TypeInfo<std::string>;
+
+  explicit(false) CppType(clang::QualType type) : type(type) {}
+  explicit(false) CppType(const clang::Type* type) : type(type, 0) {}
+
+  clang::QualType type;
 };
 
 }  // namespace Carbon::Check

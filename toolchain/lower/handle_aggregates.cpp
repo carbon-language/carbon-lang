@@ -49,6 +49,13 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::EnclosingClassAccess inst) -> void {
+  auto aggr_type = context.GetTypeIdOfInst(inst_id);
+  context.SetLocal(inst_id, GetEnclosingAggregate(context, aggr_type,
+                                                  inst.element_id, inst.index));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ClassInit inst) -> void {
   context.SetLocal(inst_id,
                    EmitAggregateInitializer(context, inst_id, inst.elements_id,

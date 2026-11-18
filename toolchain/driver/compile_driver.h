@@ -1,0 +1,344 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#ifndef CARBON_TOOLCHAIN_DRIVER_COMPILE_DRIVER_H_
+#define CARBON_TOOLCHAIN_DRIVER_COMPILE_DRIVER_H_
+
+#include <memory>
+
+#include "llvm/ADT/SmallVector.h"
+#include "toolchain/diagnostics/sorting_consumer.h"
+#include "toolchain/driver/compile_options.h"
+#include "toolchain/driver/driver_env.h"
+#include "toolchain/sem_ir/inst_namer.h"
+
+namespace llvm {
+class LLVMContext;
+class Module;
+class TargetMachine;
+}  // namespace llvm
+
+namespace Carbon {
+
+class MultiUnitCache;
+
+// Ties together information for a file being compiled.
+class CompilationUnit {
+ public:
+  // `driver_env`, `options`, `consumer`, and `target` must be non-null. If
+  // `output_filename` is empty, no output will be generated for this file. This
+  // is used for inputs that are only used as dependencies of the current
+  // compilation.
+  explicit CompilationUnit(SemIR::CheckIRId check_ir_id, int total_ir_count,
+                           DriverEnv* driver_env, const CompileOptions* options,
+                           Diagnostics::Consumer* consumer,
+                           llvm::StringRef input_filename,
+                           std::string output_filename,
+                           const llvm::Target* target,
+                           llvm::LLVMContext* llvm_context);
+  ~CompilationUnit();
+
+  // Sets the multi-unit cache and initializes dependent member state.
+  auto SetMultiUnitCache(MultiUnitCache* cache) -> void;
+
+  // Loads source and lexes it. Returns true on success.
+  auto RunLex() -> void;
+
+  // Parses tokens. Returns true on success.
+  auto RunParse() -> void;
+
+  // Returns information needed to check this unit.
+  auto GetCheckUnit() -> Check::Unit;
+
+  // Runs post-check logic. Returns true if checking succeeded for the IR.
+  auto PostCheck() -> void;
+
+  // Lower SemIR to LLVM IR.
+  auto RunLower() -> void;
+
+  // Runs the optimization pipeline.
+  auto RunOptimize(const clang::CompilerInvocation& clang_invocation) -> void;
+
+  // Runs post-lowering-to-LLVM-IR logic. This is always called if we do any
+  // lowering work, after we've finished building the IR in RunLower() and,
+  // optionally, RunOptimize().
+  auto PostLower() -> void;
+
+  auto RunCodeGen() -> void;
+
+  // Runs post-compile logic. This is always called, and called after all other
+  // actions on the CompilationUnit.
+  auto PostCompile() -> void;
+
+  // Flushes diagnostics, specifically as part of generating stack trace
+  // information.
+  auto FlushForStackTrace() -> void { consumer_->Flush(); }
+
+  auto input_filename() -> llvm::StringRef { return input_filename_; }
+  auto output_filename() -> llvm::StringRef { return output_filename_; }
+  auto is_lowered() -> bool { return !output_filename_.empty(); }
+  auto has_include_in_dumps() -> bool {
+    return tokens_ && tokens_->has_include_in_dumps();
+  }
+  auto success() -> bool { return success_; }
+  auto has_source() -> bool { return source_.has_value(); }
+  auto get_trees_and_subtrees() -> Parse::GetTreeAndSubtreesFn {
+    return *tree_and_subtrees_getter_;
+  }
+
+  auto source() const -> const SourceBuffer& { return *source_; }
+  auto tokens() const -> const Lex::TokenizedBuffer& { return *tokens_; }
+  auto parse_tree() const -> const Parse::Tree& { return *parse_tree_; }
+  auto parse_tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
+    return GetParseTreeAndSubtrees();
+  }
+  // Only present once the check phase has run.
+  auto has_sem_ir() const -> bool { return sem_ir_.has_value(); }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
+
+  auto get_inst_namer() const -> SemIR::GetInstNamerFn {
+    return *inst_namer_getter_;
+  }
+
+ private:
+  // Do codegen. Returns true on success.
+  auto RunCodeGenHelper() -> bool;
+
+  // The TreeAndSubtrees is mainly used for debugging and diagnostics, and has
+  // significant overhead. Avoid constructing it when unused.
+  auto GetParseTreeAndSubtrees() const -> const Parse::TreeAndSubtrees&;
+
+  auto GetInstNamer() const -> SemIR::InstNamer&;
+
+  // Wraps a call with log statements to indicate start and end. Typically logs
+  // with the actual function name, but marks timings with the appropriate
+  // phase.
+  auto LogCall(llvm::StringLiteral logging_label,
+               llvm::StringLiteral timing_label,
+               llvm::function_ref<auto()->void> fn) -> void;
+
+  // Returns true if the current file should be included in debug dumps.
+  auto IncludeInDumps() -> bool;
+
+  // Builds the LLVM target machine.
+  auto MakeTargetMachine(const clang::CompilerInvocation& clang_invocation)
+      -> void;
+
+  // The index of the unit amongst all units.
+  SemIR::CheckIRId check_ir_id_;
+  // The number of units in total.
+  int total_ir_count_;
+
+  DriverEnv* driver_env_;
+  const CompileOptions* options_;
+  const llvm::Target* target_;
+
+  SharedValueStores value_stores_;
+
+  // The input filename from the command line. For most diagnostics, we
+  // typically use `source_->filename()`, which includes a `-` -> `<stdin>`
+  // translation. However, logging and some diagnostics use the command line
+  // argument.
+  std::string input_filename_;
+  std::string output_filename_;
+
+  // Copied from driver_ for CARBON_VLOG.
+  llvm::raw_pwrite_stream* vlog_stream_;
+
+  // Diagnostics are sent to consumer_, with optional sorting.
+  std::optional<Diagnostics::SortingConsumer> sorting_consumer_;
+  Diagnostics::Consumer* consumer_;
+
+  bool success_ = true;
+
+  // Initialized by `SetMultiUnitCache`.
+  MultiUnitCache* cache_ = nullptr;
+  // Tracks memory usage of the compile. Present when usage is being dumped or
+  // collected into `DriverEnv::mem_usage`; see `SetMultiUnitCache`.
+  mutable std::optional<MemUsage> mem_usage_;
+  // Tracks timings of the compile.
+  std::optional<Timings> timings_;
+
+  // These are initialized as steps are run.
+  std::optional<SourceBuffer> source_;
+  std::optional<Lex::TokenizedBuffer> tokens_;
+  std::optional<Parse::Tree> parse_tree_;
+  mutable std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
+  std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
+      tree_and_subtrees_getter_;
+  mutable std::optional<SemIR::InstNamer> inst_namer_;
+  std::optional<std::function<auto()->SemIR::InstNamer&>> inst_namer_getter_;
+  llvm::LLVMContext* llvm_context_ = nullptr;
+  std::optional<SemIR::File> sem_ir_;
+  std::unique_ptr<llvm::Module> module_;
+  std::unique_ptr<llvm::TargetMachine> target_machine_;
+};
+
+// Caches lists that are shared cross-unit. Accessors do lazy caching because
+// they may not be used.
+class MultiUnitCache {
+ public:
+  using IncludeInDumpsStore = FixedSizeValueStore<SemIR::CheckIRId, bool>;
+  using TreeAndSubtreesGettersStore = Parse::GetTreeAndSubtreesStore;
+  using InstNamerGetterStore =
+      FixedSizeValueStore<SemIR::CheckIRId, SemIR::GetInstNamerFn>;
+
+  // This relies on construction after `units` are all initialized, which is
+  // reflected by the `ArrayRef` here.
+  explicit MultiUnitCache(
+      const CompileOptions* options,
+      llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units)
+      : options_(options), units_(units) {}
+
+  // If `include_in_dumps` is in use, we need to apply per-file include
+  // settings.
+  auto ApplyPerFileIncludeInDumps() -> void {
+    if (!include_in_dumps_) {
+      // No cached value to update.
+      return;
+    }
+    for (const auto& [i, unit] : llvm::enumerate(units_)) {
+      if (unit->has_include_in_dumps()) {
+        include_in_dumps_->Set(SemIR::CheckIRId(i), true);
+      }
+    }
+  }
+
+  auto include_in_dumps() -> const IncludeInDumpsStore& {
+    if (!include_in_dumps_) {
+      include_in_dumps_.emplace(
+          IncludeInDumpsStore::MakeWithExplicitSize(units_.size(), false));
+      for (auto [i, unit] : llvm::enumerate(units_)) {
+        // If this is first accessed after lexing is complete, we need to apply
+        // per-file includes. Otherwise, this is based only on the exclude
+        // option.
+        bool include =
+            unit->has_include_in_dumps() ||
+            llvm::none_of(options_->exclude_dump_file_prefixes,
+                          [&](auto prefix) {
+                            return unit->input_filename().starts_with(prefix);
+                          });
+        include_in_dumps_->Set(SemIR::CheckIRId(i), include);
+      }
+    }
+    return *include_in_dumps_;
+  }
+
+  auto tree_and_subtrees_getters() -> const TreeAndSubtreesGettersStore& {
+    if (!tree_and_subtrees_getters_) {
+      tree_and_subtrees_getters_.emplace(
+          TreeAndSubtreesGettersStore::MakeWithExplicitSize(units_.size(),
+                                                            nullptr));
+      for (auto [i, unit] : llvm::enumerate(units_)) {
+        if (unit->has_source()) {
+          tree_and_subtrees_getters_->Set(SemIR::CheckIRId(i),
+                                          unit->get_trees_and_subtrees());
+        }
+      }
+    }
+    return *tree_and_subtrees_getters_;
+  }
+
+  auto short_file_names() -> const SemIR::ShortFileNameStore& {
+    if (!short_file_names_) {
+      SemIR::TextualNamespace compilation_namespace;
+      llvm::SmallVector<SemIR::TextualNamespace::Name> namespace_names;
+      namespace_names.reserve(units_.size());
+      for (auto [i, unit] : llvm::enumerate(units_)) {
+        std::string short_name;
+        if (unit->has_source()) {
+          std::filesystem::path file_path(
+              std::string_view(unit->source().filename()));
+          short_name = file_path.stem();
+        }
+        namespace_names.push_back(
+            compilation_namespace.AllocateName(std::move(short_name)));
+      }
+      // We need to extract the disambiguated names in a separate pass, because
+      // they aren't stable until the namespace is fully populated.
+      short_file_names_.emplace(
+          SemIR::ShortFileNameStore::MakeWithExplicitSize(units_.size(), ""));
+      for (auto [i, name] : llvm::enumerate(namespace_names)) {
+        short_file_names_->Set(SemIR::CheckIRId(i),
+                               std::string(name.GetFullName()));
+      }
+    }
+    return *short_file_names_;
+  }
+
+  auto inst_namer_getters() -> const InstNamerGetterStore& {
+    if (!inst_namer_getters_) {
+      inst_namer_getters_.emplace(
+          InstNamerGetterStore::MakeWithExplicitSize(units_.size(), nullptr));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        if (unit->has_sem_ir()) {
+          inst_namer_getters_->Set(SemIR::CheckIRId(i), unit->get_inst_namer());
+        }
+      }
+    }
+    return *inst_namer_getters_;
+  }
+
+  auto total_ir_count() const -> int { return units_.size(); }
+
+ private:
+  const CompileOptions* options_;
+
+  // The units being compiled.
+  llvm::ArrayRef<std::unique_ptr<CompilationUnit>> units_;
+
+  // For each unit, whether it's included in dumps. Used cross-phase.
+  std::optional<IncludeInDumpsStore> include_in_dumps_;
+
+  // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
+  std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
+
+  // For each unit, the shorthand name for its file.
+  std::optional<SemIR::ShortFileNameStore> short_file_names_;
+
+  // For each unit, the `InstNamer` for naming its insts. Used cross-phase.
+  std::optional<InstNamerGetterStore> inst_namer_getters_;
+};
+
+// Helper class to compile C++ and Carbon input files. Used by the `build` and
+// `compile` subcommands.
+class CompileDriver {
+ public:
+  explicit CompileDriver(CompileOptions* options);
+  ~CompileDriver();
+
+  // Configure the toolchain to compile all input files and dependencies.
+  // The `map_input` function maps an input file name to an output file name.
+  // Returns `false` on configuration error.
+  [[nodiscard]] auto Initialize(
+      DriverEnv& driver_env,
+      llvm::function_ref<auto(llvm::StringRef)->std::string> map_input) -> bool;
+
+  // Performs the compilation process on each input specified in the
+  // `CompileOptions` provided at construction time.
+  [[nodiscard]] auto Compile(DriverEnv& driver_env) -> DriverResult;
+
+  // Returns the index in the `units()` array of the first input file
+  // specified by the user on the command line. This may not be the first
+  // element in the array due to dependency prepends.
+  auto first_input_index() -> size_t { return input_filenames_index_; }
+
+  // Provides read-only access to the array of CompilationUnits, useful for
+  // subsequent processing of the compiled output products.
+  auto units() -> llvm::ArrayRef<std::unique_ptr<CompilationUnit>> {
+    return units_;
+  }
+
+ private:
+  CompileOptions* options_;
+  size_t input_filenames_index_ = 0;
+  std::unique_ptr<llvm::LLVMContext> llvm_context_;
+  llvm::SmallVector<std::unique_ptr<CompilationUnit>, 256> units_;
+  std::unique_ptr<MultiUnitCache> cache_;
+  std::shared_ptr<clang::CompilerInvocation> clang_invocation_;
+};
+
+}  // namespace Carbon
+
+#endif  // CARBON_TOOLCHAIN_DRIVER_COMPILE_DRIVER_H_

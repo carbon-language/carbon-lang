@@ -8,13 +8,14 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from pathlib import Path
-import subprocess
 import os
 import platform
+import subprocess
 import sys
 import textwrap
 import unittest
+from pathlib import Path
+
 from bazel_tools.tools.python.runfiles import runfiles
 
 
@@ -134,7 +135,13 @@ class InstallTest(unittest.TestCase):
         try:
             obj_file = self.tmpdir / f"{name}.o"
             subprocess.run(
-                [carbon, "compile", f"--output={obj_file}", src_file],
+                [
+                    carbon,
+                    "compile",
+                    "--no-include-carbon-core",
+                    f"--output={obj_file}",
+                    src_file,
+                ],
                 check=True,
                 capture_output=True,
                 text=True,

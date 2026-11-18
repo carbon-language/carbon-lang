@@ -1,0 +1,56 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "carbon-testdata",
+  "scopeName": "source.carbon-testdata",
+  "fileTypes": [],
+  "patterns": [
+    {
+      "include": "#cpp-file-splits"
+    },
+    {
+      "include": "#check-stdout"
+    },
+    {
+      "include": "source.carbon"
+    }
+  ],
+  "repository": {
+    "cpp-file-splits": {
+      "patterns": [
+        {
+          "comment": "C++ file split in test files",
+          "begin": "^//\\s*---\\s*([^\\s]+\\.(h|hh|hpp|hxx|h\\+\\+|cpp|cc|cxx|c\\+\\+|c|H|HH|HPP|HXX|H\\+\\+|CPP|CC|CXX|C\\+\\+|C))\\s*$",
+          "beginCaptures": {
+            "0": { "name": "comment.line.carbon" }
+          },
+          "end": "^(?=//\\s*---)",
+          "contentName": "meta.embedded.block.cpp",
+          "patterns": [
+            {
+              "include": "source.cpp"
+            }
+          ]
+        }
+      ]
+    },
+    "check-stdout": {
+      "patterns": [
+        {
+          "comment": "Highlight compile output / SemIR in CHECK:STDOUT lines",
+          "begin": "^(\\s*//\\s*CHECK:STDOUT:)",
+          "beginCaptures": {
+            "1": {
+              "name": "comment.line.carbon"
+            }
+          },
+          "end": "$",
+          "patterns": [
+            {
+              "include": "source.carbon-semir"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

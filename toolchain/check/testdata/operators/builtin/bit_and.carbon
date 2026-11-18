@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 interface I {}
 interface J {}
 
-fn F1[T:! I & J](unused t: T) {}
-fn F2[T:! I & I](unused t: T) {}
+fn F1[T: I & J](unused t: T) {}
+fn F2[T: I & I](unused t: T) {}
 
 // --- fail_bit_and_non_facet_types.carbon
 library "[[@TEST_NAME]]";
@@ -26,32 +26,44 @@ interface I {}
 class J {}
 class K {}
 
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F1[T:! I & J](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_bit_and_non_facet_types.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F1[T: I & J](unused t: T) {}
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: non-facet type `J` combined with `&` operator
+// CHECK:STDERR:        ·               ┃        [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn F1[T:! I & J](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F2[T:! J & I](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+fn F1[T: I & J](unused t: T) {}
+// CHECK:STDERR:        ╭─┤ fail_bit_and_non_facet_types.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F2[T: J & I](unused t: T) {}
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: non-facet type `J` combined with `&` operator
+// CHECK:STDERR:        ·               ┃        [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn F2[T:! J & I](unused t: T) {}
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+8]]:11: error: non-facet type `J` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+fn F2[T: J & I](unused t: T) {}
+// CHECK:STDERR:        ╭─┤ fail_bit_and_non_facet_types.carbon:[[@LINE+14]]:10
+// CHECK:STDERR: ->     │ fn F3[T: J & K](unused t: T) {}
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: non-facet type `J` combined with `&` operator
+// CHECK:STDERR:        ·               ┃        [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_bit_and_non_facet_types.carbon:[[@LINE+4]]:11: error: non-facet type `K` combined with `&` operator [FacetTypeRequiredForTypeAndOperator]
-// CHECK:STDERR: fn F3[T:! J & K](unused t: T) {}
-// CHECK:STDERR:           ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_bit_and_non_facet_types.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F3[T: J & K](unused t: T) {}
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: non-facet type `K` combined with `&` operator
+// CHECK:STDERR:        ·               ┃        [FacetTypeRequiredForTypeAndOperator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn F3[T:! J & K](unused t: T) {}
+fn F3[T: J & K](unused t: T) {}
 
 // --- bit_and_values_with_impl.carbon
 library "[[@TEST_NAME]]";
 
 class J { adapt {}; }
 impl J as Core.BitAndWith(J) where .Result = J {
-  fn Op[unused self: Self](unused other: Self) -> Self { return {} as J; }
+  fn Op(unused self, unused other: Self) -> Self { return {} as J; }
 }
 
 fn F() {
@@ -68,9 +80,13 @@ class J { adapt {}; }
 fn F() {
   let a: J = {} as J;
   let b: J = {} as J;
-  // CHECK:STDERR: fail_bit_and_values_no_impl.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.BitAndWith(J)` in type `J` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a & b;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_bit_and_values_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a & b;
+  // CHECK:STDERR:        ·   ┳━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.BitAndWith(J)` in type `J`
+  // CHECK:STDERR:        ·      ┃        that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a & b;
 }

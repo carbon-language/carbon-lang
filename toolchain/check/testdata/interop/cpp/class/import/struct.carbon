@@ -28,12 +28,15 @@ import Cpp library "declaration.h";
 fn MyF(bar: Cpp.Bar*);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon = $import_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Bar: type = class_type @Bar [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %Bar [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %bar.param_patt: %pattern_type = value_param_pattern [concrete]
+// CHECK:STDOUT:   %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete]
 // CHECK:STDOUT:   %MyF.type: type = fn_type @MyF [concrete]
 // CHECK:STDOUT:   %MyF: %MyF.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -48,8 +51,8 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %MyF.decl: %MyF.type = fn_decl @MyF [concrete = constants.%MyF] {
-// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:     %bar.patt: %pattern_type = at_binding_pattern bar, %bar.param_patt [concrete]
+// CHECK:STDOUT:     %bar.param_patt: %pattern_type = value_param_pattern [concrete = constants.%bar.param_patt]
+// CHECK:STDOUT:     %bar.patt: %pattern_type = wrapper_binding_pattern bar, %bar.param_patt [concrete = constants.%bar.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %bar.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = constants.%ptr] {
@@ -57,7 +60,7 @@ fn MyF(bar: Cpp.Bar*);
 // CHECK:STDOUT:       %Bar.ref: type = name_ref Bar, imports.%Bar.decl [concrete = constants.%Bar]
 // CHECK:STDOUT:       %ptr: type = ptr_type %Bar.ref [concrete = constants.%ptr]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %bar: %ptr = value_binding bar, %bar.param
+// CHECK:STDOUT:     %bar: %ptr = wrapper_binding bar, %bar.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -151,19 +151,20 @@ TEST_F(TypedNodeTest, VerifyExtractTracePackage) {
       Peer::VerifyExtractAs<PackageDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                 R"Trace(Aggregate [^:]*: begin
-Optional [^:]*: begin
+                                 R"Trace(Aggregate .*: begin
+Optional .*: begin
 NodeIdForKind error: wrong kind IdentifierPackageName, expected LibrarySpecifier
-Optional [^:]*: missing
+Optional .*: missing
 NodeIdInCategory PackageName: kind IdentifierPackageName consumed
 Vector: begin
 NodeIdInCategory Modifier: kind ImplModifier consumed
 NodeIdInCategory Modifier error: kind PackageIntroducer doesn't match
 Vector: end
 NodeIdForKind: PackageIntroducer consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 }
 
@@ -179,16 +180,17 @@ TEST_F(TypedNodeTest, VerifyExtractTraceLibrary) {
       Peer::VerifyExtractAs<LibraryDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(library.has_value());
   Error err = trace;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                 R"Trace(Aggregate [^:]*: begin
+                                 R"Trace(Aggregate .*: begin
 NodeIdOneOf LibraryName or DefaultLibrary: DefaultLibrary consumed
 Vector: begin
 NodeIdInCategory Modifier: kind ImplModifier consumed
 NodeIdInCategory Modifier error: kind LibraryIntroducer doesn't match
 Vector: end
 NodeIdForKind: LibraryIntroducer consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 }
 
@@ -203,23 +205,24 @@ TEST_F(TypedNodeTest, VerifyExtractTraceVarNoInit) {
   auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace);
   ASSERT_TRUE(var.has_value());
   Error err = trace;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                 R"Trace(Aggregate [^:]*: begin
-Optional [^:]*: begin
-Aggregate [^:]*: begin
+                                 R"Trace(Aggregate .*: begin
+Optional .*: begin
+Aggregate .*: begin
 NodeIdInCategory Expr error: kind VariablePattern doesn't match
-Aggregate [^:]*: error
-Optional [^:]*: missing
+Aggregate .*: error
+Optional .*: missing
 NodeIdForKind: VariablePattern consumed
-Optional [^:]*: begin
+Optional .*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
-Optional [^:]*: missing
+Optional .*: missing
 Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 }
 
@@ -234,24 +237,25 @@ TEST_F(TypedNodeTest, VerifyExtractTraceExpression) {
   auto var = Peer::VerifyExtractAs<VariableDecl>(tree, file.decls[0], &trace1);
   ASSERT_TRUE(var.has_value());
   Error err1 = trace1;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err1.message(), testing::MatchesRegex(
-                                  R"Trace(Aggregate [^:]*: begin
-Optional [^:]*: begin
-Aggregate [^:]*: begin
+                                  R"Trace(Aggregate .*: begin
+Optional .*: begin
+Aggregate .*: begin
 NodeIdInCategory Expr: kind MemberAccessExpr consumed
 NodeIdForKind: VariableInitializer consumed
-Aggregate [^:]*: success
-Optional [^:]*: found
+Aggregate .*: success
+Optional .*: found
 NodeIdForKind: VariablePattern consumed
-Optional [^:]*: begin
+Optional .*: begin
 NodeIdForKind error: wrong kind VariableIntroducer, expected ReturnedModifier
-Optional [^:]*: missing
+Optional .*: missing
 Vector: begin
 NodeIdInCategory Modifier error: kind VariableIntroducer doesn't match
 Vector: end
 NodeIdForKind: VariableIntroducer consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 
   ASSERT_TRUE(var->initializer.has_value());
@@ -260,18 +264,19 @@ Aggregate [^:]*: success
       tree, var->initializer->value, &trace2);
   ASSERT_TRUE(value.has_value());
   Error err2 = trace2;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err2.message(), testing::MatchesRegex(
-                                  R"Trace(Aggregate [^:]*: begin
+                                  R"Trace(Aggregate .*: begin
 NodeIdInCategory IntConst\|MemberExpr\|MemberName: kind IdentifierNameNotBeforeSignature consumed
 NodeIdInCategory Expr: kind PointerMemberAccessExpr consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 }
 
 TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
   auto& tree = compile_helper_.GetTreeAndSubtrees(R"carbon(
-    private abstract class N.C(T:! type);
+    private abstract class N.C(T: type);
   )carbon");
   auto file = tree.ExtractFile();
 
@@ -281,29 +286,30 @@ TEST_F(TypedNodeTest, VerifyExtractTraceClassDecl) {
       Peer::VerifyExtractAs<ClassDecl>(tree, file.decls[0], &trace);
   EXPECT_TRUE(class_decl.has_value());
   Error err = trace;
-  // Use Regex matching to avoid hard-coding the result of `typeinfo(T).name()`.
+  // Use Regex matching to avoid hard-coding the result of
+  // `llvm::getTypeName<T>()`.
   EXPECT_THAT(err.message(), testing::MatchesRegex(
-                                 R"Trace(Aggregate [^:]*: begin
-Aggregate [^:]*: begin
-Optional [^:]*: begin
+                                 R"Trace(Aggregate .*: begin
+Aggregate .*: begin
+Optional .*: begin
 NodeIdForKind: ExplicitParamList consumed
-Optional [^:]*: found
-Optional [^:]*: begin
+Optional .*: found
+Optional .*: begin
 NodeIdForKind error: wrong kind IdentifierNameMaybeBeforeSignature, expected ImplicitParamList
-Optional [^:]*: missing
+Optional .*: missing
 NodeIdInCategory NonExprName: kind IdentifierNameMaybeBeforeSignature consumed
 Vector: begin
 NodeIdOneOf IdentifierNameQualifierWithParams or IdentifierNameQualifierWithoutParams: IdentifierNameQualifierWithoutParams consumed
 NodeIdOneOf error: wrong kind AbstractModifier, expected IdentifierNameQualifierWithParams or IdentifierNameQualifierWithoutParams
 Vector: end
-Aggregate [^:]*: success
+Aggregate .*: success
 Vector: begin
 NodeIdInCategory Modifier: kind AbstractModifier consumed
 NodeIdInCategory Modifier: kind PrivateModifier consumed
 NodeIdInCategory Modifier error: kind ClassIntroducer doesn't match
 Vector: end
 NodeIdForKind: ClassIntroducer consumed
-Aggregate [^:]*: success
+Aggregate .*: success
 )Trace"));
 }
 

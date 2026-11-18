@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/lower/type.h"
@@ -14,6 +12,12 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/mangler.h"
+
+namespace clang {
+class CodeGenerator;
+class FunctionDecl;
+}  // namespace clang
 
 namespace Carbon::Lower {
 
@@ -38,6 +42,9 @@ struct FunctionInfo {
 
   // The lowered function declaration.
   llvm::Function* llvm_function;
+
+  // How the lowered function returns its result.
+  ReturnKind return_kind;
 
   // Whether the function type information is inexact, because some component
   // type was incomplete. If this is set, the function should not be used to
@@ -103,6 +110,15 @@ class FileContext {
     return GetTypeAndDIType(type_id).llvm_ir_type;
   }
 
+  // Returns the alignment of the given type_id. This adds the alignment to the
+  // fingerprint.
+  auto GetAlignment(SemIR::TypeId type_id) -> llvm::Align {
+    return llvm::Align(sem_ir()
+                           .types()
+                           .GetCompleteTypeInfo(type_id)
+                           .object_layout.alignment.bytes());
+  }
+
   // Returns both the lowered llvm IR type and the lowered llvm IR debug info
   // type for the given type_id.
   auto GetTypeAndDIType(SemIR::TypeId type_id) const -> LoweredTypes {
@@ -135,7 +151,7 @@ class FileContext {
       -> llvm::Value*;
 
   auto GetVtable(SemIR::VtableId vtable_id, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable* {
+      -> llvm::Constant* {
     if (!specific_id.has_value()) {
       return vtables_.Get(vtable_id);
     }
@@ -154,13 +170,10 @@ class FileContext {
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
-  auto cpp_code_generator() -> clang::CodeGenerator& {
-    CARBON_CHECK(cpp_code_generator_);
-    return *cpp_code_generator_;
-  }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_file() -> const SemIR::CppFile* { return sem_ir().cpp_file(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
+  auto mangler() -> SemIR::Mangler& { return mangler_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
@@ -181,6 +194,12 @@ class FileContext {
   auto BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
+  // Returns or creates the global storage for a non-constant global or static
+  // `let` binding (`WrapperBinding`), or `nullptr` if its value representation
+  // is empty.
+  auto GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+      -> llvm::GlobalVariable*;
+
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing. If this is a generic it'll
   // only be lowered if the specific_id is specified. During this lowering of
@@ -196,6 +215,13 @@ class FileContext {
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+      -> llvm::Function*;
+
+  // Gets the LLVM function that Clang uses for a Carbon thunk exported to C++,
+  // given the thunk's C++ declaration. The thunk's definition is lowered into
+  // this function.
+  auto GetCppThunkLLVMFunction(const FunctionTypeInfo& function_type_info,
+                               clang::FunctionDecl* cpp_decl)
       -> llvm::Function*;
 
   // Notes that a specific function has been referenced for the first time.
@@ -243,7 +269,7 @@ class FileContext {
       -> llvm::DISubprogram*;
 
   auto BuildVtable(const SemIR::Vtable& vtable, SemIR::SpecificId specific_id)
-      -> llvm::GlobalVariable*;
+      -> llvm::Constant*;
 
   // Records a specific that was lowered for a generic. These are added one
   // by one while lowering their definitions.
@@ -257,10 +283,6 @@ class FileContext {
 
   // The input SemIR.
   const SemIR::File* const sem_ir_;
-
-  // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Can be null if no C++ code is imported.
-  clang::CodeGenerator* cpp_code_generator_;
 
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;
@@ -294,6 +316,10 @@ class FileContext {
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 
+  // Maps non-constant global/static `let` bindings (`WrapperBinding`) to their
+  // lowered global storage.
+  Map<SemIR::InstId, llvm::GlobalVariable*> global_bindings_;
+
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from
   // `specific_functions_`.
@@ -303,12 +329,12 @@ class FileContext {
 
   SpecificCoalescer coalescer_;
 
-  FixedSizeValueStore<SemIR::VtableId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::VtableId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       vtables_;
-  FixedSizeValueStore<SemIR::SpecificId, llvm::GlobalVariable*,
-                      Tag<SemIR::CheckIRId>>
+  FixedSizeValueStore<SemIR::SpecificId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       specific_vtables_;
+
+  SemIR::Mangler mangler_;
 };
 
 }  // namespace Carbon::Lower

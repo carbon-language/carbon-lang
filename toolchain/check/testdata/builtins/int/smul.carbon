@@ -16,8 +16,8 @@ library "[[@TEST_NAME]]";
 
 fn Mul(a: i32, b: i32) -> i32 = "int.smul";
 
-class Expect(N:! i32) {}
-fn Test(N:! i32) -> Expect(N) { return {}; }
+class Expect(N: i32) {}
+fn Test(generic N: i32) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Mul(0, 0)) as Expect(0);
@@ -38,10 +38,10 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-fn Mul(a: Core.IntLiteral(), b: Core.IntLiteral()) -> Core.IntLiteral() = "int.smul";
+fn Mul(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.smul";
 
-class Expect(N:! Core.IntLiteral()) {}
-fn Test(N:! Core.IntLiteral()) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(Mul(0, 0)) as Expect(0);
@@ -68,15 +68,19 @@ library "[[@TEST_NAME]]";
 fn Mul(a: i32, b: i32) -> i32 = "int.smul";
 
 let a: i32 = Mul(0x7FFF, 0x10000);
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `32768 * 65536` [CompileTimeIntegerOverflow]
-// CHECK:STDERR: let b: i32 = Mul(0x8000, 0x10000);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let b: i32 = Mul(0x8000, 0x10000);
+// CHECK:STDERR:        ·              ━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: integer overflow in calculation `32768 * 65536`
+// CHECK:STDERR:        ·                         ┃        [CompileTimeIntegerOverflow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = Mul(0x8000, 0x10000);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Mul.type: type = fn_type @Mul [concrete]

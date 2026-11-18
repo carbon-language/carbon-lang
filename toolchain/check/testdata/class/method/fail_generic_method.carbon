@@ -12,26 +12,39 @@
 
 class I {}
 
-class Class(T:! type) {
+class Class(T: type) {
   var a: T;
-  fn F[self: Self](n: T);
+  fn F(self, n: T);
 }
 
 // TODO: The follow-on errors here aren't great. Investigate whether we can
 // enter the scope anyway if the parameters don't match.
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+15]]:17: error: type `<pattern for I>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for type>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn Class(unused N:! I).F[unused self: Self](unused n: T) {}
-// CHECK:STDERR:                 ^~~~~
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE-10]]:13: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: class Class(T:! type) {
-// CHECK:STDERR:             ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_method.carbon:[[@LINE+28]]:17
+// CHECK:STDERR:        │ class Class(T: type) {
+// CHECK:STDERR:        ·             ───┬───
+// CHECK:STDERR:        ·                ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                   │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn Class(unused N: I).F(unused self, unused n: T) {}
+// CHECK:STDERR:        ·                 ┳━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: type `<pattern for I>` of parameter 1 in
+// CHECK:STDERR:        ·                    ┃        redeclaration differs from previous parameter type
+// CHECK:STDERR:        ·                    ┃        `<pattern for type>`
+// CHECK:STDERR:        ·                    ┃        [RedeclParamDiffersType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+8]]:39: error: name `Self` not found [NameNotFound]
-// CHECK:STDERR: fn Class(unused N:! I).F[unused self: Self](unused n: T) {}
-// CHECK:STDERR:                                       ^~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_method.carbon:[[@LINE+14]]:32
+// CHECK:STDERR: ->     │ fn Class(unused N: I).F(unused self, unused n: T) {}
+// CHECK:STDERR:        ·                                ━━┳━
+// CHECK:STDERR:        ·                                  ┗━━┫ error: name `Self` not found
+// CHECK:STDERR:        ·                                     ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_generic_method.carbon:[[@LINE+4]]:55: error: name `T` not found [NameNotFound]
-// CHECK:STDERR: fn Class(unused N:! I).F[unused self: Self](unused n: T) {}
-// CHECK:STDERR:                                                       ^
+// CHECK:STDERR:        ╭─┤ fail_generic_method.carbon:[[@LINE+7]]:48
+// CHECK:STDERR: ->     │ fn Class(unused N: I).F(unused self, unused n: T) {}
+// CHECK:STDERR:        ·                                                ┳
+// CHECK:STDERR:        ·                                                ┗━━┫ error: name `T` not found
+// CHECK:STDERR:        ·                                                   ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn Class(unused N:! I).F[unused self: Self](unused n: T) {}
+fn Class(unused N: I).F(unused self, unused n: T) {}

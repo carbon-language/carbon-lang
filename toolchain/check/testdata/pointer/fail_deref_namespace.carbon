@@ -15,21 +15,26 @@
 namespace A;
 
 fn F() {
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+4]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   *A;
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:        ╭─┤ fail_deref_namespace.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   *A;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
-  // CHECK:STDERR:   A->foo;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:        ╭─┤ fail_deref_namespace.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   A->foo;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   A->foo;
 }
 
-// CHECK:STDOUT: --- fail_deref_namespace.carbon
+// CHECK:STDOUT: --- fail_deref_namespace.carbon = $fail_deref_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -54,10 +59,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc22: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc22: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc27: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc27: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc24: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc24: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc31: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc31: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -27,7 +27,16 @@ class TestNewProposal(unittest.TestCase):
         )
         self.assertEqual(
             new_proposal._calculate_branch(parsed_args),
-            "proposal-a-really-long-long-l",
+            "proposal-a-really-long-long-long-title",
+        )
+
+    def test_calculate_branch_special(self):
+        parsed_args = new_proposal._parse_args(
+            ["A title with #*%$ special `char`s"]
+        )
+        self.assertEqual(
+            new_proposal._calculate_branch(parsed_args),
+            "proposal-a-title-with-special-char-s",
         )
 
     def test_calculate_branch_flag(self):

@@ -2,19 +2,13 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "utils/tree_sitter/src/tree_sitter/parser.h"
+#include "tree_sitter/parser.h"
 
 enum TokenType {
   BINARY_STAR,
   POSTFIX_STAR,
   STRING,
 };
-
-// This is part of a special rule that doesn't allow `copts` in Bazel, so we
-// disable warnings using `#pragma`s here.
-#pragma clang diagnostic push
-// The tree_sitter build uses C functions without prototypes.
-#pragma clang diagnostic ignored "-Wmissing-prototypes"
 
 // our scanner is stateless
 void* tree_sitter_carbon_external_scanner_create(void) { return NULL; }
@@ -89,6 +83,11 @@ bool tree_sitter_carbon_external_scanner_scan(
       (valid_symbols[BINARY_STAR] || valid_symbols[POSTFIX_STAR])) {
     // move to past the *, add * to current token
     lexer->advance(lexer, /* skip= */ false);
+
+    // `*=` is a separate token, handled by the internal lexer.
+    if (lexer->lookahead == '=') {
+      return false;
+    }
 
     // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md
     if (is_whitespace(lexer->lookahead) && whitespace) {

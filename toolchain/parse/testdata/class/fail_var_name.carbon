@@ -9,114 +9,134 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_var_name.carbon
 
 class C {
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:6: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var;
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var;
 
   var name;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var :;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var :;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var :;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var : C;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var : C;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var : C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   var name:;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:12
+  // CHECK:STDERR: ->     │   var name:;
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name C;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:11
+  // CHECK:STDERR: ->     │   var name C;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name: C C;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   var name: C C;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: `var` declarations must end with a `;`
+  // CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name: C C;
 
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name name: C;
-  // CHECK:STDERR:            ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:11
+  // CHECK:STDERR: ->     │   var name name: C;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name name: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: found `:!` pattern inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var name:! C;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+7]]:22
+  // CHECK:STDERR: ->     │   var generic name: C;
+  // CHECK:STDERR:        ·                      ┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                         ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  var name:! C;
+  var generic name: C;
 }
 
 // CHECK:STDOUT: - filename: fail_var_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: ':', has_error: yes},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'name'},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'name'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':!', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':!', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 53},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─InvalidParse ':' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─InvalidParse ':' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─SelfValueName 'self'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

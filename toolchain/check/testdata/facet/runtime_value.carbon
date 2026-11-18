@@ -44,9 +44,13 @@ fn F(c: C) {
   // TODO: This copy should work, but the narrowing prevents it currently.
   //
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+4]]:21: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
-  // CHECK:STDERR:   let unused a: I = c.ij;
-  // CHECK:STDERR:                     ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+8]]:21
+  // CHECK:STDERR: ->     │   let unused a: I = c.ij;
+  // CHECK:STDERR:        ·                     ┳━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                        ┃        `conversion of runtime facet value`
+  // CHECK:STDERR:        ·                        ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: I = c.ij;
   //@dump-sem-ir-end
@@ -56,12 +60,16 @@ fn F(c: C) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
-// CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: semantics TODO: `associated value lookup on runtime facet value` [SemanticsTodo]
-// CHECK:STDERR: fn F(T: Z, v: T.(Z.X));
-// CHECK:STDERR:               ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+8]]:15
+// CHECK:STDERR: ->     │ fn F(T: Z, v: T.(Z.X));
+// CHECK:STDERR:        ·               ┳━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·                  ┃        `associated value lookup on runtime facet value`
+// CHECK:STDERR:        ·                  ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(T: Z, v: T.(Z.X));
 
@@ -69,16 +77,20 @@ fn F(T: Z, v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: Improve this diagnostic. The problem is that T is a runtime facet
 // _and_ its facet type doesn't specific a value for `.X`. Or make this work
 // by producing an ImplWitnessAccess that functions against a runtime facet.
 //
-// CHECK:STDERR: fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: fn F(T: Z, v: T.X);
-// CHECK:STDERR:               ^~~
+// CHECK:STDERR:        ╭─┤ fail_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+8]]:15
+// CHECK:STDERR: ->     │ fn F(T: Z, v: T.X);
+// CHECK:STDERR:        ·               ┳━━
+// CHECK:STDERR:        ·               ┗━━┫ error: cannot access member of interface `Z` in type `Z` that
+// CHECK:STDERR:        ·                  ┃        does not implement that interface
+// CHECK:STDERR:        ·                  ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(T: Z, v: T.X);
 
@@ -86,15 +98,19 @@ fn F(T: Z, v: T.X);
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
 // `T`.
 //
-// CHECK:STDERR: fail_todo_compound_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
-// CHECK:STDERR: fn F(T: Z where .X = (), v: T.(Z.X));
-// CHECK:STDERR:                             ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_compound_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+8]]:29
+// CHECK:STDERR: ->     │ fn F(T: Z where .X = (), v: T.(Z.X));
+// CHECK:STDERR:        ·                             ┳━━━━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·                                ┃        `conversion of runtime facet value`
+// CHECK:STDERR:        ·                                ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(T: Z where .X = (), v: T.(Z.X));
 
@@ -102,15 +118,20 @@ fn F(T: Z where .X = (), v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
 // `T`.
 //
-// CHECK:STDERR: fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+4]]:29: error: cannot access member of interface `Z` in type `Z where .(Z.X) = ()` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: fn F(T: Z where .X = (), v: T.X);
-// CHECK:STDERR:                             ^~~
+// CHECK:STDERR:        ╭─┤ fail_todo_member_lookup_in_runtime_facet_with_value.carbon:[[@LINE+9]]:29
+// CHECK:STDERR: ->     │ fn F(T: Z where .X = (), v: T.X);
+// CHECK:STDERR:        ·                             ┳━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: cannot access member of interface `Z` in
+// CHECK:STDERR:        ·                                ┃        type `Z where .(Z.X) = ()` that does not
+// CHECK:STDERR:        ·                                ┃        implement that interface
+// CHECK:STDERR:        ·                                ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(T: Z where .X = (), v: T.X);
 
@@ -122,57 +143,98 @@ interface Z {
 }
 
 fn F(T: Z) {
-  // CHECK:STDERR: fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   T.G();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_member_lookup_in_type_of_runtime_facet_with_value.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   T.G();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Z` in type `Z` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T.G();
 }
 
-// CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
+// --- fail_member_access_runtime_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  fn G();
+}
+
+fn F(T: Z) {
+  // CHECK:STDERR:        ╭─┤ fail_member_access_runtime_facet.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   T.G();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Z` in type `Z` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  T.G();
+}
+
+// --- fail_member_access_runtime_type.carbon
+library "[[@TEST_NAME]]";
+
+fn F(T: type) {
+  // CHECK:STDERR:        ╭─┤ fail_member_access_runtime_type.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   T.G();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: type `type` does not support qualified expressions
+  // CHECK:STDERR:        ·       ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  T.G();
+}
+
+// CHECK:STDOUT: --- facet_value_copy_from_reference.carbon = $facet_value_copy_from_reference
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %pattern_type.798: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %I.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.798 = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
+// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc13_22.1: ref %I.type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc13_22.2: %I.type = acquire_value %.loc13_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = value_binding a, %.loc13_22.2
+// CHECK:STDOUT:   %a: %I.type = wrapper_binding a, %.loc13_22.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
+// CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon = $fail_todo_facet_copy_narrowing_from_reference
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %facet_type [concrete]
-// CHECK:STDOUT:   %pattern_type.c7c: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.c7c = value_binding_pattern a [concrete]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7 [concrete = @C.%.loc7]
-// CHECK:STDOUT:   %.loc21_22.1: ref %facet_type = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc21_22.2: %facet_type = acquire_value %.loc21_22.1
+// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%field_decl [concrete = @C.%field_decl]
+// CHECK:STDOUT:   %.loc25_22.1: ref %facet_type = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc25_22.2: %facet_type = acquire_value %.loc25_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: %I.type = wrapper_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

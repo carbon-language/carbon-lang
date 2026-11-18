@@ -4,4 +4,5 @@
 
 package Core library "prelude/types/int_literal";
 
-fn IntLiteral() -> type = "int_literal.make_type";
+private fn MakeIntLiteral() -> type = "int_literal.make_type";
+alias IntLiteral = MakeIntLiteral();

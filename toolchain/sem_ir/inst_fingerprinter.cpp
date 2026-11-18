@@ -11,16 +11,23 @@
 
 #include "common/concepts.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
+#include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
+#include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
+#include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
@@ -144,12 +151,12 @@ class StringFingerprintStore {
     bool first = true;
     for (const auto& item : contents_) {
       if (!first) {
-        result += ",";
+        result.push_back(',');
       }
       first = false;
       result += item;
     }
-    result += "}";
+    result.push_back('}');
     return SaveString(std::move(result));
   }
 
@@ -239,6 +246,9 @@ struct Worklist {
   // Add a string to the contents.
   auto AddString(llvm::StringRef string) -> void { store->AddString(string); }
 
+  // Add an integer to the contents.
+  auto AddInteger(uint64_t value) -> void { store->AddInteger(value); }
+
   // Each of the following `Add` functions adds a typed argument to the contents
   // of the current instruction. If we don't yet have a fingerprint for the
   // argument, it instead adds that argument to the worklist instead.
@@ -277,8 +287,16 @@ struct Worklist {
       // also be a compatible change from the perspective of users of a generic.
     } else {
       Add(entity_name.name_id);
+      if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
+        AddInteger(entity_name.is_frozen_period_self);
+      }
     }
     Add(entity_name.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity_name.name_id, entity_name.parent_scope_id)) {
+      AddLibrary(sem_ir);
+    }
   }
 
   auto AddInFile(const File* file, InstId inner_id) -> void {
@@ -313,7 +331,7 @@ struct Worklist {
 
   template <typename T>
   auto AddBlock(llvm::ArrayRef<T> block) -> void {
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto inner_id : block) {
       Add(inner_id);
     }
@@ -346,26 +364,17 @@ struct Worklist {
       return;
     }
     auto block = sem_ir->custom_layouts().Get(custom_layout_id);
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto size : block) {
-      store->AddInteger(size.bits());
+      AddInteger(size.bits());
     }
   }
 
   auto AddPackage(NameScopeId name_scope_id) -> void {
-    if (name_scope_id == NameScopeId::Package) {
-      AddLibrary(sem_ir);
-      return;
-    }
-
-    const auto& scope = sem_ir->name_scopes().Get(name_scope_id);
-    CARBON_CHECK(scope.is_imported_package());
-    if (!scope.import_ir_scopes().empty()) {
-      auto import_ir_id = scope.import_ir_scopes().front().first;
-      AddLibrary(sem_ir->import_irs().Get(import_ir_id).sem_ir);
-    } else {
-      AddInvalid();
-    }
+    CARBON_CHECK(sem_ir->name_scopes().IsPackage(name_scope_id));
+    Add(name_scope_id == NameScopeId::Package
+            ? NameId::ForPackageName(sem_ir->package_id())
+            : sem_ir->name_scopes().Get(name_scope_id).name_id());
   }
 
   auto Add(NameScopeId name_scope_id) -> void {
@@ -375,9 +384,12 @@ struct Worklist {
     }
 
     // If this is the current package or an imported package, add the package
-    // and library name.
+    // name.
     if (sem_ir->name_scopes().IsPackage(name_scope_id)) {
       AddPackage(name_scope_id);
+      // Add a placeholder parent scope to match the fingerprinting we'd use for
+      // a non-package scope.
+      AddString("<package root>");
       return;
     }
 
@@ -401,22 +413,35 @@ struct Worklist {
   template <typename EntityT = EntityWithParamsBase>
   auto AddEntity(const std::type_identity_t<EntityT>& entity) -> void {
     Add(entity.name_id);
-    if (entity.parent_scope_id.has_value()) {
-      Add(entity.parent_scope_id);
+    Add(entity.parent_scope_id);
+
+    if (sem_ir->name_scopes().IsPrivateWithinNamespace(
+            entity.name_id, entity.parent_scope_id)) {
+      AddLibrary(sem_ir);
     }
   }
 
   auto Add(FunctionId function_id) -> void {
-    AddEntity(sem_ir->functions().Get(function_id));
+    const auto& function = sem_ir->functions().Get(function_id);
+    if (!function.name_id.has_value()) {
+      auto [canonical_ir, canonical_decl_id] =
+          GetCanonicalFileAndInstId(sem_ir, function.first_decl_id());
+      llvm::SaveAndRestore in_file(sem_ir, canonical_ir);
+      AddPackage(NameScopeId::Package);
+      AddLibrary(canonical_ir);
+      // TODO: Find a more stable way to assign fingerprints to unnamed
+      // functions.
+      AddInteger(canonical_decl_id.index);
+      return;
+    }
+    AddEntity(function);
   }
 
   auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
     const CppOverloadSet& cpp_overload_set =
         sem_ir->cpp_overload_sets().Get(cpp_overload_set_id);
     Add(cpp_overload_set.name_id);
-    if (cpp_overload_set.parent_scope_id.has_value()) {
-      Add(cpp_overload_set.parent_scope_id);
-    }
+    Add(cpp_overload_set.parent_scope_id);
   }
 
   auto Add(ClangDeclId /*decl_id*/) -> void {
@@ -427,20 +452,59 @@ struct Worklist {
     // See also: https://github.com/carbon-language/carbon-lang/issues/6728
   }
 
+  auto Add(ClangFunctionPointerTypeId /*type_id*/) -> void {
+    // TODO: Add fingerprinting for `ClangFunctionPointerTypeId`.
+    // See also: https://github.com/carbon-language/carbon-lang/issues/6728
+  }
+
   auto Add(ClassId class_id) -> void {
     AddEntity(sem_ir->classes().Get(class_id));
+    // Imported C++ classes are not uniquely identified by their name and parent
+    // scope, so we also include the Clang mangled type name, which is computed
+    // on demand. The Clang type name is unique, as it is the canonical C++
+    // identity. Carbon classes rely on the name and scope from `AddEntity`.
+    llvm::SmallString<128> cpp_mangled_name;
+    llvm::raw_svector_ostream os(cpp_mangled_name);
+    if (sem_ir->AppendCppMangledTypeName(class_id, os)) {
+      AddString(cpp_mangled_name);
+    } else {
+      AddInvalid();
+    }
+  }
+
+  auto Add(FieldId field_id) -> void {
+    const auto& field = sem_ir->fields().Get(field_id);
+    Add(field.index);
+    Add(field.initializer_id);
   }
 
   auto Add(VtableId vtable_id) -> void {
     const auto& vtable = sem_ir->vtables().Get(vtable_id);
     if (vtable.class_id.has_value()) {
       Add(vtable.class_id);
+    } else {
+      AddInvalid();
     }
     Add(vtable.virtual_functions_id);
   }
 
   auto Add(InterfaceId interface_id) -> void {
     AddEntity(sem_ir->interfaces().Get(interface_id));
+  }
+
+  auto Add(MetaInstId /*meta_inst_id*/) -> void {
+    // TODO: Add some mechanism to fingerprint the target instruction. We allow
+    // "cycles" via `MetaInstId`, so we can't profile it here, and `MetaInstId`
+    // refers to the identity of the instruction, not merely its abstract value,
+    // so profiling it recursively wouldn't be correct either.
+  }
+
+  auto Add(MetaInstBlockId meta_inst_block_id) -> void {
+    if (!meta_inst_block_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    AddBlock(sem_ir->inst_blocks().Get(meta_inst_block_id));
   }
 
   auto Add(NamedConstraintId named_constraint_id) -> void {
@@ -452,8 +516,15 @@ struct Worklist {
     const auto& require = sem_ir->require_impls().Get(require_id);
     Add(sem_ir->constant_values().Get(require.self_id));
     Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
-    store->AddInteger(require.extend_self);
+    AddInteger(require.extend_self);
     Add(require.parent_scope_id);
+  }
+
+  auto Add(ObserveId observe_id) -> void {
+    CARBON_CHECK(observe_id.has_value());
+    const auto& observe = sem_ir->observes().Get(observe_id);
+    Add(observe.operations_id);
+    Add(observe.enclosing_scope_inst_id);
   }
 
   auto Add(AssociatedConstantId assoc_const_id) -> void {
@@ -478,14 +549,19 @@ struct Worklist {
     // decl block don't change the identity of the declaration.
   }
 
-  auto Add(LabelId /*block_id*/) -> void {
-    CARBON_FATAL("Should never fingerprint a label");
+  auto Add(LabelId block_id) -> void {
+    // TODO: Find a more stable way to assign fingerprints to labels. Possibly
+    // we could just number them sequentially, in the order we encounter them,
+    // but that would require a persistent cache to ensure we use the same
+    // number on subsequent encounters.
+    AddInteger(block_id.index);
   }
 
-  auto Add(FacetTypeId facet_type_id) -> void {
-    const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
+  auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const auto& facet_type =
+        sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
-      store->AddInteger(constraints.size());
+      AddInteger(constraints.size());
       for (auto [first, second] : constraints) {
         Add(first);
         Add(second);
@@ -494,7 +570,7 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    store->AddInteger(facet_type.other_requirements);
+    AddInteger(facet_type.other_requirements);
   }
 
   auto Add(GenericId generic_id) -> void {
@@ -513,6 +589,12 @@ struct Worklist {
     const auto& specific = sem_ir->specifics().Get(specific_id);
     Add(specific.generic_id);
     Add(specific.args_id);
+    AddInteger(specific.identified);
+  }
+
+  auto Add(SpecificInterface specific_interface) -> void {
+    Add(specific_interface.interface_id);
+    Add(specific_interface.specific_id);
   }
 
   auto Add(SpecificInterfaceId specific_interface_id) -> void {
@@ -520,10 +602,7 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    const auto& interface =
-        sem_ir->specific_interfaces().Get(specific_interface_id);
-    Add(interface.interface_id);
-    Add(interface.specific_id);
+    Add(sem_ir->specific_interfaces().Get(specific_interface_id));
   }
 
   auto Add(const llvm::APInt& value) -> void { store->AddAPInt(value); }
@@ -538,17 +617,11 @@ struct Worklist {
     const auto& real = sem_ir->reals().Get(real_id);
     Add(real.mantissa);
     Add(real.exponent);
-    store->AddInteger(real.is_decimal);
+    AddInteger(real.is_decimal);
   }
 
   auto Add(PackageNameId package_id) -> void {
-    if (auto ident_id = package_id.AsIdentifierId(); ident_id.has_value()) {
-      AddString(sem_ir->identifiers().Get(ident_id));
-    } else {
-      // TODO: May collide with a user package of the same name. Consider using
-      // a different value.
-      AddString(package_id.AsSpecialName());
-    }
+    Add(NameId::ForPackageName(package_id));
   }
 
   auto Add(LibraryNameId lib_name_id) -> void {
@@ -563,14 +636,23 @@ struct Worklist {
     }
   }
 
+  // Adds just the library name to the fingerprint. Does not add the package
+  // name, as it is typically already included as the outermost scope name. The
+  // caller is responsible for ensuring the package name is added somehow.
   auto AddLibrary(const File* file) -> void {
     llvm::SaveAndRestore in_file(sem_ir, file);
-    Add(file->package_id());
+    // Add a marker to prevent collisions with scope names.
+    AddString("<library>");
     Add(file->library_id());
   }
 
   auto Add(ImportIRId ir_id) -> void {
-    AddLibrary(sem_ir->import_irs().Get(ir_id).sem_ir);
+    // TODO: Is the ImportIRId for an ImportRef always the same IR for the same
+    // entity (eg, always the owning IR, or always the first-declaring IR)?
+    const auto* file = sem_ir->import_irs().Get(ir_id).sem_ir;
+    llvm::SaveAndRestore in_file(sem_ir, file);
+    AddPackage(NameScopeId::Package);
+    Add(file->library_id());
   }
 
   auto Add(ImportIRInstId ir_inst_id) -> void {
@@ -594,13 +676,22 @@ struct Worklist {
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
-    store->AddInteger(arg.index);
+    AddInteger(arg.index);
+  }
+
+  auto Add(ExprRegionId region_id) -> void {
+    auto region = sem_ir->expr_regions().Get(region_id);
+    for (auto block_id : region.block_ids) {
+      Add(block_id);
+    }
+    Add(region.result_id);
   }
 
   template <typename T>
-    requires(SameAsOneOf<T, AnyRawId, ExprRegionId, LocId>)
+    requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
-    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+    CARBON_FATAL("Unexpected instruction operand kind {0}",
+                 llvm::getTypeName<T>());
   }
 
   auto Add(IdAndKind::InvalidType /*invalid*/) -> void {
@@ -617,11 +708,49 @@ struct Worklist {
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
   // re-lookup, returns the fingerprint of the first instruction on the todo
   // list, and requires the todo list to be non-empty.
+  //
+  // To avoid runaway fingerprinting, we use a cycle detector based on Brent's
+  // algorithm.
   auto Run() -> ResultType {
     CARBON_CHECK(!todo.empty());
+
+    // The index of an enclosing item we are visiting. If we see this again at
+    // an index in
+    //   [cycle_detector_index + 1, 2 * cycle_detector_index),
+    // we have found a cycle, and if we go deeper than that, we pick a new index
+    // and watch it for longer.
+    int cycle_detector_index = todo.size() - 1;
+
     while (true) {
-      const size_t init_size = todo.size();
+      const int init_size = todo.size();
       auto [next_sem_ir, next] = todo.back();
+
+      // Check that we're not in a cycle.
+      if (cycle_detector_index < init_size - 1 &&
+          init_size - 1 < cycle_detector_index * 2) {
+        CARBON_CHECK(
+            todo[init_size - 1] != todo[cycle_detector_index],
+            "Fingerprinting got stuck in a cycle"
+#ifndef NDEBUG
+            ":{0}",
+            [&]() -> std::string {
+              RawStringOstream out;
+              for (auto [next_sem_ir, next] : llvm::ArrayRef(todo).slice(
+                       cycle_detector_index,
+                       init_size - cycle_detector_index)) {
+                out << "\n";
+                std::visit([&](auto id) { out << Dump(*next_sem_ir, id); },
+                           next);
+              }
+              return out.TakeStr();
+            }()
+#endif
+        );
+      } else {
+        // We've left the region of the stack in which we're looking for this
+        // item. Switch to looking for the current item.
+        cycle_detector_index = init_size - 1;
+      }
 
       sem_ir = next_sem_ir;
       store->Prepare();
@@ -650,7 +779,7 @@ struct Worklist {
         // the fingerprint for things other than `InstId`, but we really only
         // expect other `next` types to be at the bottom of the `todo` stack
         // since they are not added to `todo` during Run().
-        if (todo.size() == init_size) {
+        if (static_cast<int>(todo.size()) == init_size) {
           auto fingerprint = Finish();
           todo.pop_back();
           CARBON_CHECK(todo.empty(),
@@ -690,13 +819,19 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      AddWithKind(inst.arg0_and_kind());
-      AddWithKind(inst.arg1_and_kind());
+      // TODO: change `ImplWitnessTable::elements_id` type with a new type whose
+      // value is not a part of the identity of the instruction.
+      if (auto impl_witness_table = inst.TryAs<SemIR::ImplWitnessTable>()) {
+        Add(impl_witness_table->impl_id);
+      } else {
+        AddWithKind(inst.arg0_and_kind());
+        AddWithKind(inst.arg1_and_kind());
+      }
 
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so
       // we can compute its fingerprint once we've finished the work we added.
-      if (todo.size() == init_size) {
+      if (static_cast<int>(todo.size()) == init_size) {
         ResultType fingerprint = Finish();
         SetFingerprint(next_sem_ir, next_inst_id, fingerprint);
         todo.pop_back();

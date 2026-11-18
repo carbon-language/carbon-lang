@@ -52,11 +52,19 @@ struct CharLiteralValue {
 class TokenInfo {
  public:
   // The kind for this token.
-  auto kind() const -> TokenKind { return kind_; }
+  auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
 
   // Whether this token is preceded by whitespace. We only store the preceding
   // state, and look at the next token to check for trailing whitespace.
   auto has_leading_space() const -> bool { return has_leading_space_; }
+
+  // Returns a copy of this token info with the given leading space flag.
+  [[nodiscard]] auto WithLeadingSpace(bool has_leading_space) const
+      -> TokenInfo {
+    TokenInfo info = *this;
+    info.has_leading_space_ = has_leading_space;
+    return info;
+  }
 
   // A collection of methods to access the specific payload included with
   // particular kinds of tokens. Only the specific payload accessor below may
@@ -86,7 +94,8 @@ class TokenInfo {
     CARBON_DCHECK(kind() == TokenKind::IntLiteral ||
                   kind() == TokenKind::IntTypeLiteral ||
                   kind() == TokenKind::UnsignedIntTypeLiteral ||
-                  kind() == TokenKind::FloatTypeLiteral);
+                  kind() == TokenKind::FloatTypeLiteral ||
+                  kind() == TokenKind::DollarIntLiteral);
     return IntId::MakeFromTokenPayload(token_payload_);
   }
 
@@ -123,14 +132,20 @@ class TokenInfo {
   // token as well.
   auto byte_offset() const -> int32_t { return byte_offset_; }
 
-  // Transforms the token into an error token of the given length but at its
-  // original position and with the same whitespace adjacency.
-  auto ResetAsError(int error_length) -> void {
-    // Construct a fresh token to establish any needed invariants and replace
-    // this token with it.
-    TokenInfo error(TokenKind::Error, has_leading_space(), error_length,
-                    byte_offset());
-    *this = error;
+  // Returns an error token of the given length with this token's position and
+  // whitespace adjacency.
+  [[nodiscard]] auto AsError(int error_length) const -> TokenInfo {
+    return TokenInfo(TokenKind::Error, has_leading_space(), error_length,
+                     byte_offset());
+  }
+
+  // Returns an identifier token with the given identifier id with this
+  // token's position and whitespace adjacency.
+  [[nodiscard]] auto AsErrorRecoveryIdentifier(IdentifierId id) const
+      -> TokenInfo {
+    CARBON_CHECK(kind().is_word());
+    return TokenInfo(TokenKind::Identifier, has_leading_space(), id.index,
+                     byte_offset());
   }
 
  private:
@@ -147,14 +162,19 @@ class TokenInfo {
   //
   // Only used by the lexer which enforces only the correct kinds are used.
   //
-  // When the payload is not being set, we leave it uninitialized. At least in
-  // some cases, this will allow MSan to correctly detect erroneous attempts
-  // to access the payload, as it works to track uninitialized memory
-  // bit-for-bit specifically to handle complex cases like bitfields.
+  // Under MSan, leave `token_payload_` uninitialized so bit-level tracking can
+  // detect erroneous attempts to access a missing payload. In non-MSan builds,
+  // zero-initialize it so constructing a payloadless `TokenInfo` compiles to a
+  // plain 32-bit store rather than a read-modify-write preserving uninitialized
+  // upper bits (which SROA otherwise promotes to loop-carried registers).
   TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
       : kind_(kind),
         has_leading_space_(has_leading_space),
-        byte_offset_(byte_offset) {}
+#if !__has_feature(memory_sanitizer)
+        token_payload_(0),
+#endif
+        byte_offset_(byte_offset) {
+  }
 
   // Constructor for a TokenKind that carries a payload.
   //
@@ -176,8 +196,8 @@ class TokenInfo {
   // token index. Stores to this field may overflow, but we produce an error
   // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
   // so this value never overflows if lexing succeeds.
-  TokenKind kind_;
-  static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
+  static_assert(sizeof(TokenKind) == 1, "TokenKind must pack to 8 bits");
+  TokenKind::RawEnumType kind_ : 8;
   bool has_leading_space_ : 1;
   unsigned token_payload_ : PayloadBits;
 

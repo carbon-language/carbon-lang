@@ -1,0 +1,175 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/field/field_initializer.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/field/field_initializer.carbon
+
+// --- field_initializer.carbon
+library "[[@TEST_NAME]]";
+
+//@dump-sem-ir-begin
+class Class {
+  var field: i32 = 123;
+}
+
+var C: Class = {};
+//@dump-sem-ir-end
+
+// --- field_initializer_import.carbon
+library "[[@TEST_NAME]]";
+
+import library "field_initializer";
+
+var C2: Class = {};
+
+// --- field_initializer_generic.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let Default: Self;
+}
+
+impl i32 as I where .Default = 123 {}
+
+class Class(T: I) {
+  var x: T = T.Default;
+}
+
+var C: Class(i32) = {};
+
+// --- fail_field_initializer_invalid_name.carbon
+library "[[@TEST_NAME]]";
+
+class Class {
+  var field: i32 = 123;
+}
+
+// CHECK:STDERR:        ╭─┤ fail_field_initializer_invalid_name.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var C: Class = {.not_a_field = 456};
+// CHECK:STDERR:        ·                ━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: struct `Class` has no field named `not_a_field`
+// CHECK:STDERR:        ·                         ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+var C: Class = {.not_a_field = 456};
+
+// --- fail_field_initializer_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+class Class {
+  // CHECK:STDERR:        ╭─┤ fail_field_initializer_wrong_type.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR: ->     │   var field: i32 = ();
+  // CHECK:STDERR:        ·                    ┳━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
+  // CHECK:STDERR:        ·                    │  ┃        to `i32`
+  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
+  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  var field: i32 = ();
+}
+
+// --- fail_field_initializer_not_constant.carbon
+library "[[@TEST_NAME]]";
+
+var x: i32;
+class Class {
+  // CHECK:STDERR:        ╭─┤ fail_field_initializer_not_constant.carbon:[[@LINE+8]]:20
+  // CHECK:STDERR: ->     │   var field: i32 = x;
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                       ┃        `field initializer is not constant`
+  // CHECK:STDERR:        ·                       ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  var field: i32 = x;
+}
+
+var C: Class = {};
+
+// CHECK:STDOUT: --- field_initializer.carbon = $field_initializer
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %i32 [concrete]
+// CHECK:STDOUT:   %int_123.fff: Core.IntLiteral = int_value 123 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_123.fff, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_123.fff, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_123.c07: %i32 = int_value 123 [concrete]
+// CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.397: <witness> = complete_type_witness %struct_type.field [concrete]
+// CHECK:STDOUT:   %pattern_type.f15: type = pattern_type %Class [concrete]
+// CHECK:STDOUT:   %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete]
+// CHECK:STDOUT:   %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %Class.val: %Class = struct_value (%int_123.c07) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
+// CHECK:STDOUT:   %C.var: ref %Class = var_storage %C.var_patt [concrete]
+// CHECK:STDOUT:   %Class.ref: type = name_ref Class, %Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %C: ref %Class = wrapper_binding C, %C.var [concrete = %C.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %C.patt: %pattern_type.f15 = ref_binding_pattern C [concrete = constants.%C.patt]
+// CHECK:STDOUT:     %C.var_patt: %pattern_type.f15 = var_pattern %C.patt [concrete = constants.%C.var_patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Class {
+// CHECK:STDOUT:   %field_decl: %Class.elem = field_decl field, element0, initializer = inst64000108, %i32 in [concrete] {
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_123: Core.IntLiteral = int_value 123 [concrete = constants.%int_123.fff]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc5_20.1: <bound method> = bound_method %int_123, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc5_20.2: <bound method> = bound_method %int_123, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_20.2(%int_123) [concrete = constants.%int_123.c07]
+// CHECK:STDOUT:   %.loc5_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_123.c07]
+// CHECK:STDOUT:   %.loc5_20.2: %i32 = converted %int_123, %.loc5_20.1 [concrete = constants.%int_123.c07]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.field [concrete = constants.%complete_type.397]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Class
+// CHECK:STDOUT:   .field = %field_decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc8_17.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_17.2: init %Class to file.%C.var = class_init (constants.%int_123.c07) [concrete = constants.%Class.val]
+// CHECK:STDOUT:   %.loc8_1: init %Class = converted %.loc8_17.1, %.loc8_17.2 [concrete = constants.%Class.val]
+// CHECK:STDOUT:   assign file.%C.var, %.loc8_1
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

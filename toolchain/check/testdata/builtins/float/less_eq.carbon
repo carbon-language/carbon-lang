@@ -36,26 +36,30 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.less_eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_literal.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: invalid signature for builtin function "float.less_eq"
+// CHECK:STDERR:        ·                  ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-fn LessEq(a: Core.FloatLiteral(), b: Core.FloatLiteral()) -> bool = "float.less_eq";
+fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
 
-// CHECK:STDOUT: --- float_less_eq.carbon
+// CHECK:STDOUT: --- float_less_eq.carbon = $float_less_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.9a0: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [concrete]
 // CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.9a0, %b.param: %f64.9a0) -> out %return.param: bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %LessEq.ref: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
-// CHECK:STDOUT:   %a.ref: %f64.9a0 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.9a0 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.761 = name_ref b, %b
 // CHECK:STDOUT:   %LessEq.call: init bool = call %LessEq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %LessEq.call
 // CHECK:STDOUT: }

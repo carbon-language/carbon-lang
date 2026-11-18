@@ -15,14 +15,26 @@ namespace Carbon::SemIR {
 static auto GetUnwrapped(const File& sem_ir, InstId pattern_id)
     -> std::pair<InstId, Inst> {
   auto inst_id = pattern_id;
-  auto inst = sem_ir.insts().Get(inst_id);
 
-  if (auto var_pattern = inst.TryAs<AnyVarPattern>()) {
-    inst_id = var_pattern->subpattern_id;
-    inst = sem_ir.insts().Get(inst_id);
+  while (true) {
+    auto inst = sem_ir.insts().Get(inst_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND_ANY(SemIR::AnyVarPattern, var_pattern): {
+        inst_id = var_pattern.subpattern_id;
+        break;
+      }
+      case CARBON_KIND(SemIR::SpecificConstant specific_constant): {
+        inst_id = specific_constant.inst_id;
+        break;
+      }
+      case CARBON_KIND(SemIR::ImportRefLoaded _): {
+        inst_id = sem_ir.constant_values().GetConstantInstId(inst_id);
+        break;
+      }
+      default:
+        return {inst_id, inst};
+    }
   }
-
-  return {inst_id, inst};
 }
 
 // Returns the name and entity name introduced by the given instruction if it is
@@ -53,7 +65,11 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
       continue;
     }
 
-    // TODO: Look through struct patterns.
+    if (auto struct_patt = inst.TryAs<StructPattern>()) {
+      auto block = sem_ir.inst_blocks().Get(struct_patt->elements_id);
+      work_list.append(block.rbegin(), block.rend());
+      continue;
+    }
 
     if (auto ref_pattern = inst.TryAs<RefParamPattern>()) {
       // TODO: This introduces a name, but we don't model it as a binding.

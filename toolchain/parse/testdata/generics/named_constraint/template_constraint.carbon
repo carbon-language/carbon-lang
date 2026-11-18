@@ -10,9 +10,11 @@
 
 // --- fail_todo_template_constraint.carbon
 
-// CHECK:STDERR: fail_todo_template_constraint.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: template constraint Foo {
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_template_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ template constraint Foo {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint Foo {
   // TODO: Add a require statement.
@@ -20,18 +22,19 @@ template constraint Foo {
   fn DefinedMethod() {}
 }
 
-// CHECK:STDERR: fail_todo_template_constraint.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: template constraint ForwardDeclared;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_template_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ template constraint ForwardDeclared;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint ForwardDeclared;
 
 // CHECK:STDOUT: - filename: fail_todo_template_constraint.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'template', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '}', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'template', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree '}' has_error
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'template' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

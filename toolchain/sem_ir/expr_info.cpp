@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/expr_info.h"
 
 #include <concepts>
+#include <utility>
 
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
@@ -22,8 +23,16 @@ static auto AsAnyInstId(IdAndKind arg) -> InstId {
   return arg.As<SemIR::AbsoluteInstId>();
 }
 
-static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
-    -> ExprCategory {
+struct ExprCategoryResult {
+  ExprCategory category;
+  InstId inner_inst_id;
+};
+
+// Returns the expression category of `inst_id`, and the ID of the innermost
+// inst visited while determining that category.
+static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
+                                const File* specific_ir, SpecificId specific_id)
+    -> ExprCategoryResult {
   // The overall expression category if the current instruction is a value
   // expression.
   ExprCategory value_category = ExprCategory::Value;
@@ -32,11 +41,54 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
     auto untyped_inst = ir->insts().Get(inst_id);
     auto category_from_kind = untyped_inst.kind().expr_category();
 
-    // If this instruction kind has a fixed category, return it.
-    if (auto fixed_category = category_from_kind.TryAsFixedCategory()) {
-      return *fixed_category == ExprCategory::Value ? value_category
-                                                    : *fixed_category;
-    }
+    auto handle_function_return =
+        [&](SemIR::FunctionId function_id,
+            SemIR::SpecificId resolved_specific_id) -> ExprCategory {
+      const auto& function = ir->functions().Get(function_id);
+      if (function.return_form_inst_id == ErrorInst::InstId) {
+        return ExprCategory::Error;
+      }
+
+      // For a deduced return type, we know the form independent of the
+      // specific. Don't query the return form in the specific: in a generic,
+      // it's computed by the definition's eval block, which might not have been
+      // evaluated for this specific.
+      // TODO: Once we support `->? auto`, we'll need the specific function
+      // definition to be resolved here.
+      CARBON_CHECK(!function.has_pending_deduced_return_type(),
+                   "Call to function before its return type is deduced");
+      switch (function.deduced_return_kind) {
+        case Function::DeducedReturnKind::None:
+          break;
+        case Function::DeducedReturnKind::Init:
+          return ExprCategory::ReprInitializing;
+        case Function::DeducedReturnKind::Ref:
+          return ExprCategory::DurableRef;
+        case Function::DeducedReturnKind::Value:
+          return ExprCategory::Value;
+      }
+
+      auto return_form_id =
+          function.GetDeclaredReturnForm(*ir, resolved_specific_id);
+      if (!return_form_id.has_value()) {
+        // Treat as equivalent to `-> ()`.
+        return ExprCategory::ReprInitializing;
+      }
+
+      auto return_form = ir->insts().Get(return_form_id);
+      CARBON_KIND_SWITCH(return_form) {
+        case CARBON_KIND(InitForm _):
+          return ExprCategory::ReprInitializing;
+        case CARBON_KIND(RefForm _):
+          return ExprCategory::DurableRef;
+        case CARBON_KIND(ValueForm _):
+          return ExprCategory::Value;
+        case CARBON_KIND(ErrorInst _):
+          return ExprCategory::Error;
+        default:
+          CARBON_FATAL("Unexpected form inst kind: {0}", return_form);
+      }
+    };
 
     // Handle any special cases that use
     // ComputedExprCategory::DependsOnOperands.
@@ -57,33 +109,18 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        auto callee = GetCallee(*ir, inst.callee_id);
+        // TODO: Handle the case where the specific is from a different file.
+        // `GetCallee` doesn't support that case currently.
+        auto callee =
+            GetCallee(*ir, inst.callee_id,
+                      ir == specific_ir ? specific_id : SpecificId::None);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
           }
           case CARBON_KIND(SemIR::CalleeFunction callee_function): {
-            const auto& function =
-                ir->functions().Get(callee_function.function_id);
-            auto return_form_id = function.GetDeclaredReturnForm(
-                *ir, callee_function.resolved_specific_id);
-            if (!return_form_id.has_value()) {
-              // Treat as equivalent to `-> ()`.
-              return ExprCategory::ReprInitializing;
-            }
-            auto return_form = ir->insts().Get(return_form_id);
-            CARBON_KIND_SWITCH(return_form) {
-              case CARBON_KIND(InitForm _):
-                return ExprCategory::ReprInitializing;
-              case CARBON_KIND(RefForm _):
-                return ExprCategory::DurableRef;
-              case CARBON_KIND(ValueForm _):
-                return ExprCategory::Value;
-              case CARBON_KIND(ErrorInst _):
-                return ExprCategory::Error;
-              default:
-                CARBON_FATAL("Unexpected inst kind: {0}", return_form);
-            }
+            return handle_function_return(callee_function.function_id,
+                                          callee_function.resolved_specific_id);
           }
           case CARBON_KIND(SemIR::CalleeNonFunction _): {
             return ExprCategory::NotExpr;
@@ -92,143 +129,434 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id)
             // TODO: support `ref` returns from C++.
             return ExprCategory::ReprInitializing;
           }
+          case CARBON_KIND(SemIR::CalleeCppFunctionPointer function_ptr): {
+            return handle_function_return(
+                ir->clang_function_pointer_types()
+                    .Get(function_ptr.function_type_id)
+                    .function_id,
+                SemIR::SpecificId::None);
+          }
         }
+      } else if constexpr (std::same_as<TypedInstT, SpecificInst>) {
+        // Switch to looking at the inner instruction and its specific, which is
+        // known to be from the current IR.
+        inst_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        specific_ir = ir;
+        return std::nullopt;
+      } else if constexpr (std::same_as<TypedInstT, SpliceInst>) {
+        auto [inst_value_ir, inst_value_const_id] = GetConstantValueInSpecific(
+            *specific_ir, specific_id, *ir, inst.inst_id);
+        if (inst_value_const_id.is_concrete()) {
+          // If we can pull a concrete inst out of the specific, then switch to
+          // computing the category of that inst.
+          ir = inst_value_ir;
+          inst_id = ir->constant_values()
+                        .GetInstAs<InstValue>(inst_value_const_id)
+                        .inst_id;
+          return std::nullopt;
+        }
+
+        // We don't know which instruction is being spliced. We may still know
+        // the category based on the action that produces the inst.
+        auto action = ir->insts().Get(inst.inst_id);
+        if (auto* action_category = std::get_if<ActionExprCategory>(
+                &action.kind().expr_category())) {
+          if (action_category->category == ExprCategory::Value) {
+            return value_category;
+          } else {
+            return action_category->category;
+          }
+        } else {
+          // TODO: Do we need a way to specify a non-dependent category here?
+          // Perhaps for the first element of a MultiInstAction we should use
+          // the ActionExprCategory on the inst.
+          return ExprCategory::Dependent;
+        }
+      } else if constexpr (std::same_as<TypedInstT, WrapperBinding>) {
+        if (!inst.value_id.has_value()) {
+          // `value_id` can be empty if we're trying to access the binding
+          // before pattern matching, e.g. in code like `fn F(t: I, u: t.X)`,
+          // where `I` is an interface with an `X` member. We assume that
+          // the binding in such cases is a value binding.
+          // TODO: Find a more robust solution.
+          return value_category;
+        }
+        inst_id = inst.value_id;
+        return std::nullopt;
       } else {
         static_assert(
-            TypedInstT::Kind.expr_category().TryAsComputedCategory() !=
-                ComputedExprCategory::DependsOnOperands,
+            TypedInstT::Kind.expr_category() !=
+                InstExprCategory(ComputedExprCategory::DependsOnOperands),
             "Missing expression category computation for type");
       }
       CARBON_FATAL("Unreachable");
     };
 
-    // If the category depends on the operands of the instruction, determine it.
-    // Usually this means the category is the same as the category of an
-    // operand.
-    switch (*category_from_kind.TryAsComputedCategory()) {
-      case ComputedExprCategory::ValueIfHasType: {
-        return untyped_inst.kind().has_type() ? value_category
-                                              : ExprCategory::NotExpr;
+    CARBON_KIND_SWITCH(category_from_kind) {
+      case CARBON_KIND(ExprCategory fixed_category): {
+        // If this instruction kind has a fixed category, return it.
+        return {.category = fixed_category == ExprCategory::Value
+                                ? value_category
+                                : fixed_category,
+                .inner_inst_id = inst_id};
       }
-
-      case ComputedExprCategory::SameAsFirstOperand: {
-        inst_id = AsAnyInstId(untyped_inst.arg0_and_kind());
-        break;
+      case CARBON_KIND(ActionExprCategory _): {
+        // Actions are always value expressions.
+        return {.category = value_category, .inner_inst_id = inst_id};
       }
-
-      case ComputedExprCategory::SameAsSecondOperand: {
-        inst_id = AsAnyInstId(untyped_inst.arg1_and_kind());
-        break;
-      }
-
-      case ComputedExprCategory::DependsOnOperands: {
-        switch (untyped_inst.kind()) {
+      case CARBON_KIND(ComputedExprCategory computed_category): {
+        // If the category depends on the operands of the instruction, determine
+        // it. Usually this means the category is the same as the category of an
+        // operand.
+        switch (computed_category) {
+          case ComputedExprCategory::ValueIfHasType: {
+            return {.category = untyped_inst.kind().has_type()
+                                    ? value_category
+                                    : ExprCategory::NotExpr,
+                    .inner_inst_id = inst_id};
+          }
+          case ComputedExprCategory::SameAsFirstOperand: {
+            inst_id = AsAnyInstId(untyped_inst.arg0_and_kind());
+            break;
+          }
+          case ComputedExprCategory::SameAsSecondOperand: {
+            inst_id = AsAnyInstId(untyped_inst.arg1_and_kind());
+            break;
+          }
+          case ComputedExprCategory::DependsOnOperands: {
+            switch (untyped_inst.kind()) {
 #define CARBON_SEM_IR_INST_KIND(TypedInstT)                             \
   case TypedInstT::Kind: {                                              \
     auto category = handle_special_case(untyped_inst.As<TypedInstT>()); \
     if (category.has_value()) {                                         \
-      return *category;                                                 \
+      return {.category = *category, .inner_inst_id = inst_id};         \
     }                                                                   \
     break;                                                              \
   }
 #include "toolchain/sem_ir/inst_kind.def"
+            }
+          }
         }
       }
     }
   }
 }
 
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory {
-  return GetExprCategoryImpl(&file, inst_id);
+auto GetExprCategory(const File& file, InstId inst_id,
+                     const File* specific_file, SpecificId specific_id)
+    -> ExprCategory {
+  return GetExprCategoryImpl(&file, inst_id,
+                             specific_file ? specific_file : &file, specific_id)
+      .category;
 }
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
+  auto [storage_sem_ir, storage_id] = FindStorageArgForInitializerInSpecific(
+      sem_ir, init_id, sem_ir, SpecificId::None, allow_transitive);
+  CARBON_CHECK(!storage_id.has_value() || storage_sem_ir == &sem_ir);
+  return storage_id;
+}
+
+auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
+                                            const File& specific_sem_ir,
+                                            SpecificId specific_id,
+                                            bool allow_transitive)
+    -> std::pair<const File*, InstId> {
+  const File* ir = &sem_ir;
   while (true) {
-    Inst init_untyped = sem_ir.insts().Get(init_id);
+    Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
+      case CARBON_KIND(ImportRefLoaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
+      case CARBON_KIND(ImportRefUnloaded init): {
+        auto import_ir_inst = ir->import_ir_insts().Get(init.import_ir_inst_id);
+        ir = ir->import_irs().Get(import_ir_inst.ir_id()).sem_ir;
+        init_id = import_ir_inst.inst_id();
+        continue;
+      }
       case CARBON_KIND(AsCompatible init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.source_id;
         continue;
       }
       case CARBON_KIND(Converted init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.result_id;
         continue;
       }
+      case CARBON_KIND(ImplWitnessAssociatedConstant init): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        init_id = init.inst_id;
+        continue;
+      }
       case CARBON_KIND(UpdateInit init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.base_init_id;
         continue;
       }
+      case CARBON_KIND(SpliceBlock splice): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        init_id = splice.result_id;
+        continue;
+      }
+      case CARBON_KIND(SpecificInst inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
+      case CARBON_KIND(SpecificConstant inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(ClassInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(StructInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(TupleInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(InPlaceInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(MarkInPlaceInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
+      }
+      case CARBON_KIND(SpliceInst inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        auto [const_sem_ir, const_id] = GetConstantValueInSpecific(
+            specific_sem_ir, specific_id, *ir, inst.inst_id);
+        ir = const_sem_ir;
+        init_id =
+            ir->constant_values().GetInstAs<SemIR::InstValue>(const_id).inst_id;
+        continue;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function = GetCalleeAsFunction(sem_ir, call.callee_id);
-        const auto& function =
-            sem_ir.functions().Get(callee_function.function_id);
+        auto callee_function =
+            GetCalleeAsFunction(*ir, call.callee_id, specific_id);
+        const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
-        auto return_form_constant_id = GetConstantValueInSpecific(
-            sem_ir, callee_function.resolved_specific_id,
-            function.return_form_inst_id);
-        auto return_form = sem_ir.insts().Get(
-            sem_ir.constant_values().GetInstId(return_form_constant_id));
+        auto [return_form_sem_ir, return_form_constant_id] =
+            GetConstantValueInSpecific(specific_sem_ir,
+                                       callee_function.resolved_specific_id,
+                                       *ir, function.return_form_inst_id);
+        ir = return_form_sem_ir;
+        auto return_form = ir->insts().Get(
+            ir->constant_values().GetInstId(return_form_constant_id));
         CARBON_KIND_SWITCH(return_form) {
           case CARBON_KIND(InitForm init_form): {
-            auto type_id = sem_ir.types().GetTypeIdForTypeInstId(
+            auto type_id = ir->types().GetTypeIdForTypeInstId(
                 init_form.type_component_inst_id);
-            if (!InitRepr::ForType(sem_ir, type_id).MightBeInPlace()) {
-              return InstId::None;
+            if (!InitRepr::ForType(*ir, type_id).MightBeInPlace()) {
+              return {ir, InstId::None};
             }
 
             if (!call.args_id.has_value()) {
               // Argument initialization failed, so we have no return slot.
-              return InstId::None;
+              return {ir, InstId::None};
             }
 
             CARBON_CHECK(function.call_param_ranges.return_size() == 1,
                          "Unexpected number of output parameters on function");
-            return sem_ir.inst_blocks().Get(
-                call.args_id)[function.call_param_ranges.return_begin().index];
+            return {ir,
+                    ir->inst_blocks().Get(
+                        call.args_id)[function.call_param_ranges.return_begin()
+                                          .index]};
           }
           case CARBON_KIND(RefForm _): {
-            return InstId::None;
+            return {ir, InstId::None};
+          }
+          case CARBON_KIND(ValueForm _): {
+            return {ir, InstId::None};
           }
           default:
             CARBON_FATAL("Unexpected inst kind: {0}", return_form);
         }
       }
       case CARBON_KIND(ErrorInst _): {
-        return InstId::None;
+        return {ir, InstId::None};
       }
       default:
         CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);
     }
+  }
+}
+
+// Given a type, determines the category of the decomposed form of an expression
+// of that type. This is Primitive if the type does not support form
+// decomposition.
+static auto GetDecomposedFormKindForType(const File& sem_ir, TypeId type_id)
+    -> FormInfo::Kind {
+  if (sem_ir.types().Is<TupleType>(type_id)) {
+    return FormInfo::Tuple;
+  }
+  if (sem_ir.types().Is<StructType>(type_id)) {
+    return FormInfo::Struct;
+  }
+  return FormInfo::Primitive;
+}
+
+auto GetFormInfo(const File& sem_ir, SemIR::InstId inst_id) -> FormInfo {
+  auto inst = sem_ir.insts().Get(inst_id);
+
+  auto [category, inner_inst_id] =
+      GetExprCategoryImpl(&sem_ir, inst_id, &sem_ir, SpecificId::None);
+  if (inst.type_id() == SemIR::ErrorInst::TypeId) {
+    // TODO: Should `GetExprCategory` do this?
+    category = ExprCategory::Error;
+  }
+
+  FormInfo::Kind kind = FormInfo::Primitive;
+  if (category == ExprCategory::Mixed) {
+    kind = GetDecomposedFormKindForType(sem_ir, inst.type_id());
+    CARBON_CHECK(kind != FormInfo::Primitive,
+                 "Unexpected type {0} for mixed category",
+                 sem_ir.types().GetAsInst(inst.type_id()));
+  }
+
+  auto form_inst_id = InstId::None;
+  if (category == ExprCategory::Dependent) {
+    kind = FormInfo::Dependent;
+    // TODO: Generalize this logic to handle other kinds of form-dependent insts
+    // besides references to `:?` bindings.
+    auto splice = sem_ir.insts().GetAs<SpliceInst>(inner_inst_id);
+    auto param_action =
+        sem_ir.insts().GetAs<CalleePatternMatchAction>(splice.inst_id);
+    auto args = sem_ir.bundles().Get(param_action.args_id);
+    splice = sem_ir.insts().GetAs<SpliceInst>(args.pattern_id);
+    auto pattern = sem_ir.insts().GetAs<FormParamPatternAction>(splice.inst_id);
+    form_inst_id = pattern.form_id;
+  }
+
+  return {.kind = kind,
+          .category = category,
+          .type_id = inst.type_id(),
+          .constant_id = sem_ir.constant_values().Get(inst_id),
+          .form_inst_id = form_inst_id,
+          .loc_id = LocId(inst_id),
+          .inst_id = inst_id};
+}
+
+auto DecomposeForm(const File& sem_ir, FormInfo form) -> FormInfo {
+  if (form.kind == FormInfo::Primitive) {
+    form.kind = GetDecomposedFormKindForType(sem_ir, form.type_id);
+    // TODO: Should we replace a category of Initializing with
+    // EphemeralReference here to model temporary materialization if we
+    // performed decomposition?
+  }
+  return form;
+}
+
+// Gets information about the forms of the instructions in a block.
+static auto VisitFormInfos(const File& sem_ir, InstBlockId inst_block_id,
+                           FormVisitor visitor) -> void {
+  auto inst_ids = sem_ir.inst_blocks().Get(inst_block_id);
+  for (auto inst_id : inst_ids) {
+    visitor(GetFormInfo(sem_ir, inst_id));
+  }
+}
+
+auto VisitTupleElementForms(const File& sem_ir, FormInfo form,
+                            FormVisitor visitor) -> void {
+  // If we have a tuple literal, directly grab the forms of its elements.
+  if (auto tuple_lit_inst =
+          sem_ir.insts().TryGetAsIfValid<TupleLiteral>(form.inst_id)) {
+    VisitFormInfos(sem_ir, tuple_lit_inst->elements_id, visitor);
+    return;
+  }
+
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto tuple_type = sem_ir.types().GetAs<TupleType>(form.type_id);
+  auto element_type_inst_ids =
+      sem_ir.inst_blocks().Get(tuple_type.type_elements_id);
+
+  auto tuple_const_inst = sem_ir.insts().TryGetAsIfValid<TupleValue>(
+      sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
+  auto tuple_const_inst_ids =
+      tuple_const_inst ? sem_ir.inst_blocks().Get(tuple_const_inst->elements_id)
+                       : llvm::ArrayRef<InstId>();
+
+  for (auto [type_inst_id, const_inst_id] :
+       llvm::zip_longest(element_type_inst_ids, tuple_const_inst_ids)) {
+    // TODO: figure out how to update the category if it's `Mixed`, and
+    // how to populate `form_inst_id` if the updated category is `Dependent`.
+    visitor({.kind = FormInfo::Primitive,
+             .category = form.category,
+             .type_id = sem_ir.types().GetTypeIdForTypeInstId(*type_inst_id),
+             .constant_id = const_inst_id
+                                ? sem_ir.constant_values().Get(*const_inst_id)
+                                : ConstantId::NotConstant,
+             .form_inst_id = InstId::None,
+             .loc_id = form.loc_id,
+             .inst_id = InstId::None});
+  }
+}
+
+auto VisitStructElementForms(const File& sem_ir, FormInfo form,
+                             FormVisitor visitor) -> void {
+  // If we have a struct literal, directly grab the forms of its elements.
+  if (auto struct_lit_inst =
+          sem_ir.insts().TryGetAsIfValid<StructLiteral>(form.inst_id)) {
+    VisitFormInfos(sem_ir, struct_lit_inst->elements_id, visitor);
+    return;
+  }
+
+  // Otherwise, decompose the type and, if available, the constant value.
+  auto struct_type = sem_ir.types().GetAs<StructType>(form.type_id);
+  auto fields = sem_ir.struct_type_fields().Get(struct_type.fields_id);
+
+  auto struct_const_inst = sem_ir.insts().TryGetAsIfValid<StructValue>(
+      sem_ir.constant_values().GetInstIdIfValid(form.constant_id));
+  auto struct_const_inst_ids =
+      struct_const_inst
+          ? sem_ir.inst_blocks().Get(struct_const_inst->elements_id)
+          : llvm::ArrayRef<InstId>();
+
+  for (auto [field, const_inst_id] :
+       llvm::zip_longest(fields, struct_const_inst_ids)) {
+    // TODO: figure out how to update the category if it's `Mixed`, and
+    // how to populate `form_inst_id` if the updated category is `Dependent`.
+    visitor(
+        {.kind = FormInfo::Primitive,
+         .category = form.category,
+         .type_id = sem_ir.types().GetTypeIdForTypeInstId(field->type_inst_id),
+         .constant_id = const_inst_id
+                            ? sem_ir.constant_values().Get(*const_inst_id)
+                            : ConstantId::NotConstant,
+         .form_inst_id = InstId::None,
+         .loc_id = form.loc_id,
+         .inst_id = InstId::None});
   }
 }
 

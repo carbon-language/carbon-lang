@@ -12,54 +12,78 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+33]]:25: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                         ^~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+30]]:16: note: `abstract` previously appeared here [ModifierPrevious]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+51]]:25
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        ·                ────┬─── ┳━━━
+// CHECK:STDERR:        ·                    │    ┗━━┫ error: `base` not allowed on declaration with
+// CHECK:STDERR:        ·                    │       ┃        `abstract`
+// CHECK:STDERR:        ·                    │       ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·                    ╰─────────┤ `abstract` previously appeared here
+// CHECK:STDERR:        ·                              │ [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+26]]:30: error: `default` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                              ^~~~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+23]]:16: note: `abstract` previously appeared here [ModifierPrevious]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+41]]:30
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        ·                ────┬───      ┳━━━━━━
+// CHECK:STDERR:        ·                    │         ┗━━┫ error: `default` not allowed on declaration
+// CHECK:STDERR:        ·                    │            ┃        with `abstract`
+// CHECK:STDERR:        ·                    │            ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·                    ╰──────────────┤ `abstract` previously appeared here
+// CHECK:STDERR:        ·                                   │ [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+19]]:38: error: `final` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                                      ^~~~~
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+16]]:16: note: `abstract` previously appeared here [ModifierPrevious]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+31]]:38
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        ·                ────┬───              ┳━━━━
+// CHECK:STDERR:        ·                    │                 ┗━━┫ error: `final` not allowed on
+// CHECK:STDERR:        ·                    │                    ┃        declaration with `abstract`
+// CHECK:STDERR:        ·                    │                    ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·                    ╰──────────────────────┤ `abstract` previously appeared here
+// CHECK:STDERR:        ·                                           │ [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+12]]:1: error: `private` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+21]]:1
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `private` not allowed on `namespace` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:9: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:         ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+14]]:9
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        ·         ━━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `extern` not allowed on `namespace` declaration
+// CHECK:STDERR:        ·               ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:16: error: `abstract` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: private extern abstract base default final namespace A;
-// CHECK:STDERR:                ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ private extern abstract base default final namespace A;
+// CHECK:STDERR:        ·                ━━━━┳━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: `abstract` not allowed on `namespace` declaration
+// CHECK:STDERR:        ·                       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 private extern abstract base default final namespace A;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `impl` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: impl namespace B;
-// CHECK:STDERR: ^~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl namespace B;
+// CHECK:STDERR:        · ━━┳━
+// CHECK:STDERR:        ·   ┗━━┫ error: `impl` not allowed on `namespace` declaration
+// CHECK:STDERR:        ·      ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl namespace B;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `extern` not allowed on `namespace` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: extern namespace C;
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern namespace C;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `extern` not allowed on `namespace` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern namespace C;
 
-// CHECK:STDOUT: --- fail_modifiers.carbon
+// CHECK:STDOUT: --- fail_modifiers.carbon = $fail_modifiers
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {

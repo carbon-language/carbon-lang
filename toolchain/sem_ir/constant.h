@@ -63,7 +63,7 @@ enum class ConstantDependence : uint8_t {
 // parameterized by the `bind_symbolic_name` constant insts that it depends on,
 // whereas an attached constant explicitly binds them to parameters of the
 // enclosing generic. It's the difference between "`Vector(T)` where `T` is some
-// value of type `type`" and "`Vector(T)` where `T` is the `T:! type` parameter
+// value of type `type`" and "`Vector(T)` where `T` is the `T: type` parameter
 // of this particular enclosing generic".
 //
 // TODO: consider instead keeping this metadata in a separate hash map keyed by
@@ -268,22 +268,7 @@ class ConstantValueStore {
   auto enumerate() const -> auto { return values_.enumerate(); }
 
   // Outputs assigned constant values, and all symbolic constants.
-  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
-    return Yaml::OutputMapping([&, include_singletons](
-                                   Yaml::OutputMapping::Map map) {
-      map.Add("values", Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
-                for (auto [id, value] : values_.enumerate()) {
-                  if (!include_singletons && IsSingletonInstId(id)) {
-                    continue;
-                  }
-                  if (!value.has_value() || value.is_constant()) {
-                    map.Add(PrintToString(id), Yaml::OutputScalar(value));
-                  }
-                }
-              }));
-      map.Add("symbolic_constants", symbolic_constants_.OutputYaml());
-    });
-  }
+  auto OutputYaml(bool include_singletons) const -> Yaml::OutputMapping;
 
   // The tag used in ConstantIds for concrete constants.
   using ConcreteIdTagType = IdTag<SemIR::ConstantId, Tag<SemIR::CheckIRId>>;
@@ -346,6 +331,10 @@ class ConstantStore {
   // This updates `sem_ir->insts()` and `sem_ir->constant_values()` if the
   // constant is new.
   auto GetOrAdd(Inst inst, ConstantDependence dependence) -> ConstantId;
+
+  // Gets the existing constant ID for this value. The constant is required to
+  // already exist.
+  auto Get(Inst inst) const -> ConstantId;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const

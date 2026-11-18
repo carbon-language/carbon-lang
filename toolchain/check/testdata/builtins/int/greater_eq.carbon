@@ -38,10 +38,10 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> bool {
 
 library "[[@TEST_NAME]]";
 
-fn GreaterEq(a: Core.IntLiteral(), b: Core.IntLiteral()) -> bool = "int.greater_eq";
+fn GreaterEq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.greater_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(GreaterEq(5, 5)) as Expect(true);
@@ -56,10 +56,10 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-fn GreaterEq(a: Core.IntLiteral(), b: i32) -> bool = "int.greater_eq";
+fn GreaterEq(a: Core.IntLiteral, b: i32) -> bool = "int.greater_eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(GreaterEq(5, 5)) as Expect(true);
@@ -70,9 +70,10 @@ fn F() {
   Test(GreaterEq(1, -1)) as Expect(true);
 }
 
-// CHECK:STDOUT: --- int_greater_eq.carbon
+// CHECK:STDOUT: --- int_greater_eq.carbon = $int_greater_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]

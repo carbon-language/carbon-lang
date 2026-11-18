@@ -56,18 +56,24 @@ package Same library "[[@TEST_NAME]]";
 
 import library "b";
 
-// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE+13]]:10: error: function returns incomplete type `A.C` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fn G() { F(); }
-// CHECK:STDERR:          ^~~
-// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class A.C;
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
-// CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_same_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR: ->     │ fn G() { F(); }
+// CHECK:STDERR:        ·          ━┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function returns incomplete type `A.C`
+// CHECK:STDERR:        ·              ┃        [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_same_package.carbon [InImport]
+// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ class A.C;
+// CHECK:STDERR:        · ─────┬────
+// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ b.carbon
+// CHECK:STDERR:        │ fn F() -> A.C;
+// CHECK:STDERR:        ·        ───┬──
+// CHECK:STDERR:        ·           ╰──┤ return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() { F(); }
 
@@ -77,24 +83,31 @@ package Other library "[[@TEST_NAME]]";
 
 import Same library "b";
 
-// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+13]]:10: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fn G() { Same.F(); }
-// CHECK:STDERR:          ^~~~~~~~
-// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:3:1: in import [InImport]
-// CHECK:STDERR: a.carbon:6:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class A.C;
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: b.carbon:7:8: note: return type declared here [IncompleteReturnTypeHere]
-// CHECK:STDERR: fn F() -> A.C;
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_different_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR: ->     │ fn G() { Same.F(); }
+// CHECK:STDERR:        ·          ━━━━┳━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Same.A.C`
+// CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_different_package.carbon [InImport]
+// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ class A.C;
+// CHECK:STDERR:        · ─────┬────
+// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ b.carbon
+// CHECK:STDERR:        │ fn F() -> A.C;
+// CHECK:STDERR:        ·        ───┬──
+// CHECK:STDERR:        ·           ╰──┤ return type declared here [IncompleteReturnTypeHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() { Same.F(); }
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,12 +132,15 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %.120: Core.Form = init_form %C [concrete]
+// CHECK:STDOUT:   %.46c: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -152,12 +168,12 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %B: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %C.ref [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %A.ref: <namespace> = name_ref A, imports.%A [concrete = imports.%A]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Same.C [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.120]
+// CHECK:STDOUT:     %.loc7: Core.Form = init_form %C.ref [concrete = constants.%.46c]
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param0
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -167,7 +183,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Same.A: <namespace> = import_ref Same//b, A, loaded
@@ -196,9 +212,10 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- d.carbon
+// CHECK:STDOUT: --- d.carbon = $d
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -237,12 +254,15 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- e.carbon
+// CHECK:STDOUT: --- e.carbon = $e
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type = ref_binding_pattern e [concrete]
+// CHECK:STDOUT:   %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
 // CHECK:STDOUT:   %D.type: type = fn_type @D [concrete]
 // CHECK:STDOUT:   %D: %D.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -275,16 +295,16 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete]
-// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var %e.var_patt [concrete]
+// CHECK:STDOUT:   %e.var: ref %empty_tuple.type = var_storage %e.var_patt [concrete]
 // CHECK:STDOUT:   %.loc5_9.1: type = splice_block %.loc5_9.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %e: ref %empty_tuple.type = ref_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   %e: ref %empty_tuple.type = wrapper_binding e, %e.var [concrete = %e.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type = ref_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:     %e.var_patt: %pattern_type = var_pattern %e.patt [concrete = constants.%e.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D [from "d.carbon"];
@@ -300,9 +320,10 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon
+// CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon = $fail_named_indirectly_same_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -346,9 +367,10 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon
+// CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon = $fail_named_indirectly_different_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]

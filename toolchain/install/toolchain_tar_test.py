@@ -8,11 +8,11 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-from pathlib import Path
 import os
 import re
 import tarfile
 import unittest
+from pathlib import Path
 
 
 class ToolchainTarTest(unittest.TestCase):

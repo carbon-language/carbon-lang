@@ -13,9 +13,9 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -97,6 +97,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::CppAddrOfFunction inst) -> void {
+  context.SetLocal(
+      inst_id, context.specific_file_context().GetFunction(inst.function_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::ExportDecl inst) -> void {
   if (IsNamespace(context, inst_id)) {
     return;
@@ -106,18 +112,104 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::RefBinding inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::ValueBinding inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SymbolicBinding inst) -> void {
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::WrapperBinding inst) -> void {
+  auto* value = context.GetValue(inst.value_id);
+  context.SetLocal(inst_id, value);
+
+  const auto& entity_name =
+      context.sem_ir().entity_names().Get(inst.entity_name_id);
+  if (!entity_name.parent_scope_id.has_value() ||
+      entity_name.name_id == SemIR::NameId::Underscore ||
+      context.sem_ir().constant_values().Get(inst_id).is_constant()) {
+    return;
+  }
+
+  auto& file_context = context.GetFileContext(&context.sem_ir());
+  auto* global_var = file_context.GetOrCreateGlobalBinding(inst_id);
+  if (!global_var) {
+    return;
+  }
+  global_var->setInitializer(
+      llvm::Constant::getNullValue(global_var->getValueType()));
+
+  if (SemIR::IsRefCategory(SemIR::GetExprCategory(context.sem_ir(), inst_id))) {
+    auto* store = context.builder().CreateStore(value, global_var);
+    store->setAlignment(
+        context.llvm_module().getDataLayout().getPointerABIAlignment(0));
+    return;
+  }
+
+  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id);
+  switch (value_rep.kind) {
+    case SemIR::ValueRepr::Copy:
+      context.StoreObject(
+          {.file = &context.sem_ir(), .type_id = value_rep.type_id}, value,
+          global_var);
+      break;
+    case SemIR::ValueRepr::Pointer: {
+      auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
+      context.CopyObject(
+          {.file = &context.sem_ir(), .type_id = pointee_type_id}, value,
+          global_var);
+      break;
+    }
+    default:
+      CARBON_FATAL("Unexpected value repr for global binding: {0}", inst);
+  }
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::GlobalRef inst) -> void {
+  auto [canonical_ir, canonical_inst_id] =
+      SemIR::GetCanonicalFileAndInstId(&context.sem_ir(), inst.inst_id);
+  auto& target_file_context = context.GetFileContext(canonical_ir);
+  auto* global_var =
+      target_file_context.GetOrCreateGlobalBinding(canonical_inst_id);
+  context.AddGlobalToCurrentFingerprint(global_var);
+
+  if (SemIR::IsRefCategory(
+          SemIR::GetExprCategory(*canonical_ir, canonical_inst_id))) {
+    auto* ptr_type = llvm::PointerType::get(context.llvm_context(),
+                                            /*AddressSpace=*/0);
+    auto* load = context.builder().CreateLoad(ptr_type, global_var);
+    load->setAlignment(
+        context.llvm_module().getDataLayout().getPointerABIAlignment(0));
+    context.SetLocal(inst_id, load);
+    return;
+  }
+
+  auto canonical_binding =
+      canonical_ir->insts().GetAs<SemIR::WrapperBinding>(canonical_inst_id);
+  auto value_rep =
+      SemIR::ValueRepr::ForType(*canonical_ir, canonical_binding.type_id);
+  switch (value_rep.kind) {
+    case SemIR::ValueRepr::Unknown:
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Unexpected incomplete or dependent global binding: {0}",
+                   canonical_binding);
+    case SemIR::ValueRepr::None:
+      context.SetLocal(
+          inst_id,
+          llvm::PoisonValue::get(context.GetType(
+              {.file = canonical_ir, .type_id = canonical_binding.type_id})));
+      break;
+    case SemIR::ValueRepr::Copy:
+      context.SetLocal(inst_id,
+                       context.LoadObject(
+                           {.file = canonical_ir, .type_id = value_rep.type_id},
+                           global_var));
+      break;
+    case SemIR::ValueRepr::Pointer:
+      context.SetLocal(inst_id, global_var);
+      break;
+    case SemIR::ValueRepr::Custom:
+      CARBON_FATAL("TODO: Support global binding with custom value repr");
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -194,11 +286,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::FacetAccessType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::FacetValue /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
@@ -220,19 +307,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto inner_inst_id = inst.value_id;
-
-  // `GetValue` will fail on package-scope value bindings because they aren't
-  // constants, and they aren't global variables, so as a workaround we
-  // peek through bindings here to directly access the bound value.
-  // TODO: Find a way of dealing with this that still works if the bound
-  // value isn't a global variable or constant either.
-  if (auto bind_name =
-          context.sem_ir().insts().TryGetAs<SemIR::AnyBinding>(inner_inst_id)) {
-    inner_inst_id = bind_name->value_id;
-  }
-
-  context.SetLocal(inst_id, context.GetValue(inner_inst_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
@@ -260,14 +335,22 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
+// Returns how the function being lowered returns its result, as determined
+// when its signature was lowered.
+static auto GetReturnKind(FunctionContext& context) -> ReturnKind {
+  const auto& function_info = context.specific_file_context().GetFunctionInfo(
+      context.specific_sem_ir_function_id(), context.specific_id());
+  CARBON_CHECK(function_info, "Lowering body of undeclared function");
+  return function_info->return_kind;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Return /*inst*/) -> void {
   // The 'Run()' entry point does not need to specify a return type, but
   // the C runtime and system ABI expects the entry point to return an `int`.
   // In this situation we modify the lowered IR to return `0`
   // with the expected LLVM type that corresponds to the `int` type.
-  if (SemIR::IsEntryPoint(context.specific_sem_ir(),
-                          context.specific_sem_ir_function_id())) {
+  if (GetReturnKind(context) == ReturnKind::EntryPointInt32) {
     context.builder().CreateRet(context.builder().getInt32(0));
     return;
   }
@@ -276,53 +359,50 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
-  auto result_type = context.GetTypeIdOfInst(inst.expr_id);
-  switch (context.GetInitRepr(result_type).kind) {
-    case SemIR::InitRepr::None:
+  auto expr_cat =
+      SemIR::GetExprCategory(context.sem_ir(), inst.expr_id,
+                             &context.specific_sem_ir(), context.specific_id());
+  context.AddEnumToCurrentFingerprint(expr_cat);
+
+  auto return_kind = GetReturnKind(context);
+  context.AddEnumToCurrentFingerprint(return_kind);
+  switch (return_kind) {
+    case ReturnKind::None:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitRepr::InPlace:
-      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
-                       SemIR::ValueRepr::Pointer,
-                   "TODO: Add support for ReturnExpr with custom value repr");
-      // TODO: find a way to avoid the redundant call to GetInitRepr inside
-      // InitializeStorage.
-      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
-      context.builder().CreateRetVoid();
+
+    case ReturnKind::ByReference:
+      // Return a pointer: either the address of a reference, or the value
+      // representation of a value of a type with a pointer (or pointer-like
+      // custom) value representation.
+      context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
-    case SemIR::InitRepr::ByCopy: {
+
+    case ReturnKind::ByCopy: {
       auto* value = context.GetValue(inst.expr_id);
-      switch (SemIR::GetExprCategory(context.sem_ir(), inst.expr_id)) {
-        case SemIR::ExprCategory::Value:
-        case SemIR::ExprCategory::ReprInitializing:
-        case SemIR::ExprCategory::EphemeralRef:
-        case SemIR::ExprCategory::DurableRef:
-          break;
-        case SemIR::ExprCategory::InPlaceInitializing:
-          value =
-              context.builder().CreateLoad(context.GetType(result_type), value);
-          break;
-        case SemIR::ExprCategory::Mixed:
-        case SemIR::ExprCategory::RefTagged:
-        case SemIR::ExprCategory::NotExpr:
-        case SemIR::ExprCategory::Error:
-        case SemIR::ExprCategory::Pattern:
-        case SemIR::ExprCategory::Dependent:
-          CARBON_FATAL("Unexpected category for `return` expression");
+      if (expr_cat == SemIR::ExprCategory::InPlaceInitializing) {
+        value = context.builder().CreateLoad(
+            context.GetType(context.GetTypeIdOfInst(inst.expr_id)), value);
       }
       context.builder().CreateRet(value);
       return;
     }
-    case SemIR::InitRepr::Abstract:
-      CARBON_FATAL("Lowering return of abstract type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL("Lowering return of incomplete type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Dependent:
-      CARBON_FATAL("Lowering return of dependent type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
+
+    case ReturnKind::InPlace: {
+      auto result_type = context.GetTypeIdOfInst(inst.expr_id);
+      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
+                       SemIR::ValueRepr::Pointer,
+                   "TODO: Add support for ReturnExpr with custom value repr");
+      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
+      context.builder().CreateRetVoid();
+      return;
+    }
+
+    case ReturnKind::EntryPointInt32:
+      CARBON_FATAL(
+          "`return` with expression in entry point without a return "
+          "type");
   }
 }
 
@@ -346,16 +426,49 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpecificInst inst) -> void {
+  // If it's valid to refer to inst.inst_id at runtime and it's not constant, it
+  // must be within this function, and hence in the same specific that we're
+  // lowering.
+  CARBON_CHECK(&context.sem_ir() == &context.specific_sem_ir() &&
+                   context.specific_id() == inst.specific_id,
+               "Runtime specific_inst refers to a different specific");
+
+  // When lowering templates, the specific may contain instructions that
+  // neither emit a value during lowering nor have a constant value, so set
+  // require_value=false.
+  if (auto* value = context.GetValue(inst.inst_id, /*require_value=*/false)) {
+    context.SetLocal(inst_id, value);
+  }
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlockContents(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::SpliceInst /*inst*/) -> void {
-  // TODO: Get the constant value of the spliced instruction from the current
-  // specific, and lower the instruction in that constant value.
-  CARBON_FATAL("Template lowering not implemented yet");
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpliceInst inst) -> void {
+  auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(
+      context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
+      inst.inst_id);
+  auto inst_value =
+      inst_ir->constant_values().GetInstAs<SemIR::InstValue>(inst_value_id);
+  if (inst_ir == &context.sem_ir()) {
+    // Easy case: same file. Just emit the spliced instruction.
+    context.AddInstToCurrentFingerprint(inst_value.inst_id);
+    context.LowerInst(inst_value.inst_id);
+    context.SetLocal(inst_id, context.GetValue(inst_value.inst_id));
+  } else {
+    // TODO: We don't yet have support for cross-file templates at all. Lowering
+    // the result here would mostly just require that we switch the `sem_ir` on
+    // the `FunctionContext` to instead refer to the `specific_sem_ir`, but we
+    // would also need to handle references from the instantiated instructions
+    // back to the original ones, and we don't even know how to represent those
+    // references yet.
+    CARBON_FATAL("Cross-file template lowering not implemented yet");
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -393,7 +506,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::VarStorage /* inst */) -> void {
   context.SetLocal(inst_id,
-                   context.CreateAlloca(context.GetTypeOfInst(inst_id)));
+                   context.CreateAlloca(context.GetTypeIdOfInst(inst_id)));
 }
 
 }  // namespace Carbon::Lower

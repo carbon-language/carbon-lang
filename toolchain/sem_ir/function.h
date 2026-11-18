@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_
 
+#include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/clang_decl.h"
@@ -20,12 +21,39 @@ struct FunctionFields {
   // Kinds of special functions. See `Function::Set*` for details on each; these
   // shouldn't be assigned directly (but are used for reads/switches).
   enum class SpecialFunctionKind : uint8_t {
+    // A regular function.
     None,
+    // A builtin function. `special_function_kind_data` is the corresponding
+    // `BuiltinFunctionKind`.
     Builtin,
-    CoreWitness,
+    // A synthesized function generated for a custom witness.
+    // `special_function_kind_data` is the corresponding
+    // `GeneratedFunctionId`, which holds data for canonicalization,
+    // mangling, and the `BuiltinFunctionKind` for the function body, if any.
+    Generated,
+    // A thunk that adapts a function with one signature to have another
+    // signature, by forwarding the arguments and return value, with implicit
+    // conversions applied as necessary. `special_function_kind_data` is the
+    // corresponding `ThunkId`. A call to this function can generally be
+    // rewritten as a call to its target function, after performing the
+    // intermediate parameter conversions.
     Thunk,
+    // A thunk for calling to or from C++, with an intentionally-simple ABI so
+    // that it can be called across the language barrier. `Context::clang_decls`
+    // can be used to find the corresponding C++ function, which will have the
+    // same mangled name.
+    //
+    // `special_function_kind_data` is the `InstId` of the wrapped function. If
+    // the wrapped function is in Carbon, the Carbon version of the thunk will
+    // be a definition. If the wrapped function is in C++, the C++ version of
+    // the thunk will be a definition.
     CppThunk,
+    // A function that was imported from C++, for which we generated a
+    // `CppThunk`. `special_function_kind_data` is the `InstId` of that thunk.
     HasCppThunk,
+    // A thunk that calls a C++ function pointer. `special_function_kind_data`
+    // is unused.
+    CppFunctionPointerThunk,
   };
 
   // Kinds of virtual modifiers that can apply to functions.
@@ -34,8 +62,29 @@ struct FunctionFields {
   // Kinds of evaluation modifiers that can apply to functions.
   enum class EvaluationMode : uint8_t { None, Eval, MustEval };
 
+  // Kinds of interface modifiers that can apply to functions.
+  // TODO: turn into a CARBON_ENUM for more convenient checks.
+  enum class InterfaceModifier : uint8_t { None, Default, Final };
+
+  // Kinds of deduced return. For a function whose return type is deduced from
+  // its body, this is the category of the return form, which is specified
+  // explicitly, as in `-> ref auto`.
+  enum class DeducedReturnKind : uint8_t {
+    // The return type is not deduced.
+    None,
+    // `-> auto` or `-> var auto`.
+    Init,
+    // `-> ref auto`.
+    Ref,
+    // `-> val auto`.
+    Value,
+  };
+
   // The following members always have values, and do not change throughout the
-  // lifetime of the function.
+  // lifetime of the function. The exception is a function with a deduced return
+  // type: its `Call` parameters, parameter pattern block and return
+  // information are extended once, when the return type is deduced. See
+  // `has_pending_deduced_return_type`.
 
   // This block consists of references to the `*ParamPattern` insts that
   // represent the function's `Call` parameters. The "`Call` parameters" are the
@@ -117,12 +166,15 @@ struct FunctionFields {
   InstId return_form_inst_id;
 
   // The parameter pattern inst that is declared by the function's return
-  // declaration. This will be a ReturnSlotPattern, or None if the function
-  // doesn't have a return declaration. It may or may not be used, depending on
+  // specifier. This will be a ReturnSlotPattern, or None if the function
+  // doesn't have a return specifier. It may or may not be used, depending on
   // whether the type has an in-place initializing representation.
   //
   // TODO: Extend this to support composite return forms.
   InstId return_pattern_id;
+
+  // This block consists of `ObserveId`s declared inside the function body.
+  ObserveBlockId observe_block_id = ObserveBlockId::None;
 
   // Which kind of special function this is, if any. This is used in cases where
   // a special function would otherwise be indistinguishable from a normal
@@ -142,13 +194,21 @@ struct FunctionFields {
   // function.
   EvaluationMode evaluation_mode = EvaluationMode::None;
 
-  // The implicit self parameter pattern, if any, in
-  // implicit_param_patterns_id from EntityWithParamsBase.
+  // Which, if any, interface modifier is applied to this function.
+  InterfaceModifier interface_modifier = InterfaceModifier::None;
+
+  // Whether, and how, the function's return type is deduced from its body, as
+  // in `-> auto`. Until the return type is deduced, the function has no return
+  // information; see `has_pending_deduced_return_type`.
+  DeducedReturnKind deduced_return_kind = DeducedReturnKind::None;
+
+  // The `self` parameter pattern, if any. This is the first pattern in
+  // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
 
   // Data that is specific to the special function kind. Use
-  // `builtin_function_kind()`, `thunk_decl_id()` or `cpp_thunk_decl_id()` to
-  // access this.
+  // `non_generated_builtin_function_kind()`, `generated_function_id()`,
+  // `thunk_decl_id()` or `cpp_thunk_decl_id()` to access this.
   AnyRawId special_function_kind_data = AnyRawId(AnyRawId::NoneIndex);
 
   // The following members are accumulated throughout the function definition.
@@ -158,11 +218,37 @@ struct FunctionFields {
   // be empty for declarations that don't have a visible definition.
   llvm::SmallVector<InstBlockId> body_block_ids = {};
 
-  // If the function is imported from C++, the Clang function declaration. Used
-  // for mangling and inline function definition code generation. The AST is
-  // owned by `CompileSubcommand` so we expect it to be live from `Function`
-  // creation to mangling.
-  ClangDeclId clang_decl_id = ClangDeclId::None;
+  friend auto operator<<(llvm::raw_ostream& out, InterfaceModifier modifier)
+      -> llvm::raw_ostream& {
+    using enum InterfaceModifier;
+    switch (modifier) {
+      case None:
+        return out << "none";
+      case Default:
+        return out << "default";
+      case Final:
+        return out << "final";
+    }
+
+    CARBON_FATAL("unhandled `ImplModifier` during printing");
+  }
+
+  friend auto operator<<(llvm::raw_ostream& out, DeducedReturnKind kind)
+      -> llvm::raw_ostream& {
+    using enum DeducedReturnKind;
+    switch (kind) {
+      case None:
+        return out << "none";
+      case Init:
+        return out << "init";
+      case Ref:
+        return out << "ref";
+      case Value:
+        return out << "value";
+    }
+
+    CARBON_FATAL("unhandled `DeducedReturnKind` during printing");
+  }
 };
 
 inline constexpr FunctionFields::CallParamIndexRanges
@@ -196,6 +282,30 @@ struct Function : public EntityWithParamsBase,
     if (return_pattern_id.has_value()) {
       out << ", return_pattern_id: " << return_pattern_id;
     }
+    if (auto builtin_kind = non_generated_builtin_function_kind();
+        builtin_kind != BuiltinFunctionKind::None) {
+      out << ", builtin: " << builtin_kind;
+    }
+    if (auto generated_id = generated_function_id(); generated_id.has_value()) {
+      out << ", generated_function_id: " << generated_id;
+    }
+    if (auto thunk_id_val = thunk_id(); thunk_id_val.has_value()) {
+      out << ", thunk: " << thunk_id_val;
+    }
+    if (auto cpp_thunk_decl_id_val = cpp_thunk_decl_id();
+        cpp_thunk_decl_id_val.has_value()) {
+      out << ", cpp_thunk_decl: " << cpp_thunk_decl_id_val;
+    }
+    if (auto cpp_thunk_callee_val = cpp_thunk_callee();
+        cpp_thunk_callee_val.has_value()) {
+      out << ", cpp_thunk_callee: " << cpp_thunk_callee_val;
+    }
+    if (interface_modifier != InterfaceModifier::None) {
+      out << ", interface_modifier: " << interface_modifier;
+    }
+    if (deduced_return_kind != DeducedReturnKind::None) {
+      out << ", deduced_return_kind: " << deduced_return_kind;
+    }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: [{0}]",
@@ -204,13 +314,24 @@ struct Function : public EntityWithParamsBase,
     out << "}";
   }
 
-  // Returns the builtin function kind for this function, or None if this is not
-  // a builtin function.
-  auto builtin_function_kind() const -> BuiltinFunctionKind {
-    return (special_function_kind == SpecialFunctionKind::Builtin ||
-            special_function_kind == SpecialFunctionKind::CoreWitness)
+  // Returns the builtin function kind for this Builtin function, or None if
+  // this is not a builtin function. Note that Generated functions may also
+  // have a BuiltinFunctionKind, but this returns None for Generated
+  // functions. Use GetBuiltinFunctionKind to get the builtin function kind for
+  // all special functions.
+  auto non_generated_builtin_function_kind() const -> BuiltinFunctionKind {
+    return special_function_kind == SpecialFunctionKind::Builtin
                ? BuiltinFunctionKind::FromInt(special_function_kind_data.index)
                : BuiltinFunctionKind::None;
+  }
+
+  // Returns the ID of the GeneratedFunction. It holds a key used to
+  // canonicalize Generated functions so that we use the same function across
+  // all files.
+  auto generated_function_id() const -> GeneratedFunctionId {
+    return special_function_kind == SpecialFunctionKind::Generated
+               ? GeneratedFunctionId(special_function_kind_data.index)
+               : GeneratedFunctionId::None;
   }
 
   // Returns the ThunkId for this thunk function, or None if it's not a thunk.
@@ -236,10 +357,29 @@ struct Function : public EntityWithParamsBase,
                : InstId::None;
   }
 
+  // Gets the BuiltinFunctionKind for the function, if it has one. This applies
+  // to both Builtin and Generated special functions.
+  auto GetBuiltinFunctionKind(const File& file) const -> BuiltinFunctionKind;
+
+  // Returns whether this function's return type is to be deduced from its
+  // body, but has not been deduced yet. This is the case only between the
+  // function's declaration and the end of its body, or its first `returned
+  // var`. In this state, the function has no return information, and
+  // querying its return type or form is an error.
+  auto has_pending_deduced_return_type() const -> bool {
+    return has_deduced_return_type() && !return_form_inst_id.has_value();
+  }
+
+  // Returns whether this function's return type is deduced from its body.
+  auto has_deduced_return_type() const -> bool {
+    return deduced_return_kind != DeducedReturnKind::None;
+  }
+
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
-  // case the effective return type is an empty tuple.
+  // case the effective return type is an empty tuple. The function must not
+  // have an undeduced return type.
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
@@ -248,12 +388,14 @@ struct Function : public EntityWithParamsBase,
   // function, or for the original declaration if no specific is specified.
   // Returns `None` if the function was declared without a return form, in which
   // case the effective return form is an empty tuple initializing expression.
+  // The function must not have an undeduced return type.
   auto GetDeclaredReturnForm(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> InstId;
 
   // When merging a declaration and definition, prefer things which would point
-  // at the definition for diagnostics.
+  // at the definition for diagnostics. Note that merging parameter default
+  // values needs more context, so doesn't happen here.
   auto MergeDefinition(const Function& definition) -> void {
     EntityWithParamsBase::MergeBaseDefinition(definition);
     call_param_patterns_id = definition.call_param_patterns_id;
@@ -271,14 +413,13 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(kind.AsInt());
   }
 
-  // Sets that this function is generated for a `Core` witness. These will
-  // typically have a custom implementation for a `None` kind, but may use
-  // builtin functions, most often `NoOp`. We still track them differently in
-  // order to support mangling.
-  auto SetCoreWitness(BuiltinFunctionKind kind) -> void {
+  // Sets that this function is generated function for a custom witness. The
+  // generated function data may include a BuiltinFunctionKind if the body is a
+  // builtin.
+  auto SetGenerated(GeneratedFunctionId generated_function_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
-    special_function_kind = SpecialFunctionKind::CoreWitness;
-    special_function_kind_data = AnyRawId(kind.AsInt());
+    special_function_kind = SpecialFunctionKind::Generated;
+    special_function_kind_data = AnyRawId(generated_function_id.index);
   }
 
   // Sets that this function is a thunk.
@@ -288,11 +429,17 @@ struct Function : public EntityWithParamsBase,
     special_function_kind_data = AnyRawId(thunk_id.index);
   }
 
-  // Sets that this function is a C++ thunk.
+  // Sets that this function is a thunk for a C++ function.
   auto SetCppThunk(InstId decl_id) -> void {
     CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
     special_function_kind = SpecialFunctionKind::CppThunk;
     special_function_kind_data = AnyRawId(decl_id.index);
+  }
+
+  // Sets that this function is a thunk for a C++ function pointer.
+  auto SetCppFunctionPointerThunk() -> void {
+    CARBON_CHECK(special_function_kind == SpecialFunctionKind::None);
+    special_function_kind = SpecialFunctionKind::CppFunctionPointerThunk;
   }
 
   // Sets that this function is a C++ function that should be called using a C++
@@ -327,11 +474,15 @@ struct CalleeFunction {
   SpecificId enclosing_specific_id;
   // The specific for the callee itself, in a resolved call.
   SpecificId resolved_specific_id;
-  // The bound `Self` type or facet value. `None` if not a bound interface
-  // member.
+  // The bound `Self` facet. `None` if not a bound interface member.
   InstId self_type_id;
-  // The bound `self` parameter. `None` if not a method.
+  // The bound `self` argument. `None` if not a method.
   InstId self_id;
+};
+
+// Information about a callee that's a C++ function pointer.
+struct CalleeCppFunctionPointer {
+  ClangFunctionPointerTypeId function_type_id;
 };
 
 // Information about a callee that may be a generic type, or could be an
@@ -339,8 +490,14 @@ struct CalleeFunction {
 struct CalleeNonFunction {};
 
 // A variant combining the callee forms.
-using Callee = std::variant<CalleeCppOverloadSet, CalleeError, CalleeFunction,
-                            CalleeNonFunction>;
+using Callee = std::variant<CalleeCppFunctionPointer, CalleeCppOverloadSet,
+                            CalleeError, CalleeFunction, CalleeNonFunction>;
+
+// Given a callee expression in a function call, attempt to convert the callee
+// to a `BoundMethod`, minimally unwrapping it while doing so.
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod>;
 
 // Returns information for the function corresponding to callee_id in
 // caller_specific_id.
@@ -370,11 +527,65 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
                               SpecificId base_class_specific_id)
     -> DecomposedVirtualFunction;
 
+// The key holds values used to canonicalize generated functions for custom
+// witnesses globally across files. The payload holds a link to the Generated
+// function, as well as any extra fields for a Generated function. This can be
+// used for deduping generating functions in order to keep only a single
+// canonical copy, and for generating a mangled name that will be the same for
+// all files.
+struct GeneratedFunction : public Printable<GeneratedFunction> {
+  struct CanonicalKey {
+    // The Interface from Core.
+    SemIR::SpecificInterfaceId specific_interface_id;
+    // The self type for the operation.
+    //
+    // TODO: If the above becomes an Interface-with-Self specific, then this
+    // separate ID can be removed.
+    SemIR::TypeId self_type_id;
+    // The name of the function in the Core interface specified by the specific.
+    SemIR::NameId name_id;
+    // TODO: Also include parameters to support overloaded functions. Then use
+    // them in mangling.
+
+    auto operator==(const CanonicalKey& rhs) const -> bool = default;
+  };
+  CanonicalKey canonical_key;
+
+  // The canonical FunctionId for this Generated special function. There will
+  // only be one Function for a given Key value. This will contain the canonical
+  // values shared (with local ID mappings) across all files.
+  SemIR::FunctionId function_id;
+  // The owning declaration of the canonical generated Function. This will be
+  // local to, and thus different, in each file.
+  SemIR::InstId decl_id;
+  // The builtin function to execute when called. This will be None if the
+  // Function has a generated body.
+  SemIR::BuiltinFunctionKind builtin_function_kind;
+
+  auto GetAsKey() const -> const CanonicalKey& { return canonical_key; }
+
+  auto Print(llvm::raw_ostream& out) const -> void {
+    out << "{";
+    out << "specific_interface_id: " << canonical_key.specific_interface_id
+        << ", name_id: " << canonical_key.name_id
+        << ", function_id: " << function_id << ", decl_id: " << decl_id
+        << ", builtin_function_kind: " << builtin_function_kind;
+    out << "}";
+  }
+};
+
+using GeneratedFunctionStore =
+    CanonicalValueStore<GeneratedFunctionId, GeneratedFunction::CanonicalKey,
+                        Tag<CheckIRId>, GeneratedFunction>;
+
 }  // namespace Carbon::SemIR
 
 namespace Carbon {
 extern template class ValueStore<SemIR::FunctionId, SemIR::Function,
                                  Tag<SemIR::CheckIRId>>;
+extern template class CanonicalValueStore<
+    SemIR::GeneratedFunctionId, SemIR::GeneratedFunction::CanonicalKey,
+    Tag<SemIR::CheckIRId>, SemIR::GeneratedFunction>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_FUNCTION_H_

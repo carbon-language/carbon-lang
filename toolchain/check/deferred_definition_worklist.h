@@ -51,6 +51,7 @@ class DeferredDefinitionWorklist {
     SemIR::FunctionId function_id;
     SemIR::InstId decl_id;
     SemIR::InstId callee_id;
+    SemIR::TypeId override_self_type_id;
   };
 
   // A worklist task that indicates we should define a thunk that was previously

@@ -118,5 +118,5 @@ avoid collisions between the package name `Cpp` and a top-level entity named
 
 ## Alternatives considered
 
--   [Have both predeclared identifiers and keywords](/proposals/p4864.md#have-both-predeclared-identifiers-and-keywords)
--   [Reserve words with a certain spelling](/proposals/p4864.md#reserve-words-with-a-certain-spelling)
+-   [Have both predeclared identifiers and keywords](/proposals/p004864-no-predeclared-identifiers-core-is-a-keyword.md#have-both-predeclared-identifiers-and-keywords)
+-   [Reserve words with a certain spelling](/proposals/p004864-no-predeclared-identifiers-core-is-a-keyword.md#reserve-words-with-a-certain-spelling)

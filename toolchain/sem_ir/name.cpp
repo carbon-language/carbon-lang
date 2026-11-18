@@ -67,4 +67,13 @@ auto NameStoreWrapper::GetIRBaseName(NameId name_id) const -> llvm::StringRef {
   return GetSpecialName(name_id, /*for_ir=*/true);
 }
 
+auto NameStoreWrapper::OutputYaml() const -> Yaml::OutputMapping {
+  return Yaml::OutputMapping([&](Yaml::OutputMapping::Map map) {
+    for (auto [identifier_id, value] : identifiers_->enumerate()) {
+      map.Add(PrintToString(NameId{identifier_id.index}),
+              Yaml::OutputScalar(value));
+    }
+  });
+}
+
 }  // namespace Carbon::SemIR

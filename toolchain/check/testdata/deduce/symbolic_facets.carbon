@@ -18,23 +18,29 @@
 // --- fail_missing_interface.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B) {
+  fn G(generic T: B) {
     // T only implements D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
-    // CHECK:STDERR: fail_missing_interface.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     C(()).F(T);
-    // CHECK:STDERR:     ^~~~~~~~~~
-    // CHECK:STDERR: fail_missing_interface.carbon:[[@LINE-12]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR:   fn F(unused T:! A) {}
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:        ╭─┤ fail_missing_interface.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR:        │   fn F(unused generic T: A) {}
+    // CHECK:STDERR:        ·   ─────────────┬─────────────
+    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     C(()).F(T);
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `T` that implements `B` into type
+    // CHECK:STDERR:        ·        ┃        implementing `A`
+    // CHECK:STDERR:        ·        ┃        [ConversionFailureFacetToFacet]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     C(()).F(T);
   }
@@ -43,23 +49,29 @@ class D(DD:! type) {
 // --- fail_interface_wrong_generic_param.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B & C({}).A) {
+  fn G(generic T: B & C({}).A) {
     // T implements C({}).A and D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
-    // CHECK:STDERR: fail_interface_wrong_generic_param.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `A & B` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     C(()).F(T);
-    // CHECK:STDERR:     ^~~~~~~~~~
-    // CHECK:STDERR: fail_interface_wrong_generic_param.carbon:[[@LINE-12]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR:   fn F(unused T:! A) {}
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:        ╭─┤ fail_interface_wrong_generic_param.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR:        │   fn F(unused generic T: A) {}
+    // CHECK:STDERR:        ·   ─────────────┬─────────────
+    // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     C(()).F(T);
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `T` that implements `A & B` into type
+    // CHECK:STDERR:        ·        ┃        implementing `A`
+    // CHECK:STDERR:        ·        ┃        [ConversionFailureFacetToFacet]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     C(()).F(T);
   }
@@ -68,14 +80,14 @@ class D(DD:! type) {
 // --- compatible_deduce.carbon
 library "[[@TEST_NAME]]";
 
-class C(CC:! type) {
+class C(CC: type) {
   interface A {}
-  fn F(unused T:! A) {}
+  fn F(unused generic T: A) {}
 }
 
-class D(DD:! type) {
+class D(DD: type) {
   interface B {}
-  fn G(T:! B & C(()).A) {
+  fn G(generic T: B & C(()).A) {
     C(()).F(T);
   }
 }

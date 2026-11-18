@@ -14,18 +14,13 @@ class Square {
   adapt char;
 
   impl as Core.Copy {
-    fn Op[self: Self]() -> Self {
+    fn Op(self) -> Self {
       return (self as char).(Core.Copy.Op)() as Self;
     }
   }
-  impl as Core.EqWith(Square) {
-    fn Equal[self: Self](other: Self) -> bool {
-      // TODO: Use a `char` comparison when it's supported.
-      return (self as u8) == (other as u8);
-    }
-    fn NotEqual[self: Self](other: Self) -> bool {
-      // TODO: Use a `char` comparison when it's supported.
-      return (self as u8) != (other as u8);
+  impl as Core.Eq {
+    fn Equal(self, other: Self) -> bool {
+      return (self as char) == (other as char);
     }
   }
 
@@ -65,7 +60,7 @@ class Grid {
     return var;
   }
 
-  fn Move[ref self: Self](d: (i32, i32)) {
+  fn Move(ref self, d: (i32, i32)) {
     var distance: i32 = 1;
     while (self.data[self.robot.0 + distance * d.0][self.robot.1 + distance * d.1] == Box) {
       ++distance;
@@ -79,7 +74,7 @@ class Grid {
     }
   }
 
-  fn Print[self: Self]() {
+  fn Print(self) {
     var y: i32 = 0;
     while (y < 50) {
       var x: i32 = 0;
@@ -93,7 +88,7 @@ class Grid {
     Core.PrintChar('\n');
   }
 
-  fn Signature[self: Self]() -> i32 {
+  fn Signature(self) -> i32 {
     var s: i32 = 0;
     var y: i32 = 0;
     while (y < 50) {
