@@ -508,13 +508,7 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
         context.constant_values().GetConstantInstId(converted_inst_id);
     // Check that the value is constant after conversion, because the result of
     // conversion can be non-constant even if the original value was constant.
-    if (converted_inst_id.has_value()) {
-      value_id = converted_inst_id;
-      if (value_id == SemIR::ErrorInst::InstId) {
-        table_entry = SemIR::ErrorInst::InstId;
-        return;
-      }
-    } else {
+    if (!converted_inst_id.has_value()) {
       const auto& assoc_const = context.associated_constants().Get(
           assoc_constant_decl->assoc_const_id);
       CARBON_DIAGNOSTIC(
@@ -528,6 +522,11 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
       table_entry = SemIR::ErrorInst::InstId;
       return;
     }
+    if (converted_inst_id == SemIR::ErrorInst::InstId) {
+      table_entry = SemIR::ErrorInst::InstId;
+      return;
+    }
+    value_id = converted_inst_id;
   }
 
   CARBON_CHECK(
