@@ -341,15 +341,11 @@ interface Z {
 }
 
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_assign_fn.carbon:[[@LINE+11]]:13
+  // CHECK:STDERR:        ╭─┤ fail_assign_fn.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   where F = fn()=>();
-  // CHECK:STDERR:        ·             ┳━━━━━
-  // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·             │  ┃        `<type of function expression>` to `<type of F>`
-  // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·             ╰────┤ type `<type of function expression>` does not implement
-  // CHECK:STDERR:        ·                  │ interface `Core.ImplicitAs(<type of F>)`
-  // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: assigning to associated function F
+  // CHECK:STDERR:        ·               ┃        [RewriteForAssociatedFunction]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where F = fn()=>();
