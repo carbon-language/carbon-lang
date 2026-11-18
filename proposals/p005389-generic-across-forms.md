@@ -2388,7 +2388,7 @@ class __Binding_Dog_Bark {
 
 impl __TypeOf_Dog_Bark as BindToRef(Dog) {
   where Result = __Binding_Dog_Bark;
-  fn Op(self, ref r: Dog)
+  fn Op(unused self, ref r: Dog)
       -> ref __Binding_Dog_Bark {
     return r as __Binding_Dog_Bark;
   }
@@ -2396,7 +2396,7 @@ impl __TypeOf_Dog_Bark as BindToRef(Dog) {
 
 impl __TypeOf_Dog_Bark as BindToVal(Dog) {
   where Result = __Binding_Dog_Bark;
-  fn Op(self, x: Dog)
+  fn Op(unused self, x: Dog)
       -> val __Binding_Dog_Bark {
     return x as __Binding_Dog_Bark;
   }
