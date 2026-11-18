@@ -165,8 +165,8 @@ class ImportContext {
       : context_(context),
         import_ir_id_(import_ir_id),
         import_ir_(*context_->import_irs().Get(import_ir_id).sem_ir) {
-    CARBON_CHECK(import_ir_id.has_value() &&
-                 import_ir_id != SemIR::ImportIRId::Local);
+    CARBON_CHECK(import_ir_id.has_value());
+    CARBON_CHECK(import_ir_id != SemIR::ImportIRId::Local);
   }
 
   // Returns the file we are importing from.
