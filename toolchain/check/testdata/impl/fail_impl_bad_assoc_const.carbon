@@ -21,7 +21,7 @@ interface I { let T: type; }
 // CHECK:STDERR:        ·                         │ [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl () as I {}
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface I
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
