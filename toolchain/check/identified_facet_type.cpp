@@ -4,6 +4,7 @@
 
 #include "toolchain/check/identified_facet_type.h"
 
+#include "common/find.h"
 #include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
@@ -84,10 +85,28 @@ IdentifiedFacetType::IdentifiedFacetType(
       extend_impls_,
       llvm::map_range(extends, [](RequiredImpl req) { return req.interface; }));
 
-  rewrites_.assign(rewrites);
-  SortAndDeduplicate(rewrites_, RewriteLess);
-  equivalents_.assign(equivalents);
-  SortAndDeduplicate(equivalents_, EquivalentLess);
+  // Keep rewrites and equivalents in the same order they are found during
+  // identify, but drop duplicates.
+  //
+  // TODO: We want to perform rewrite constraint resolution here instead of when
+  // we evaluate WhereExpr. That is a more complicated deduping operation and
+  // would replace this.
+  llvm::SmallVector<Rewrite> rewrites_dedupe(rewrites);
+  SortAndDeduplicate(rewrites_dedupe, RewriteLess);
+  rewrites_.reserve(rewrites_dedupe.size());
+  for (auto r : rewrites) {
+    if (Contains(rewrites_dedupe, r)) {
+      rewrites_.push_back(r);
+    }
+  }
+  llvm::SmallVector<Equivalent> equivalents_dedupe(equivalents);
+  SortAndDeduplicate(equivalents_dedupe, EquivalentLess);
+  equivalents_.reserve(equivalents_dedupe.size());
+  for (auto e : equivalents) {
+    if (Contains(equivalents_dedupe, e)) {
+      equivalents_.push_back(e);
+    }
+  }
 }
 
 class EvaluateSubstCallbacks : public SubstInstCallbacks {

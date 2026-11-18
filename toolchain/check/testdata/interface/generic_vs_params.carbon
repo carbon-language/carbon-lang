@@ -116,14 +116,14 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %.bd1: <witness> = impl_self_witness %X, @NotGenericNoParams [concrete]
+// CHECK:STDOUT:   %.bd1: <witness> = impl_self_witness %X, @NotGenericNoParams [symbolic_self]
 // CHECK:STDOUT:   %NotGenericNoParams.impl_witness: <witness> = impl_witness @X.as.NotGenericNoParams.impl.%NotGenericNoParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %NotGenericNoParams.facet: %NotGenericNoParams.type = facet_value %X, (%NotGenericNoParams.impl_witness) [concrete]
-// CHECK:STDOUT:   %.7d9: <witness> = impl_self_witness %X, @NotGenericButParams [concrete]
+// CHECK:STDOUT:   %.7d9: <witness> = impl_self_witness %X, @NotGenericButParams [symbolic_self]
 // CHECK:STDOUT:   %NotGenericButParams.impl_witness: <witness> = impl_witness @X.as.NotGenericButParams.impl.%NotGenericButParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %NotGenericButParams.facet: %NotGenericButParams.type.21c = facet_value %X, (%NotGenericButParams.impl_witness) [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.4e4: type = facet_type <@GenericAndParams.loc6, @GenericAndParams.loc6(%X)> [concrete]
-// CHECK:STDOUT:   %.fac: <witness> = impl_self_witness %X, @GenericAndParams.loc6, @GenericAndParams.loc6(%X) [concrete]
+// CHECK:STDOUT:   %.fac: <witness> = impl_self_witness %X, @GenericAndParams.loc6, @GenericAndParams.loc6(%X) [symbolic_self]
 // CHECK:STDOUT:   %GenericAndParams.impl_witness.3dc: <witness> = impl_witness @X.as.GenericAndParams.impl.abf.%GenericAndParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.112: %GenericAndParams.type.4e4 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.facet.4b5: %GenericAndParams.type.4e4 = facet_value %X, (%GenericAndParams.impl_witness.3dc) [concrete]
@@ -131,12 +131,12 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:   %GenericNoParams.type.1c3: type = facet_type <@GenericNoParams, @GenericNoParams(%X)> [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.b45: type = generic_interface_type @GenericAndParams.loc10, @C(%X) [concrete]
 // CHECK:STDOUT:   %GenericAndParams.generic.1d6: %GenericAndParams.type.b45 = struct_value () [concrete]
-// CHECK:STDOUT:   %.f7f: <witness> = impl_self_witness %X, @GenericNoParams, @GenericNoParams(%X) [concrete]
+// CHECK:STDOUT:   %.f7f: <witness> = impl_self_witness %X, @GenericNoParams, @GenericNoParams(%X) [symbolic_self]
 // CHECK:STDOUT:   %GenericNoParams.impl_witness: <witness> = impl_witness @X.as.GenericNoParams.impl.%GenericNoParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.056: %GenericNoParams.type.1c3 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %GenericNoParams.facet: %GenericNoParams.type.1c3 = facet_value %X, (%GenericNoParams.impl_witness) [concrete]
 // CHECK:STDOUT:   %GenericAndParams.type.3e1: type = facet_type <@GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X)> [concrete]
-// CHECK:STDOUT:   %.8ee: <witness> = impl_self_witness %X, @GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X) [concrete]
+// CHECK:STDOUT:   %.8ee: <witness> = impl_self_witness %X, @GenericAndParams.loc10, @GenericAndParams.loc10(%X, %X) [symbolic_self]
 // CHECK:STDOUT:   %GenericAndParams.impl_witness.3fd: <witness> = impl_witness @X.as.GenericAndParams.impl.61d.%GenericAndParams.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.281: %GenericAndParams.type.3e1 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %GenericAndParams.facet.1b4: %GenericAndParams.type.3e1 = facet_value %X, (%GenericAndParams.impl_witness.3fd) [concrete]
@@ -175,20 +175,20 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %NotGenericNoParams.ref: type = name_ref NotGenericNoParams, file.%NotGenericNoParams.decl [concrete = constants.%NotGenericNoParams.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @X.as.NotGenericNoParams.impl.%X.ref, @NotGenericNoParams [concrete = constants.%.bd1]
+// CHECK:STDOUT:   %.loc14: <witness> = impl_self_witness @X.as.NotGenericNoParams.impl.%X.ref, @NotGenericNoParams [symbolic_self = constants.%.bd1]
 // CHECK:STDOUT:   impl_decl @X.as.NotGenericButParams.impl [concrete] {} {
 // CHECK:STDOUT:     %X.ref: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %NotGenericButParams.ref: %NotGenericButParams.type.2fe = name_ref NotGenericButParams, file.%NotGenericButParams.decl [concrete = constants.%NotGenericButParams.generic]
 // CHECK:STDOUT:     %NotGenericButParams.type: type = facet_type <@NotGenericButParams> [concrete = constants.%NotGenericButParams.type.21c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @X.as.NotGenericButParams.impl.%X.ref, @NotGenericButParams [concrete = constants.%.7d9]
+// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @X.as.NotGenericButParams.impl.%X.ref, @NotGenericButParams [symbolic_self = constants.%.7d9]
 // CHECK:STDOUT:   impl_decl @X.as.GenericAndParams.impl.abf [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc16_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.ref: %GenericAndParams.type.23f = name_ref GenericAndParams, file.%GenericAndParams.decl [concrete = constants.%GenericAndParams.generic.504]
 // CHECK:STDOUT:     %X.ref.loc16_28: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.loc6, @GenericAndParams.loc6(constants.%X)> [concrete = constants.%GenericAndParams.type.4e4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16: <witness> = impl_self_witness @X.as.GenericAndParams.impl.abf.%X.ref.loc16_6, @GenericAndParams.loc6, @GenericAndParams.loc6(constants.%X) [concrete = constants.%.fac]
+// CHECK:STDOUT:   %.loc16: <witness> = impl_self_witness @X.as.GenericAndParams.impl.abf.%X.ref.loc16_6, @GenericAndParams.loc6, @GenericAndParams.loc6(constants.%X) [symbolic_self = constants.%.fac]
 // CHECK:STDOUT:   impl_decl @X.as.GenericNoParams.impl [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc17_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -197,7 +197,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:     %.loc17: type = specific_constant @C.%GenericNoParams.decl, @C(constants.%X) [concrete = constants.%GenericNoParams.type.1c3]
 // CHECK:STDOUT:     %GenericNoParams.ref: type = name_ref GenericNoParams, %.loc17 [concrete = constants.%GenericNoParams.type.1c3]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @X.as.GenericNoParams.impl.%X.ref.loc17_6, @GenericNoParams, @GenericNoParams(constants.%X) [concrete = constants.%.f7f]
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @X.as.GenericNoParams.impl.%X.ref.loc17_6, @GenericNoParams, @GenericNoParams(constants.%X) [symbolic_self = constants.%.f7f]
 // CHECK:STDOUT:   impl_decl @X.as.GenericAndParams.impl.61d [concrete] {} {
 // CHECK:STDOUT:     %X.ref.loc18_6: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
@@ -208,7 +208,7 @@ interface Bar[T: type] {}
 // CHECK:STDOUT:     %X.ref.loc18_33: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:     %GenericAndParams.type: type = facet_type <@GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X)> [concrete = constants.%GenericAndParams.type.3e1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @X.as.GenericAndParams.impl.61d.%X.ref.loc18_6, @GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X) [concrete = constants.%.8ee]
+// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @X.as.GenericAndParams.impl.61d.%X.ref.loc18_6, @GenericAndParams.loc10, @GenericAndParams.loc10(constants.%X, constants.%X) [symbolic_self = constants.%.8ee]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @NotGenericNoParams {

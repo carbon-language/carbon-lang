@@ -71,7 +71,7 @@ fn LoadSubscript(s: Span, i: i32) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CLoadViaAt.Main(ptr %s) #0 !dbg !46 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call = call i32 @"_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.7d2c1205e4a4eaa2"(ptr %s, i32 0), !dbg !51
+// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call = call i32 @"_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.d055f9132a1e41b9"(ptr %s, i32 0), !dbg !51
 // CHECK:STDOUT:   ret i32 %T.as_type.as.IndexWith.impl.At.call, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -92,7 +92,7 @@ fn LoadSubscript(s: Span, i: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.7d2c1205e4a4eaa2"(ptr %self, i32 %subscript) #0 !dbg !78 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.d055f9132a1e41b9"(ptr %self, i32 %subscript) #0 !dbg !78 {
 // CHECK:STDOUT:   %1 = call ptr @"_CRef.Span.Main:IndirectIndexWith.55456748a8a2eb70.Core"(ptr %self, i32 %subscript), !dbg !85
 // CHECK:STDOUT:   %2 = load i32, ptr %1, align 4, !dbg !85
 // CHECK:STDOUT:   ret i32 %2, !dbg !87
@@ -155,7 +155,7 @@ fn LoadSubscript(s: Span, i: i32) -> i32 {
 // CHECK:STDOUT: !75 = !DILocation(line: 40, column: 3, scope: !66)
 // CHECK:STDOUT: !76 = !{!67, !68}
 // CHECK:STDOUT: !77 = !DIFile(filename: "{{.*}}/prelude/operators/index.carbon", directory: "")
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "At", linkageName: "_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.7d2c1205e4a4eaa2", scope: null, file: !77, line: 25, type: !17, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !88)
+// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "At", linkageName: "_CAt.4b18d5ec6f2c7a47:IndexWith.eb057aa32837c84e.Core.d055f9132a1e41b9", scope: null, file: !77, line: 25, type: !17, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !88)
 // CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !7)
 // CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !6)
 // CHECK:STDOUT: !85 = !DILocation(line: 26, column: 12, scope: !78)
