@@ -50,7 +50,7 @@ fn Test() {
 // --- todo_nontrivial_one_trivial_field.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: implement trivial destruction optimisations.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
 
 import library "types";
 
@@ -69,7 +69,7 @@ fn Test() {
 // --- nontrivial_nested.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: implement trivial destruction optimisations.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
 
 import library "types";
 

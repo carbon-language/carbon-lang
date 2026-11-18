@@ -42,7 +42,7 @@ fn Test() {
 // --- todo_nontrivial_one_trivial_element.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: implement trivial destruction optimisations.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
 
 class HasNonTrivialDestruction {
   impl as Core.DestroyImpl {
@@ -73,7 +73,7 @@ fn Test() {
 // --- todo_nontrivial_nested.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: implement trivial destruction optimisations.
+// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
 
 class HasNonTrivialDestruction {
   impl as Core.DestroyImpl {
