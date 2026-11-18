@@ -149,6 +149,7 @@ auto PrecedenceGroup::ForLeading(Lex::TokenKind kind)
   switch (kind) {
     case Lex::TokenKind::Star:
     case Lex::TokenKind::Amp:
+    case Lex::TokenKind::Expand:
       return PrecedenceGroup(TermPrefix);
 
     case Lex::TokenKind::Not:
@@ -249,6 +250,7 @@ auto PrecedenceGroup::ForTrailing(Lex::TokenKind kind, bool infix)
 
     // Prefix-only operators.
     case Lex::TokenKind::Const:
+    case Lex::TokenKind::Expand:
     case Lex::TokenKind::MinusMinus:
     case Lex::TokenKind::Not:
     case Lex::TokenKind::Partial:

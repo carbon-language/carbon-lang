@@ -23,9 +23,12 @@ interface Y {
 impl () as Y;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_extend_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_extend_require_for_concrete_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as Y {}
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: interface `Y` being implemented requires that `()` implements `Z`
+// CHECK:STDERR:        ·       ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y {}
 
@@ -42,9 +45,12 @@ interface Y {
 impl () as Y;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `()` implements `Z` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_require_for_concrete_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as Y {}
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: interface `Y` being implemented requires that `()` implements `Z`
+// CHECK:STDERR:        ·       ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y {}
 
@@ -61,9 +67,12 @@ interface Y {
 impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_extend_require_for_symbolic_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as Y {}
+// CHECK:STDERR:        · ━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: interface `Y` being implemented requires that `T` implements `Z`
+// CHECK:STDERR:        ·        ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as Y {}
 
@@ -80,9 +89,12 @@ interface Y {
 impl forall [T: type] T as Y;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: interface `Y` being implemented requires that `T` implements `Z` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_require_for_symbolic_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as Y {}
+// CHECK:STDERR:        · ━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: interface `Y` being implemented requires that `T` implements `Z`
+// CHECK:STDERR:        ·        ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as Y {}
 
@@ -99,9 +111,13 @@ interface Y(U: type) {
   extend require impls Z1(U) & Z2(B);
 }
 
-// CHECK:STDERR: fail_missing_extend_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as Y(A) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_extend_require_double.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl () as Y(A) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: interface `Y(A)` being implemented requires that `()` implements
+// CHECK:STDERR:        ·    ┃        `Z1(A) & Z2(B)`
+// CHECK:STDERR:        ·    ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y(A) {}
 
@@ -118,9 +134,13 @@ interface Y(U: type) {
   require impls Z1(U) & Z2(B);
 }
 
-// CHECK:STDERR: fail_missing_require_double.carbon:[[@LINE+4]]:1: error: interface `Y(A)` being implemented requires that `()` implements `Z1(A) & Z2(B)` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as Y(A) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_require_double.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl () as Y(A) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: interface `Y(A)` being implemented requires that `()` implements
+// CHECK:STDERR:        ·    ┃        `Z1(A) & Z2(B)`
+// CHECK:STDERR:        ·    ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y(A) {}
 
@@ -227,9 +247,13 @@ interface Y(U: type) {
 }
 
 // Y requires that C impls Z(Self), but it does not do so.
-// CHECK:STDERR: fail_require_non_self_missing.carbon:[[@LINE+4]]:1: error: interface `Y(())` being implemented requires that `C` implements `Z(())` [InterfaceRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as Y(()) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_require_non_self_missing.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl () as Y(()) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: interface `Y(())` being implemented requires that `C` implements
+// CHECK:STDERR:        ·    ┃        `Z(())`
+// CHECK:STDERR:        ·    ┃        [InterfaceRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y(()) {}
 
@@ -286,12 +310,15 @@ fn F(generic T: C) {
 // --- fail_impl_requires_itself_cycle_with_monomorphization_error.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 class W(T: type) {
   adapt {};
 }
 
 interface A(N: Core.IntLiteral) {
-  fn AA() -> W(array((), N));
+  fn AA() -> W(Array((), N));
 }
 interface B(N: Core.IntLiteral) {
   require impls A(N);
@@ -301,7 +328,7 @@ interface C(N: Core.IntLiteral) {
 }
 
 impl forall [N: Core.IntLiteral, T: B(N)] T as A(N) {
-  fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
+  fn AA() -> W(Array((), N)) { return {} as W(Array((), N)); }
 }
 
 impl forall [N: Core.IntLiteral, T: C(N)] T as B(N) {
@@ -315,12 +342,16 @@ impl forall [N: Core.IntLiteral, T: C(N)] T as B(N) {
 }
 
 fn F(generic T: C(-1)) {
-  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+7]]:3: error: unable to monomorphize specific `AA()` [ResolvingSpecificHere]
-  // CHECK:STDERR:   T.(A(-1).AA)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE-27]]:26: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   fn AA() -> W(array((), N));
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR:        ╭─┤ fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   fn AA() -> W(Array((), N));
+  // CHECK:STDERR:        ·                          ┬
+  // CHECK:STDERR:        ·                          ╰──┤ array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   T.(A(-1).AA)();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `AA()`
+  // CHECK:STDERR:        ·             ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T.(A(-1).AA)();
 }

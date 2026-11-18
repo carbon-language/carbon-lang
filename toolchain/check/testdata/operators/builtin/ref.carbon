@@ -17,9 +17,12 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var x: () = ();
-  // CHECK:STDERR: fail_discarded_ref.carbon:[[@LINE+4]]:3: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   ref x;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_discarded_ref.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   ref x;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `ref` tag is not an argument to a `ref` parameter
+  // CHECK:STDERR:        ·        ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ref x;
 }
@@ -30,14 +33,22 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var x: () = ();
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:22: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   let unused y: () = ref x;
-  // CHECK:STDERR:                      ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+8]]:22
+  // CHECK:STDERR: ->     │   let unused y: () = ref x;
+  // CHECK:STDERR:        ·                      ┳━━━━
+  // CHECK:STDERR:        ·                      ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·                         ┃        parameter
+  // CHECK:STDERR:        ·                         ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused y: () = ref x;
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+4]]:23: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR:   let unused z: () = (ref x);
-  // CHECK:STDERR:                       ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+8]]:23
+  // CHECK:STDERR: ->     │   let unused z: () = (ref x);
+  // CHECK:STDERR:        ·                       ┳━━━━
+  // CHECK:STDERR:        ·                       ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·                          ┃        parameter
+  // CHECK:STDERR:        ·                          ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused z: () = (ref x);
 }

@@ -70,9 +70,10 @@ fn F() {
   Test(GreaterEq(1, -1)) as Expect(true);
 }
 
-// CHECK:STDOUT: --- int_greater_eq.carbon
+// CHECK:STDOUT: --- int_greater_eq.carbon = $int_greater_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %GreaterEq.type: type = fn_type @GreaterEq [concrete]

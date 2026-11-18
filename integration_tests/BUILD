@@ -16,3 +16,8 @@ carbon_binary(
     name = "make_unique_test",
     srcs = ["make_unique_test.carbon"],
 )
+
+carbon_binary(
+    name = "callback_test",
+    srcs = ["callback_test.carbon"],
+)

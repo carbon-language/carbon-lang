@@ -11,6 +11,7 @@
 #include <system_error>
 #include <utility>
 
+#include "clang/Basic/TargetOptions.h"
 #include "common/error.h"
 #include "common/ostream.h"
 #include "common/pretty_stack_trace_function.h"
@@ -18,18 +19,23 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Target/TargetMachine.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
 #include "toolchain/codegen/codegen.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/lex/lex.h"
 #include "toolchain/lower/lower.h"
 #include "toolchain/lower/options.h"
@@ -61,6 +67,8 @@ CompilationUnit::CompilationUnit(
     consumer_ = &*sorting_consumer_;
   }
 }
+
+CompilationUnit::~CompilationUnit() = default;
 
 auto CompilationUnit::IncludeInDumps() -> bool {
   return cache_->include_in_dumps().Get(check_ir_id_);
@@ -149,6 +157,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
+  inst_namer_getter_ = [this]() -> SemIR::InstNamer& { return GetInstNamer(); };
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
@@ -186,9 +195,11 @@ auto CompilationUnit::RunLower() -> void {
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
     options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+    // Only generate inst names if the llvm IR needs to be human-readable.
+    options.generate_inst_names = options_->dump_llvm_ir;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
-                                 total_ir_count_, options);
+                                 total_ir_count_, get_inst_namer(), options);
   });
 }
 
@@ -203,9 +214,21 @@ auto CompilationUnit::MakeTargetMachine(
   llvm::Triple target_triple(options_->codegen_options->target);
   module_->setTargetTriple(target_triple);
 
-  // TODO: Provide flags to control these.
-  constexpr llvm::StringLiteral CPU = "generic";
-  constexpr llvm::StringLiteral Features = "";
+  const auto& clang_target_opts = clang_invocation.getTargetOpts();
+  std::string features_str = llvm::join(clang_target_opts.Features, ",");
+
+  // LLVM's TargetMachine does not have a module-level TuneCPU setting; instead,
+  // target backends read the `"tune-cpu"` function attribute. Ignore Clang's
+  // implicit `"generic"` default on x86 unless `--target-cpu-tune` was set.
+  if (!clang_target_opts.TuneCPU.empty() &&
+      (!options_->codegen_options->target_cpu_tune.empty() ||
+       clang_target_opts.TuneCPU != "generic")) {
+    for (llvm::Function& fn : *module_) {
+      if (!fn.isDeclaration() && !fn.hasFnAttribute("tune-cpu")) {
+        fn.addFnAttr("tune-cpu", clang_target_opts.TuneCPU);
+      }
+    }
+  }
 
   const auto& codegen_opts = clang_invocation.getCodeGenOpts();
 
@@ -218,7 +241,8 @@ auto CompilationUnit::MakeTargetMachine(
   target_opts.DataSections = codegen_opts.DataSections;
   target_opts.UniqueSectionNames = codegen_opts.UniqueSectionNames;
   target_machine_.reset(target_->createTargetMachine(
-      target_triple, CPU, Features, target_opts, llvm::Reloc::PIC_));
+      target_triple, clang_target_opts.CPU, features_str, target_opts,
+      llvm::Reloc::PIC_));
 }
 
 auto CompilationUnit::RunOptimize(
@@ -261,7 +285,7 @@ auto CompilationUnit::RunOptimize(
                                     /*DebugLogging=*/false);
   si.registerCallbacks(pic);
 
-  llvm::PassBuilder builder(target_machine_.get(), pto,
+  llvm::PassBuilder builder(module_->getContext(), target_machine_.get(), pto,
                             /*PGOOpt=*/std::nullopt, &pic);
 
   // TODO: Add an AssignmentTrackingPass for at least `--optimize=debug`.
@@ -407,6 +431,13 @@ auto CompilationUnit::GetParseTreeAndSubtrees() const
   return *parse_tree_and_subtrees_;
 }
 
+auto CompilationUnit::GetInstNamer() const -> SemIR::InstNamer& {
+  if (!inst_namer_) {
+    inst_namer_.emplace(&sem_ir(), cache_->total_ir_count());
+  }
+  return *inst_namer_;
+}
+
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
                               llvm::function_ref<auto()->void> fn) -> void {
@@ -420,6 +451,8 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 }
 
 CompileDriver::CompileDriver(CompileOptions* options) : options_(options) {}
+
+CompileDriver::~CompileDriver() = default;
 
 auto CompileDriver::Initialize(
     DriverEnv& driver_env,
@@ -611,7 +644,9 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   }
 
   Check::CheckParseTrees(check_units, cache_->tree_and_subtrees_getters(),
-                         driver_env.fs, options, clang_invocation_);
+                         cache_->short_file_names(),
+                         cache_->inst_namer_getters(), driver_env.fs, options,
+                         clang_invocation_);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");
   for (auto& unit : units_) {

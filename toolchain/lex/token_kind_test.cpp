@@ -23,52 +23,73 @@ constexpr llvm::StringLiteral SymbolRegex =
 // specific exceptions.
 constexpr llvm::StringLiteral KeywordRegex = "[a-z_]+|Core|Cpp|Self";
 
-#define CARBON_TOKEN(TokenName)                           \
-  TEST(TokenKindTest, TokenName) {                        \
-    EXPECT_FALSE(TokenKind::TokenName.is_symbol());       \
-    EXPECT_FALSE(TokenKind::TokenName.is_keyword());      \
-    EXPECT_EQ("", TokenKind::TokenName.fixed_spelling()); \
-  }
-#define CARBON_SYMBOL_TOKEN(TokenName, Spelling)                \
-  TEST(TokenKindTest, TokenName) {                              \
-    EXPECT_TRUE(TokenKind::TokenName.is_symbol());              \
-    EXPECT_FALSE(TokenKind::TokenName.is_grouping_symbol());    \
-    EXPECT_FALSE(TokenKind::TokenName.is_opening_symbol());     \
-    EXPECT_FALSE(TokenKind::TokenName.is_closing_symbol());     \
-    EXPECT_FALSE(TokenKind::TokenName.is_keyword());            \
-    EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling()); \
-    EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));     \
-  }
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)   \
-  TEST(TokenKindTest, TokenName) {                                            \
-    EXPECT_TRUE(TokenKind::TokenName.is_symbol());                            \
-    EXPECT_TRUE(TokenKind::TokenName.is_grouping_symbol());                   \
-    EXPECT_TRUE(TokenKind::TokenName.is_opening_symbol());                    \
-    EXPECT_EQ(TokenKind::ClosingName, TokenKind::TokenName.closing_symbol()); \
-    EXPECT_FALSE(TokenKind::TokenName.is_closing_symbol());                   \
-    EXPECT_FALSE(TokenKind::TokenName.is_keyword());                          \
-    EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling());               \
-    EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));                   \
-  }
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)   \
-  TEST(TokenKindTest, TokenName) {                                            \
-    EXPECT_TRUE(TokenKind::TokenName.is_symbol());                            \
-    EXPECT_TRUE(TokenKind::TokenName.is_grouping_symbol());                   \
-    EXPECT_FALSE(TokenKind::TokenName.is_opening_symbol());                   \
-    EXPECT_TRUE(TokenKind::TokenName.is_closing_symbol());                    \
-    EXPECT_EQ(TokenKind::OpeningName, TokenKind::TokenName.opening_symbol()); \
-    EXPECT_FALSE(TokenKind::TokenName.is_keyword());                          \
-    EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling());               \
-    EXPECT_THAT(Spelling, MatchesRegex(SymbolRegex.str()));                   \
-  }
-#define CARBON_KEYWORD_TOKEN(TokenName, Spelling)               \
-  TEST(TokenKindTest, TokenName) {                              \
-    EXPECT_FALSE(TokenKind::TokenName.is_symbol());             \
-    EXPECT_TRUE(TokenKind::TokenName.is_keyword());             \
-    EXPECT_EQ(Spelling, TokenKind::TokenName.fixed_spelling()); \
-    EXPECT_THAT(Spelling, MatchesRegex(KeywordRegex.str()));    \
-  }
+static void CheckToken(TokenKind kind) {
+  EXPECT_FALSE(kind.is_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_keyword()) << kind.name().str();
+  EXPECT_EQ("", kind.fixed_spelling()) << kind.name().str();
+}
+
+static void CheckSymbolToken(TokenKind kind, llvm::StringRef spelling) {
+  EXPECT_TRUE(kind.is_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_grouping_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_opening_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_closing_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_keyword()) << kind.name().str();
+  EXPECT_EQ(spelling, kind.fixed_spelling()) << kind.name().str();
+  EXPECT_THAT(spelling.str(), MatchesRegex(SymbolRegex.str()))
+      << kind.name().str();
+}
+
+static void CheckOpeningGroupSymbolToken(TokenKind kind,
+                                         llvm::StringRef spelling,
+                                         TokenKind closing_kind) {
+  EXPECT_TRUE(kind.is_symbol()) << kind.name().str();
+  EXPECT_TRUE(kind.is_grouping_symbol()) << kind.name().str();
+  EXPECT_TRUE(kind.is_opening_symbol()) << kind.name().str();
+  EXPECT_EQ(closing_kind, kind.closing_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_closing_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_keyword()) << kind.name().str();
+  EXPECT_EQ(spelling, kind.fixed_spelling()) << kind.name().str();
+  EXPECT_THAT(spelling.str(), MatchesRegex(SymbolRegex.str()))
+      << kind.name().str();
+}
+
+static void CheckClosingGroupSymbolToken(TokenKind kind,
+                                         llvm::StringRef spelling,
+                                         TokenKind opening_kind) {
+  EXPECT_TRUE(kind.is_symbol()) << kind.name().str();
+  EXPECT_TRUE(kind.is_grouping_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_opening_symbol()) << kind.name().str();
+  EXPECT_TRUE(kind.is_closing_symbol()) << kind.name().str();
+  EXPECT_EQ(opening_kind, kind.opening_symbol()) << kind.name().str();
+  EXPECT_FALSE(kind.is_keyword()) << kind.name().str();
+  EXPECT_EQ(spelling, kind.fixed_spelling()) << kind.name().str();
+  EXPECT_THAT(spelling.str(), MatchesRegex(SymbolRegex.str()))
+      << kind.name().str();
+}
+
+static void CheckKeywordToken(TokenKind kind, llvm::StringRef spelling) {
+  EXPECT_FALSE(kind.is_symbol()) << kind.name().str();
+  EXPECT_TRUE(kind.is_keyword()) << kind.name().str();
+  EXPECT_EQ(spelling, kind.fixed_spelling()) << kind.name().str();
+  EXPECT_THAT(spelling.str(), MatchesRegex(KeywordRegex.str()))
+      << kind.name().str();
+}
+
+TEST(TokenKindTest, AllTokens) {
+#define CARBON_TOKEN(TokenName) CheckToken(TokenKind::TokenName);
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  CheckSymbolToken(TokenKind::TokenName, Spelling);
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  CheckOpeningGroupSymbolToken(TokenKind::TokenName, Spelling,              \
+                               TokenKind::ClosingName);
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  CheckClosingGroupSymbolToken(TokenKind::TokenName, Spelling,              \
+                               TokenKind::OpeningName);
+#define CARBON_KEYWORD_TOKEN(TokenName, Spelling) \
+  CheckKeywordToken(TokenKind::TokenName, Spelling);
 #include "toolchain/lex/token_kind.def"
+}
 
 // Verify that the symbol tokens are sorted from longest to shortest. This is
 // important to ensure that simply in-order testing will identify tokens

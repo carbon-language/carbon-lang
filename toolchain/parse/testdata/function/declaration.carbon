@@ -45,61 +45,79 @@ private override default fn I();
 
 // --- fail_identifier_instead_of_sig.carbon
 
-// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+4]]:8: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: fn foo bar;
-// CHECK:STDERR:        ^~~
+// CHECK:STDERR:        ╭─┤ fail_identifier_instead_of_sig.carbon:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ fn foo bar;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `fn` declarations must either end with a `;` or have a
+// CHECK:STDERR:        ·          ┃        `{ ... }` block for a definition
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn foo bar;
 
 // --- fail_missing_implicit_close.carbon
 
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+8]]:7: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-// CHECK:STDERR: fn Div[();
-// CHECK:STDERR:       ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_missing_implicit_close.carbon:[[@LINE+4]]:7: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: fn Div[();
-// CHECK:STDERR:       ^
+// CHECK:STDERR:        ╭─┤ fail_missing_implicit_close.carbon:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ fn Div[();
+// CHECK:STDERR:        ·       ┳  ┬
+// CHECK:STDERR:        ·       ┗━━━━━┫ error: opening symbol without a corresponding closing symbol
+// CHECK:STDERR:        ·          │  ┃        [UnmatchedOpening]
+// CHECK:STDERR:        ·          ╰────┤ possibly missing `]` here [PossiblyMissingBracketHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Div[();
 
 // --- fail_missing_name.carbon
 
-// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn ();
-// CHECK:STDERR:    ^
+// CHECK:STDERR:        ╭─┤ fail_missing_name.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn ();
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ();
 
 // --- fail_no_sig_or_semi.carbon
 
+// CHECK:STDERR:        ╭─┤ fail_no_sig_or_semi.carbon:[[@LINE+8]]:7
+// CHECK:STDERR: ->     │ fn foo
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `fn` declarations must either end with a `;` or have a
+// CHECK:STDERR:        ·          ┃        `{ ... }` block for a definition
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn foo
-// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+4]]:1: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR:
-// CHECK:STDERR: ^
-// CHECK:STDERR:
 
 // --- fail_only_fn_and_semi.carbon
 
-// CHECK:STDERR: fail_only_fn_and_semi.carbon:[[@LINE+4]]:3: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn;
-// CHECK:STDERR:   ^
+// CHECK:STDERR:        ╭─┤ fail_only_fn_and_semi.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn;
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn;
 
 // --- fail_repeated_fn_and_semi.carbon
 
-// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn fn;
-// CHECK:STDERR:    ^~
+// CHECK:STDERR:        ╭─┤ fail_repeated_fn_and_semi.carbon:[[@LINE+8]]:4
+// CHECK:STDERR: ->     │ fn fn;
+// CHECK:STDERR:        ·    ┳━
+// CHECK:STDERR:        ·    ┗━━┫ error: `fn` introducer should be followed by a name; prefix reserved
+// CHECK:STDERR:        ·       ┃        word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·       ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn fn;
 
 // --- fail_skip_indented_newline_until_outdent.carbon
 
-  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+4]]:6: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-  // CHECK:STDERR:   fn (x,
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:        ╭─┤ fail_skip_indented_newline_until_outdent.carbon:[[@LINE+6]]:5
+  // CHECK:STDERR: ->     │   fn (x,
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn (x,
       y,
@@ -108,9 +126,11 @@ fn F();
 
 // --- fail_skip_indented_newline_with_semi.carbon
 
-// CHECK:STDERR: fail_skip_indented_newline_with_semi.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn (x,
-// CHECK:STDERR:    ^
+// CHECK:STDERR:        ╭─┤ fail_skip_indented_newline_with_semi.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn (x,
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn (x,
     y,
@@ -119,9 +139,11 @@ fn F();
 
 // --- fail_skip_indented_newline_without_semi.carbon
 
-// CHECK:STDERR: fail_skip_indented_newline_without_semi.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn (x,
-// CHECK:STDERR:    ^
+// CHECK:STDERR:        ╭─┤ fail_skip_indented_newline_without_semi.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn (x,
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn (x,
     y,
@@ -130,18 +152,22 @@ fn F();
 
 // --- fail_skip_to_newline_without_semi.carbon
 
-// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn ()
-// CHECK:STDERR:    ^
+// CHECK:STDERR:        ╭─┤ fail_skip_to_newline_without_semi.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn ()
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ()
 fn F();
 
 // --- fail_skip_without_semi_to_curly.carbon
 
-// CHECK:STDERR: fail_skip_without_semi_to_curly.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: struct X { fn () }
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_skip_without_semi_to_curly.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ struct X { fn () }
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 struct X { fn () }
 fn F();
@@ -152,9 +178,11 @@ fn foo(bar);
 
 // --- fail_without_name_and_many_tokens_in_params.carbon
 
-// CHECK:STDERR: fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+4]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
-// CHECK:STDERR:    ^
+// CHECK:STDERR:        ╭─┤ fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+6]]:3
+// CHECK:STDERR: ->     │ fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
+// CHECK:STDERR:        ·   ┳
+// CHECK:STDERR:        ·   ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 
@@ -165,17 +193,23 @@ fn ComplexFormParam(x:? X.Y(Z));
 
 // --- fail_ref_on_form_parameter.carbon
 
-// CHECK:STDERR: fail_ref_on_form_parameter.carbon:[[@LINE+4]]:6: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
-// CHECK:STDERR: fn F(ref x:? Form);
-// CHECK:STDERR:      ^~~
+// CHECK:STDERR:        ╭─┤ fail_ref_on_form_parameter.carbon:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ fn F(ref x:? Form);
+// CHECK:STDERR:        ·      ━┳━
+// CHECK:STDERR:        ·       ┗━━┫ error: `ref` is only allowed on a runtime binding
+// CHECK:STDERR:        ·          ┃        [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(ref x:? Form);
 
 // --- fail_form_within_var.carbon
 
-// CHECK:STDERR: fail_form_within_var.carbon:[[@LINE+4]]:26: error: found `:?` binding inside `var` pattern [NonRegularBindingInVarDecl]
-// CHECK:STDERR: fn FormInVar(var x:? Form);
-// CHECK:STDERR:                          ^
+// CHECK:STDERR:        ╭─┤ fail_form_within_var.carbon:[[@LINE+7]]:26
+// CHECK:STDERR: ->     │ fn FormInVar(var x:? Form);
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: found `:?` binding inside `var` pattern
+// CHECK:STDERR:        ·                             ┃        [NonRegularBindingInVarDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn FormInVar(var x:? Form);
 
@@ -183,6 +217,40 @@ fn FormInVar(var x:? Form);
 
 fn SimpleReturnForm() ->? Form;
 fn ComplexReturnForm() ->? X.Y(Z);
+
+// --- ref_return.carbon
+
+fn RefReturn() -> ref u32;
+fn ComplexRefReturn() -> ref X.Y(Z);
+let a: auto = fn -> ref u32 { return 0; };
+
+// --- fail_ref_return_missing_type.carbon
+
+// CHECK:STDERR:        ╭─┤ fail_ref_return_missing_type.carbon:[[@LINE+6]]:22
+// CHECK:STDERR: ->     │ fn RefReturn() -> ref;
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn RefReturn() -> ref;
+
+// --- val_var_return.carbon
+
+fn ValReturn() -> val u32;
+fn VarReturn() -> var u32;
+fn ComplexValReturn() -> val X.Y(Z);
+let a: auto = fn -> val u32 { return 0; };
+let b: auto = fn -> var u32 { return 0; };
+
+// --- fail_val_return_missing_type.carbon
+
+// CHECK:STDERR:        ╭─┤ fail_val_return_missing_type.carbon:[[@LINE+6]]:22
+// CHECK:STDERR: ->     │ fn ValReturn() -> val;
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+fn ValReturn() -> val;
 
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
@@ -317,8 +385,12 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_missing_implicit_close.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Div'
-// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Div'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ ├─TuplePattern ')'
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_name.carbon
@@ -345,8 +417,8 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT: - filename: fail_repeated_fn_and_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │ ├─InvalidParse 'fn' has_error
-// CHECK:STDOUT:   ├─FunctionDecl ';' has_error
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'fn'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_skip_indented_newline_until_outdent.carbon
@@ -499,6 +571,136 @@ fn ComplexReturnForm() ->? X.Y(Z);
 // CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'Z'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ReturnForm '->?'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: ref_return.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'RefReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ ╭─RefPrimitiveForm 'ref'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ComplexRefReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'X'
+// CHECK:STDOUT:   │ │         ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │       ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │     ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ │   ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │ ╭─RefPrimitiveForm 'ref'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │   ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │   │ ╭─RefPrimitiveForm 'ref'
+// CHECK:STDOUT:   │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_ref_return_missing_type.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'RefReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─RefPrimitiveForm 'ref' has_error
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: val_var_return.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'VarReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ ╭─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ComplexValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'X'
+// CHECK:STDOUT:   │ │         ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │       ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │     ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ │   ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │   ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │   │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │   ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │   │ ╭─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_val_return_missing_type.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val' has_error
+// CHECK:STDOUT:   │ ├─ReturnType '->'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

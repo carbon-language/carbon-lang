@@ -53,6 +53,15 @@ struct DependentInst {
 auto AttachDependentInstToCurrentGeneric(Context& context,
                                          DependentInst dependent_inst) -> void;
 
+// Given an instruction that might have a generic constant value, returns an
+// instruction that has the corresponding specific constant value in the current
+// generic, if any. This is typically not necessary except when manually adding
+// instructions directly to the eval block, for example when building an Action
+// instruction.
+auto GetOrAddInstWithSpecificConstantValue(Context& context,
+                                           SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object
 // would not actually be used, or when recovering from an error.
@@ -114,11 +123,23 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificId specific_id) -> void;
 
+enum class DefinitionResolution : std::uint8_t {
+  // The definition is not available.
+  NotDefinedYet,
+
+  // The definition was resolved by this operation.
+  NewlyResolved,
+
+  // The definition was resolved by a previous operation.
+  PreviouslyResolved,
+};
+
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
-// block in the specific. Returns false if a definition is not available.
+// block in the specific.
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool;
+                               SemIR::SpecificId specific_id)
+    -> DefinitionResolution;
 
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.

@@ -1,0 +1,604 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/class/access/access_modifiers.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/class/access/access_modifiers.carbon
+
+// --- fail_private_field_access.carbon
+library "[[@TEST_NAME]]";
+
+class Circle {
+  private var radius: i32;
+  private let SOME_INTERNAL_CONSTANT: i32 = 5;
+
+  private fn SomeInternalFunction() -> i32 {
+    return 0;
+  }
+
+  fn Make() -> Self {
+//@dump-sem-ir-begin
+    return {.radius = 5};
+//@dump-sem-ir-end
+  }
+}
+
+fn Run() {
+//@dump-sem-ir-begin
+  let circle: Circle = Circle.Make();
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:28
+  // CHECK:STDERR:        │   private var radius: i32;
+  // CHECK:STDERR:        ·               ─────┬─────
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused radius: i32 = circle.radius;
+  // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                            ┗━━┫ error: cannot access private member `radius` of
+  // CHECK:STDERR:        ·                               ┃        type `Circle`
+  // CHECK:STDERR:        ·                               ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  let unused radius: i32 = circle.radius;
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   private var radius: i32;
+  // CHECK:STDERR:        ·               ─────┬─────
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.radius = 5;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot access private member `radius` of type `Circle`
+  // CHECK:STDERR:        ·            ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  circle.radius = 5;
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   private let SOME_INTERNAL_CONSTANT: i32 = 5;
+  // CHECK:STDERR:        ·               ─────────────┬─────────────
+  // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.SOME_INTERNAL_CONSTANT;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access private member `SOME_INTERNAL_CONSTANT` of type
+  // CHECK:STDERR:        ·      ┃        `Circle`
+  // CHECK:STDERR:        ·      ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  circle.SOME_INTERNAL_CONSTANT;
+
+  // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   private fn SomeInternalFunction() -> i32 {
+  // CHECK:STDERR:        ·   ─────────────────────┬────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   circle.SomeInternalFunction();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access private member `SomeInternalFunction` of type
+  // CHECK:STDERR:        ·      ┃        `Circle`
+  // CHECK:STDERR:        ·      ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  circle.SomeInternalFunction();
+//@dump-sem-ir-end
+}
+
+// --- fail_protected_field_access.carbon
+library "[[@TEST_NAME]]";
+
+class A {
+  protected var x: i32;
+}
+
+fn Run() {
+//@dump-sem-ir-begin
+  // CHECK:STDERR:        ╭─┤ fail_protected_field_access.carbon:[[@LINE+11]]:23
+  // CHECK:STDERR:        │   protected var x: i32;
+  // CHECK:STDERR:        ·                 ───┬──
+  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused x: i32 = A.x;
+  // CHECK:STDERR:        ·                       ┳━━
+  // CHECK:STDERR:        ·                       ┗━━┫ error: cannot access protected member `x` of type `A`
+  // CHECK:STDERR:        ·                          ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  let unused x: i32 = A.x;
+//@dump-sem-ir-end
+}
+
+// --- instance_private_field_access_on_self.carbon
+library "[[@TEST_NAME]]";
+
+class Circle {
+  private var radius: i32;
+
+  fn GetRadius(self) -> i32 {
+//@dump-sem-ir-begin
+    return self.radius;
+//@dump-sem-ir-end
+  }
+
+  private fn SomeInternalFunction() -> i32 {
+    return 0;
+  }
+
+  fn Compute(self) -> i32 {
+//@dump-sem-ir-begin
+    return self.SomeInternalFunction();
+//@dump-sem-ir-end
+  }
+}
+
+// --- out_of_line_instance_private_field_access_on_self.carbon
+library "[[@TEST_NAME]]";
+
+class Circle {
+  private var radius: i32;
+
+  fn GetRadius(self) -> i32;
+
+  private fn SomeInternalFunction() -> i32 {
+    return 0;
+  }
+
+  fn Compute(self) -> i32;
+}
+
+fn Circle.GetRadius(self) -> i32 {
+//@dump-sem-ir-begin
+  return self.radius;
+//@dump-sem-ir-end
+}
+
+fn Circle.Compute(self) -> i32 {
+//@dump-sem-ir-begin
+  return self.SomeInternalFunction();
+//@dump-sem-ir-end
+}
+
+// --- public_global_access.carbon
+library "[[@TEST_NAME]]";
+
+class A {
+  let x: i32 = 5;
+}
+
+//@dump-sem-ir-begin
+let x: i32 = A.x;
+//@dump-sem-ir-end
+
+// --- fail_global_access.carbon
+library "[[@TEST_NAME]]";
+
+class A {
+  protected let x: i32 = 5;
+  private let y: i32 = 5;
+}
+
+//@dump-sem-ir-begin
+// CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        │   protected let x: i32 = 5;
+// CHECK:STDERR:        ·                 ───┬──
+// CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let x: i32 = A.x;
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: cannot access protected member `x` of type `A`
+// CHECK:STDERR:        ·                  ┃        [ClassInvalidMemberAccess]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let x: i32 = A.x;
+// CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
+// CHECK:STDERR:        │   private let y: i32 = 5;
+// CHECK:STDERR:        ·               ───┬──
+// CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let y: i32 = A.y;
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: cannot access private member `y` of type `A`
+// CHECK:STDERR:        ·                  ┃        [ClassInvalidMemberAccess]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let y: i32 = A.y;
+//@dump-sem-ir-end
+
+// --- self_access.carbon
+library "[[@TEST_NAME]]";
+
+class A {
+  private fn F() {}
+  private fn G() {
+//@dump-sem-ir-begin
+    Self.F();
+//@dump-sem-ir-end
+  }
+}
+
+// CHECK:STDOUT: --- fail_private_field_access.carbon = $fail_private_field_access
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Circle: type = class_type @Circle [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
+// CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.ab2: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_5.708: %i32 = int_value 5 [concrete]
+// CHECK:STDOUT:   %pattern_type.f70: type = pattern_type %Circle [concrete]
+// CHECK:STDOUT:   %Circle.Make.type: type = fn_type @Circle.Make [concrete]
+// CHECK:STDOUT:   %Circle.Make: %Circle.Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.radius.082: type = struct_type {.radius: %i32} [concrete]
+// CHECK:STDOUT:   %struct_type.radius.f47: type = struct_type {.radius: Core.IntLiteral} [concrete]
+// CHECK:STDOUT:   %struct: %struct_type.radius.f47 = struct_value (%int_5.64b) [concrete]
+// CHECK:STDOUT:   %Circle.val: %Circle = struct_value (%int_5.708) [concrete]
+// CHECK:STDOUT:   %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete]
+// CHECK:STDOUT:   %radius.patt: %pattern_type.d94 = value_binding_pattern radius [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc20_36.1 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.49a: %SubobjectDestroy.type = facet_value %i32, (%custom_witness.b80ef6.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.077: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.49a) [concrete]
+// CHECK:STDOUT:   %Destroy.facet.c2b: %Destroy.type = facet_value %i32, (%DestroyImpl.impl_witness.077, %custom_witness.b80ef6.1) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc20_36.3 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.cde: %SubobjectDestroy.type = facet_value %Circle, (%custom_witness.b80ef6.3) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.60b: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.cde) [concrete]
+// CHECK:STDOUT:   %Destroy.facet.4b3: %Destroy.type = facet_value %Circle, (%DestroyImpl.impl_witness.60b, %custom_witness.b80ef6.3) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Circle {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Circle
+// CHECK:STDOUT:   .radius [private] = %field_decl
+// CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = %SOME_INTERNAL_CONSTANT
+// CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
+// CHECK:STDOUT:   .Make = %Circle.Make.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Circle.Make() -> out %return.param: %Circle {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
+// CHECK:STDOUT:   %.loc13_24.1: %struct_type.radius.f47 = struct_literal (%int_5) [concrete = constants.%struct]
+// CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc13_24.1: <bound method> = bound_method %int_5, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc13_24.2: <bound method> = bound_method %int_5, %specific_fn [concrete = constants.%bound_method.ab2]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_24.2(%int_5) [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc13_24.2: init %i32 = converted %int_5, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc13_24.3: ref %i32 = class_element_access %return.param, element0
+// CHECK:STDOUT:   %.loc13_24.4: init %i32 to %.loc13_24.3 = in_place_init %.loc13_24.2 [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc13_24.5: init %Circle to %return.param = class_init (%.loc13_24.4) [concrete = constants.%Circle.val]
+// CHECK:STDOUT:   %.loc13_25: init %Circle = converted %.loc13_24.1, %.loc13_24.5 [concrete = constants.%Circle.val]
+// CHECK:STDOUT:   return %.loc13_25 to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Circle.ref.loc20_24: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
+// CHECK:STDOUT:   %Make.ref: %Circle.Make.type = name_ref Make, @Circle.%Circle.Make.decl [concrete = constants.%Circle.Make]
+// CHECK:STDOUT:   %.loc20_36.1: ref %Circle = temporary_storage
+// CHECK:STDOUT:   %Circle.Make.call: init %Circle to %.loc20_36.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc20_36.2: ref %Circle = temporary %.loc20_36.1, %Circle.Make.call
+// CHECK:STDOUT:   %.loc20_36.3: %Circle = acquire_value %.loc20_36.2
+// CHECK:STDOUT:   %Circle.ref.loc20_15: type = name_ref Circle, file.%Circle.decl [concrete = constants.%Circle]
+// CHECK:STDOUT:   %circle: %Circle = wrapper_binding circle, %.loc20_36.3
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %circle.patt: %pattern_type.f70 = value_binding_pattern circle [concrete = constants.%circle.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %circle.ref.loc33: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc33: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %radius: %i32 = wrapper_binding radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %radius.patt: %pattern_type.d94 = value_binding_pattern radius [concrete = constants.%radius.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %circle.ref.loc45: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %radius.ref.loc45: <error> = name_ref radius, <error> [concrete = <error>]
+// CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
+// CHECK:STDOUT:   assign %radius.ref.loc45, <error>
+// CHECK:STDOUT:   %circle.ref.loc58: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %SOME_INTERNAL_CONSTANT.ref: <error> = name_ref SOME_INTERNAL_CONSTANT, <error> [concrete = <error>]
+// CHECK:STDOUT:   %circle.ref.loc72: %Circle = name_ref circle, %circle
+// CHECK:STDOUT:   %SomeInternalFunction.ref: <error> = name_ref SomeInternalFunction, <error> [concrete = <error>]
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.1: %Destroy.type = facet_value constants.%Circle, (constants.%DestroyImpl.impl_witness.60b, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.4b3]
+// CHECK:STDOUT:   %.loc20_36.4: %Destroy.type = converted constants.%Circle, %Destroy.facet.loc20_36.1 [concrete = constants.%Destroy.facet.4b3]
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.2: %Destroy.type = facet_value constants.%Circle, (constants.%DestroyImpl.impl_witness.60b, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.4b3]
+// CHECK:STDOUT:   %.loc20_36.5: %Destroy.type = converted constants.%Circle, %Destroy.facet.loc20_36.2 [concrete = constants.%Destroy.facet.4b3]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_36.2)
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_36.1(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_36.2(%self.param: ref %struct_type.radius.082) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc20_36.1: ref %i32 = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.1: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80ef6.1) [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %.loc20_36.2: %Destroy.type = converted constants.%i32, %Destroy.facet.loc20_36.1 [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.2: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80ef6.1) [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %.loc20_36.3: %Destroy.type = converted constants.%i32, %Destroy.facet.loc20_36.2 [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_36.1)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_36.3(%self.param: ref %Circle) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
+// CHECK:STDOUT:   %.loc20_36.1: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.1: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80ef6.1) [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %.loc20_36.2: %Destroy.type = converted constants.%i32, %Destroy.facet.loc20_36.1 [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %Destroy.facet.loc20_36.2: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80ef6.1) [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   %.loc20_36.3: %Destroy.type = converted constants.%i32, %Destroy.facet.loc20_36.2 [concrete = constants.%Destroy.facet.c2b]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_36.1)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_protected_field_access.carbon = $fail_protected_field_access
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Run() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- instance_private_field_access_on_self.carbon = $instance_private_field_access_on_self
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Circle: type = class_type @Circle [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction.type: type = fn_type @Circle.SomeInternalFunction [concrete]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction: %Circle.SomeInternalFunction.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Circle {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Circle
+// CHECK:STDOUT:   .radius [private] = %field_decl
+// CHECK:STDOUT:   .GetRadius = %Circle.GetRadius.decl
+// CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
+// CHECK:STDOUT:   .Compute = %Circle.Compute.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Circle.GetRadius(%self.param: %Circle) -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
+// CHECK:STDOUT:   %.loc8_16.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc8_16.2: %i32 = acquire_value %.loc8_16.1
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc8_16.1: <bound method> = bound_method %.loc8_16.2, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc8_16.2: <bound method> = bound_method %.loc8_16.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc8_16.2(%.loc8_16.2)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Circle.Compute(%self.param: %Circle) -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self
+// CHECK:STDOUT:   %SomeInternalFunction.ref: %Circle.SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%Circle.SomeInternalFunction.decl [concrete = constants.%Circle.SomeInternalFunction]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction.call: init %i32 = call %SomeInternalFunction.ref()
+// CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- out_of_line_instance_private_field_access_on_self.carbon = $out_of_line_instance_private_field_access_on_self
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Circle: type = class_type @Circle [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %Circle.elem: type = unbound_element_type %Circle, %i32 [concrete]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction.type: type = fn_type @Circle.SomeInternalFunction [concrete]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction: %Circle.SomeInternalFunction.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Circle.GetRadius(%self.param.loc15: %Circle) -> out %return.param.loc15: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self.loc15
+// CHECK:STDOUT:   %radius.ref: %Circle.elem = name_ref radius, @Circle.%field_decl [concrete = @Circle.%field_decl]
+// CHECK:STDOUT:   %.loc17_14.1: ref %i32 = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc17_14.2: %i32 = acquire_value %.loc17_14.1
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc17_14.1: <bound method> = bound_method %.loc17_14.2, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17_14.2: <bound method> = bound_method %.loc17_14.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc17_14.2(%.loc17_14.2)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Circle.Compute(%self.param.loc21: %Circle) -> out %return.param.loc21: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Circle = name_ref self, %self.loc21
+// CHECK:STDOUT:   %SomeInternalFunction.ref: %Circle.SomeInternalFunction.type = name_ref SomeInternalFunction, @Circle.%Circle.SomeInternalFunction.decl [concrete = constants.%Circle.SomeInternalFunction]
+// CHECK:STDOUT:   %Circle.SomeInternalFunction.call: init %i32 = call %SomeInternalFunction.ref()
+// CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- public_global_access.carbon = $public_global_access
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.patt.ea2: %pattern_type.d94 = value_binding_pattern x [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref @A.%x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.global_ref
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %x.ref
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_global_access.carbon = $fail_global_access
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.patt.ea2: %pattern_type.d94 = value_binding_pattern x [concrete]
+// CHECK:STDOUT:   %y.patt.cd5: %pattern_type.d94 = value_binding_pattern y [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %y: %i32 = wrapper_binding y, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %y.patt: %pattern_type.d94 = value_binding_pattern y [concrete = constants.%y.patt.cd5]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %A.ref.loc20: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc32: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- self_access.carbon = $self_access
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %A.F.type: type = fn_type @A.F [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %A.F: %A.F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%A
+// CHECK:STDOUT:   .F [private] = %A.F.decl
+// CHECK:STDOUT:   .G [private] = %A.G.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A.G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Self.ref: type = name_ref Self, constants.%A [concrete = constants.%A]
+// CHECK:STDOUT:   %F.ref: %A.F.type = name_ref F, @A.%A.F.decl [concrete = constants.%A.F]
+// CHECK:STDOUT:   %A.F.call: init %empty_tuple.type = call %F.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:

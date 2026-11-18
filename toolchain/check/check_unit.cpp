@@ -20,6 +20,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -34,6 +35,7 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -93,6 +95,11 @@ auto CheckUnit::Run() -> void {
 
   if (!ProcessNodeIds()) {
     context_.sem_ir().set_has_errors(true);
+    context_.sem_ir().set_complete();
+
+    // TODO: Are there more steps from `FinishRun` we should be doing here?
+    FinalizeCppAstFragment(context_);
+    DisconnectCppAst(context_);
     return;
   }
 
@@ -380,10 +387,10 @@ auto CheckUnit::ProcessNodeIds() -> bool {
   PrettyStackTraceFunction node_dumper([&](llvm::raw_ostream& output) {
     const auto& tree = tree_and_subtrees_getter_();
     auto converted = tree.NodeToDiagnosticLoc(node_id, /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Checking " << context_.parse_tree().node_kind(node_id) << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   while (auto maybe_node_id = traversal.Next()) {
@@ -456,7 +463,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   }
 }
 
-auto CheckUnit::CheckRequiredDefinitions() -> void {
+auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
   for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
@@ -485,11 +492,13 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         }
         break;
       }
-      case SemIR::InterfaceDecl::Kind: {
-        // TODO: Handle `interface` as well, once we can test it without
-        // triggering
-        // https://github.com/carbon-language/carbon-lang/issues/4071.
-        CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
+      case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+        auto& interface =
+            context_.interfaces().Get(interface_decl.interface_id);
+        if (!interface.is_complete()) {
+          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
       }
       default: {
         CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
@@ -497,25 +506,38 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
     }
   }
+  context_.definitions_required_by_decl().clear();
 
+  auto new_resolution_occurred = false;
   for (auto [loc, specific_id] :
        GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                        "use of undefined generic function");
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                        "generic function declared here");
-      auto generic_decl_id =
-          context_.generics()
-              .Get(context_.specifics().Get(specific_id).generic_id)
-              .decl_id;
-      emitter_.Build(loc, MissingGenericFunctionDefinition)
-          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
-          .Emit();
+    switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
+      case DefinitionResolution::NewlyResolved:
+        new_resolution_occurred = true;
+        break;
+      case DefinitionResolution::PreviouslyResolved:
+        break;
+      case DefinitionResolution::NotDefinedYet: {
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                          "use of undefined generic function");
+        CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere, Info,
+                                "generic function declared here");
+        auto generic_decl_id =
+            context_.generics()
+                .Get(context_.specifics().Get(specific_id).generic_id)
+                .decl_id;
+        emitter_.Build(loc, MissingGenericFunctionDefinition)
+            .Attach(generic_decl_id, MissingGenericFunctionDefinitionHere)
+            .Emit();
+        break;
+      }
     }
   }
+
+  context_.definitions_required_by_use().clear();
+  return new_resolution_occurred;
 }
 
 auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
@@ -536,41 +558,69 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     }
     if (found_witness_id != poison.witness_id) {
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
-        auto table_id = context_.constant_values()
-                            .GetInstAs<SemIR::ImplWitness>(witness_id)
-                            .witness_table_id;
-        return context_.insts()
-            .GetAs<SemIR::ImplWitnessTable>(table_id)
-            .impl_id;
+        auto inst = context_.constant_values().GetInst(witness_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::ImplWitness impl_witness): {
+            auto table_id = impl_witness.witness_table_id;
+            return context_.insts()
+                .GetAs<SemIR::ImplWitnessTable>(table_id)
+                .impl_id;
+          }
+          case CARBON_KIND(SemIR::CustomWitness _): {
+            return SemIR::ImplId::None;
+          }
+          default:
+            CARBON_FATAL("Unsupported entity");
+        }
       };
 
       // We can get the `Impl` from the resulting witness here, which is the
       // `Impl` that conflicts with the previous poison query.
       auto bad_impl_id = witness_to_impl_id(found_witness_id);
-      const auto& bad_impl = context_.impls().Get(bad_impl_id);
-
       auto prev_impl_id = witness_to_impl_id(poison.witness_id);
+      CARBON_CHECK(prev_impl_id.has_value(),
+                   "previous implementation should always have a value");
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
+      if (bad_impl_id.has_value()) {
+        const auto& bad_impl = context_.impls().Get(bad_impl_id);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupConcreteResult, Error,
+            "found `impl` that would change the result of an earlier "
+            "use of `{0} as {1}`",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupConcreteResultNoteBadImpl, Info,
+            "the use would select the `impl` here but it was not found yet");
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupConcreteResultNotePreviousImpl, Info,
+            "the use had selected the `impl` here");
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Attach(bad_impl.first_decl_id(),
+                    PoisonedImplLookupConcreteResultNoteBadImpl)
+            .Attach(prev_impl.first_decl_id(),
+                    PoisonedImplLookupConcreteResultNotePreviousImpl)
+            .Emit();
+      } else {
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupCustomResult, Error,
+            "found `impl` for {0} as {1}, which has a custom witness",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        CARBON_DIAGNOSTIC_LABEL(
+            PoisonedImplLookupCustomResultNoteBadImpl, Info,
+            "the use tried to select the `impl` here, but a custom "
+            "witness was already chosen");
 
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResult, Error,
-          "found `impl` that would change the result of an earlier "
-          "use of `{0} as {1}`",
-          InstIdAsRawType, SpecificInterfaceIdAsRawType);
-      auto builder =
-          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
-                         poison.query.query_self_inst_id,
-                         poison.query.query_specific_interface_id);
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
-          "the use would select the `impl` here but it was not found yet");
-      builder.Note(bad_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNoteBadImpl);
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
-                        "the use had selected the `impl` here");
-      builder.Note(prev_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNotePreviousImpl);
-      builder.Emit();
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupCustomResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Attach(prev_impl.first_decl_id(),
+                    PoisonedImplLookupCustomResultNoteBadImpl)
+            .Emit();
+      }
     }
   }
   context_.inst_block_stack().PopAndDiscard();
@@ -579,13 +629,56 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
 auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
+  // TODO: Find a more optimal way to evaluate mutually-dependent interop
+  // between Carbon and C++.
+  //
+  // Experimental evidence indicates that each additional loop doubles the
+  // run-time of `fail_todo_bidirectional_intorp_too_deep.carbon`. That unit
+  // test isn't terribly complex, so we should probably solve this fairly soon.
+  //
+  // We chose 10 loops to make progress without significantly slowing down debug
+  // unit tests.
+  constexpr auto max_resolution_check_cycles = 10;
+  auto num_resolution_check_cycles = 0;
+
+  while (num_resolution_check_cycles++ < max_resolution_check_cycles) {
+    // Finalizes the C++ portion of the compilation, allowing any pending C++
+    // template instantiations to complete Carbon types and generate required
+    // thunks or function calls.
+    FinalizeCppAstFragment(context_);
+
+    if (!CheckRequiredDefinitions()) {
+      break;
+    }
+  }
+
+  if (num_resolution_check_cycles > max_resolution_check_cycles) {
+    // Point at the code that queued the next C++ instantiation, because that
+    // is what needed another pass. If nothing is queued, point at the top of
+    // the file.
+    auto loc_id = SemIR::LocId::None;
+    auto* cpp_context = context_.cpp_context();
+    if (cpp_context && !cpp_context->sema().PendingInstantiations.empty()) {
+      loc_id = AddImportIRInst(
+          context_.sem_ir(),
+          cpp_context->sema().PendingInstantiations.front().second);
+    }
+    context_.TODO(
+        loc_id, llvm::formatv(
+                    "maximum depth for bidirectional Carbon/C++ interop is {}",
+                    max_resolution_check_cycles));
+    if (cpp_context) {
+      cpp_context->sema().PendingInstantiations.clear();
+    }
+  }
+
   CheckRequiredDeclarations();
-  CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  // Finalizes the C++ portion of the compilation.
-  FinishAst(context_);
+  // Disconnects AST generation from the context before popping the file-level
+  // scope and destroying the context.
+  DisconnectCppAst(context_);
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
@@ -608,6 +701,8 @@ auto CheckUnit::FinishRun() -> void {
       block = context_.generated();
     } else if (reserved_id == SemIR::InstBlockId::Imports) {
       block = context_.imports();
+    } else if (reserved_id == SemIR::InstBlockId::ExtraGlobalVariables) {
+      block = context_.extra_global_variables();
     } else {
       CARBON_FATAL("Unexpected reserved InstBlockId: {0}", reserved_id);
     }
@@ -617,6 +712,7 @@ auto CheckUnit::FinishRun() -> void {
   emitter_.Flush();
 
   context_.sem_ir().set_has_errors(unit_and_imports_->err_tracker.seen_error());
+  context_.sem_ir().set_complete();
 
   // Verify that Context cleanly finished.
   context_.VerifyOnFinish();

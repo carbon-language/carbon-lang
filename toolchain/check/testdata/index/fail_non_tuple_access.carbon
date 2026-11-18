@@ -13,30 +13,40 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   0[1];
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_non_tuple_access.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   0[1];
+  // CHECK:STDERR:        ·   ┳━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·      ┃        `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that
+  // CHECK:STDERR:        ·      ┃        does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   0[1];
 }
 
-// CHECK:STDOUT: --- fail_non_tuple_access.carbon
+// CHECK:STDOUT: --- fail_non_tuple_access.carbon = $fail_non_tuple_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.841: type = generic_interface_type @IndirectIndexWith [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.generic: %IndirectIndexWith.type.841 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.df6: type = generic_interface_type @IndexWith [concrete]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .IndirectIndexWith = %Core.IndirectIndexWith
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.df6 = import_ref Core//prelude/operators/index, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

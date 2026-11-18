@@ -38,9 +38,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:11: error: name `A` not found [NameNotFound]
-// CHECK:STDERR: var inst: A = {};
-// CHECK:STDERR:           ^
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:11
+// CHECK:STDERR: ->     │ var inst: A = {};
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: name `A` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var inst: A = {};
 
@@ -50,15 +52,19 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:11: error: member name `A` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: var inst: Test.A = {};
-// CHECK:STDERR:           ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ var inst: Test.A = {};
+// CHECK:STDERR:        ·           ━━━┳━━
+// CHECK:STDERR:        ·              ┗━━┫ error: member name `A` not found in `Test`
+// CHECK:STDERR:        ·                 ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var inst: Test.A = {};
 
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -82,9 +88,10 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon = $def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -135,9 +142,10 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_def.carbon
+// CHECK:STDOUT: --- fail_local_def.carbon = $fail_local_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -164,14 +172,15 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_def.carbon
+// CHECK:STDOUT: --- fail_other_def.carbon = $fail_other_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -203,7 +212,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

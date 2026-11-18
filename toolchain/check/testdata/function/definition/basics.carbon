@@ -17,22 +17,27 @@
 
 class C;
 
-// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:13: error: parameter has incomplete type `C` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fn F(unused n: C) {}
-// CHECK:STDERR:             ^~~~
-// CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+11]]:13
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused n: C) {}
+// CHECK:STDERR:        ·             ┳━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: parameter has incomplete type `C` in function definition
+// CHECK:STDERR:        ·                ┃        [IncompleteTypeInFunctionParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused n: C) {}
 
-// CHECK:STDOUT: --- fail_incomplete_type.carbon
+// CHECK:STDOUT: --- fail_incomplete_type.carbon = $fail_incomplete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -45,7 +50,7 @@ fn F(unused n: C) {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type = at_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]

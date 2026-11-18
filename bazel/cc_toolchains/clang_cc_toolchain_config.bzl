@@ -28,8 +28,13 @@ load(
 def _impl(ctx):
     # Only use a sysroot if one was found when detecting Clang.
     sysroot = None
+    sdk_settings = []
     if sysroot_dir != "None":
         sysroot = sysroot_dir
+
+        # On MacOS, the compiler depends on this file at the root of the SDK,
+        # and it ends up in the `.d` files.
+        sdk_settings = [sysroot_dir + "/SDKSettings.json"]
 
     identifier = "local-{0}-{1}".format(ctx.attr.target_cpu, ctx.attr.target_os)
     return cc_common.create_cc_toolchain_config_info(
@@ -41,7 +46,7 @@ def _impl(ctx):
             extra_cpp_features = [libcxx_feature(llvm_bindir, clang_bindir)],
         ),
         action_configs = llvm_action_configs(llvm_bindir, clang_bindir),
-        cxx_builtin_include_directories = clang_include_dirs + [
+        cxx_builtin_include_directories = clang_include_dirs + sdk_settings + [
             # Add Clang's resource directory to the end of the builtin include
             # directories to cover the use of sanitizer resource files by the
             # driver.

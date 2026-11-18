@@ -12,12 +12,16 @@
 
 interface I {
   let T: type;
-  // CHECK:STDERR: fail_type_as_facet.carbon:[[@LINE+7]]:17: error: cannot implicitly convert non-type value of type `Self.(TODO: element 0 in incomplete Self as I)` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   fn F[X: T](x: X);
-  // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_type_as_facet.carbon:[[@LINE+4]]:17: note: type `Self.(TODO: element 0 in incomplete Self as I)` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   fn F[X: T](x: X);
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR:        ╭─┤ fail_type_as_facet.carbon:[[@LINE+11]]:17
+  // CHECK:STDERR: ->     │   fn F[X: T](x: X);
+  // CHECK:STDERR:        ·                 ┳
+  // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type `T`
+  // CHECK:STDERR:        ·                 │  ┃        to `type`
+  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·                 ╰────┤ type `Self.(TODO: element 0 in incomplete Self as I)`
+  // CHECK:STDERR:        ·                      │ does not implement interface `Core.ImplicitAs(type)`
+  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F[X: T](x: X);
 }

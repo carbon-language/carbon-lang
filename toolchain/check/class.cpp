@@ -8,6 +8,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
@@ -60,21 +61,22 @@ static auto CheckCompleteAdapterClassType(
   const auto& class_info = context.classes().Get(class_id);
   if (class_info.base_id.has_value()) {
     CARBON_DIAGNOSTIC(AdaptWithBase, Error, "adapter with base class");
-    CARBON_DIAGNOSTIC(AdaptWithBaseHere, Note, "`base` declaration is here");
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithBaseHere, Info,
+                            "`base` declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithBase)
-        .Note(class_info.base_id, AdaptWithBaseHere)
+        .Attach(class_info.base_id, AdaptWithBaseHere)
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
 
   if (!field_decls.empty()) {
     CARBON_DIAGNOSTIC(AdaptWithFields, Error, "adapter with fields");
-    CARBON_DIAGNOSTIC(AdaptWithFieldHere, Note,
-                      "first field declaration is here");
+    CARBON_DIAGNOSTIC_LABEL(AdaptWithFieldHere, Info,
+                            "first field declaration is here");
     context.emitter()
         .Build(class_info.adapt_id, AdaptWithFields)
-        .Note(field_decls.front(), AdaptWithFieldHere)
+        .Attach(field_decls.front(), AdaptWithFieldHere)
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
@@ -87,11 +89,11 @@ static auto CheckCompleteAdapterClassType(
           SemIR::Function::VirtualModifier::Virtual) {
         CARBON_DIAGNOSTIC(AdaptWithVirtual, Error,
                           "adapter with virtual function");
-        CARBON_DIAGNOSTIC(AdaptWithVirtualHere, Note,
-                          "first virtual function declaration is here");
+        CARBON_DIAGNOSTIC_LABEL(AdaptWithVirtualHere, Info,
+                                "first virtual function declaration is here");
         context.emitter()
             .Build(class_info.adapt_id, AdaptWithVirtual)
-            .Note(inst_id, AdaptWithVirtualHere)
+            .Attach(inst_id, AdaptWithVirtualHere)
             .Emit();
         return SemIR::ErrorInst::InstId;
       }
@@ -123,7 +125,7 @@ static auto AddStructTypeFields(
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
       struct_type_fields.push_back(
-          {.name_id = field_decl.name_id,
+          {.name_id = field.name_id,
            .type_inst_id = SemIR::ErrorInst::TypeInstId});
       continue;
     }
@@ -131,7 +133,7 @@ static auto AddStructTypeFields(
         context.sem_ir().types().GetAs<SemIR::UnboundElementType>(
             field_decl.type_id);
     struct_type_fields.push_back(
-        {.name_id = field_decl.name_id,
+        {.name_id = field.name_id,
          .type_inst_id = unbound_element_type.element_type_inst_id});
   }
   auto fields_id =
@@ -174,13 +176,15 @@ static auto CompareVirtualWithOverrider(const SemIR::Function& base_fn,
   return OverrideMatchResult::Match;
 }
 
-// Builds and returns a vtable for the current class. Assumes that the virtual
-// functions for the class are listed as the top element of the `vtable_stack`.
+// Builds and returns a vtable for the current class, along with a bool
+// indicating whether it is a Carbon-native vtable (false for a foreign vtable
+// inherited from a C++ base class). Assumes that the virtual functions for the
+// class are listed as the top element of the `vtable_stack`.
 static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                         SemIR::ClassId class_id,
                         std::optional<SemIR::ClassType> base_class_type,
                         llvm::ArrayRef<SemIR::InstId> vtable_contents)
-    -> SemIR::VtableId {
+    -> std::pair<SemIR::VtableId, bool> {
   auto base_vtable_id = SemIR::VtableId::None;
   auto base_class_specific_id = SemIR::SpecificId::None;
 
@@ -222,7 +226,7 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   };
 
   llvm::SmallVector<SemIR::InstId> vtable;
-  Set<SemIR::FunctionId> implemented_impls;
+  Set<SemIR::FunctionId, 16> implemented_impls;
   bool carbon_native_vtable = true;
 
   // Add vtable entries from the base class, updating them to point to a derived
@@ -314,11 +318,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
-      CARBON_DIAGNOSTIC(OverrideCandidateArityMismatch, Note,
-                        "base class function has {2:more|fewer} parameters "
-                        "({0} vs {1} excluding `self`)",
-                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
-                        Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC_LABEL(
+          OverrideCandidateArityMismatch, Info,
+          "base class function has {2:more|fewer} parameters "
+          "({0} vs {1} excluding `self`)",
+          Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+          Diagnostics::BoolAsSelect);
       auto builder = context.emitter().Build(SemIR::LocId(inst_id),
                                              OverrideWithoutVirtualInBase);
       if (base_vtable_id.has_value()) {
@@ -336,12 +341,12 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
           const auto& base_fn = context.sem_ir().functions().Get(fn_id);
           switch (CompareVirtualWithOverrider(base_fn, fn)) {
             case OverrideMatchResult::ArityMismatch:
-              builder.Note(base_fn.first_owning_decl_id,
-                           OverrideCandidateArityMismatch,
-                           base_fn.call_param_ranges.explicit_size() - 1,
-                           fn.call_param_ranges.explicit_size() - 1,
-                           base_fn.call_param_ranges.explicit_size() >
-                               fn.call_param_ranges.explicit_size());
+              builder.Attach(base_fn.first_owning_decl_id,
+                             OverrideCandidateArityMismatch,
+                             base_fn.call_param_ranges.explicit_size() - 1,
+                             fn.call_param_ranges.explicit_size() - 1,
+                             base_fn.call_param_ranges.explicit_size() >
+                                 fn.call_param_ranges.explicit_size());
               break;
             case OverrideMatchResult::NameMismatch:
               // TODO: If the name is similar enough and the overrider otherwise
@@ -358,10 +363,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     }
   }
 
-  return context.vtables().Add(
+  auto vtable_id = context.vtables().Add(
       {{.class_id = class_id,
         .virtual_functions_id = context.inst_blocks().Add(vtable),
         .carbon_native_vtable = carbon_native_vtable}});
+  return {vtable_id, carbon_native_vtable};
 }
 
 // Checks that the specified finished class definition is valid and builds and
@@ -411,9 +417,11 @@ static auto CheckCompleteClassType(
         {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
   }
 
+  bool foreign_vtable = false;
   if (class_info.is_dynamic) {
-    auto vtable_id = BuildVtable(context, node_id, class_id, base_class_type,
-                                 vtable_contents);
+    auto [vtable_id, carbon_native_vtable] = BuildVtable(
+        context, node_id, class_id, base_class_type, vtable_contents);
+    foreign_vtable = !carbon_native_vtable;
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
         context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
@@ -422,11 +430,20 @@ static auto CheckCompleteClassType(
   auto struct_type_id = GetStructType(
       context, AddStructTypeFields(context, struct_type_fields, field_decls));
 
-  return AddInst<SemIR::CompleteTypeWitness>(
+  auto complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        .object_repr_type_inst_id =
            context.types().GetTypeInstId(struct_type_id)});
+  class_info.complete_type_witness_id = complete_type_witness_id;
+
+  if (foreign_vtable && !class_info.generic_id.has_value()) {
+    ExportAndCompleteClassToCpp(
+        context,
+        context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
+  }
+
+  return complete_type_witness_id;
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
@@ -441,17 +458,37 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
 }
 
 auto InNonStaticFieldDecl(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          !context.decl_introducer_state_stack()
               .innermost()
               .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
 auto InStaticClassScopeVar(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          context.decl_introducer_state_stack()
              .innermost()
              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
+auto InClassScopeLet(Context& context) -> bool {
+  return context.full_pattern_stack().CurrentKindIs(
+      FullPatternStack::Kind::ClassScopeLetDecl);
+}
+
+auto LookupClassFieldByStructField(Context& context,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  auto entry_id = class_scope.Lookup(struct_field.name_id);
+  if (!entry_id) {
+    return std::nullopt;
+  }
+  auto entry_inst_id = class_scope.GetEntry(*entry_id).result.target_inst_id();
+  LoadImportRef(context, entry_inst_id);
+  return SemIR::GetClassFieldFromScopeEntry(context.sem_ir(), entry_inst_id);
 }
 
 }  // namespace Carbon::Check

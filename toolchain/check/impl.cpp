@@ -12,6 +12,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -27,7 +28,6 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -39,20 +39,20 @@ namespace Carbon::Check {
 // Adds the location of the associated function to a diagnostic.
 static auto NoteAssociatedFunction(Context& context, DiagnosticBuilder& builder,
                                    SemIR::FunctionId function_id) -> void {
-  CARBON_DIAGNOSTIC(AssociatedFunctionHere, Note,
-                    "associated function {0} declared here", SemIR::NameId);
+  CARBON_DIAGNOSTIC_LABEL(AssociatedFunctionHere, Info,
+                          "associated function {0} declared here",
+                          SemIR::NameId);
   const auto& function = context.functions().Get(function_id);
-  builder.Note(function.latest_decl_id(), AssociatedFunctionHere,
-               function.name_id);
+  builder.Attach(function.latest_decl_id(), AssociatedFunctionHere,
+                 function.name_id);
 }
 
 auto CheckAssociatedFunctionImplementation(
     Context& context, SemIR::FunctionType interface_function_type,
     SemIR::SpecificId enclosing_specific_id, SemIR::InstId impl_decl_id,
     bool defer_thunk_definition) -> SemIR::InstId {
-  auto impl_function_decl =
-      context.insts().TryGetAs<SemIR::FunctionDecl>(impl_decl_id);
-  if (!impl_function_decl) {
+  auto impl_function_decl = context.insts().Get(impl_decl_id).type_id();
+  if (!context.types().Is<SemIR::FunctionType>(impl_function_decl)) {
     if (impl_decl_id != SemIR::ErrorInst::InstId) {
       CARBON_DIAGNOSTIC(ImplFunctionWithNonFunction, Error,
                         "associated function {0} implemented by non-function",
@@ -123,9 +123,10 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
         }
         return ImplRedeclType::Mismatch;
       }
-      case CARBON_KIND(SemIR::GenericClassType new_scope): {
+      case CARBON_KIND(SemIR::ParameterizedClassType new_scope): {
         if (auto prev_scope =
-                context.insts().TryGetAs<SemIR::GenericClassType>(prev_id)) {
+                context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                    prev_id)) {
           if (new_scope.class_id == prev_scope->class_id) {
             return ImplRedeclType::ValidRedecl;
           }
@@ -148,7 +149,7 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
 
   // The redecl is is an invalid scope.
   CARBON_DIAGNOSTIC(ImplDeclInInvalidScope, Error,
-                    "impl redeclation not in a declarative scope; "
+                    "impl redeclaration not in a declarative scope; "
                     "redeclaration is allowed only in a class or namespace");
   context.emitter().Emit(new_impl.latest_decl_id(), ImplDeclInInvalidScope);
   return ImplRedeclType::DiagnosedInvalidRedecl;
@@ -192,12 +193,12 @@ static auto VerifyImplRedecl(Context& context, const SemIR::Impl& new_impl,
     CARBON_DIAGNOSTIC(ImplRedefinition, Error,
                       "redefinition of `impl {0} as {1}`", InstIdAsRawType,
                       InstIdAsRawType);
-    CARBON_DIAGNOSTIC(ImplPreviousDefinition, Note,
-                      "previous definition was here");
+    CARBON_DIAGNOSTIC_LABEL(ImplPreviousDefinition, Info,
+                            "previous definition was here");
     context.emitter()
         .Build(new_impl.latest_decl_id(), ImplRedefinition, new_impl.self_id,
                new_impl.constraint_id)
-        .Note(prev_impl.definition_id, ImplPreviousDefinition)
+        .Attach(prev_impl.definition_id, ImplPreviousDefinition)
         .Emit();
     return ImplRedeclType::DiagnosedInvalidRedecl;
   }
@@ -288,11 +289,11 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
   if (!RequireCompleteType(
           context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
           SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(ExtendImplAsIncomplete, Context,
-                              "`extend impl as` incomplete facet type {0}",
-                              InstIdAsType);
-            builder.Context(impl.latest_decl_id(), ExtendImplAsIncomplete,
-                            impl.constraint_id);
+            CARBON_DIAGNOSTIC_CONTEXT(
+                ExtendImplAsIncomplete,
+                "`extend impl as` incomplete facet type {0}", InstIdAsType);
+            builder.Attach(impl.latest_decl_id(), ExtendImplAsIncomplete,
+                           impl.constraint_id);
           })) {
     parent_scope.set_has_error();
     return false;
@@ -395,33 +396,66 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   return impl_id;
 }
 
+// Substitute the impl's ImplWitness for any IdentifiedWitness that refers to
+// the current impl's interface, as well as any ImplSelfWitness which always
+// implicitly refers to the current impl.
+class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
+ public:
+  SubstWithImplWitness(Context* context, const SemIR::Impl* impl,
+                       SemIR::InstId impl_witness_id)
+      : SubstIdentifiedWitnessesCallbacks(context),
+        impl_(impl),
+        impl_witness_id_(impl_witness_id) {
+    CARBON_CHECK(impl_witness_id.has_value());
+  }
+
+  auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
+      -> SemIR::InstId override {
+    // The impl `self_id` can be a FacetAccessType in generic impls. We need the
+    // canonical facet to compare with a witness.
+    auto impl_self = context().constant_values().Get(
+        GetCanonicalFacet(context(), impl_->self_id));
+    auto witness_self =
+        context().constant_values().Get(witness.query_self_inst_id);
+    if (impl_self != witness_self) {
+      return SemIR::InstId::None;
+    }
+    auto witness_interface = context().specific_interfaces().Get(
+        witness.query_specific_interface_id);
+    if (impl_->interface != witness_interface) {
+      return SemIR::InstId::None;
+    }
+    return impl_witness_id_;
+  }
+
+  auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
+      -> SemIR::InstId override {
+    // The impl `self_id` can be a FacetAccessType in generic impls. We need the
+    // canonical facet to compare with a witness.
+    auto impl_self = context().constant_values().Get(
+        GetCanonicalFacet(context(), impl_->self_id));
+    auto witness_self = context().constant_values().Get(witness.period_self);
+    auto witness_interface =
+        context().specific_interfaces().Get(witness.specific_interface_id);
+    CARBON_CHECK(impl_self == witness_self);
+    CARBON_CHECK(impl_->interface == witness_interface);
+    return impl_witness_id_;
+  }
+
+ private:
+  const SemIR::Impl* impl_;
+  SemIR::InstId impl_witness_id_;
+};
+
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
+                                  SemIR::LocId constraint_loc_id,
                                   const SemIR::Impl& impl,
-                                  SemIR::TypeInstId full_constraint_id,
+                                  IdentifiedFacetTypeId identified_id,
                                   SemIR::SpecificId self_specific_id)
     -> SemIR::InstId {
-  auto facet_type_id =
-      context.types().GetTypeIdForTypeInstId(full_constraint_id);
-  CARBON_CHECK(facet_type_id != SemIR::ErrorInst::TypeId);
-  auto facet_type = context.types().GetAs<SemIR::FacetType>(facet_type_id);
-  // TODO: We need to collect rewrites from named constraints too, so we will
-  // want to get them from the IdentifiedFacetType, or something similar. That
-  // process should also replace `.Self` in the constraints as appropriate.
-  const auto& declared_facet_type =
-      context.declared_facet_types().Get(facet_type.declared_facet_type_id);
+  const auto& identified = context.identified_facet_types().Get(identified_id);
 
-  // An iterator over the rewrite_constraints where the LHS of the rewrite names
-  // a member of the `impl.interface`. This filters out rewrites of names
-  // from other interfaces, as they do not set values in the witness table.
-  auto rewrites_into_interface_to_witness = llvm::make_filter_range(
-      declared_facet_type.rewrite_constraints,
-      [&](const SemIR::DeclaredFacetType::RewriteConstraint& rewrite) {
-        auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
-            GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
-        return context.insts().Is<SemIR::ImplSelfWitness>(access.witness_id);
-      });
-
-  if (rewrites_into_interface_to_witness.empty()) {
+  if (identified.rewrites().empty()) {
     // The witness table is not needed until the definition. Make a placeholder
     // for the declaration.
     auto witness_table_inst_id = AddInst<SemIR::ImplWitnessTable>(
@@ -473,9 +507,14 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
          .specific_id = self_specific_id});
   }
 
-  for (auto rewrite : rewrites_into_interface_to_witness) {
-    auto access = context.insts().GetAs<SemIR::ImplWitnessAccess>(
-        GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
+  // An `impl as` statement has exactly one extended interface, and the rewrites
+  // in the IdentifiedFacetType only contains rewrites into extended interfaces.
+  // So we don't need to filter them any further here.
+  for (auto rewrite : identified.rewrites()) {
+    // We use the rewrite LHS without replacing the witness so that the
+    // ImplWitnessAccess has no chance to be evaluated away.
+    auto access = context.constant_values().GetInstAs<SemIR::ImplWitnessAccess>(
+        rewrite.lhs.RawValue());
     auto& table_entry = table[access.index.index];
     if (table_entry == SemIR::ErrorInst::InstId) {
       // Don't overwrite an error value. This prioritizes not generating
@@ -483,7 +522,18 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       // for it to use to attempt recovery.
       continue;
     }
-    auto rewrite_inst_id = rewrite.rhs_id;
+
+    // The RHS of the rewrite may contain IdentifiedWitness, but also
+    // ImplSelfWitness for the current impl. Usually they are gone already, as
+    // early rewrite replacement and rewrite resolution replace any references
+    // to an associated constant with the value of that associated constant.
+    // However FacetValues using `.Self` may encode such witnesses, and it is
+    // also possible when an associated constant is used from the impl
+    // declaration but is not set in the declaration.
+    SubstWithImplWitness callbacks(&context, &impl, witness_inst_id);
+    auto rhs = rewrite.rhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+
+    auto rewrite_inst_id = context.constant_values().GetInstId(rhs);
     if (rewrite_inst_id == SemIR::ErrorInst::InstId) {
       table_entry = SemIR::ErrorInst::InstId;
       continue;
@@ -514,25 +564,20 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(RewriteForAssociatedFunction, Error,
                         "rewrite specified for associated function {0}",
                         SemIR::NameId);
-      context.emitter().Emit(full_constraint_id, RewriteForAssociatedFunction,
+      context.emitter().Emit(constraint_loc_id, RewriteForAssociatedFunction,
                              fn.name_id);
       table_entry = SemIR::ErrorInst::InstId;
       continue;
     }
 
-    // FacetTypes resolution disallows two rewrites to the same associated
-    // constant, so we won't ever have a facet write twice to the same position
-    // in the witness table.
-    CARBON_CHECK(table_entry == SemIR::InstId::ImplWitnessTablePlaceholder);
-
     // If the associated constant has a symbolic type, convert the rewrite
     // value to that type now we know the value of `Self`.
     SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
     if (assoc_const_type_id.is_symbolic()) {
-      auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
       auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, interface.generic_id, interface.generic_with_self_id,
-          impl.interface.specific_id, self_facet);
+          impl.interface.specific_id,
+          context.constant_values().Get(impl.self_id));
 
       // Get the type of the associated constant in this interface with this
       // value for `Self`.
@@ -541,9 +586,8 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       // Perform the conversion of the value to the type. We skipped this when
       // forming the facet type because the type of the associated constant
       // was symbolic.
-      auto converted_inst_id =
-          ConvertToValueOfType(context, SemIR::LocId(full_constraint_id),
-                               rewrite_inst_id, assoc_const_type_id);
+      auto converted_inst_id = ConvertToValueOfType(
+          context, constraint_loc_id, rewrite_inst_id, assoc_const_type_id);
       // Canonicalize the converted constant value.
       converted_inst_id =
           context.constant_values().GetConstantInstId(converted_inst_id);
@@ -560,7 +604,7 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
             "after conversion to {2}",
             SemIR::NameId, InstIdAsConstant, SemIR::TypeId);
         context.emitter().Emit(
-            full_constraint_id, AssociatedConstantNotConstantAfterConversion,
+            constraint_loc_id, AssociatedConstantNotConstantAfterConversion,
             assoc_const.name_id, rewrite_inst_id, assoc_const_type_id);
         rewrite_inst_id = SemIR::ErrorInst::InstId;
       }
@@ -569,6 +613,28 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(rewrite_inst_id == context.constant_values().GetConstantInstId(
                                         rewrite_inst_id),
                  "Rewritten value for associated constant is not canonical.");
+
+    // The same entry may be written by a named constraint and the impl, or by
+    // two named constraints, etc. They need to all match.
+    if (table_entry != SemIR::InstId::ImplWitnessTablePlaceholder) {
+      if (context.constant_values().Get(table_entry) !=
+          context.constant_values().Get(rewrite_inst_id)) {
+        if (table_entry != SemIR::ErrorInst::InstId) {
+          const auto& assoc_const = context.associated_constants().Get(
+              assoc_constant_decl->assoc_const_id);
+          CARBON_DIAGNOSTIC(
+              AssociatedConstantGivenDifferentValues, Error,
+              "associated constant {0} given value {1} that is different from "
+              "previously given value {2}",
+              SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
+          context.emitter().Emit(
+              constraint_loc_id, AssociatedConstantGivenDifferentValues,
+              assoc_const.name_id, rewrite_inst_id, table_entry);
+        }
+        table_entry = SemIR::ErrorInst::InstId;
+      }
+      continue;
+    }
 
     table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
         context, loc_id,
@@ -589,13 +655,13 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
     if (!RequireCompleteType(
             context, context.types().GetTypeIdForTypeInstId(impl.constraint_id),
             SemIR::LocId(impl.constraint_id), [&](auto& builder) {
-              CARBON_DIAGNOSTIC(
-                  ImplAsIncompleteFacetTypeDefinition, Context,
+              CARBON_DIAGNOSTIC_CONTEXT(
+                  ImplAsIncompleteFacetTypeDefinition,
                   "definition of impl as incomplete facet type {0}",
                   InstIdAsType);
-              builder.Context(SemIR::LocId(impl.latest_decl_id()),
-                              ImplAsIncompleteFacetTypeDefinition,
-                              impl.constraint_id);
+              builder.Attach(SemIR::LocId(impl.latest_decl_id()),
+                             ImplAsIncompleteFacetTypeDefinition,
+                             impl.constraint_id);
             })) {
       FillImplWitnessWithErrors(context, impl);
       return;
@@ -613,8 +679,6 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
   auto witness_table =
       context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
-  auto witness_block =
-      context.inst_blocks().GetMutable(witness_table.elements_id);
 
   // The impl declaration may have created a placeholder witness table, or a
   // full witness table. We can detect that the witness table is a placeholder
@@ -623,7 +687,7 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
   // size, since the interface must be complete for the impl definition.
   bool witness_table_is_placeholder =
       witness_table.elements_id != SemIR::InstBlockId::Empty &&
-      witness_block.empty();
+      context.inst_blocks().Get(witness_table.elements_id).empty();
   if (witness_table_is_placeholder) {
     // TODO: Since our `empty_table` repeats the same value throughout, we could
     // skip an allocation here if there was a `ReplacePlaceholder` function that
@@ -632,36 +696,6 @@ auto ImplWitnessStartDefinition(Context& context, SemIR::Impl& impl) -> void {
         assoc_entities.size(), SemIR::InstId::ImplWitnessTablePlaceholder);
     context.inst_blocks().ReplacePlaceholder(witness_table.elements_id,
                                              empty_table);
-    witness_block = context.inst_blocks().GetMutable(witness_table.elements_id);
-  }
-
-  // Check we have a value for all non-function associated constants in the
-  // witness.
-  for (auto [assoc_entity, witness_value] :
-       llvm::zip_equal(assoc_entities, witness_block)) {
-    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
-    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
-    if (auto decl =
-            context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
-      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
-        CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
-                          "associated constant {0} not given a value in impl "
-                          "of interface {1}",
-                          SemIR::NameId, SemIR::NameId);
-        CARBON_DIAGNOSTIC(AssociatedConstantHere, Note,
-                          "associated constant declared here");
-        context.emitter()
-            .Build(impl.definition_id, ImplAssociatedConstantNeedsValue,
-                   context.associated_constants()
-                       .Get(decl->assoc_const_id)
-                       .name_id,
-                   interface.name_id)
-            .Note(assoc_entity, AssociatedConstantHere)
-            .Emit();
-
-        witness_value = SemIR::ErrorInst::InstId;
-      }
-    }
   }
 }
 
@@ -712,13 +746,37 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
         auto lookup_result =
             LookupNameInExactScope(context, SemIR::LocId(decl_id), fn.name_id,
                                    impl.scope_id, impl_scope);
+        using InterfaceModifier = SemIR::Function::InterfaceModifier;
         if (lookup_result.is_found()) {
+          if (fn.interface_modifier == InterfaceModifier::Final) {
+            CARBON_DIAGNOSTIC(ImplFinalFunction, Error,
+                              "attempted to implement `{0}`, which is final in "
+                              "interface `{1}`",
+                              SemIR::NameId, SemIR::NameId);
+            auto builder =
+                context.emitter().Build(impl.definition_id, ImplFinalFunction,
+                                        fn.name_id, interface.name_id);
+            NoteAssociatedFunction(context, builder, fn_type->function_id);
+            builder.Emit();
+            witness_value = SemIR::ErrorInst::InstId;
+            break;
+          }
           used_decl_ids.push_back(lookup_result.target_inst_id());
           witness_value = CheckAssociatedFunctionImplementation(
               context, *fn_type,
               context.generics().GetSelfSpecific(impl.generic_id),
               lookup_result.target_inst_id(),
               /*defer_thunk_definition=*/true);
+          break;
+        }
+
+        if (fn.interface_modifier != InterfaceModifier::None) {
+          // We are updating the impl witness table in-place, and we pulled this
+          // instruction out of a constant value in a different generic, so
+          // manually ensure the new value gets added to the eval block.
+          witness_value =
+              GetOrAddInstWithSpecificConstantValue(context, decl_id);
+          break;
         } else {
           CARBON_DIAGNOSTIC(
               ImplMissingFunction, Error,
@@ -749,155 +807,97 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-// Replace any `ImplSelfWitness` with the final `ImplWitness`. This causes any
-// enclosing ImplWitnessAccess be resolved to the corresponding value from the
-// impl's witness table.
-static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
-                                   SemIR::IdentifiedFacetType::RequiredImpl req,
-                                   SemIR::InterfaceId impl_interface_id,
-                                   SemIR::InstId witness_id)
-    -> SemIR::IdentifiedFacetType::RequiredImpl {
-  class Callbacks : public SubstInstCallbacks {
-   public:
-    explicit Callbacks(Context* context, SemIR::LocId loc_id,
-                       SemIR::InterfaceId impl_interface_id,
-                       SemIR::InstId witness_id)
-        : SubstInstCallbacks(context),
-          loc_id_(loc_id),
-          impl_interface_id_(impl_interface_id),
-          witness_id_(witness_id) {}
-    auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-      auto const_inst_id =
-          context().constant_values().GetConstantInstId(inst_id);
-      if (const_inst_id == SemIR::TypeType::TypeInstId ||
-          const_inst_id == SemIR::ErrorInst::InstId) {
-        return FullySubstituted;
-      }
-
-      auto self_witness =
-          context().insts().TryGetAs<SemIR::ImplSelfWitness>(inst_id);
-      if (!self_witness) {
-        return SubstOperands;
-      }
-      // It would be nice to check the full specific interface. But the witness
-      // has an interface with `.Self` references unresolved, and the impl's
-      // specific interface has them resolved. It doesn't seem worth identifying
-      // the witness's interface to substitute in the impl's self type just for
-      // this CHECK.
-      CARBON_CHECK(
-          context()
-                  .specific_interfaces()
-                  .Get(self_witness->specific_interface_id)
-                  .interface_id == impl_interface_id_,
-          "found incorrect ImplSelfWitness that is not a witness for the "
-          "impl's target interface; expected a LookupImplWitness");
-      inst_id = witness_id_;
-      return FullySubstituted;
-    }
-
-    auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
-        -> SemIR::InstId override {
-      return RebuildNewInst(loc_id_, new_inst);
-    }
-
-   private:
-    SemIR::LocId loc_id_;
-    SemIR::InterfaceId impl_interface_id_;
-    SemIR::InstId witness_id_;
-  };
-
-  Callbacks callbacks(&context, loc_id, impl_interface_id, witness_id);
-
-  auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
-  self_inst_id = SubstInst(context, self_inst_id, callbacks);
-
-  auto specific_id = req.specific_interface.specific_id;
-  if (specific_id.has_value()) {
-    const auto& specific = context.specifics().Get(specific_id);
-    llvm::SmallVector<SemIR::InstId> args(
-        context.inst_blocks().Get(specific.args_id));
-    for (auto& arg_id : args) {
-      arg_id = SubstInst(context, arg_id, callbacks);
-    }
-    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
-  }
-
-  return {
-      .self_facet_value = context.constant_values().Get(self_inst_id),
-      .specific_interface = {req.specific_interface.interface_id, specific_id}};
-}
-
-auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
-                                SemIR::Impl& impl,
-                                SemIR::TypeInstId full_constraint_id) -> void {
+auto CheckImplRequirementsAtEndOfDefinition(
+    Context& context, SemIR::LocId loc_id, SemIR::Impl& impl,
+    SemIR::TypeInstId full_constraint_id, IdentifiedFacetTypeId identified_id)
+    -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
 
-  // TODO: Check other kinds of constraints too: rewrites into targets other
-  // than `Self.(TargetInterface.__)` and same-type constraints. Consider maybe
-  // building a facet type that just excludes anything about the impl-as target
-  // interface, and then just perform lookup of Self as that facet type, so we
-  // don't have to re-implement all of the validation of impl lookup?
+  auto witness = context.insts().GetAs<SemIR::ImplWitness>(impl.witness_id);
+  auto witness_table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  auto witness_block =
+      context.inst_blocks().GetMutable(witness_table.elements_id);
+  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  auto assoc_entities =
+      context.inst_blocks().Get(interface.associated_entities_id);
+
+  // Check we have a value for all non-function associated constants in the
+  // witness.
+  for (auto [assoc_entity, witness_value] :
+       llvm::zip_equal(assoc_entities, witness_block)) {
+    auto decl_id = context.constant_values().GetConstantInstId(assoc_entity);
+    CARBON_CHECK(decl_id.has_value(), "Non-constant associated entity");
+    if (auto decl =
+            context.insts().TryGetAs<SemIR::AssociatedConstantDecl>(decl_id)) {
+      if (witness_value == SemIR::InstId::ImplWitnessTablePlaceholder) {
+        CARBON_DIAGNOSTIC(ImplAssociatedConstantNeedsValue, Error,
+                          "associated constant {0} not given a value in impl "
+                          "of interface {1}",
+                          SemIR::NameId, SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(AssociatedConstantHere, Info,
+                                "associated constant declared here");
+        context.emitter()
+            .Build(loc_id, ImplAssociatedConstantNeedsValue,
+                   context.associated_constants()
+                       .Get(decl->assoc_const_id)
+                       .name_id,
+                   interface.name_id)
+            .Attach(assoc_entity, AssociatedConstantHere)
+            .Emit();
+        // Just set the one value in the witness table to an error. The rest of
+        // the impl remains valid.
+        witness_value = SemIR::ErrorInst::InstId;
+      }
+    }
+  }
 
   // The IdentifiedFacetType canonicalizes the self facets, so we do the same
   // for comparing with it.
-  auto self_const_id = GetCanonicalFacetOrTypeValue(
-      context, context.constant_values().Get(impl.self_id));
+  auto self_const_id =
+      GetCanonicalFacet(context, context.constant_values().Get(impl.self_id));
 
-  // We already identified the `impl.self_id` as the canonical
-  // `full_constraint_id`, so this should just be a cache lookup and can't fail.
-  //
-  // This is critical because the identification constructs specifics in named
-  // constraints which may refer back to the impl itself through access of an
-  // associated constant. Those references back to the impl need to be
-  // represented as `ImplSelfWitness` which can only be done inside the impl
-  // declaration. It is too late to form those specifics here, we need to find
-  // the specifics formed during the impl declaration.
-  //
-  // TODO: Consider a function that just forms the key and returns the ID for an
-  // already-identified facet type? Or plumb through the IdentifiedFacetType?
-  auto identified_id = TryToIdentifyFacetType(
-      context, loc_id, context.constant_values().Get(impl.self_id),
-      context.constant_values().GetConstantTypeInstId(
-          context.types().GetAsTypeInstId(full_constraint_id)),
-      /*allow_partially_identified=*/false);
-  CARBON_CHECK(identified_id.has_value());
   const auto& identified = context.identified_facet_types().Get(identified_id);
   for (auto req : identified.required_impls()) {
-    if (req.self_facet_value == self_const_id &&
-        req.specific_interface == identified.impl_as_target_interface()) {
+    // This replaces both IdentifiedWitness and ImplSelfWitness referring to
+    // this impl with the impl's ImplWitness. That causes any access through the
+    // witness to resolve to the value from the impl's witness table.
+    SubstWithImplWitness callbacks(&context, &impl, impl.witness_id);
+    auto req_self_facet =
+        req.self_facet.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+    auto req_interface =
+        req.interface.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+    if (req_self_facet == self_const_id && req_interface == impl.interface) {
       // This is what the impl is implementing, so it's not already satisfied.
       continue;
     }
 
-    // Resolve any accesses in the declaration by using the impl's witness
-    // table, now that it exists. Since these accesses are from an
-    // IdentifiedFacetType first constructed inside the impl declaration, they
-    // were originally evaluated before the impl existed.
-    req = SubstImplSelfWitnesses(context, loc_id, req,
-                                 impl.interface.interface_id, impl.witness_id);
+    auto req_interface_type_id = GetInterfaceType(
+        context, req_interface.interface_id, req_interface.specific_id);
+    if (req_self_facet == SemIR::ErrorInst::ConstantId ||
+        req_interface_type_id == SemIR::ErrorInst::TypeId) {
+      // The impls requirement can not be met by errors, so the impl is not
+      // valid.
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
 
-    auto result = LookupImplWitness(
-        context, loc_id, req.self_facet_value,
-        GetInterfaceType(context, req.specific_interface.interface_id,
-                         req.specific_interface.specific_id)
-            .AsConstantId());
+    auto result = LookupImplWitness(context, loc_id, req_self_facet,
+                                    req_interface_type_id.AsConstantId());
     if (!result.has_value()) {
       CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotImplemented, Error,
                         "constraint {0} being implemented requires that {1} "
                         "implements `{2}`",
                         SemIR::DeclaredFacetTypeId, InstIdAsConstant,
                         SemIR::SpecificInterface);
+      auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+          context.constant_values().GetConstantInstId(full_constraint_id));
       context.emitter().Emit(
           loc_id, IdentifiedRequireImplsNotImplemented,
-          context.insts()
-              .GetAs<SemIR::FacetType>(
-                  context.constant_values().GetConstantInstId(
-                      full_constraint_id))
-              .declared_facet_type_id,
-          context.constant_values().GetInstId(req.self_facet_value),
-          req.specific_interface);
+          facet_type.declared_facet_type_id,
+          context.constant_values().GetInstId(req_self_facet), req_interface);
     }
     if (!result.has_value() || result.has_error_value()) {
       FillImplWitnessWithErrors(context, impl);
@@ -905,20 +905,50 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  const auto& interface = context.interfaces().Get(impl.interface.interface_id);
+  for (auto equiv : identified.equivalents()) {
+    // This replaces both IdentifiedWitness and ImplSelfWitness referring to
+    // this impl with the impl's ImplWitness. That causes any access through the
+    // witness to resolve to the value from the impl's witness table.
+    SubstWithImplWitness callbacks(&context, &impl, impl.witness_id);
+    auto lhs = equiv.lhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+    auto rhs = equiv.rhs.SubstIdentifiedWitnesses(context, loc_id, callbacks);
+    if (lhs == SemIR::ErrorInst::ConstantId ||
+        rhs == SemIR::ErrorInst::ConstantId) {
+      // The equivalence requirement can not be met by errors, so the impl is
+      // not valid.
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
+
+    if (lhs != rhs) {
+      CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotEquivalent, Error,
+                        "constraint {0} being implemented requires that {1} "
+                        "equals {2}; found {3} and {4}",
+                        SemIR::DeclaredFacetTypeId, InstIdAsConstant,
+                        InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+      auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+          context.constant_values().GetConstantInstId(full_constraint_id));
+      context.emitter().Emit(
+          loc_id, IdentifiedRequireImplsNotEquivalent,
+          facet_type.declared_facet_type_id,
+          context.constant_values().GetInstId(equiv.lhs.RawValue()),
+          context.constant_values().GetInstId(equiv.rhs.RawValue()),
+          context.constant_values().GetInstId(lhs),
+          context.constant_values().GetInstId(rhs));
+      FillImplWitnessWithErrors(context, impl);
+      return;
+    }
+  }
 
   auto require_ids =
       context.require_impls_blocks().Get(interface.require_impls_block_id);
-  if (require_ids.empty()) {
-    return;
+  auto interface_with_self_specific_id = SemIR::SpecificId::None;
+  if (!require_ids.empty()) {
+    interface_with_self_specific_id = MakeSpecificWithInnerSelf(
+        context, loc_id, interface.generic_id, interface.generic_with_self_id,
+        impl.interface.specific_id,
+        context.constant_values().Get(impl.self_id));
   }
-
-  // Make a facet value for the self type.
-  auto self_facet = GetConstantFacetValueForType(context, impl.self_id);
-  auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
-      context, loc_id, interface.generic_id, interface.generic_with_self_id,
-      impl.interface.specific_id, self_facet);
-
   for (auto require_id : require_ids) {
     const auto& require = context.require_impls().Get(require_id);
 
@@ -1000,34 +1030,36 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
-                                SemIR::TypeInstId constraint_id)
-    -> SemIR::SpecificInterface {
-  auto canon_constraint_id =
-      context.constant_values().GetConstantTypeInstId(constraint_id);
-  if (canon_constraint_id == SemIR::ErrorInst::TypeInstId) {
-    return SemIR::SpecificInterface::None;
-  }
+                                SemIR::TypeInstId full_constraint_id)
+    -> std::pair<IdentifiedFacetTypeId, SemIR::SpecificInterface> {
   auto identified_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_id),
-      context.constant_values().Get(self_id), canon_constraint_id,
+      context, SemIR::LocId(full_constraint_id),
+      context.constant_values().Get(self_id),
+      context.types().GetTypeIdForTypeInstId(full_constraint_id),
       [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
-                          "facet type {0} cannot be identified in `impl as`",
-                          InstIdAsType);
-        builder.Context(loc_id, ImplOfUnidentifiedFacetType, constraint_id);
+        CARBON_DIAGNOSTIC_CONTEXT(
+            ImplOfUnidentifiedFacetType,
+            "facet type {0} cannot be identified in `impl as`", InstIdAsType);
+        builder.Attach(loc_id, ImplOfUnidentifiedFacetType, full_constraint_id);
       });
   if (!identified_id.has_value()) {
-    return SemIR::SpecificInterface::None;
+    return {IdentifiedFacetTypeId::None, SemIR::SpecificInterface::None};
   }
   const auto& identified = context.identified_facet_types().Get(identified_id);
-  if (!identified.is_valid_impl_as_target()) {
+  auto impl_as_target =
+      identified.EvaluateImplWitnessesToGetImplAsTarget(context, loc_id);
+  if (!impl_as_target.is_valid()) {
     CARBON_DIAGNOSTIC(ImplOfNotOneInterface, Error,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(loc_id, ImplOfNotOneInterface,
-                           identified.num_interfaces_to_impl());
-    return SemIR::SpecificInterface::None;
+                           impl_as_target.num_interfaces());
+    return {IdentifiedFacetTypeId::None, SemIR::SpecificInterface::None};
   }
-  return identified.impl_as_target_interface();
+  auto interface = impl_as_target.target();
+  if (context.specifics().HasError(interface.specific_id)) {
+    return {IdentifiedFacetTypeId::None, SemIR::SpecificInterface::None};
+  }
+  return {identified_id, interface};
 }
 
 auto GetImplInterfaceInSpecific(Context& context, const SemIR::Impl& impl,

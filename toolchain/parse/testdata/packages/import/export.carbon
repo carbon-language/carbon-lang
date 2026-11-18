@@ -12,9 +12,12 @@
 
 package Pkg;
 
-// CHECK:STDERR: fail_package.carbon:[[@LINE+4]]:15: error: `export` cannot be used when importing a package [ExportImportPackage]
-// CHECK:STDERR: export import Bar;
-// CHECK:STDERR:               ^~~
+// CHECK:STDERR:        ╭─┤ fail_package.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ export import Bar;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `export` cannot be used when importing a package
+// CHECK:STDERR:        ·       ┃        [ExportImportPackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export import Bar;
 
@@ -38,20 +41,27 @@ export import library "a";
 
 class C;
 
-// CHECK:STDERR: fail_order.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: export import library "b";
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_order.carbon:[[@LINE-5]]:1: note: first declaration is here [FirstDecl]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_order.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ──┬──
+// CHECK:STDERR:        ·   ╰──┤ first declaration is here [FirstDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ export import library "b";
+// CHECK:STDERR:        · ┳━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `import` declarations must come after the `package` declaration (if
+// CHECK:STDERR:        ·    ┃        present) and before any other entities in the file
+// CHECK:STDERR:        ·    ┃        [ImportTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export import library "b";
 
 // --- fail_in_default_library.carbon
 
-// CHECK:STDERR: fail_in_default_library.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
-// CHECK:STDERR: export import library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_in_default_library.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ export import library "lib";
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export import library "lib";
 
@@ -59,9 +69,11 @@ export import library "lib";
 
 impl package Pkg;
 
-// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+4]]:1: error: `export` is only allowed in API files [ExportFromImpl]
-// CHECK:STDERR: export import library "lib";
-// CHECK:STDERR: ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_in_impl.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ export import library "lib";
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export import library "lib";
 

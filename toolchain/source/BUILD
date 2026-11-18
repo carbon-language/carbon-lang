@@ -11,10 +11,8 @@ cc_library(
     srcs = ["source_buffer.cpp"],
     hdrs = ["source_buffer.h"],
     deps = [
-        "//common:error",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:file_diagnostics",
-        "//toolchain/diagnostics:format_providers",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -28,6 +26,7 @@ cc_test(
         "//common:check",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

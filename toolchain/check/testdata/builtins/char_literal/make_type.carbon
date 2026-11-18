@@ -29,9 +29,10 @@ let not_7_bit: CharLiteral = '\u{80}';
 let not_8_bit: CharLiteral = '\u{1E15}';
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type Core.CharLiteral [concrete]
 // CHECK:STDOUT:   %ascii_x.patt: %pattern_type = value_binding_pattern ascii_x [concrete]
 // CHECK:STDOUT:   %.4ac: Core.CharLiteral = char_value U+0078 [concrete]

@@ -88,7 +88,7 @@ year, and all of the active contributors to Carbon have thoroughly ramped up on
 our implementation and are making meaningful contributions to it.
 
 [roadmap for 2024]:
-    https://github.com/carbon-language/carbon-lang/blob/10189bbb78db7b143a6d9d62797fc9698363fe4d/docs/project/roadmap.md
+https://github.com/carbon-language/carbon-lang/blob/10189bbb78db7b143a6d9d62797fc9698363fe4d/docs/project/roadmap.md
 
 Going into 2024, Carbon's compiler didn't have any support for generics,
 importing, expression categories, debug info, mangling, a prelude, or so many

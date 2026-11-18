@@ -58,16 +58,24 @@ library "[[@TEST_NAME]]";
 
 class FailIncomplete;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+11]]:17: error: function returns incomplete type `FailIncomplete` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
-// CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class FailIncomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+19]]:17
+// CHECK:STDERR:        │ class FailIncomplete;
+// CHECK:STDERR:        · ──────────┬──────────
+// CHECK:STDERR:        ·           ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
+// CHECK:STDERR:        ·                 ━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: function returns incomplete type `FailIncomplete`
+// CHECK:STDERR:        ·                       ┃        [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
 
@@ -80,9 +88,13 @@ class FailWrongArg {
   var end: i32*;
 }
 
-// CHECK:STDERR: fail_wrong_arg.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(n: i32) -> FailWrongArg = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_arg.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(n: i32) -> FailWrongArg = "cpp.std.initializer_list.make";
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(n: i32) -> FailWrongArg = "cpp.std.initializer_list.make";
 
@@ -95,9 +107,13 @@ class FailWrongArgCount {
   var end: i32*;
 }
 
-// CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(arr: array(i32, 3), n: i32) -> FailWrongArgCount = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_arg_count.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(arr: array(i32, 3), n: i32) -> FailWrongArgCount = "cpp.std.initia...
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(arr: array(i32, 3), n: i32) -> FailWrongArgCount = "cpp.std.initializer_list.make";
 
@@ -105,9 +121,13 @@ fn Make(arr: array(i32, 3), n: i32) -> FailWrongArgCount = "cpp.std.initializer_
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_a_class.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(arr: array(i32, 3)) -> i32 = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_not_a_class.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(arr: array(i32, 3)) -> i32 = "cpp.std.initializer_list.make";
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(arr: array(i32, 3)) -> i32 = "cpp.std.initializer_list.make";
 
@@ -119,9 +139,13 @@ class FailWrongFieldCount {
   var start: i32*;
 }
 
-// CHECK:STDERR: fail_wrong_field_count.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(arr: array(i32, 3)) -> FailWrongFieldCount = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_field_count.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(arr: array(i32, 3)) -> FailWrongFieldCount = "cpp.std.initializer_...
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(arr: array(i32, 3)) -> FailWrongFieldCount = "cpp.std.initializer_list.make";
 
@@ -134,9 +158,13 @@ class FailWrongFirstField {
   var end: i32;
 }
 
-// CHECK:STDERR: fail_wrong_first_field.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(arr: array(i32, 3)) -> FailWrongFirstField = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_first_field.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(arr: array(i32, 3)) -> FailWrongFirstField = "cpp.std.initializer_...
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(arr: array(i32, 3)) -> FailWrongFirstField = "cpp.std.initializer_list.make";
 
@@ -149,8 +177,12 @@ class FailWrongSecondField {
   var end: {.a: i32};
 }
 
-// CHECK:STDERR: fail_wrong_second_field.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "cpp.std.initializer_list.make" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Make(arr: array(i32, 3)) -> FailWrongSecondField = "cpp.std.initializer_list.make";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_second_field.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn Make(arr: array(i32, 3)) -> FailWrongSecondField = "cpp.std.initializer...
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: invalid signature for builtin function
+// CHECK:STDERR:        ·    ┃        "cpp.std.initializer_list.make"
+// CHECK:STDERR:        ·    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Make(arr: array(i32, 3)) -> FailWrongSecondField = "cpp.std.initializer_list.make";

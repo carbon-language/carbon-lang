@@ -7,14 +7,21 @@
 #include <filesystem>
 #include <string>
 
+#include "clang/Basic/DiagnosticDriver.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Driver/CreateInvocationFromArgs.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/Utils.h"
 #include "common/string_helpers.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/TargetParser/SubtargetFeature.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace Carbon {
 
@@ -50,17 +57,51 @@ auto ClangDriverDiagnosticConsumer::HandleDiagnostic(
   }
 }
 
+// Validates `target_opts` (such as `-march`, `-mcpu`, `-mtune`, and
+// `-target-feature`) and canonicalizes `target_opts.Features` via
+// `clang::TargetInfo::CreateTargetInfo`. Returns `false` if any target option
+// or feature is invalid.
+static auto ValidateTargetOptions(clang::DiagnosticsEngine& driver_diags,
+                                  clang::TargetOptions& target_opts) -> bool {
+  llvm::IntrusiveRefCntPtr<clang::TargetInfo> target_info(
+      clang::TargetInfo::CreateTargetInfo(driver_diags, target_opts));
+
+  // `TargetInfo::CreateTargetInfo` expands Clang-level feature aliases into
+  // `TargetOptions::Features`, but passes unknown `+feature`/`-feature`
+  // entries through to the backend where `MCSubtargetInfo` only prints a raw
+  // stderr warning. Validate that every canonicalized backend feature is
+  // recognized by the target's `MCSubtargetInfo` when the target is registered.
+  std::string target_error;
+  llvm::Triple triple(target_opts.Triple);
+  if (const llvm::Target* target =
+          llvm::TargetRegistry::lookupTarget(triple, target_error)) {
+    std::unique_ptr<llvm::MCSubtargetInfo> subtarget_info(
+        target->createMCSubtargetInfo(triple, /*CPU=*/"", /*Features=*/""));
+    if (subtarget_info) {
+      llvm::ArrayRef<llvm::SubtargetFeatureKV> valid_features =
+          subtarget_info->getAllProcessorFeatures();
+      const auto& features =
+          target_info ? target_opts.Features : target_opts.FeaturesAsWritten;
+      for (llvm::StringRef feature : features) {
+        llvm::StringRef name = llvm::SubtargetFeatures::StripFlag(feature);
+        const auto* it = llvm::lower_bound(valid_features, name);
+        if (it == valid_features.end() || llvm::StringRef(it->key()) != name) {
+          driver_diags.Report(clang::diag::err_drv_unsupported_option_argument)
+              << "-target-feature" << feature;
+        }
+      }
+    }
+  }
+
+  return target_info && !driver_diags.hasErrorOccurred();
+}
+
 auto BuildClangInvocation(Diagnostics::Consumer& consumer,
                           llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                           const InstallPaths& install_paths,
                           llvm::StringRef target_str,
                           llvm::ArrayRef<llvm::StringRef> extra_args)
     -> std::unique_ptr<clang::CompilerInvocation> {
-  Diagnostics::ErrorTrackingConsumer error_tracker(consumer);
-  Diagnostics::NoLocEmitter emitter(&error_tracker);
-
-  ClangDriverDiagnosticConsumer diagnostics_consumer(&emitter);
-
   llvm::SmallVector<std::string> args;
   args.push_back("--start-no-unused-arguments");
   AppendDefaultClangArgs(install_paths, target_str, args);
@@ -83,6 +124,8 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
 
   // Build a diagnostics engine. Note that we don't have any diagnostic options
   // yet; they're produced by running the driver.
+  Diagnostics::NoLocEmitter emitter(&consumer);
+  ClangDriverDiagnosticConsumer diagnostics_consumer(&emitter);
   clang::DiagnosticOptions driver_diag_opts;
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> driver_diags(
       clang::CompilerInstance::createDiagnostics(*fs, driver_diag_opts,
@@ -91,23 +134,22 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
 
   // Ask the driver to process the arguments and build a corresponding clang
   // frontend invocation.
-  auto invocation =
+  std::unique_ptr<clang::CompilerInvocation> invocation =
       clang::createInvocation(cstr_args, {.Diags = driver_diags, .VFS = fs});
 
   // If Clang produced an error, throw away its invocation.
-  if (error_tracker.seen_error()) {
+  if (!invocation || driver_diags->hasErrorOccurred() ||
+      !ValidateTargetOptions(*driver_diags, invocation->getTargetOpts())) {
     return nullptr;
   }
 
-  if (invocation) {
-    // Track submodule visibility in the preprocessor and Sema.
-    invocation->getLangOpts().Modules = true;
-    invocation->getLangOpts().ModulesLocalVisibility = true;
+  // Track submodule visibility in the preprocessor and Sema.
+  invocation->getLangOpts().Modules = true;
+  invocation->getLangOpts().ModulesLocalVisibility = true;
 
-    // Do not emit Clang's name and version as the creator of the output file.
-    invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
-    invocation->getCodeGenOpts().DiscardValueNames = false;
-  }
+  // Do not emit Clang's name and version as the creator of the output file.
+  invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
+  invocation->getCodeGenOpts().DiscardValueNames = false;
 
   return invocation;
 }

@@ -19,9 +19,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_in_rewrite.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_in_rewrite.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 
@@ -42,9 +47,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_two_levels_in_rewrite.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant2: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_two_levels_in_rewrite.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant2: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant2: type = ();
   let generic Constant: type = (Constant2, );
@@ -66,9 +76,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_in_rewrite_callee.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_in_rewrite_callee.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 
@@ -89,9 +104,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_in_rewrite_caller.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_in_rewrite_caller.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 
@@ -112,9 +132,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_in_nested_facet_type.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 
@@ -137,9 +162,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_named_constant_in_nested_facet_type_caller.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_named_constant_in_nested_facet_type_caller.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 
@@ -162,9 +192,14 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_named_constant_in_nested_facet_type_callee.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic Constant: type = ();
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_named_constant_in_nested_facet_type_callee.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic Constant: type = ();
+  // CHECK:STDERR:        ·               ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic Constant: type = ();
 

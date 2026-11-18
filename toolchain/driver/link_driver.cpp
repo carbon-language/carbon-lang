@@ -67,10 +67,19 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   // We link using a C++ mode of the driver.
   clang_args.push_back("--driver-mode=g++");
 
-  // Pass the target down to Clang to pick up the correct defaults.
+  // Pass the target and codegen flags down to Clang as defaults.
   std::string target_arg =
       llvm::formatv("--target={0}", options_->codegen_options->target).str();
   clang_args.push_back(target_arg);
+  llvm::SmallVector<std::string> codegen_clang_args =
+      options_->codegen_options->GetClangArgs();
+  if (!codegen_clang_args.empty()) {
+    clang_args.push_back("--start-no-unused-arguments");
+    for (llvm::StringRef arg : codegen_clang_args) {
+      clang_args.push_back(arg);
+    }
+    clang_args.push_back("--end-no-unused-arguments");
+  }
 
   if (!options_->output_filename.empty()) {
     clang_args.push_back("-o");
@@ -89,6 +98,15 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
                       "no object files provided to link command and no extra "
                       "Clang options that could provide them");
     driver_env.emitter.Emit(LinkObjectFilesMissing);
+    return {.success = false};
+  }
+
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
+
+  auto features = runner.ComputeRuntimesFeatures(*options_->codegen_options,
+                                                 *driver_env.consumer);
+  if (!features.ok()) {
     return {.success = false};
   }
 
@@ -111,9 +129,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       runtimes_path = driver_env.prebuilt_runtimes->base_path();
       include_prelude = true;
     } else if (driver_env.build_runtimes_on_demand) {
-      Runtimes::Cache::Features features = {
-          .target = options_->codegen_options->target.str()};
-      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
+      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(*features);
       CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
                    runtimes_or_error.error().message());
       auto runtimes = std::move(*runtimes_or_error);
@@ -122,7 +138,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       auto path_or_error = std::move(prelude_builder).Build();
       if (!path_or_error.ok()) {
         CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,
-                          "Failed to build Carbon prelude during linking: {0}",
+                          "failed to build Carbon prelude during linking: {0}",
                           std::string);
         driver_env.emitter.Emit(LinkCarbonPreludeBuildFailed,
                                 path_or_error.error().message());
@@ -171,8 +187,6 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());
 
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
   ErrorOr<bool> run_result =
       driver_env.prebuilt_runtimes
           ? runner.RunWithPrebuiltRuntimes(clang_args,
@@ -180,7 +194,8 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
                                            driver_env.enable_leaking)
       : driver_env.build_runtimes_on_demand
           ? runner.Run(clang_args, driver_env.runtimes_cache,
-                       *driver_env.thread_pool, driver_env.enable_leaking)
+                       *driver_env.thread_pool, driver_env.enable_leaking,
+                       *std::move(features))
           : runner.RunWithNoRuntimes(clang_args, driver_env.enable_leaking);
 
   if (!run_result.ok()) {

@@ -32,9 +32,10 @@ var b: () = NS.ChildNS.B();
 var package_a: () = package.NS.A();
 var package_b: () = package.NS.ChildNS.B();
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
@@ -69,9 +70,10 @@ var package_b: () = package.NS.ChildNS.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon = $implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]

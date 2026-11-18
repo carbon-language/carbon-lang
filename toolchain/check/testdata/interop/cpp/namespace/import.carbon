@@ -40,9 +40,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "single.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_member_name.carbon:[[@LINE+4]]:3: error: member name `not_foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.my_namespace.not_foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_namespace_wrong_member_name.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.my_namespace.not_foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: member name `not_foo` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                  ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.my_namespace.not_foo();
 }
@@ -54,9 +57,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "single.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+4]]:3: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.not_my_namespace.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_namespace_wrong_name.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.not_my_namespace.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `not_my_namespace` not found in `Cpp`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.not_my_namespace.foo();
 }
@@ -132,25 +138,33 @@ fn MyF() {
   // file split.
   // TODO: Pass a location into Clang when performing C++ name lookup so that
   // its error has a location attached.
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+13]]:3: error: name `error` not found [NameNotFound]
-  // CHECK:STDERR:   error;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_inline_ambiguity.carbon:[[@LINE+25]]:3
+  // CHECK:STDERR: ->     │   error;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: name `error` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | namespace N { void foo(); }
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
-  // CHECK:STDERR:     3 | inline namespace { namespace N {} }
-  // CHECK:STDERR:       |                              ^
+  // CHECK:STDERR: ->     ╭─┤ <no location>
+  // CHECK:STDERR:        · ┗━━┫ error: reference to 'N' is ambiguous [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./inline_ambiguity.h:2:11
+  // CHECK:STDERR:        │ namespace N { void foo(); }
+  // CHECK:STDERR:        ·           ┬
+  // CHECK:STDERR:        ·           ╰──┤ candidate found by name lookup is 'N' [CppInteropParseNote]
+  // CHECK:STDERR:        │ inline namespace { namespace N {} }
+  // CHECK:STDERR:        ·                              ┬
+  // CHECK:STDERR:        ·                              ╰──┤ candidate found by name lookup is '(anonymous
+  // CHECK:STDERR:        ·                                 │ namespace)::N'
+  // CHECK:STDERR:        ·                                 │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_import_inline_ambiguity.carbon
+  // CHECK:STDERR:        │   Cpp.N.foo();
+  // CHECK:STDERR:        ·   ──┬──
+  // CHECK:STDERR:        ·     ╰──┤ in `Cpp` name lookup for `N` [InCppNameLookup]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   error;
 
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+4]]:3: note: in `Cpp` name lookup for `N` [InCppNameLookup]
-  // CHECK:STDERR:   Cpp.N.foo();
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR:
   Cpp.N.foo();
 }
 
@@ -191,9 +205,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescpaed.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.base.foo();
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_special_name_call_unescpaed.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.base.foo();
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: member name `base` not found in `Cpp`
+  // CHECK:STDERR:        ·          ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.base.foo();
 }
@@ -244,6 +261,15 @@ fn Use(y: Cpp.Y) -> i32 {
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_indirect_namespace_no_import.carbon [InImport]
+// CHECK:STDERR:        ├─┤ namespace_alias.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ import Cpp library "single.h";
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·    ┃        `indirect import of C++ declaration with no direct Cpp import`
+// CHECK:STDERR:        ·    ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 import Cpp library "single.h";
 
 alias MyNamespaceAlias = Cpp.my_namespace;
@@ -256,12 +282,7 @@ fn CallFoo() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+8]]:1: in import [InImport]
-// CHECK:STDERR: namespace_alias.carbon:4:1: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
-// CHECK:STDERR: import Cpp library "single.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: imported from: fail_indirect_namespace_no_import.carbon:[[@LINE+3]]:1 [InImport]
 // CHECK:STDERR: namespace_alias.carbon: error: semantics TODO: `indirect import of C++ declaration with no direct Cpp import` [SemanticsTodo]
 // CHECK:STDERR:
 import library "namespace_alias";
@@ -269,15 +290,21 @@ import library "namespace_alias";
 fn F() {
   // Imports are not implicitly re-exported, so lookup is expected to fail,
   // regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   MyNamespaceAlias.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_indirect_namespace_no_import.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MyNamespaceAlias.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `foo` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   MyNamespaceAlias.bar();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_indirect_namespace_no_import.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MyNamespaceAlias.bar();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `bar` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
 }
@@ -286,7 +313,7 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:1: in import [InImport]
+// CHECK:STDERR: imported from: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+3]]:1 [InImport]
 // CHECK:STDERR: namespace_alias.carbon: error: semantics TODO: `use of imported C++ declaration with no corresponding local import` [SemanticsTodo]
 // CHECK:STDERR:
 import library "namespace_alias";
@@ -295,15 +322,21 @@ import Cpp;
 fn F() {
   // Imports are not implicitly re-exported, so name lookup is expected to
   // fail, regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   MyNamespaceAlias.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_indirect_namespace_no_local_decl.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MyNamespaceAlias.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `foo` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   MyNamespaceAlias.bar();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_indirect_namespace_no_local_decl.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MyNamespaceAlias.bar();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `bar` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
 }
@@ -337,9 +370,12 @@ namespace my_namespace {
 fn F() {
   // Cpp imports are not implicitly re-exported, so name lookup is expected to
   // fail.
-  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   MyNamespaceAlias.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MyNamespaceAlias.foo();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `foo` not found in `Cpp.my_namespace`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 }
@@ -365,9 +401,10 @@ fn F() {
   MyNamespaceAlias.baz();
 }
 
-// CHECK:STDOUT: --- import_single.carbon
+// CHECK:STDOUT: --- import_single.carbon = $import_single
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -397,9 +434,10 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple.carbon
+// CHECK:STDOUT: --- import_multiple.carbon = $import_multiple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo1.cpp_overload_set.type: type = cpp_overload_set_type @foo1.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo1.cpp_overload_set.value: %foo1.cpp_overload_set.type = cpp_overload_set_value @foo1.cpp_overload_set [concrete]
@@ -462,9 +500,10 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inline.carbon
+// CHECK:STDOUT: --- import_inline.carbon = $import_inline
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -494,9 +533,10 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inline_ambiguity_not_triggered.carbon
+// CHECK:STDOUT: --- import_inline_ambiguity_not_triggered.carbon = $import_inline_ambiguity_not_triggered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
@@ -504,8 +544,17 @@ fn F() {
 // CHECK:STDOUT:   %ptr.614: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.1d5: <witness> = custom_witness (%X.cpp_destructor), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.c4b: %SubobjectDestroy.type = facet_value %X, (%custom_witness.1d5) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.c08: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c4b) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %X, (%DestroyImpl.impl_witness.c08, %custom_witness.1d5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -519,6 +568,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
@@ -530,14 +581,19 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %X to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   %X.cpp_destructor.bound: <bound method> = bound_method %.loc8_11.3, constants.%X.cpp_destructor
-// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call %X.cpp_destructor.bound(%.loc8_11.3)
+// CHECK:STDOUT:   %Destroy.facet.loc8_11.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.c08, constants.%custom_witness.1d5) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_11.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc8_11.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc8_11.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.c08, constants.%custom_witness.1d5) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_11.5: %Destroy.type = converted constants.%X, %Destroy.facet.loc8_11.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc8_11.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_special_name_call_escpaed.carbon
+// CHECK:STDOUT: --- import_special_name_call_escpaed.carbon = $import_special_name_call_escpaed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]

@@ -20,17 +20,23 @@ impl Goat as Animal {}
 fn WalkAnimal(unused generic a: Animal) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic x: type = Goat;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_convert_type_erased_type_to_facet.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic x: type = Goat;
+  // CHECK:STDERR:        ·               ━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic x: type = Goat;
   WalkAnimal(x);
 }
 
-// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon
+// CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon = $fail_convert_type_erased_type_to_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]

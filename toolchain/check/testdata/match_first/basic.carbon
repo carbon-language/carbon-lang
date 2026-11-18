@@ -54,12 +54,17 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 match_first {
-  // CHECK:STDERR: fail_final_inside.carbon:[[@LINE+7]]:3: error: `final impl` in `match_first` block [FinalImplInMatchFirst]
-  // CHECK:STDERR:   final impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_final_inside.carbon:[[@LINE-4]]:1: note: the `match_first` block can be modified as `final` instead [FinalImplInMatchFirstNote]
-  // CHECK:STDERR: match_first {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_final_inside.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ match_first {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ the `match_first` block can be modified as `final` instead
+  // CHECK:STDERR:        ·          │ [FinalImplInMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   final impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: `final impl` in `match_first` block
+  // CHECK:STDERR:        ·                ┃        [FinalImplInMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final impl () as Z {}
 }
@@ -69,9 +74,11 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-// CHECK:STDERR: fail_final_redecl.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: final impl () as Z;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_final_redecl.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ final impl () as Z;
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl () as Z;
 match_first {
@@ -91,9 +98,11 @@ match_first {
   // This is not seen as a redecl of the `final impl`. It's not valid to write
   // an `impl` in `match_first` that overlaps a `final impl`, but we already
   // have a diagnostic.
-  // CHECK:STDERR: fail_final_redecl_defined_once.carbon:[[@LINE+4]]:3: error: impl declared but not defined [ImplMissingDefinition]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_final_redecl_defined_once.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -108,12 +117,16 @@ match_first {
   // This is not seen as a redecl of the `final impl`. It's not valid to write
   // an `impl` in `match_first` that overlaps a `final impl`, but we already
   // have a diagnostic.
-  // CHECK:STDERR: fail_final_redecl_defined_twice.carbon:[[@LINE+7]]:3: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_final_redecl_defined_twice.carbon:[[@LINE-8]]:1: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
-  // CHECK:STDERR: final impl () as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_final_redecl_defined_twice.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ final impl () as Z {}
+  // CHECK:STDERR:        · ──────────┬─────────
+  // CHECK:STDERR:        ·           ╰──┤ `final impl` declared here would always be used instead
+  // CHECK:STDERR:        ·              │ [ImplFinalOverlapsNonFinalNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z {}
 }
@@ -128,12 +141,17 @@ match_first {
   // This _is_ seen as a redecl of the `final impl`. It's not valid to write
   // an `impl` in `match_first` that overlaps a `final impl`, but we already
   // have a diagnostic.
-  // CHECK:STDERR: fail_final_final_redecl.carbon:[[@LINE+7]]:3: error: `final impl` in `match_first` block [FinalImplInMatchFirst]
-  // CHECK:STDERR:   final impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_final_final_redecl.carbon:[[@LINE-7]]:1: note: the `match_first` block can be modified as `final` instead [FinalImplInMatchFirstNote]
-  // CHECK:STDERR: match_first {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_final_final_redecl.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ match_first {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ the `match_first` block can be modified as `final` instead
+  // CHECK:STDERR:        ·          │ [FinalImplInMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   final impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: `final impl` in `match_first` block
+  // CHECK:STDERR:        ·                ┃        [FinalImplInMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final impl () as Z {}
 }
@@ -201,12 +219,15 @@ interface Z {}
 
 impl () as Z {}
 match_first {
-  // CHECK:STDERR: fail_redecl_with_definition_after_defined.carbon:[[@LINE+7]]:3: error: redefinition of `impl () as Z` [ImplRedefinition]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_with_definition_after_defined.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
-  // CHECK:STDERR: impl () as Z {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_with_definition_after_defined.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        │ impl () as Z {}
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ previous definition was here [ImplPreviousDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: redefinition of `impl () as Z` [ImplRedefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z {}
 }
@@ -238,12 +259,16 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 interface Y {
-  // CHECK:STDERR: fail_inside_interface.carbon:[[@LINE+7]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
-  // CHECK:STDERR:   match_first {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_inside_interface.carbon:[[@LINE-4]]:1: note: in enclosing scope here [MatchFirstInWrongScopeNote]
-  // CHECK:STDERR: interface Y {
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_inside_interface.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface Y {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   match_first {
+  // CHECK:STDERR:        ·   ━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·    ┗━━┫ error: found `match_first` in invalid scope; expected namespace or class
+  // CHECK:STDERR:        ·       ┃        [MatchFirstInWrongScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   match_first {
     impl Self as Z {}
@@ -256,12 +281,16 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 constraint N {
-  // CHECK:STDERR: fail_inside_constraint.carbon:[[@LINE+7]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
-  // CHECK:STDERR:   match_first {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_inside_constraint.carbon:[[@LINE-4]]:1: note: in enclosing scope here [MatchFirstInWrongScopeNote]
-  // CHECK:STDERR: constraint N {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_inside_constraint.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ constraint N {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   match_first {
+  // CHECK:STDERR:        ·   ━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·    ┗━━┫ error: found `match_first` in invalid scope; expected namespace or class
+  // CHECK:STDERR:        ·       ┃        [MatchFirstInWrongScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   match_first {
     impl Self as Z {}
@@ -274,10 +303,15 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 match_first {
-  // CHECK:STDERR: fail_inside_match_first.carbon:[[@LINE+5]]:3: error: found `match_first` in invalid scope; expected namespace or class [MatchFirstInWrongScope]
-  // CHECK:STDERR:   match_first {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_inside_match_first.carbon: note: in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ╭─┤ fail_inside_match_first.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR: ->     │   match_first {
+  // CHECK:STDERR:        ·   ━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·    ┗━━┫ error: found `match_first` in invalid scope; expected namespace or class
+  // CHECK:STDERR:        ·       ┃        [MatchFirstInWrongScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_inside_match_first.carbon
+  // CHECK:STDERR:        · ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   match_first {
     impl () as Z {}
@@ -291,12 +325,16 @@ interface Z {}
 
 match_first {
   impl () as Z;
-  // CHECK:STDERR: fail_redecl_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_in_same_block.carbon:[[@LINE-4]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_in_same_block.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z;
+  // CHECK:STDERR:        ·   ──────┬──────
+  // CHECK:STDERR:        ·         ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·            ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -309,12 +347,16 @@ interface Z {}
 
 match_first {
   impl () as Z;
-  // CHECK:STDERR: fail_defined_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_defined_in_same_block.carbon:[[@LINE-4]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_defined_in_same_block.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z;
+  // CHECK:STDERR:        ·   ──────┬──────
+  // CHECK:STDERR:        ·         ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·             ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z {}
 }
@@ -326,12 +368,16 @@ interface Z {}
 
 match_first {
   impl () as Z {}
-  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_after_defined_in_same_block.carbon:[[@LINE-4]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_after_defined_in_same_block.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z {}
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·            ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -345,12 +391,16 @@ impl () as Z {}
 match_first {
   impl () as Z;
   // TODO: This "previous declaration" location is wrong. The redecl came after.
-  // CHECK:STDERR: fail_two_redecl_in_same_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_two_redecl_in_same_block.carbon:[[@LINE-5]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_two_redecl_in_same_block.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z;
+  // CHECK:STDERR:        ·   ──────┬──────
+  // CHECK:STDERR:        ·         ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·            ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -364,12 +414,16 @@ match_first {
   impl () as Z;
 }
 match_first {
-  // CHECK:STDERR: fail_redecl_in_different_block.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_in_different_block.carbon:[[@LINE-6]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_in_different_block.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z;
+  // CHECK:STDERR:        ·   ──────┬──────
+  // CHECK:STDERR:        ·         ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·            ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -384,12 +438,16 @@ match_first {
   impl () as Z {}
 }
 match_first {
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_firset.carbon:[[@LINE-6]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_defined_in_different_block_firset.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z {}
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·            ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z;
 }
@@ -403,12 +461,16 @@ match_first {
   impl () as Z;
 }
 match_first {
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_second.carbon:[[@LINE+7]]:3: error: impl declared in `match_first` more than once [ImplInTwoMatchFirst]
-  // CHECK:STDERR:   impl () as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_redecl_defined_in_different_block_second.carbon:[[@LINE-6]]:3: note: previous declaration here [ImplInTwoMatchFirstNote]
-  // CHECK:STDERR:   impl () as Z;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_redecl_defined_in_different_block_second.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   impl () as Z;
+  // CHECK:STDERR:        ·   ──────┬──────
+  // CHECK:STDERR:        ·         ╰──┤ previous declaration here [ImplInTwoMatchFirstNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl () as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: impl declared in `match_first` more than once
+  // CHECK:STDERR:        ·             ┃        [ImplInTwoMatchFirst]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl () as Z {}
 }
@@ -450,9 +512,10 @@ final match_first {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- decl.carbon
+// CHECK:STDOUT: --- decl.carbon = $decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -477,9 +540,10 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- definition.carbon
+// CHECK:STDOUT: --- definition.carbon = $definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -506,9 +570,10 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_defined.carbon
+// CHECK:STDOUT: --- redecl_defined.carbon = $redecl_defined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -533,9 +598,10 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_redecl.carbon
+// CHECK:STDOUT: --- final_block_redecl.carbon = $final_block_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -560,9 +626,10 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_decl.carbon
+// CHECK:STDOUT: --- final_block_decl.carbon = $final_block_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -587,9 +654,10 @@ final match_first {
 // CHECK:STDOUT:   witness = %Z.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- final_block_defined.carbon
+// CHECK:STDOUT: --- final_block_defined.carbon = $final_block_defined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]

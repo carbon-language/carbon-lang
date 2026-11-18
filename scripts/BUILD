@@ -5,6 +5,8 @@
 load("@rules_python//python:defs.bzl", "py_test")
 load("//bazel/cc_rules:defs.bzl", "cc_library")
 
+exports_files(["bench_runner.py"])
+
 py_test(
     name = "no_op_test",
     size = "small",
@@ -16,12 +18,11 @@ cc_library(
     name = "deps_for_clangd_tidy",
     srcs = ["deps_for_clangd_tidy.cpp"],
     deps = [
-        # `@boost.unordered` uses `strip_prefix`, which results in
+        # These targets use `strip_include_prefix`, which results in
         # `_virtual_includes` being part of the `compile_commands.json`. To
-        # support tools like `clangd-tidy`, this is intended to generate that directory.
-        #
-        # `@boost.unordered` uses `strip_prefix`, which results in
-        # bazel-out/<mode>/bin/external/+_repo_rules+boost.unordered/_virtual_includes/boost.unordered
+        # support tools like `clangd-tidy`, this is intended to generate those
+        # directories.
         "@boost.unordered",
+        "@tree-sitter-bazel//lib/include/tree_sitter:api",
     ],
 )

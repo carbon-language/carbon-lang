@@ -10,12 +10,16 @@
 
 ;
 
-// CHECK:STDERR: fail_semi_before.carbon:[[@LINE+7]]:1: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-// CHECK:STDERR: library "semi_before";
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_semi_before.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
-// CHECK:STDERR: ;
-// CHECK:STDERR: ^
+// CHECK:STDERR:        ╭─┤ fail_semi_before.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ ;
+// CHECK:STDERR:        · ┬
+// CHECK:STDERR:        · ╰──┤ first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ library "semi_before";
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: the `library` declaration must be the first non-comment line
+// CHECK:STDERR:        ·       ┃        [PackageTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 library "[[@TEST_NAME]]";
 

@@ -347,7 +347,7 @@ these differences:
     pointer type to reflect the safety risks posed by them.
 
 [null-mistake]:
-    https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/
+https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare/
 
 While these are described in terms of C's pointers, C++ inherits these without
 meaningful improvement from C. The core point here is that while Carbon is
@@ -488,7 +488,7 @@ in a [document][pointer-syntax-doc] but the key syntax alternatives are
 extracted with modern syntax below.
 
 [pointer-syntax-doc]:
-    https://docs.google.com/document/d/1gsP74fLykZBCWZKQua9VP0GnQcADCkn5-TIC1JbUvdA/edit?resourcekey=0-8MsUybUvHDCuejrzadrbMg
+https://docs.google.com/document/d/1gsP74fLykZBCWZKQua9VP0GnQcADCkn5-TIC1JbUvdA/edit?resourcekey=0-8MsUybUvHDCuejrzadrbMg
 
 #### Pointer type alternative syntaxes
 
@@ -734,7 +734,7 @@ interact with `const` references.
 2.  A _thread-safe interface_ of a [thread-compatible type][]
 
 [thread-compatible type]:
-    https://abseil.io/blog/20180531-regular-types#:~:text=restrictions%20or%20both,No%20concurrent%20call
+https://abseil.io/blog/20180531-regular-types#:~:text=restrictions%20or%20both,No%20concurrent%20call
 
 Some examples of the immutable view use case are provided below. These include
 `const` reference parameters and locals, as well as `const` declared local and

@@ -18,6 +18,12 @@ fn foo(bar: i64, baz: i64) {
   foo(baz, bar + baz);
 }
 
+// --- with_positional_params.carbon
+
+fn foo {
+  foo($0, $42.0 + $86);
+}
+
 // --- with_return_type.carbon
 
 fn foo() -> f64 {
@@ -29,11 +35,13 @@ fn foo() -> f64 {
 fn F() {
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
+  // CHECK:STDERR:        ╭─┤ fail_identifier_in_statements.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   bar
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   bar
-// CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+4]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
 }
 
 // --- nested.carbon
@@ -55,25 +63,34 @@ impl T as I {
 
 // --- fail_builtin_identifier.carbon
 
-// CHECK:STDERR: fail_builtin_identifier.carbon:[[@LINE+4]]:18: error: expected builtin function name after `=` [ExpectedBuiltinName]
-// CHECK:STDERR: fn NotString() = banana;
-// CHECK:STDERR:                  ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_builtin_identifier.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn NotString() = banana;
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: expected builtin function name after `=`
+// CHECK:STDERR:        ·                    ┃        [ExpectedBuiltinName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotString() = banana;
 
 // --- fail_builtin_two_strings.carbon
 
-// CHECK:STDERR: fail_builtin_two_strings.carbon:[[@LINE+4]]:32: error: `fn` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: fn JunkAfterString() = "hello" "world";
-// CHECK:STDERR:                                ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_builtin_two_strings.carbon:[[@LINE+7]]:31
+// CHECK:STDERR: ->     │ fn JunkAfterString() = "hello" "world";
+// CHECK:STDERR:        ·                               ┳
+// CHECK:STDERR:        ·                               ┗━━┫ error: `fn` declarations must end with a `;`
+// CHECK:STDERR:        ·                                  ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn JunkAfterString() = "hello" "world";
 
 // --- fail_builtin_spurious_equals.carbon
 
-// CHECK:STDERR: fail_builtin_spurious_equals.carbon:[[@LINE+4]]:23: error: expected builtin function name after `=` [ExpectedBuiltinName]
-// CHECK:STDERR: fn SpuriousEquals() = { }
-// CHECK:STDERR:                       ^
+// CHECK:STDERR:        ╭─┤ fail_builtin_spurious_equals.carbon:[[@LINE+7]]:22
+// CHECK:STDERR: ->     │ fn SpuriousEquals() = { }
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: expected builtin function name after `=`
+// CHECK:STDERR:        ·                         ┃        [ExpectedBuiltinName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn SpuriousEquals() = { }
 fn TestRecoveryFromSpuriousEquals();
@@ -110,6 +127,25 @@ fn TestRecoveryFromSpuriousEquals();
 // CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'bar'
 // CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'baz'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: with_positional_params.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'foo'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'foo'
+// CHECK:STDOUT:   │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   ├─PositionalParamExpr '$0'
+// CHECK:STDOUT:   │ │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │   ╭─PositionalParamExpr '$42'
+// CHECK:STDOUT:   │ │   │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   │ ├─PositionalParamExpr '$86'
 // CHECK:STDOUT:   │ │   ├─InfixOperatorPlus '+'
 // CHECK:STDOUT:   │ │ ╭─CallExpr ')'
 // CHECK:STDOUT:   │ ├─ExprStatement ';'

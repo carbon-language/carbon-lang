@@ -5,37 +5,52 @@
  */
 
 // This grammar is more permissive than toolchain because it is geared towards
-// editor use.
+// editor use. It is based on the toolchain's parser; see in particular
+// toolchain/parse/state.def and toolchain/parse/precedence.cpp.
 
 function repeat_sep1(thing, sep) {
   return seq(thing, repeat(seq(sep, thing)));
 }
 
-function comma_sep(thing) {
-  // Trailing comma is only allowed if there is at least one element.
-  return optional(seq(repeat_sep1(thing, ','), optional(',')));
+function comma_sep1(thing) {
+  return seq(repeat_sep1(thing, ','), optional(','));
 }
 
-// This is based on toolchain/parser/precedence.cpp
+function comma_sep(thing) {
+  // Trailing comma is only allowed if there is at least one element.
+  return optional(comma_sep1(thing));
+}
+
+// This is based on toolchain/parse/precedence.cpp. The toolchain uses a partial
+// order of precedence levels, whereas tree-sitter uses a total order, so this
+// is a linearization of the toolchain's order. Higher numbers bind tighter.
 const PREC = {
-  TermPrefix: 12,
-  TermPostfix: 12,
-  NumericPrefix: 11,
-  NumericPostfix: 11,
-  Multiplicative: 10,
-  Additive: 9,
-  BitwisePrefix: 8,
-  BitwiseAnd: 7,
-  BitwiseOr: 7,
-  BitwiseXor: 7,
-  BitShift: 7,
-  TypePostfix: 6,
-  LogicalPrefix: 5,
-  Relational: 4,
-  LogicalAnd: 3,
-  LogicalOr: 3,
-  IfExpression: 2,
-  WhereClause: 1,
+  Postfix: 30,
+  TermPrefix: 29,
+  IncrementDecrement: 28,
+  NumericPrefix: 27,
+  BitwisePrefix: 27,
+  TypePrefix: 27,
+  TypePostfix: 26,
+  // `like` only needs to bind less tightly than postfix `*`; it is not
+  // comparable to the other operators.
+  Like: 25,
+  Multiplicative: 24,
+  Additive: 23,
+  Bitwise: 22,
+  // `where` and `as` are not comparable in the toolchain. We make `where` bind
+  // more tightly so that `impl T as I where ...` is not parsed as
+  // `impl (T as I) where ...`.
+  Requirement: 21,
+  Where: 21,
+  As: 20,
+  Relational: 19,
+  LogicalPrefix: 18,
+  Logical: 17,
+  Ref: 16,
+  If: 15,
+  Lambda: 14,
+  Assignment: 13,
 };
 
 module.exports = grammar({
@@ -44,9 +59,12 @@ module.exports = grammar({
   word: ($) => $.ident,
 
   conflicts: ($) => [
-    [$.paren_pattern, $.paren_expression],
-    [$.struct_literal, $.struct_type_literal],
-    [$._pattern_without_expression, $._simple_expression],
+    [$.tuple_pattern, $.paren_expression],
+    [$.struct_pattern, $.struct_literal],
+    [$.binding_pattern, $._primary_expression],
+    [$._pattern, $.paren_expression],
+    [$._pattern, $.struct_literal],
+    [$.modifier, $.impl_declaration],
   ],
 
   extras: ($) => [/\s/, $.comment],
@@ -55,22 +73,7 @@ module.exports = grammar({
   externals: ($) => [$.binary_star, $.postfix_star, $.string],
 
   rules: {
-    source_file: ($) =>
-      seq(
-        optional($.package_directive),
-        repeat($.import_directive),
-        repeat($.declaration)
-      ),
-
-    api_or_impl: ($) => choice('api', 'impl'),
-
-    library_path: ($) => seq('library', $.string),
-
-    package_directive: ($) =>
-      seq('package', $.ident, optional($.library_path), $.api_or_impl, ';'),
-
-    import_directive: ($) =>
-      seq('import', $.ident, optional($.library_path), ';'),
+    source_file: ($) => repeat($._declaration),
 
     comment: ($) => token(seq('//', /.*/)),
 
@@ -78,112 +81,140 @@ module.exports = grammar({
     // https://github.com/carbon-language/carbon-lang/blob/trunk/proposals/p002015-numeric-type-literal-syntax.md#syntax
     numeric_type_literal: ($) => /[iuf][1-9][0-9]*/,
 
-    ident: ($) => /[A-Za-z_][A-Za-z0-9_]*/,
+    ident: ($) => /(r#)?[A-Za-z_][A-Za-z0-9_]*/,
 
     bool_literal: ($) => choice('true', 'false'),
 
-    numeric_literal: ($) => {
-      // This is using variables because rules are not allowed in
-      // token.immediate and token.
-      // https://github.com/tree-sitter/tree-sitter/issues/449
-      const decimal_integer_literal = choice('0', /[1-9](_?[0-9])*/);
-      const hex_digits = /[0-9A-F](_?[0-9A-F])*/;
-      const binary_integer_literal = /0b[01](_?[01])*/;
-      const hex_integer_literal = seq('0x', token.immediate(hex_digits));
-
-      const decimal_real_number_literal = seq(
-        decimal_integer_literal,
-        token.immediate(/\.[0-9](_?[0-9])*/),
-        optional(
-          seq(
-            token.immediate(/e[+-]?/),
-            token.immediate(decimal_integer_literal)
+    // This is intentionally permissive about the digits used. A real literal
+    // requires a digit after the `.`, so that `3.Foo` is not a single token.
+    numeric_literal: ($) =>
+      token(
+        seq(
+          /[0-9][0-9A-Za-z_]*/,
+          optional(
+            seq(/\.[0-9A-F]/, repeat(choice(/[0-9A-Za-z_]/, /[eEpP][+-]/)))
           )
         )
-      );
-
-      const hex_real_number_literal = seq(
-        hex_integer_literal,
-        token.immediate('.'),
-        token.immediate(hex_digits),
-        optional(
-          seq(
-            token.immediate(/p[+-]?/),
-            token.immediate(decimal_integer_literal)
-          )
-        )
-      );
-
-      return token(
-        choice(
-          decimal_integer_literal,
-          binary_integer_literal,
-          hex_integer_literal,
-          decimal_real_number_literal,
-          hex_real_number_literal
-        )
-      );
-    },
-
-    array_literal: ($) =>
-      seq(
-        '[',
-        field('type', $._expression),
-        ';',
-        optional(field('size', $._expression)),
-        ']'
       ),
 
-    struct_literal: ($) =>
-      seq('{', comma_sep(seq($.designator, '=', $._expression)), '}'),
+    char_literal: ($) =>
+      token(
+        seq("'", choice(/[^'\\\n]/, /\\[^\n]/, /\\u\{[0-9A-Fa-f]*\}/), "'")
+      ),
 
-    struct_type_literal: ($) =>
-      seq('{', comma_sep(seq($.designator, ':', $._expression)), '}'),
+    // `$0`, `$1`, ... in lambda bodies.
+    positional_param: ($) => /\$[0-9]+/,
 
-    builtin_type: ($) => choice('Self', 'String', 'bool', 'type'),
+    // A tuple index in a member access, such as the `0` in `x.0`.
+    tuple_index: ($) => /[0-9]+/,
+
+    builtin_type: ($) => choice('Self', 'bool', 'char', 'str', 'type', 'auto'),
 
     literal: ($) =>
       choice(
         $.bool_literal,
         $.numeric_literal,
+        $.char_literal,
         $.numeric_type_literal,
-        $.string,
-        $.struct_literal,
-        $.struct_type_literal
+        $.string
       ),
 
-    binding_lhs: ($) => choice($.ident, '_'),
+    // ------------------------------------------------------------------------
+    // Expressions
+    // ------------------------------------------------------------------------
 
-    paren_pattern: ($) =>
+    designator: ($) => prec(1, seq('.', choice('base', $.ident))),
+
+    struct_literal: ($) =>
+      choice(
+        seq('{', '}'),
+        seq('{', comma_sep1(seq($.designator, '=', $._expression)), '}')
+      ),
+
+    struct_type_literal: ($) =>
+      seq('{', comma_sep1(seq($.designator, ':', $._expression)), '}'),
+
+    paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
+
+    array_expression: ($) =>
+      seq('array', '(', $._expression, ',', $._expression, ')'),
+
+    form_literal: ($) =>
       seq(
+        'form',
         '(',
-        comma_sep(choice($._pattern_without_expression, $._expression)),
+        optional(choice('val', 'var', 'ref')),
+        $._expression,
         ')'
       ),
 
-    _pattern_without_expression: ($) =>
+    // `.Member` or `.Self`, used in `where` clauses.
+    designator_expression: ($) => seq('.', choice($.ident, 'Self')),
+
+    // `each` is part of the name syntax, so it binds more tightly than any
+    // operator. See docs/design/variadics.md.
+    each_name: ($) => seq('each', $.ident),
+
+    typeof_expression: ($) => seq('typeof', '(', $._expression, ')'),
+
+    _primary_expression: ($) =>
       choice(
-        'auto',
-        seq(optional('ref'), 'self', optional(seq(':', $._expression))),
-        seq($.binding_lhs, ':', $._expression),
-        seq($.binding_lhs, ':!', $._expression),
-        seq('template', $.binding_lhs, ':!', $._expression),
-        seq('var', $._pattern),
-        $.paren_pattern,
-        // alternative patterns
-        // example: Optional(i32).Some(x: i32)
-        seq($._simple_expression, $.paren_pattern)
+        $.ident,
+        $.literal,
+        $.builtin_type,
+        $.positional_param,
+        $.each_name,
+        'self',
+        'Core',
+        'Cpp',
+        'package',
+        $.designator_expression,
+        $.paren_expression,
+        $.struct_literal,
+        $.struct_type_literal,
+        $.array_expression,
+        $.form_literal,
+        $.typeof_expression
       ),
 
-    _pattern: ($) =>
-      choice($._pattern_without_expression, $._simple_expression),
+    call_expression: ($) =>
+      prec(
+        PREC.Postfix,
+        seq(
+          field('function', $._expression),
+          field('arguments', $.paren_expression)
+        )
+      ),
 
-    unary_prefix_expression: ($) => {
+    member_access_expression: ($) =>
+      prec(
+        PREC.Postfix,
+        seq(
+          field('object', $._expression),
+          choice('.', '->'),
+          field(
+            'member',
+            choice($.ident, 'base', $.tuple_index, seq('(', $._expression, ')'))
+          )
+        )
+      ),
+
+    index_expression: ($) =>
+      prec(PREC.Postfix, seq($._expression, '[', $._expression, ']')),
+
+    pointer_type_expression: ($) =>
+      prec.left(PREC.TypePostfix, seq($._expression, $.postfix_star)),
+
+    prefix_expression: ($) => {
       const table = [
+        [PREC.TermPrefix, '*'],
+        [PREC.TermPrefix, '&'],
+        [PREC.TermPrefix, 'expand'],
         [PREC.NumericPrefix, '-'],
-        [PREC.NumericPrefix, '--'],
-        [PREC.NumericPrefix, '++'],
         [PREC.BitwisePrefix, '^'],
+        [PREC.TypePrefix, 'const'],
+        [PREC.TypePrefix, 'partial'],
+        [PREC.Like, 'like'],
         [PREC.LogicalPrefix, 'not'],
       ];
 
@@ -197,15 +228,13 @@ module.exports = grammar({
       );
     },
 
+    ref_expression: ($) => prec(PREC.Ref, seq('ref', $._expression)),
+
     binary_expression: ($) => {
       const table = [
-        [PREC.LogicalAnd, 'and'],
-        [PREC.LogicalOr, 'or'],
-        [PREC.BitwiseAnd, '&'],
-        [PREC.BitwiseOr, '|'],
-        [PREC.BitwiseXor, '^'],
-        [PREC.BitShift, choice('<<', '>>')],
-        [PREC.Relational, choice('==', '!=', '<', '<=', '>', '>=')],
+        [PREC.Logical, choice('and', 'or')],
+        [PREC.Bitwise, choice('&', '|', '^', '<<', '>>')],
+        [PREC.Relational, choice('==', '!=', '<', '<=', '>', '>=', '<=>')],
         [PREC.Additive, choice('+', '-')],
         [PREC.Multiplicative, choice($.binary_star, '/', '%')],
       ];
@@ -225,123 +254,168 @@ module.exports = grammar({
     },
 
     // This should be non-associative but conflicts are not allowed in tree-sitter
-    as_expression: ($) => prec.left(seq($._expression, 'as', $._expression)),
+    as_expression: ($) =>
+      prec.left(
+        PREC.As,
+        seq($._expression, optional('unsafe'), 'as', $._expression)
+      ),
 
-    ref_expression: ($) =>
-      prec.right(PREC.TermPrefix, seq('&', $._simple_expression)),
+    requirement: ($) =>
+      prec.left(
+        PREC.Requirement,
+        seq($._expression, choice('impls', '==', '='), $._expression)
+      ),
 
-    deref_expression: ($) =>
-      prec.right(PREC.TermPrefix, seq('*', $._simple_expression)),
+    // This is written recursively rather than with `repeat` so that the
+    // precedence applies to the `and`, which would otherwise be parsed as a
+    // logical `and` ending the `where` expression.
+    _requirements: ($) =>
+      choice(
+        $.requirement,
+        prec.left(PREC.Where, seq($._requirements, 'and', $._requirements))
+      ),
 
-    fn_type_expression: ($) =>
-      prec.left(seq('__Fn', $.paren_expression, '->', $._simple_expression)),
+    // Right-associative so that an `and` after a requirement continues the
+    // requirement list rather than ending the `where` expression.
+    where_expression: ($) =>
+      prec.right(PREC.Where, seq($._expression, 'where', $._requirements)),
 
     if_expression: ($) =>
-      prec(
-        PREC.IfExpression,
+      prec.right(
+        PREC.If,
         seq('if', $._expression, 'then', $._expression, 'else', $._expression)
       ),
 
-    paren_expression: ($) => seq('(', comma_sep($._expression), ')'),
-
-    index_expression: ($) =>
-      prec(
-        PREC.TermPostfix,
-        seq($._simple_expression, '[', $._expression, ']')
-      ),
-
-    designator: ($) => seq('.', choice('base', $.ident)),
-
-    postfix_expression: ($) =>
-      prec(
-        PREC.TermPostfix,
+    lambda_expression: ($) =>
+      prec.right(
+        PREC.Lambda,
         seq(
-          $._simple_expression,
-          choice(
-            '++',
-            '--',
-            $.designator,
-            seq('->', $.ident),
-            seq(choice('.', '->'), '(', $._expression, ')')
-          )
+          'fn',
+          optional($.implicit_parameters),
+          optional($.parameters),
+          optional($.return_type),
+          choice(seq('=>', $._expression), $.block)
         )
-      ),
-
-    where_clause: ($) =>
-      choice(
-        seq($._simple_expression, '==', $._simple_expression),
-        seq($._simple_expression, 'impls', $._simple_expression),
-        seq($._simple_expression, '=', $._simple_expression),
-        prec.left(
-          PREC.WhereClause + 1,
-          seq($.where_clause, 'and', $.where_clause)
-        )
-      ),
-
-    where_expression: ($) =>
-      prec.left(PREC.WhereClause, seq($._expression, 'where', $.where_clause)),
-
-    call_expression: ($) =>
-      prec(PREC.TermPostfix, seq($._simple_expression, $.paren_expression)),
-
-    pointer_expression: ($) =>
-      prec(PREC.TypePostfix, seq($._simple_expression, $.postfix_star)),
-
-    _simple_expression: ($) =>
-      choice(
-        $.array_literal,
-        $.builtin_type,
-        $.call_expression,
-        $.deref_expression,
-        $.fn_type_expression,
-        $.ident,
-        $.index_expression,
-        $.literal,
-        $.paren_expression,
-        $.pointer_expression,
-        $.postfix_expression,
-        $.ref_expression,
-        'self',
-        '.Self',
-        $.designator
       ),
 
     _expression: ($) =>
       choice(
-        $.as_expression,
+        $._primary_expression,
+        $.call_expression,
+        $.member_access_expression,
+        $.index_expression,
+        $.pointer_type_expression,
+        $.prefix_expression,
+        $.ref_expression,
         $.binary_expression,
-        $.if_expression,
-        $.unary_prefix_expression,
+        $.as_expression,
         $.where_expression,
-        $._simple_expression
+        $.if_expression,
+        $.lambda_expression
       ),
 
-    var_declaration: ($) =>
+    // Expressions that are only valid as complete statements.
+    assignment_expression: ($) =>
+      prec.right(
+        PREC.Assignment,
+        seq(
+          $._expression,
+          choice(
+            '=',
+            '+=',
+            '-=',
+            '*=',
+            '/=',
+            '%=',
+            '&=',
+            '|=',
+            '^=',
+            '<<=',
+            '>>='
+          ),
+          $._expression
+        )
+      ),
+
+    increment_expression: ($) =>
+      prec(PREC.IncrementDecrement, seq(choice('++', '--'), $._expression)),
+
+    // ------------------------------------------------------------------------
+    // Patterns
+    // ------------------------------------------------------------------------
+
+    // In a pattern, `ref` is treated as a binding modifier rather than as the
+    // start of a `ref` expression.
+    binding_modifier: ($) =>
+      prec(PREC.Ref + 1, choice('template', 'generic', 'runtime', 'ref')),
+
+    binding_pattern: ($) =>
       seq(
-        seq(optional('static'), 'var'),
-        $._pattern_without_expression,
-        optional(seq('=', $._expression)),
+        repeat($.binding_modifier),
+        choice(
+          seq(
+            field('name', choice($.ident, $.each_name, 'self', '_')),
+            choice(':', ':?'),
+            field('type', $._expression)
+          ),
+          // `self` may omit its type.
+          field('name', 'self')
+        )
+      ),
+
+    var_pattern: ($) => seq('var', $._pattern),
+
+    unused_pattern: ($) => seq('unused', $._pattern),
+
+    // An element of a pattern list, with an optional default value.
+    _pattern_list_element: ($) => choice($._pattern, $.default_value_pattern),
+
+    default_value_pattern: ($) =>
+      seq(
+        $._pattern,
+        '=',
+        choice(alias('_', $.default_value_unspecified), $._expression)
+      ),
+
+    tuple_pattern: ($) => seq('(', comma_sep($._pattern_list_element), ')'),
+
+    struct_pattern: ($) =>
+      seq(
+        '{',
+        comma_sep(
+          choice(
+            seq($.designator, '=', $._pattern),
+            $._pattern_list_element,
+            '_'
+          )
+        ),
+        '}'
+      ),
+
+    _pattern: ($) =>
+      choice(
+        $.binding_pattern,
+        $.tuple_pattern,
+        $.struct_pattern,
+        $.var_pattern,
+        $.unused_pattern,
+        $._expression
+      ),
+
+    parameters: ($) => seq('(', comma_sep($._pattern_list_element), ')'),
+
+    implicit_parameters: ($) =>
+      seq('[', comma_sep($._pattern_list_element), ']'),
+
+    // ------------------------------------------------------------------------
+    // Statements
+    // ------------------------------------------------------------------------
+
+    expression_statement: ($) =>
+      seq(
+        choice($._expression, $.assignment_expression, $.increment_expression),
         ';'
       ),
-
-    let_declaration: ($) =>
-      seq('let', $._pattern_without_expression, '=', $._expression, ';'),
-
-    assign_statement: ($) =>
-      seq($._expression, $._assign_operator, $._expression, ';'),
-
-    _assign_operator: ($) =>
-      choice('=', '+=', '/=', '*=', '%=', '-=', '&=', '|=', '^=', '<<=', '>>='),
-
-    match_clause: ($) =>
-      seq(choice(seq('case', $._pattern), 'default'), '=>', $.block),
-
-    match_statement: ($) =>
-      seq('match', '(', $._expression, ')', '{', repeat($.match_clause), '}'),
-
-    returned_var_statement: ($) => seq('returned', $.var_declaration),
-
-    while_statement: ($) => seq('while', '(', $._expression, ')', $.block),
 
     break_statement: ($) => seq('break', ';'),
 
@@ -350,182 +424,284 @@ module.exports = grammar({
     return_statement: ($) =>
       seq('return', optional(choice('var', $._expression)), ';'),
 
-    if_statement: ($) =>
-      seq('if', '(', $._expression, ')', $.block, optional($.else)),
+    returned_var_statement: ($) => seq('returned', $.var_declaration),
 
-    else: ($) => choice(seq('else', $.if_statement), seq('else', $.block)),
+    if_statement: ($) =>
+      seq(
+        'if',
+        '(',
+        field('condition', $._expression),
+        ')',
+        field('then', $.block),
+        optional(seq('else', field('else', choice($.if_statement, $.block))))
+      ),
+
+    while_statement: ($) =>
+      seq('while', '(', field('condition', $._expression), ')', $.block),
 
     for_statement: ($) =>
       seq('for', '(', $._pattern, 'in', $._expression, ')', $.block),
 
-    statement: ($) =>
+    match_case: ($) =>
+      seq(
+        'case',
+        $._pattern,
+        optional(seq('if', field('guard', $._expression))),
+        '=>',
+        $.block
+      ),
+
+    match_default: ($) => seq('default', '=>', $.block),
+
+    match_statement: ($) =>
+      seq(
+        'match',
+        '(',
+        $._expression,
+        ')',
+        '{',
+        repeat(choice($.match_case, $.match_default)),
+        '}'
+      ),
+
+    _statement: ($) =>
       choice(
-        seq($._expression, ';'),
-        $.assign_statement,
-        $.var_declaration,
-        $.let_declaration,
-        $.match_statement,
-        $.returned_var_statement,
-        $.if_statement,
-        $.while_statement,
+        $._declaration,
+        $.expression_statement,
         $.break_statement,
         $.continue_statement,
         $.return_statement,
-        $.for_statement
+        $.returned_var_statement,
+        $.if_statement,
+        $.while_statement,
+        $.for_statement,
+        $.match_statement
       ),
 
-    block: ($) => seq('{', repeat($.statement), '}'),
+    block: ($) => seq('{', repeat($._statement), '}'),
 
-    declared_name: ($) => repeat_sep1($.ident, '.'),
+    // ------------------------------------------------------------------------
+    // Declarations
+    // ------------------------------------------------------------------------
 
-    generic_binding: ($) =>
-      seq(optional('template'), $.ident, ':!', $._expression),
+    library_specifier: ($) => seq('library', choice($.string, 'default')),
 
-    deduced_param: ($) => $.generic_binding,
+    // `impl` could be either a modifier or the start of an `impl` declaration;
+    // this is handled as a conflict so that we can look further ahead, for
+    // example to distinguish `impl package Foo;` from `impl package.Foo as I`.
+    modifier: ($) =>
+      choice(
+        'abstract',
+        'base',
+        'default',
+        'eval',
+        'export',
+        'extend',
+        'final',
+        'impl',
+        'musteval',
+        'override',
+        'private',
+        'protected',
+        'static',
+        'virtual',
+        prec.right(seq('extern', optional($.library_specifier)))
+      ),
 
-    deduced_params: ($) => seq('[', comma_sep($.deduced_param), ']'),
+    _modifiers: ($) => repeat1($.modifier),
 
-    return_type: ($) => seq('->', choice('auto', $._expression)),
+    package_name: ($) => choice($.ident, 'Core', 'Cpp'),
+
+    package_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'package',
+        $.package_name,
+        optional($.library_specifier),
+        ';'
+      ),
+
+    library_declaration: ($) =>
+      seq(optional($._modifiers), 'library', choice($.string, 'default'), ';'),
+
+    import_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'import',
+        choice(
+          seq(
+            $.package_name,
+            optional(choice($.library_specifier, seq('inline', $.string)))
+          ),
+          $.library_specifier
+        ),
+        ';'
+      ),
+
+    name_component: ($) =>
+      seq($.ident, optional($.implicit_parameters), optional($.parameters)),
+
+    declared_name: ($) => repeat_sep1($.name_component, '.'),
+
+    return_type: ($) => seq(choice('->', '->?'), $._expression),
 
     function_declaration: ($) =>
       seq(
-        optional(choice('abstract', 'virtual', 'impl')),
+        optional($._modifiers),
         'fn',
         $.declared_name,
-        optional($.deduced_params),
-        $.paren_pattern,
         optional($.return_type),
-        choice($.block, ';')
+        choice(
+          ';',
+          field('body', $.block),
+          seq('=>', field('body', $._expression), ';'),
+          seq('=', field('builtin', $.string), ';')
+        )
       ),
 
-    namespace_declaration: ($) => seq('namespace', $.declared_name, ';'),
+    namespace_declaration: ($) =>
+      seq(optional($._modifiers), 'namespace', $.declared_name, ';'),
 
     alias_declaration: ($) =>
-      seq('alias', $.declared_name, '=', $._expression, ';'),
-
-    type_params: ($) => $.paren_pattern,
-
-    interface_body_item: ($) =>
-      choice(
-        $.function_declaration,
-        seq('let', $.generic_binding, ';'),
-        seq('extend', $._expression, ';'),
-        seq('require', $._expression, 'impls', $._expression, ';')
+      seq(
+        optional($._modifiers),
+        'alias',
+        $.declared_name,
+        '=',
+        $._expression,
+        ';'
       ),
 
-    interface_body: ($) => seq('{', repeat($.interface_body_item), '}'),
+    export_declaration: ($) =>
+      seq(optional($._modifiers), 'export', $.declared_name, ';'),
+
+    inline_declaration: ($) =>
+      seq(optional($._modifiers), 'inline', 'Cpp', $.string, ';'),
+
+    let_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'let',
+        $._pattern,
+        optional(seq('=', $._expression)),
+        ';'
+      ),
+
+    var_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'var',
+        $._pattern,
+        optional(seq('=', $._expression)),
+        ';'
+      ),
+
+    declaration_body: ($) => seq('{', repeat($._declaration), '}'),
+
+    class_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'class',
+        $.declared_name,
+        choice(';', $.declaration_body)
+      ),
 
     interface_declaration: ($) =>
       seq(
+        optional($._modifiers),
         'interface',
         $.declared_name,
-        optional($.deduced_params),
-        optional($.type_params),
-        choice(';', $.interface_body)
+        choice(';', $.declaration_body)
       ),
 
     constraint_declaration: ($) =>
       seq(
+        optional($._modifiers),
         'constraint',
         $.declared_name,
-        optional($.deduced_params),
-        optional($.type_params),
-        choice(';', $.interface_body)
+        choice(';', $.declaration_body)
       ),
 
-    impl_body_item: ($) => choice($.function_declaration, $.alias_declaration),
-
-    impl_body: ($) => seq('{', repeat($.impl_body_item), '}'),
-
-    impl_declaration: ($) =>
-      seq(
-        'impl',
-        optional(seq('forall', $.deduced_params)),
-        optional($._expression),
-        'as',
-        $._expression,
-        $.impl_body
-      ),
-
-    extend_impl_declaration: ($) =>
-      seq('extend', 'impl', 'as', $._expression, $.impl_body),
-
-    extend_base_declaration: ($) =>
-      seq('extend', 'base', ':', $._expression, ';'),
-
-    destructor_declaration: ($) =>
-      seq(
-        optional(choice('virtual', 'impl')),
-        'destructor',
-        optional($.deduced_params),
-        choice($.block, ';')
-      ),
-
-    class_body_item: ($) =>
-      choice(
-        $.declaration,
-        $.extend_base_declaration,
-        $.extend_impl_declaration,
-        $.mix_declaration,
-        $.destructor_declaration
-      ),
-
-    class_body: ($) => seq('{', repeat($.class_body_item), '}'),
-
-    class_declaration: ($) =>
-      seq(
-        optional(choice('base', 'abstract')),
-        'class',
-        $.declared_name,
-        optional($.deduced_params),
-        optional($.type_params),
-        choice(';', $.class_body)
-      ),
+    choice_alternative: ($) => seq($.ident, optional($.parameters)),
 
     choice_declaration: ($) =>
       seq(
+        optional($._modifiers),
         'choice',
         $.declared_name,
-        optional($.type_params),
         '{',
-        comma_sep(seq($.ident, optional($.paren_expression))),
+        comma_sep($.choice_alternative),
         '}'
       ),
 
+    impl_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'impl',
+        optional(seq('forall', $.implicit_parameters)),
+        optional(field('type', $._expression)),
+        'as',
+        field('interface', $._expression),
+        choice(';', $.declaration_body)
+      ),
+
+    adapt_declaration: ($) =>
+      seq(optional($._modifiers), 'adapt', $._expression, ';'),
+
+    base_declaration: ($) =>
+      seq(optional($._modifiers), 'base', ':', $._expression, ';'),
+
+    require_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'require',
+        optional($._expression),
+        'impls',
+        $._expression,
+        ';'
+      ),
+
+    observe_declaration: ($) =>
+      seq(
+        optional($._modifiers),
+        'observe',
+        $._expression,
+        repeat(seq('impls', $._expression)),
+        ';'
+      ),
+
+    friend_declaration: ($) =>
+      seq(optional($._modifiers), 'friend', $._expression, ';'),
+
+    match_first_declaration: ($) =>
+      seq(optional($._modifiers), 'match_first', $.declaration_body),
+
     empty_declaration: ($) => ';',
 
-    declaration: ($) =>
+    _declaration: ($) =>
       choice(
         $.empty_declaration,
+        $.package_declaration,
+        $.library_declaration,
+        $.import_declaration,
         $.namespace_declaration,
         $.var_declaration,
         $.let_declaration,
         $.function_declaration,
         $.alias_declaration,
+        $.export_declaration,
+        $.inline_declaration,
         $.interface_declaration,
         $.constraint_declaration,
         $.impl_declaration,
         $.class_declaration,
         $.choice_declaration,
-        $.mixin_declaration,
+        $.adapt_declaration,
+        $.base_declaration,
+        $.require_declaration,
+        $.observe_declaration,
+        $.friend_declaration,
         $.match_first_declaration
       ),
-
-    // Explorer only experimental featurues
-    mix_declaration: ($) => seq('__mix', $._expression, ';'),
-
-    mixin_declaration: ($) =>
-      seq(
-        '__mixin',
-        $.declared_name,
-        optional($.type_params),
-        optional(seq('for', $._expression)),
-        '{',
-        repeat(choice($.function_declaration, $.mix_declaration)),
-        '}'
-      ),
-
-    match_first_declaration: ($) =>
-      seq('__match_first', '{', repeat($.impl_declaration), '}'),
   },
 });

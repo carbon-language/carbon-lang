@@ -13,7 +13,7 @@ runs:
     # everything provides a little flexibility to get space while trying
     # to shrink the build.
     - name: Free up disk space
-      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
       with:
         android: true
         dotnet: true
@@ -22,18 +22,26 @@ runs:
         # to save time.
         large-packages: false
 
+    # The image's Android environment variables still point into the SDK and
+    # NDK deleted above, which confuses tools that look for them, such as
+    # rules_android. `$GITHUB_ENV` can't unset variables, so set them to empty,
+    # which rules_android treats as unset.
+    - name: Clear Android environment variables
+      shell: bash
+      run: |
+        for var in ANDROID_HOME ANDROID_SDK_ROOT ANDROID_NDK ANDROID_NDK_HOME \
+            ANDROID_NDK_LATEST_HOME ANDROID_NDK_ROOT; do
+          echo "$var=" >> "$GITHUB_ENV"
+        done
+
     # Select the LLVM release - by the cache key and the download.
-    #
-    # x86-64 uses the LLVM 19 monolithic package. That release only
-    # published a smaller community build for Linux AArch64, so AArch64 uses
-    # the official monolithic package, first available in LLVM 20.
     - name: Select LLVM release
       shell: bash
       run: |
         if [[ "${{ runner.arch }}" == "ARM64" ]]; then
-          echo "LLVM_RELEASE=20.1.8" >> "$GITHUB_ENV"
+          echo "LLVM_RELEASE=21.1.8" >> "$GITHUB_ENV"
         else
-          echo "LLVM_RELEASE=19.1.7" >> "$GITHUB_ENV"
+          echo "LLVM_RELEASE=21.1.8" >> "$GITHUB_ENV"
         fi
 
     # Cache and install a recent version of LLVM. This uses the GitHub action
@@ -41,7 +49,7 @@ runs:
     # reliability.
     - name: Cache LLVM and Clang installation
       id: cache-llvm-ubuntu
-      uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v5.0.3
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/llvm
         key: LLVM-${{ env.LLVM_RELEASE }}-Cache-ubuntu-${{ runner.arch }}

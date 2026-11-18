@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -100,12 +100,12 @@ cc_library(
         "cpp_initializer_list.cpp",
         "cpp_overload_set.cpp",
         "declared_facet_type.cpp",
+        "dominance.cpp",
         "entity_name.cpp",
         "field.cpp",
         "file.cpp",
         "function.cpp",
         "generic.cpp",
-        "identified_facet_type.cpp",
         "impl.cpp",
         "import_ir.cpp",
         "inst.cpp",
@@ -135,13 +135,13 @@ cc_library(
         "cpp_initializer_list.h",
         "cpp_overload_set.h",
         "declared_facet_type.h",
+        "dominance.h",
         "entity_name.h",
         "entity_with_params_base.h",
         "field.h",
         "file.h",
         "function.h",
         "generic.h",
-        "identified_facet_type.h",
         "impl.h",
         "import_cpp.h",
         "import_ir.h",
@@ -180,6 +180,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:grouped_value_store",
         "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
@@ -202,16 +203,31 @@ cc_library(
 )
 
 cc_library(
+    name = "sugared_type",
+    srcs = ["sugared_type.cpp"],
+    hdrs = ["sugared_type.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "stringify",
     srcs = ["stringify.cpp"],
     hdrs = ["stringify.h"],
     deps = [
         ":file",
+        ":sugared_type",
         ":typed_insts",
         "//common:check",
         "//common:concepts",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -227,6 +243,7 @@ cc_library(
         "inst_namer.h",
     ],
     deps = [
+        ":dump",
         ":file",
         ":typed_insts",
         "//common:concepts",
@@ -317,6 +334,7 @@ cc_library(
         ":absolute_node_ref",
         ":file",
         ":typed_insts",
+        "//common:check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:basic",
@@ -330,11 +348,13 @@ cc_library(
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
+        ":expr_info",
         ":file",
         ":stringify",
         ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "@llvm-project//clang:ast",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.
@@ -361,6 +381,50 @@ cc_test(
         ":typed_insts",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+    ],
+)
+
+cc_library(
+    name = "dominance_test_helpers",
+    testonly = 1,
+    hdrs = ["dominance_test_helpers.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "dominance_test",
+    size = "small",
+    srcs = ["dominance_test.cpp"],
+    deps = [
+        ":dominance_test_helpers",
+        ":file",
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "//toolchain/parse:node_kind",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "dominance_benchmark",
+    testonly = 1,
+    srcs = ["dominance_benchmark.cpp"],
+    deps = [
+        ":dominance_test_helpers",
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//common:error",
+        "//testing/base:benchmark_main",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -406,6 +470,7 @@ cc_library(
     hdrs = ["read_only_ast_source.h"],
     deps = [
         "//toolchain/sem_ir:file",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:sema",
     ],
 )

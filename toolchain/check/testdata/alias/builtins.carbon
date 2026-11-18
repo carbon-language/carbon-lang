@@ -36,9 +36,10 @@ alias a = false;
 let a_test: bool = a;
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }
@@ -48,16 +49,21 @@ let a_test: bool = a;
 // CHECK:STDOUT:   %a: type = alias_binding a, %i32 [concrete = constants.%i32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- bool.carbon
+// CHECK:STDOUT: --- bool.carbon = $bool.2
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %.loc5: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %b: type = alias_binding b, %.loc5 [concrete = bool]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- bool_value.carbon
+// CHECK:STDOUT: --- bool_value.carbon = $bool_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %a_test.patt: %pattern_type = value_binding_pattern a_test [concrete]

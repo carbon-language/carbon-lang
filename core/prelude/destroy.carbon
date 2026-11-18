@@ -1,16 +1,39 @@
 // Part of the Carbon Language project, under the Apache License v2.0 with LLVM
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
-
 package Core library "prelude/destroy";
 
-// TODO: Add `Destructor`, as in:
-// interface Destructor {
-//   private fn Op(ref self);
+import library "prelude/operators/as";
+import library "prelude/operators/bitwise";
+
+// TODO: uncomment when `require impls` adds a witness table entry.
+interface SubobjectDestroy {
+  fn Op(ref self);
+}
+
+// TODO: rename to `Destroy` when `require impls` adds a witness table entry.
+interface DestroyImpl {
+  // TODO: uncomment when `require impls` adds a witness table entry.
+  // require impls SubobjectDestroy;
+
+  // TODO: change `Self` to `partial Self`.
+  fn Op(ref self);
+}
+
+impl forall [T: SubobjectDestroy] T as DestroyImpl {
+  fn Op(ref self) = "no_op";
+}
+
+constraint Destroy {
+  extend require impls SubobjectDestroy & DestroyImpl;
+}
+
+// TODO: uncomment when `require impls` adds a witness table entry.
+// impl forall [T: SubobjectDestroy] partial T as Destroy {
+//   alias Op = T.Op;
 // }
 
-// Destroys objects. This will invoke `Destructor` impls recursively on members;
-// it does not deallocate memory.
-interface Destroy {
-  fn Op(ref self);
+fn SelfDestruct[T: Destroy](ref t: T) {
+    t.(DestroyImpl.Op)();
+    t.(SubobjectDestroy.Op)();
 }

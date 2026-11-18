@@ -25,11 +25,11 @@ namespace Carbon {
 // TODO: Address this by using a different representation in SemIR.
 struct Real : public Printable<Real> {
   auto Print(llvm::raw_ostream& output_stream) const -> void {
-    mantissa.print(output_stream, /*isSigned=*/false);
+    mantissa.print(output_stream, /*isSigned=*/true);
     output_stream << "*" << (is_decimal ? "10" : "2") << "^" << exponent;
   }
 
-  // The mantissa, represented as an unsigned integer.
+  // The mantissa, represented as a signed integer.
   llvm::APInt mantissa;
 
   // The exponent, represented as a signed integer.

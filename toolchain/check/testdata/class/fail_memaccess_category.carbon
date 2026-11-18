@@ -20,23 +20,29 @@ class B {
 
 fn F(s: {.a: A}, b: B) {
   // `s` has only a value representation, so this must be invalid.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   s.a.F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-12]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F(ref self: A);
-  // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_memaccess_category.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        │   fn F(ref self: A);
+  // CHECK:STDERR:        ·        ─────┬─────
+  // CHECK:STDERR:        ·             ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   s.a.F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   s.a.F();
 
   // `b` has an object representation for `A`, but this is still invalid for
   // consistency.
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   b.a.F();
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR: fail_memaccess_category.carbon:[[@LINE-23]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F(ref self: A);
-  // CHECK:STDERR:        ^~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_memaccess_category.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        │   fn F(ref self: A);
+  // CHECK:STDERR:        ·        ─────┬─────
+  // CHECK:STDERR:        ·             ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   b.a.F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   b.a.F();
 }

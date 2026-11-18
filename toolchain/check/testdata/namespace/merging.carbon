@@ -50,9 +50,10 @@ fn Run() {
   NS.C();
 }
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -81,9 +82,10 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B1.type: type = fn_type @B1 [concrete]
 // CHECK:STDOUT:   %B1: %B1.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B2.type: type = fn_type @B2 [concrete]
@@ -125,9 +127,10 @@ fn Run() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type: type = fn_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: %C.type = struct_value () [concrete]

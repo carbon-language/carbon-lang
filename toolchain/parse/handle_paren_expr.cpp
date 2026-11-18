@@ -31,7 +31,7 @@ auto HandleOnlyParenExprFinish(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(UnexpectedTokenInCompoundMemberAccess, Error,
                         "expected `)`");
-      context.emitter().Emit(*context.position(),
+      context.emitter().Emit(context.PointAfterPreviousToken(),
                              UnexpectedTokenInCompoundMemberAccess);
       state.has_error = true;
     }

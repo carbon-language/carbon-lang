@@ -10,34 +10,48 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: import B;
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-5]]:1: note: first declaration is here [FirstDecl]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~
+// CHECK:STDERR:        ╭─┤ fail_after_decl_repeated.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first declaration is here [FirstDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import B;
+// CHECK:STDERR:        · ┳━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `import` declarations must come after the `package` declaration (if
+// CHECK:STDERR:        ·    ┃        present) and before any other entities in the file
+// CHECK:STDERR:        ·    ┃        [ImportTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import B;
 // Note this is still invalid, but doesn't warn because it's sequential.
 import C;
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
-// CHECK:STDERR: package D;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-16]]:1: note: first non-comment line is here [FirstNonCommentLine]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~
+// CHECK:STDERR:        ╭─┤ fail_after_decl_repeated.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ package D;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: the `package` declaration must be the first non-comment line
+// CHECK:STDERR:        ·       ┃        [PackageTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package D;
 
 fn E();
 
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE+7]]:1: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: import F;
-// CHECK:STDERR: ^~~~~~
-// CHECK:STDERR: fail_after_decl_repeated.carbon:[[@LINE-27]]:1: note: first declaration is here [FirstDecl]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~
+// CHECK:STDERR:        ╭─┤ fail_after_decl_repeated.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first declaration is here [FirstDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import F;
+// CHECK:STDERR:        · ┳━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `import` declarations must come after the `package` declaration (if
+// CHECK:STDERR:        ·    ┃        present) and before any other entities in the file
+// CHECK:STDERR:        ·    ┃        [ImportTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import F;
 // Note this is still invalid, but doesn't warn because it's sequential.

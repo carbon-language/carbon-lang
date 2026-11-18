@@ -13,19 +13,24 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_value_disallowed.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE+7]]:3: error: no return expression should be provided in this context [ReturnStatementDisallowExpr]
-  // CHECK:STDERR:   return 0;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_value_disallowed.carbon:[[@LINE-4]]:1: note: there was no return type provided [ReturnTypeOmittedNote]
-  // CHECK:STDERR: fn Main() {
-  // CHECK:STDERR: ^~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_value_disallowed.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Main() {
+  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·      ╰──┤ there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return 0;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: no return expression should be provided in this context
+  // CHECK:STDERR:        ·          ┃        [ReturnStatementDisallowExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return 0;
 }
 
-// CHECK:STDOUT: --- fail_value_disallowed.carbon
+// CHECK:STDOUT: --- fail_value_disallowed.carbon = $fail_value_disallowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]

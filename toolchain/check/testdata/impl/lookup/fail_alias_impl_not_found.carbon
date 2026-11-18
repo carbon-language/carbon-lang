@@ -21,21 +21,30 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   C.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:        ╭─┤ fail_alias_impl_not_found.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   C.F();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `I` in type `C` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:        ╭─┤ fail_alias_impl_not_found.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   c.F();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `I` in type `C` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.F();
 }
 
-// CHECK:STDOUT: --- fail_alias_impl_not_found.carbon
+// CHECK:STDOUT: --- fail_alias_impl_not_found.carbon = $fail_alias_impl_not_found
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic]
@@ -47,7 +56,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -62,7 +71,7 @@ fn F(c: C) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
 // CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, file.%C.decl [concrete = constants.%C]
@@ -105,10 +114,10 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc28: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc28: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc32: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc33: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc41: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

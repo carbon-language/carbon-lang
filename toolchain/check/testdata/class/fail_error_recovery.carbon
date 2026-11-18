@@ -12,9 +12,12 @@
 
 // --- fail_virtual_fn_in_invalid_context.carbon
 
-// CHECK:STDERR: fail_virtual_fn_in_invalid_context.carbon:[[@LINE+4]]:24: error: name `error_not_found` not found [NameNotFound]
-// CHECK:STDERR: fn F(unused generic N: error_not_found) {
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_virtual_fn_in_invalid_context.carbon:[[@LINE+7]]:24
+// CHECK:STDERR: ->     │ fn F(unused generic N: error_not_found) {
+// CHECK:STDERR:        ·                        ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·                               ┗━━┫ error: name `error_not_found` not found
+// CHECK:STDERR:        ·                                  ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic N: error_not_found) {
   base class C {

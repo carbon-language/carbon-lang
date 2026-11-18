@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
@@ -120,9 +121,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::FloatLiteralType::Kind:
           case SemIR::IntLiteralType::Kind:
           case SemIR::NamespaceType::Kind:
-          case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::TypeType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();
@@ -138,6 +137,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             break;
           }
           default: {
+            if (self_const_inst_id == SemIR::TypeType::TypeInstId) {
+              os << "type";
+              break;
+            }
+
             // Fall back to including a fingerprint.
             MangleFingerprint(os, &sem_ir(), self_const_inst_id);
             break;
@@ -206,7 +210,11 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
 
   os << "_C";
 
-  MangleNameId(os, function.name_id);
+  if (function.name_id.has_value()) {
+    MangleNameId(os, function.name_id);
+  } else {
+    os << "fn";
+  }
   char separator = '.';
 
   // For a special function, add a marker to disambiguate.
@@ -215,11 +223,31 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
     case SemIR::Function::SpecialFunctionKind::CppThunk:
       break;
 
-    case SemIR::Function::SpecialFunctionKind::CoreWitness:
+    case SemIR::Function::SpecialFunctionKind::Generated: {
       os << ".";
-      MangleFingerprint(os, &sem_ir(), function.self_param_id);
+      const auto& canonical_key = sem_ir()
+                                      .generated_functions()
+                                      .Get(function.generated_function_id())
+                                      .canonical_key;
+      auto specific_interface = sem_ir().specific_interfaces().Get(
+          canonical_key.specific_interface_id);
+      if (specific_interface.specific_id.has_value()) {
+        const auto& specific =
+            sem_ir().specifics().Get(specific_interface.specific_id);
+        // TODO: Should we use the fully qualified name of each argument (and
+        // any parameters each type has...) when possible?
+        MangleFingerprint(os, &sem_ir(), specific.args_id);
+        os << ".";
+      }
+      MangleFingerprint(
+          os, &sem_ir(),
+          sem_ir().types().GetTypeInstId(canonical_key.self_type_id));
+      // TODO: We want to include the function's parameters here when they are
+      // part of the GeneratedFunction::CanonicalKey to disambiguate overloads.
+      // Or perhaps using the index of the function in the witness table?
       os << ":core";
       break;
+    }
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       if (function.thunk_id().has_value()) {
@@ -240,15 +268,18 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
 
     case SemIR::Function::SpecialFunctionKind::Builtin:
       CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
-                   function.builtin_function_kind());
+                   function.non_generated_builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
+    case SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk:
+      CARBON_FATAL("Attempting to mangle call to function pointer");
   }
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id,
                                   SemIR::SpecificId::None, separator);
 
-  if (sem_ir().name_scopes().IsPrivateToLibrary(function.name_id,
+  if (!function.name_id.has_value() ||
+      sem_ir().name_scopes().IsPrivateToLibrary(function.name_id,
                                                 function.parent_scope_id)) {
     os << ".";
     MangleFingerprint(os, &sem_ir(), function.first_decl_id());
@@ -297,28 +328,40 @@ auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
 }
 
 auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
+  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
+    CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
+  }
+
   // Use the name of the first binding in the variable as its mangled name.
   auto var_name_id =
       SemIR::GetFirstBindingNameFromPatternId(sem_ir(), pattern_id);
-  if (!var_name_id.has_value()) {
+  return MangleGlobalBinding(var_name_id, pattern_id);
+}
+
+auto Mangler::MangleGlobalBinding(SemIR::EntityNameId entity_name_id,
+                                  SemIR::InstId fingerprint_inst_id)
+    -> std::string {
+  if (!entity_name_id.has_value()) {
     return std::string();
   }
 
-  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
-    CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
+  if (!entity_name.name_id.has_value() ||
+      entity_name.name_id == SemIR::NameId::Underscore ||
+      !entity_name.parent_scope_id.has_value()) {
+    return std::string();
   }
 
   RawStringOstream os;
   os << "_C";
 
-  auto var_name = sem_ir().entity_names().Get(var_name_id);
-  MangleNameId(os, var_name.name_id);
-  MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
+  MangleNameId(os, entity_name.name_id);
+  MangleInverseQualifiedNameScope(os, entity_name.parent_scope_id);
 
-  if (sem_ir().name_scopes().IsPrivateToLibrary(var_name.name_id,
-                                                var_name.parent_scope_id)) {
+  if (sem_ir().name_scopes().IsPrivateToLibrary(entity_name.name_id,
+                                                entity_name.parent_scope_id)) {
     os << ".";
-    MangleFingerprint(os, &sem_ir(), pattern_id);
+    MangleFingerprint(os, &sem_ir(), fingerprint_inst_id);
   }
   return os.TakeStr();
 }

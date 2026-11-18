@@ -5,7 +5,6 @@
 package Core library "prelude/default";
 
 import library "prelude/types/bool";
-import library "prelude/types/int_literal";
 
 // Provides the default value of an object. If implemented for a type `T`, this
 // is used to initialize declarations without an explicit initializer, such as
@@ -29,7 +28,6 @@ interface UnformedInit {
 // own.
 impl bool as UnformedInit {}
 impl forall [T: type] T* as UnformedInit {}
-impl forall [T: UnformedInit, N: IntLiteral] array(T, N) as UnformedInit {}
 // TODO: Generalize these to apply to tuples and structs containing only
 // `UnformedInit` types.
 impl () as UnformedInit {}

@@ -551,14 +551,16 @@ make it clear that the data representation of the value is not changing, just
 its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
-might use a cast to switch between [type adaptations](/docs/design/classes.md#adapters), or to
-be explicit where an implicit conversion would otherwise occur. For now, we are
-saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
-to the type `y`. Note that outside of generics, the term "casting" includes any
-explicit type change, including those that change the data representation.
+might use a cast to switch between
+[type adaptations](/docs/design/classes.md#adapters), or to be explicit where an
+implicit conversion would otherwise occur. For now, we are saying "`x as y`" is
+the provisional syntax in Carbon for casting the value `x` to the type `y`. Note
+that outside of generics, the term "casting" includes any explicit type change,
+including those that change the data representation.
 
 In contexts where an expression of one type is provided and a different type is
-required, an [implicit conversion](/docs/design/expressions/implicit_conversions.md) is
+required, an
+[implicit conversion](/docs/design/expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
@@ -824,9 +826,9 @@ express, for example:
     element type.
 -   An interface may define an associated facet that needs to be constrained to
     implement some interfaces.
--   This type must be [compatible](/docs/design/classes.md#compatible-types) with another type. You
-    might use this to define alternate implementations of a single interfaces,
-    such as sorting order, for a single type.
+-   This type must be [compatible](/docs/design/classes.md#compatible-types)
+    with another type. You might use this to define alternate implementations of
+    a single interfaces, such as sorting order, for a single type.
 
 Note that type constraints can be a restriction on one facet parameter or
 associated facet, or can define a relationship between multiple facets.

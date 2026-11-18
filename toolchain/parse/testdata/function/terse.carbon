@@ -10,8 +10,6 @@
 
 fn F(x: i32) => x;
 
-fn G(x: i32) -> i32 => x;
-
 // CHECK:STDOUT: - filename: terse.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
@@ -22,22 +20,7 @@ fn G(x: i32) -> i32 => x;
 // CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '=>'
-// CHECK:STDOUT:   │ ├─TerseBodyArrow '=>'
-// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'x'
-// CHECK:STDOUT:   ├─FunctionTerseDefinition ';'
-// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'G'
-// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
-// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '=>'
-// CHECK:STDOUT:   │ ├─TerseBodyArrow '=>'
+// CHECK:STDOUT:   │ ╭─FunctionTerseDefinitionStart '=>'
 // CHECK:STDOUT:   │ ├─IdentifierNameExpr 'x'
 // CHECK:STDOUT:   ├─FunctionTerseDefinition ';'
 // CHECK:STDOUT:   ├─FileEnd ''

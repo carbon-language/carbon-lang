@@ -26,9 +26,13 @@ fn Test(a: C, b: D, z: bool) -> C {
   if (z) {
     return a + a;
   } else {
-    // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+4]]:12: error: cannot access member of interface `Core.AddWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-    // CHECK:STDERR:     return a + b;
-    // CHECK:STDERR:            ^~~~~
+    // CHECK:STDERR:        ╭─┤ fail_no_impl_for_arg.carbon:[[@LINE+8]]:12
+    // CHECK:STDERR: ->     │     return a + b;
+    // CHECK:STDERR:        ·            ┳━━━━
+    // CHECK:STDERR:        ·            ┗━━┫ error: cannot access member of interface `Core.AddWith(D)` in
+    // CHECK:STDERR:        ·               ┃        type `C` that does not implement that interface
+    // CHECK:STDERR:        ·               ┃        [MissingImplInMemberAccess]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return a + b;
   }
@@ -39,9 +43,13 @@ fn TestAssign(b: D) {
 
   a += a;
 
-  // CHECK:STDERR: fail_no_impl_for_arg.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(D)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a += b;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_no_impl_for_arg.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a += b;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.AddAssignWith(D)` in type
+  // CHECK:STDERR:        ·      ┃        `C` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a += b;
 }

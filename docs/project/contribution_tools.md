@@ -49,8 +49,8 @@ These commands should help set up a development environment on your machine.
 # Update apt.
 sudo apt update
 
-# Check that the `clang` version is at least 19, our minimum version. That needs
-# the number of the `:` in the output to be over 19. For example, `1:19.0-1`.
+# Check that the `clang` version is at least 21, our minimum version. That needs
+# the number of the `:` in the output to be over 21. For example, `1:21.0-1`.
 apt-cache show clang | grep 'Version:'
 
 # Install tools. Use the same version as the Clang version you found above. Do
@@ -88,28 +88,28 @@ it to your `$PATH`, and aliasing `bazel` to it.
 
 #### Old `clang` versions
 
-If the version of `clang` is earlier than 19, you may still have version 19
+If the version of `clang` is earlier than 21, you may still have version 21
 available. You can use the following install instead:
 
 ```shell
 # Install explicitly versioned Clang tools.
 sudo apt install \
-  clang-19 \
-  libc++-19-dev \
-  libc++abi-19-dev \
-  lld-19 \
-  lldb-19
+  clang-21 \
+  libc++-21-dev \
+  libc++abi-21-dev \
+  lld-21 \
+  lldb-21
 
 # In your Carbon checkout, tell Bazel where to find `clang`. You can also
 # export this path as the `CC` environment variable, or add it directly to
 # your `PATH`.
-echo "build --repo_env=CC=$(readlink -f $(which clang-19))" >> user.bazelrc
+echo "build --repo_env=CC=$(readlink -f $(which clang-21))" >> user.bazelrc
 ```
 
 And if it's not available directly from the distribution, you can install Clang
 tools on Debian/Ubuntu from <https://apt.llvm.org>.
 
-> NOTE: Most LLVM 19+ installs should build Carbon. If you're having issues, see
+> NOTE: Most LLVM 21+ installs should build Carbon. If you're having issues, see
 > [troubleshooting build issues](#troubleshooting-build-issues).
 
 ### macOS
@@ -151,6 +151,21 @@ bazel test //...:all
 
 <!-- google-doc-style-resume -->
 
+You will need to have [Python](https://docs.python.org/3/using/mac.html)
+installed, and to install root certificates in order to use `prek`
+before submitting a PR. To do so, from a terminal run the
+`Install Certificates.command` found at
+`/Applications/Python 3.x/Install Certificates.command`, where `x` is the
+version of Python being used by `prek`. If you're unsure, just do this for
+all installed versions.
+
+If you don't install certificates, `prek` can fail when attempting to make
+https connections with an error like:
+
+```
+urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate
+```
+
 ### Windows
 
 The easiest way to build Carbon on Windows is using WSL. Use `wsl --install` to
@@ -188,7 +203,7 @@ These tools are essential for work on Carbon.
         -   [Bazelisk](https://docs.bazel.build/versions/master/install-bazelisk.html):
             Downloads and runs the [configured Bazel version](/.bazelversion).
     -   [Clang](https://clang.llvm.org/) and [LLVM](https://llvm.org/)
-        -   NOTE: Most LLVM 19+ installs should build Carbon. If you're having
+        -   NOTE: Most LLVM 21+ installs should build Carbon. If you're having
             issues, see
             [troubleshooting build issues](#troubleshooting-build-issues).
     -   [gh CLI](https://github.com/cli/cli): Helps with GitHub.
@@ -210,8 +225,8 @@ To use it:
 
 A typical commit workflow looks like:
 
-1.  `git commit` to try committing files. This automatically executes `prek run`,
-    which may fail and leave files modified for cleanup.
+1.  `git commit` to try committing files. This automatically executes `prek
+    run`, which may fail and leave files modified for cleanup.
 2.  `git add .` to add the automatic modifications done by hooks.
 3.  `git commit` again.
 
@@ -235,16 +250,16 @@ considering if they fit your workflow.
     -   **WARNING**: Bugs in `rs-git-fsmonitor` and/or Watchman can result in
         `prek` deleting files. If you see files being deleted, disable
         `rs-git-fsmonitor` with `git config --unset core.fsmonitor`.
--   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use for
-    formatting Markdown files. If you want to format files directly or use it in
-    your editor, you can install it:
+-   [rumdl](https://github.com/rvben/rumdl): A Markdown formatter, which we use
+    for formatting Markdown files. If you want to format files directly or use
+    it in your editor, you can install it:
     -   With `cargo` (preferred): `cargo install --locked rumdl`
     -   With `brew` (on macOS): `brew install rumdl`
     -   For Vim/Neovim, it is recommended to connect using its built-in Language
-        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is supported
-        by [Mason](https://github.com/williamboman/mason.nvim) (as `rumdl`) and
-        can be configured by way of `nvim-lspconfig` or formatting plugins like
-        `conform.nvim`. For more details, see the
+        Server Protocol (LSP) capabilities (by way of `rumdl server`). It is
+        supported by [Mason](https://github.com/williamboman/mason.nvim) (as
+        `rumdl`) and can be configured by way of `nvim-lspconfig` or formatting
+        plugins like `conform.nvim`. For more details, see the
         [rumdl editor integration documentation](https://github.com/rvben/rumdl#editor-integration).
 -   [vim-prettier](https://github.com/prettier/vim-prettier): A vim integration
     for [Prettier](https://prettier.io/), which we use for formatting.
@@ -318,6 +333,12 @@ jj config set --repo 'revset-aliases."trunk()"' 'trunk@upstream'
 # Treat github.com/carbon-language/carbon-lang as immutable, but treat your fork
 # as mutable.
 jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, upstream)'
+
+# Run `prek` over the commits a push would send, and push only if they pass.
+jj config set --repo aliases.push '["util", "exec", "--", "sh", "-c", "exec \"$(jj workspace root)/scripts/jj_push.sh\" \"$@\"", "jj push"]'
+
+# Run `prek` over the changes between `trunk()` and `@`.
+jj config set --repo aliases.prek '["util", "exec", "--", "sh", "-c", "exec \"$(jj workspace root)/scripts/jj_prek.sh\" \"$@\"", "jj prek"]'
 ```
 
 <!-- google-doc-style-resume -->
@@ -325,6 +346,18 @@ jj config set --repo 'revset-aliases."immutable_heads()"' 'remote_bookmarks(*, u
 The above assumes that you have configured the remote name `origin` to refer to
 your fork and `upstream` to refer to `github.com/carbon-language/carbon-lang`,
 and will need to be adjusted if you use different remote names.
+
+The `prek` alias runs [`scripts/jj_prek.sh`](/scripts/jj_prek.sh), which runs
+`prek` against `@` from anywhere in the workspace, including a non-colocated
+one. Arguments go to `prek run`, so `jj prek --all-files` checks everything.
+
+The `push` alias runs [`scripts/jj_push.sh`](/scripts/jj_push.sh), which checks
+the commits the push would send and leaves anything the hooks change in a commit
+for you to squash. It takes the same arguments as `jj git push`, and `--dry-run`
+still runs the checks. `jj` only knows the name of an alias, not what it expands
+to, so it completes file names after `jj push`.
+[`scripts/completions`](/scripts/completions/README.md) has Bash, Zsh, and Fish
+completions for the alias.
 
 #### AI assistants
 
@@ -404,8 +437,8 @@ includes things such as changing LLVM versions, or installing libc++. Running
 
 Many build issues result from the particular options `clang` and `llvm` have
 been built with, particularly when it comes to system-installed versions. If you
-run `clang --version`, you should see at least version 19. If you see an older
-version, please update, or use the special `clang-19` instructions above.
+run `clang --version`, you should see at least version 21. If you see an older
+version, please update, or use the special `clang-21` instructions above.
 
 System installs of macOS typically won't work, for example being an old LLVM
 version or missing llvm-ar; [setup commands](#setup-commands) includes LLVM from
@@ -427,7 +460,7 @@ providing the output of the following diagnostic commands:
 ```shell
 echo $CC
 which clang
-which clang-19
+which clang-21
 clang --version
 grep llvm_bindir $(bazel info workspace)/bazel-execroot/external/+clang_toolchain_extension+bazel_cc_toolchain/clang_detected_variables.bzl
 

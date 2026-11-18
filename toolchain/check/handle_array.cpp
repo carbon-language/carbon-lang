@@ -6,6 +6,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/type.h"
 #include "toolchain/parse/node_kind.h"
 
@@ -50,11 +51,33 @@ auto HandleParseNode(Context& context, Parse::ArrayExprId node_id) -> bool {
   bound_inst_id = ConvertToValueOfType(
       context, SemIR::LocId(bound_inst_id), bound_inst_id,
       GetSingletonType(context, SemIR::IntLiteralType::TypeInstId));
-  AddInstAndPush<SemIR::ArrayType>(
-      context, node_id,
-      {.type_id = SemIR::TypeType::TypeId,
-       .bound_id = bound_inst_id,
-       .element_type_inst_id = element_type.inst_id});
+
+  if (element_type.type_id == SemIR::ErrorInst::TypeId) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
+
+  // Diagnose an invalid concrete bound here, rather than when completing
+  // `Core.Array` below, so that the diagnostic points at the bound.
+  //
+  // As with `Core.Int`, an invalid symbolic bound is diagnosed only when the
+  // type is completed.
+  // TODO: Express the constraint on the bound in the prelude.
+  if (!ValidateArrayType(
+          context, SemIR::LocId(bound_inst_id),
+          {.type_id = SemIR::TypeType::TypeId,
+           .bound_id =
+               context.constant_values().GetConstantInstId(bound_inst_id),
+           .element_type_inst_id = element_type.inst_id})) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    return true;
+  }
+
+  // `array(T, N)` is `Core.Array(T, N)`. The call is attributed to the
+  // `array(T, N)` expression, so that the resulting type has a location.
+  auto type_expr =
+      MakeArrayType(context, node_id, element_type.inst_id, bound_inst_id);
+  context.node_stack().Push(node_id, type_expr.inst_id);
   return true;
 }
 

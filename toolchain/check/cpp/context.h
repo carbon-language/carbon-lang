@@ -9,15 +9,18 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "common/check.h"
+#include "common/map.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/cpp/diagnostic_listener.h"
 #include "toolchain/sem_ir/cpp_domain.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace clang {
 class ASTContext;
 class CompilerInstance;
 class FunctionDecl;
 class MangleContext;
+class NamespaceDecl;
 class Parser;
 class Sema;
 }  // namespace clang
@@ -48,6 +51,17 @@ class CppContext {
     return carbon_file_locations_;
   }
 
+  auto carbon_lookup_namespace() const -> clang::NamespaceDecl* {
+    return carbon_lookup_namespace_;
+  }
+  void set_carbon_lookup_namespace(clang::NamespaceDecl* decl) {
+    carbon_lookup_namespace_ = decl;
+  }
+
+  auto lookup_namespaces() -> Map<SemIR::NameScopeId, clang::NamespaceDecl*>& {
+    return lookup_namespaces_;
+  }
+
   auto placement_new_decl() const -> clang::FunctionDecl* {
     return placement_new_decl_;
   }
@@ -58,6 +72,12 @@ class CppContext {
  private:
   // The C++ compilation domain.
   SemIR::CppDomain* domain_;
+
+  // The per-file lookup-only `::Carbon` namespace and child namespaces.
+  // These are only used for C++ name lookup within this Carbon file, and are
+  // never used as the parent `DeclContext` for exported Carbon entities.
+  clang::NamespaceDecl* carbon_lookup_namespace_ = nullptr;
+  Map<SemIR::NameScopeId, clang::NamespaceDecl*> lookup_namespaces_;
 
   // TODO: All of the below state that is not specific to a particular
   // Check::Context or SemIR::File should be moved into CppDomain.

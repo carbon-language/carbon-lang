@@ -9,34 +9,58 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/member_access/fail_keyword.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   a.self;
-  // CHECK:STDERR:     ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.self;
+  // CHECK:STDERR:        ·     ┳━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`; prefix reserved word with `r#` to
+  // CHECK:STDERR:        ·        ┃        form a valid identifier
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   a.Self;
-  // CHECK:STDERR:     ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.Self;
+  // CHECK:STDERR:        ·     ┳━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`; prefix reserved word with `r#` to
+  // CHECK:STDERR:        ·        ┃        form a valid identifier
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   a.for;
-  // CHECK:STDERR:     ^~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.for;
+  // CHECK:STDERR:        ·     ┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`; prefix reserved word with `r#` to
+  // CHECK:STDERR:        ·        ┃        form a valid identifier
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.for;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   p->self;
-  // CHECK:STDERR:      ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:6
+  // CHECK:STDERR: ->     │   p->self;
+  // CHECK:STDERR:        ·      ┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier after `->`; prefix reserved word with `r#`
+  // CHECK:STDERR:        ·         ┃        to form a valid identifier
+  // CHECK:STDERR:        ·         ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   p->Self;
-  // CHECK:STDERR:      ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:6
+  // CHECK:STDERR: ->     │   p->Self;
+  // CHECK:STDERR:        ·      ┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier after `->`; prefix reserved word with `r#`
+  // CHECK:STDERR:        ·         ┃        to form a valid identifier
+  // CHECK:STDERR:        ·         ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->Self;
-  // CHECK:STDERR: fail_keyword.carbon:[[@LINE+4]]:6: error: expected identifier after `->`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   p->while;
-  // CHECK:STDERR:      ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_keyword.carbon:[[@LINE+8]]:6
+  // CHECK:STDERR: ->     │   p->while;
+  // CHECK:STDERR:        ·      ┳━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier after `->`; prefix reserved word with `r#`
+  // CHECK:STDERR:        ·         ┃        to form a valid identifier
+  // CHECK:STDERR:        ·         ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->while;
 }

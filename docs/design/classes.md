@@ -51,6 +51,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Inheritance](#inheritance)
         -   [Virtual methods](#virtual-methods)
             -   [Virtual modifier keywords](#virtual-modifier-keywords)
+            -   [Signature differences in overrides](#signature-differences-in-overrides)
         -   [Subtyping](#subtyping)
         -   [`Self` refers to the current type](#self-refers-to-the-current-type)
         -   [Constructors](#constructors)
@@ -120,8 +121,8 @@ constant value.
 The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-**This design currently only attempts to address the "data classes" and
-"encapsulated types" use cases.** Addressing the "interface as base class",
+**This design currently only attempts to address the "data classes",
+"encapsulated types", and "interface as base class" use cases.** Addressing the
 "interop with C++ multiple inheritance" and "mixin" use cases is future work.
 
 ### Data classes
@@ -801,9 +802,37 @@ class GraphNode {
 // `GraphNode` is first complete here.
 ```
 
+Class modifiers (`abstract`, `base`, `final`) exist only on the
+definition, not on the forward declaration, while access modifiers (`private`
+and `protected`) must match.
+
 An incomplete type cannot be used as the target of an `extend` declaration (such
 as `extend base: T` or `extend adapt T`), as the target type must be complete to
 allow name lookup into it.
+
+The combination of a forward declaration and a definition is allowed in type
+scopes. This includes both member functions and member types.
+
+For example:
+
+```carbon
+class C {
+  class D;
+
+  fn F() -> D;
+
+  class D {
+    fn G() -> Self { return C.F(); }
+
+    var x: i32;
+  }
+
+  fn F() -> D { return {.x = 42}; }
+}
+```
+
+This is necessary because type bodies are not automatically moved out-of-line,
+unlike function bodies.
 
 > **TODO:** Document that qualified names can be looked up in an incomplete
 > type, as adopted in
@@ -811,6 +840,11 @@ allow name lookup into it.
 
 **Open question:** What else is specifically allowed and forbidden with an
 incomplete type has not yet been decided.
+
+> References:
+>
+> -   ["Modifier keywords" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
+> -   ["Type scopes may contain both a forward declaration and definition" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#type-scopes-may-contain-both-a-forward-declaration-and-definition)
 
 ### `Self`
 
@@ -1345,6 +1379,74 @@ after the `extend base` declaration when present in a class definition. This
 simplifies the compiler, and follows the
 [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
+It is an error for a class with a custom value representation to declare or
+implement a virtual function that passes `self` by value.
+
+##### Signature differences in overrides
+
+An `override` function can be used directly in the derived class if it has the
+same signature as in the base class, except with the derived class as the type
+of `self`. Otherwise, a thunk is generated that differs from the declaration in
+the base class by replacing the type of `self` with the derived class.
+
+When a virtual function is used directly in a
+base class and not overridden in the derived class, it is also used directly in
+the derived class, even though its declared `self` parameter does not have a
+matching type.
+
+```carbon
+base class B {
+  // No thunk used.
+  virtual fn F[ref self: B]();
+  virtual fn G[ref self: B]();
+}
+base class C {
+  extend B;
+  // No thunk used: `self` has expected type `C`.
+  override fn F[ref self: C]();
+  // Uses a thunk due to unexpected `self` type.
+  override fn G[ref self: B]();
+}
+class D {
+  // No thunk for `F`, because no thunk was used in `C`.
+  // Uses thunk for `F`, because thunk was used in `C`.
+  extend C;
+}
+```
+
+Note that this supports covariant return types automatically, as well as any
+other case where the return value from the derived class function can be
+implicitly converted to the base class function's return type. However, an
+`impl fn` doesn't introduce a new name lookup result, so the return type of a
+call expression is always that of the `virtual fn`, which means this feature is
+not useful.
+
+This matches the approach used for
+[`impl` members that implement `interface` members](/docs/design/generics/details.md#impl-members-vs-interface-members).
+
+> **Future work:** It might be useful to allow a declaration to both implement
+> an existing virtual function and introduce a new one. This would allow
+> introducing functions with covariant return types that work as expected. This
+> could be achieved with syntax such as:
+>
+> ```carbon
+> base class A {
+>   virtual fn Clone[self: Self]() -> A*;
+> }
+> base class B {
+>   virtual override fn Clone[self: Self]() -> B*;
+> }
+> ```
+>
+> Here, a call to `b->Clone()` would find `B.Clone` rather than `A.Clone`, and
+> so would have return type `B*`. The downside is that the vtable for `B` would
+> have two `Clone` slots, for `A.Clone` and `B.Clone`, whereas a covariant
+> return in C++ would only need a single vtable slot to express the same thing.
+
+> References:
+>
+> -   ["`virtual` functions" in proposal #3763](/proposals/p003763-matching-redeclarations.md#virtual-functions)
+
 #### Subtyping
 
 A pointer to a base class, like `MyBaseClass*` is actually considered to be a
@@ -1711,11 +1813,12 @@ class SongByTitle {
 }
 ```
 
-An adapter can also preserve the API and interface implementations of the original
-type using `extend adapt`. For details on how an extending adapter implements
-interfaces that are implemented for the adapted type, as well as applications of adapters to generics, see
-[Adapting types](/docs/design/generics/details.md#adapting-types) in the generics
-design.
+An adapter can also preserve the API and interface implementations of the
+original type using `extend adapt`. For details on how an extending adapter
+implements interfaces that are implemented for the adapted type, as well as
+applications of adapters to generics, see
+[Adapting types](/docs/design/generics/details.md#adapting-types) in the
+generics design.
 
 **Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
@@ -1736,10 +1839,10 @@ checks, like `ValidDate` with the same data layout as `Date`. Or to record the
 units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`.
 
-> **Future work:** We should have some way of restricting the casts between a type
-> and an adapter to address this use case. One possibility would be to add the
-> keyword `private` before `adapt`, so you might write
-> `extend private adapt Date;`.
+> **Future work:** We should have some way of restricting the casts between a
+> type and an adapter to address this use case. One possibility would be to add
+> the keyword `private` before `adapt`, so you might write `extend private adapt
+> Date;`.
 
 Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
 Haskell's feature doesn't directly support reusing implementations either, but
@@ -2512,5 +2615,7 @@ the type of `U.x`."
 -   [#2107: Clarify rules around `Self` and `.Self`](https://github.com/carbon-language/carbon-lang/pull/2107)
 -   [#2287: Allow unqualified name lookup for class members](https://github.com/carbon-language/carbon-lang/pull/2287)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#3762: Merging forward declarations](https://github.com/carbon-language/carbon-lang/pull/3762)
+-   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)

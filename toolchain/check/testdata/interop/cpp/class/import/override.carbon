@@ -41,21 +41,29 @@ import Cpp library "overload.h";
 class Overload0Params {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE+16]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn f(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:6:16: note: base class function has more parameters (1 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(X x);
-  // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:7:16: note: base class function has more parameters (1 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(Y y);
-  // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:8:16: note: base class function has more parameters (2 vs 0 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(X x, Y y);
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:        ╭─┤ fail_overload_no_matching_arity.carbon:[[@LINE+24]]:3
+  // CHECK:STDERR: ->     │   override fn f(self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./overload.h
+  // CHECK:STDERR:        │   virtual void f(X x);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has more parameters (1 vs 0 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        │   virtual void f(Y y);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has more parameters (1 vs 0 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        │   virtual void f(X x, Y y);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has more parameters (2 vs 0 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn f(self);
 }
@@ -63,28 +71,34 @@ class Overload0Params {
 class Overload3Params {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE+16]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn f(self, x: Cpp.X, y: Cpp.Y, z: Cpp.X);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:6:16: note: base class function has fewer parameters (1 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(X x);
-  // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-34]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:7:16: note: base class function has fewer parameters (1 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(Y y);
-  // CHECK:STDERR:                ^
-  // CHECK:STDERR: fail_overload_no_matching_arity.carbon:[[@LINE-38]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:8:16: note: base class function has fewer parameters (2 vs 3 excluding `self`) [OverrideCandidateArityMismatch]
-  // CHECK:STDERR:   virtual void f(X x, Y y);
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:        ╭─┤ fail_overload_no_matching_arity.carbon:[[@LINE+24]]:3
+  // CHECK:STDERR: ->     │   override fn f(self, x: Cpp.X, y: Cpp.Y, z: Cpp.X);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                       ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./overload.h
+  // CHECK:STDERR:        │   virtual void f(X x);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has fewer parameters (1 vs 3 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        │   virtual void f(Y y);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has fewer parameters (1 vs 3 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        │   virtual void f(X x, Y y);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ base class function has fewer parameters (2 vs 3 excluding
+  // CHECK:STDERR:        ·                   │ `self`)
+  // CHECK:STDERR:        ·                   │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn f(self, x: Cpp.X, y: Cpp.Y, z: Cpp.X);
 }
 
 // --- fail_overload_type.carbon
-// CHECK:STDERR: fail_overload_type.carbon: error: cannot implicitly convert expression of type `Cpp.Y` to `Cpp.X` [ConversionFailure]
-// CHECK:STDERR: fail_overload_type.carbon: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessInContext]
 // TODO: The conversion diagnostics here should have a location.
 
 library "[[@TEST_NAME]]";
@@ -94,29 +108,75 @@ import Cpp library "overload.h";
 class OverloadX {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+10]]:23: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn f(self, x: Cpp.X);
-  // CHECK:STDERR:                       ^~~~~~~~
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:7:16: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual void f(Y y);
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+32]]:3
+  // CHECK:STDERR: ->     │   override fn f(self, x: Cpp.X);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.Y` to `Cpp.X`
+  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
+  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
+  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_overload_type.carbon: error: cannot implicitly convert expression of type `Cpp.X` to `Cpp.Y` [ConversionFailure]
-  // CHECK:STDERR: fail_overload_type.carbon: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR: ->     │   override fn f(self, x: Cpp.X);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.Y` to `Cpp.X`
+  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
+  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
+  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./overload.h
+  // CHECK:STDERR:        │   virtual void f(Y y);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   override fn f(self, x: Cpp.X);
 }
 
 class OverloadY {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+8]]:23: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   override fn f(self, y: Cpp.Y);
-  // CHECK:STDERR:                       ^~~~~~~~
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./overload.h:6:16: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   virtual void f(X x);
-  // CHECK:STDERR:                ^
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+32]]:3
+  // CHECK:STDERR: ->     │   override fn f(self, y: Cpp.Y);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.X` to `Cpp.Y`
+  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
+  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
+  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR: ->     │   override fn f(self, y: Cpp.Y);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.X` to `Cpp.Y`
+  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
+  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
+  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./overload.h
+  // CHECK:STDERR:        │   virtual void f(X x);
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn f(self, y: Cpp.Y);
 }

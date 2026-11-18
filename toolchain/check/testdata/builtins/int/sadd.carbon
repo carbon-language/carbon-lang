@@ -57,15 +57,20 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew(a: i32) -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew(a: i32) -> i32 = "int.sadd";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:26: error: name `TooMany` not found [NameNotFound]
-// CHECK:STDERR: var too_many: array(i32, TooMany(1, 2, 3));
-// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+6]]:26
+// CHECK:STDERR: ->     │ var too_many: array(i32, TooMany(1, 2, 3));
+// CHECK:STDERR:        ·                          ━━━┳━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: name `TooMany` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_many: array(i32, TooMany(1, 2, 3));
 
@@ -77,15 +82,21 @@ fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.sadd";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:33: error: name `BadReturnType` not found [NameNotFound]
-// CHECK:STDERR: var bad_return_type: array(i32, BadReturnType(1, 2));
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:33
+// CHECK:STDERR: ->     │ var bad_return_type: array(i32, BadReturnType(1, 2));
+// CHECK:STDERR:        ·                                 ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                                       ┗━━┫ error: name `BadReturnType` not found
+// CHECK:STDERR:        ·                                          ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_return_type: array(i32, BadReturnType(1, 2));
 
@@ -97,15 +108,20 @@ fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: i32, b: i32) -> bool = "int.sadd";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:25: error: name `TooFew` not found [NameNotFound]
-// CHECK:STDERR: var too_few: array(i32, TooFew(1));
-// CHECK:STDERR:                         ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+6]]:25
+// CHECK:STDERR: ->     │ var too_few: array(i32, TooFew(1));
+// CHECK:STDERR:        ·                         ━━━┳━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: name `TooFew` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_few: array(i32, TooFew(1));
 
@@ -117,9 +133,12 @@ fn RuntimeCallIsValidBadReturnType(a: i32, b: i32) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+4]]:26: error: name `JustRight` not found [NameNotFound]
-// CHECK:STDERR: var bad_call: array(i32, JustRight(1, 2, 3));
-// CHECK:STDERR:                          ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+7]]:26
+// CHECK:STDERR: ->     │ var bad_call: array(i32, JustRight(1, 2, 3));
+// CHECK:STDERR:        ·                          ━━━━┳━━━━
+// CHECK:STDERR:        ·                              ┗━━┫ error: name `JustRight` not found
+// CHECK:STDERR:        ·                                 ┃        [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_call: array(i32, JustRight(1, 2, 3));
 
@@ -127,24 +146,36 @@ var bad_call: array(i32, JustRight(1, 2, 3));
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd1(a: i32, b: Core.IntLiteral) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_mixed_add.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedAdd1(a: i32, b: Core.IntLiteral) -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedAdd1(a: i32, b: Core.IntLiteral) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd2(a: Core.IntLiteral, b: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_mixed_add.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedAdd2(a: Core.IntLiteral, b: i32) -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedAdd2(a: Core.IntLiteral, b: i32) -> i32 = "int.sadd";
-// CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_mixed_add.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedAdd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedAdd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.sadd";
-// CHECK:STDERR: fail_mixed_add.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAdd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.sadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_mixed_add.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedAdd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedAdd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.sadd";
 
@@ -155,15 +186,19 @@ library "[[@TEST_NAME]]";
 fn Add(a: i32, b: i32) -> i32 = "int.sadd";
 
 let a: i32 = Add(0x7FFFFFFF, 0);
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `2147483647 + 1` [CompileTimeIntegerOverflow]
-// CHECK:STDERR: let b: i32 = Add(0x7FFFFFFF, 1);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let b: i32 = Add(0x7FFFFFFF, 1);
+// CHECK:STDERR:        ·              ━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: integer overflow in calculation `2147483647 + 1`
+// CHECK:STDERR:        ·                        ┃        [CompileTimeIntegerOverflow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = Add(0x7FFFFFFF, 1);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]

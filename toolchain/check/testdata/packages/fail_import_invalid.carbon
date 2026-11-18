@@ -14,15 +14,21 @@
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name [ImportCurrentPackageByName]
-// CHECK:STDERR: import Main;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import Main;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: imports from the current package must omit the package name
+// CHECK:STDERR:        ·          ┃        [ImportCurrentPackageByName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: imports from the current package must omit the package name [ImportCurrentPackageByName]
-// CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import Main library "lib";
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: imports from the current package must omit the package name
+// CHECK:STDERR:        ·             ┃        [ImportCurrentPackageByName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Main library "lib";
 
@@ -30,15 +36,20 @@ import Main library "lib";
 
 package NotMain;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages [ImportMainPackage]
-// CHECK:STDERR: import Main;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_not_main.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import Main;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: cannot import `Main` from other packages [ImportMainPackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Main;
 
-// CHECK:STDERR: fail_not_main.carbon:[[@LINE+4]]:1: error: cannot import `Main` from other packages [ImportMainPackage]
-// CHECK:STDERR: import Main library "lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_not_main.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import Main library "lib";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: cannot import `Main` from other packages
+// CHECK:STDERR:        ·                 ┃        [ImportMainPackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Main library "lib";
 
@@ -46,9 +57,11 @@ import Main library "lib";
 
 package This;
 
-// CHECK:STDERR: fail_this.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
-// CHECK:STDERR: import This;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_this.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import This;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: file cannot import itself [ImportSelf]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import This;
 
@@ -56,9 +69,11 @@ import This;
 
 package This library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_this_lib.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
-// CHECK:STDERR: import library "this_lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_this_lib.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import library "this_lib";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: file cannot import itself [ImportSelf]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library "this_lib";
 
@@ -70,9 +85,13 @@ package Implicit;
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
-// CHECK:STDERR: import Implicit;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_implicit.impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ import Implicit;
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: explicit import of `api` from `impl` file is redundant with implicit
+// CHECK:STDERR:        ·    ┃        import
+// CHECK:STDERR:        ·    ┃        [ExplicitImportApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Implicit;
 
@@ -84,66 +103,58 @@ package Implicit library "[[@TEST_NAME]]";
 
 impl package Implicit library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit_lib.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
-// CHECK:STDERR: import Implicit library "implicit_lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_implicit_lib.impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ import Implicit library "implicit_lib";
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: explicit import of `api` from `impl` file is redundant with implicit
+// CHECK:STDERR:        ·    ┃        import
+// CHECK:STDERR:        ·    ┃        [ExplicitImportApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Implicit library "implicit_lib";
 
 // --- fail_not_found.carbon
 package NotFound;
 
-// CHECK:STDERR: fail_not_found.carbon:[[@LINE+4]]:1: error: imported API 'ImportNotFound' not found [ImportNotFound]
-// CHECK:STDERR: import ImportNotFound;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_not_found.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import ImportNotFound;
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: imported API 'ImportNotFound' not found [ImportNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import ImportNotFound;
 
-// CHECK:STDOUT: --- fail_main.carbon
+// CHECK:STDOUT: --- fail_main.carbon = $fail_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_main.carbon
+// CHECK:STDOUT: --- fail_not_main.carbon = $fail_not_main
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_this.carbon
+// CHECK:STDOUT: --- fail_this.carbon = $fail_this
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_this_lib.carbon
+// CHECK:STDOUT: --- fail_this_lib.carbon = $fail_this_lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT:   %Implicit.import = import Implicit
-// CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit_lib.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_implicit_lib.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon = $fail_implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -151,7 +162,21 @@ import ImportNotFound;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_not_found.carbon
+// CHECK:STDOUT: --- implicit_lib.carbon = $implicit_lib
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_implicit_lib.impl.carbon = $fail_implicit_lib.impl
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %Implicit.import = import Implicit
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_not_found.carbon = $fail_not_found
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %ImportNotFound: <namespace> = namespace file.%ImportNotFound.import, [concrete] {

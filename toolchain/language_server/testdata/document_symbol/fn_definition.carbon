@@ -11,11 +11,11 @@
 // --- fn_definition.carbon
 fn None();
 fn Braced() {}
-fn Terse() => 42;
-fn Builtin() = "int.make_type_32";
+fn Terse() => ();
+fn Builtin() -> type = "int_literal.make_type";
 
 // --- STDIN
-[[@LSP-CALL:initialize]]
+[[@LSP-CALL:initialize:"capabilities": {}]]
 [[@LSP-NOTIFY:textDocument/didOpen:
   "textDocument": {
     "uri": "file:/fn_definition.carbon",
@@ -29,40 +29,32 @@ fn Builtin() = "int.make_type_32";
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 146{{\r}}
+// CHECK:STDOUT: Content-Length: 432{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": {
 // CHECK:STDOUT:     "capabilities": {
+// CHECK:STDOUT:       "declarationProvider": true,
+// CHECK:STDOUT:       "definitionProvider": true,
+// CHECK:STDOUT:       "documentFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
-// CHECK:STDOUT:       "textDocumentSync": 2
+// CHECK:STDOUT:       "hoverProvider": true,
+// CHECK:STDOUT:       "implementationProvider": true,
+// CHECK:STDOUT:       "positionEncoding": "utf-16",
+// CHECK:STDOUT:       "referencesProvider": true,
+// CHECK:STDOUT:       "textDocumentSync": 2,
+// CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 482{{\r}}
+// CHECK:STDOUT: }Content-Length: 153{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "method": "textDocument/publishDiagnostics",
 // CHECK:STDOUT:   "params": {
-// CHECK:STDOUT:     "diagnostics": [
-// CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "semantics TODO: `HandleTerseBodyArrow`",
-// CHECK:STDOUT:         "range": {
-// CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 13,
-// CHECK:STDOUT:             "line": 2
-// CHECK:STDOUT:           },
-// CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 11,
-// CHECK:STDOUT:             "line": 2
-// CHECK:STDOUT:           }
-// CHECK:STDOUT:         },
-// CHECK:STDOUT:         "severity": 1,
-// CHECK:STDOUT:         "source": "carbon"
-// CHECK:STDOUT:       }
-// CHECK:STDOUT:     ],
+// CHECK:STDOUT:     "diagnostics": [],
 // CHECK:STDOUT:     "uri": "file:///fn_definition.carbon"
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }Content-Length: 1706{{\r}}
@@ -148,7 +140,7 @@ fn Builtin() = "int.make_type_32";
 // CHECK:STDOUT:       "name": "Builtin",
 // CHECK:STDOUT:       "range": {
 // CHECK:STDOUT:         "end": {
-// CHECK:STDOUT:           "character": 34,
+// CHECK:STDOUT:           "character": 47,
 // CHECK:STDOUT:           "line": 3
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "start": {

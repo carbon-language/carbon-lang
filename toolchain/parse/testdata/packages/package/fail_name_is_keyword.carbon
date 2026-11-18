@@ -8,15 +8,20 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_name_is_keyword.carbon
 
-// CHECK:STDERR: fail_name_is_keyword.carbon:[[@LINE+4]]:9: error: expected identifier after `package` [ExpectedIdentifierAfterPackage]
-// CHECK:STDERR: package fn;
-// CHECK:STDERR:         ^~
+// CHECK:STDERR:        ╭─┤ fail_name_is_keyword.carbon:[[@LINE+8]]:9
+// CHECK:STDERR: ->     │ package fn;
+// CHECK:STDERR:        ·         ┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: expected identifier after `package`; prefix reserved word
+// CHECK:STDERR:        ·            ┃        with `r#` to form a valid identifier
+// CHECK:STDERR:        ·            ┃        [ExpectedIdentifierAfterPackage]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package fn;
 
 // CHECK:STDOUT: - filename: fail_name_is_keyword.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
-// CHECK:STDOUT:   ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'fn'
+// CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

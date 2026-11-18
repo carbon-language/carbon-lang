@@ -34,9 +34,12 @@ fn CallMixed(ref a: i32, b: i64) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_unsized.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.right_shift_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_unsized.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_...
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: invalid signature for builtin function "int.right_shift_assign"
+// CHECK:STDERR:        ·         ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_assign";
 
@@ -44,15 +47,19 @@ fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.right_shift_assign
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.right_shift_assign" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotRef(a: i32, b: i32) = "int.right_shift_assign";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NotRef(a: i32, b: i32) = "int.right_shift_assign";
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: invalid signature for builtin function "int.right_shift_assign"
+// CHECK:STDERR:        ·         ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotRef(a: i32, b: i32) = "int.right_shift_assign";
 
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]

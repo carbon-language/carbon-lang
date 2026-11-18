@@ -60,6 +60,8 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
                         const EntityT& entity, bool is_definition)
     -> std::optional<SemIR::Inst>;
 
+auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
+                        CoreIdentifier interface_name) -> SemIR::InterfaceId;
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_INTERFACE_H_

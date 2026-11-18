@@ -33,9 +33,9 @@ namespace Carbon {
 //                   data_.reserved_bytes());
 //     // Common library types like `Map` and `llvm::SmallVector` have
 //     // type-specific support.
-//     mem_usage.Add(MemUsage::Concat(label, "array_"), array_);
+//     mem_usage.Add(MemUsage::ConcatLabel(label, "array_"), array_);
 //     // Implementing `CollectMemUsage` allows use with the same interface.
-//     mem_usage.Collect(MemUsage::Concat(label, "obj_"), obj_);
+//     mem_usage.Collect(MemUsage::ConcatLabel(label, "obj_"), obj_);
 //   }
 class MemUsage {
  public:
@@ -102,6 +102,11 @@ class MemUsage {
   auto Collect(std::string label, const llvm::SmallVectorImpl<T>& array)
       -> void {
     Add(std::move(label), array.size_in_bytes(), array.capacity_in_bytes());
+  }
+
+  // Adds memory usage of a string's data.
+  auto Collect(std::string label, const std::string& string) -> void {
+    Add(std::move(label), string.size(), string.capacity());
   }
 
   // Adds memory usage for an object that provides `CollectMemUsage`.

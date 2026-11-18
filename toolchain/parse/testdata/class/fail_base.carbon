@@ -9,39 +9,51 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_base.carbon
 
 class A {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   base;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   base;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base;
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:8: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   base calss X {}
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   base calss X {}
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base calss X {}
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:9: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   base: ;
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   base: ;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base: ;
 
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+7]]:12
+  // CHECK:STDERR: ->     │   base: { }
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: `base` declarations must end with a `;`
+  // CHECK:STDERR:        ·               ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var n: i32;
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
   var n: i32;
 }
 
 base class Foo {}
 
 class B {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:15: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   extend base Foo;
-  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   extend base Foo;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: `class` or `:` expected after `base`
+  // CHECK:STDERR:        ·                 ┃        [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base Foo;
 }

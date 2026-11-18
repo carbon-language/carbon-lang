@@ -13,19 +13,22 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/fail_extend_non_interface.carbon
 
 class C {
-  // CHECK:STDERR: fail_extend_non_interface.carbon:[[@LINE+4]]:3: error: impl as non-facet type `i32` [ImplAsNonFacetType]
-  // CHECK:STDERR:   extend impl as i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_extend_non_interface.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   extend impl as i32;
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: impl as non-facet type `i32` [ImplAsNonFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as i32;
 }
 
-// CHECK:STDOUT: --- fail_extend_non_interface.carbon
+// CHECK:STDOUT: --- fail_extend_non_interface.carbon = $fail_extend_non_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

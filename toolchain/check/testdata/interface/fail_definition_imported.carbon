@@ -23,19 +23,24 @@ interface I;
 library "[[@TEST_NAME]]";
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:11: error: duplicate name `I` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: interface I {}
-// CHECK:STDERR:           ^
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: interface I;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// TODO: Replace this diagnostic with one that better describes the error, such as 'DeclaredInMultipleLibraries'.
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ interface I {}
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: redeclaration of `interface I` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ interface I;
+// CHECK:STDERR:        · ──────┬─────
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface I {}
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -48,31 +53,25 @@ interface I {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_b.carbon
+// CHECK:STDOUT: --- fail_b.carbon = $fail_b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %I.type.8e70aa.1: type = facet_type <@I.1> [concrete]
-// CHECK:STDOUT:   %I.type.8e70aa.2: type = facet_type <@I.loc13> [concrete]
-// CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.I: type = import_ref Main//a, I, loaded [concrete = constants.%I.type.8e70aa.1]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .I = imports.%Main.I
+// CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %I.decl: type = interface_decl @I.loc13 [concrete = constants.%I.type.8e70aa.2] {} {}
+// CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.1 [from "a.carbon"];
-// CHECK:STDOUT:
-// CHECK:STDOUT: interface @I.loc13 {
-// CHECK:STDOUT:   %Self: %I.type.8e70aa.2 = symbolic_binding Self, 0 [symbolic = constants.%Self]
-// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I.loc13 [concrete]
+// CHECK:STDOUT: interface @I [from "a.carbon"] {
+// CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = constants.%Self]
+// CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self

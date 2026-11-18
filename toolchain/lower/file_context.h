@@ -12,6 +12,7 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/mangler.h"
 
 namespace clang {
 class CodeGenerator;
@@ -41,6 +42,9 @@ struct FunctionInfo {
 
   // The lowered function declaration.
   llvm::Function* llvm_function;
+
+  // How the lowered function returns its result.
+  ReturnKind return_kind;
 
   // Whether the function type information is inexact, because some component
   // type was incomplete. If this is set, the function should not be used to
@@ -169,6 +173,7 @@ class FileContext {
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_file() -> const SemIR::CppFile* { return sem_ir().cpp_file(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
+  auto mangler() -> SemIR::Mangler& { return mangler_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
@@ -189,6 +194,12 @@ class FileContext {
   auto BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
+  // Returns or creates the global storage for a non-constant global or static
+  // `let` binding (`WrapperBinding`), or `nullptr` if its value representation
+  // is empty.
+  auto GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+      -> llvm::GlobalVariable*;
+
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing. If this is a generic it'll
   // only be lowered if the specific_id is specified. During this lowering of
@@ -204,6 +215,13 @@ class FileContext {
   // Notes that a C++ function has been referenced for the first time, so we
   // should ask Clang to generate a definition for it if possible.
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
+      -> llvm::Function*;
+
+  // Gets the LLVM function that Clang uses for a Carbon thunk exported to C++,
+  // given the thunk's C++ declaration. The thunk's definition is lowered into
+  // this function.
+  auto GetCppThunkLLVMFunction(const FunctionTypeInfo& function_type_info,
+                               clang::FunctionDecl* cpp_decl)
       -> llvm::Function*;
 
   // Notes that a specific function has been referenced for the first time.
@@ -298,6 +316,10 @@ class FileContext {
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
 
+  // Maps non-constant global/static `let` bindings (`WrapperBinding`) to their
+  // lowered global storage.
+  Map<SemIR::InstId, llvm::GlobalVariable*> global_bindings_;
+
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from
   // `specific_functions_`.
@@ -311,6 +333,8 @@ class FileContext {
       vtables_;
   FixedSizeValueStore<SemIR::SpecificId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       specific_vtables_;
+
+  SemIR::Mangler mangler_;
 };
 
 }  // namespace Carbon::Lower

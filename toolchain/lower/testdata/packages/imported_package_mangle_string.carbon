@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // EXTRA-ARGS: --mangle-string-fingerprint
 //
@@ -46,62 +46,62 @@ fn G() {
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"() #0 !dbg !4 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !7
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"() #0 !dbg !8 {
+// CHECK:STDOUT: define void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"() #0 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!35}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "a.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A", scope: null, file: !1, line: 10, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 10, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "F", linkageName: "_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A", scope: null, file: !1, line: 17, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !9 = !DILocation(line: 17, column: 3, scope: !8)
+// CHECK:STDOUT: !34 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !36 = !{null}
+// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !34, line: 10, type: !37, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !39 = !DILocation(line: 10, column: 3, scope: !38)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "F", linkageName: "_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A", scope: null, file: !34, line: 17, type: !37, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !41 = !DILocation(line: 17, column: 3, scope: !40)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.B() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CG.B() #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"(), !dbg !7
-// CHECK:STDOUT:   call void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"(), !dbg !8
-// CHECK:STDOUT:   ret void, !dbg !9
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !45
+// CHECK:STDOUT:   call void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"(), !dbg !46
+// CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,C,A,<package root>,!invalid,!invalid}}:I.A"()
+// CHECK:STDOUT: declare void @"_CF.Array.{2,{class_type,C,A,<package root>,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"()
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CF.{array_type,{int_value,{Core.IntLiteral},1},{class_type,D,N,A,!invalid,!invalid}}:I.A"()
+// CHECK:STDOUT: declare void @"_CF.Array.{2,{class_type,D,N,A,!invalid,!invalid},{int_value,{Core.IntLiteral},1}}.Core:I.A"()
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!43}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "b.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !1, line: 4, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 5, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 6, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 4, column: 1, scope: !4)
+// CHECK:STDOUT: !36 = !{null}
+// CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
+// CHECK:STDOUT: !42 = !DIFile(filename: "b.carbon", directory: "")
+// CHECK:STDOUT: !43 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !42, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "G", linkageName: "_CG.B", scope: null, file: !42, line: 4, type: !37, spFlags: DISPFlagDefinition, unit: !43)
+// CHECK:STDOUT: !45 = !DILocation(line: 5, column: 3, scope: !44)
+// CHECK:STDOUT: !46 = !DILocation(line: 6, column: 3, scope: !44)
+// CHECK:STDOUT: !47 = !DILocation(line: 4, column: 1, scope: !44)
 // CHECK:STDOUT:

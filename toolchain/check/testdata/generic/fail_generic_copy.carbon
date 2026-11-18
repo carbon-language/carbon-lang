@@ -15,12 +15,13 @@
 library "[[@TEST_NAME]]";
 
 fn F[T: type](x: T) -> T {
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+7]]:10: error: cannot copy value of type `T` [CopyOfUncopyableType]
-  // CHECK:STDERR:   return x;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+4]]:10: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return x;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return x;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `T` [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·          ╰────┤ type `T` does not implement interface `Core.Copy`
+  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x;
 }
@@ -30,12 +31,14 @@ fn F[T: type](x: T) -> T {
 library "[[@TEST_NAME]]";
 
 fn F[T: Core.Destroy](x: T) {
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+7]]:21: error: cannot copy value of type `T` [CopyOfUncopyableType]
-  // CHECK:STDERR:   var unused y: T = x;
-  // CHECK:STDERR:                     ^
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:21: note: type `T` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var unused y: T = x;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:        ╭─┤ fail_var.carbon:[[@LINE+9]]:21
+  // CHECK:STDERR: ->     │   var unused y: T = x;
+  // CHECK:STDERR:        ·                     ┳
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot copy value of type `T`
+  // CHECK:STDERR:        ·                     │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·                     ╰────┤ type `T` does not implement interface `Core.Copy`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused y: T = x;
 }

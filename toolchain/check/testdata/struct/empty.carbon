@@ -15,9 +15,10 @@
 var x: {} = {};
 var y: {} = x;
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon = $empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]

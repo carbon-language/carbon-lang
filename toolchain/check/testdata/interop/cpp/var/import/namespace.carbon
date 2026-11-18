@@ -45,9 +45,10 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- type_in_namespace.carbon
+// CHECK:STDOUT: --- type_in_namespace.carbon = $type_in_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]

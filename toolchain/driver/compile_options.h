@@ -10,14 +10,17 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/OptimizationLevel.h"
 #include "toolchain/check/check.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/driver_env.h"
-#include "toolchain/lower/lower.h"
+#include "toolchain/lower/options.h"
 #include "toolchain/parse/parse.h"
+
+namespace llvm {
+class Target;
+}  // namespace llvm
 
 namespace Carbon {
 

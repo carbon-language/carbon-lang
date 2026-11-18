@@ -47,9 +47,10 @@ auto HandlePattern(Context& context) -> void {
           state.binding_context, state.ambient_precedence);
       break;
     default:
-      if (context.PositionKind().is_word() &&
-          context.PositionKind(Lookahead::NextToken)
-              .is_binding_pattern_operator()) {
+      if ((context.PositionKind().is_word() &&
+           context.PositionKind(Lookahead::NextToken)
+               .is_binding_pattern_operator()) ||
+          state.in_field_shorthand_pattern) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
             state.in_unused_pattern, state.in_field_shorthand_pattern,
@@ -75,11 +76,12 @@ auto HandleExprPattern(Context& context) -> void {
   if (context.PositionKind().is_binding_pattern_operator()) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedBindingName, Error,
-                        "unexpected expression before {0} in binding pattern",
+                        "unexpected expression before `{0}` in binding pattern",
                         Lex::TokenKind);
-      // TODO: Underline the parsed expression.
-      context.emitter().Emit(*context.position(), ExpectedBindingName,
-                             context.PositionKind());
+      context.emitter().Emit(
+          DiagnosticLoc::Tokens(
+              {.begin = state.token, .end = *(context.position() - 1)}),
+          ExpectedBindingName, context.PositionKind());
       state.has_error = true;
     }
     context.Consume();

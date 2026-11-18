@@ -36,10 +36,10 @@ auto CheckUnusedBinding(Context& context, SemIR::NameId name_id,
       CARBON_DIAGNOSTIC_ON_SCOPE(UnusedButUsed, Error,
                                  "variable `{0}` marked `unused` but used",
                                  SemIR::NameId);
-      CARBON_DIAGNOSTIC(UnusedButUsedHere, Note, "usage here");
+      CARBON_DIAGNOSTIC_LABEL(UnusedButUsedHere, Info, "usage here");
       context.emitter()
           .Build(decl_loc, UnusedButUsed, name_id)
-          .Note(result.use_loc_id, UnusedButUsedHere)
+          .Attach(result.use_loc_id, UnusedButUsedHere)
           .Emit();
     }
   } else {

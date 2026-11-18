@@ -8,23 +8,31 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_invalid_infix.carbon
 
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:19: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var a: i32 = n == ;
-// CHECK:STDERR:                   ^
+// CHECK:STDERR:        ╭─┤ fail_invalid_infix.carbon:[[@LINE+6]]:18
+// CHECK:STDERR: ->     │ var a: i32 = n == ;
+// CHECK:STDERR:        ·                  ┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: i32 = n == ;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:14: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var b: i32 = == n;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR:        ╭─┤ fail_invalid_infix.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ var b: i32 = == n;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = == n;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+8]]:14: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var c: i32 = == ;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR:        ╭─┤ fail_invalid_infix.carbon:[[@LINE+12]]:13
+// CHECK:STDERR: ->     │ var c: i32 = == ;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:17: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: var c: i32 = == ;
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:        ╭─┤ fail_invalid_infix.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ var c: i32 = == ;
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: i32 = == ;
 

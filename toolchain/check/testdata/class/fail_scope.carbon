@@ -17,9 +17,11 @@ class Class {
 }
 
 fn G() -> () {
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+4]]:10: error: name `F` not found [NameNotFound]
-  // CHECK:STDERR:   return F();
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_scope.carbon:[[@LINE+6]]:10
+  // CHECK:STDERR: ->     │   return F();
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `F` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return F();
 }

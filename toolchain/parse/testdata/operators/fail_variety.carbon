@@ -9,25 +9,47 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_variety.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+20]]:21: error: operator `=` can only be used as a complete statement [StatementOperatorAsSubExpr]
-  // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR:        ╭─┤ fail_variety.carbon:[[@LINE+42]]:21
+  // CHECK:STDERR: ->     │   n = a * b + c * d = d * d << e & f - not g;
+  // CHECK:STDERR:        ·                     ┳
+  // CHECK:STDERR:        ·                     ┗━━┫ error: operator `=` can only be used as a complete
+  // CHECK:STDERR:        ·                        ┃        statement
+  // CHECK:STDERR:        ·                        ┃        [StatementOperatorAsSubExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+16]]:29: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
-  // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
-  // CHECK:STDERR:                             ^~
+  // CHECK:STDERR:        ╭─┤ fail_variety.carbon:[[@LINE+34]]:29
+  // CHECK:STDERR: ->     │   n = a * b + c * d = d * d << e & f - not g;
+  // CHECK:STDERR:        ·                             ┳━
+  // CHECK:STDERR:        ·                             ┗━━┫ error: parentheses are required to disambiguate
+  // CHECK:STDERR:        ·                                ┃        operator precedence
+  // CHECK:STDERR:        ·                                ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+12]]:34: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
-  // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
-  // CHECK:STDERR:                                  ^
+  // CHECK:STDERR:        ╭─┤ fail_variety.carbon:[[@LINE+26]]:34
+  // CHECK:STDERR: ->     │   n = a * b + c * d = d * d << e & f - not g;
+  // CHECK:STDERR:        ·                                  ┳
+  // CHECK:STDERR:        ·                                  ┗━━┫ error: parentheses are required to
+  // CHECK:STDERR:        ·                                     ┃        disambiguate operator precedence
+  // CHECK:STDERR:        ·                                     ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+8]]:38: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
-  // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
-  // CHECK:STDERR:                                      ^
+  // CHECK:STDERR:        ╭─┤ fail_variety.carbon:[[@LINE+18]]:38
+  // CHECK:STDERR: ->     │   n = a * b + c * d = d * d << e & f - not g;
+  // CHECK:STDERR:        ·                                      ┳
+  // CHECK:STDERR:        ·                                      ┗━━┫ error: parentheses are required to
+  // CHECK:STDERR:        ·                                         ┃        disambiguate operator
+  // CHECK:STDERR:        ·                                         ┃        precedence
+  // CHECK:STDERR:        ·                                         ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_variety.carbon:[[@LINE+4]]:40: error: parentheses are required around this unary `not` operator [UnaryOperatorRequiresParentheses]
-  // CHECK:STDERR:   n = a * b + c * d = d * d << e & f - not g;
-  // CHECK:STDERR:                                        ^~~
+  // CHECK:STDERR:        ╭─┤ fail_variety.carbon:[[@LINE+9]]:40
+  // CHECK:STDERR: ->     │   n = a * b + c * d = d * d << e & f - not g;
+  // CHECK:STDERR:        ·                                        ┳━━
+  // CHECK:STDERR:        ·                                        ┗━━┫ error: parentheses are required
+  // CHECK:STDERR:        ·                                           ┃        around this unary `not`
+  // CHECK:STDERR:        ·                                           ┃        operator
+  // CHECK:STDERR:        ·                                           ┃        [UnaryOperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n = a * b + c * d = d * d << e & f - not g;
 }

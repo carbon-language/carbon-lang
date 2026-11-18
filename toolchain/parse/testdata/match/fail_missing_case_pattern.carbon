@@ -10,9 +10,11 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_pattern.carbon:[[@LINE+4]]:10: error: expected pattern [ExpectedPattern]
-    // CHECK:STDERR:     case => { return 2; }
-    // CHECK:STDERR:          ^~
+    // CHECK:STDERR:        ╭─┤ fail_missing_case_pattern.carbon:[[@LINE+6]]:9
+    // CHECK:STDERR: ->     │     case => { return 2; }
+    // CHECK:STDERR:        ·         ┳
+    // CHECK:STDERR:        ·         ┗━━┫ error: expected pattern [ExpectedPattern]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     case => { return 2; }
   }

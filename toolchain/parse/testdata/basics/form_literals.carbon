@@ -21,55 +21,84 @@ fn VarReturn() ->? form(ref i32);
 // --- fail_invalid_form_literal.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:7: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   form;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+13]]:8
+  // CHECK:STDERR: ->     │   form();
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `ref`, `var`, or `val` after `form(`
+  // CHECK:STDERR:        ·           ┃        [ExpectedCategoryModifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   form();
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   form();
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form();
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form(i32);
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   form(i32);
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `ref`, `var`, or `val` after `form(`
+  // CHECK:STDERR:        ·           ┃        [ExpectedCategoryModifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form(i32);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
-  // CHECK:STDERR:   form(whole lot of nonsense);
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+15]]:8
+  // CHECK:STDERR: ->     │   form(whole lot of nonsense);
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `ref`, `var`, or `val` after `form(`
+  // CHECK:STDERR:        ·           ┃        [ExpectedCategoryModifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:14: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-  // CHECK:STDERR:   form(whole lot of nonsense);
-  // CHECK:STDERR:              ^~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR: ->     │   form(whole lot of nonsense);
+  // CHECK:STDERR:        ·       ┬      ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·       │             ┗━━┫ error: unexpected tokens before `)`
+  // CHECK:STDERR:        ·       │                ┃        [ExpectedCloseSymbol]
+  // CHECK:STDERR:        ·       ╰──────────────────┤ matching this `(` [GroupOpenedHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form(whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:18: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-  // CHECK:STDERR:   form(var whole lot of nonsense);
-  // CHECK:STDERR:                  ^~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+8]]:18
+  // CHECK:STDERR: ->     │   form(var whole lot of nonsense);
+  // CHECK:STDERR:        ·       ┬          ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·       │                 ┗━━┫ error: unexpected tokens before `)`
+  // CHECK:STDERR:        ·       │                    ┃        [ExpectedCloseSymbol]
+  // CHECK:STDERR:        ·       ╰──────────────────────┤ matching this `(` [GroupOpenedHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form(var whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form whole lot of nonsense;
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+12]]:8
+  // CHECK:STDERR: ->     │   form whole lot of nonsense;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   form whole lot of nonsense;
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   form whole lot of nonsense;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form whole lot of nonsense;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+8]]:8: error: expected `(` after `form` [ExpectedParenAfter]
-  // CHECK:STDERR:   form var whole lot of nonsense;
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+12]]:8
+  // CHECK:STDERR: ->     │   form var whole lot of nonsense;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   form var whole lot of nonsense;
-  // CHECK:STDERR:        ^~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_form_literal.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   form var whole lot of nonsense;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   form var whole lot of nonsense;
 }

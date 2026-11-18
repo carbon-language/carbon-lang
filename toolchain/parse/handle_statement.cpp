@@ -51,6 +51,12 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(StateKind::MatchIntroducer);
       break;
     }
+    case Lex::TokenKind::PeriodPeriodPeriod: {
+      context.PushState(StateKind::StatementPackExpansionFinish);
+      context.AddLeafNode(NodeKind::PackExpansionStart, context.Consume());
+      context.PushState(StateKind::Statement);
+      break;
+    }
 #define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
@@ -69,7 +75,8 @@ auto HandleStatement(Context& context) -> void {
     case Lex::TokenKind::Observe:
     // We intentionally don't handle Package here, because `package.` can be
     // used at the start of an expression, and it's not worth disambiguating it.
-    case Lex::TokenKind::Var: {
+    case Lex::TokenKind::Var:
+    case Lex::TokenKind::Where: {
       context.PushState(StateKind::DeclAsRegular);
       break;
     }
@@ -90,7 +97,8 @@ static auto HandleStatementKeywordFinish(Context& context, NodeKind node_kind)
   if (!semi) {
     CARBON_DIAGNOSTIC(ExpectedStatementSemi, Error,
                       "`{0}` statements must end with a `;`", Lex::TokenKind);
-    context.emitter().Emit(*context.position(), ExpectedStatementSemi,
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedStatementSemi,
                            context.tokens().GetKind(state.token));
     state.has_error = true;
     // Recover to the next semicolon if possible.
@@ -138,7 +146,7 @@ auto HandleStatementForHeaderIn(Context& context) -> void {
     end_token = context.Consume();
   } else if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedIn, Error, "expected `in` after loop pattern");
-    context.emitter().Emit(*context.position(), ExpectedIn);
+    context.emitter().Emit(context.PointAfterPreviousToken(), ExpectedIn);
     state.has_error = true;
   }
 
@@ -226,6 +234,13 @@ auto HandleStatementReturn(Context& context) -> void {
 
 auto HandleStatementReturnFinish(Context& context) -> void {
   HandleStatementKeywordFinish(context, NodeKind::ReturnStatement);
+}
+
+auto HandleStatementPackExpansionFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::PackExpansionStatement, state.token,
+                  state.has_error);
 }
 
 auto HandleStatementScopeLoop(Context& context) -> void {

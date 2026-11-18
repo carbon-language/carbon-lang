@@ -15,6 +15,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Abbreviations used in the code (AKA Carbon abbreviation decoder ring)](#abbreviations-used-in-the-code-aka-carbon-abbreviation-decoder-ring)
 -   [`.def` files](#def-files)
     -   [EnumBase types](#enumbase-types)
+    -   [Overloads and conditional overlods](#overloads-and-conditional-overlods)
 -   [Index types](#index-types)
 -   [ValueStore](#valuestore)
 -   [Template metaprogramming](#template-metaprogramming)
@@ -112,6 +113,63 @@ In code, these types and values can be used directly in a `switch`. They will
 convert to an internal _actual_ `enum class` for the `switch`, and receive
 corresponding compiler safety checks that all enum values are handled.
 
+### Overloads and conditional overlods
+
+Sometimes we want to declare a set of overloaded functions elements of a set of
+types declared in a `.def` file, with the definitions of those functions spread
+out across multiple files. For example, this is common with the `Handle*`
+functions used in various layers of the toolchain:
+
+```c++
+namespace Carbon::Parse {
+
+// Declare handlers for each parse state.
+#define CARBON_PARSE_STATE(Name) auto Handle##Name(Context& context) -> void;
+#include "toolchain/parse/state.def"
+
+}  // namespace Carbon::Parse
+```
+
+This avoids the need to manually declare each such function, and provides nice
+errors if such a function is defined with the wrong signature: Clang diagnoses
+that a non-`static` function lacks a forward declaration, or that a `static`
+function has no callers.
+
+In some cases, we don't want an overload for _each_ element of a `.def` file,
+but only for some subset of those elements, or we want different signatures for
+different elements. We accomplish this by defining a template that maps the
+relevant element to the corresponding function type, and maps elements that
+should be omitted to a placeholder signature (typically `auto() -> void`):
+
+```c++
+namespace Internal {
+// Computes the function type to use for DoThings for InstT.
+template <typename InstT>
+using FunctionTypeForDoThings = std::conditional_t<
+    HasDoThings<InstT>,
+    auto(Context& context, InstT inst) -> void,
+    auto()->void>;
+}  // namespace Internal
+```
+
+We then delete the placeholder signature, and use the `.def` file to generate
+one declaration per element:
+
+```c++
+auto DoThings() -> void = delete;
+
+// Do a thing. For each instruction kind that does things, an overload should be
+// defined with the signature:
+//
+//   auto DoThings(Context& context, InstT inst) -> void;
+#define CARBON_SEM_IR_INST_KIND(InstT) \
+  Internal::FunctionTypeForDoThings<SemIR::InstT> DoThings;
+#include "toolchain/sem_ir/inst_kind.def"
+```
+
+This results in all the "omitted" signatures being redeclarations of the deleted
+signature.
+
 ## Index types
 
 Carbon makes frequent use of
@@ -172,7 +230,7 @@ available on [checking's Context class].
 <!-- google-doc-style-ignore -->
 
 [checking's Context class]:
-    https://github.com/search?q=repo%3Acarbon-language%2Fcarbon-lang+path%3Atoolchain%2Fcheck%2Fcontext.h+%2F%5Cw%2BStore%2F&type=code
+https://github.com/search?q=repo%3Acarbon-language%2Fcarbon-lang+path%3Atoolchain%2Fcheck%2Fcontext.h+%2F%5Cw%2BStore%2F&type=code
 
 <!-- google-doc-style-resume -->
 

@@ -4,22 +4,32 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-set -xeuo pipefail
+set -euo pipefail
 
-ROOT="$(git rev-parse --show-toplevel)"
+if ! command -v tree-sitter >/dev/null 2>&1; then
+  echo "tree-sitter command not found" >&2
+  echo "please run npm install -g tree-sitter-cli" >&2
+  exit 1
+fi
+
+DIR="$(dirname -- "$(readlink -f -- "$0")")"
+ROOT="$(git -C "$DIR" rev-parse --show-toplevel)"
 
 mkdir -p ~/.config/nvim/{lua,parser,queries}
 
-# add highlight queries
-ln -sTf "$PWD/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
-
-# add carbon.lua
-ln -sf "$PWD/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
+echo "Linking carbon queries and carbon.lua to neovim's configuration..." >&2
+[ -e ~/.config/nvim/queries/carbon ] && unlink ~/.config/nvim/queries/carbon
+ln -sf "$ROOT/utils/tree_sitter/queries" ~/.config/nvim/queries/carbon
+[ -e ~/.config/nvim/lua/carbon.lua ] && unlink ~/.config/nvim/lua/carbon.lua
+ln -sf "$ROOT/utils/nvim/carbon.lua" ~/.config/nvim/lua/carbon.lua
 
 # load carbon.lua on startup
-grep 'require "carbon"' ~/.config/nvim/init.lua || echo 'require "carbon"' >> ~/.config/nvim/init.lua
+echo "Adding \`require \"carbon\"\` to init.lua..." >&2
+grep 'require "carbon"' ~/.config/nvim/init.lua >/dev/null || echo 'require "carbon"' >> ~/.config/nvim/init.lua
 
 # build tree_sitter
-cd utils/tree_sitter
-tree-sitter generate
-clang -o ~/.config/nvim/parser/carbon.so -shared src/parser.c src/scanner.c -I ./src -Os -fPIC
+echo "Building and copying in tree-sitter binary..." >&2
+(cd "$ROOT" && bazel build //utils/tree_sitter:parser_shared -c opt --action_env=PATH)
+cp "$ROOT/bazel-bin/utils/tree_sitter/carbon.so" ~/.config/nvim/parser/carbon.so
+# bazel builds read-only binaries
+chmod +w ~/.config/nvim/parser/carbon.so

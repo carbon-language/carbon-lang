@@ -8,9 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/index/fail_malformed_expr.carbon
 
-// CHECK:STDERR: fail_malformed_expr.carbon:[[@LINE+4]]:17: error: unexpected tokens before `]` [ExpectedCloseSymbol]
-// CHECK:STDERR: var v: i32 = t[0,];
-// CHECK:STDERR:                 ^
+// CHECK:STDERR:        ╭─┤ fail_malformed_expr.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ var v: i32 = t[0,];
+// CHECK:STDERR:        ·               ┬ ┳
+// CHECK:STDERR:        ·               │ ┗━━┫ error: unexpected tokens before `]` [ExpectedCloseSymbol]
+// CHECK:STDERR:        ·               ╰──────┤ matching this `[` [GroupOpenedHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v: i32 = t[0,];
 

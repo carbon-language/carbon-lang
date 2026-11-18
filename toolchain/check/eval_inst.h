@@ -104,8 +104,8 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     -> bool {
   switch (kind) {
     case SemIR::InstConstantKind::Never:
-    case SemIR::InstConstantKind::ConstantInstAction:
     case SemIR::InstConstantKind::InstAction:
+    case SemIR::InstConstantKind::MultiInstAction:
     case SemIR::InstConstantKind::WheneverPossible:
     case SemIR::InstConstantKind::Always:
     case SemIR::InstConstantKind::AlwaysUnique:
@@ -114,6 +114,7 @@ constexpr auto ConstantKindHasEvalConstantInst(SemIR::InstConstantKind kind)
     case SemIR::InstConstantKind::Indirect:
     case SemIR::InstConstantKind::SymbolicOnly:
     case SemIR::InstConstantKind::SymbolicOrReference:
+    case SemIR::InstConstantKind::TemplateOnly:
     case SemIR::InstConstantKind::Conditional:
     case SemIR::InstConstantKind::ConditionalUnique:
       return true;
@@ -140,11 +141,10 @@ struct FunctionTypeForEvalConstantInstImpl<InstT, true, true> {
       -> ConstantEvalResult;
 };
 template <typename InstT>
-using FunctionTypeForEvalConstantInst =
-    typename FunctionTypeForEvalConstantInstImpl<
-        InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
-        InstT::Kind.constant_needs_inst_id() !=
-            SemIR::InstConstantNeedsInstIdKind::No>::Type;
+using FunctionTypeForEvalConstantInst = FunctionTypeForEvalConstantInstImpl<
+    InstT, ConstantKindHasEvalConstantInst(InstT::Kind.constant_kind()),
+    InstT::Kind.constant_needs_inst_id() !=
+        SemIR::InstConstantNeedsInstIdKind::No>::Type;
 
 }  // namespace Internal
 
@@ -164,6 +164,7 @@ auto EvalConstantInst() -> void = delete;
 // - InstConstantKind::Indirect
 // - InstConstantKind::SymbolicOnly
 // - InstConstantKind::SymbolicOrReference
+// - InstConstantKind::TemplateOnly
 // - InstConstantKind::Conditional
 // - InstConstantKind::ConditionalUnique
 //

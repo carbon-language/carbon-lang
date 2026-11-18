@@ -15,19 +15,28 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
-  // CHECK:STDERR:   default fn F();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_virtual.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   default fn F();
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `default` not allowed; requires interface scope
+  // CHECK:STDERR:        ·         ┃        [ModifierRequiresInterface]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default fn F();
-  // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `override` not allowed; requires class scope [ModifierRequiresClass]
-  // CHECK:STDERR:   override fn G();
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_virtual.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   override fn G();
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `override` not allowed; requires class scope
+  // CHECK:STDERR:        ·          ┃        [ModifierRequiresClass]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn G();
-  // CHECK:STDERR: fail_virtual.carbon:[[@LINE+4]]:3: error: `virtual` not allowed; requires class scope [ModifierRequiresClass]
-  // CHECK:STDERR:   virtual fn H();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_virtual.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   virtual fn H();
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `virtual` not allowed; requires class scope
+  // CHECK:STDERR:        ·         ┃        [ModifierRequiresClass]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   virtual fn H();
 }
@@ -37,14 +46,20 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `private` not allowed; requires class or file scope [ModifierPrivateNotAllowed]
-  // CHECK:STDERR:   private var unused v: {} = {};
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_access.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   private var unused v: {} = {};
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `private` not allowed; requires class or file scope
+  // CHECK:STDERR:        ·         ┃        [ModifierPrivateNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   private var unused v: {} = {};
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:3: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
-  // CHECK:STDERR:   protected var unused w: {} = {};
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_access.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   protected var unused w: {} = {};
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `protected` not allowed; requires class scope
+  // CHECK:STDERR:        ·          ┃        [ModifierProtectedNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   protected var unused w: {} = {};
 }

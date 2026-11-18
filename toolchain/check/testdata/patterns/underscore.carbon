@@ -56,12 +56,17 @@ library "[[@TEST_NAME]]";
 fn F(generic _: type);
 
 fn G() {
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+7]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR:   F({});
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-6]]:1: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR: fn F(generic _: type);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_function_generic_undefined.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(generic _: type);
+  // CHECK:STDERR:        · ───────────┬──────────
+  // CHECK:STDERR:        ·            ╰──┤ generic function declared here
+  // CHECK:STDERR:        ·               │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F({});
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: use of undefined generic function
+  // CHECK:STDERR:        ·      ┃        [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F({});
 }
@@ -79,9 +84,12 @@ fn G[_: type]() {}
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:7: error: expected identifier in field declaration [FieldNamedUnderscore]
-  // CHECK:STDERR:   var _: ();
-  // CHECK:STDERR:       ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_class.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var _: ();
+  // CHECK:STDERR:        ·       ━━┳━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected identifier in field declaration
+  // CHECK:STDERR:        ·            ┃        [FieldNamedUnderscore]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: ();
 }
@@ -90,24 +98,33 @@ class C {
 
 fn F() -> {} {
   let _: {} = {};
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+12]]:10: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+20]]:9
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+8]]:10: error: `return` statements must end with a `;` [ExpectedStatementSemi]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+14]]:9
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: `return` statements must end with a `;`
+  // CHECK:STDERR:        ·            ┃        [ExpectedStatementSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   return _;
-  // CHECK:STDERR:          ^
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return _;
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -120,18 +137,31 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.patt.bc9: %pattern_type.a96 = value_binding_pattern _ [concrete]
 // CHECK:STDOUT:   %_.patt.3b4: %pattern_type.a96 = ref_binding_pattern _ [concrete]
 // CHECK:STDOUT:   %_.var_patt.f52: %pattern_type.a96 = var_pattern %_.patt.3b4 [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %Destroy.Op.type: type = fn_type @Destroy.Op [concrete]
-// CHECK:STDOUT:   %Destroy.Op: %Destroy.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.6b7: %SubobjectDestroy.type = facet_value %empty_struct_type, (%custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.011: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6b7) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_struct_type, (%DestroyImpl.impl_witness.011, %custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -140,13 +170,11 @@ fn F() -> {} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_14: %empty_struct_type = converted @__global_init.%.loc4, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc4: %empty_struct_type = wrapper_binding _, %.loc4_14
+// CHECK:STDOUT:   %_: %empty_struct_type = wrapper_binding _, @__global_init.%.loc4_14.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc3]
 // CHECK:STDOUT:   }
@@ -155,7 +183,6 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc5: ref %empty_struct_type = wrapper_binding _, %_.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
@@ -179,8 +206,8 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.var: ref %empty_struct_type = var_storage %_.var_patt
 // CHECK:STDOUT:   %.loc9_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc9_16.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc9_3: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   assign %_.var, %.loc9_3
+// CHECK:STDOUT:   %.loc9_3.1: init %empty_struct_type = converted %.loc9_16.1, %.loc9_16.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   assign %_.var, %.loc9_3.1
 // CHECK:STDOUT:   %.loc9_11.1: type = splice_block %.loc9_11.3 [concrete = constants.%empty_struct_type] {
 // CHECK:STDOUT:     %.loc9_11.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc9_11.3: type = converted %.loc9_11.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
@@ -190,32 +217,40 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc9: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.3b4]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc9 [concrete = constants.%_.var_patt.f52]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.Op.bound: <bound method> = bound_method %_.var, constants.%Destroy.Op
-// CHECK:STDOUT:   %Destroy.Op.call: init %empty_tuple.type = call %Destroy.Op.bound(%_.var)
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%empty_struct_type, (constants.%DestroyImpl.impl_witness.011, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%empty_struct_type, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%empty_struct_type, (constants.%DestroyImpl.impl_witness.011, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc9_3.3: %Destroy.type = converted constants.%empty_struct_type, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%_.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.Op(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc4: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc4_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc4_14.2: %empty_struct_type = converted %.loc4_14.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_1: init %empty_struct_type = converted %.loc5_14.1, %.loc5_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%_.var, %.loc5_1
+// CHECK:STDOUT:   %_: ref %empty_struct_type = wrapper_binding _, file.%_.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- function.carbon
+// CHECK:STDOUT: --- function.carbon = $function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %_.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete]
+// CHECK:STDOUT:   %_.patt: %pattern_type = wrapper_binding_pattern _, %_.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
@@ -241,7 +276,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc4_10.1: type = splice_block %.loc4_10.3 [concrete = constants.%empty_struct_type] {
@@ -252,7 +287,7 @@ fn F() -> {} {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %_.param_patt: %pattern_type = value_param_pattern [concrete = constants.%_.param_patt]
-// CHECK:STDOUT:     %_.patt: %pattern_type = at_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt: %pattern_type = wrapper_binding_pattern _, %_.param_patt [concrete = constants.%_.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %_.param: %empty_struct_type = value_param call_param0
 // CHECK:STDOUT:     %.loc6_10.1: type = splice_block %.loc6_10.3 [concrete = constants.%empty_struct_type] {
@@ -281,11 +316,11 @@ fn F() -> {} {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- function_generic.carbon
+// CHECK:STDOUT: --- function_generic.carbon = $function_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -317,7 +352,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_15.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_15.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
@@ -359,11 +394,11 @@ fn F() -> {} {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_function_generic_undefined.carbon
+// CHECK:STDOUT: --- fail_function_generic_undefined.carbon = $fail_function_generic_undefined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -395,7 +430,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_15.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_15.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_17.1: type = splice_block %.loc4_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_15.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_15.1 (constants.%_)]
@@ -413,8 +448,8 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc14_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc14_7: type = converted %.loc14_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc19_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc19_7: type = converted %.loc19_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
@@ -430,11 +465,11 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc4_15.1 => constants.%empty_struct_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- function_implict.carbon
+// CHECK:STDOUT: --- function_implict.carbon = $function_implict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: type = symbolic_binding _, 0 [symbolic]
@@ -462,7 +497,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc4_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc4_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_9.1: type = splice_block %.loc4_9.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc4_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc4_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc4_7.1 (constants.%_)]
@@ -471,7 +506,7 @@ fn F() -> {} {
 // CHECK:STDOUT:     %_.patt.loc6_7.1: %pattern_type = symbolic_binding_pattern _, 0 [symbolic = %_.patt.loc6_7.2 (constants.%_.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc6_9.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %_.loc6_7.2: type = symbolic_binding _, 0 [symbolic = %_.loc6_7.1 (constants.%_)]
@@ -507,11 +542,13 @@ fn F() -> {} {
 // CHECK:STDOUT:   %_.loc6_7.1 => constants.%_
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class.carbon
+// CHECK:STDOUT: --- fail_class.carbon = $fail_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type._: type = struct_type {._: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type._ [concrete]
@@ -534,7 +571,10 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc9: %C.elem = field_decl _, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl _, element0, %.loc12_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc12_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %.loc12_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type._ [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -542,9 +582,10 @@ fn F() -> {} {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use.carbon
+// CHECK:STDOUT: --- fail_use.carbon = $fail_use
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

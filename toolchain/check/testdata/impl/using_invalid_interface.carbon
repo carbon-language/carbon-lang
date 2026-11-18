@@ -19,12 +19,18 @@ class ArgToI(T: I) {}
 
 interface IMisuse {
   let Arg: type;
-  // CHECK:STDERR: fail_invalid_interface.carbon:[[@LINE+7]]:18: error: cannot convert type `Arg` into type implementing `I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
-  // CHECK:STDERR:                  ^~~~~~~~~~~
-  // CHECK:STDERR: fail_invalid_interface.carbon:[[@LINE-7]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: class ArgToI(T: I) {}
-  // CHECK:STDERR:              ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_interface.carbon:[[@LINE+13]]:18
+  // CHECK:STDERR:        │ class ArgToI(T: I) {}
+  // CHECK:STDERR:        ·              ──┬─
+  // CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                   │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn Op(self) -> ArgToI(Arg);
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot convert type `Arg` into type implementing
+  // CHECK:STDERR:        ·                     ┃        `I`
+  // CHECK:STDERR:        ·                     ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn Op(self) -> ArgToI(Arg);
 }
@@ -35,14 +41,18 @@ library "[[@TEST_NAME]]";
 import library "invalid_interface";
 
 class C {
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:32: error: name `T` not found [NameNotFound]
-  // CHECK:STDERR:   impl as IMisuse where .Arg = T {
-  // CHECK:STDERR:                                ^
+  // CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+6]]:32
+  // CHECK:STDERR: ->     │   impl as IMisuse where .Arg = T {
+  // CHECK:STDERR:        ·                                ┳
+  // CHECK:STDERR:        ·                                ┗━━┫ error: name `T` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl as IMisuse where .Arg = T {
-    // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:34: error: name `T` not found [NameNotFound]
-    // CHECK:STDERR:     fn Op(unused self) -> ArgToI(T) {
-    // CHECK:STDERR:                                  ^
+    // CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+6]]:34
+    // CHECK:STDERR: ->     │     fn Op(unused self) -> ArgToI(T) {
+    // CHECK:STDERR:        ·                                  ┳
+    // CHECK:STDERR:        ·                                  ┗━━┫ error: name `T` not found [NameNotFound]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn Op(unused self) -> ArgToI(T) {
       return {};
@@ -50,27 +60,37 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+8]]:28: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
-// CHECK:STDERR:                            ^~~~~~
-// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-21]]:1: in import [InImport]
-// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+13]]:28
+// CHECK:STDERR: ->     │ fn F(generic T: IMisuse) { T.Op(); }
+// CHECK:STDERR:        ·                            ┳━━━━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: 0 arguments passed to function expecting
+// CHECK:STDERR:        ·                               ┃        1 argument
+// CHECK:STDERR:        ·                               ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_invalid_interface.carbon
+// CHECK:STDERR:        │   fn Op(self) -> ArgToI(Arg);
+// CHECK:STDERR:        ·   ─────────────┬─────────────
+// CHECK:STDERR:        ·                ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `IMisuse` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   F(c);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+7]]:3: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   F(c);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-10]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
-  // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │ fn F(generic T: IMisuse) { T.Op(); }
+  // CHECK:STDERR:        ·              ─────┬────
+  // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(c);
+  // CHECK:STDERR:        ·   ┳━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
+  // CHECK:STDERR:        ·   │  ┃        implementing `IMisuse`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(c);
 }
@@ -84,13 +104,19 @@ class ArgC {}
 
 class C {
   impl as IMisuse where .Arg = ArgC {
-    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:27: error: cannot convert type `ArgC` into type implementing `I` [ConversionFailureTypeToFacet]
-    // CHECK:STDERR:     fn Op(unused self) -> ArgToI(ArgC) {
-    // CHECK:STDERR:                           ^~~~~~~~~~~~
-    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-9]]:1: in import [InImport]
-    // CHECK:STDERR: fail_invalid_interface.carbon:5:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-    // CHECK:STDERR: class ArgToI(T: I) {}
-    // CHECK:STDERR:              ^~~~
+    // CHECK:STDERR:        ╭─┤ fail_using_invalid_interface.carbon:[[@LINE+14]]:27
+    // CHECK:STDERR: ->     │     fn Op(unused self) -> ArgToI(ArgC) {
+    // CHECK:STDERR:        ·                           ┳━━━━━━━━━━━
+    // CHECK:STDERR:        ·                           ┗━━┫ error: cannot convert type `ArgC` into type
+    // CHECK:STDERR:        ·                              ┃        implementing `I`
+    // CHECK:STDERR:        ·                              ┃        [ConversionFailureTypeToFacet]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR:        ├─┤ fail_invalid_interface.carbon
+    // CHECK:STDERR:        │ class ArgToI(T: I) {}
+    // CHECK:STDERR:        ·              ──┬─
+    // CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
+    // CHECK:STDERR:        ·                   │ [InitializingGenericParam]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn Op(unused self) -> ArgToI(ArgC) {
       return {};
@@ -98,27 +124,37 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+8]]:28: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
-// CHECK:STDERR:                            ^~~~~~
-// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-23]]:1: in import [InImport]
-// CHECK:STDERR: fail_invalid_interface.carbon:16:3: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR:   fn Op(self) -> ArgToI(Arg);
-// CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_using_invalid_interface.carbon:[[@LINE+13]]:28
+// CHECK:STDERR: ->     │ fn F(generic T: IMisuse) { T.Op(); }
+// CHECK:STDERR:        ·                            ┳━━━━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: 0 arguments passed to function expecting
+// CHECK:STDERR:        ·                               ┃        1 argument
+// CHECK:STDERR:        ·                               ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_invalid_interface.carbon
+// CHECK:STDERR:        │   fn Op(self) -> ArgToI(Arg);
+// CHECK:STDERR:        ·   ─────────────┬─────────────
+// CHECK:STDERR:        ·                ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;
-  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+10]]:3: error: cannot implicitly convert non-type value of type `C` into type implementing `IMisuse` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   F(c);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+7]]:3: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   F(c);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-10]]:14: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(generic T: IMisuse) { T.Op(); }
-  // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_using_invalid_interface.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │ fn F(generic T: IMisuse) { T.Op(); }
+  // CHECK:STDERR:        ·              ─────┬────
+  // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(c);
+  // CHECK:STDERR:        ·   ┳━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
+  // CHECK:STDERR:        ·   │  ┃        implementing `IMisuse`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(c);
 }

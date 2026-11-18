@@ -14,9 +14,13 @@ var x: i32 = ref y as i32;
 
 // --- fail_if_ref.carbon
 
-// CHECK:STDERR: fail_if_ref.carbon:[[@LINE+4]]:18: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
-// CHECK:STDERR: var x: i32 = ref if b then c else d;
-// CHECK:STDERR:                  ^~
+// CHECK:STDERR:        ╭─┤ fail_if_ref.carbon:[[@LINE+8]]:18
+// CHECK:STDERR: ->     │ var x: i32 = ref if b then c else d;
+// CHECK:STDERR:        ·                  ┳━
+// CHECK:STDERR:        ·                  ┗━━┫ error: parentheses are required around this unary `if`
+// CHECK:STDERR:        ·                     ┃        operator
+// CHECK:STDERR:        ·                     ┃        [UnaryOperatorRequiresParentheses]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: i32 = ref if b then c else d;
 var x: i32 = ref (if b then c else d);

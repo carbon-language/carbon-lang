@@ -555,9 +555,10 @@ fn ReturnVarWithControlFlow() -> Point {
 We propose a set of restrictions to give simple and understandable behavior
 which remains reasonably expressive.
 
-1.  Once a `returned var` is in scope, another `returned var` cannot be declared.
-2.  Any `return` with a `returned var` in scope must be `return var;` and returns
-    the declared `returned var`.
+1.  Once a `returned var` is in scope, another `returned var` cannot be
+    declared.
+2.  Any `return` with a `returned var` in scope must be `return var;` and
+    returns the declared `returned var`.
 3.  If control flow exits the scope of a `returned var` in any way other than a
     `return var;`, it ends the lifetime of the declared `returned var` exactly
     like it would end the lifetime of a `var` declaration.

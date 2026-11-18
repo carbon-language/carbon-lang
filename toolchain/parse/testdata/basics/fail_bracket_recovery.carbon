@@ -11,22 +11,42 @@
 // This is a valid parse tree even though the lex errors.
 fn F() {
   var a: array(i32, 3) = (0, 1, 2);
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:5: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:   (a[1) + 1;
-  // CHECK:STDERR:     ^
+  // CHECK:STDERR:        ╭─┤ fail_bracket_recovery.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   (a[1) + 1;
+  // CHECK:STDERR:        ·     ┳ ┬
+  // CHECK:STDERR:        ·     ┗━━━━┫ error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR:        ·       │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·       ╰────┤ possibly missing `]` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (a[1) + 1;
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+12]]:15: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:        ╭─┤ fail_bracket_recovery.carbon:[[@LINE+28]]:15
+  // CHECK:STDERR: ->     │   var x: {.y: (} = {.y = ((};
+  // CHECK:STDERR:        ·               ╻╷
+  // CHECK:STDERR:        ·               ┗━━━┫ error: opening symbol without a corresponding closing symbol
+  // CHECK:STDERR:        ·                │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+8]]:26: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
-  // CHECK:STDERR:                          ^
+  // CHECK:STDERR:        ╭─┤ fail_bracket_recovery.carbon:[[@LINE+20]]:26
+  // CHECK:STDERR: ->     │   var x: {.y: (} = {.y = ((};
+  // CHECK:STDERR:        ·                          ┳ ┬
+  // CHECK:STDERR:        ·                          ┗━━━━┫ error: opening symbol without a corresponding
+  // CHECK:STDERR:        ·                            │  ┃        closing symbol
+  // CHECK:STDERR:        ·                            │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                            ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                                 │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_bracket_recovery.carbon:[[@LINE+4]]:27: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:   var x: {.y: (} = {.y = ((};
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR:        ╭─┤ fail_bracket_recovery.carbon:[[@LINE+10]]:27
+  // CHECK:STDERR: ->     │   var x: {.y: (} = {.y = ((};
+  // CHECK:STDERR:        ·                           ╻╷
+  // CHECK:STDERR:        ·                           ┗━━━┫ error: opening symbol without a corresponding
+  // CHECK:STDERR:        ·                            │  ┃        closing symbol
+  // CHECK:STDERR:        ·                            │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                            ╰────┤ possibly missing `)` here
+  // CHECK:STDERR:        ·                                 │ [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: {.y: (} = {.y = ((};
 }

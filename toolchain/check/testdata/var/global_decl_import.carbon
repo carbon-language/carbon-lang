@@ -28,9 +28,10 @@ fn G() -> {.v: ()} {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import.carbon
+// CHECK:STDOUT: --- import.carbon = $import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.v: type = struct_type {.v: %empty_tuple.type} [concrete]

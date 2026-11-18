@@ -34,9 +34,10 @@ let pwa: Cpp.A* = &Cpp.Wrap.r#var(Cpp.A);
 let pwb: Cpp.B* = &Cpp.Wrap.r#var(Cpp.B);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_var_template.carbon
+// CHECK:STDOUT: --- use_var_template.carbon = $use_var_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %ptr.25f: type = ptr_type %A [concrete]
 // CHECK:STDOUT:   %pattern_type.1fa: type = pattern_type %ptr.25f [concrete]

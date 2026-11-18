@@ -10,12 +10,16 @@
 
 fn A();
 
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE+7]]:1: error: the `package` declaration must be the first non-comment line [PackageTooLate]
-// CHECK:STDERR: package B;
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_after_decl.carbon:[[@LINE-5]]:1: note: first non-comment line is here [FirstNonCommentLine]
-// CHECK:STDERR: fn A();
-// CHECK:STDERR: ^~
+// CHECK:STDERR:        ╭─┤ fail_after_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn A();
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ package B;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: the `package` declaration must be the first non-comment line
+// CHECK:STDERR:        ·       ┃        [PackageTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package B;
 

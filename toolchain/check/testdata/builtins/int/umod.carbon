@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/array.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -50,21 +50,26 @@ fn Mod(a: i32, b: i32) -> i32 = "int.umod";
 
 // Remainder of division by zero is not defined.
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let a: i32 = Mod(1, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_div_by_zero.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let a: i32 = Mod(1, 0);
+// CHECK:STDERR:        ·              ━━━━┳━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: i32 = Mod(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let b: i32 = Mod(0, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_div_by_zero.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let b: i32 = Mod(0, 0);
+// CHECK:STDERR:        ·              ━━━━┳━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: division by zero [CompileTimeDivisionByZero]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: i32 = Mod(0, 0);
 
-// CHECK:STDOUT: --- int_div.carbon
+// CHECK:STDOUT: --- int_div.carbon = $int_div
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Mod.type: type = fn_type @Mod [concrete]

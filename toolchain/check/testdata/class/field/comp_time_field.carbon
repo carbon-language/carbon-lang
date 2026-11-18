@@ -17,15 +17,24 @@
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:15: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let generic A: type = Class;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_let.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic A: type = Class;
+  // CHECK:STDERR:        ·               ━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        ``let` compile time binding outside function or interface`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic A: type = Class;
 
-  // CHECK:STDERR: fail_let.carbon:[[@LINE+4]]:7: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-  // CHECK:STDERR:   let template B: type = Class;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_let.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR: ->     │   let template B: type = Class;
+  // CHECK:STDERR:        ·       ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·          ┃        ``let` compile time binding outside function or interface`
+  // CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let template B: type = Class;
 }
@@ -35,31 +44,41 @@ class Class {
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+8]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   var generic C: type = Class;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_var.carbon:[[@LINE+15]]:15
+  // CHECK:STDERR: ->     │   var generic C: type = Class;
+  // CHECK:STDERR:        ·               ┳━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                  ┃        `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·                  ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:23: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var generic C: type = Class;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR:        ╭─┤ fail_var.carbon:[[@LINE+7]]:23
+  // CHECK:STDERR: ->     │   var generic C: type = Class;
+  // CHECK:STDERR:        ·                       ┳
+  // CHECK:STDERR:        ·                       ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                          ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var generic C: type = Class;
 
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:24: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var template D: type = Class;
-  // CHECK:STDERR:                        ^
+  // CHECK:STDERR:        ╭─┤ fail_var.carbon:[[@LINE+7]]:24
+  // CHECK:STDERR: ->     │   var template D: type = Class;
+  // CHECK:STDERR:        ·                        ┳
+  // CHECK:STDERR:        ·                        ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                           ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var template D: type = Class;
 }
 
 var x: Class = {};
 
-// CHECK:STDOUT: --- fail_let.carbon
+// CHECK:STDOUT: --- fail_let.carbon = $fail_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %A.patt: %pattern_type = value_binding_pattern A [concrete]
 // CHECK:STDOUT:   %B.patt: %pattern_type = value_binding_pattern B [concrete]
@@ -75,21 +94,19 @@ var x: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Class.ref.loc9: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc9_18.1: type = splice_block %.loc9_18.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc9: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc9_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc14_18.1: type = splice_block %.loc14_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc14: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc14_18.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc9
+// CHECK:STDOUT:   %A: type = wrapper_binding A, @__global_init.%Class.ref.loc14
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete = constants.%A.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc15: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc15_19.1: type = splice_block %.loc15_19.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc15: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc15_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc24_19.1: type = splice_block %.loc24_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc24: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc24_19.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc15
+// CHECK:STDOUT:   %B: type = wrapper_binding B, @__global_init.%Class.ref.loc24
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete = constants.%B.patt]
 // CHECK:STDOUT:   }
@@ -103,9 +120,17 @@ var x: Class = {};
 // CHECK:STDOUT:   .B = %B
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_var.carbon
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Class.ref.loc14: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %Class.ref.loc24: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_var.carbon = $fail_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -26,6 +26,7 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
                                 std::optional<Lex::TokenIndex> template_token,
                                 std::optional<Lex::TokenIndex> generic_token,
                                 std::optional<Lex::TokenIndex> runtime_token,
+                                std::optional<Lex::TokenIndex> self_token,
                                 bool& redundant_modifier) -> bool {
   // `template`/`generic` force a generic binding, `runtime` forces a runtime
   // binding, and otherwise the context's default applies.
@@ -35,7 +36,11 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
   } else if (runtime_token) {
     resolved_generic = false;
   } else {
-    resolved_generic = state.binding_context != BindingContext::ExplicitParam;
+    // For `self`, the default is always `runtime` so that `[ref self]` is
+    // diagnosed for being in the wrong place, not for being a generic ref
+    // binding.
+    resolved_generic =
+        state.binding_context != BindingContext::ExplicitParam && !self_token;
   }
 
   // A form binding's phase is fixed, so phase keywords don't apply to it, and
@@ -72,15 +77,16 @@ auto HandleBindingPattern(Context& context) -> void {
   auto state = context.PopState();
 
   // Handle an invalid pattern introducer for parameters and variables.
-  auto on_error = [&](bool expected_name, bool recover_as_raw = false) {
+  auto on_error = [&](DiagnosticLoc loc, bool expected_name,
+                      bool recover_as_raw = false) {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(
           ExpectedBindingPattern, Error,
           "expected {0:name|`:` or `:?`} in binding pattern"
           "{1:; prefix reserved word with `r#` to form a valid identifier|}",
           Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
-      context.emitter().Emit(*context.position(), ExpectedBindingPattern,
-                             expected_name, recover_as_raw);
+      context.emitter().Emit(loc, ExpectedBindingPattern, expected_name,
+                             recover_as_raw);
       state.has_error = !recover_as_raw;
     }
   };
@@ -128,10 +134,9 @@ auto HandleBindingPattern(Context& context) -> void {
     if (state.in_field_shorthand_pattern) {
       CARBON_DIAGNOSTIC(
           AnonymousBindingInStructPattern, Error,
-          "Anonymous binding found in struct pattern. Use `.field = "
+          "anonymous binding found in struct pattern; use `.field = "
           "_: field_type` or `unused field: field_type`");
-      context.emitter().Emit(*context.position(),
-                             AnonymousBindingInStructPattern);
+      context.emitter().Emit(*underscore, AnonymousBindingInStructPattern);
       state.has_error = true;
     }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
@@ -142,21 +147,27 @@ auto HandleBindingPattern(Context& context) -> void {
     // such as a numeric type literal or a keyword. For error recovery, convert
     // the token to an identifier, as we can be confident that a word in this
     // position was intended to be a declared name.
+    auto word = context.Consume();
     auto word_as_identifier =
-        context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
-            context.Consume());
+        context.tokens().AddPostLexingRecoveryTokenAsIdentifier(word);
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         word_as_identifier);
-    on_error(/*expected_name=*/true, /*recover_as_raw*/ true);
+    on_error(word, /*expected_name=*/true, /*recover_as_raw*/ true);
   } else {
+    // The missing name goes after the modifiers before it. With none, the
+    // binding starts at the token found in the name's place.
+    auto missing_name_loc = state.token == *context.position()
+                                ? DiagnosticLoc(*context.position())
+                                : context.PointAfterPreviousToken();
     // Add a placeholder for the name.
     context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
                         *context.position(), /*has_error=*/true);
-    on_error(/*expected_name=*/true);
+    on_error(missing_name_loc, /*expected_name=*/true);
   }
 
   auto token_kind = context.PositionKind();
   if (!token_kind.is_binding_pattern_operator()) {
+    // TODO: We should allow omitting the type in a generic `self` binding.
     if (self_token && !template_token && !generic_token && !runtime_token) {
       // A `self` binding may omit its type; checking supplies the implicit
       // `Self` type. There is no type node, so this produces a
@@ -171,7 +182,7 @@ auto HandleBindingPattern(Context& context) -> void {
       }
       return;
     }
-    on_error(/*expected_name=*/false);
+    on_error(context.PointAfterPreviousToken(), /*expected_name=*/false);
     // Add a substitute for the identifier name and virtual type-start nodes.
     context.AddInvalidParse(*context.position());
     context.AddInvalidParse(*context.position());
@@ -186,19 +197,9 @@ auto HandleBindingPattern(Context& context) -> void {
   bool is_form = token_kind == Lex::TokenKind::ColonQuestion;
 
   bool redundant_modifier = false;
-  bool resolved_generic =
-      ResolveBindingPhase(context, state, is_form, template_token,
-                          generic_token, runtime_token, redundant_modifier);
-
-  // `self` is always a runtime receiver binding; its phase never comes from the
-  // enclosing context's default. Forcing runtime here means that a misplaced
-  // `self` (in a deduced `[]` list or a compile-time entity's parameters, where
-  // the default would otherwise be generic) is reported by `check` as a
-  // misplaced `self` — the relevant error — rather than also producing a
-  // `ref`-on-generic error from that default.
-  if (self_token) {
-    resolved_generic = false;
-  }
+  bool resolved_generic = ResolveBindingPhase(
+      context, state, is_form, template_token, generic_token, runtime_token,
+      self_token, redundant_modifier);
 
   // `template` and `ref` wrap the binding name, and each is only meaningful on
   // a particular kind of binding: `template` on a generic binding, and `ref` on
@@ -285,7 +286,9 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
 
   auto node_kind = NodeKind::InvalidParse;
   if (state.in_var_pattern) {
-    node_kind = NodeKind::VarBindingPattern;
+    node_kind = state.in_field_shorthand_pattern
+                    ? NodeKind::StructPatternFieldVarBindingPattern
+                    : NodeKind::VarBindingPattern;
     if (finish_kind != StateKind::BindingPatternFinishAsRegular) {
       CARBON_DIAGNOSTIC(NonRegularBindingInVarDecl, Error,
                         "found {0:generic|`:?`} binding inside `var` pattern",
@@ -301,7 +304,9 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
         node_kind = NodeKind::CompileTimeBindingPattern;
         break;
       case StateKind::BindingPatternFinishAsRegular:
-        node_kind = NodeKind::LetBindingPattern;
+        node_kind = state.in_field_shorthand_pattern
+                        ? NodeKind::StructPatternFieldLetBindingPattern
+                        : NodeKind::LetBindingPattern;
         break;
       case StateKind::BindingPatternFinishAsForm:
         node_kind = NodeKind::FormBindingPattern;

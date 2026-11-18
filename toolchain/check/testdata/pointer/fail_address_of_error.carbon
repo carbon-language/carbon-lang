@@ -13,25 +13,32 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:4: error: name `undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   &undeclared;
-  // CHECK:STDERR:    ^~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   &undeclared;
+  // CHECK:STDERR:        ·    ━━━━━┳━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+8]]:6: error: name `undeclared` not found [NameNotFound]
-  // CHECK:STDERR:   &(&undeclared);
-  // CHECK:STDERR:      ^~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+12]]:6
+  // CHECK:STDERR: ->     │   &(&undeclared);
+  // CHECK:STDERR:        ·      ━━━━━┳━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   &(&undeclared);
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   &(&undeclared);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &(&undeclared);
 }
 
-// CHECK:STDOUT: --- fail_address_of_error.carbon
+// CHECK:STDOUT: --- fail_address_of_error.carbon = $fail_address_of_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Test.type: type = fn_type @Test [concrete]
 // CHECK:STDOUT:   %Test: %Test.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -55,11 +62,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc20: <error> = addr_of %undeclared.ref.loc20 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc29: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_5: <error> = addr_of %undeclared.ref.loc29 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc29_3: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc22: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc22: <error> = addr_of %undeclared.ref.loc22 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc35: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc35_5: <error> = addr_of %undeclared.ref.loc35 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc35_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

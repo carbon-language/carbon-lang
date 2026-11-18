@@ -196,10 +196,7 @@ def main() -> None:
         bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flag
     )
 
-    print(
-        "Generating compile_commands.json (may take a few minutes)...",
-        flush=True,
-    )
+    print("Generating compile_commands.json...", flush=True)
     subprocess.run(
         [
             bazel,
@@ -209,6 +206,8 @@ def main() -> None:
         + [
             "//:generate_compile_commands",
             "--",
+            "//... except attr(tags, '\\bmanual\\b', //...) "
+            "+ //utils/tree_sitter:test_runner",
         ]
         + [f"--extra_aquery_arg={arg}" for arg in args.extra_bazel_flag]
     )

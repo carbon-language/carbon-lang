@@ -102,11 +102,14 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
             absolute_output_path.parent_path());
         return absolute_output_path.string();
       });
-  CARBON_CHECK(init_result,
-               "Failed to initialize compiler driver for Carbon prelude.");
+  if (!init_result) {
+    return Error("Failed to initialize compiler driver for Carbon prelude.");
+  }
 
   auto compile_result = compile_driver_.Compile(*driver_env_);
-  CARBON_CHECK(compile_result.success, "Failed to compile Carbon prelude.");
+  if (!compile_result.success) {
+    return Error("Failed to compile Carbon prelude.");
+  }
 
   result_ = (*std::move(runtimes_builder_)).Commit();
   return std::move(result_);

@@ -4,7 +4,6 @@
 
 #include "toolchain/check/facet_type.h"
 
-#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -43,10 +42,10 @@ auto FacetTypeFromNamedConstraint(Context& context,
           .declared_facet_type_id = declared_facet_type_id};
 }
 
-auto GetImplWitnessAccessWithoutSubstitution(Context& context,
+auto GetImplWitnessAccessWithoutSubstitution(const SemIR::File& sem_ir,
                                              SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (auto inst = context.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
+  if (auto inst = sem_ir.insts().TryGetAs<SemIR::ImplWitnessAccessSubstituted>(
           inst_id)) {
     return inst->impl_witness_access_id;
   }
@@ -341,7 +340,7 @@ static auto IsPeriodSelfAccess(Context& context, SemIR::InstId inst_id)
 static auto TryGetRewriteAccess(Context& context, SemIR::InstId inst_id)
     -> std::optional<SemIR::KnownInstId<SemIR::ImplWitnessAccess>> {
   auto access_without_subst_id =
-      GetImplWitnessAccessWithoutSubstitution(context, inst_id);
+      GetImplWitnessAccessWithoutSubstitution(context.sem_ir(), inst_id);
 
   // When a facet type is first constructed, the LHS of every rewrite is an
   // access into `.Self`. But because we resolve rewrites on every evaluation,
@@ -426,7 +425,7 @@ auto ResolveFacetTypeRewriteConstraints(
           // location along with them in the rewrite constraints.
           context.emitter().Emit(loc_id, AssociatedConstantWithDifferentValues,
                                  GetImplWitnessAccessWithoutSubstitution(
-                                     context, constraint.lhs_id),
+                                     context.sem_ir(), constraint.lhs_id),
                                  source_order1, source_order2);
         }
         return false;
@@ -465,29 +464,6 @@ auto ResolveFacetTypeRewriteConstraints(
   rewrites.erase(rewrites.begin() + keep_size, rewrites.end());
 
   return true;
-}
-
-auto GetEmptyFacetType(Context& context) -> SemIR::TypeId {
-  SemIR::DeclaredFacetTypeId declared_facet_type_id =
-      context.declared_facet_types().Add(SemIR::DeclaredFacetType{});
-  auto const_id = EvalOrAddInst<SemIR::FacetType>(
-      context, SemIR::LocId::None,
-      {.type_id = SemIR::TypeType::TypeId,
-       .declared_facet_type_id = declared_facet_type_id});
-  return context.types().GetTypeIdForTypeConstantId(const_id);
-}
-
-auto GetConstantFacetValueForType(Context& context,
-                                  SemIR::TypeInstId type_inst_id)
-    -> SemIR::ConstantId {
-  // We use an empty facet type because values of type `type` do not provide any
-  // witnesses of their own.
-  auto type_facet_type = GetEmptyFacetType(context);
-  return EvalOrAddInst<SemIR::FacetValue>(
-      context, SemIR::LocId::None,
-      {.type_id = type_facet_type,
-       .type_inst_id = type_inst_id,
-       .witnesses_block_id = SemIR::InstBlockId::Empty});
 }
 
 auto GetConstantFacetValueForTypeAndInterface(
@@ -550,7 +526,7 @@ auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
 
    private:
     bool* found_;
-    Set<SemIR::InstId> searched_;
+    Set<SemIR::InstId, 16> searched_;
   };
 
   if (!const_id.is_constant()) {

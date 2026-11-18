@@ -11,6 +11,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/Support/raw_ostream.h"
+#include "testing/base/benchmark_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/base/install_paths_test_helpers.h"
@@ -175,7 +176,7 @@ static auto BM_PreludeCompile(benchmark::State& state) -> void {
   for (auto _ : state) {
     bool success = bench.RunCompile();
     CARBON_CHECK(success);
-    benchmark::DoNotOptimize(success);
+    DoNotOptimize(success);
   }
 }
 

@@ -11,23 +11,31 @@
 // api.carbon
 
 class C {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR:   library "foo";
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-4]]:1: note: first non-comment line is here [FirstNonCommentLine]
-  // CHECK:STDERR: class C {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   library "foo";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·         ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   library "foo";
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR:   library "foo";
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-15]]:1: note: first non-comment line is here [FirstNonCommentLine]
-  // CHECK:STDERR: class C {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   library "foo";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·         ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   library "foo";
 }
@@ -35,23 +43,31 @@ fn F() {
 // impl.carbon
 
 class C {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR:   impl library "foo";
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-28]]:1: note: first non-comment line is here [FirstNonCommentLine]
-  // CHECK:STDERR: class C {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl library "foo";
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·        ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl library "foo";
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+7]]:3: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR:   impl library "foo";
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-39]]:1: note: first non-comment line is here [FirstNonCommentLine]
-  // CHECK:STDERR: class C {
-  // CHECK:STDERR: ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl library "foo";
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·        ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl library "foo";
 }

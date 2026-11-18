@@ -9,17 +9,22 @@
 #include <optional>
 #include <utility>
 
+#include "common/checked_save_and_restore.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/base/value_ids.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/context.h"
 #include "toolchain/check/cpp/constant.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
@@ -29,6 +34,7 @@
 #include "toolchain/diagnostics/diagnostic.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/lex/token_kind.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
@@ -72,14 +78,11 @@ struct LocalEvalInfo {
 // `context` must not be null.
 class EvalContext {
  public:
-  explicit EvalContext(
-      Context* context, SemIR::LocId fallback_loc_id,
-      SemIR::SpecificId specific_id = SemIR::SpecificId::None,
-      std::optional<SpecificEvalInfo> specific_eval_info = std::nullopt)
+  explicit EvalContext(Context* context, SemIR::LocId fallback_loc_id,
+                       SemIR::SpecificId specific_id = SemIR::SpecificId::None)
       : context_(context),
         fallback_loc_id_(fallback_loc_id),
-        specific_id_(specific_id),
-        specific_eval_info_(specific_eval_info) {}
+        specific_id_(specific_id) {}
 
   EvalContext(const EvalContext&) = delete;
   auto operator=(const EvalContext&) -> EvalContext& = delete;
@@ -152,30 +155,6 @@ class EvalContext {
     return constant_values().Get(args[binding_index]);
   }
 
-  // Given information about a symbolic constant, determine its value in the
-  // currently-being-evaluated eval block, if it refers to that eval block. If
-  // we can't find a value in this way, returns `None`.
-  auto GetInEvaluatedSpecific(const SemIR::SymbolicConstant& symbolic_info)
-      -> SemIR::ConstantId {
-    if (!specific_eval_info_ || !symbolic_info.index.has_value()) {
-      return SemIR::ConstantId::None;
-    }
-
-    CARBON_CHECK(
-        symbolic_info.generic_id == specifics().Get(specific_id_).generic_id,
-        "Instruction has constant operand in wrong generic");
-    if (symbolic_info.index.region() != specific_eval_info_->region) {
-      return SemIR::ConstantId::None;
-    }
-
-    auto inst_id = specific_eval_info_->values[symbolic_info.index.index()];
-    CARBON_CHECK(inst_id.has_value(),
-                 "Forward reference in eval block: index {0} referenced "
-                 "before evaluation",
-                 symbolic_info.index.index());
-    return constant_values().Get(inst_id);
-  }
-
   // Gets the constant value of the specified instruction in this context.
   auto GetConstantValue(SemIR::InstId inst_id) -> SemIR::ConstantId {
     auto const_id = constant_values().GetAttached(inst_id);
@@ -191,41 +170,11 @@ class EvalContext {
       return const_id;
     }
 
-    if (!const_id.is_symbolic()) {
-      return const_id;
-    }
-
-    // While resolving a specific, map from previous instructions in the eval
-    // block into their evaluated values. These values won't be present on the
-    // specific itself yet, so `GetConstantValueInSpecific` won't be able to
-    // find them.
-    const auto& symbolic_info = constant_values().GetSymbolicConstant(const_id);
-    if (auto eval_block_const_id = GetInEvaluatedSpecific(symbolic_info);
-        eval_block_const_id.has_value()) {
-      return eval_block_const_id;
-    }
-
     return GetConstantValueInSpecific(sem_ir(), specific_id_, inst_id);
   }
 
   // Gets the type of the specified instruction in this context.
   auto GetTypeOfInst(SemIR::InstId inst_id) -> SemIR::TypeId {
-    auto type_id = insts().GetAttachedType(inst_id);
-    if (!type_id.is_symbolic()) {
-      return type_id;
-    }
-
-    // While resolving a specific, map from previous instructions in the eval
-    // block into their evaluated values. These values won't be present on the
-    // specific itself yet, so `GetTypeOfInstInSpecific` won't be able to
-    // find them.
-    const auto& symbolic_info =
-        constant_values().GetSymbolicConstant(types().GetConstantId(type_id));
-    if (auto eval_block_const_id = GetInEvaluatedSpecific(symbolic_info);
-        eval_block_const_id.has_value()) {
-      return types().GetTypeIdForTypeConstantId(eval_block_const_id);
-    }
-
     return GetTypeOfInstInSpecific(sem_ir(), specific_id_, inst_id);
   }
 
@@ -272,6 +221,8 @@ class EvalContext {
 
   auto sem_ir() -> SemIR::File& { return context().sem_ir(); }
 
+  auto specific_id() -> SemIR::SpecificId { return specific_id_; }
+
   auto emitter() -> DiagnosticEmitterBase& { return context().emitter(); }
 
  protected:
@@ -295,9 +246,6 @@ class EvalContext {
   SemIR::LocId fallback_loc_id_;
   // The specific that we are evaluating within.
   SemIR::SpecificId specific_id_;
-  // If we are currently evaluating an eval block for `specific_id_`,
-  // information about that evaluation.
-  std::optional<SpecificEvalInfo> specific_eval_info_;
   // If we are currently evaluating within a local scope, values of local
   // instructions that have already been evaluated. This is here rather than in
   // `FunctionEvalContext` so we can reference it from `GetConstantValue`.
@@ -431,6 +379,19 @@ static auto MakeIntResult(Context& context, SemIR::TypeId type_id,
   return MakeIntResult(context, type_id, result);
 }
 
+// Converts a Real into a ConstantId.
+static auto MakeFloatLiteralResult(Context& context, Real real)
+    -> SemIR::ConstantId {
+  auto real_id = context.reals().Add(real);
+  return MakeConstantResult(
+      context,
+      SemIR::FloatLiteralValue{
+          .type_id =
+              GetSingletonType(context, SemIR::FloatLiteralType::TypeInstId),
+          .real_id = real_id},
+      Phase::Concrete);
+}
+
 // Converts an APFloat value into a ConstantId.
 static auto MakeFloatResult(Context& context, SemIR::TypeId type_id,
                             llvm::APFloat value) -> SemIR::ConstantId {
@@ -457,12 +418,6 @@ static auto MakeFacetTypeResult(
 // with constant phase, and if so, returns the corresponding constant value.
 // Overloads are provided for different kinds of ID. `RequireConstantValue` does
 // the same, but produces an error diagnostic if the input is not constant.
-
-// AbsoluteInstId can not have its values substituted, so this overload is
-// deleted. This prevents conversion to InstId.
-static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::AbsoluteInstId inst_id, Phase* phase)
-    -> SemIR::InstId = delete;
 
 // If the given instruction is constant, returns its constant value.
 static auto GetConstantValue(EvalContext& eval_context, SemIR::InstId inst_id,
@@ -532,6 +487,10 @@ static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::MetaInstId inst_id, Phase* phase)
     -> SemIR::MetaInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
   Phase inner_phase = Phase::Concrete;
   if (auto const_inst_id =
           GetConstantValue(eval_context, SemIR::InstId(inst_id), &inner_phase);
@@ -556,11 +515,24 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandDependence(eval_context.context(), inst_id) ==
+  if (OperandDependence(eval_context.sem_ir(), inst_id) ==
       SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
   return inst_id;
+}
+
+static auto GetConstantValue(EvalContext& eval_context,
+                             SemIR::MetaInstBlockId inst_block_id, Phase* phase)
+    -> SemIR::MetaInstBlockId {
+  auto inst_ids = eval_context.inst_blocks().Get(inst_block_id);
+  llvm::SmallVector<SemIR::InstId> new_inst_ids;
+  for (auto inst_id : inst_ids) {
+    new_inst_ids.push_back(
+        GetConstantValue(eval_context, SemIR::MetaInstId{inst_id}, phase));
+  }
+
+  return eval_context.inst_blocks().Add(new_inst_ids);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -596,12 +568,6 @@ static auto GetTypeOfInst(EvalContext& eval_context, SemIR::InstId inst_id,
                                 eval_context.types().GetConstantId(type_id)));
   return type_id;
 }
-
-// AbsoluteInstBlockId can not have its values substituted, so this overload is
-// deleted. This prevents conversion to InstBlockId.
-static auto GetConstantValue(EvalContext& eval_context,
-                             SemIR::AbsoluteInstBlockId inst_block_id,
-                             Phase* phase) -> SemIR::InstBlockId = delete;
 
 // If the given instruction block contains only constants, returns a
 // corresponding block of those values. Ignores the instructions in the
@@ -694,21 +660,41 @@ static auto GetConstantValue(EvalContext& eval_context,
     return SemIR::SpecificId::None;
   }
 
-  // Generally, when making a new specific, it's done through MakeSpecific(),
-  // which will ensure the declaration is resolved.
-  //
-  // However, the SpecificId returned here is intentionally left without its
-  // declaration resolved. Imported instructions with SpecificIds should not
-  // have the specific's declaration resolved, but other instructions which
-  // include a new SpecificId should.
-  //
-  // The resolving of the specific's declaration will be ensured later when
-  // evaluating the instruction containing the SpecificId.
-  if (args_id == specific.args_id) {
-    return specific_id;
+  auto result_id = specific_id;
+
+  // If the args are unchanged, we can reuse the specific ID. However, we still
+  // have to resolve the specific because it may have been produced by `Subst`,
+  // which doesn't resolve specifics.
+  // TODO: consider finding a way to have `Subst` resolve the specifics it
+  // creates.
+  if (args_id != specific.args_id) {
+    // When modifying a non-`identified` specific during identify, mark the new
+    // specific as `identified` too. If modifying an `identified` specific
+    // outside of identify, it may contain `IdentifiedWitness` insts so the new
+    // specific must keep the `identified` marker.
+    bool identified =
+        eval_context.context().eval_impl_lookup_to_identified_witness() ||
+        specific.identified;
+    result_id = eval_context.context().specifics().GetOrAdd(
+        specific.generic_id, args_id, identified);
   }
-  return eval_context.context().specifics().GetOrAdd(specific.generic_id,
-                                                     args_id);
+
+  const auto& generic = eval_context.generics().Get(specific.generic_id);
+  if (result_id == generic.self_specific_id ||
+      // If the generic doesn't yet have a self-specific, the specific we're
+      // currently handling must be the in-progress self-specific.
+      !generic.self_specific_id.has_value()) {
+    // Impl witness table construction happens before its generic decl is
+    // finished, in order to make the table's instructions dependent
+    // instructions of the Impl's generic. But those instructions can refer
+    // to the generic's self specific. We can not resolve the specific
+    // declaration for the self specific until the generic is finished, but
+    // it is explicitly resolved at that time in `FinishGenericDecl()`.
+    return result_id;
+  }
+  ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
+                      result_id);
+  return result_id;
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -806,30 +792,26 @@ static auto GetConstantDeclaredFacetType(EvalContext& eval_context,
                  &self_phase)}});
   }
 
-  // Rewrite constraints are resolved first before replacing them with their
-  // canonical instruction, so that in a `WhereExpr` we can work with the
-  // `ImplWitnessAccess` references to `.Self` on the LHS of the constraints
-  // rather than the value of the associated constant they reference.
-  //
-  // This also implies that we may find `ImplWitnessAccessSubstituted`
-  // instructions in the LHS and RHS of these constraints, which are preserved
-  // to maintain them as an unresolved reference to an associated constant, but
-  // which must be handled gracefully during resolution. They will be replaced
-  // with the constant value of the `ImplWitnessAccess` below when they are
-  // substituted with a constant value.
-  declared_facet_type.rewrite_constraints = orig.rewrite_constraints;
+  // The rewrite constraints may not be fully resolved yet, so there may be
+  // `ImplWitnessAccessSubstituted` insts on the LHS that we need to look
+  // through in order to constant-evaluate correctly.
+  declared_facet_type.rewrite_constraints.reserve(
+      orig.rewrite_constraints.size());
+  for (const auto& rewrite : orig.rewrite_constraints) {
+    declared_facet_type.rewrite_constraints.push_back(
+        {.lhs_id = RequireConstantValue(
+             eval_context,
+             GetImplWitnessAccessWithoutSubstitution(
+                 eval_context.context().sem_ir(), rewrite.lhs_id),
+             &self_phase),
+         .rhs_id =
+             RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase)});
+  }
+
   if (!ResolveFacetTypeRewriteConstraints(
           eval_context.context(), loc_id,
           declared_facet_type.rewrite_constraints)) {
     *phase = Phase::UnknownDueToError;
-  }
-
-  for (auto& rewrite : declared_facet_type.rewrite_constraints) {
-    auto lhs_id =
-        RequireConstantValue(eval_context, rewrite.lhs_id, &self_phase);
-    auto rhs_id =
-        RequireConstantValue(eval_context, rewrite.rhs_id, &self_phase);
-    rewrite = {.lhs_id = lhs_id, .rhs_id = rhs_id};
   }
 
   // Update phase, ignoring `.Self` dependence from constraints whose `.Self` is
@@ -872,11 +854,15 @@ static auto GetConstantValue(EvalContext& eval_context,
   return eval_context.entity_names().MakeCanonical(entity_name_id);
 }
 
-// Returns the constant value of `id` if it has a `GetConstantValue` overload,
-// and otherwise returns `id` itself.
+// ID types without a more specific overload are passed through unchanged.
 template <typename IdT>
-static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
-                                          Phase* phase) -> IdT;
+  requires SemIR::IdKind::Contains<IdT> ||
+           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType,
+                       SemIR::IdAndKind::InvalidType>
+static auto GetConstantValue(EvalContext& /*eval_context*/, IdT id,
+                             Phase* /*phase*/) {
+  return id;
+}
 
 template <typename BundleT>
 static auto GetConstantValue(EvalContext& eval_context,
@@ -884,7 +870,7 @@ static auto GetConstantValue(EvalContext& eval_context,
     -> SemIR::BundleId<BundleT> {
   return eval_context.context().bundles().AddCanonical(std::apply(
       [&]<typename... Ids>(Ids... ids) -> BundleT {
-        return {GetConstantValueOrPassThrough(eval_context, ids, phase)...};
+        return {GetConstantValue(eval_context, ids, phase)...};
       },
       eval_context.context().bundles().GetAsTuple(bundle_id)));
 }
@@ -904,30 +890,6 @@ static auto ReplaceFieldWithConstantValue(EvalContext& eval_context,
   return IsConstantOrError(*phase);
 }
 
-// Function template that can be called with an argument of type `T`. Used below
-// to detect which overloads of `GetConstantValue` exist.
-template <typename T>
-static void Accept(T /*arg*/) {}
-
-// Determines whether a `GetConstantValue` overload exists for a given ID type.
-// Note that we do not check whether `GetConstantValue` is *callable* with a
-// given ID type, because that would use the `InstId` overload for
-// `AbsoluteInstId` and similar wrapper types, which should be left alone.
-template <typename IdT>
-static constexpr bool HasGetConstantValueOverload = requires {
-  Accept<auto (*)(EvalContext&, IdT, Phase*)->IdT>(GetConstantValue);
-};
-
-template <typename IdT>
-static auto GetConstantValueOrPassThrough(EvalContext& eval_context, IdT id,
-                                          Phase* phase) -> IdT {
-  if constexpr (HasGetConstantValueOverload<IdT>) {
-    return GetConstantValue(eval_context, id, phase);
-  } else {
-    return id;
-  }
-}
-
 // Given the stored value `arg` of an instruction field and its corresponding
 // kind `kind`, returns the constant value to use for that field, if it has a
 // constant phase. `*phase` is updated to include the new constant value. If
@@ -937,7 +899,7 @@ static auto GetConstantValueForArg(EvalContext& eval_context,
                                    SemIR::IdAndKind arg_and_kind, Phase* phase)
     -> int32_t {
   return arg_and_kind.Dispatch<int32_t>([&]<typename IdT>(IdT id) -> int32_t {
-    return SemIR::ToRaw(GetConstantValueOrPassThrough(eval_context, id, phase));
+    return SemIR::ToRaw(GetConstantValue(eval_context, id, phase));
   });
 }
 
@@ -981,121 +943,6 @@ static auto ReplaceTypeWithConstantValue(EvalContext& eval_context,
   return IsConstantOrError(*phase);
 }
 
-template <typename... Types>
-static auto KindHasGetConstantValueOverload(TypeEnum<Types...> e) -> bool {
-  static constexpr std::array<bool, SemIR::IdKind::NumTypes> Values = {
-      (HasGetConstantValueOverload<Types>)...};
-  return Values[e.ToIndex()];
-}
-
-static auto ResolveSpecificDeclForSpecificId(EvalContext& eval_context,
-                                             SemIR::SpecificId specific_id)
-    -> void {
-  if (!specific_id.has_value()) {
-    return;
-  }
-
-  const auto& specific = eval_context.specifics().Get(specific_id);
-  const auto& generic = eval_context.generics().Get(specific.generic_id);
-  if (specific_id == generic.self_specific_id) {
-    // Impl witness table construction happens before its generic decl is
-    // finish, in order to make the table's instructions dependent
-    // instructions of the Impl's generic. But those instructions can refer to
-    // the generic's self specific. We can not resolve the specific
-    // declaration for the self specific until the generic is finished, but it
-    // is explicitly resolved at that time in `FinishGenericDecl()`.
-    return;
-  }
-  ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
-                      specific_id);
-}
-
-static auto ResolveSpecificDeclForArg(
-    EvalContext& eval_context,
-    SemIR::DeclaredFacetTypeId declared_facet_type_id) -> void {
-  const auto& declared_facet_type =
-      eval_context.context().declared_facet_types().Get(declared_facet_type_id);
-  for (const auto& interface : declared_facet_type.extend_constraints) {
-    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-  }
-  for (const auto& interface : declared_facet_type.self_impls_constraints) {
-    ResolveSpecificDeclForSpecificId(eval_context, interface.specific_id);
-  }
-  for (const auto& constraint : declared_facet_type.extend_named_constraints) {
-    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
-  }
-  for (const auto& constraint :
-       declared_facet_type.self_impls_named_constraints) {
-    ResolveSpecificDeclForSpecificId(eval_context, constraint.specific_id);
-  }
-  for (const auto& type_impls : declared_facet_type.type_impls_interfaces) {
-    ResolveSpecificDeclForSpecificId(eval_context,
-                                     type_impls.specific_interface.specific_id);
-  }
-  for (const auto& type_impls :
-       declared_facet_type.type_impls_named_constraints) {
-    ResolveSpecificDeclForSpecificId(
-        eval_context, type_impls.specific_named_constraint.specific_id);
-  }
-}
-
-static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
-                                      SemIR::SpecificId specific_id) -> void {
-  ResolveSpecificDeclForSpecificId(eval_context, specific_id);
-}
-
-static auto ResolveSpecificDeclForArg(
-    EvalContext& eval_context, SemIR::SpecificInterfaceId specific_interface_id)
-    -> void {
-  ResolveSpecificDeclForSpecificId(eval_context,
-                                   eval_context.specific_interfaces()
-                                       .Get(specific_interface_id)
-                                       .specific_id);
-}
-
-template <typename IdT>
-  requires SemIR::Internal::IsIdKindType<IdT> &&
-           SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::DestInstId,
-                       SemIR::EntityNameId, SemIR::InstBlockId, SemIR::InstId,
-                       SemIR::MetaInstId, SemIR::StructTypeFieldsId,
-                       SemIR::TypeInstId>
-static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
-    -> void {
-  // These id types have a GetConstantValue() overload but that overload
-  // does not canonicalize any SpecificId in the value type.
-}
-
-template <typename IdT>
-  requires SemIR::Internal::IsIdKindType<IdT>
-static auto ResolveSpecificDeclForArg(EvalContext& /*eval_context*/, IdT /*id*/)
-    -> void {
-  if constexpr (HasGetConstantValueOverload<IdT>) {
-    CARBON_FATAL("Missing case for {0} which has a GetConstantValue() overload",
-                 IdT::Label);
-  }
-}
-
-template <typename BundleT>
-static auto ResolveSpecificDeclForArg(EvalContext& eval_context,
-                                      SemIR::BundleId<BundleT> bundle_id)
-    -> void {
-  std::apply(
-      [&](auto... ids) -> void {
-        (..., ResolveSpecificDeclForArg(eval_context, ids));
-      },
-      eval_context.context().bundles().GetAsTuple(bundle_id));
-}
-
-// Resolves the specific declarations for a specific id in any field of the
-// `inst` instruction.
-static auto ResolveSpecificDeclForInst(EvalContext& eval_context,
-                                       const SemIR::Inst& inst) -> void {
-  for (auto arg_and_kind : {inst.arg0_and_kind(), inst.arg1_and_kind()}) {
-    arg_and_kind.Dispatch<void>(
-        [&](auto id) { ResolveSpecificDeclForArg(eval_context, id); });
-  }
-}
-
 auto AddImportedConstant(Context& context, SemIR::Inst inst)
     -> SemIR::ConstantId {
   EvalContext eval_context(&context, SemIR::LocId::None);
@@ -1130,8 +977,12 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetTypeOfInst(inst.array_id);
-  if (auto array_type =
-          eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
+  // The array operand may have a type that adapts an array type, such as
+  // `Core.Array`.
+  if (auto array_type = eval_context.types().TryGetAs<SemIR::ArrayType>(
+          eval_context.types()
+              .GetTransitiveUnqualifiedAdaptedType(aggregate_type_id)
+              .first)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntValue>(
             array_type->bound_id)) {
       // This awkward call to `getZExtValue` is a workaround for APInt not
@@ -1322,6 +1173,22 @@ static auto PerformCharLiteralSubChar(Context& context, SemIR::InstId lhs_id,
                        llvm::APInt(32, result, /*isSigned=*/true));
 }
 
+// Forms a constant array type as an evaluation result. Requires that
+// `element_type_id` and `bound_id` are constant.
+static auto MakeArrayTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId element_type_id,
+                                SemIR::InstId bound_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::ArrayType{
+      .type_id = SemIR::TypeType::TypeId,
+      .bound_id = bound_id,
+      .element_type_inst_id = context.types().GetAsTypeInstId(element_type_id)};
+  if (!ValidateArrayType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
+}
+
 // Forms a constant int type as an evaluation result. Requires that width_id is
 // constant.
 static auto MakeIntTypeResult(Context& context, SemIR::LocId loc_id,
@@ -1438,7 +1305,7 @@ static auto RealToAPFloat(Context& context, RealId real_id,
   // Convert the real value to a string.
   llvm::SmallString<64> str;
   real_value.mantissa.toString(str, real_value.is_decimal ? 10 : 16,
-                               /*signed=*/false, /*formatAsCLiteral=*/true);
+                               /*signed=*/true, /*formatAsCLiteral=*/true);
   str += real_value.is_decimal ? "e" : "p";
   real_value.exponent.toStringSigned(str);
 
@@ -1550,20 +1417,10 @@ static auto PerformIntToFloatConvert(Context& context, SemIR::LocId loc_id,
   if (!dest_float_type) {
     // Target is Core.FloatLiteral, which is always exact.
     llvm::APInt mantissa = op_val;
-    if (src_is_signed && op_val.isNegative()) {
-      // FloatLiteral can only represent positive real values. Negative
-      // literals are parsed as Negate(FloatLiteralValue).
-      context.TODO(loc_id, "negative float literal conversion");
-      return SemIR::ErrorInst::ConstantId;
-    }
-    auto real_id = context.reals().Add(
-        Real{.mantissa = mantissa,
-             .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
-             .is_decimal = true});
-    return MakeConstantResult(
-        context,
-        SemIR::FloatLiteralValue{.type_id = dest_type_id, .real_id = real_id},
-        Phase::Concrete);
+    return MakeFloatLiteralResult(
+        context, Real{.mantissa = mantissa,
+                      .exponent = llvm::APInt(32, 0, /*isSigned=*/true),
+                      .is_decimal = true});
   }
 
   llvm::APFloat ap_float(dest_float_type->float_kind.Semantics());
@@ -1702,19 +1559,19 @@ static auto ConvertRealLiteralToInt(Context& context, SemIR::LocId loc_id,
   // If the exponent is positive, base^exponent cannot be larger than the result
   // size. If it's negative, base^exponent can't be *much* larger than the
   // mantissa or we'd have computed a lower bound of 0 bits and bailed out.
-  CARBON_CHECK(
-      exponent_upper_bound <=
-      std::max<unsigned>(mantissa.getActiveBits() * 2, bounds.upper_bound));
+  CARBON_CHECK(exponent_upper_bound <=
+               std::max<unsigned>(mantissa.getSignificantBits() * 2,
+                                  bounds.upper_bound));
 
   // Compute a bit-width in which we can safely compute the result. We need
   // enough space to store the mantissa, base^exponent, the result and a sign
   // bit, and the number 10 (4 bits).
   unsigned calc_width =
-      std::max({mantissa.getActiveBits(), exponent_upper_bound,
+      std::max({mantissa.getSignificantBits(), exponent_upper_bound,
                 static_cast<unsigned>(bounds.upper_bound + 1), 4U});
 
   // Compute the integer result.
-  llvm::APInt integer_val = mantissa.zextOrTrunc(calc_width);
+  llvm::APInt integer_val = mantissa.sextOrTrunc(calc_width);
   if (!real_val.is_decimal) {
     // Binary exponent (mantissa * 2^exponent).
     if (!exponent.isNegative()) {
@@ -2173,31 +2030,259 @@ static auto PerformBuiltinIntComparison(Context& context,
   return MakeBoolResult(context, bool_type_id, result);
 }
 
+static auto NegateRealLiteral(Real val) -> Real {
+  // Check if negation would overflow.
+  if (val.mantissa.isMinSignedValue()) {
+    val.mantissa = val.mantissa.sext(val.mantissa.getBitWidth() + 1);
+  }
+  val.mantissa.negate();
+  return val;
+}
+
 // Performs a builtin unary float -> float operation.
 static auto PerformBuiltinUnaryFloatOp(Context& context,
                                        SemIR::BuiltinFunctionKind builtin_kind,
                                        SemIR::InstId arg_id)
     -> SemIR::ConstantId {
+  CARBON_CHECK(builtin_kind == SemIR::BuiltinFunctionKind::FloatNegate,
+               "Unexpected builtin kind");
+
+  if (auto literal =
+          context.insts().TryGetAs<SemIR::FloatLiteralValue>(arg_id)) {
+    auto real_val = context.reals().Get(literal->real_id);
+
+    return MakeFloatLiteralResult(context, NegateRealLiteral(real_val));
+  }
+
   auto op = context.insts().GetAs<SemIR::FloatValue>(arg_id);
   auto op_val = context.floats().Get(op.float_id);
 
-  switch (builtin_kind) {
-    case SemIR::BuiltinFunctionKind::FloatNegate:
-      op_val.changeSign();
-      break;
-    default:
-      CARBON_FATAL("Unexpected builtin kind");
-  }
+  op_val.changeSign();
 
   return MakeFloatResult(context, op.type_id, std::move(op_val));
 }
 
+// Adds two APInts handling overflow by growing result.
+// Assumes lhs and rhs have same bit width.
+static auto OverflowAdd(const llvm::APInt& lhs, const llvm::APInt& rhs)
+    -> llvm::APInt {
+  CARBON_CHECK(lhs.getBitWidth() == rhs.getBitWidth());
+  bool is_negative = lhs.isNegative();
+
+  bool overflow = false;
+  llvm::APInt result = lhs.sadd_ov(rhs, overflow);
+  if (overflow) {
+    unsigned old_width = lhs.getBitWidth();
+    unsigned new_width = old_width + 1;
+    result = result.zext(new_width);
+    if (is_negative) {
+      // For positive value overflow, zero-extension is sufficient, for negative
+      // overflow we need to re-apply the dropped sign bits.
+      result.setBits(old_width, new_width);
+    }
+  }
+  return result;
+}
+
+struct FactoredExponent {
+  int twos = 0;
+  int fives = 0;
+};
+
+// Decomposes Real's exponents into form 2^a * 5^b where a and b are 32-bit
+// ints. Returns nullopt if exponent is too large.
+static auto TryGetFactoredExponent(const Real& real)
+    -> std::optional<FactoredExponent> {
+  if (real.exponent.getSignificantBits() > 32) {
+    // Reject evaluation if we can't fit exponent into int.
+    return std::nullopt;
+  }
+  auto exponent = static_cast<int>(real.exponent.getZExtValue());
+  return FactoredExponent{
+      .twos = exponent,
+      .fives = real.is_decimal ? exponent : 0,
+  };
+}
+
+// Constructs a Real from mantissa and factored exponent.
+static auto RecombineFactoredExponent(llvm::APInt mantissa,
+                                      const FactoredExponent& exponent)
+    -> Real {
+  CARBON_CHECK(exponent.fives == exponent.twos || exponent.fives == 0,
+               "exponent must by dyadic or decadic");
+  return {
+      .mantissa = mantissa,
+      .exponent = llvm::APInt(32, exponent.twos, /*isSigned=*/true),
+      .is_decimal = exponent.fives == exponent.twos,
+  };
+}
+
+// Finds a dyadic or decadic exponent that both lhs and rhs can be converted to.
+static auto FindCommonExponent(FactoredExponent lhs, FactoredExponent rhs)
+    -> FactoredExponent {
+  // In general common exponent of x^a and x^b is x^min(a,b) because we can
+  // always subtract from exponent (and increase mantisssa by factor) but we
+  // can't add to exponent unless factor divides the mantisssa.
+  FactoredExponent min_factors = {
+      .twos = std::min(lhs.twos, rhs.twos),
+      .fives = std::min(lhs.fives, rhs.fives),
+  };
+
+  // If both lhs and rhs have positive 5^n factor, we can convert to dyadic or
+  // decadic real. Choose the one that minimizes mantissa size.
+  // Assume x * 5^n requires 3n bits and x * 2^n requires n bits.
+  int factor_diff = std::abs(min_factors.fives - min_factors.twos);
+  int decadic_bits =
+      min_factors.fives > min_factors.twos ? 3 * factor_diff : factor_diff;
+  if (min_factors.fives >= 0) {
+    int dyadic_bits = 3 * min_factors.fives;
+    if (dyadic_bits < decadic_bits) {
+      // Result will be (likely) smaller if stored as dyadic real.
+      return {
+          .twos = min_factors.twos,
+          .fives = 0,
+      };
+    }
+  }
+
+  int min_exponent = std::min(min_factors.fives, min_factors.twos);
+  return {
+      .twos = min_exponent,
+      .fives = min_exponent,
+  };
+}
+
+// Finds difference between two exponents.
+static auto ComputeExponentDelta(const FactoredExponent& lhs,
+                                 const FactoredExponent& rhs)
+    -> FactoredExponent {
+  return {
+      .twos = lhs.twos - rhs.twos,
+      .fives = lhs.fives - rhs.fives,
+  };
+}
+
+// Estimates additional bits required to apply exponent to an APInt.
+static auto EstimateBitsForExponent(const FactoredExponent& exponent) -> int {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  return static_cast<int>(std::ceil(std::log2f(5) * exponent.fives)) +
+         exponent.twos;
+}
+
+// Multiplies factored exponent with provided APInt sign, result is sign
+// extended to `bit_width`.
+static auto ApplyFactoredExponent(const FactoredExponent& exponent,
+                                  const llvm::APInt& mantissa,
+                                  unsigned bit_width) -> llvm::APInt {
+  CARBON_CHECK(exponent.twos >= 0 && exponent.fives >= 0);
+  auto result = mantissa.sextOrTrunc(bit_width);
+  if (exponent.twos > 0) {
+    result <<= exponent.twos;
+  }
+  if (exponent.fives > 0) {
+    result *= llvm::APIntOps::pow(llvm::APInt(bit_width, 5), exponent.fives);
+  }
+  return result;
+}
+
+// Adds or subtracts two Real literals.
+// Returns std::nullopt if value would be too large to compute without losing
+// precision.
+static auto TryAddRealLiterals(const Real& lhs, const Real& rhs)
+    -> std::optional<Real> {
+  auto lhs_exponent = TryGetFactoredExponent(lhs);
+  if (!lhs_exponent) {
+    return std::nullopt;
+  }
+  auto rhs_exponent = TryGetFactoredExponent(rhs);
+  if (!rhs_exponent) {
+    return std::nullopt;
+  }
+
+  // Find an exponent we can convert both lhs and rhs to.
+  auto common_exponent = FindCommonExponent(*lhs_exponent, *rhs_exponent);
+  // Find change to mantisssa (in form of factored exponents) so that lhs and
+  // rhs have desired exponent.
+  auto lhs_exponent_delta =
+      ComputeExponentDelta(*lhs_exponent, common_exponent);
+  auto rhs_exponent_delta =
+      ComputeExponentDelta(*rhs_exponent, common_exponent);
+
+  // Assume no overflow during addition, OverflowAdd will grow final result if
+  // necessary.
+  auto bit_width = std::max({
+      lhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(lhs_exponent_delta),
+      rhs.mantissa.getSignificantBits() +
+          EstimateBitsForExponent(rhs_exponent_delta),
+      static_cast<unsigned>(IntStore::MinAPWidth),
+  });
+  if (bit_width > IntStore::MaxIntWidth) {
+    // Mantissa is too big.
+    return std::nullopt;
+  }
+
+  auto lhs_mantissa =
+      ApplyFactoredExponent(lhs_exponent_delta, lhs.mantissa, bit_width);
+  auto rhs_mantissa =
+      ApplyFactoredExponent(rhs_exponent_delta, rhs.mantissa, bit_width);
+  return RecombineFactoredExponent(OverflowAdd(lhs_mantissa, rhs_mantissa),
+                                   common_exponent);
+}
+
+// Performs a builtin binary real -> real operation.
+static auto PerformBuiltinBinaryFloatLiteralOp(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::BuiltinFunctionKind builtin_kind, RealId lhs_id, RealId rhs_id)
+    -> SemIR::ConstantId {
+  auto lhs_val = context.reals().Get(lhs_id);
+  auto rhs_val = context.reals().Get(rhs_id);
+
+  Lex::TokenKind op_token;
+  std::optional<Real> result;
+  switch (builtin_kind) {
+    case SemIR::BuiltinFunctionKind::FloatAdd:
+      result = TryAddRealLiterals(lhs_val, rhs_val);
+      op_token = Lex::TokenKind::Plus;
+      break;
+    case SemIR::BuiltinFunctionKind::FloatSub:
+      result = TryAddRealLiterals(lhs_val, NegateRealLiteral(rhs_val));
+      op_token = Lex::TokenKind::Minus;
+      break;
+    default:
+      CARBON_FATAL("Unexpected operation kind.");
+  }
+
+  if (!result) {
+    CARBON_DIAGNOSTIC(
+        CompileTimeFloatLiteralBinaryOperationOutOfRange, Error,
+        "binary calculation `{0} {1} {2}` would exceed the maximum "
+        "supported integer width of {3}",
+        Real, Lex::TokenKind, Real, int);
+    context.emitter().Emit(loc_id,
+                           CompileTimeFloatLiteralBinaryOperationOutOfRange,
+                           lhs_val, op_token, rhs_val, IntStore::MaxIntWidth);
+    return SemIR::ErrorInst::ConstantId;
+  }
+
+  return MakeFloatLiteralResult(context, std::move(*result));
+}
+
 // Performs a builtin binary float -> float operation.
-static auto PerformBuiltinBinaryFloatOp(Context& context,
+static auto PerformBuiltinBinaryFloatOp(Context& context, SemIR::LocId loc_id,
                                         SemIR::BuiltinFunctionKind builtin_kind,
                                         SemIR::InstId lhs_id,
                                         SemIR::InstId rhs_id)
     -> SemIR::ConstantId {
+  if (context.insts().Is<SemIR::FloatLiteralValue>(lhs_id)) {
+    auto literal_lhs = context.insts().GetAs<SemIR::FloatLiteralValue>(lhs_id);
+    auto literal_rhs = context.insts().GetAs<SemIR::FloatLiteralValue>(rhs_id);
+
+    return PerformBuiltinBinaryFloatLiteralOp(context, loc_id, builtin_kind,
+                                              literal_lhs.real_id,
+                                              literal_rhs.real_id);
+  }
+
   auto lhs = context.insts().GetAs<SemIR::FloatValue>(lhs_id);
   auto rhs = context.insts().GetAs<SemIR::FloatValue>(rhs_id);
   auto lhs_val = context.floats().Get(lhs.float_id);
@@ -2341,7 +2426,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
       if (index_val.isNegative()) {
         CARBON_DIAGNOSTIC(StringAtIndexNegative, Error,
-                          "index `{0}` is negative.", TypedInt);
+                          "index `{0}` is negative", TypedInt);
         context.emitter().Emit(
             loc_id, StringAtIndexNegative,
             {.type = eval_context.insts().Get(index_id).type_id(),
@@ -2352,7 +2437,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (index_val.getZExtValue() >= string_value.size()) {
         CARBON_DIAGNOSTIC(
             StringAtIndexOutOfBounds, Error,
-            "string index `{0}` is out of bounds; string has length {1}.",
+            "string index `{0}` is out of bounds; string has length {1}",
             TypedInt, size_t);
         context.emitter().Emit(
             loc_id, StringAtIndexOutOfBounds,
@@ -2468,6 +2553,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
               .type_id = SemIR::TypeType::TypeId,
               .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::ArrayMakeType: {
+      return MakeArrayTypeResult(context, loc_id, arg_ids[0], arg_ids[1],
+                                 phase);
     }
 
     case SemIR::BuiltinFunctionKind::FormMakeType: {
@@ -2662,8 +2752,8 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (phase != Phase::Concrete) {
         break;
       }
-      return PerformBuiltinBinaryFloatOp(context, builtin_kind, arg_ids[0],
-                                         arg_ids[1]);
+      return PerformBuiltinBinaryFloatOp(context, loc_id, builtin_kind,
+                                         arg_ids[0], arg_ids[1]);
     }
 
     // Float comparisons.
@@ -2704,10 +2794,24 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 static auto GetReturnStorageParamIndexRange(EvalContext& eval_context,
                                             const SemIR::Callee& callee)
     -> std::pair<int, int> {
-  if (const auto* callee_function =
-          std::get_if<SemIR::CalleeFunction>(&callee)) {
-    const auto& function =
-        eval_context.functions().Get(callee_function->function_id);
+  auto function_id = SemIR::FunctionId::None;
+  CARBON_KIND_SWITCH(callee) {
+    case CARBON_KIND(SemIR::CalleeFunction callee_function): {
+      function_id = callee_function.function_id;
+      break;
+    }
+    case CARBON_KIND(SemIR::CalleeCppFunctionPointer callee_function_ptr): {
+      function_id = eval_context.context()
+                        .clang_function_pointer_types()
+                        .Get(callee_function_ptr.function_type_id)
+                        .function_id;
+      break;
+    }
+    default:
+      break;
+  }
+  if (function_id.has_value()) {
+    const auto& function = eval_context.functions().Get(function_id);
     return {function.call_param_ranges.return_begin().index,
             function.call_param_ranges.return_end().index};
   }
@@ -2760,7 +2864,7 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   auto evaluation_mode = SemIR::Function::EvaluationMode::None;
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
     function = &eval_context.functions().Get(callee_function->function_id);
-    builtin_kind = function->builtin_function_kind();
+    builtin_kind = function->GetBuiltinFunctionKind(eval_context.sem_ir());
     evaluation_mode = function->evaluation_mode;
     // Calls to builtins and to `eval` or `musteval` functions might be
     // constant.
@@ -2792,13 +2896,13 @@ static auto MakeConstantForCall(EvalContext& eval_context,
         evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
-      CARBON_DIAGNOSTIC(CompTimeOnlyFunctionHere, Note,
-                        "compile-time-only function declared here");
+      CARBON_DIAGNOSTIC_LABEL(CompTimeOnlyFunctionHere, Info,
+                              "compile-time-only function declared here");
       const auto& function = eval_context.functions().Get(
           std::get<SemIR::CalleeFunction>(callee).function_id);
       eval_context.emitter()
           .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Note(function.latest_decl_id(), CompTimeOnlyFunctionHere)
+          .Attach(function.latest_decl_id(), CompTimeOnlyFunctionHere)
           .Emit();
     }
     return SemIR::ConstantId::NotConstant;
@@ -2814,11 +2918,14 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   // Handle calls to `eval` and `musteval` functions.
   if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
     // A non-concrete call to `eval` or `musteval` is a template symbolic
-    // constant, regardless of the phase of the arguments.
+    // constant, unless it is only dependent on `.Self`. Then preserve that so
+    // a Call on the RHS of a `where` does not change the phase of the whole
+    // facet type.
     if (phase != Phase::Concrete) {
       CARBON_CHECK(phase <= Phase::TemplateSymbolic);
-      return MakeConstantResult(eval_context.context(), call,
-                                Phase::TemplateSymbolic);
+      phase = phase == Phase::PeriodSelfSymbolic ? Phase::PeriodSelfSymbolic
+                                                 : Phase::TemplateSymbolic;
+      return MakeConstantResult(eval_context.context(), call, phase);
     }
 
     // TODO: Instead of performing the call immediately, add it to a work queue
@@ -2854,6 +2961,8 @@ static auto ConvertEvalResultToConstantId(Context& context,
   if (result.is_new()) {
     auto is_symbolic_only =
         orig_inst_kind.constant_kind() == SemIR::InstConstantKind::SymbolicOnly;
+    auto is_template_only =
+        orig_inst_kind.constant_kind() == SemIR::InstConstantKind::TemplateOnly;
     auto new_phase = result.same_phase_as_inst()
                          ? orig_phase
                          : ComputeInstPhase(context, result.new_inst());
@@ -2861,6 +2970,13 @@ static auto ConvertEvalResultToConstantId(Context& context,
                      result.new_inst().kind() != orig_inst_kind,
                  "SymbolicOnly instruction `{0}` has a concrete value",
                  orig_inst_kind);
+    CARBON_CHECK(!is_template_only || new_phase > Phase::Concrete ||
+                     result.new_inst().kind() != orig_inst_kind,
+                 "TemplateOnly instruction `{0}` has a concrete value",
+                 orig_inst_kind);
+    if (is_template_only && new_phase < Phase::TemplateSymbolic) {
+      new_phase = Phase::TemplateSymbolic;
+    }
     return MakeConstantResult(context, result.new_inst(), new_phase);
   }
   return result.existing();
@@ -2912,27 +3028,45 @@ static auto TryEvalTypedInst(EvalContext& eval_context, SemIR::InstId inst_id,
       return SemIR::ErrorInst::ConstantId;
     }
 
-    // When canonicalizing a SpecificId, we defer resolving the specific's
-    // declaration until here, to avoid resolving declarations from imported
-    // specifics. (Imported instructions are not evaluated.)
-    ResolveSpecificDeclForInst(eval_context, inst);
-
     if constexpr (ConstantKind == SemIR::InstConstantKind::Always ||
                   ConstantKind == SemIR::InstConstantKind::WheneverPossible) {
       return MakeConstantResult(eval_context.context(), inst, phase);
-    } else if constexpr (ConstantKind ==
-                             SemIR::InstConstantKind::ConstantInstAction ||
-                         ConstantKind == SemIR::InstConstantKind::InstAction) {
+    } else if constexpr (ConstantKind == SemIR::InstConstantKind::InstAction) {
       auto result_inst_id = PerformDelayedAction(
-          eval_context.context(), SemIR::LocId(inst_id), inst.As<InstT>());
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
       if (result_inst_id.has_value()) {
         // The result is an instruction.
         return MakeConstantResult(
             eval_context.context(),
-            SemIR::InstValue{
-                .type_id = GetSingletonType(eval_context.context(),
-                                            SemIR::InstType::TypeInstId),
-                .inst_id = result_inst_id},
+            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                             .inst_id = result_inst_id},
+            Phase::Concrete);
+      }
+      // Couldn't perform the action because it's still dependent.
+      return MakeConstantResult(eval_context.context(), inst,
+                                Phase::TemplateSymbolic);
+    } else if constexpr (ConstantKind ==
+                         SemIR::InstConstantKind::MultiInstAction) {
+      auto result_inst_ids = PerformDelayedAction(
+          eval_context.context(), eval_context.specific_id(),
+          SemIR::LocId(inst_id), inst.As<InstT>());
+      if (!result_inst_ids.empty()) {
+        // The result is a tuple of instruction values.
+        for (auto& result_inst_id : result_inst_ids) {
+          result_inst_id =
+              eval_context.constant_values().GetInstId(MakeConstantResult(
+                  eval_context.context(),
+                  SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                                   .inst_id = result_inst_id},
+                  Phase::Concrete));
+        }
+        return MakeConstantResult(
+            eval_context.context(),
+            SemIR::TupleValue{
+                .type_id = inst.type_id(),
+                .elements_id =
+                    eval_context.inst_blocks().AddCanonical(result_inst_ids)},
             Phase::Concrete);
       }
       // Couldn't perform the action because it's still dependent.
@@ -2972,6 +3106,20 @@ auto TryEvalTypedInst<SemIR::Call>(EvalContext& eval_context,
                                    SemIR::InstId inst_id, SemIR::Inst inst)
     -> SemIR::ConstantId {
   return MakeConstantForCall(eval_context, inst_id, inst.As<SemIR::Call>());
+}
+
+// `typeof` evaluates to the type of its operand. The operand is in a separate
+// region that is not evaluated, so we look at the type of the region's result
+// directly rather than evaluating any operands; this specialization avoids us
+// needing a way to map a `ExprRegionId` to an evaluated version in a specific.
+template <>
+auto TryEvalTypedInst<SemIR::TypeOf>(EvalContext& eval_context,
+                                     SemIR::InstId /*inst_id*/,
+                                     SemIR::Inst inst) -> SemIR::ConstantId {
+  auto region = eval_context.sem_ir().expr_regions().Get(
+      inst.As<SemIR::TypeOf>().operand_region_id);
+  return eval_context.types().GetConstantId(
+      eval_context.GetTypeOfInst(region.result_id));
 }
 
 // ImportRefLoaded can have a constant value, but it's owned and maintained by
@@ -3148,15 +3296,15 @@ static auto AddRequirementImpls(Context& context, SemIR::RequirementImpls impls,
     llvm::append_range(declared_facet_type->self_impls_named_constraints,
                        rhs.extend_named_constraints);
   } else {
-    auto lhs_facet_or_type = GetCanonicalFacetOrTypeValue(context, lhs_id);
+    auto lhs_facet = GetCanonicalFacet(context, lhs_id);
 
     auto extends_interface = [=](SemIR::SpecificInterface si)
         -> SemIR::DeclaredFacetType::TypeImplsInterface {
-      return {lhs_facet_or_type, si};
+      return {lhs_facet, si};
     };
     auto extends_constraint = [=](SemIR::SpecificNamedConstraint sc)
         -> SemIR::DeclaredFacetType::TypeImplsNamedConstraint {
-      return {lhs_facet_or_type, sc};
+      return {lhs_facet, sc};
     };
 
     // Extend constraints are copied over without replacing anything, but are
@@ -3267,44 +3415,103 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
+// Finds the scope to use for `context.access_context`, representing the
+// innermost enclosing type scope of the generic.
+static auto FindAccessContext(Context& context, const SemIR::Generic& generic)
+    -> SemIR::NameScopeId {
+  auto function_decl =
+      context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
+  if (!function_decl || !function_decl->function_id.has_value()) {
+    return context.access_context();
+  }
+  const auto& function = context.functions().Get(function_decl->function_id);
+  if (!function.parent_scope_id.has_value()) {
+    return context.access_context();
+  }
+
+  return function.parent_scope_id;
+}
+
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
-                             SemIR::GenericInstIndex::Region region)
-    -> std::pair<SemIR::InstBlockId, bool> {
+                             SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
-  auto eval_block_id = context.generics().Get(generic_id).GetEvalBlock(region);
+  const auto& generic = context.generics().Get(generic_id);
+  auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
 
-  llvm::SmallVector<SemIR::InstId> result;
-  result.resize(eval_block.size(), SemIR::InstId::None);
+  // Allocate the value block and store it back onto the specific, so that our
+  // in-progress results are visible.
+  auto& specific = context.specifics().Get(specific_id);
+  auto value_block_id =
+      context.inst_blocks().AddUninitialized(eval_block.size());
+  auto value_block = context.inst_blocks().GetMutable(value_block_id);
+  for (auto& inst_id : value_block) {
+    inst_id = SemIR::InstId::None;
+  }
+  specific.SetValueBlock(region, value_block_id);
 
-  EvalContext eval_context(&context, loc_id, specific_id,
-                           SpecificEvalInfo{
-                               .region = region,
-                               .values = result,
-                           });
+  CheckedSaveAndRestore access_context(context.access_context(),
+                                       FindAccessContext(context, generic));
+
+  // TODO: There are now 3 things being set-and-restored. Can this be refactored
+  // to make this a more clear pattern?
+
+  // The `declaring_impl_decls` is a global state that modifies the evaluation
+  // of LookupImplWitness. As a global state, it should only affect new
+  // instructions introduced during a given state. When we are evaluating for a
+  // specific, we are resolving existing instructions in the eval block for a
+  // generic. The global state should not apply to anything done while resolving
+  // a specific.
+  //
+  // TODO: Instead of moving the whole stack here, track an index on Context
+  // that is the start of the stack that we're going to consider (in practice we
+  // only consider a single value right now, but we'd only consider the latest
+  // value at least at that tracked index).
+  CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
+
+  // The `eval_impl_lookup_to_identified_witness` is also a global state that
+  // modifies the evaluation of LookupImplWitness. We don't want to apply that
+  // state to existing instructions in eval blocks, unless we are resolving a
+  // specific that is marked as `identified`. In that case, the specific is
+  // being formed as part of identification and the global state does apply.
+  // Otherwise, it should not affect anything done while resolving a specific.
+  std::optional<CheckedSaveAndRestore<int32_t>> eval_identified;
+  if (!specific.identified) {
+    eval_identified.emplace(context.eval_impl_lookup_to_identified_witness(),
+                            0);
+  }
+
+  EvalContext eval_context(&context, loc_id, specific_id);
 
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ResolvingSpecificHere, SoftContext,
-                          "unable to monomorphize specific {0}",
-                          SemIR::SpecificId);
-        builder.Context(loc_id, ResolvingSpecificHere, specific_id);
+        CARBON_DIAGNOSTIC_SOFT_CONTEXT(ResolvingSpecificHere,
+                                       "unable to monomorphize specific {0}",
+                                       SemIR::SpecificId);
+        builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
       });
 
-  bool has_error = false;
-  for (auto [i, inst_id] : llvm::enumerate(eval_block)) {
+  // Everything created while evaluating the eval block belongs to the specific,
+  // so nothing should be added to any generic we're in the middle of checking.
+  auto num_tracked_insts = context.generic_region_stack().num_tracked_insts();
+
+  for (auto [i, inst_id, result_id] :
+       llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
                                          context.insts().Get(inst_id));
-    if (const_id == SemIR::ErrorInst::ConstantId) {
-      has_error = true;
-    }
-    result[i] = context.constant_values().GetInstId(const_id);
-    CARBON_CHECK(result[i].has_value(), "Failed to evaluate {0} in eval block",
+    CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
                  context.insts().Get(inst_id));
+    if (const_id == SemIR::ErrorInst::ConstantId) {
+      specific.SetHasError(region);
+    }
+    result_id = context.constant_values().GetInstId(const_id);
   }
 
-  return {context.inst_blocks().Add(result), has_error};
+  CARBON_CHECK(
+      context.generic_region_stack().num_tracked_insts() == num_tracked_insts,
+      "Evaluating {0} added instructions to an enclosing generic region",
+      specific_id);
 }
 
 // Information about the function call we are currently executing. Unlike
@@ -3334,22 +3541,31 @@ class FunctionExecContext : public EvalContext {
   // Branch control flow to the given block. This replaces the innermost block
   // in the block stack, but doesn't affect any enclosing blocks.
   auto BranchTo(SemIR::InstBlockId block_id) -> void {
-    blocks_.back() = inst_blocks().Get(block_id);
+    blocks_.back().insts = inst_blocks().Get(block_id);
   }
 
   // Push a new block to be executed immediately. After the block finishes,
-  // control will resume after the current instruction.
-  auto PushBlock(SemIR::InstBlockId block_id) -> void {
-    blocks_.push_back(inst_blocks().Get(block_id));
+  // control will resume after the current instruction. If `splice_id` is
+  // specified, it is the `SpliceBlock` instruction whose block is being
+  // executed, and its value is set to the value of its result once the block
+  // finishes.
+  auto PushBlock(SemIR::InstBlockId block_id,
+                 SemIR::InstId splice_id = SemIR::InstId::None) -> void {
+    blocks_.push_back(
+        {.insts = inst_blocks().Get(block_id), .splice_id = splice_id});
   }
 
   // Pops and returns the next instruction to be executed.
   auto PopNextInstId() -> SemIR::InstId {
-    while (blocks_.back().empty()) {
-      blocks_.pop_back();
+    while (blocks_.back().insts.empty()) {
+      auto splice_id = blocks_.pop_back_val().splice_id;
       CARBON_CHECK(!blocks_.empty(), "Fell off end of function");
+      if (splice_id.has_value()) {
+        auto splice = insts().GetAs<SemIR::SpliceBlock>(splice_id);
+        locals().Update(splice_id, GetConstantValue(splice.result_id));
+      }
     }
-    return blocks_.back().consume_front();
+    return blocks_.back().insts.consume_front();
   }
 
   // Sets the most recent block argument value provided by a `BranchWithArg`.
@@ -3364,11 +3580,19 @@ class FunctionExecContext : public EvalContext {
   }
 
  private:
+  // A block that is being executed.
+  struct ExecBlock {
+    // The remaining instructions in the block.
+    llvm::ArrayRef<SemIR::InstId> insts;
+    // The `SpliceBlock` instruction that is executing this block, if any.
+    SemIR::InstId splice_id = SemIR::InstId::None;
+  };
+
   // The stack of code blocks that we are currently evaluating. This is kept as
   // a stack so that we can schedule the function body to execute after the decl
   // block and so that we can handle `SpliceBlock`s. When the innermost block is
   // complete, it will be popped and the next outer block will execute.
-  llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
+  llvm::SmallVector<ExecBlock, 4> blocks_;
 
   // The arguments in the function call.
   llvm::ArrayRef<SemIR::InstId> args_;
@@ -3519,13 +3743,13 @@ auto TryExecTypedInst<SemIR::ReturnSlot>(FunctionExecContext& eval_context,
 
 template <>
 auto TryExecTypedInst<SemIR::SpliceBlock>(FunctionExecContext& eval_context,
-                                          SemIR::InstId /*inst_id*/,
+                                          SemIR::InstId inst_id,
                                           SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto splice_block = inst.As<SemIR::SpliceBlock>();
-  eval_context.PushBlock(splice_block.block_id);
-  // TODO: Copy the values from the result_id instruction to the result of
-  // the splice_block instruction once the spliced block finishes.
+  // Once the spliced block finishes, the value of its result is copied to the
+  // `SpliceBlock` instruction.
+  eval_context.PushBlock(splice_block.block_id, inst_id);
   return SemIR::ConstantId::None;
 }
 
@@ -3652,9 +3876,9 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
 
   Diagnostics::AnnotationScope annotate_diagnostics(
       &eval_context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCallToEvalFn, Note, "in call to {0} here",
-                          SemIR::NameId);
-        builder.Note(loc_id, InCallToEvalFn, function.name_id);
+        CARBON_DIAGNOSTIC_LABEL(InCallToEvalFn, Info, "in call to {0} here",
+                                SemIR::NameId);
+        builder.Attach(loc_id, InCallToEvalFn, function.name_id);
       });
 
   // Execute the function decl block followed by the body.

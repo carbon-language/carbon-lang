@@ -42,20 +42,34 @@ library "[[@TEST_NAME]]";
 import Core;
 
 fn CheckFail() {
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `f64` into type implementing `Core.FloatFitsIn(f32)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1.0 as f64, 2.0 as f32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: FloatFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_narrowing.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Core.CheckFitsIn(1.0 as f64, 2.0 as f32);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `f64` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.FloatFitsIn(f32)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ core.carbon
+  // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: FloatFitsIn(U)](unused t: T, unused u: U) {}
+  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1.0 as f64, 2.0 as f32);
-  // CHECK:STDERR: fail_narrowing.carbon:[[@LINE+7]]:3: error: cannot convert type `f32` into type implementing `Core.FloatFitsIn(f16)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Core.CheckFitsIn(1.0 as f32, 2.0 as f16);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: core.carbon:6:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckFitsIn[U: type, T: FloatFitsIn(U)](unused t: T, unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_narrowing.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Core.CheckFitsIn(1.0 as f32, 2.0 as f16);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `f32` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.FloatFitsIn(f16)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ core.carbon
+  // CHECK:STDERR:        │ fn CheckFitsIn[U: type, T: FloatFitsIn(U)](unused t: T, unused u: U) {}
+  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.CheckFitsIn(1.0 as f32, 2.0 as f16);
 }

@@ -20,18 +20,27 @@ library "[[@TEST_NAME]]";
 
 // TODO: Translate the file to a `#include` that includes the named file
 // properly. `\` escapes aren't processed in regular `#include`s.
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+14]]:10: error: '\' file not found [CppInteropParseError]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |          ^~~
+// CHECK:STDERR:        ╭─┤ fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+23]]:10
+// CHECK:STDERR: ->     │ #include "\"foo.h\""
+// CHECK:STDERR:        ·          ━┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: '\' file not found [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+10]]:13: error: invalid suffix on literal; C++11 requires a space between literal and identifier [CppInteropParseError]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |             ^
-// CHECK:STDERR:       |              {{}}
+// CHECK:STDERR:        ╭─┤ fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+17]]:13
+// CHECK:STDERR: ->     │ #include "\"foo.h\""
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid suffix on literal; C++11 requires a space
+// CHECK:STDERR:        ·             │  ┃        between literal and identifier
+// CHECK:STDERR:        ·             │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·             ╰────┤ insert ` ` here [CppInteropFixItInsertion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+5]]:13: warning: extra tokens at end of #include directive [CppInteropParseWarning]
-// CHECK:STDERR:    20 | #include "\"foo.h\""
-// CHECK:STDERR:       |             ^
-// CHECK:STDERR:       |             //
+// CHECK:STDERR:        ╭─┤ fail_todo_import_cpp_library_file_with_quotes.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ #include "\"foo.h\""
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ warning: extra tokens at end of #include directive
+// CHECK:STDERR:        ·             │  ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ·             ╰────┤ insert `//` here [CppInteropFixItInsertion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library "\"foo.h\"";

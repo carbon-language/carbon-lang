@@ -9,55 +9,73 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_var_name.carbon
 
 class C {
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:6: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var;
-  // CHECK:STDERR:      ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var;
 
   var name;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var :;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var :;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var :;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   var : C;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   var : C;
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var : C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   var name:;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:12
+  // CHECK:STDERR: ->     │   var name:;
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name C;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:11
+  // CHECK:STDERR: ->     │   var name C;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name: C C;
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   var name: C C;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: `var` declarations must end with a `;`
+  // CHECK:STDERR:        ·                 ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name: C C;
 
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var name name: C;
-  // CHECK:STDERR:            ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+6]]:11
+  // CHECK:STDERR: ->     │   var name name: C;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var name name: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
-  // CHECK:STDERR:   var generic name: C;
-  // CHECK:STDERR:                      ^
+  // CHECK:STDERR:        ╭─┤ fail_var_name.carbon:[[@LINE+7]]:22
+  // CHECK:STDERR: ->     │   var generic name: C;
+  // CHECK:STDERR:        ·                      ┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                         ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var generic name: C;
 }

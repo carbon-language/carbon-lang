@@ -71,9 +71,12 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_zero_size.carbon:[[@LINE+4]]:8: error: integer type width of 0 is not positive [IntWidthNotPositive]
-// CHECK:STDERR: var n: Int(0);
-// CHECK:STDERR:        ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_zero_size.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var n: Int(0);
+// CHECK:STDERR:        ·        ━━━┳━━
+// CHECK:STDERR:        ·           ┗━━┫ error: integer type width of 0 is not positive
+// CHECK:STDERR:        ·              ┃        [IntWidthNotPositive]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: Int(0);
 
@@ -85,9 +88,12 @@ import library "types";
 
 fn Negate(a: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_negative_size.carbon:[[@LINE+4]]:8: error: integer type width of -1 is not positive [IntWidthNotPositive]
-// CHECK:STDERR: var n: Int(Negate(1));
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_negative_size.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var n: Int(Negate(1));
+// CHECK:STDERR:        ·        ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: integer type width of -1 is not positive
+// CHECK:STDERR:        ·                  ┃        [IntWidthNotPositive]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: Int(Negate(1));
 
@@ -97,15 +103,20 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_oversized.carbon:[[@LINE+4]]:8: error: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
-// CHECK:STDERR: var m: Int(1000000000);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_oversized.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ var m: Int(1000000000);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: integer type width of 1000000000 is greater than the maximum
+// CHECK:STDERR:        ·           ┃        supported width of 8388608
+// CHECK:STDERR:        ·           ┃        [IntWidthTooLarge]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var m: Int(1000000000);
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64.builtin: type = int_type signed, %int_64 [concrete]
 // CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete]

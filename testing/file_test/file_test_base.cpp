@@ -93,6 +93,14 @@ struct FileTestInfo {
   // expectations.
   bool autoupdate_differs = false;
 
+  // Mismatches between `fail_` prefixes and test success, set after running.
+  // Autoupdate doesn't fix these; they require manual renaming.
+  llvm::SmallVector<std::string> fail_prefix_problems;
+
+  // Whether the test is NOAUTOUPDATE and its output doesn't match expectations.
+  // Like `fail_prefix_problems`, this requires a manual fix.
+  bool noautoupdate_differs = false;
+
   // Time spent in the test total, including processing and autoupdate.
   std::chrono::milliseconds elapsed_ms = std::chrono::milliseconds(0);
 };
@@ -120,35 +128,51 @@ static auto SplitOutput(llvm::StringRef output)
   llvm::StringRef(output).split(lines, "\n");
   return llvm::SmallVector<std::string_view>(lines.begin(), lines.end());
 }
-// Verify that the success and `fail_` prefix use correspond. Separately handle
-// both cases for clearer test failures.
-static auto CompareFailPrefix(llvm::StringRef filename, bool success) -> void {
-  if (success) {
-    EXPECT_FALSE(filename.starts_with("fail_"))
-        << "`" << filename
-        << "` succeeded; if success is expected, remove the `fail_` "
-           "prefix.";
-  } else {
-    EXPECT_TRUE(filename.starts_with("fail_"))
-        << "`" << filename
-        << "` failed; if failure is expected, add the `fail_` prefix.";
-  }
-}
+// Checks that success and `fail_` prefix use correspond for the test file and
+// its splits. Returns a description of each mismatch found. These can't be
+// fixed by autoupdate, so they're reported separately from output mismatches.
+static auto GetFailPrefixProblems(llvm::StringRef test_name,
+                                  const TestFile& test_file)
+    -> llvm::SmallVector<std::string> {
+  llvm::SmallVector<std::string> problems;
+  auto check = [&](llvm::StringRef name, llvm::StringRef split_desc,
+                   bool success) {
+    bool has_prefix = name.starts_with("fail_");
+    if (success && has_prefix) {
+      problems.push_back(llvm::formatv(
+          "`{0}`{1} succeeded; if success is expected, remove the `fail_` "
+          "prefix.",
+          test_name, split_desc));
+    } else if (!success && !has_prefix) {
+      problems.push_back(llvm::formatv(
+          "`{0}`{1} failed; if failure is expected, add the `fail_` prefix.",
+          test_name, split_desc));
+    }
+  };
 
-// Verify that the success and `fail_` prefix use correspond for a split within
-// a test file.
-static auto CompareFailPrefix(llvm::StringRef filename, llvm::StringRef split,
-                              bool success) -> void {
-  if (success) {
-    EXPECT_FALSE(split.starts_with("fail_"))
-        << "`" << filename << "` split `" << split
-        << "` succeeded; if success is expected, remove the `fail_` "
-           "prefix.";
-  } else {
-    EXPECT_TRUE(split.starts_with("fail_"))
-        << "`" << filename << "` split `" << split
-        << "` failed; if failure is expected, add the `fail_` prefix.";
+  auto test_filename = std::filesystem::path(test_name.str()).filename();
+  const auto& run_result = test_file.run_result;
+  bool require_overall_failure = false;
+  for (const auto& [split, success] : run_result.per_file_success) {
+    check(split, llvm::formatv(" split `{0}`", split).str(), success);
+    if (!success) {
+      require_overall_failure = true;
+    }
   }
+
+  if (require_overall_failure) {
+    if (run_result.success) {
+      problems.push_back(llvm::formatv(
+          "`{0}` succeeded, but there is a per-file failure expectation, so "
+          "the overall result should have been a failure.",
+          test_name));
+    }
+  } else {
+    // Individual files all succeeded (or there are no splits), so the prefix is
+    // enforced on the main test file.
+    check(test_filename.string(), "", run_result.success);
+  }
+  return problems;
 }
 
 // Returns the requested bazel command string for the given execution mode.
@@ -217,6 +241,21 @@ static auto RunAutoupdater(FileTestBase* test_base, const TestFile& test_file,
       .Run(dry_run);
 }
 
+// Returns whether the actual output matches the expected output.
+static auto OutputMatchesExpectations(const TestFile& test_file) -> bool {
+  auto matches = [&](llvm::StringRef actual,
+                     llvm::ArrayRef<testing::Matcher<std::string>> expected) {
+    if (test_file.check_subset) {
+      return testing::Value(SplitOutput(actual),
+                            testing::IsSupersetOf(expected));
+    }
+    return testing::Value(SplitOutput(actual),
+                          testing::ElementsAreArray(expected));
+  };
+  return matches(test_file.actual_stdout, test_file.expected_stdout) &&
+         matches(test_file.actual_stderr, test_file.expected_stderr);
+}
+
 auto FileTestCase::TestBody() -> void {
   if (absl::GetFlag(FLAGS_autoupdate) || absl::GetFlag(FLAGS_dump_output)) {
     return;
@@ -228,31 +267,11 @@ auto FileTestCase::TestBody() -> void {
 
   ASSERT_TRUE(test_info_->test_result->ok())
       << test_info_->test_result->error();
-  auto test_filename = std::filesystem::path(test_info_->test_name).filename();
 
   // Check success/failure against `fail_` prefixes.
   TestFile& test_file = **(test_info_->test_result);
-  if (test_file.run_result.per_file_success.empty()) {
-    CompareFailPrefix(test_filename.string(), test_file.run_result.success);
-  } else {
-    bool require_overall_failure = false;
-    for (const auto& [filename, success] :
-         test_file.run_result.per_file_success) {
-      CompareFailPrefix(test_filename.string(), filename, success);
-      if (!success) {
-        require_overall_failure = true;
-      }
-    }
-
-    if (require_overall_failure) {
-      EXPECT_FALSE(test_file.run_result.success)
-          << "There is a per-file failure expectation, so the overall result "
-             "should have been a failure.";
-    } else {
-      // Individual files all succeeded, so the prefix is enforced on the main
-      // test file.
-      CompareFailPrefix(test_filename.string(), test_file.run_result.success);
-    }
+  for (const auto& problem : test_info_->fail_prefix_problems) {
+    ADD_FAILURE() << problem;
   }
 
   // Check results. Include a reminder for NOAUTOUPDATE tests.
@@ -463,6 +482,11 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
     return true;
   }
 
+  test.fail_prefix_problems =
+      GetFailPrefixProblems(test.test_name, **test.test_result);
+  test.noautoupdate_differs = !(*test.test_result)->autoupdate_line_number &&
+                              !OutputMatchesExpectations(**test.test_result);
+
   Timer autoupdate_timer;
   test.autoupdate_differs =
       RunAutoupdater(test_instance.get(), **test.test_result,
@@ -478,7 +502,13 @@ static auto RunSingleTest(FileTestInfo& test, bool single_threaded,
                  << "\n--- Autoupdate differs: "
                  << (test.autoupdate_differs ? "true" : "false") << "\n";
   } else {
-    llvm::errs() << (test.autoupdate_differs ? "!" : ".");
+    // `?` indicates a problem that autoupdate can't fix, `!` indicates that
+    // autoupdate made (or would make) changes, and `.` indicates no changes.
+    llvm::errs() << (!test.fail_prefix_problems.empty() ||
+                             test.noautoupdate_differs
+                         ? "?"
+                     : test.autoupdate_differs ? "!"
+                                               : ".");
   }
 
   return true;
@@ -546,6 +576,31 @@ auto FileTestEventListener::OnTestProgramStart(
   llvm::errs() << "\nRan " << run_count << " tests in "
                << all_elapsed_ms.count() << " ms wall time, "
                << total_elapsed_ms.count() << " ms across threads\n";
+
+  // When autoupdating, list problems that autoupdate couldn't fix. When not
+  // autoupdating, these are reported as test failures instead.
+  if (absl::GetFlag(FLAGS_autoupdate)) {
+    bool printed_header = false;
+    auto print_problem = [&](llvm::StringRef problem) {
+      if (!printed_header) {
+        llvm::errs() << "\nProblems that require manual fixes:\n";
+        printed_header = true;
+      }
+      llvm::errs() << "  - " << problem << "\n";
+    };
+    for (const auto& test : tests_) {
+      for (const auto& problem : test.fail_prefix_problems) {
+        print_problem(problem);
+      }
+      if (test.noautoupdate_differs) {
+        print_problem(
+            llvm::formatv("`{0}` is NOAUTOUPDATE and its output doesn't match "
+                          "expectations.",
+                          test.test_name)
+                .str());
+      }
+    }
+  }
 
   // When there are multiple tests, give additional timing details, particularly
   // slowest tests.

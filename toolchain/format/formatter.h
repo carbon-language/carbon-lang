@@ -65,17 +65,21 @@ class Formatter {
   // line.
   auto EmitComment() -> void;
 
+  // Emits a new line before next token. If the source code contained multiple
+  // newlines, will emit up to 2 new lines.
+  auto EmitNewLine(int start_line) -> void;
+
   // Ensures there is a separator before adding new content. May do
   // `PrepareForPackedContent` or output a separator space, dependent on line
   // state. Always results in line_state_ being HasSeparator; the caller is
   // responsible for adjusting state if needed.
-  auto PrepareForSpacedContent() -> void;
+  auto PrepareForSpacedContent(int start_line = 0) -> void;
 
   // Requires that the current line is indented, but not necessarily a separator
   // space. May output spaces for `indent_`, dependent on line state. Only
   // guarantees the line_state_ is not Empty; the caller is responsible for
   // adjusting state if needed.
-  auto PrepareForPackedContent() -> void;
+  auto PrepareForPackedContent(int start_line = 0) -> void;
 
   // Returns the next token index.
   static auto NextToken(Lex::TokenIndex token) -> Lex::TokenIndex {
@@ -97,6 +101,12 @@ class Formatter {
 
   // The current code indent level, to be added to new lines.
   int indent_ = 0;
+
+  // The 0-based end line in original source of the previous token or comment.
+  int prev_end_line_ = 0;
+
+  // Kind of the last token before current one.
+  Lex::TokenKind prev_token_kind_ = Lex::TokenKind::FileStart;
 };
 
 }  // namespace Carbon::Format

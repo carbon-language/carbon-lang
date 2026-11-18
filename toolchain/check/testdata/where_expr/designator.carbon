@@ -34,9 +34,13 @@ interface J {
   let Member: type;
 }
 
-// CHECK:STDERR: fail_wrong_member.carbon:[[@LINE+4]]:38: error: member name `Mismatch` not found in `J` [MemberNameNotFoundInSpecificScope]
-// CHECK:STDERR: fn PeriodMismatch(generic W: J where .Mismatch = {});
-// CHECK:STDERR:                                      ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_wrong_member.carbon:[[@LINE+8]]:38
+// CHECK:STDERR: ->     │ fn PeriodMismatch(generic W: J where .Mismatch = {});
+// CHECK:STDERR:        ·                                      ┳━━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: member name `Mismatch` not
+// CHECK:STDERR:        ·                                         ┃        found in `J`
+// CHECK:STDERR:        ·                                         ┃        [MemberNameNotFoundInSpecificScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn PeriodMismatch(generic W: J where .Mismatch = {});
 
@@ -46,10 +50,15 @@ library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var unused x: ();
-  // CHECK:STDERR: fail_designator_matches_var.carbon:[[@LINE+5]]:10: error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:   return .x;
-  // CHECK:STDERR:          ^~
-  // CHECK:STDERR: fail_designator_matches_var.carbon: note: designator may only be used when `.Self` is in scope [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ╭─┤ fail_designator_matches_var.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR: ->     │   return .x;
+  // CHECK:STDERR:        ·          ━┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_designator_matches_var.carbon
+  // CHECK:STDERR:        · ╰──┤ designator may only be used when `.Self` is in scope
+  // CHECK:STDERR:        ·    │ [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return .x;
 }
@@ -59,10 +68,15 @@ fn Foo() -> () {
 library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
-  // CHECK:STDERR: fail_unknown_designator.carbon:[[@LINE+5]]:10: error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:   return .undef;
-  // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_unknown_designator.carbon: note: designator may only be used when `.Self` is in scope [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ╭─┤ fail_unknown_designator.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR: ->     │   return .undef;
+  // CHECK:STDERR:        ·          ━━━┳━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_unknown_designator.carbon
+  // CHECK:STDERR:        · ╰──┤ designator may only be used when `.Self` is in scope
+  // CHECK:STDERR:        ·    │ [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return .undef;
 }
@@ -72,9 +86,11 @@ fn Bar() -> () {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_dot_self_method_return_value.carbon:[[@LINE+4]]:27: error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:   fn F() -> Self { return .Self; }
-  // CHECK:STDERR:                           ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_dot_self_method_return_value.carbon:[[@LINE+6]]:27
+  // CHECK:STDERR: ->     │   fn F() -> Self { return .Self; }
+  // CHECK:STDERR:        ·                           ━━┳━━
+  // CHECK:STDERR:        ·                             ┗━━┫ error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> Self { return .Self; }
 }
@@ -84,9 +100,11 @@ class C {
 library "[[@TEST_NAME]]";
 
 class D {
-  // CHECK:STDERR: fail_dot_self_method_return_type.carbon:[[@LINE+4]]:13: error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:   fn G() -> .Self { return Self; }
-  // CHECK:STDERR:             ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_dot_self_method_return_type.carbon:[[@LINE+6]]:13
+  // CHECK:STDERR: ->     │   fn G() -> .Self { return Self; }
+  // CHECK:STDERR:        ·             ━━┳━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: name `.Self` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn G() -> .Self { return Self; }
 }
@@ -96,9 +114,18 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR: fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:52: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(generic U: type, unused generic T: type where U impls I) {}
-// CHECK:STDERR:                                                    ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_impls_constraint_does_not_constrain_self.carbon:[[@LINE+13]]:52
+// CHECK:STDERR: ->     │ fn F(generic U: type, unused generic T: type where U impls I) {}
+// CHECK:STDERR:        ·                                                    ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                    ┗━━┫ error: constraint in
+// CHECK:STDERR:        ·                                                       ┃        `where` clause
+// CHECK:STDERR:        ·                                                       ┃        without a
+// CHECK:STDERR:        ·                                                       ┃        designator;
+// CHECK:STDERR:        ·                                                       ┃        expected `.Self`
+// CHECK:STDERR:        ·                                                       ┃        or a member
+// CHECK:STDERR:        ·                                                       ┃        access like `.M`
+// CHECK:STDERR:        ·                                                       ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic U: type, unused generic T: type where U impls I) {}
 
@@ -109,9 +136,17 @@ interface I {
   let X: type;
 }
 
-// CHECK:STDERR: fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U.X == ()) {}
-// CHECK:STDERR:                                                 ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_equality_constraint_does_not_constrain_self.carbon:[[@LINE+12]]:49
+// CHECK:STDERR: ->     │ fn F(generic U: I, unused generic T: type where U.X == ()) {}
+// CHECK:STDERR:        ·                                                 ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                 ┗━━┫ error: constraint in
+// CHECK:STDERR:        ·                                                    ┃        `where` clause
+// CHECK:STDERR:        ·                                                    ┃        without a
+// CHECK:STDERR:        ·                                                    ┃        designator; expected
+// CHECK:STDERR:        ·                                                    ┃        `.Self` or a member
+// CHECK:STDERR:        ·                                                    ┃        access like `.M`
+// CHECK:STDERR:        ·                                                    ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic U: I, unused generic T: type where U.X == ()) {}
 
@@ -122,13 +157,26 @@ interface I {
   let X: type;
 }
 
-// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+8]]:49: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
-// CHECK:STDERR:                                                 ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+21]]:49
+// CHECK:STDERR: ->     │ fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
+// CHECK:STDERR:        ·                                                 ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                 ┗━━┫ error: constraint in
+// CHECK:STDERR:        ·                                                    ┃        `where` clause
+// CHECK:STDERR:        ·                                                    ┃        without a
+// CHECK:STDERR:        ·                                                    ┃        designator; expected
+// CHECK:STDERR:        ·                                                    ┃        `.Self` or a member
+// CHECK:STDERR:        ·                                                    ┃        access like `.M`
+// CHECK:STDERR:        ·                                                    ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+4]]:63: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
-// CHECK:STDERR:                                                               ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_combined_constraint_does_not_constrain_self.carbon:[[@LINE+9]]:63
+// CHECK:STDERR: ->     │ fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
+// CHECK:STDERR:        ·                                                               ━━━━┳━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: constraint in `where` clause without a designator; expected `.Self` or
+// CHECK:STDERR:        · ┃        a member access like `.M`
+// CHECK:STDERR:        · ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic U: I, unused generic T: type where U impls I and U.X == ()) {}
 
@@ -152,9 +200,18 @@ class A(T: type);
 class B;
 class C;
 
-// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:53: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
-// CHECK:STDERR:                                                     ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+13]]:53
+// CHECK:STDERR: ->     │ fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
+// CHECK:STDERR:        ·                                                     ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                     ┗━━┫ error: constraint in
+// CHECK:STDERR:        ·                                                        ┃        `where` clause
+// CHECK:STDERR:        ·                                                        ┃        without a
+// CHECK:STDERR:        ·                                                        ┃        designator;
+// CHECK:STDERR:        ·                                                        ┃        expected `.Self`
+// CHECK:STDERR:        ·                                                        ┃        or a member
+// CHECK:STDERR:        ·                                                        ┃        access like `.M`
+// CHECK:STDERR:        ·                                                        ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type where A(.Self) == B and A(B) == B) {}
 
@@ -162,9 +219,16 @@ interface Z {
   let Z0: type;
 }
 
-// CHECK:STDERR: fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+4]]:48: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
-// CHECK:STDERR:                                                ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_designator_in_one_equiv_constraint.carbon:[[@LINE+11]]:48
+// CHECK:STDERR: ->     │ fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
+// CHECK:STDERR:        ·                                                ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                ┗━━┫ error: constraint in `where`
+// CHECK:STDERR:        ·                                                   ┃        clause without a
+// CHECK:STDERR:        ·                                                   ┃        designator; expected
+// CHECK:STDERR:        ·                                                   ┃        `.Self` or a member
+// CHECK:STDERR:        ·                                                   ┃        access like `.M`
+// CHECK:STDERR:        ·                                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(unused generic T: Z where A(.Z0) == B and A(B) == B) {}
 
@@ -186,9 +250,15 @@ interface I {}
 interface J(T: type) {}
 class C;
 
-// CHECK:STDERR: fail_where_without_self_designator_in_type.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: type where C impls type) {}
-// CHECK:STDERR:                                   ^~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_self_designator_in_type.carbon:[[@LINE+10]]:35
+// CHECK:STDERR: ->     │ fn F(unused generic T: type where C impls type) {}
+// CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                                   ┗━━┫ error: constraint in `where` clause
+// CHECK:STDERR:        ·                                      ┃        without a designator; expected
+// CHECK:STDERR:        ·                                      ┃        `.Self` or a member access like
+// CHECK:STDERR:        ·                                      ┃        `.M`
+// CHECK:STDERR:        ·                                      ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls type) {}
 
@@ -201,9 +271,15 @@ interface I {}
 interface J(T: type) {}
 class C;
 
-// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_interface.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: type where C impls (I & J(.Self))) {}
-// CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_self_designator_in_one_impls_interface.carbon:[[@LINE+10]]:35
+// CHECK:STDERR: ->     │ fn F(unused generic T: type where C impls (I & J(.Self))) {}
+// CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                   ┗━━┫ error: constraint in `where` clause
+// CHECK:STDERR:        ·                                      ┃        without a designator; expected
+// CHECK:STDERR:        ·                                      ┃        `.Self` or a member access like
+// CHECK:STDERR:        ·                                      ┃        `.M`
+// CHECK:STDERR:        ·                                      ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls (I & J(.Self))) {}
 
@@ -217,9 +293,14 @@ interface I {}
 interface J(T: type) {}
 class C;
 
-// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_interface.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_member_designator_in_one_impls_interface.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: constraint in `where` clause without
+// CHECK:STDERR:        ·                                   ┃        a designator; expected `.Self` or a
+// CHECK:STDERR:        ·                                   ┃        member access like `.M`
+// CHECK:STDERR:        ·                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: Z where C impls (I & J(.Z0))) {}
 
@@ -234,9 +315,15 @@ constraint K(T: type) {
 }
 class C;
 
-// CHECK:STDERR: fail_where_without_self_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:35: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: type where C impls (I & K(.Self))) {}
-// CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_self_designator_in_one_impls_named_constraint.carbon:[[@LINE+10]]:35
+// CHECK:STDERR: ->     │ fn F(unused generic T: type where C impls (I & K(.Self))) {}
+// CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                   ┗━━┫ error: constraint in `where` clause
+// CHECK:STDERR:        ·                                      ┃        without a designator; expected
+// CHECK:STDERR:        ·                                      ┃        `.Self` or a member access like
+// CHECK:STDERR:        ·                                      ┃        `.M`
+// CHECK:STDERR:        ·                                      ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls (I & K(.Self))) {}
 
@@ -254,9 +341,14 @@ constraint K(T: type) {
 class C;
 
 
-// CHECK:STDERR: fail_where_without_member_designator_in_one_impls_named_constraint.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_where_without_member_designator_in_one_impls_named_constraint.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: constraint in `where` clause without
+// CHECK:STDERR:        ·                                   ┃        a designator; expected `.Self` or a
+// CHECK:STDERR:        ·                                   ┃        member access like `.M`
+// CHECK:STDERR:        ·                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: Z where C impls (I & K(.Z0))) {}
 
@@ -345,9 +437,14 @@ class C;
 
 eval fn E(generic _: type) -> type { return C; }
 
-// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_same_type.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: I where C == E(.Self)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_fn_call_returns_type_without_self_in_same_type.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ fn F(unused generic T: I where C == E(.Self)) {}
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: constraint in `where` clause without
+// CHECK:STDERR:        ·                                   ┃        a designator; expected `.Self` or a
+// CHECK:STDERR:        ·                                   ┃        member access like `.M`
+// CHECK:STDERR:        ·                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: I where C == E(.Self)) {}
 
@@ -359,9 +456,14 @@ class C;
 
 eval fn E(generic _: type) -> type { return C; }
 
-// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_impls.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: I where C impls E(.Self)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_fn_call_returns_type_without_self_in_impls.carbon:[[@LINE+9]]:40
+// CHECK:STDERR: ->     │ fn F(unused generic T: I where C impls E(.Self)) {}
+// CHECK:STDERR:        ·                                        ┳━━━━━━━
+// CHECK:STDERR:        ·                                        ┗━━┫ error: right argument of `impls`
+// CHECK:STDERR:        ·                                           ┃        requirement must be a facet
+// CHECK:STDERR:        ·                                           ┃        type
+// CHECK:STDERR:        ·                                           ┃        [ImplsOnNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: I where C impls E(.Self)) {}
 
@@ -378,9 +480,14 @@ eval fn E(generic T: type) -> type { return T; }
 // value. As such, we can't tell at the time of checking the facet type if
 // `E(.Self)` resolves to an expression containing a designator.
 
-// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_same_type.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: I where C == E(.Self)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_fn_call_returns_type_with_self_in_same_type.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ fn F(unused generic T: I where C == E(.Self)) {}
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: constraint in `where` clause without
+// CHECK:STDERR:        ·                                   ┃        a designator; expected `.Self` or a
+// CHECK:STDERR:        ·                                   ┃        member access like `.M`
+// CHECK:STDERR:        ·                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: I where C == E(.Self)) {}
 
@@ -397,9 +504,14 @@ eval fn E(generic T: type) -> type { return T; }
 // value. As such, we can't tell at the time of checking the facet type if
 // `E(.Self)` resolves to an expression containing a designator.
 
-// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_impls.carbon:[[@LINE+4]]:32: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
-// CHECK:STDERR: fn F(unused generic T: I where C impls E(.Self)) {}
-// CHECK:STDERR:                                ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_fn_call_returns_type_with_self_in_impls.carbon:[[@LINE+9]]:40
+// CHECK:STDERR: ->     │ fn F(unused generic T: I where C impls E(.Self)) {}
+// CHECK:STDERR:        ·                                        ┳━━━━━━━
+// CHECK:STDERR:        ·                                        ┗━━┫ error: right argument of `impls`
+// CHECK:STDERR:        ·                                           ┃        requirement must be a facet
+// CHECK:STDERR:        ·                                           ┃        type
+// CHECK:STDERR:        ·                                           ┃        [ImplsOnNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: I where C impls E(.Self)) {}
 
@@ -421,21 +533,16 @@ class C(T: type);
 
 // TODO: Once we can write a generic alias, this should pass.
 
-// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: alias A(U: type) = C(U);
-// CHECK:STDERR:        ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_generic_alias_preserves_self.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias A(U: type) = C(U);
+// CHECK:STDERR:        ·        ━━━━┳━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `alias` declaration cannot have parameters
+// CHECK:STDERR:        ·               ┃        [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias A(U: type) = C(U);
 
-// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-fn F(unused T:! I where C == A(.Self)) {}
+fn F(unused T: I where C == A(.Self)) {}
 
 // --- fail_generic_alias_without_self.carbon
 library "[[@TEST_NAME]]";
@@ -443,9 +550,12 @@ library "[[@TEST_NAME]]";
 interface I {}
 class C;
 
-// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:8: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
-// CHECK:STDERR: alias A(U: type) = C;
-// CHECK:STDERR:        ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_alias_without_self.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias A(U: type) = C;
+// CHECK:STDERR:        ·        ━━━━┳━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `alias` declaration cannot have parameters
+// CHECK:STDERR:        ·               ┃        [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias A(U: type) = C;
 
@@ -453,24 +563,16 @@ alias A(U: type) = C;
 
 // TODO: Once we can write a generic alias, this should become an error because
 // there is no constraint against `.Self`.
-// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-fn F(unused T:! I where C == A(.Self)) {}
+fn F(unused T: I where C == A(.Self)) {}
 
-// CHECK:STDOUT: --- success.carbon
+// CHECK:STDOUT: --- success.carbon = $success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%Member [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.3a0: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -481,7 +583,7 @@ fn F(unused T:! I where C == A(.Self)) {}
 // CHECK:STDOUT:   %T: %I_where.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodSelf.type: type = fn_type @PeriodSelf [concrete]
 // CHECK:STDOUT:   %PeriodSelf: %PeriodSelf.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.frozen.as_type.e90: type = facet_access_type %.Self.frozen.3a0 [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.3a0 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.ced: <witness> = lookup_impl_witness %.Self.frozen.3a0, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.125: type = impl_witness_access %I.lookup_impl_witness.ced, element0 [symbolic_self]
 // CHECK:STDOUT:   %I.lookup_impl_witness.78b: <witness> = lookup_impl_witness %.Self.f73, @I [symbolic_self]
@@ -490,9 +592,7 @@ fn F(unused T:! I where C == A(.Self)) {}
 // CHECK:STDOUT:   %U: %I_where.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %PeriodMember.type: type = fn_type @PeriodMember [concrete]
 // CHECK:STDOUT:   %PeriodMember: %PeriodMember.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.Self.frozen.as_type.bce: type = facet_access_type %.Self.frozen.197 [symbolic_self]
-// CHECK:STDOUT:   %.Self.e0b: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self.e0b [symbolic_self]
+// CHECK:STDOUT:   %.Self.c86: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @I> [concrete]
 // CHECK:STDOUT:   %pattern_type.951: type = pattern_type %type_where [concrete]
 // CHECK:STDOUT:   %V.patt: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic]
@@ -506,7 +606,7 @@ fn F(unused T:! I where C == A(.Self)) {}
 // CHECK:STDOUT:     %T.patt.loc9_24.1: %pattern_type.603 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_24.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_28.1: type = splice_block %.loc9_28.2 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc9_24: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_24: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.frozen.loc9_28: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
@@ -527,13 +627,13 @@ fn F(unused T:! I where C == A(.Self)) {}
 // CHECK:STDOUT:     %U.patt.loc11_26.1: %pattern_type.603 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc11_26.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_30.1: type = splice_block %.loc11_30.2 [concrete = constants.%I_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc11_26: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc11_26: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:       %.Self.frozen.loc11_30: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.3a0]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:       %.Self.ref: %I.type = name_ref .Self, %.Self.frozen.loc11_30 [symbolic_self = constants.%.Self.frozen.3a0]
-// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type.e90]
-// CHECK:STDOUT:       %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type.e90]
+// CHECK:STDOUT:       %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:       %.loc11_36: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:       %Member.ref: %I.assoc_type = name_ref Member, @Member.%assoc0 [concrete = constants.%assoc0]
 // CHECK:STDOUT:       %impl.elem0.loc11_36.1: type = impl_witness_access constants.%I.lookup_impl_witness.ced, element0 [symbolic_self = constants.%impl.elem0.125]
 // CHECK:STDOUT:       %.loc11_48: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
@@ -551,23 +651,19 @@ fn F(unused T:! I where C == A(.Self)) {}
 // CHECK:STDOUT:     %V.patt.loc13_27.1: %pattern_type.951 = symbolic_binding_pattern V, 0 [symbolic = %V.patt.loc13_27.2 (constants.%V.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc13_34.1: type = splice_block %.loc13_34.2 [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %.Self.frozen.loc13_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc13_27: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %.loc13_29: type = type_literal type [concrete = type]
-// CHECK:STDOUT:       %.Self.frozen.loc13_34: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc13_34: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc13_29 [concrete]
-// CHECK:STDOUT:       %.Self.ref.loc13_40.1: %type = name_ref .Self, %.Self.frozen.loc13_34 [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.ref.loc13_40.1: type = name_ref .Self, %.Self.frozen.loc13_34 [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:       %.Self.as_type.loc13_40.1: type = facet_access_type %.Self.ref.loc13_40.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
-// CHECK:STDOUT:       %.loc13_40.1: type = converted %.Self.ref.loc13_40.1, %.Self.as_type.loc13_40.1 [symbolic_self = constants.%.Self.frozen.as_type.bce]
-// CHECK:STDOUT:       %impls.loc13_46.1 = requirement_impls %.loc13_40.1, %I.ref [concrete]
-// CHECK:STDOUT:       %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.ref.loc13_40.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.e0b]
-// CHECK:STDOUT:       %.Self.as_type.loc13_40.2: type = facet_access_type %.Self.ref.loc13_40.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %.loc13_40.2: type = converted %.Self.ref.loc13_40.1, %.Self.as_type.loc13_40.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:       %impls.loc13_46.2 = requirement_impls %.loc13_40.2, %I.ref [concrete]
+// CHECK:STDOUT:       %impls.loc13_46.1 = requirement_impls %.Self.ref.loc13_40.1, %I.ref [concrete]
+// CHECK:STDOUT:       %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self.c86]
+// CHECK:STDOUT:       %.Self.ref.loc13_40.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self.c86]
+// CHECK:STDOUT:       %impls.loc13_46.2 = requirement_impls %.Self.ref.loc13_40.2, %I.ref [concrete]
 // CHECK:STDOUT:       %.loc13_34.2: type = where_expr [concrete = constants.%type_where] {
 // CHECK:STDOUT:         %base_facet_type = requirement_base_facet_type %.loc13_29 [concrete]
-// CHECK:STDOUT:         %impls.loc13_46.2 = requirement_impls %.loc13_40.2, %I.ref [concrete]
+// CHECK:STDOUT:         %impls.loc13_46.2 = requirement_impls %.Self.ref.loc13_40.2, %I.ref [concrete]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %V.loc13_27.2: %type_where = symbolic_binding V, 0 [symbolic = %V.loc13_27.1 (constants.%V)]

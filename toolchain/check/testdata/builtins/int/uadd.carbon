@@ -29,15 +29,21 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: i32) -> i32 = "int.uadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew(a: i32) -> i32 = "int.uadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew(a: i32) -> i32 = "int.uadd";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:25: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_few: array(i32, TooFew(1));
-// CHECK:STDERR:                         ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:25
+// CHECK:STDERR: ->     │ var too_few: array(i32, TooFew(1));
+// CHECK:STDERR:        ·                         ━━━━┳━━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_few: array(i32, TooFew(1));
 
@@ -49,15 +55,21 @@ fn RuntimeCallIsValidTooFew(a: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.uadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.uadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: i32, b: i32, c: i32) -> i32 = "int.uadd";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:26: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var too_many: array(i32, TooMany(1, 2, 3));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:26
+// CHECK:STDERR: ->     │ var too_many: array(i32, TooMany(1, 2, 3));
+// CHECK:STDERR:        ·                          ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·                                  ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                     ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_many: array(i32, TooMany(1, 2, 3));
 
@@ -69,15 +81,21 @@ fn RuntimeCallIsValidTooMany(a: i32, b: i32, c: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.uadd" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: invalid signature for builtin function "int.uadd"
+// CHECK:STDERR:        ·                       ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: i32, b: i32) -> bool = "int.uadd";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:33: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: var bad_return_type: array(i32, BadReturnType(1, 2));
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:33
+// CHECK:STDERR: ->     │ var bad_return_type: array(i32, BadReturnType(1, 2));
+// CHECK:STDERR:        ·                                 ━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                                        ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                           ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_return_type: array(i32, BadReturnType(1, 2));
 
@@ -91,12 +109,17 @@ library "[[@TEST_NAME]]";
 
 fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+7]]:26: error: 3 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: var bad_call: array(i32, Add(1, 2, 3));
-// CHECK:STDERR:                          ^~~~~~~~~~~~
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-5]]:1: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR: fn Add(a: i32, b: i32) -> i32 = "int.uadd";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
+// CHECK:STDERR:        │ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
+// CHECK:STDERR:        · ───────────────┬───────────────
+// CHECK:STDERR:        ·                ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var bad_call: array(i32, Add(1, 2, 3));
+// CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: 3 arguments passed to function expecting 2
+// CHECK:STDERR:        ·                             ┃        arguments
+// CHECK:STDERR:        ·                             ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_call: array(i32, Add(1, 2, 3));
 
@@ -110,9 +133,10 @@ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 let a: i32 = Add(0x7FFFFFFF, 0);
 let b: i32 = Add(0x7FFFFFFF, 1);
 
-// CHECK:STDOUT: --- int_add.carbon
+// CHECK:STDOUT: --- int_add.carbon = $int_add
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]

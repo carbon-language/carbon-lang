@@ -16,12 +16,16 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+7]]:13: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: impl i32 as false {}
-// CHECK:STDERR:             ^~~~~
-// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+4]]:13: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: impl i32 as false {}
-// CHECK:STDERR:             ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_impl_as_false.carbon:[[@LINE+11]]:13
+// CHECK:STDERR: ->     │ impl i32 as false {}
+// CHECK:STDERR:        ·             ┳━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert non-type value of type `bool`
+// CHECK:STDERR:        ·             │  ┃        to `type`
+// CHECK:STDERR:        ·             │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·             ╰────┤ type `bool` does not implement interface
+// CHECK:STDERR:        ·                  │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl i32 as false {}
 
@@ -29,9 +33,11 @@ impl i32 as false {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_impl_as_type.carbon:[[@LINE+4]]:1: error: impl as non-facet type `type` [ImplAsNonFacetType]
-// CHECK:STDERR: impl bool as type {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_impl_as_type.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl bool as type {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl bool as type {}
 
@@ -39,9 +45,12 @@ impl bool as type {}
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_impl_as_type_where.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl f64 as type where .Self impls type {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_impl_as_type_where.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl f64 as type where .Self impls type {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: impl as 0 interfaces, expected 1
+// CHECK:STDERR:        ·                        ┃        [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl f64 as type where .Self impls type {}
 
@@ -51,17 +60,21 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR: fail_impl_as_type_where_impls_interface.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl {.a: bool} as type where .Self impls I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_impl_as_type_where_impls_interface.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl {.a: bool} as type where .Self impls I {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: impl as 0 interfaces, expected 1
+// CHECK:STDERR:        ·                          ┃        [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {.a: bool} as type where .Self impls I {}
 
-// CHECK:STDOUT: --- fail_impl_as_false.carbon
+// CHECK:STDOUT: --- fail_impl_as_false.carbon = $fail_impl_as_false
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
@@ -85,7 +98,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc11: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc15: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
 // CHECK:STDOUT:   impl_decl @i32.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -98,7 +111,11 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type.carbon
+// CHECK:STDOUT: --- fail_impl_as_type.carbon = $fail_impl_as_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -115,29 +132,27 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @bool.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc8_6: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:     %.loc8_14: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc10_6: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc10_14: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc8_6 as <error> {
+// CHECK:STDOUT: impl @bool.as.<error>.impl: %.loc10_6 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where.carbon = $fail_impl_as_type_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
+// CHECK:STDOUT:   %Float.type: type = parameterized_class_name_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %f64: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -156,22 +171,18 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   impl_decl @f64.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %f64: type = type_literal constants.%f64 [concrete = constants.%f64]
-// CHECK:STDOUT:     %.loc8_13: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc8_13 [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc8_24.1: %type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc8_36: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.as_type.loc8_24.1: type = facet_access_type %.Self.ref.loc8_24.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc8_24.1: type = converted %.Self.ref.loc8_24.1, %.Self.as_type.loc8_24.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %impls.loc8_30.1 = requirement_impls %.loc8_24.1, %.loc8_36 [concrete]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc8_24.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type.loc8_24.2: type = facet_access_type %.Self.ref.loc8_24.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc8_24.2: type = converted %.Self.ref.loc8_24.1, %.Self.as_type.loc8_24.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %impls.loc8_30.2 = requirement_impls %.loc8_24.2, %.loc8_36 [concrete]
-// CHECK:STDOUT:     %.loc8_18: type = where_expr [concrete = constants.%type] {
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc8_13 [concrete]
-// CHECK:STDOUT:       %impls.loc8_30.2 = requirement_impls %.loc8_24.2, %.loc8_36 [concrete]
+// CHECK:STDOUT:     %.loc11_13: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc11_13 [concrete]
+// CHECK:STDOUT:     %.Self.ref.loc11_24.1: type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc11_36: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %impls.loc11_30.1 = requirement_impls %.Self.ref.loc11_24.1, %.loc11_36 [concrete]
+// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc11_24.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %impls.loc11_30.2 = requirement_impls %.Self.ref.loc11_24.2, %.loc11_36 [concrete]
+// CHECK:STDOUT:     %.loc11_18: type = where_expr [concrete = type] {
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc11_13 [concrete]
+// CHECK:STDOUT:       %impls.loc11_30.2 = requirement_impls %.Self.ref.loc11_24.2, %.loc11_36 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -182,17 +193,15 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon = $fail_impl_as_type_where_impls_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: bool} [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
-// CHECK:STDOUT:   %.Self: %type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %type_where: type = facet_type <type where .Self impls @I> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -213,24 +222,20 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @struct_type.a.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc10_11: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:     %.loc13_11: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: bool} [concrete = constants.%struct_type.a]
-// CHECK:STDOUT:     %.loc10_20: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc10_20 [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc10_31.1: %type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc13_20: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc13_20 [concrete]
+// CHECK:STDOUT:     %.Self.ref.loc13_31.1: type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self.as_type.loc10_31.1: type = facet_access_type %.Self.ref.loc10_31.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc10_31.1: type = converted %.Self.ref.loc10_31.1, %.Self.as_type.loc10_31.1 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %impls.loc10_37.1 = requirement_impls %.loc10_31.1, %I.ref [concrete]
-// CHECK:STDOUT:     %.Self: %type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc10_31.2: %type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.as_type.loc10_31.2: type = facet_access_type %.Self.ref.loc10_31.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %.loc10_31.2: type = converted %.Self.ref.loc10_31.1, %.Self.as_type.loc10_31.2 [symbolic_self = constants.%.Self.as_type]
-// CHECK:STDOUT:     %impls.loc10_37.2 = requirement_impls %.loc10_31.2, %I.ref [concrete]
-// CHECK:STDOUT:     %.loc10_25: type = where_expr [concrete = constants.%type_where] {
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc10_20 [concrete]
-// CHECK:STDOUT:       %impls.loc10_37.2 = requirement_impls %.loc10_31.2, %I.ref [concrete]
+// CHECK:STDOUT:     %impls.loc13_37.1 = requirement_impls %.Self.ref.loc13_31.1, %I.ref [concrete]
+// CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %.Self.ref.loc13_31.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %impls.loc13_37.2 = requirement_impls %.Self.ref.loc13_31.2, %I.ref [concrete]
+// CHECK:STDOUT:     %.loc13_25: type = where_expr [concrete = constants.%type_where] {
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc13_20 [concrete]
+// CHECK:STDOUT:       %impls.loc13_37.2 = requirement_impls %.Self.ref.loc13_31.2, %I.ref [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

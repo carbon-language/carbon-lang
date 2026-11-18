@@ -16,9 +16,10 @@ fn Main() {
   return;
 }
 
-// CHECK:STDOUT: --- no_value.carbon
+// CHECK:STDOUT: --- no_value.carbon = $no_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Main.type: type = fn_type @Main [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT: }

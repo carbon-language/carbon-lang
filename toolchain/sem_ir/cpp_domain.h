@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_DOMAIN_H_
 
 #include <memory>
+#include <utility>
 
 #include "common/check.h"
 #include "common/map.h"
@@ -16,7 +17,10 @@
 namespace clang {
 class CodeGenerator;
 class CompilerInstance;
+class DeclContext;
+class IdentifierInfo;
 class Module;
+class NamespaceDecl;
 class Parser;
 }  // namespace clang
 
@@ -41,6 +45,14 @@ struct CppInputFile {
 // parse more code into that domain. May be shared across multiple Carbon files.
 class CppDomain {
  public:
+  // A map from parent context and namespace name to semantic namespace, for
+  // cross-file deduplication of exported packages and namespaces. We use the
+  // same semantic C++ namespace for the same Carbon package and namespace path
+  // in every file.
+  using SemanticNamespacesMap =
+      Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
+          clang::NamespaceDecl*>;
+
   explicit CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
                      std::unique_ptr<clang::Parser> parser,
                      llvm::ArrayRef<CppInputFile> inputs,
@@ -67,6 +79,15 @@ class CppDomain {
   auto header_modules() -> llvm::StringMap<clang::Module*>& {
     return header_modules_;
   }
+  auto carbon_namespace() const -> clang::NamespaceDecl* {
+    return carbon_namespace_;
+  }
+  auto set_carbon_namespace(clang::NamespaceDecl* carbon_namespace) -> void {
+    carbon_namespace_ = carbon_namespace;
+  }
+  auto semantic_namespaces() -> SemanticNamespacesMap& {
+    return semantic_namespaces_;
+  }
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_instance_;
@@ -74,6 +95,8 @@ class CppDomain {
   Map<CheckIRId, clang::CodeGenerator*> code_generators_;
   Map<CheckIRId, clang::Module*> modules_;
   llvm::StringMap<clang::Module*> header_modules_;
+  clang::NamespaceDecl* carbon_namespace_ = nullptr;
+  SemanticNamespacesMap semantic_namespaces_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 

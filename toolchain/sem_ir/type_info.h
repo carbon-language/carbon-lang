@@ -381,6 +381,8 @@ struct RecognizedTypeInfo {
     // `str` / `Core.String`.
     // TODO: Rename `Core.String` to `Core.Str`.
     Str,
+    // `array(T, N)` / `Core.Array(T, N)`.
+    Array,
   };
 
   // Returns the type literal that would evaluate to this class type, if any.

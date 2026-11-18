@@ -60,7 +60,7 @@ auto GlobalInit::Finalize() -> void {
 
 auto UseGlobalInit(Context& context) -> bool {
   return context.scope_stack().PeekIndex() == ScopeIndex::Package ||
-         InStaticClassScopeVar(context);
+         InStaticClassScopeVar(context) || InClassScopeLet(context);
 }
 
 }  // namespace Carbon::Check

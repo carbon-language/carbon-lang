@@ -12,16 +12,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_unresolved_scope.carbon
 
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+4]]:4: error: name `Foo` not found [NameNotFound]
-// CHECK:STDERR: fn Foo.Baz() {
-// CHECK:STDERR:    ^~~
+// CHECK:STDERR:        ╭─┤ fail_unresolved_scope.carbon:[[@LINE+6]]:4
+// CHECK:STDERR: ->     │ fn Foo.Baz() {
+// CHECK:STDERR:        ·    ━┳━
+// CHECK:STDERR:        ·     ┗━━┫ error: name `Foo` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: --- fail_unresolved_scope.carbon
+// CHECK:STDOUT: --- fail_unresolved_scope.carbon = $fail_unresolved_scope
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Baz.type: type = fn_type @Baz [concrete]
 // CHECK:STDOUT:   %Baz: %Baz.type = struct_value () [concrete]
 // CHECK:STDOUT: }

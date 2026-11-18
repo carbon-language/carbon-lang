@@ -9,9 +9,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_returned_var.carbon
 
 fn foo() -> i32 {
-  // CHECK:STDERR: fail_returned_var.carbon:[[@LINE+4]]:8: error: expected pattern [ExpectedPattern]
-  // CHECK:STDERR:   for (returned var x: i32 in y) {
-  // CHECK:STDERR:        ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_returned_var.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   for (returned var x: i32 in y) {
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   for (returned var x: i32 in y) {
     return var;
