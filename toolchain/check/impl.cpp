@@ -451,6 +451,8 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 //
 // If `convert_symbolic_only` is true, the `value_id` is assumed to be already
 // converted to the type of the associated constant when that type is concrete.
+// Then we would only convert the `value_id` to the associated constant type
+// if that type was symbolic, by forming the impl's target interface specific.
 static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
                           const SemIR::Impl& impl,
                           const SemIR::Interface& interface,
@@ -491,8 +493,6 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
     return;
   }
 
-  // If the associated constant has a symbolic type, convert the rewrite
-  // value to that type now we know the value of `Self`.
   SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
   if (assoc_const_type_id.is_symbolic() || !convert_symbolic_only) {
     auto interface_with_self_specific_id = MakeSpecificWithInnerSelf(
