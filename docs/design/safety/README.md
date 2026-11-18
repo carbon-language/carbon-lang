@@ -28,8 +28,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 One of Carbon's core goals is [practical safety]. This is referring to _[code
 safety]_ as opposed to the larger space of [systems safety]. The largest aspect
 of code safety at the language level is [memory safety], but this also applies
-to other aspects of code safety such as avoiding undefined behavior in other
-forms.
+to other aspects of code safety such as avoiding
+[undefined behavior](/docs/design/program_behavior.md) in other forms.
 
 [practical safety]:
     /docs/project/goals.md#practical-safety-and-testing-mechanisms
@@ -229,7 +229,8 @@ overhead incurred.
 [performance control]: /docs/project/goals.md#performance-critical-software
 
 The debug build will change the actual behavior of both safe and unsafe code
-with detectable bugs or detectable undefined or erroneous behavior to have
+with detectable bugs or detectable
+[undefined or erroneous behavior](/docs/design/program_behavior.md) to have
 [fail-stop] behavior and provide detailed diagnostics to enable better
 debugging. This mode will at least provide similar bug [detection] capabilities
 to [AddressSanitizer] and [MemorySanitizer].
