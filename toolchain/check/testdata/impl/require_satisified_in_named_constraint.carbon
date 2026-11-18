@@ -27,7 +27,7 @@ impl () as N;
 // () needs to impl Z at the start of the definition.
 // CHECK:STDERR:        ╭─┤ fail_missing_require_for_concrete_type.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ impl () as N {}
-// CHECK:STDERR:        · ━━┳━━━━━━━━━━━
+// CHECK:STDERR:        · ━━┳━━━━━━━━━━━━
 // CHECK:STDERR:        ·   ┗━━┫ error: constraint `N` being implemented requires that `()` implements `Z`
 // CHECK:STDERR:        ·      ┃        [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:        ╰────
@@ -51,7 +51,7 @@ impl forall [T: type] T as N;
 // T needs to impl Z at the start of the definition.
 // CHECK:STDERR:        ╭─┤ fail_missing_require_for_symbolic_type.carbon:[[@LINE+7]]:1
 // CHECK:STDERR: ->     │ impl forall [T: type] T as N {}
-// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·    ┗━━┫ error: constraint `N` being implemented requires that `T` implements `Z`
 // CHECK:STDERR:        ·       ┃        [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:        ╰────
@@ -179,7 +179,7 @@ impl () as Z where .Z1 = {};
 
 // CHECK:STDERR:        ╭─┤ fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE+14]]:1
 // CHECK:STDERR: ->     │ impl () as N {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┗━━┫ error: constraint `N` being implemented requires that `().(Z.Z1)` equals
 // CHECK:STDERR:        ·    ┃        `()`; found `{}` and `()`
 // CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotEquivalent]
@@ -224,7 +224,7 @@ constraint N {
 // Wrong type for `.Z1`.
 // CHECK:STDERR:        ╭─┤ fail_require_non_extended_rewrite_same_interface_wrong_type.carbon:[[@LINE+8]]:1
 // CHECK:STDERR: ->     │ impl () as N where .Z1 = {} {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┗━━┫ error: constraint `N where .(Z.Z1) = {}` being implemented requires that
 // CHECK:STDERR:        ·    ┃        `().(Z.Z1)` equals `()`; found `{}` and `()`
 // CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotEquivalent]

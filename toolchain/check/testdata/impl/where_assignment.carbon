@@ -17,17 +17,6 @@ interface Z {
   let Z1: type;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+11]]:1
-// CHECK:STDERR:        │   let Z1: type;
-// CHECK:STDERR:        ·       ────┬───
-// CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as Z {
-// CHECK:STDERR:        · ━━━━━┳━━━━━━━━
-// CHECK:STDERR:        ·      ┗━━┫ error: associated constant Z1 not given a value in impl of interface Z
-// CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl () as Z {
   // CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+6]]:3
   // CHECK:STDERR: ->     │   where Z1 = type;
@@ -46,17 +35,6 @@ interface Z {
 }
 
 class C {
-  // CHECK:STDERR:        ╭─┤ fail_todo_basic_in_class.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   let Z1: type;
-  // CHECK:STDERR:        ·       ────┬───
-  // CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   impl as Z {
-  // CHECK:STDERR:        ·   ━━━┳━━━━━━━
-  // CHECK:STDERR:        ·      ┗━━┫ error: associated constant Z1 not given a value in impl of interface Z
-  // CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   impl as Z {
     // CHECK:STDERR:        ╭─┤ fail_todo_basic_in_class.carbon:[[@LINE+6]]:5
     // CHECK:STDERR: ->     │     where Z1 = type;

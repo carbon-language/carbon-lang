@@ -256,7 +256,7 @@ impl forall [T: type] T as J where .T = () {
   }
 }
 
-// --- fail_todo_associated_constant_use_before_value_known.carbon
+// --- fail_associated_constant_use_before_value_known.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -266,32 +266,15 @@ interface J {
 
 class A {}
 
-// TODO: Make sure this behaves reasonably once we support `where` declarations.
-
-// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+22]]:1
-// CHECK:STDERR:        │   let T: type;
-// CHECK:STDERR:        ·       ───┬───
-// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl A as J {
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface J
-// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
-// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+11]]:1
-// CHECK:STDERR:        │   let U: type;
-// CHECK:STDERR:        ·       ───┬───
-// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl A as J {
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: associated constant U not given a value in impl of interface J
-// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:13
+  // CHECK:STDERR: ->     │   where U = T;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
   // CHECK:STDERR: ->     │   where U = T;
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
   // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `where assignment decl` [SemanticsTodo]
