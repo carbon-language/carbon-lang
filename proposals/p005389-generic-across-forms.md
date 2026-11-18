@@ -369,7 +369,7 @@ A primitive `Core.Form` has (at least):
     function is run")
 -   for compile time phase, a specific compile-time value
 
-Unlike [expression forms](/docs/design/values.md#expression-forms), which
+Unlike [expression forms](/docs/design/values.md#extended-types), which
 distinguish `"template"` and `"symbolic"` expression phases, `Core.Form` uses a
 single `"compile time"` phase:
 
@@ -384,8 +384,9 @@ single `"compile time"` phase:
 -   Both checked-generic and `template` compile-time parameters accept either
     kind of compile-time constant per
     [leads issue #2153](https://github.com/carbon-language/carbon-lang/issues/2153)
-    and [proposal #2964](p2964.md#proposal), so parameter matching on
-    `Core.Form` does not distinguish them.
+    and
+    [proposal #2964](p002964-expression-phase-terminology.md#proposal),
+    so parameter matching on `Core.Form` does not distinguish them.
 
 See
 [the alternative considered](#separate-template-and-symbolic-phases-in-coreform).
@@ -612,7 +613,7 @@ Previously, interfaces had an implicit `Self` type parameter, set to the type
 that is implementing the interface. We add the capability to explicitly declare
 the `Self` parameter with a form facet type as the first parameter in
 parentheses `(`...`)`, similar to the `self` parameter of methods in
-[proposal #7016](p7016.md):
+[proposal #7016](p007016-updating-self-syntax-and-adding-static-member-variables.md):
 
 ```carbon
 interface Callback(Self:! Core.Form) {
@@ -1900,7 +1901,7 @@ Observe that this replicates the semantics of `BindToValue`, `BindToRef`, and
 -   `BindToType` uses the value of the left argument, not the type.
 -   The [`implicit_into` variance](#implicit_into-interface-parameter-variance)
     of the `LHS` parameter supports
-    [implicit conversions](p3720.md#inheritance-and-other-implicit-conversions).
+    [implicit conversions](p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
 
 However, there are a few differences:
 
@@ -2131,8 +2132,9 @@ This was discussed on
 
 #### Positional parameters
 
-[Positional parameters](/docs/design/lambdas.md#positional-parameters),
-introduced in [proposal #3848](p3848.md#positional-parameters),
+[Positional parameters](/docs/design/functions.md#positional-parameters),
+introduced in
+[proposal #3848](p003848-lambdas.md#positional-parameters),
 previously had type `auto`. This proposal changes them to have `auto` form. So
 `fn F {`...`}` acts as if it had signature `fn F(... _:? auto)`. This means that
 an argument that is a reference expression that is modified by the function body
@@ -2324,8 +2326,8 @@ fn Id(ref x: i32) ->? auto {
 Note that the `=>` return syntax introduced in
 [proposal #3848](https://github.com/carbon-language/carbon-lang/pull/3848) is
 not changed to deduce form, as decided in
-[proposal #5434](p5434.md#-infers-form-not-just-type). This still may
-be revisited once the memory safety story is more developed.
+[proposal #5434](p005434-ref-parameters-arguments-returns-and-val-returns.md#-infers-form-not-just-type).
+This still may be revisited once the memory safety story is more developed.
 
 ### Implicit conversions of `self`
 
@@ -2405,7 +2407,7 @@ the `CallPrimitive` implementation looked up as part of resolving the `()`
 operation. That lookup will only find calls where the type of `Self` is `Dog`.
 
 This works with
-[our approach of allowing implicit conversions with the `self` parameter](p3720.md#inheritance-and-other-implicit-conversions).
+[our approach of allowing implicit conversions with the `self` parameter](p003720-member-binding-operators.md#inheritance-and-other-implicit-conversions).
 See extension methods
 [leads issue #1345: "How is the type of me restricted, and where can methods be declared?"](https://github.com/carbon-language/carbon-lang/issues/1345)
 and
@@ -2610,7 +2612,7 @@ InvokeForm(lambda2)
 ### `impl` lookup for an interface with variant parameters
 
 There are a few changes needed to
-[the current `impl` selection algorithm from proposal #5337](p5337.md#impl-selection-algorithm):
+[the current `impl` selection algorithm from proposal #5337](p005337-interface-extension-and-final-impl-update.md#impl-selection-algorithm):
 
 -   The initial filter for `impl`s that have a compatible type structure for the
     query is changed to allow differences in the type structure in the
@@ -3178,8 +3180,8 @@ Assert(SumPair((three, three)) == 6);
 ```
 
 A parameterized alias was mentioned in
-[proposal #2875](p2875.md#function-pointers) as a way to define a parameterized
-`FunctionPtr` type.
+[proposal #2875](p002875-functions-function-types-and-function-calls.md#function-pointers)
+as a way to define a parameterized `FunctionPtr` type.
 
 ### `ref?`
 
@@ -3301,7 +3303,7 @@ rest of the form, but we do that without a representation for the rest of the
 form. See [the "any form with this type" section](#any-form-with-this-type).
 
 See also the
-["Mixed expression categories" alternative in proposal #5545](p5545.md#mixed-expression-categories)
+["Mixed expression categories" alternative in proposal #5545](p005545-expression-form-basics.md#mixed-expression-categories)
 for a related discussion of keeping types and expression categories separate in
 general.
 
@@ -3686,7 +3688,7 @@ and in
 
 We considered distinguishing `"template"` and `"symbolic"` phases in
 `Core.Form`, matching the three phases (`"runtime"`, `"symbolic"`, and
-`"template"`) of [expression forms](/docs/design/values.md#expression-forms). We
+`"template"`) of [expression forms](/docs/design/values.md#extended-types). We
 chose a single `"compile time"` phase instead for three reasons:
 
 -   Under
