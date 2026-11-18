@@ -500,16 +500,10 @@ static auto SetTableEntry(Context& context, SemIR::LocId loc_id,
         impl.interface.specific_id,
         context.constant_values().Get(impl.self_id));
 
-    // Get the type of the associated constant in this interface with this
-    // value for `Self`.
     assoc_const_type_id = GetTypeForSpecificAssociatedEntity(
         context, interface_with_self_specific_id, decl_id);
-    // Perform the conversion of the value to the type. We skipped this when
-    // forming the facet type because the type of the associated constant
-    // was symbolic.
     auto converted_inst_id =
         ConvertToValueOfType(context, loc_id, value_id, assoc_const_type_id);
-    // Canonicalize the converted constant value.
     converted_inst_id =
         context.constant_values().GetConstantInstId(converted_inst_id);
     // Check that the value is constant after conversion, because the result of

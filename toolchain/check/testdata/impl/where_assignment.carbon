@@ -94,7 +94,7 @@ impl () as Z {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where Z1 = ();
-  where Z2 = ({} as C({}));
+  where Z2 = ({} as C(()));
 }
 
 // --- symbolic_type.carbon
