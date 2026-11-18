@@ -10,8 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/arrays.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
 // TODO: builtin array type destruction should be trivial, and defer to
 // `Core.Array as Core.Destroy`.
 
@@ -26,7 +24,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_trivial_empty_array_with_trivial_element_type.carbon
+// --- trivial_empty_array_with_trivial_element_type.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -44,7 +42,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_empty_array_with_nontrivial_element_type.carbon
+// --- trivial_empty_array_with_nontrivial_element_type.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -62,7 +60,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_populated.carbon
+// --- trivial_populated.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -91,7 +89,7 @@ fn Test() {
   Array as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_array_of_array.carbon
+// --- trivial_array_of_array.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -109,7 +107,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_empty_array_of_nontrivial_populated_array.carbon
+// --- trivial_empty_array_of_nontrivial_populated_array.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -131,7 +129,7 @@ fn Test() {
   Array as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_array_adapter.carbon
+// --- trivial_array_adapter.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `adapters.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -167,7 +165,7 @@ fn Test() {
   Adapter as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_constrained_facet.carbon
+// --- trivial_constrained_facet.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `facets.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -191,7 +189,7 @@ fn Test(generic T: Core.TrivialDestroy) {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_const_populated.carbon
+// --- trivial_const_populated.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -224,7 +222,7 @@ fn Test() {
   Array as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_array_of_const.carbon
+// --- trivial_array_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
@@ -252,7 +250,7 @@ fn Test() {
   Array as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_array_with_trivial_element_type.carbon = $todo_trivial_empty_array_with_trivial_element_type
+// CHECK:STDOUT: --- trivial_empty_array_with_trivial_element_type.carbon = $trivial_empty_array_with_trivial_element_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -340,7 +338,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %Array.744) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_empty_array_with_nontrivial_element_type.carbon = $todo_trivial_empty_array_with_nontrivial_element_type
+// CHECK:STDOUT: --- trivial_empty_array_with_nontrivial_element_type.carbon = $trivial_empty_array_with_nontrivial_element_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -428,7 +426,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %Array.fbd) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_populated.carbon = $todo_trivial_populated
+// CHECK:STDOUT: --- trivial_populated.carbon = $trivial_populated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -539,7 +537,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_array_of_array.carbon = $todo_trivial_array_of_array
+// CHECK:STDOUT: --- trivial_array_of_array.carbon = $trivial_array_of_array
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -767,7 +765,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_array_adapter.carbon = $todo_trivial_array_adapter
+// CHECK:STDOUT: --- trivial_array_adapter.carbon = $trivial_array_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -881,7 +879,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_constrained_facet.carbon = $todo_trivial_constrained_facet
+// CHECK:STDOUT: --- trivial_constrained_facet.carbon = $trivial_constrained_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1011,7 +1009,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.loc14_18.1 => constants.%T.f45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_const_populated.carbon = $todo_trivial_const_populated
+// CHECK:STDOUT: --- trivial_const_populated.carbon = $trivial_const_populated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

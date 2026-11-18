@@ -10,9 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/adapters.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -24,7 +21,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_trivial_class_adapter.carbon
+// --- trivial_class_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -75,7 +72,7 @@ fn Test() {
   Adapter as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_struct_adapter.carbon
+// --- trivial_struct_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -143,7 +140,7 @@ fn Test() {
   Adapter as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_pointer.carbon
+// --- trivial_pointer.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -161,7 +158,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_trivial_class_adapter.carbon = $todo_trivial_class_adapter
+// CHECK:STDOUT: --- trivial_class_adapter.carbon = $trivial_class_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -249,7 +246,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc13_11.3(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_struct_adapter.carbon = $todo_trivial_struct_adapter
+// CHECK:STDOUT: --- trivial_struct_adapter.carbon = $trivial_struct_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -473,7 +470,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc13_11.4(%self.param: ref %Adapter) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_pointer.carbon = $todo_trivial_pointer
+// CHECK:STDOUT: --- trivial_pointer.carbon = $trivial_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

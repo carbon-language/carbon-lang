@@ -10,9 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/classes.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -38,7 +35,7 @@ base class NonTrivialDynamicClass {
   }
 }
 
-// --- todo_trivial_empty_class.carbon
+// --- trivial_empty_class.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -64,7 +61,7 @@ fn Test() {
   ImplsDestroy as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_all_trivial_fields.carbon
+// --- trivial_all_trivial_fields.carbon
 library "[[@TEST_NAME]]";
 
 class TrivialFields {
@@ -115,7 +112,7 @@ fn Test() {
   NonTrivialFieldSecond as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_nested_trivial_fields.carbon
+// --- trivial_nested_trivial_fields.carbon
 library "[[@TEST_NAME]]";
 
 class TrivialFields {
@@ -159,7 +156,7 @@ fn Test() {
   NestedNonTrivialMember as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_derived_from_trivial_base.carbon
+// --- trivial_derived_from_trivial_base.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -242,7 +239,7 @@ fn Test() {
   Derived as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_generic_class.carbon
+// --- trivial_generic_class.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -314,7 +311,7 @@ fn Test() {
   Derived as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_dynamic_class.carbon
+// --- trivial_dynamic_class.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -331,7 +328,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_dynamic_base.carbon
+// --- trivial_dynamic_base.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -459,7 +456,7 @@ fn Test() {
   Derived as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_class.carbon = $todo_trivial_empty_class
+// CHECK:STDOUT: --- trivial_empty_class.carbon = $trivial_empty_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -545,7 +542,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9_25.2(%self.param: ref %HasTrivialDestruction) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_all_trivial_fields.carbon = $todo_trivial_all_trivial_fields
+// CHECK:STDOUT: --- trivial_all_trivial_fields.carbon = $trivial_all_trivial_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -689,7 +686,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nested_trivial_fields.carbon = $todo_trivial_nested_trivial_fields
+// CHECK:STDOUT: --- trivial_nested_trivial_fields.carbon = $trivial_nested_trivial_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -867,7 +864,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_derived_from_trivial_base.carbon = $todo_trivial_derived_from_trivial_base
+// CHECK:STDOUT: --- trivial_derived_from_trivial_base.carbon = $trivial_derived_from_trivial_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1011,7 +1008,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_generic_class.carbon = $todo_trivial_generic_class
+// CHECK:STDOUT: --- trivial_generic_class.carbon = $trivial_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1125,7 +1122,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_dynamic_class.carbon = $todo_trivial_dynamic_class
+// CHECK:STDOUT: --- trivial_dynamic_class.carbon = $trivial_dynamic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1233,7 +1230,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_dynamic_base.carbon = $todo_trivial_dynamic_base
+// CHECK:STDOUT: --- trivial_dynamic_base.carbon = $trivial_dynamic_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

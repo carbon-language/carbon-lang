@@ -10,9 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/types.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
 // --- todo_trivial_associated_entity.carbon
 library "[[@TEST_NAME]]";
 
@@ -24,10 +21,16 @@ interface I {
 
 alias AssociatedEntityType = typeof(I.F);
 
+fn Make() -> AssociatedEntityType;
+
 fn Test() {
+  //@dump-sem-ir-begin
   // AssociatedEntityType as Core.SubobjectDestroy;
   // AssociatedEntityType as Core.Destroy;
   // AssociatedEntityType as Core.TrivialDestroy;
+  //
+  // var unused x: AssociatedEntityType = Make();
+  //@dump-sem-ir-end
 }
 
 // --- todo_trivial_generic_interface.carbon
@@ -37,6 +40,8 @@ library "[[@TEST_NAME]]";
 
 interface GenericInterface(T: type) {}
 alias GenericInterfaceType = typeof(GenericInterface);
+
+fn Make() -> GenericInterfaceType;
 
 fn Test() {
   //@dump-sem-ir-begin
@@ -74,10 +79,16 @@ library "[[@TEST_NAME]]";
 namespace N;
 alias NamespaceType = typeof(N);
 
+fn Make() -> NamespaceType;
+
 fn Test() {
+  //@dump-sem-ir-begin
   // NamespaceType as Core.SubobjectDestroy;
   // NamespaceType as Core.Destroy;
   // NamespaceType as Core.TrivialDestroy;
+  //
+  // var unused x: NamespaceType = Make();
+  //@dump-sem-ir-end
 }
 
 // --- todo_trivial_parameterised_class.carbon
@@ -121,7 +132,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_trivial_tuple_access.carbon
+// --- trivial_trivial_tuple_access.carbon
 library "[[@TEST_NAME]]";
 
 alias Tuple = (type, type);
@@ -139,7 +150,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_class_type.carbon
+// --- trivial_class_type.carbon
 library "[[@TEST_NAME]]";
 
 class C;
@@ -157,6 +168,13 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
+// CHECK:STDOUT: --- todo_trivial_associated_entity.carbon = $todo_trivial_associated_entity
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Test() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_trivial_generic_interface.carbon = $todo_trivial_generic_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
@@ -165,6 +183,13 @@ fn Test() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- todo_trivial_generic_named_constraint.carbon = $todo_trivial_generic_named_constraint
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Test() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- todo_trivial_namespace.carbon = $todo_trivial_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
@@ -185,7 +210,7 @@ fn Test() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_trivial_tuple_access.carbon = $todo_trivial_trivial_tuple_access
+// CHECK:STDOUT: --- trivial_trivial_tuple_access.carbon = $trivial_trivial_tuple_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -265,7 +290,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_class_type.carbon = $todo_trivial_class_type
+// CHECK:STDOUT: --- trivial_class_type.carbon = $trivial_class_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -10,9 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/const.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -24,7 +21,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_trivial_const_struct.carbon
+// --- trivial_const_struct.carbon
 library "[[@TEST_NAME]]";
 
 alias Struct = const {};
@@ -66,7 +63,7 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_const_class.carbon
+// --- trivial_const_class.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -100,10 +97,8 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_const_partial.carbon
+// --- trivial_const_partial.carbon
 library "[[@TEST_NAME]]";
-
-// TODO: implement case for `PartialType` in `MakeSubobjectDestroyOpBody`.
 
 base class Base {}
 alias Const = const (partial Base);
@@ -122,8 +117,6 @@ fn Test() {
 // --- todo_fail_nontrivial_const_partial.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: implement case for `PartialType` in `MakeSubobjectDestroyOpBody`.
-
 import library "types";
 
 base class Base {
@@ -136,7 +129,7 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_const_dynamic_class.carbon
+// --- trivial_const_dynamic_class.carbon
 library "[[@TEST_NAME]]";
 
 base class TrivialDynamic {
@@ -219,7 +212,7 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_const_struct.carbon = $todo_trivial_const_struct
+// CHECK:STDOUT: --- trivial_const_struct.carbon = $trivial_const_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -306,7 +299,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_const_class.carbon = $todo_trivial_const_class
+// CHECK:STDOUT: --- trivial_const_class.carbon = $trivial_const_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -397,7 +390,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_const_partial.carbon = $todo_trivial_const_partial
+// CHECK:STDOUT: --- trivial_const_partial.carbon = $trivial_const_partial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

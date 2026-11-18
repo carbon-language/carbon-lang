@@ -10,11 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/maybe_unformed.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-// TODO: implement case for `MaybeUnformedType` in `MakeSubobjectDestroyOpBody`.
-
-// --- todo_trivial_maybe_unformed.carbon
+// --- trivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -50,8 +46,7 @@ fn Test() {
 // --- todo_fail_nontrivial_maybe_unformed_of_const.carbon
 library "[[@TEST_NAME]]";
 
-// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
-// `unformed.carbon`.
+// Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
 
 class HasNonTrivialDestruction {
   impl as Core.DestroyImpl {
@@ -72,8 +67,7 @@ fn Test() {
 // --- todo_fail_nontrivial_const_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
-// Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
-// `unformed.carbon`.
+// Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
 
 class HasNonTrivialDestruction {
   impl as Core.DestroyImpl {
@@ -91,7 +85,7 @@ fn Test() {
   Const as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_maybe_unformed.carbon = $todo_trivial_maybe_unformed
+// CHECK:STDOUT: --- trivial_maybe_unformed.carbon = $trivial_maybe_unformed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

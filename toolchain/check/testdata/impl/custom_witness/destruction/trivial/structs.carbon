@@ -10,9 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/structs.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -28,7 +25,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_trivial_empty.carbon
+// --- trivial_empty.carbon
 library "[[@TEST_NAME]]";
 
 alias Struct = {};
@@ -44,7 +41,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_nonempty.carbon
+// --- trivial_nonempty.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -62,7 +59,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_nested_struct_with_trivial_members.carbon
+// --- trivial_nested_struct_with_trivial_members.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -113,7 +110,7 @@ fn Test() {
   Struct as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty.carbon = $todo_trivial_empty
+// CHECK:STDOUT: --- trivial_empty.carbon = $trivial_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -198,7 +195,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nonempty.carbon = $todo_trivial_nonempty
+// CHECK:STDOUT: --- trivial_nonempty.carbon = $trivial_nonempty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +315,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nested_struct_with_trivial_members.carbon = $todo_trivial_nested_struct_with_trivial_members
+// CHECK:STDOUT: --- trivial_nested_struct_with_trivial_members.carbon = $trivial_nested_struct_with_trivial_members
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

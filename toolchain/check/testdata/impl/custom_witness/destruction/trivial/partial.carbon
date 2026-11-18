@@ -10,10 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/partial.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-// TODO: implement case for `PartialType` in `MakeSubobjectDestroyOpBody`.
-
 // --- types.carbon
 library "[[@TEST_NAME]]";
 
@@ -23,7 +19,7 @@ class HasNonTrivialDestruction {
   }
 }
 
-// --- todo_trivial_empty_partial_class.carbon
+// --- trivial_empty_partial_class.carbon
 library "[[@TEST_NAME]]";
 
 base class Base {}
@@ -39,7 +35,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_trivial_nonempty_partial_class.carbon
+// --- trivial_nonempty_partial_class.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivalDestruction {}
@@ -88,7 +84,7 @@ fn Test() {
   partial Base as Core.TrivialDestroy;
 }
 
-// --- todo_trivial_abstract.carbon
+// --- trivial_abstract.carbon
 library "[[@TEST_NAME]]";
 
 abstract class Abstract {}
@@ -117,7 +113,7 @@ fn Test() {
   partial Abstract as Core.TrivialDestroy;
 }
 
-// CHECK:STDOUT: --- todo_trivial_empty_partial_class.carbon = $todo_trivial_empty_partial_class
+// CHECK:STDOUT: --- trivial_empty_partial_class.carbon = $trivial_empty_partial_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -211,7 +207,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_16.2(%self.param: ref %.edf) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_nonempty_partial_class.carbon = $todo_trivial_nonempty_partial_class
+// CHECK:STDOUT: --- trivial_nonempty_partial_class.carbon = $trivial_nonempty_partial_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -344,7 +340,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_trivial_abstract.carbon = $todo_trivial_abstract
+// CHECK:STDOUT: --- trivial_abstract.carbon = $trivial_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

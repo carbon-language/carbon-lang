@@ -10,10 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/facet.carbon
 
-// TODO: implement `Core.TrivialDestroy`.
-// TODO: `Core.SelfDestruct` should either be a no-op or not generated for types with trivial destruction.
-
-// --- todo_constrained_facet.carbon
+// --- trivial_constrained_facet.carbon
 library "[[@TEST_NAME]]";
 
 interface Extra {}
@@ -31,7 +28,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_generic_class.carbon
+// --- trivial_generic_class.carbon
 library "[[@TEST_NAME]]";
 
 class GenericClass(T: Core.TrivialDestroy) {
@@ -51,7 +48,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_struct.carbon
+// --- trivial_struct.carbon
 library "[[@TEST_NAME]]";
 
 interface Extra {}
@@ -69,7 +66,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_tuple.carbon
+// --- trivial_tuple.carbon
 library "[[@TEST_NAME]]";
 
 interface Extra {}
@@ -88,7 +85,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- todo_constrained_facet.carbon = $todo_constrained_facet
+// CHECK:STDOUT: --- trivial_constrained_facet.carbon = $trivial_constrained_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -173,7 +170,7 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %facet_type.3be) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_generic_class.carbon = $todo_generic_class
+// CHECK:STDOUT: --- trivial_generic_class.carbon = $trivial_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -286,7 +283,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_struct.carbon = $todo_struct
+// CHECK:STDOUT: --- trivial_struct.carbon = $trivial_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -390,7 +387,7 @@ fn Test() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_tuple.carbon = $todo_tuple
+// CHECK:STDOUT: --- trivial_tuple.carbon = $trivial_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
