@@ -143,7 +143,8 @@ not support all of the features of function calls:
 
 -   `var` and `ref` parameters;
 -   mutation of the callable object using `ref self`;
--   compile-time parameters, as designated by `:!` or `template`...`:!`; and
+-   compile-time parameters, as designated by `generic`, `template`, or deduced
+    `[`...`]` parameter lists; and
 -   compile-time parameters that are mentioned elsewhere in the signature.
 
 In addition, we want to be able to express these aspects of parameters in other
@@ -189,7 +190,7 @@ Ideally, our call operator interface would support:
     `bool` and one accepting an `i32`, should be able to be passed as an
     argument to a function requiring a callable accepting a `bool`. This same
     mechanism should allow a generic function with signature that could accept a
-    `bool`, such as `fn F[T:! type](x: T)`, to be passed to the function
+    `bool`, such as `fn F[T: type](x: T)`, to be passed to the function
     requiring a callable accepting a `bool`, using the instantiation with
     `T == bool`.
 -   **Closed**: There is a way to say "just these implementations and no
@@ -274,7 +275,7 @@ In short, this proposal introduces:
 -   `Core.ValSelf`, `Core.RefSelf`, and `Core.VarSelf` functions that take a
     `Core.Form` facet type and return an ordinary `type` facet type with the
     specified category used for `Self`.
--   `Core.ConvertsInto(PF:! Core.Form)` and `Core.ConvertsFrom(RF:! Core.Form)`
+-   `Core.ConvertsInto(PF: Core.Form)` and `Core.ConvertsFrom(RF: Core.Form)`
     which are `Core.Form` constraints: `ConvertsInto(PF)` matches all forms that
     can be converted to a parameter with form `PF`, and `ConvertsFrom(RF)`
     matches all forms that can be converted from a return with form `RF`.
@@ -555,7 +556,7 @@ While this is valid, this is not how this feature is expected to be used.
 Instead, the form value will typically be a generic parameter.
 
 ```carbon
-fn Explicit(PF:! Core.Form, arg:? PF);
+fn Explicit(generic PF: Core.Form, arg:? PF);
 
 //  ✅ Valid since `5` can be passed to a
 // `var _: i32` parameter.
@@ -604,7 +605,7 @@ fn Ref() ->? form(ref i32);
 // Determines the return form from the
 // argument. `Param(form(ref i32))`
 // returns an `i32` ref.
-fn Param(RF:! Core.Form) ->? RF;
+fn Param(generic RF: Core.Form) ->? RF;
 ```
 
 ### Form interfaces
@@ -616,14 +617,14 @@ parentheses `(`...`)`, similar to the `self` parameter of methods in
 [proposal #7016](p007016-updating-self-syntax-and-adding-static-member-variables.md):
 
 ```carbon
-interface Callback(Self:! Core.Form) {
+interface Callback(Self: Core.Form) {
   // Uses `Self` as the form of a
   // parameter using `:?`.
   fn Go(self:? Self);
 }
 
 interface DefaultConstructible
-    (Self:! Core.Form) {
+    (Self: Core.Form) {
   // Uses `Self` as the form of the
   // return using `->?`.
   fn MakeDefault() ->? Self;
@@ -639,8 +640,8 @@ satisfying `Self`'s declared form facet type rather than a `type` value, and a
 form facet implicitly converts to `Core.Form` (and to `Self`'s declared form
 facet type) rather than to `type`.
 
-An ordinary "type" interface acts as if `Self` is declared `Self:! type` as the
-first parameter in `(`...`)`, and `Self:! type` may also be written explicitly.
+An ordinary "type" interface acts as if `Self` is declared `Self: type` as the
+first parameter in `(`...`)`, and `Self: type` may also be written explicitly.
 Other `type` facet types (such as another interface, named constraint, or
 `where` expression) are not allowed as the type of `Self`, express such
 requirements with `require` declarations in the body instead (see
@@ -652,25 +653,25 @@ the argument list when referencing the interface.
 Let's break down what happens with an ordinary "type" interface:
 
 ```carbon
-// Equivalent to: interface I(Self:! type)
+// Equivalent to: interface I(Self: type)
 interface I {
   fn F(self);
 }
 
-// Since `I` is effectively declared `I(Self:! type)`, that means
+// Since `I` is effectively declared `I(Self: type)`, that means
 // `T` is a facet of a type, which means a type that is known to
 // implement `I`. Since `T` is a facet of a type, it has an implicit
 // conversion to `type`, so it can be used to the right of a `:`
 // to give a type to `x`.
-fn A[T:! I](x: T) {
+fn A[T: I](x: T) {
   x.F();
   // - Looks in the type of `x` for a `F`
   // - Type of `x` is `T`, which is symbolic, so look in its type instead
   // - Type of `T` is `I`, has a member `F`, namely `I.F`
   // - Now evaluate `x.(I.F)`
-  //   - `I.F` has signature `I(Self:! type).fn F(self)`
+  //   - `I.F` has signature `I(Self: type).fn F(self)`
   // - Requires that the type of `x` implements `I`
-  // - Satisfied by the bindings `x: T` and `T:! I`
+  // - Satisfied by the bindings `x: T` and `T: I`
 }
 ```
 
@@ -678,12 +679,12 @@ Now look at how this works analogously with the `Core.Form` interface
 `Callback`:
 
 ```carbon
-// Since `Callback` is declared `Callback(Self:! Core.Form)`, that means
+// Since `Callback` is declared `Callback(Self: Core.Form)`, that means
 // `CF` is a facet of a `Core.Form`, which means a `Core.Form` that is
 // known to implement `Callback`. Since `CF` is a facet of a `Core.Form`,
 // it has an implicit conversion to `Core.Form`, so it can be used to the
 // right of a `:?` to give a form to `c`.
-fn InvokeCallback[CF:! Callback](c:? CF) {
+fn InvokeCallback[CF: Callback](c:? CF) {
   c.Go();
   // - Looks in the type part of the form of `c` for `Go`
   //   - If the form is a paren form, allow `.0`, `.1` access
@@ -693,9 +694,9 @@ fn InvokeCallback[CF:! Callback](c:? CF) {
   // - Type of `CF` is `Callback`, has a member `Go`, namely `Callback.Go`
   // - Now evaluate `c.(Callback.Go)`
   //   - `Callback.Go` has signature
-  //     `Callback(Self:! Core.Form).fn Go(self:? Self)`
+  //     `Callback(Self: Core.Form).fn Go(self:? Self)`
   // - Requires the *form* of `c` to implement `Callback`
-  // - Satisfied by the bindings `c:? CF` and `CF:! Callback`.
+  // - Satisfied by the bindings `c:? CF` and `CF: Callback`.
 }
 ```
 
@@ -778,8 +779,8 @@ Interfaces can also use form types as the types of its parameters or associated
 constants.
 
 ```carbon
-interface OneArg(P:! Core.Form) {
-  let Result:! Core.Form;
+interface OneArg(P: Core.Form) {
+  let Result: Core.Form;
   fn Fun(self, a:? P) -> Result;
 }
 
@@ -799,9 +800,9 @@ The form value itself is used, though, when prioritizing during `impl` lookup.
 ### `where`...`impls`
 
 A `where` constraint may now contain a requirement `A impls B` where `A` is a
-form or facet of a form, and `B` is a form facet type. For example,
-`T:! type where form(val .Self) impls Callback` will bind to types `T` such that
-there is an implementation of `Callback` for `form(val T)`.
+form or facet of a form, and `B` is a form facet type. For example, a generic
+binding `T: type where form(val .Self) impls Callback` will bind to types `T`
+such that there is an implementation of `Callback` for `form(val T)`.
 
 ### `extend`
 
@@ -839,7 +840,7 @@ named constraint are types, but the requirements of the constraint can be on
 form values using the `Self` type.
 
 ```carbon
-// Equivalent to `constraint ValCallback(Self:! type)`
+// Equivalent to `constraint ValCallback(Self: type)`
 constraint ValCallback {
   extend require form(val Self) impls Callback;
 }
@@ -867,7 +868,7 @@ facet type and return an ordinary `type` facet type: `Core.ValSelf`,
 
 ```carbon
 fn InvokeValCallback
-    [T:! Core.ValSelf(Callback)](c: T) {
+    [T: Core.ValSelf(Callback)](c: T) {
   // Name lookup into `T` finds names from
   // `Callback`. `T.Go` has signature
   // `fn Go(self: T)`.
@@ -875,7 +876,7 @@ fn InvokeValCallback
 }
 
 fn InvokeRefCallback
-    [T:! Core.RefSelf(Callback)](ref c: T) {
+    [T: Core.RefSelf(Callback)](ref c: T) {
   // Name lookup into `T` finds names from
   // `Callback`. `T.Go` has signature
   // `fn Go(ref self: T)`.
@@ -883,7 +884,7 @@ fn InvokeRefCallback
 }
 
 fn InvokeVarCallback
-    [T:! Core.VarSelf(Callback) & Core.Move]
+    [T: Core.VarSelf(Callback) & Core.Move]
     (var c: T) {
   // Name lookup into `T` finds names from
   // `Callback`. `T.Go` has signature
@@ -896,7 +897,7 @@ fn InvokeVarCallback
 }
 
 fn InvokeWithResultOfFunctionCall
-    [T:! Core.Call() where
+    [T: Core.Call() where
          .Result impls VarSelf(Callback)]
     (f: T) {
   // Not `f().Go()` since `.Result impls`
@@ -932,7 +933,7 @@ we end up with a situation where the type to satisfy the orphan rule can come
 from the `forall` clause. In this example:
 
 ```carbon
-impl [PF:! Core.Form where .type = MyClass] PF as I;
+impl [PF: Core.Form where .type = MyClass] PF as I;
 ```
 
 The type structure for the orphan rule is `PF.type as I` which, after applying
@@ -941,8 +942,8 @@ the rewrite from `PF`'s constraint, becomes `MyClass as I`.
 This approach also allows deduction of a type through a form, as in:
 
 ```carbon
-fn F[T:! I](PF:! Core.Form where
-            .type = Vector(T))
+fn F[T: I](generic PF: Core.Form where
+           .type = Vector(T))
     -> T.Iterator;
 ```
 
@@ -954,7 +955,7 @@ along with alternative ways we could specify this constraint.
 
 ### `Core.ConvertsInto`
 
-The `Core` package defines the `Form` facet type `ConvertsInto(PF:! Form)`,
+The `Core` package defines the `Form` facet type `ConvertsInto(PF: Form)`,
 which says which `Form`s describe a binding that would be allowed to convert to
 the binding described by `PF`. So `form(val i32)` is a value of
 `ConvertsInto(form(val i64))` since there is an implicit conversion from `i32`
@@ -1038,8 +1039,8 @@ A form interface parameter (including `Self` for a form interface) may be marked
 with the `implicit_into` keyword binding modifier, as in this example:
 
 ```carbon
-interface I(implicit_into Self:! Core.Form,
-            implicit_into P:! Core.Form) {
+interface I(implicit_into Self: Core.Form,
+            implicit_into P: Core.Form) {
   fn F(self:? Self, a:? P);
 }
 
@@ -1067,8 +1068,8 @@ was replaced by a collection of `impl`s for purposes of `impl` lookup:
 alias ForwardTo =
   (form(ref u64) as I(form(var i64))).F;
 
-impl forall [PF1:! ConvertsInto(form(ref u64)),
-             PF2:! ConvertsInto(form(var i64))]
+impl forall [PF1: ConvertsInto(form(ref u64)),
+             PF2: ConvertsInto(form(var i64))]
     PF1 as I(PF2) {
   fn F(self:? PF1, a:? PF2) {
     // This is allowed, by the definition of
@@ -1079,10 +1080,10 @@ impl forall [PF1:! ConvertsInto(form(ref u64)),
   }
 }
 
-impl forall [PF1:! ConvertsInto(form(ref u64))]
+impl forall [PF1: ConvertsInto(form(ref u64))]
    PF1 as I(exact form(var i64)) { ... }
 
-impl forall [PF2:! ConvertsInto(form(var i64))]
+impl forall [PF2: ConvertsInto(form(var i64))]
    exact form(ref u64) as I(PF2) { ... }
 
 impl exact form(ref u64)
@@ -1141,7 +1142,7 @@ Consequences:
 Now consider a generic call to invoke `I.F`:
 
 ```carbon
-fn CallF[T:! Core.RefSelf(I(form(val i16)))]
+fn CallF[T: Core.RefSelf(I(form(val i16)))]
     (ref x: T) {
   x.F(3);
 }
@@ -1159,7 +1160,7 @@ A few things to note here:
     impl that does satisfy that constraint:
 
     ```carbon
-    impl forall [PF2:! ConvertsInto(form(var i64))]
+    impl forall [PF2: ConvertsInto(form(var i64))]
         exact form(ref u64) as I(PF2) {
 
       fn F(ref self: u64, a:? PF2) {
@@ -1184,14 +1185,14 @@ Consider a class that uses the interface with a variant parameter from before as
 a parameter constraint:
 
 ```carbon
-interface I(implicit_into Self:! Core.Form,
-            implicit_into P:! Core.Form) {
+interface I(implicit_into Self: Core.Form,
+            implicit_into P: Core.Form) {
   fn F(self:? Self, a:? P);
 }
 
-class C(P:! I(form(val i16))) { ... }
+class C(P: I(form(val i16))) { ... }
 
-fn G[P:! I(form(val i32))](c: C(P));
+fn G[P: I(form(val i32))](c: C(P));
 ```
 
 Unlike with interfaces with invariant parameters, multiple different `impl`s
@@ -1298,7 +1299,7 @@ interface Factory {
 }
 
 fn UseFactory
-    [T:! Factory where .Result = form(var i64)]
+    [T: Factory where .Result = form(var i64)]
     (x: T) -> i64 {
   return x.Create();
 }
@@ -1341,8 +1342,8 @@ This example shows an `implicit_from` interface parameter, using
 [the `Core.CallPrimitive` interface](#primitive-call-interface):
 
 ```carbon
-interface Registry(implicit_from P:! Core.Form) {
-  fn Register[FN:! Core.CallPrimitive(P)](ref self, f: FN);
+interface Registry(implicit_from P: Core.Form) {
+  fn Register[FN: Core.CallPrimitive(P)](ref self, f: FN);
   fn DefaultArg() ->? P;
 }
 ```
@@ -1371,7 +1372,7 @@ For example, an `impl` of `Registry`:
 class R {}
 impl R as Registry(form(val i32)) {
   fn Register
-      [FN:! Core.CallPrimitive(form(val i32))]
+      [FN: Core.CallPrimitive(form(val i32))]
       (ref self, f: FN) {
     f(R.DefaultArg());
   }
@@ -1385,7 +1386,7 @@ is as if it was written:
 
 ```carbon
 class R {}
-impl forall [RF:! Core.ConvertsFrom(form(val i32))]
+impl forall [RF: Core.ConvertsFrom(form(val i32))]
     R as Registry(RF) { ... }
 ```
 
@@ -1398,7 +1399,7 @@ fn TakesI64(x: i64);
 // In the `DoRegister(r)` call below, `T`
 // is an adapter for `R` that adds the
 // `i32` -> `i64` conversion.
-fn DoRegister[T:! Registry(form(val i64))]
+fn DoRegister[T: Registry(form(val i64))]
     (ref r: T) {
   // Calls `TakesI64` with `7 as i32`
   // which gets converted to an `i64`.
@@ -1433,9 +1434,9 @@ the `Call` interface that allows specifying forms:
 package Core;
 
 interface CallPrimitive(
-    implicit_into anchor Self:! Form,
-    ... implicit_into each Param:! Form) {
-  let implicit_from ResultForm:! Form;
+    implicit_into anchor Self: Form,
+    ... implicit_into each Param: Form) {
+  let implicit_from ResultForm: Form;
   fn Op(self:? Self, ... each args:? each Param)
       ->? ResultForm;
 }
@@ -1513,16 +1514,16 @@ alternative to `AddWith` when you don't need the additional flexibility.
 
 #### Named form constraints
 
-We allow an optional `Self:!`... declaration as the first parameter in `(`...`)`
+We allow an optional `Self:`... declaration as the first parameter in `(`...`)`
 on named constraints, with the same allowed types for `Self` as on
-[form interfaces](#form-interfaces) (including explicit `Self:! type`, the
+[form interfaces](#form-interfaces) (including explicit `Self: type`, the
 default when `Self` is omitted). A `require impls` or `require Self impls` in a
 constraint is allowed when the type of `Self` matches the type of the `Self` of
 the interface or constraint being required.
 
 ```carbon
 constraint DefaultConstructibleCallback
-    (Self:! Core.Form) {
+    (Self: Core.Form) {
   // `Self` is `Core.Form`, matches the `Self`
   // of `Callback` and `DefaultConstructible`.
   extend require impls Callback;
@@ -1533,7 +1534,7 @@ constraint DefaultConstructibleCallback
 #### Associated constants in named constraints
 
 We add support for associated constant declarations in named constraints, using
-the same `let`...`:!`...`;` syntax as in interfaces. Such associated constants
+the same `let`...`:`...`;` syntax as in interfaces. Such associated constants
 must be used in such a way as to be deducible from the `impl`s of interfaces
 required by the constraint. Deducible here means following the same rules as a
 deduced parameter in a function signature. When seeing if a facet satisfies a
@@ -1542,19 +1543,19 @@ constraint, the associated constants are deduced.
 ```carbon
 constraint Invalid {
   // ❌ Invalid: `Key` not deducible.
-  let Key:! type;
+  let Key: type;
   extend require impls Map(Key);
 }
 
-constraint MultiMap(Key:! type) {
+constraint MultiMap(Key: type) {
   // Shadows `Value` from `Map`.
-  let Value:! type;
+  let Value: type;
   extend require impls Map(Key)
       where .Value = Vector(Value);
 }
 // This is legal since a function like
-//   fn F[Value:! type]
-//     (T:! Map(Key) where .Value = Vector(Value));
+//   fn F[Value: type]
+//     (generic T: Map(Key) where .Value = Vector(Value));
 // is valid, since `Value` is deducible from `T`.
 ```
 
@@ -1571,13 +1572,13 @@ class S2I { ... }
 impl S2I as Map(String)
   where .Value = Vector(i32) { ... }
 
-fn MultiGet[T:! MultiMap(String)](x: T)
+fn MultiGet[T: MultiMap(String)](x: T)
     -> T.Value;
-fn MapGet[T:! Map(String)](x: T)
+fn MapGet[T: Map(String)](x: T)
     -> T.Value;
 fn Restricted(
-    V:! type,
-    T:! MultiMap(String) where .Value = V);
+    generic V: type,
+    generic T: MultiMap(String) where .Value = V);
 
 var s2i: S2I = {...}
 // `(S2I as Map(String)).Value` is
@@ -1619,12 +1620,12 @@ consistent value to any associated constants it might have.
 
 ```carbon
 interface X {
-  let T:! type;
-  let U:! type;
+  let T: type;
+  let U: type;
 }
 
 constraint N {
-  let V:! type;
+  let V: type;
   extend require impls X
       where .T = Vector(V)
         and .U = Map(V);
@@ -1660,16 +1661,16 @@ this case, it is given a value directly instead of being deduced from the
 `impl`s of required interfaces. Examples:
 
 ```carbon
-constraint VectorI(T:! type) {
+constraint VectorI(T: type) {
   // Can be used to give a name to an
   // an expression.
-  final let Elt:! type = Vector(T);
+  final let Elt: type = Vector(T);
 
   require impls I where .Elt = Elt;
 
   // Can be used to create an alias to
   // a member of a required interface.
-  final let template Iter:! auto
+  final let template Iter: auto
       = I.Iter;
 }
 ```
@@ -1682,12 +1683,12 @@ a named constraint default, as in:
 
 ```carbon
 interface DefaultResult {
-  default let ResultForm:! Core.Form
+  default let ResultForm: Core.Form
       = form(var Self);
   fn F() ->? ResultForm;
 }
 constraint C {
-  let Result:! type;
+  let Result: type;
   extend require impls DefaultResult
       where .ResultForm = form(var Result);
 }
@@ -1709,7 +1710,7 @@ Consider a situation where an interface with variant parameters is used twice in
 the constraint of a generic parameter, as in this example:
 
 ```carbon
-fn H[T:! call(_: i32) & call(_: i64)]
+fn H[T: call(_: i32) & call(_: i64)]
     (g:? T, x: i16) {
   // ❌ Ambiguous whether it uses
   // `call(_: i32)` or `call(_:i64)`.
@@ -1729,14 +1730,14 @@ and a desire to avoid a second syntax for expressing the prioritization between
 the same `match_first` syntax used to prioritize `impl`s outside this context.
 
 ```carbon
-constraint X(Self:! Core.Form) {
+constraint X(Self: Core.Form) {
   match_first {
     require Self impls call(_: i32);
     require Self impls call(_: i64);
   }
 }
 
-fn J[T:! X](g:? T, x: i16) {
+fn J[T: X](g:? T, x: i16) {
   // ✅ Uses `call(_: i32)`.
   g(x);
 }
@@ -1754,8 +1755,8 @@ control over forms is not needed.
 ```carbon
 package Core;
 
-constraint Call(... each Param:! type) {
-  let Result:! type;
+constraint Call(... each Param: type) {
+  let Result: type;
   extend require impls
       call[val](... _: each Param) -> Result;
   // Equivalent to:
@@ -1867,28 +1868,28 @@ categories. We can now redefine them as named constraints, in terms of a general
 `MemberBind` interface:
 
 ```carbon
-interface MemberBind(implicit_into LHS:! Core.Form) {
-  let implicit_from ResultForm:! Core.Form;
+interface MemberBind(implicit_into LHS: Core.Form) {
+  let implicit_from ResultForm: Core.Form;
   fn Op(self, lhs:? LHS) ->? ResultForm;
 }
 
 // Formerly BindToValue
-constraint BindToVal(T:! type) {
-  let Result:! type;
+constraint BindToVal(T: type) {
+  let Result: type;
   extend require impls
       MemberBind(form(val T))
       where .ResultForm = form(val Result);
 }
 
-constraint BindToRef(T:! type) {
-  let Result:! type;
+constraint BindToRef(T: type) {
+  let Result: type;
   extend require impls
       MemberBind(form(ref T))
       where .ResultForm = form(ref Result);
 }
 
-constraint BindToType(T:! type) {
-  let Result:! type;
+constraint BindToType(T: type) {
+  let Result: type;
   extend require impls
       MemberBind(formof(T))
       where .ResultForm = form(val Result);
@@ -2012,9 +2013,9 @@ is now rewritten to `a.(AddWithPrimitive(formof(b)).Op)(b)`, where
 package Core;
 
 interface AddWithPrimitive(
-    implicit_into Self:! Form,
-    implicit_into P:! Form) {
-  let implicit_from ResultForm:! Form;
+    implicit_into Self: Form,
+    implicit_into P: Form) {
+  let implicit_from ResultForm: Form;
   fn Op(self:? Self, rhs:? P) ->? ResultForm;
 }
 ```
@@ -2037,8 +2038,8 @@ continue to provide `Core.AddWith` that uses types instead of forms, but it is
 now a named constraint:
 
 ```carbon
-constraint AddWith(T:! type) {
-  let Result:! type;
+constraint AddWith(T: type) {
+  let Result: type;
 
   extend require impls ValSelf(
       AddWithPrimitive(form(val T))
@@ -2106,7 +2107,7 @@ or category.
 ```carbon
 let x:? auto = y;
 // Equivalent to (if it was allowed):
-let [P:! Core.Form] x:? P = y;
+let [P: Core.Form] x:? P = y;
 
 // In contrast,
 let a: auto = b;
@@ -2298,7 +2299,7 @@ class C {
   class D {}
 }
 
-class E(T:! type) {
+class E(T: type) {
   // Equivalent to `alias D = C.D;`:
   using C.D;
 
@@ -2374,7 +2375,7 @@ is another conversion after that, to an adapter of `Dog` that implements
 
 ```carbon
 class __TypeOf_Dog_Bark {}
-let __Dog_Bark:! __TypeOf_Dog_Bark = {};
+let generic __Dog_Bark: __TypeOf_Dog_Bark = {};
 
 class __Binding_Dog_Bark {
   adapt Dog;
@@ -2423,8 +2424,8 @@ Given this package:
 package P;
 
 interface J
-    (implicit_into P1:! Core.Form,
-     implicit_into P2:! Core.Form,
+    (implicit_into P1: Core.Form,
+     implicit_into P2: Core.Form,
      P3: Core.Form) { }
 
 class C {}
@@ -2569,7 +2570,7 @@ These facet types may also be used as a constraint for a generic parameter:
 ```carbon
 // `call` followed by `[ref]` creates an
 // ordinary type facet type
-fn InvokeRef[T:! call[ref](_: i32) -> ()]
+fn InvokeRef[T: call[ref](_: i32) -> ()]
     (ref f: T, arg: i32) {
   f(arg);
 }
@@ -2577,7 +2578,7 @@ fn InvokeRef[T:! call[ref](_: i32) -> ()]
 // `call` without `[`...`]` creates a
 // `Core.Form` facet type. Category of `f`
 // will be deduced from the argument.
-fn InvokeForm[PF:! call() -> i32]
+fn InvokeForm[PF: call() -> i32]
     (f:? PF) -> i32 {
   return f();
 }
@@ -2649,7 +2650,7 @@ fn ConcreteCall() {
   IntArg(7);
 }
 
-fn GenericCall[FNT:! call[val](_: i32)](f: FNT) {
+fn GenericCall[FNT: call[val](_: i32)](f: FNT) {
   // Good to get the same conversion here, even
   // though we don't (and can't) have a blanket
   // `impl` that `f` accepts anything that
@@ -2671,7 +2672,7 @@ capture the argument's expression category, phase, and compile-time value.
 -   A reference expression argument will deduce a `ref` form.
 
 ```carbon
-fn Deduced[PF:! Core.Form](arg:? PF);
+fn Deduced[PF: Core.Form](arg:? PF);
 
 let l: bool = true;
 // Deduces PF = form(val bool).
@@ -2690,7 +2691,7 @@ Deduced(Make());
 // Deduces PF = formof(7).
 Deduced(7);
 
-fn SymbolicN(N:! i32) {
+fn SymbolicN(generic N: i32) {
   // Deduces PF = formof(N).
   F(N);
 }
@@ -2708,7 +2709,7 @@ a legal value of the form facet type.
     `var`/initializing.
 
 ```carbon
-fn NoVar[P:! Core.NoVarForm](x:? P);
+fn NoVar[P: Core.NoVarForm](x:? P);
 
 // Deduces P = form(val i32)
 NoVar(Make());
@@ -2743,12 +2744,12 @@ F(7 as i32);
 // ❌ not a different type
 F(i16);
 
-fn G(T:! type) {
+fn G(generic T: type) {
   // ❌ not known to be `i32`
   F(T);
 }
 
-fn H(template T:! type) {
+fn H(template T: type) {
   F(T);
 }
 
@@ -2766,7 +2767,7 @@ It provides a resolution of
 giving a method to work around ordering constraints on parameters:
 
 ```carbon
-fn DoACast[U:! type, T:! ImplicitAs(U)]
+fn DoACast[U: type, T: ImplicitAs(U)]
     (x: T, _:? formof(U)) -> U {
   return x as U;
 }
@@ -2830,8 +2831,8 @@ parameter instead of what was declared for `ExactlyBool`:
 
 ```
 fn ErasedByGeneric
-    [T:! call(_: bool) -> (),
-     U:! ImplicitAs(bool)](f:? T, x: U) {
+    [T: call(_: bool) -> (),
+     U: ImplicitAs(bool)](f:? T, x: U) {
   // The deduction of parameters to `f`
   // is done by this point, so nothing to
   // prevent conversion of `x` to `bool`.
@@ -2851,15 +2852,15 @@ modeled as part of the interface, but using parameterized `impl`s of that
 interface. For example:
 
 ```carbon
-fn Ident[T:! type](x: T) -> T;
+fn Ident[T: type](x: T) -> T;
 ```
 
 can be modeled as
 
 ```carbon
 class __Ident_Type {}
-let Ident:! __Ident_Type = {};
-impl forall [T:! type]
+let generic Ident: __Ident_Type = {};
+impl forall [T: type]
     form(val __Ident_Type)
     as CallPrimitive(form(val T))
     where .ResultForm = form(var T);
@@ -2869,8 +2870,8 @@ or equivalently:
 
 ```carbon
 class __Ident_Type {}
-let F:! __Ident_Type = {};
-impl forall [T:! type] __Ident_Type
+let generic F: __Ident_Type = {};
+impl forall [T: type] __Ident_Type
     as call[val](_: T) -> T;
 ```
 
@@ -2878,7 +2879,7 @@ This partially addresses the ["subsumption" problem](#problem), since this
 `Ident` could be passed to this function:
 
 ```carbon
-fn GenericCall[FNT:! call[val](_: i32)](f: FNT);
+fn GenericCall[FNT: call[val](_: i32)](f: FNT);
 ```
 
 This will succeed since when it looks to see if `__Ident_Type` implements
@@ -2894,15 +2895,15 @@ except they also are included in the list of parameter forms passed to
 For example:
 
 ```carbon
-fn F(T:! type, x: T) -> T;
+fn F(generic T: type, x: T) -> T;
 ```
 
 can be modeled as:
 
 ```carbon
 class __F_Type {}
-let F:! __F_Type = {};
-impl forall [T:! type] form(val __F_Type)
+let generic F: __F_Type = {};
+impl forall [T: type] form(val __F_Type)
     as CallPrimitive(formof(T),
                      form(val T))
     where .ResultForm = form(var T);
@@ -2912,13 +2913,13 @@ or equivalently:
 
 ```carbon
 class __F_Type {}
-let F:! __F_Type = {};
-impl forall [T:! type] __F_Type as
+let generic F: __F_Type = {};
+impl forall [T: type] __F_Type as
     call[val](_:? formof(T), _: T) -> T;
 ```
 
-An explicit `template` parameter, such as `fn H(template T:! type, x: T) -> T;`,
-is modeled the same way using `impl forall [template T:! type]` with the same
+An explicit `template` parameter, such as `fn H(template T: type, x: T) -> T;`,
+is modeled the same way using `impl forall [template T: type]` with the same
 `CallPrimitive(formof(T), form(val T))` interface arguments. Per
 [leads issue #2153](https://github.com/carbon-language/carbon-lang/issues/2153),
 this accepts both template and symbolic compile-time arguments satisfying
@@ -2956,7 +2957,7 @@ design. The function taking the callable object can be generic on its aspect in
 the caller, as in:
 
 ```carbon
-fn GenericCaller[PF:! call() -> i32]
+fn GenericCaller[PF: call() -> i32]
     (f:? PF) -> i32 {
   return f();
 }
@@ -2970,19 +2971,19 @@ wrapper that holds a pointer to make the call:
 
 ```carbon
 // Only has to be defined once
-class CalledThroughPointer(T:! type) {
+class CalledThroughPointer(T: type) {
   var p: T*;
 }
 
-fn CallThroughPointer[T:! type](p: T*)
+fn CallThroughPointer[T: type](p: T*)
     -> CalledThroughPointer(T) {
   return {.p = p};
 }
 
 impl forall
-    [... each P:! Core.Form,
-     // Or: `T:! call[ref](... _:? each P)`
-     T:! Core.RefSelf(Core.CallPrimitive(... each P))]
+    [... each P: Core.Form,
+     // Or: `T: call[ref](... _:? each P)`
+     T: Core.RefSelf(Core.CallPrimitive(... each P))]
     form(val CalledThroughPointer(T)) as
     Core.CallPrimitive(... each P) {
   where ResultForm = T.ResultForm;
@@ -2991,8 +2992,8 @@ impl forall
   }
 }
 
-// Or: `FNT:! Core.Call() where .Result = i32`
-fn ValueCaller[FNT:! call[val]() -> i32](f: FNT) -> i32 {
+// Or: `FNT: Core.Call() where .Result = i32`
+fn ValueCaller[FNT: call[val]() -> i32](f: FNT) -> i32 {
   return f();
 }
 
@@ -3017,8 +3018,8 @@ example, this `Apply` function takes a callable object and argument expressions
 to call it with and performs the call:
 
 ```carbon
-fn Apply[... each ArgT:! Core.Form,
-         FNT:! call(... _:? each ArgT)]
+fn Apply[... each ArgT: Core.Form,
+         FNT: call(... _:? each ArgT)]
         (f:? FNT,
          ... each arg:? each ArgT)
         ->? FNT.ResultForm {
@@ -3040,8 +3041,8 @@ This works with `Apply` calling `f` once. To support multiple calls, we drop
 support for using `var` parameters with initializing argument expressions:
 
 ```carbon
-fn Apply2[... each ArgT:! Core.NoVarForm,
-          FNT:! call(... _:? each ArgT) &
+fn Apply2[... each ArgT: Core.NoVarForm,
+          FNT: call(... _:? each ArgT) &
                 Core.NoVarForm]
          (f:? FNT, ... each arg:? each ArgT) {
   f(... each arg);
@@ -3056,7 +3057,7 @@ Input-to-output forwarding is where argument forms are returned from a function,
 as in:
 
 ```carbon
-fn Id[F:! Core.NoVarForm](x:? F) ->? F {
+fn Id[F: Core.NoVarForm](x:? F) ->? F {
   return x;
 }
 ```
@@ -3072,7 +3073,7 @@ in.
 >
 > ```carbon
 > fn Moves
->     [F:! Core.Form where .type impls Core.Move]
+>     [F: Core.Form where .type impls Core.Move]
 >     (x:? F) ->? F {
 >   return ~x;
 > }
@@ -3100,8 +3101,8 @@ argument lists using tuple patterns, such as this definition of `ApplySum`
 
 ```carbon
 // Multiple variadic parameters have to be passed as tuples.
-fn ApplySum[... each ArgF:! Core.NoVarForm,
-            Fn:! call(... _:? each ArgF) -> i32 & Core.NoVarForm]
+fn ApplySum[... each ArgF: Core.NoVarForm,
+            Fn: call(... _:? each ArgF) -> i32 & Core.NoVarForm]
            (f: Fn,
             (... each a:? each ArgF),
             (... each b:? each Argf)) -> i32 {
@@ -3163,7 +3164,7 @@ a bit like functions, except that the arguments to the alias may be deduced. For
 example, this generic `Double` alias:
 
 ```carbon
-alias Double(T:! type) = (T, T) as type;
+alias Double(T: type) = (T, T) as type;
 ```
 
 would allow you to define a function that accepted any pair of two values of the
@@ -3171,7 +3172,7 @@ same type:
 
 ```carbon
 // `T` is deduced from the argument type.
-fn SumPair[T:! Add](p: Double(T)) -> T {
+fn SumPair[T: Add](p: Double(T)) -> T {
   return p.0 + p.1;
 }
 
@@ -3221,7 +3222,7 @@ with a reference to the array, and a value if you started with a value.
 One possible approach would be to have something like:
 
 ```carbon
-fn AccessX[PF:! ValOrRef(Self)](self:? PF) ->? FormWithCategory(PF, D);
+fn AccessX[PF: ValOrRef(Self)](self:? PF) ->? FormWithCategory(PF, D);
 ```
 
 `ValOrRef(Self)` (passed a type and returns a form facet type) is equivalent to
@@ -3234,7 +3235,7 @@ A C++-like approach would be to have conditional versions of our existing `var`,
 `ref`, `template` keywords, perhaps with a trailing `_`:
 
 ```carbon
-fn AccessX[IsRef:! bool](ref_(IsRef) self)
+fn AccessX[IsRef: bool](ref_(IsRef) self)
   -> ref_(IsRef) D;
 ```
 
@@ -3378,13 +3379,13 @@ variance, as
 Example:
 
 ```carbon
-interface CallbackRegistry(PF:! Core.Form) {
-  fn Register[T:! CallPrimitive(PF)](f:? T);
+interface CallbackRegistry(PF: Core.Form) {
+  fn Register[T: CallPrimitive(PF)](f:? T);
 }
 
 class CR { }
 impl CR as CallbackRegistry(form(val i32)) {
-  fn Register[T:! call(_: i32)](f:? T) {
+  fn Register[T: call(_: i32)](f:? T) {
     let i: i32 = 999999;
     f(i);
   }
@@ -3392,7 +3393,7 @@ impl CR as CallbackRegistry(form(val i32)) {
 
 fn F(x: i16);
 
-fn G(U:! CallbackRegistry(_: i16)) {
+fn G(generic U: CallbackRegistry(_: i16)) {
   U.Register(F);
 }
 
@@ -3404,7 +3405,7 @@ In this next example, `PF` needs to be invariant, since it is used in both
 covariant and contravariant positions:
 
 ```carbon
-interface J(PF:! Core.Form) {
+interface J(PF: Core.Form) {
   fn F(c: C(PF));
   fn G() -> C(PF);
 }
@@ -3485,7 +3486,7 @@ implicitly converted from. This had the downside that the following code is an
 error:
 
 ```carbon
-fn F[T:! call[val](_: i32)->bool](f: T) -> bool {
+fn F[T: call[val](_: i32)->bool](f: T) -> bool {
   // Error: `T` supports `i32` arguments, not
   // `Core.IntLiteral`.
   return f(7);
@@ -3648,7 +3649,7 @@ interface I {
 is equivalent to an interface with a constraint on `Self`:
 
 ```carbon
-interface I(Self:! J) {}
+interface I(Self: J) {}
 ```
 
 This however had concerns which led us to keep using `require` and disallow
@@ -3693,9 +3694,9 @@ chose a single `"compile time"` phase instead for three reasons:
 
 -   Under
     [leads issue #2153](https://github.com/carbon-language/carbon-lang/issues/2153),
-    a checked-generic function `fn Sym(T:! C)` accepts template constants such
-    as `Sym(i32)`, and a template function `fn Tmpl(template T:! C)` accepts
-    symbolic constants such as `Tmpl(U)` for `U:! C`. If `formof(T)` had
+    a checked-generic function `fn Sym(generic T: C)` accepts template constants
+    such as `Sym(i32)`, and a template function `fn Tmpl(template T: C)` accepts
+    symbolic constants such as `Tmpl(U)` for `generic U: C`. If `formof(T)` had
     `"symbolic"` phase in `Sym`'s [`CallPrimitive`](#primitive-call-interface)
     implementation and `"template"` phase in `Tmpl`'s,
     [`ConvertsInto`](#coreconvertsinto) would have to convert `"template"` forms
