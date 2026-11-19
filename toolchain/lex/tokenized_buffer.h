@@ -182,12 +182,22 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
-  auto GetMatchedClosingToken(TokenIndex opening_token) const -> TokenIndex;
+  auto GetMatchedClosingToken(TokenIndex opening_token) const -> TokenIndex {
+    const auto& opening_token_info = token_infos_.Get(opening_token);
+    CARBON_DCHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
+                  opening_token_info.kind());
+    return opening_token_info.closing_token_index();
+  }
 
   // Returns the opening token matched with the given closing token.
   //
   // The given token must be a closing token kind.
-  auto GetMatchedOpeningToken(TokenIndex closing_token) const -> TokenIndex;
+  auto GetMatchedOpeningToken(TokenIndex closing_token) const -> TokenIndex {
+    const auto& closing_token_info = token_infos_.Get(closing_token);
+    CARBON_DCHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
+                  closing_token_info.kind());
+    return closing_token_info.opening_token_index();
+  }
 
   // Returns whether the given token has leading whitespace.
   auto HasLeadingWhitespace(TokenIndex token) const -> bool;
