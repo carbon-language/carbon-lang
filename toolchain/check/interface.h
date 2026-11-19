@@ -61,7 +61,8 @@ auto TryGetExistingDecl(Context& context, const NameComponent& name,
     -> std::optional<SemIR::Inst>;
 
 // Retrieves the `InterfaceId` for a core interface, as specified by
-// `CoreIdentifier`. Returns `None` if `interface_name` can't be found in Core.
+// `CoreIdentifier`. Returns `None` if `interface_name` can't be found in Core,
+// which will be diagnosed as an error.
 auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
                         CoreIdentifier interface_name) -> SemIR::InterfaceId;
 }  // namespace Carbon::Check
