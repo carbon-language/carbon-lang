@@ -37,17 +37,11 @@ fn Main() {
 // CHECK:STDOUT:   store i32 0, ptr %a.var, align 4, !dbg !35
 // CHECK:STDOUT:   %Echo.call = call ptr @_CEcho.Main(ptr %a.var), !dbg !39
 // CHECK:STDOUT:   store i32 1, ptr %Echo.call, align 4, !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %a.var), !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !42
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !43 {
-// CHECK:STDOUT:   ret void, !dbg !48
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -57,7 +51,6 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "ref_return.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -73,11 +66,5 @@ fn Main() {
 // CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !18, line: 17, type: !25, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !35 = !DILocation(line: 18, column: 3, scope: !34)
 // CHECK:STDOUT: !39 = !DILocation(line: 19, column: 3, scope: !34)
-// CHECK:STDOUT: !40 = !{null, !20}
-// CHECK:STDOUT: !41 = !DISubroutineType(types: !40)
-// CHECK:STDOUT: !42 = !DILocation(line: 17, column: 1, scope: !34)
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !41, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !49)
-// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !20)
-// CHECK:STDOUT: !48 = !DILocation(line: 32, column: 1, scope: !43)
-// CHECK:STDOUT: !49 = !{!44}
+// CHECK:STDOUT: !40 = !DILocation(line: 17, column: 1, scope: !34)
 // CHECK:STDOUT:

@@ -55,8 +55,6 @@ fn M() -> i32 {
 // CHECK:STDOUT:   %G.call = call i32 @_CG.Main.091764f9509e9823(i32 %.loc35_9), !dbg !36
 // CHECK:STDOUT:   store i32 %G.call, ptr %m.var, align 4, !dbg !34
 // CHECK:STDOUT:   %.loc36 = load i32, ptr %m.var, align 4, !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %m.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %n.var), !dbg !26
 // CHECK:STDOUT:   ret i32 %.loc36, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,26 +74,19 @@ fn M() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_6.3.temp), !dbg !52
 // CHECK:STDOUT:   %H.call = call i32 @_CH.Main.2fad9574e050607e(i32 %x), !dbg !52
 // CHECK:STDOUT:   store i32 %H.call, ptr %.loc25_6.3.temp, align 4, !dbg !52
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc25_6.3.temp), !dbg !52
 // CHECK:STDOUT:   call void @_CF.Main.55456748a8a2eb70(i32 %x), !dbg !54
 // CHECK:STDOUT:   ret i32 %x, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !58 {
-// CHECK:STDOUT:   ret void, !dbg !63
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.2fad9574e050607e(i32 %x) #0 !dbg !65 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CH.Main.2fad9574e050607e(i32 %x) #0 !dbg !58 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.55456748a8a2eb70(i32 %x), !dbg !71
-// CHECK:STDOUT:   ret i32 %x, !dbg !73
+// CHECK:STDOUT:   call void @_CF.Main.55456748a8a2eb70(i32 %x), !dbg !64
+// CHECK:STDOUT:   ret i32 %x, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f127f30143696d51, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -105,7 +96,6 @@ fn M() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "call_basic_depth.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -135,13 +125,9 @@ fn M() -> i32 {
 // CHECK:STDOUT: !54 = !DILocation(line: 26, column: 3, scope: !46)
 // CHECK:STDOUT: !56 = !DILocation(line: 27, column: 3, scope: !46)
 // CHECK:STDOUT: !57 = !{!47}
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.2fad9574e050607e", scope: null, file: !18, line: 19, type: !38, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !67)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !20)
-// CHECK:STDOUT: !63 = !DILocation(line: 32, column: 1, scope: !58)
-// CHECK:STDOUT: !64 = !{!59}
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.2fad9574e050607e", scope: null, file: !18, line: 19, type: !38, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !74)
-// CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !65, type: !20)
-// CHECK:STDOUT: !71 = !DILocation(line: 20, column: 3, scope: !65)
-// CHECK:STDOUT: !73 = !DILocation(line: 21, column: 3, scope: !65)
-// CHECK:STDOUT: !74 = !{!66}
+// CHECK:STDOUT: !64 = !DILocation(line: 20, column: 3, scope: !58)
+// CHECK:STDOUT: !66 = !DILocation(line: 21, column: 3, scope: !58)
+// CHECK:STDOUT: !67 = !{!59}
 // CHECK:STDOUT:

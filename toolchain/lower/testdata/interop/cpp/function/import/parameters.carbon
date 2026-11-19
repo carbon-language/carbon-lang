@@ -126,19 +126,15 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_19.3.temp = alloca i8, align 1, !dbg !56
 // CHECK:STDOUT:   %.loc7_22.3.temp = alloca i16, align 2, !dbg !57
-// CHECK:STDOUT:   %.loc9_21.3.temp = alloca i8, align 1, !dbg !63
-// CHECK:STDOUT:   %.loc9_24.3.temp = alloca i16, align 2, !dbg !64
+// CHECK:STDOUT:   %.loc9_21.3.temp = alloca i8, align 1, !dbg !59
+// CHECK:STDOUT:   %.loc9_24.3.temp = alloca i16, align 2, !dbg !60
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_19.3.temp), !dbg !56
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_22.3.temp), !dbg !57
 // CHECK:STDOUT:   call void @_Z11pass_signedasil.carbon_thunk.____(ptr @int_1.2eb, ptr @int_2.fee, i32 3, i64 4), !dbg !58
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e43967308dd20a9f(ptr @int_2.fee), !dbg !57
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6fb12317fdf5c9b3(ptr @int_1.2eb), !dbg !56
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.3.temp), !dbg !63
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_24.3.temp), !dbg !64
-// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk.____(ptr @int_1.5dc, ptr @int_2.2d4, i32 3, i64 4), !dbg !65
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.44e7310a0b394feb(ptr @int_2.2d4), !dbg !64
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.73549b49ca05bf4c(ptr @int_1.5dc), !dbg !63
-// CHECK:STDOUT:   ret void, !dbg !70
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_21.3.temp), !dbg !59
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_24.3.temp), !dbg !60
+// CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm.carbon_thunk.____(ptr @int_1.5dc, ptr @int_2.2d4, i32 3, i64 4), !dbg !61
+// CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -148,16 +144,16 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr2 = alloca i32, align 4
 // CHECK:STDOUT:   %.addr3 = alloca i64, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !122
-// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !125
-// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !127
-// CHECK:STDOUT:   store i64 %3, ptr %.addr3, align 8, !tbaa !129
-// CHECK:STDOUT:   %4 = load ptr, ptr %.addr, align 8, !tbaa !122
-// CHECK:STDOUT:   %5 = load i8, ptr %4, align 1, !tbaa !130
-// CHECK:STDOUT:   %6 = load ptr, ptr %.addr1, align 8, !tbaa !125
-// CHECK:STDOUT:   %7 = load i16, ptr %6, align 2, !tbaa !131
-// CHECK:STDOUT:   %8 = load i32, ptr %.addr2, align 4, !tbaa !127
-// CHECK:STDOUT:   %9 = load i64, ptr %.addr3, align 8, !tbaa !129
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !89
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !91
+// CHECK:STDOUT:   store i64 %3, ptr %.addr3, align 8, !tbaa !93
+// CHECK:STDOUT:   %4 = load ptr, ptr %.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   %5 = load i8, ptr %4, align 1, !tbaa !94
+// CHECK:STDOUT:   %6 = load ptr, ptr %.addr1, align 8, !tbaa !89
+// CHECK:STDOUT:   %7 = load i16, ptr %6, align 2, !tbaa !95
+// CHECK:STDOUT:   %8 = load i32, ptr %.addr2, align 4, !tbaa !91
+// CHECK:STDOUT:   %9 = load i64, ptr %.addr3, align 8, !tbaa !93
 // CHECK:STDOUT:   call void @_Z11pass_signedasil(i8 noundef signext %5, i16 noundef signext %7, i32 noundef %8, i64 noundef %9)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -169,16 +165,16 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.addr1 = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr2 = alloca i32, align 4
 // CHECK:STDOUT:   %.addr3 = alloca i64, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !122
-// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !125
-// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !127
-// CHECK:STDOUT:   store i64 %3, ptr %.addr3, align 8, !tbaa !129
-// CHECK:STDOUT:   %4 = load ptr, ptr %.addr, align 8, !tbaa !122
-// CHECK:STDOUT:   %5 = load i8, ptr %4, align 1, !tbaa !130
-// CHECK:STDOUT:   %6 = load ptr, ptr %.addr1, align 8, !tbaa !125
-// CHECK:STDOUT:   %7 = load i16, ptr %6, align 2, !tbaa !131
-// CHECK:STDOUT:   %8 = load i32, ptr %.addr2, align 4, !tbaa !127
-// CHECK:STDOUT:   %9 = load i64, ptr %.addr3, align 8, !tbaa !129
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   store ptr %1, ptr %.addr1, align 8, !tbaa !89
+// CHECK:STDOUT:   store i32 %2, ptr %.addr2, align 4, !tbaa !91
+// CHECK:STDOUT:   store i64 %3, ptr %.addr3, align 8, !tbaa !93
+// CHECK:STDOUT:   %4 = load ptr, ptr %.addr, align 8, !tbaa !86
+// CHECK:STDOUT:   %5 = load i8, ptr %4, align 1, !tbaa !94
+// CHECK:STDOUT:   %6 = load ptr, ptr %.addr1, align 8, !tbaa !89
+// CHECK:STDOUT:   %7 = load i16, ptr %6, align 2, !tbaa !95
+// CHECK:STDOUT:   %8 = load i32, ptr %.addr2, align 4, !tbaa !91
+// CHECK:STDOUT:   %9 = load i64, ptr %.addr3, align 8, !tbaa !93
 // CHECK:STDOUT:   call void @_Z13pass_unsignedhtjm(i8 noundef zeroext %5, i16 noundef zeroext %7, i32 noundef %8, i64 noundef %9)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -186,41 +182,37 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare i16 @_CMakeShort.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) #0 !dbg !71 {
+// CHECK:STDOUT: define void @_CPassShort.Main(i16 %a, ptr %b) #0 !dbg !63 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !76
-// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !79
-// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !81
-// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !83
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !76
-// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !76
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc17_18.1.temp), !dbg !77
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e43967308dd20a9f(ptr %.loc17_18.1.temp), !dbg !76
-// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !79
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !79
-// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !79
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc18_18.3.temp), !dbg !80
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e43967308dd20a9f(ptr %.loc18_18.3.temp), !dbg !79
-// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !81
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !81
-// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !81
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc19_18.2.temp), !dbg !82
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e43967308dd20a9f(ptr %.loc19_18.2.temp), !dbg !81
-// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !83
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !83
-// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !83
-// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc20_28.3.temp), !dbg !84
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e43967308dd20a9f(ptr %.loc20_28.3.temp), !dbg !83
-// CHECK:STDOUT:   ret void, !dbg !85
+// CHECK:STDOUT:   %.loc17_18.1.temp = alloca i16, align 2, !dbg !68
+// CHECK:STDOUT:   %.loc18_18.3.temp = alloca i16, align 2, !dbg !71
+// CHECK:STDOUT:   %.loc19_18.2.temp = alloca i16, align 2, !dbg !73
+// CHECK:STDOUT:   %.loc20_28.3.temp = alloca i16, align 2, !dbg !75
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_18.1.temp), !dbg !68
+// CHECK:STDOUT:   store i16 %a, ptr %.loc17_18.1.temp, align 2, !dbg !68
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc17_18.1.temp), !dbg !69
+// CHECK:STDOUT:   %.loc18_18.2 = load i16, ptr %b, align 2, !dbg !71
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_18.3.temp), !dbg !71
+// CHECK:STDOUT:   store i16 %.loc18_18.2, ptr %.loc18_18.3.temp, align 2, !dbg !71
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc18_18.3.temp), !dbg !72
+// CHECK:STDOUT:   %.loc19_18.1 = load i16, ptr @_Cc.Main, align 2, !dbg !73
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc19_18.2.temp), !dbg !73
+// CHECK:STDOUT:   store i16 %.loc19_18.1, ptr %.loc19_18.2.temp, align 2, !dbg !73
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc19_18.2.temp), !dbg !74
+// CHECK:STDOUT:   %MakeShort.call = call i16 @_CMakeShort.Main(), !dbg !75
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_28.3.temp), !dbg !75
+// CHECK:STDOUT:   store i16 %MakeShort.call, ptr %.loc20_28.3.temp, align 2, !dbg !75
+// CHECK:STDOUT:   call void @_Z10pass_shorts.carbon_thunk._(ptr %.loc20_28.3.temp), !dbg !76
+// CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z10pass_shorts.carbon_thunk._(ptr noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !125
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !125
-// CHECK:STDOUT:   %2 = load i16, ptr %1, align 2, !tbaa !131
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !89
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !89
+// CHECK:STDOUT:   %2 = load i16, ptr %1, align 2, !tbaa !95
 // CHECK:STDOUT:   call void @_Z10pass_shorts(i16 noundef signext %2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -229,30 +221,10 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e43967308dd20a9f(ptr %t) #0 !dbg !90 {
-// CHECK:STDOUT:   ret void, !dbg !95
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6fb12317fdf5c9b3(ptr %t) #0 !dbg !97 {
-// CHECK:STDOUT:   ret void, !dbg !102
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.44e7310a0b394feb(ptr %t) #0 !dbg !104 {
-// CHECK:STDOUT:   ret void, !dbg !109
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.73549b49ca05bf4c(ptr %t) #0 !dbg !111 {
-// CHECK:STDOUT:   ret void, !dbg !116
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !87 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i16 poison, ptr @_Cc.Main, align 2, !dbg !88
-// CHECK:STDOUT:   ret void, !dbg !89
+// CHECK:STDOUT:   store i16 poison, ptr @_Cc.Main, align 2, !dbg !80
+// CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z11pass_signedasil(i8 noundef signext, i16 noundef signext, i32 noundef, i64 noundef) #3
@@ -264,7 +236,6 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z10pass_shorts.carbon_thunk._, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 7, 6, 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.e43967308dd20a9f, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -272,18 +243,14 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!35}
-// CHECK:STDOUT: !llvm.module.flags = !{!132, !133, !134, !135, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!137}
+// CHECK:STDOUT: !llvm.module.flags = !{!96, !97, !98, !99, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!101}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !34 = !DIFile(filename: "import_ints.carbon", directory: "")
 // CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !39 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !41 = !DIBasicType(name: "int", size: 16, encoding: DW_ATE_unsigned)
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -293,70 +260,46 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !56 = !DILocation(line: 7, column: 19, scope: !55)
 // CHECK:STDOUT: !57 = !DILocation(line: 7, column: 22, scope: !55)
 // CHECK:STDOUT: !58 = !DILocation(line: 7, column: 3, scope: !55)
-// CHECK:STDOUT: !59 = !{null, !39}
-// CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
-// CHECK:STDOUT: !61 = !{null, !38}
-// CHECK:STDOUT: !62 = !DISubroutineType(types: !61)
-// CHECK:STDOUT: !63 = !DILocation(line: 9, column: 21, scope: !55)
-// CHECK:STDOUT: !64 = !DILocation(line: 9, column: 24, scope: !55)
-// CHECK:STDOUT: !65 = !DILocation(line: 9, column: 3, scope: !55)
-// CHECK:STDOUT: !66 = !{null, !41}
-// CHECK:STDOUT: !67 = !DISubroutineType(types: !66)
-// CHECK:STDOUT: !68 = !{null, !10}
-// CHECK:STDOUT: !69 = !DISubroutineType(types: !68)
-// CHECK:STDOUT: !70 = !DILocation(line: 6, column: 1, scope: !55)
-// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !34, line: 16, type: !52, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !86)
-// CHECK:STDOUT: !72 = !DILocalVariable(arg: 1, scope: !71, type: !39)
-// CHECK:STDOUT: !73 = !DILocalVariable(arg: 2, scope: !71, type: !44)
-// CHECK:STDOUT: !76 = !DILocation(line: 17, column: 18, scope: !71)
-// CHECK:STDOUT: !77 = !DILocation(line: 17, column: 3, scope: !71)
-// CHECK:STDOUT: !79 = !DILocation(line: 18, column: 18, scope: !71)
-// CHECK:STDOUT: !80 = !DILocation(line: 18, column: 3, scope: !71)
-// CHECK:STDOUT: !81 = !DILocation(line: 19, column: 18, scope: !71)
-// CHECK:STDOUT: !82 = !DILocation(line: 19, column: 3, scope: !71)
-// CHECK:STDOUT: !83 = !DILocation(line: 20, column: 18, scope: !71)
-// CHECK:STDOUT: !84 = !DILocation(line: 20, column: 3, scope: !71)
-// CHECK:STDOUT: !85 = !DILocation(line: 16, column: 1, scope: !71)
-// CHECK:STDOUT: !86 = !{!72, !73}
-// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !34, type: !43, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !88 = !DILocation(line: 14, column: 1, scope: !87)
-// CHECK:STDOUT: !89 = !DILocation(line: 0, scope: !87)
-// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e43967308dd20a9f", scope: null, file: !26, line: 32, type: !60, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !96)
-// CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !90, type: !39)
-// CHECK:STDOUT: !95 = !DILocation(line: 32, column: 1, scope: !90)
-// CHECK:STDOUT: !96 = !{!91}
-// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6fb12317fdf5c9b3", scope: null, file: !26, line: 32, type: !62, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !103)
-// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !38)
-// CHECK:STDOUT: !102 = !DILocation(line: 32, column: 1, scope: !97)
-// CHECK:STDOUT: !103 = !{!98}
-// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.44e7310a0b394feb", scope: null, file: !26, line: 32, type: !67, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !110)
-// CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !104, type: !41)
-// CHECK:STDOUT: !109 = !DILocation(line: 32, column: 1, scope: !104)
-// CHECK:STDOUT: !110 = !{!105}
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.73549b49ca05bf4c", scope: null, file: !26, line: 32, type: !69, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !117)
-// CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !111, type: !10)
-// CHECK:STDOUT: !116 = !DILocation(line: 32, column: 1, scope: !111)
-// CHECK:STDOUT: !117 = !{!112}
-// CHECK:STDOUT: !118 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !119 = !{!"omnipotent char", !118, i64 0}
-// CHECK:STDOUT: !120 = !{!"any pointer", !119, i64 0}
-// CHECK:STDOUT: !121 = !{!"p1 omnipotent char", !120, i64 0}
-// CHECK:STDOUT: !122 = !{!121, !121, i64 0}
-// CHECK:STDOUT: !123 = !{!"short", !119, i64 0}
-// CHECK:STDOUT: !124 = !{!"p1 short", !120, i64 0}
-// CHECK:STDOUT: !125 = !{!124, !124, i64 0}
-// CHECK:STDOUT: !126 = !{!"int", !119, i64 0}
-// CHECK:STDOUT: !127 = !{!126, !126, i64 0}
-// CHECK:STDOUT: !128 = !{!"long", !119, i64 0}
-// CHECK:STDOUT: !129 = !{!128, !128, i64 0}
-// CHECK:STDOUT: !130 = !{!119, !119, i64 0}
-// CHECK:STDOUT: !131 = !{!123, !123, i64 0}
-// CHECK:STDOUT: !132 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !133 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !134 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !135 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !136 = !{!"__libc_errno", !126, i64 0}
-// CHECK:STDOUT: !137 = !{!136, !126, i64 0}
+// CHECK:STDOUT: !59 = !DILocation(line: 9, column: 21, scope: !55)
+// CHECK:STDOUT: !60 = !DILocation(line: 9, column: 24, scope: !55)
+// CHECK:STDOUT: !61 = !DILocation(line: 9, column: 3, scope: !55)
+// CHECK:STDOUT: !62 = !DILocation(line: 6, column: 1, scope: !55)
+// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "PassShort", linkageName: "_CPassShort.Main", scope: null, file: !34, line: 16, type: !52, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !78)
+// CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !63, type: !39)
+// CHECK:STDOUT: !65 = !DILocalVariable(arg: 2, scope: !63, type: !44)
+// CHECK:STDOUT: !68 = !DILocation(line: 17, column: 18, scope: !63)
+// CHECK:STDOUT: !69 = !DILocation(line: 17, column: 3, scope: !63)
+// CHECK:STDOUT: !71 = !DILocation(line: 18, column: 18, scope: !63)
+// CHECK:STDOUT: !72 = !DILocation(line: 18, column: 3, scope: !63)
+// CHECK:STDOUT: !73 = !DILocation(line: 19, column: 18, scope: !63)
+// CHECK:STDOUT: !74 = !DILocation(line: 19, column: 3, scope: !63)
+// CHECK:STDOUT: !75 = !DILocation(line: 20, column: 18, scope: !63)
+// CHECK:STDOUT: !76 = !DILocation(line: 20, column: 3, scope: !63)
+// CHECK:STDOUT: !77 = !DILocation(line: 16, column: 1, scope: !63)
+// CHECK:STDOUT: !78 = !{!64, !65}
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !34, type: !43, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !80 = !DILocation(line: 14, column: 1, scope: !79)
+// CHECK:STDOUT: !81 = !DILocation(line: 0, scope: !79)
+// CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !83 = !{!"omnipotent char", !82, i64 0}
+// CHECK:STDOUT: !84 = !{!"any pointer", !83, i64 0}
+// CHECK:STDOUT: !85 = !{!"p1 omnipotent char", !84, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !85, i64 0}
+// CHECK:STDOUT: !87 = !{!"short", !83, i64 0}
+// CHECK:STDOUT: !88 = !{!"p1 short", !84, i64 0}
+// CHECK:STDOUT: !89 = !{!88, !88, i64 0}
+// CHECK:STDOUT: !90 = !{!"int", !83, i64 0}
+// CHECK:STDOUT: !91 = !{!90, !90, i64 0}
+// CHECK:STDOUT: !92 = !{!"long", !83, i64 0}
+// CHECK:STDOUT: !93 = !{!92, !92, i64 0}
+// CHECK:STDOUT: !94 = !{!83, !83, i64 0}
+// CHECK:STDOUT: !95 = !{!87, !87, i64 0}
+// CHECK:STDOUT: !96 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !97 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !98 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !99 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !100 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !101 = !{!100, !90, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_struct.carbon'
@@ -367,36 +310,35 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: %struct.X = type { i32, i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTest.Main() #0 !dbg !142 {
+// CHECK:STDOUT: define void @_CTest.Main() #0 !dbg !106 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca [12 x i8], align 4, !dbg !143
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !143
-// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr %x.var), !dbg !143
-// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 0, !dbg !145
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !145
-// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 4, !dbg !146
-// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !146
-// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !147
-// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !147
-// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !149
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %x.var), !dbg !143
-// CHECK:STDOUT:   ret void, !dbg !150
+// CHECK:STDOUT:   %x.var = alloca [12 x i8], align 4, !dbg !107
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !107
+// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr %x.var), !dbg !107
+// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 0, !dbg !109
+// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !109
+// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 4, !dbg !110
+// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !110
+// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !111
+// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !111
+// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !113
+// CHECK:STDOUT:   ret void, !dbg !114
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
 // CHECK:STDOUT: define internal void @_ZN1XC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !167
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !167
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !124
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !124
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp"(ptr sret([12 x i8]) %return) #2 !dbg !152 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp"(ptr sret([12 x i8]) %return) #2 !dbg !116 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %return), !dbg !153
-// CHECK:STDOUT:   ret void, !dbg !153
+// CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %return), !dbg !117
+// CHECK:STDOUT:   ret void, !dbg !117
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -405,9 +347,9 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %struct.X, align 4
 // CHECK:STDOUT:   %agg.tmp.coerce = alloca { i64, i32 }, align 4
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !167
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !167
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 12, i1 false), !tbaa.struct !169
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !124
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !124
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp, ptr align 4 %1, i64 12, i1 false), !tbaa.struct !126
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %agg.tmp.coerce, ptr align 4 %agg.tmp, i64 12, i1 false)
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw { i64, i32 }, ptr %agg.tmp.coerce, i32 0, i32 0
 // CHECK:STDOUT:   %3 = load i64, ptr %2, align 4
@@ -421,14 +363,9 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr sret([12 x i8]) %return) #0 !dbg !154 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp"(ptr %return), !dbg !157
-// CHECK:STDOUT:   ret void, !dbg !158
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %t) #0 !dbg !159 {
-// CHECK:STDOUT:   ret void, !dbg !164
+// CHECK:STDOUT: define linkonce_odr void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr sret([12 x i8]) %return) #0 !dbg !118 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp"(ptr %return), !dbg !121
+// CHECK:STDOUT:   ret void, !dbg !122
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z11pass_struct1X(i64, i32) #5
@@ -446,54 +383,47 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!139}
-// CHECK:STDOUT: !llvm.module.flags = !{!132, !133, !134, !135, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!137}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!103}
+// CHECK:STDOUT: !llvm.module.flags = !{!96, !97, !98, !99, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!101}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !22 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !53 = !{null, !44}
-// CHECK:STDOUT: !54 = !DISubroutineType(types: !53)
-// CHECK:STDOUT: !118 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !119 = !{!"omnipotent char", !118, i64 0}
-// CHECK:STDOUT: !120 = !{!"any pointer", !119, i64 0}
-// CHECK:STDOUT: !126 = !{!"int", !119, i64 0}
-// CHECK:STDOUT: !127 = !{!126, !126, i64 0}
-// CHECK:STDOUT: !132 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !133 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !134 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !135 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !136 = !{!"__libc_errno", !126, i64 0}
-// CHECK:STDOUT: !137 = !{!136, !126, i64 0}
-// CHECK:STDOUT: !138 = !DIFile(filename: "import_struct.carbon", directory: "")
-// CHECK:STDOUT: !139 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !138, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !140 = !{!44}
-// CHECK:STDOUT: !141 = !DISubroutineType(types: !140)
-// CHECK:STDOUT: !142 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !138, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !139)
-// CHECK:STDOUT: !143 = !DILocation(line: 7, column: 3, scope: !142)
-// CHECK:STDOUT: !145 = !DILocation(line: 8, column: 3, scope: !142)
-// CHECK:STDOUT: !146 = !DILocation(line: 9, column: 3, scope: !142)
-// CHECK:STDOUT: !147 = !DILocation(line: 10, column: 3, scope: !142)
-// CHECK:STDOUT: !149 = !DILocation(line: 11, column: 3, scope: !142)
-// CHECK:STDOUT: !150 = !DILocation(line: 6, column: 1, scope: !142)
-// CHECK:STDOUT: !151 = !DIFile(filename: "./struct.h", directory: "")
-// CHECK:STDOUT: !152 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp", scope: null, file: !151, line: 2, type: !141, spFlags: DISPFlagDefinition, unit: !139)
-// CHECK:STDOUT: !153 = !DILocation(line: 2, column: 8, scope: !152)
-// CHECK:STDOUT: !154 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !22, line: 9, type: !141, spFlags: DISPFlagDefinition, unit: !139)
-// CHECK:STDOUT: !157 = !DILocation(line: 9, column: 28, scope: !154)
-// CHECK:STDOUT: !158 = !DILocation(line: 9, column: 21, scope: !154)
-// CHECK:STDOUT: !159 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !139, retainedNodes: !165)
-// CHECK:STDOUT: !160 = !DILocalVariable(arg: 1, scope: !159, type: !44)
-// CHECK:STDOUT: !164 = !DILocation(line: 32, column: 1, scope: !159)
-// CHECK:STDOUT: !165 = !{!160}
-// CHECK:STDOUT: !166 = !{!"p1 _ZTS1X", !120, i64 0}
-// CHECK:STDOUT: !167 = !{!166, !166, i64 0}
-// CHECK:STDOUT: !169 = !{i64 0, i64 4, !127, i64 4, i64 4, !127, i64 8, i64 4, !127}
+// CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !83 = !{!"omnipotent char", !82, i64 0}
+// CHECK:STDOUT: !84 = !{!"any pointer", !83, i64 0}
+// CHECK:STDOUT: !90 = !{!"int", !83, i64 0}
+// CHECK:STDOUT: !91 = !{!90, !90, i64 0}
+// CHECK:STDOUT: !96 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !97 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !98 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !99 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !100 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !101 = !{!100, !90, i64 0}
+// CHECK:STDOUT: !102 = !DIFile(filename: "import_struct.carbon", directory: "")
+// CHECK:STDOUT: !103 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !102, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !104 = !{!44}
+// CHECK:STDOUT: !105 = !DISubroutineType(types: !104)
+// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !102, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !103)
+// CHECK:STDOUT: !107 = !DILocation(line: 7, column: 3, scope: !106)
+// CHECK:STDOUT: !109 = !DILocation(line: 8, column: 3, scope: !106)
+// CHECK:STDOUT: !110 = !DILocation(line: 9, column: 3, scope: !106)
+// CHECK:STDOUT: !111 = !DILocation(line: 10, column: 3, scope: !106)
+// CHECK:STDOUT: !113 = !DILocation(line: 11, column: 3, scope: !106)
+// CHECK:STDOUT: !114 = !DILocation(line: 6, column: 1, scope: !106)
+// CHECK:STDOUT: !115 = !DIFile(filename: "./struct.h", directory: "")
+// CHECK:STDOUT: !116 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp", scope: null, file: !115, line: 2, type: !105, spFlags: DISPFlagDefinition, unit: !103)
+// CHECK:STDOUT: !117 = !DILocation(line: 2, column: 8, scope: !116)
+// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !22, line: 9, type: !105, spFlags: DISPFlagDefinition, unit: !103)
+// CHECK:STDOUT: !121 = !DILocation(line: 9, column: 28, scope: !118)
+// CHECK:STDOUT: !122 = !DILocation(line: 9, column: 21, scope: !118)
+// CHECK:STDOUT: !123 = !{!"p1 _ZTS1X", !84, i64 0}
+// CHECK:STDOUT: !124 = !{!123, !123, i64 0}
+// CHECK:STDOUT: !126 = !{i64 0, i64 4, !91, i64 4, i64 4, !91, i64 8, i64 4, !91}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_class_with_nontrivial_copy.carbon'
@@ -504,19 +434,18 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: %class.Y = type { i32, i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassRefExpr.Main() #0 !dbg !172 {
+// CHECK:STDOUT: define void @_CPassRefExpr.Main() #0 !dbg !129 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %y.var = alloca [12 x i8], align 4, !dbg !173
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !173
-// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 0, !dbg !175
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !175
-// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 4, !dbg !176
-// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !176
-// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !177
-// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !177
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !179
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %y.var), !dbg !173
-// CHECK:STDOUT:   ret void, !dbg !180
+// CHECK:STDOUT:   %y.var = alloca [12 x i8], align 4, !dbg !130
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !130
+// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 0, !dbg !132
+// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !132
+// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 4, !dbg !133
+// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !133
+// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !134
+// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !134
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !136
+// CHECK:STDOUT:   ret void, !dbg !137
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -524,8 +453,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.Y, align 4
-// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !200
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !200
+// CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !150
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !150
 // CHECK:STDOUT:   call void @_ZN1YC1ERKS_(ptr noundef nonnull align 4 dereferenceable(12) %agg.tmp, ptr noundef nonnull align 4 dereferenceable(12) %1)
 // CHECK:STDOUT:   call void @_Z11pass_struct1Y(ptr nofreeobj noundef align 4 dead_on_return dereferenceable(12) %agg.tmp)
 // CHECK:STDOUT:   ret void
@@ -534,30 +463,24 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @_CMake.Main(ptr sret([12 x i8]))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassInitExpr.Main() #0 !dbg !181 {
+// CHECK:STDOUT: define void @_CPassInitExpr.Main() #0 !dbg !138 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_24.1.temp = alloca [12 x i8], align 4, !dbg !182
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !182
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !182
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !183
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %.loc17_24.1.temp), !dbg !182
-// CHECK:STDOUT:   ret void, !dbg !184
+// CHECK:STDOUT:   %.loc17_24.1.temp = alloca [12 x i8], align 4, !dbg !139
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !139
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !139
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !140
+// CHECK:STDOUT:   ret void, !dbg !141
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !185 {
+// CHECK:STDOUT: define void @_CPassValueExpr.Main(ptr %y) #0 !dbg !142 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y), !dbg !189
-// CHECK:STDOUT:   ret void, !dbg !190
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y), !dbg !146
+// CHECK:STDOUT:   ret void, !dbg !147
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %t) #0 !dbg !192 {
-// CHECK:STDOUT:   ret void, !dbg !197
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z11pass_struct1Y(ptr nofreeobj noundef align 4 dead_on_return dereferenceable(12)) #3
 // CHECK:STDOUT:
@@ -565,57 +488,51 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.5d1f4d5634dc3faa, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!171}
-// CHECK:STDOUT: !llvm.module.flags = !{!132, !133, !134, !135, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!137}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!128}
+// CHECK:STDOUT: !llvm.module.flags = !{!96, !97, !98, !99, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!101}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !53 = !{null, !44}
 // CHECK:STDOUT: !54 = !DISubroutineType(types: !53)
-// CHECK:STDOUT: !118 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !119 = !{!"omnipotent char", !118, i64 0}
-// CHECK:STDOUT: !120 = !{!"any pointer", !119, i64 0}
-// CHECK:STDOUT: !126 = !{!"int", !119, i64 0}
-// CHECK:STDOUT: !132 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !133 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !134 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !135 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !136 = !{!"__libc_errno", !126, i64 0}
-// CHECK:STDOUT: !137 = !{!136, !126, i64 0}
-// CHECK:STDOUT: !170 = !DIFile(filename: "import_class_with_nontrivial_copy.carbon", directory: "")
-// CHECK:STDOUT: !171 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !170, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !172 = distinct !DISubprogram(name: "PassRefExpr", linkageName: "_CPassRefExpr.Main", scope: null, file: !170, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !171)
-// CHECK:STDOUT: !173 = !DILocation(line: 7, column: 3, scope: !172)
-// CHECK:STDOUT: !175 = !DILocation(line: 8, column: 3, scope: !172)
-// CHECK:STDOUT: !176 = !DILocation(line: 9, column: 3, scope: !172)
-// CHECK:STDOUT: !177 = !DILocation(line: 10, column: 3, scope: !172)
-// CHECK:STDOUT: !179 = !DILocation(line: 11, column: 3, scope: !172)
-// CHECK:STDOUT: !180 = !DILocation(line: 6, column: 1, scope: !172)
-// CHECK:STDOUT: !181 = distinct !DISubprogram(name: "PassInitExpr", linkageName: "_CPassInitExpr.Main", scope: null, file: !170, line: 16, type: !43, spFlags: DISPFlagDefinition, unit: !171)
-// CHECK:STDOUT: !182 = !DILocation(line: 17, column: 19, scope: !181)
-// CHECK:STDOUT: !183 = !DILocation(line: 17, column: 3, scope: !181)
-// CHECK:STDOUT: !184 = !DILocation(line: 16, column: 1, scope: !181)
-// CHECK:STDOUT: !185 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !170, line: 20, type: !54, spFlags: DISPFlagDefinition, unit: !171, retainedNodes: !191)
-// CHECK:STDOUT: !186 = !DILocalVariable(arg: 1, scope: !185, type: !44)
-// CHECK:STDOUT: !189 = !DILocation(line: 21, column: 3, scope: !185)
-// CHECK:STDOUT: !190 = !DILocation(line: 20, column: 1, scope: !185)
-// CHECK:STDOUT: !191 = !{!186}
-// CHECK:STDOUT: !192 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d1f4d5634dc3faa", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !171, retainedNodes: !198)
-// CHECK:STDOUT: !193 = !DILocalVariable(arg: 1, scope: !192, type: !44)
-// CHECK:STDOUT: !197 = !DILocation(line: 32, column: 1, scope: !192)
-// CHECK:STDOUT: !198 = !{!193}
-// CHECK:STDOUT: !199 = !{!"p1 _ZTS1Y", !120, i64 0}
-// CHECK:STDOUT: !200 = !{!199, !199, i64 0}
+// CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !83 = !{!"omnipotent char", !82, i64 0}
+// CHECK:STDOUT: !84 = !{!"any pointer", !83, i64 0}
+// CHECK:STDOUT: !90 = !{!"int", !83, i64 0}
+// CHECK:STDOUT: !96 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !97 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !98 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !99 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !100 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !101 = !{!100, !90, i64 0}
+// CHECK:STDOUT: !127 = !DIFile(filename: "import_class_with_nontrivial_copy.carbon", directory: "")
+// CHECK:STDOUT: !128 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !127, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "PassRefExpr", linkageName: "_CPassRefExpr.Main", scope: null, file: !127, line: 6, type: !43, spFlags: DISPFlagDefinition, unit: !128)
+// CHECK:STDOUT: !130 = !DILocation(line: 7, column: 3, scope: !129)
+// CHECK:STDOUT: !132 = !DILocation(line: 8, column: 3, scope: !129)
+// CHECK:STDOUT: !133 = !DILocation(line: 9, column: 3, scope: !129)
+// CHECK:STDOUT: !134 = !DILocation(line: 10, column: 3, scope: !129)
+// CHECK:STDOUT: !136 = !DILocation(line: 11, column: 3, scope: !129)
+// CHECK:STDOUT: !137 = !DILocation(line: 6, column: 1, scope: !129)
+// CHECK:STDOUT: !138 = distinct !DISubprogram(name: "PassInitExpr", linkageName: "_CPassInitExpr.Main", scope: null, file: !127, line: 16, type: !43, spFlags: DISPFlagDefinition, unit: !128)
+// CHECK:STDOUT: !139 = !DILocation(line: 17, column: 19, scope: !138)
+// CHECK:STDOUT: !140 = !DILocation(line: 17, column: 3, scope: !138)
+// CHECK:STDOUT: !141 = !DILocation(line: 16, column: 1, scope: !138)
+// CHECK:STDOUT: !142 = distinct !DISubprogram(name: "PassValueExpr", linkageName: "_CPassValueExpr.Main", scope: null, file: !127, line: 20, type: !54, spFlags: DISPFlagDefinition, unit: !128, retainedNodes: !148)
+// CHECK:STDOUT: !143 = !DILocalVariable(arg: 1, scope: !142, type: !44)
+// CHECK:STDOUT: !146 = !DILocation(line: 21, column: 3, scope: !142)
+// CHECK:STDOUT: !147 = !DILocation(line: 20, column: 1, scope: !142)
+// CHECK:STDOUT: !148 = !{!143}
+// CHECK:STDOUT: !149 = !{!"p1 _ZTS1Y", !84, i64 0}
+// CHECK:STDOUT: !150 = !{!149, !149, i64 0}
 // CHECK:STDOUT:

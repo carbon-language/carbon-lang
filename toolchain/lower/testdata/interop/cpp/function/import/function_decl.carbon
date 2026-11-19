@@ -417,7 +417,6 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !81
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !80
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !82
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %value.var), !dbg !75
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !83
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -432,8 +431,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !91
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !91
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !84
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !84
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef %0, i32 noundef 2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -451,8 +450,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !91
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !91
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !84
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !84
 // CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef %0, i32 noundef 2)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -461,11 +460,6 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !84 {
-// CHECK:STDOUT:   ret void, !dbg !89
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z13NoReturnValueii, { 2, 1, 0 }
@@ -482,7 +476,6 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !25 = !{i32 2, !"debugger-tuning", !"gdb"}
 // CHECK:STDOUT: !26 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !27 = !{i32 7, !"PIE Level", i32 2}
@@ -497,8 +490,6 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !58 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !59 = !{!58}
 // CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
-// CHECK:STDOUT: !61 = !{null, !58}
-// CHECK:STDOUT: !62 = !DISubroutineType(types: !61)
 // CHECK:STDOUT: !69 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !56, line: 6, type: !60, spFlags: DISPFlagDefinition, unit: !57)
 // CHECK:STDOUT: !72 = !DILocation(line: 7, column: 3, scope: !69)
 // CHECK:STDOUT: !73 = !DILocation(line: 8, column: 3, scope: !69)
@@ -511,9 +502,5 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !81 = !DILocation(line: 13, column: 11, scope: !69)
 // CHECK:STDOUT: !82 = !DILocation(line: 14, column: 10, scope: !69)
 // CHECK:STDOUT: !83 = !DILocation(line: 14, column: 3, scope: !69)
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !62, spFlags: DISPFlagDefinition, unit: !57, retainedNodes: !90)
-// CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !58)
-// CHECK:STDOUT: !89 = !DILocation(line: 32, column: 1, scope: !84)
-// CHECK:STDOUT: !90 = !{!85}
-// CHECK:STDOUT: !91 = !{!31, !31, i64 0}
+// CHECK:STDOUT: !84 = !{!31, !31, i64 0}
 // CHECK:STDOUT:

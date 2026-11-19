@@ -96,7 +96,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
-// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
+// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !4
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !4
@@ -105,7 +105,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.notnull:                                   ; preds = %entry
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %0, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %0, i64 noundef 8) #11
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.end:                                       ; preds = %delete.notnull, %entry
@@ -152,7 +152,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
-// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
+// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !6
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !6
@@ -186,8 +186,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: define internal void @_ZNK1A1FEv.carbon_thunk._(ptr noundef nonnull align 8 dereferenceable(8) %this) #5 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !92
-// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !92, !nonnull !95, !align !96
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
+// CHECK:STDOUT:   %0 = load ptr, ptr %this.addr, align 8, !tbaa !85, !nonnull !88, !align !89
 // CHECK:STDOUT:   %vtable = load ptr, ptr %0, align 8, !tbaa !8
 // CHECK:STDOUT:   %vfn = getelementptr inbounds ptr, ptr %vtable, i64 2
 // CHECK:STDOUT:   %1 = load ptr, ptr %vfn, align 8
@@ -207,7 +207,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Final.Main"(ptr %self) #6 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.937c854cf39ce4c2(ptr %self), !dbg !39
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.45fe25ba56ec930e(ptr %self), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,16 +217,14 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e9cc9e95545cc62f:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !43
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !43
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.28387b086eba9957:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !47
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !47
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,15 +247,14 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.Base.Main"(ptr %self) #6 !dbg !58 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a4aefa05e08cd2e1(ptr %self), !dbg !60
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.65206047a296fdf2(ptr %self), !dbg !60
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.294df737cd074d60:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_17.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !64
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc17_17.1.base), !dbg !64
+// CHECK:STDOUT:   %.loc17.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -269,31 +266,20 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.937c854cf39ce4c2(ptr %t) #8 !dbg !70 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.45fe25ba56ec930e(ptr %t) #8 !dbg !70 {
 // CHECK:STDOUT:   call void @"_COp.28387b086eba9957:core.SubobjectDestroy.Core"(ptr %t), !dbg !74
 // CHECK:STDOUT:   ret void, !dbg !75
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %t) #8 !dbg !77 {
-// CHECK:STDOUT:   %vtable = load ptr, ptr %t, align 8, !dbg !81
-// CHECK:STDOUT:   %1 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !81
-// CHECK:STDOUT:   call void %1(ptr %t), !dbg !81
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.65206047a296fdf2(ptr %t) #8 !dbg !77 {
+// CHECK:STDOUT:   call void @"_COp.294df737cd074d60:core.SubobjectDestroy.Core"(ptr %t), !dbg !81
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.a4aefa05e08cd2e1(ptr %t) #8 !dbg !84 {
-// CHECK:STDOUT:   call void @"_COp.294df737cd074d60:core.SubobjectDestroy.Core"(ptr %t), !dbg !88
-// CHECK:STDOUT:   ret void, !dbg !89
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: read)
-// CHECK:STDOUT: declare ptr @llvm.load.relative.i32(ptr, i32) #9
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @__cxa_pure_virtual() unnamed_addr
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZNK1A1FEv(ptr noundef nonnull align 8 dereferenceable(8)) unnamed_addr #10
+// CHECK:STDOUT: declare void @_ZNK1A1FEv(ptr noundef nonnull align 8 dereferenceable(8)) unnamed_addr #9
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main5FinalD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
@@ -302,7 +288,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,7 +321,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,7 +339,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !92
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTV1A, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
@@ -364,7 +350,6 @@ void delete_new_Base() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main5FinalD2Ev, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.e885b4b34ded440e, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @__cxa_pure_virtual, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main4BaseD2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1AC2Ev, { 1, 0 }
@@ -379,14 +364,13 @@ void delete_new_Base() {
 // CHECK:STDOUT: attributes #6 = { alwaysinline nounwind }
 // CHECK:STDOUT: attributes #7 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #8 = { nounwind }
-// CHECK:STDOUT: attributes #9 = { nocallback nofree nosync nounwind willreturn memory(argmem: read) }
-// CHECK:STDOUT: attributes #10 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #11 = { builtin allocsize(0) memory(inaccessiblemem: readwrite, errnomem: write) }
-// CHECK:STDOUT: attributes #12 = { builtin nounwind }
+// CHECK:STDOUT: attributes #9 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #10 = { builtin allocsize(0) memory(inaccessiblemem: readwrite, errnomem: write) }
+// CHECK:STDOUT: attributes #11 = { builtin nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!28}
-// CHECK:STDOUT: !llvm.module.flags = !{!98, !99, !100, !101, !11, !12}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!104}
+// CHECK:STDOUT: !llvm.module.flags = !{!91, !92, !93, !94, !11, !12}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!97}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -441,30 +425,25 @@ void delete_new_Base() {
 // CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !29)
 // CHECK:STDOUT: !68 = !DILocation(line: 19, column: 3, scope: !66)
 // CHECK:STDOUT: !69 = !{!67}
-// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.937c854cf39ce4c2", scope: null, file: !19, line: 32, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !76)
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.45fe25ba56ec930e", scope: null, file: !19, line: 32, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !76)
 // CHECK:STDOUT: !71 = !DILocalVariable(arg: 1, scope: !70, type: !29)
 // CHECK:STDOUT: !74 = !DILocation(line: 34, column: 5, scope: !70)
 // CHECK:STDOUT: !75 = !DILocation(line: 32, column: 1, scope: !70)
 // CHECK:STDOUT: !76 = !{!71}
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e885b4b34ded440e", scope: null, file: !19, line: 32, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !83)
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.65206047a296fdf2", scope: null, file: !19, line: 32, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !83)
 // CHECK:STDOUT: !78 = !DILocalVariable(arg: 1, scope: !77, type: !29)
 // CHECK:STDOUT: !81 = !DILocation(line: 34, column: 5, scope: !77)
 // CHECK:STDOUT: !82 = !DILocation(line: 32, column: 1, scope: !77)
 // CHECK:STDOUT: !83 = !{!78}
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.a4aefa05e08cd2e1", scope: null, file: !19, line: 32, type: !31, spFlags: DISPFlagDefinition, unit: !28, retainedNodes: !90)
-// CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !29)
-// CHECK:STDOUT: !88 = !DILocation(line: 34, column: 5, scope: !84)
-// CHECK:STDOUT: !89 = !DILocation(line: 32, column: 1, scope: !84)
-// CHECK:STDOUT: !90 = !{!85}
-// CHECK:STDOUT: !91 = !{!"p1 _ZTS1A", !2, i64 0}
-// CHECK:STDOUT: !92 = !{!91, !91, i64 0}
-// CHECK:STDOUT: !95 = !{}
-// CHECK:STDOUT: !96 = !{i64 8}
-// CHECK:STDOUT: !98 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !99 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !100 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !101 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !102 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !103 = !{!"__libc_errno", !102, i64 0}
-// CHECK:STDOUT: !104 = !{!103, !102, i64 0}
+// CHECK:STDOUT: !84 = !{!"p1 _ZTS1A", !2, i64 0}
+// CHECK:STDOUT: !85 = !{!84, !84, i64 0}
+// CHECK:STDOUT: !88 = !{}
+// CHECK:STDOUT: !89 = !{i64 8}
+// CHECK:STDOUT: !91 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !92 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !93 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !94 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !95 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !96 = !{!"__libc_errno", !95, i64 0}
+// CHECK:STDOUT: !97 = !{!96, !95, i64 0}
 // CHECK:STDOUT:

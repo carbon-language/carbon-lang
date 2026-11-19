@@ -148,35 +148,6 @@ static auto GetFacetTypeForQuerySpecificInterface(
   return const_id;
 }
 
-// Starts a block for lookup-related instructions, and returns the `FacetType`
-// for lookups in `HasWitnessForRepeatedField`.
-static auto PrepareForHasWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::ConstantId {
-  context.inst_block_stack().Push();
-  StartGenericDecl(context);
-
-  return GetFacetTypeForQuerySpecificInterface(context, loc_id,
-                                               query_specific_interface);
-}
-
-// Cleans up state `PrepareForHasWitness`.
-static auto CleanupAfterHasWitness(Context& context) -> void {
-  DiscardGenericDecl(context);
-  context.inst_block_stack().PopAndDiscard();
-}
-
-// Returns true if `type_inst_id` has a witness for the query interface, which
-// comes from `PrepareForHasWitness`.
-static auto HasWitnessForRepeatedField(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId type_inst_id,
-    SemIR::ConstantId query_facet_type_const_id) -> bool {
-  auto type_const_id = context.constant_values().Get(type_inst_id);
-  auto block_or_err = LookupImplWitness(context, loc_id, type_const_id,
-                                        query_facet_type_const_id);
-  return block_or_err.has_value();
-}
-
 // The format for `Destroy.Op`.
 enum class DestroyFormat {
   NoDestroy,
@@ -184,49 +155,151 @@ enum class DestroyFormat {
   NonTrivial,
 };
 
-// Returns true if the type is known to have trivial destruction.
-static auto IsBuiltinWithTrivialDestruction(Context& context,
-                                            SemIR::InstId inst_id) -> bool {
-  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
-    case SemIR::BoolType::Kind:
-    case SemIR::BoundMethodType::Kind:
-    case SemIR::CppFunctionPointerType::Kind:
-    case SemIR::FacetType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::FormType::Kind:
-    case SemIR::FunctionType::Kind:
-    case SemIR::IntLiteralType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return true;
-    default:
-      return false;
+namespace {
+// RAII wrapper around a block for lookup-related instructions, so that we can
+// look up destruction interfaces to determine a type's destroy format.
+// The block is popped and discarded when the wrapper is destroyed.
+//
+// Automatically looks up `Core.SubobjectDestroy` and `Core.Destroy` upon
+// construction, since they're always required. Looking up `Core.TrivialDestroy`
+// is deferred until necessary.
+class DestroyFormatWitnessContext {
+ public:
+  DestroyFormatWitnessContext(DestroyFormatWitnessContext&& other)
+      : context_(std::exchange(other.context_, nullptr)),
+        subobject_destroy_interface_(
+            std::exchange(other.subobject_destroy_interface_,
+                          SemIR::SpecificInterface::None)),
+        destroy_interface_(std::exchange(other.destroy_interface_,
+                                         SemIR::SpecificInterface::None)) {}
+
+  DestroyFormatWitnessContext(const DestroyFormatWitnessContext&) = delete;
+  auto operator=(DestroyFormatWitnessContext&&) -> void = delete;
+  auto operator=(const DestroyFormatWitnessContext&) -> void = delete;
+
+  // Starts the block and returns a context wrapper if the facets for
+  // `SubobjectDestroy` and `Destroy` can be found.
+  //
+  // Returns `std::nullopt` if `SubobjectDestroy` or `Destroy` can't be found.
+  static auto PrepareForLookup(Context& context, SemIR::LocId loc_id)
+      -> std::optional<DestroyFormatWitnessContext> {
+    context.inst_block_stack().Push();
+    StartGenericDecl(context);
+
+    auto subobject_destroy_interface_id =
+        GetCoreInterfaceId(context, loc_id, CoreIdentifier::SubobjectDestroy);
+    if (!subobject_destroy_interface_id.has_value()) {
+      return std::nullopt;
+    }
+
+    auto destroy_interface_id =
+        GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyImpl);
+    if (!destroy_interface_id.has_value()) {
+      return std::nullopt;
+    }
+
+    return DestroyFormatWitnessContext(context, subobject_destroy_interface_id,
+                                       destroy_interface_id);
   }
-}
 
-// Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
-// field, this can handle the call to `PrepareForHasWitness`.
-static auto HasWitnessForOneField(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
-    SemIR::SpecificInterface query_specific_interface) -> DestroyFormat {
-  if (IsBuiltinWithTrivialDestruction(context, field_inst_id)) {
-    return DestroyFormat::Trivial;
+  // Cleans up the block that was created during construction.
+  ~DestroyFormatWitnessContext() {
+    if (context_) {
+      DiscardGenericDecl(*context_);
+      context_->inst_block_stack().PopAndDiscard();
+    }
   }
 
-  auto query_facet_type_const_id =
-      PrepareForHasWitness(context, loc_id, query_specific_interface);
-  auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
-                                                query_facet_type_const_id);
-  CleanupAfterHasWitness(context);
-  return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
-}
+  // Determines the destroy format for `type_inst_id`.
+  //
+  // Returns:
+  //   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+  //       `Core.SubobjectDestroy`, `Core.Destroy`, or `Core.Destroy.Op`);
+  //   -   `DestroyFormat::NoDestroy`, if `Core.SubobjectDestroy.Op` doesn't
+  //       exist;
+  //   -   `DestroyFormat::Trivial`, if `Core.SubobjectDestroy.Op` and
+  //       `Core.Destroy.Op` are both no-ops;
+  //   -   `DestroyFormat::NonTrivial`, otherwise;
+  auto GetDestroyFormatForOneType(Context& context, SemIR::LocId loc_id,
+                                  SemIR::TypeInstId type_inst_id)
+      -> std::optional<DestroyFormat> {
+    const auto op_name_id =
+        context.core_identifiers().AddNameId(CoreIdentifier::Op);
 
-// Returns true if `array_type` should impl `Destroy`.
-static auto CanDestroyArray(Context& context, SemIR::LocId loc_id,
-                            SemIR::ArrayType array_type,
-                            SemIR::SpecificInterface query_specific_interface)
-    -> DestroyFormat {
+    auto subobject_destroy_op_fn_id =
+        GetAssociatedFunction(context, loc_id, type_inst_id,
+                              subobject_destroy_interface_, op_name_id);
+    if (subobject_destroy_op_fn_id == std::nullopt) {
+      return std::nullopt;
+    }
+
+    // `SubobjectDestroy.Op`'s definition is provided by the toolchain. Being
+    // unable to find `SubobjectDestroy.Op` signals that the object can't be
+    // destroyed.
+    if (*subobject_destroy_op_fn_id == SemIR::FunctionId::None) {
+      return DestroyFormat::NoDestroy;
+    }
+
+    const auto& subobject_destroy_op_fn =
+        context.functions().Get(*subobject_destroy_op_fn_id);
+    if (auto builtin_kind =
+            subobject_destroy_op_fn.GetBuiltinFunctionKind(context.sem_ir());
+        builtin_kind == SemIR::BuiltinFunctionKind::None) {
+      return DestroyFormat::NonTrivial;
+    }
+
+    auto destroy_op_fn_id = GetAssociatedFunction(
+        context, loc_id, type_inst_id, destroy_interface_, op_name_id);
+    if (destroy_op_fn_id == std::nullopt) {
+      // The toolchain diagnoses a missing `Core.Destroy` elsewhere.
+      return std::nullopt;
+    }
+
+    if (*destroy_op_fn_id == SemIR::FunctionId::None) {
+      CARBON_DIAGNOSTIC(MissingImplForCoreDestroyOp, Error,
+                        "`{}` declares a custom implementation for "
+                        "`Core.Destroy`, but doesn't define `Core.Destroy.Op`",
+                        SemIR::TypeInstId);
+      context.emitter().Emit(loc_id, MissingImplForCoreDestroyOp, type_inst_id);
+      return std::nullopt;
+    }
+    const auto& destroy_op_fn = context.functions().Get(*destroy_op_fn_id);
+    auto builtin_kind = destroy_op_fn.GetBuiltinFunctionKind(context.sem_ir());
+    return builtin_kind == SemIR::BuiltinFunctionKind::NoOp
+               ? DestroyFormat::Trivial
+               : DestroyFormat::NonTrivial;
+  }
+
+ private:
+  Context* context_;
+  SemIR::SpecificInterface subobject_destroy_interface_;
+  SemIR::SpecificInterface destroy_interface_;
+
+  // Private non-static data members prevent us from treating this type as an
+  // aggregate.
+  DestroyFormatWitnessContext(Context& context,
+                              SemIR::InterfaceId subobject_destroy_interface_id,
+                              SemIR::InterfaceId destroy_interface_id)
+      : context_(&context),
+        subobject_destroy_interface_{
+            .interface_id = subobject_destroy_interface_id,
+            .specific_id = SemIR::SpecificId::None},
+        destroy_interface_{.interface_id = destroy_interface_id,
+                           .specific_id = SemIR::SpecificId::None} {}
+};
+}  // namespace
+
+// Determines the destroy format for an array type.
+//
+// Returns:
+//   -   `DestroyFormat::Trivial` for empty arrays;
+//   -   The array's element type for non-empty arrays;
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+static auto GetArrayDestroyFormat(Context& context, SemIR::LocId loc_id,
+                                  SemIR::ArrayType array_type,
+                                  DestroyFormatWitnessContext& witness_context)
+    -> std::optional<DestroyFormat> {
   // A zero element array is always trivially destructible.
   if (auto int_bound = context.sem_ir().GetZExtIntValue(array_type.bound_id);
       !int_bound || *int_bound == 0) {
@@ -234,16 +307,100 @@ static auto CanDestroyArray(Context& context, SemIR::LocId loc_id,
   }
 
   // Verify the element can be destroyed.
-  return HasWitnessForOneField(context, loc_id, array_type.element_type_inst_id,
-                               query_specific_interface);
+  return witness_context.GetDestroyFormatForOneType(
+      context, loc_id, array_type.element_type_inst_id);
 }
 
-// Returns true if `class_type` should impl `Destroy`.
-static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
-                            SemIR::ClassType class_type,
-                            const SemIR::CompleteTypeInfo& complete_info,
-                            SemIR::SpecificInterface query_specific_interface,
-                            bool is_partial) -> DestroyFormat {
+// Determines the destroy format for a struct type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, if any subobject's destroy
+//       format is `DestroyFormat::NoDestroy`;
+//   -   Otherwise, `DestroyFormat::NonTrivial`, if any subobject's destroy
+//       format is `DestroyFormat::NonTrivial`;
+//   -   Otherwise, `DestroyFormat::Trivial`.
+static auto GetStructDestroyFormat(
+    Context& context, SemIR::LocId loc_id,
+    llvm::ArrayRef<SemIR::StructTypeField> fields,
+    DestroyFormatWitnessContext& witness_context)
+    -> std::optional<DestroyFormat> {
+  auto result = DestroyFormat::Trivial;
+  for (const auto& subobject : fields) {
+    auto destroy_format = witness_context.GetDestroyFormatForOneType(
+        context, loc_id, subobject.type_inst_id);
+    if (!destroy_format) {
+      return std::nullopt;
+    }
+
+    if (*destroy_format == DestroyFormat::NoDestroy) {
+      return DestroyFormat::NoDestroy;
+    }
+
+    result = std::max(result, *destroy_format);
+  }
+
+  return result;
+}
+
+// Determines the destroy format for a tuple type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, if any subobject's destroy
+//       format is `DestroyFormat::NoDestroy`;
+//   -   Otherwise, `DestroyFormat::NonTrivial`, if any subobject's destroy
+//       format is `DestroyFormat::NonTrivial`;
+//   -   Otherwise, `DestroyFormat::Trivial`.
+static auto GetTupleDestroyFormat(Context& context, SemIR::LocId loc_id,
+                                  SemIR::TypeInstId type_id,
+                                  DestroyFormatWitnessContext& witness_context)
+    -> std::optional<DestroyFormat> {
+  auto tuple_type = context.insts().GetAs<SemIR::TupleType>(type_id);
+  auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
+  if (block.empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  auto result = DestroyFormat::Trivial;
+  for (const auto& element_id : block) {
+    auto destroy_format = witness_context.GetDestroyFormatForOneType(
+        context, loc_id, context.types().GetAsTypeInstId(element_id));
+    if (!destroy_format) {
+      return std::nullopt;
+    }
+
+    if (*destroy_format == DestroyFormat::NoDestroy) {
+      return DestroyFormat::NoDestroy;
+    }
+
+    result = std::max(result, *destroy_format);
+  }
+
+  return result;
+}
+
+// Determines the destroy format for a class type.
+//
+// Returns:
+//   -   `std::nullopt`, if a toolchain error occurs (e.g. failed to look up
+//       `Core.SubobjectDestroy`);
+//   -   Otherwise, `DestroyFormat::NoDestroy`, in the following cases:
+//       -   The class is abstract and non-partial; or
+//       -   the class is a C++ type; or
+//       -   any of the class's subobjects cannot be destroyed;
+//   -   Otherwise, `DestroyFormat::Trivial`, if the class type's
+//       `Core.Destroy.Op` is a no-op, and all of the class's subobjects have
+//       trivial  destruction;
+//   -   Otherwise, `DestroyFormat::NonTrivial`.
+static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
+                                  SemIR::ClassType class_type,
+                                  const SemIR::CompleteTypeInfo& complete_info,
+                                  DestroyFormatWitnessContext& witness_context,
+                                  bool is_partial)
+    -> std::optional<DestroyFormat> {
   // Abstract classes can't be destroyed.
   if (!is_partial && complete_info.IsAbstract()) {
     return DestroyFormat::NoDestroy;
@@ -256,50 +413,96 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
     return DestroyFormat::NoDestroy;
   }
 
-  auto object_repr_id =
+  auto adapted_type_id =
       class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
-  if (object_repr_id.has_value()) {
+  if (adapted_type_id.has_value()) {
     if (auto array_type =
-            context.types().TryGetAs<SemIR::ArrayType>(object_repr_id)) {
-      return CanDestroyArray(context, loc_id, *array_type,
-                             query_specific_interface);
+            context.types().TryGetAs<SemIR::ArrayType>(adapted_type_id)) {
+      return GetArrayDestroyFormat(context, loc_id, *array_type,
+                                   witness_context);
     }
-  } else {
-    object_repr_id =
-        class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+    return witness_context.GetDestroyFormatForOneType(
+        context, loc_id, context.types().GetTypeInstId(adapted_type_id));
   }
 
-  auto has_witness = HasWitnessForOneField(
-      context, loc_id, context.types().GetTypeInstId(object_repr_id),
-      query_specific_interface);
-  if (has_witness == DestroyFormat::NoDestroy) {
+  auto object_repr_id =
+      class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
+
+  auto destroy_format = witness_context.GetDestroyFormatForOneType(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id));
+  if (destroy_format == DestroyFormat::NoDestroy) {
     return DestroyFormat::NoDestroy;
   }
 
-  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
-          .empty()) {
-    return DestroyFormat::Trivial;
-  }
-
-  // TODO: check that a class' base has trivial destruction.
-  // TODO: check that a class' subobjects have trivial destruction.
-
-  return DestroyFormat::NonTrivial;
+  destroy_format = GetStructDestroyFormat(
+      context, loc_id,
+      class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id),
+      witness_context);
+  return destroy_format;
 }
 
-// Returns true if the `Self` should impl `Destroy`. This will recurse into impl
-// lookup of `Destroy` for members, similar to `where .Self.members each impls
-// Destroy`.
-static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
-                           SemIR::ConstantId query_self_const_id,
-                           SemIR::SpecificInterface query_specific_interface)
-    -> DestroyFormat {
+// Attempts to determine the type's destroy format using its kind.
+// Returns `std::nullopt` if lookup is required.
+static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
+    -> std::optional<DestroyFormat> {
+  switch (type) {
+    // Built-in types have trivial destruction.
+    case SemIR::AssociatedEntityType::Kind:
+    case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
+    case SemIR::CharLiteralType::Kind:
+    case SemIR::CppFunctionPointerType::Kind:
+    case SemIR::CppOverloadSetType::Kind:
+    case SemIR::CppTemplateNameType::Kind:
+    case SemIR::FacetType::Kind:
+    case SemIR::FloatLiteralType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
+    case SemIR::FunctionTypeWithSelfType::Kind:
+    case SemIR::GenericInterfaceType::Kind:
+    case SemIR::GenericNamedConstraintType::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::NamespaceType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
+    case SemIR::PointerType::Kind:
+    case SemIR::SpecificConstant::Kind:
+    case SemIR::TupleAccess::Kind:
+    case SemIR::UnboundElementType::Kind:
+      return DestroyFormat::Trivial;
+    // A dependent type constructor calls that cannot be resolved under the
+    // generic context.
+    case SemIR::Call::Kind:
+      return DestroyFormat::NoDestroy;
+    // Symbolic facets of type `type`. Such symbolic values can't be
+    // destroyed.
+    case SemIR::ImplWitnessAccess::Kind:
+    case SemIR::SymbolicBinding::Kind:
+      return DestroyFormat::NoDestroy;
+
+    // We can't work it out from the kind alone
+    default:
+      return std::nullopt;
+  }
+}
+
+// Determines the destroy format for `Self`.
+//
+// Types that return `DestroyFormat::Trivial` have trivial destruction, should
+// have a no-op for `Core.SubobjectDestroy.Op`, and must implement
+// `Core.TrivialDestroy`. Types that return `DestroyFormat::NonTrivial` can't
+// implement `TrivialDestroy`, and their `SubobjectDestroy.Op` might require
+// some non-trivial work. Types that return `DestroyFormat::NoDestroy` must not
+// implement `SubobjectDestroy`.
+//
+// This function returns `std::nullopt` if a toolchain error occurred (e.g.
+// failed to look up `Core.SubobjectDestroy`).
+static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
+                             SemIR::ConstantId query_self_const_id)
+    -> std::optional<DestroyFormat> {
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacet(context, query_self_const_id));
-
-  if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
-    return DestroyFormat::Trivial;
-  }
 
   auto inst = context.insts().Get(inst_id);
   if (context.types().IsConstrainedFacetType(inst.type_id())) {
@@ -310,99 +513,65 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     return DestroyFormat::NoDestroy;
   }
 
-  // Incomplete types can not be destroyed.
+  if (auto early_exit = TryGetDestroyFormatFromKind(inst.kind())) {
+    return early_exit;
+  }
+
+  // Incomplete types cannot be destroyed because we don't know anything about
+  // them.
   auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
   if (!TryToCompleteType(context, type_id, loc_id)) {
     return DestroyFormat::NoDestroy;
   }
 
+  auto witness_prep =
+      DestroyFormatWitnessContext::PrepareForLookup(context, loc_id);
+  if (!witness_prep) {
+    return std::nullopt;
+  }
+
   CARBON_KIND_SWITCH(inst) {
-    case SemIR::ImplWitnessAccess::Kind:
-    case SemIR::SymbolicBinding::Kind: {
-      // A symbolic facet of type `type`. Such symbolic values can't be
-      // destroyed.
-      return DestroyFormat::NoDestroy;
-    }
-
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      return CanDestroyArray(context, loc_id, array_type,
-                             query_specific_interface);
+      return GetArrayDestroyFormat(context, loc_id, array_type, *witness_prep);
     }
-
-    case SemIR::Call::Kind:
-      // Dependent type constructor calls that cannot be resolved under the
-      // generic context.
-      return DestroyFormat::NoDestroy;
-
     case CARBON_KIND(SemIR::ClassType class_type): {
-      return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface,
-                             /*is_partial=*/false);
+      return GetClassDestroyFormat(context, loc_id, class_type,
+                                   context.types().GetCompleteTypeInfo(type_id),
+                                   *witness_prep,
+                                   /*is_partial=*/false);
     }
-
     case CARBON_KIND(SemIR::ConstType const_type): {
-      return HasWitnessForOneField(context, loc_id, const_type.inner_id,
-                                   query_specific_interface);
+      return witness_prep->GetDestroyFormatForOneType(context, loc_id,
+                                                      const_type.inner_id);
     }
-
     case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
-      return HasWitnessForOneField(context, loc_id,
-                                   maybe_unformed_type.inner_id,
-                                   query_specific_interface);
+      return witness_prep->GetDestroyFormatForOneType(
+          context, loc_id, maybe_unformed_type.inner_id);
     }
-
     case CARBON_KIND(SemIR::PartialType partial_type): {
       // In contrast with something like `const`, need to treat the inner
       // class differently based on the `partial` modifier.
       auto class_type =
           context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
-      return CanDestroyClass(context, loc_id, class_type,
-                             context.types().GetCompleteTypeInfo(type_id),
-                             query_specific_interface,
-                             /*is_partial=*/true);
+      return GetClassDestroyFormat(context, loc_id, class_type,
+                                   context.types().GetCompleteTypeInfo(type_id),
+                                   *witness_prep,
+                                   /*is_partial=*/true);
     }
-
     case CARBON_KIND(SemIR::StructType struct_type): {
-      auto fields = context.struct_type_fields().Get(struct_type.fields_id);
-      if (fields.empty()) {
-        return DestroyFormat::Trivial;
-      }
-      auto query_facet_type_const_id =
-          PrepareForHasWitness(context, loc_id, query_specific_interface);
-      bool has_witness = true;
-      for (const auto& field : fields) {
-        if (!HasWitnessForRepeatedField(context, loc_id, field.type_inst_id,
-                                        query_facet_type_const_id)) {
-          has_witness = false;
-          break;
-        }
-      }
-      CleanupAfterHasWitness(context);
-      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+      return GetStructDestroyFormat(
+          context, loc_id,
+          context.struct_type_fields().Get(struct_type.fields_id),
+          *witness_prep);
     }
-
-    case CARBON_KIND(SemIR::TupleType tuple_type): {
-      auto block = context.inst_blocks().Get(tuple_type.type_elements_id);
-      if (block.empty()) {
-        return DestroyFormat::Trivial;
-      }
-      auto query_facet_type_const_id =
-          PrepareForHasWitness(context, loc_id, query_specific_interface);
-      bool has_witness = true;
-      for (const auto& element_id : block) {
-        if (!HasWitnessForRepeatedField(context, loc_id, element_id,
-                                        query_facet_type_const_id)) {
-          has_witness = false;
-          break;
-        }
-      }
-      CleanupAfterHasWitness(context);
-      return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
+    case SemIR::TupleType::Kind: {
+      return GetTupleDestroyFormat(context, loc_id,
+                                   context.types().GetAsTypeInstId(inst_id),
+                                   *witness_prep);
     }
-
-    default:
-      CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
+    default: {
+      CARBON_FATAL("Unexpected type for `GetDestroyFormat`: {}", inst.kind());
+    }
   }
 }
 
@@ -415,7 +584,9 @@ static auto DestroyStructFields(
     auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
                                          struct_fields[i].name_id);
     auto self_destruct_call = BuildSelfDestructCall(context, member_id);
-    DiscardExpr(context, self_destruct_call);
+    if (self_destruct_call.has_value()) {
+      DiscardExpr(context, self_destruct_call);
+    }
   }
 }
 
@@ -856,9 +1027,12 @@ static auto LookupSubobjectDestroyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
-  auto format = CanDestroyType(context, loc_id, query_self_const_id,
-                               query_specific_interface);
-  if (format == DestroyFormat::NoDestroy) {
+  auto format = GetDestroyFormat(context, loc_id, query_self_const_id);
+  if (!format) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (*format == DestroyFormat::NoDestroy) {
     return std::nullopt;
   }
 
@@ -867,7 +1041,33 @@ static auto LookupSubobjectDestroyWitness(
   }
 
   return BuildSubobjectDestroyWitness(context, loc_id, query_self_const_id,
-                                      query_specific_interface, format);
+                                      query_specific_interface, *format);
+}
+
+static auto MakeTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  auto witness_prep =
+      DestroyFormatWitnessContext::PrepareForLookup(context, loc_id);
+  if (!witness_prep) {
+    return std::nullopt;
+  }
+
+  auto destroy_format = witness_prep->GetDestroyFormatForOneType(
+      context, loc_id,
+      context.types().GetTypeInstIdForTypeConstantId(query_self_const_id));
+  if (!destroy_format || *destroy_format != DestroyFormat::Trivial) {
+    return std::nullopt;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {});
 }
 
 static auto MakeIntFitsInWitness(
@@ -1055,6 +1255,9 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
       return LookupSubobjectDestroyWitness(context, loc_id, query_self_const_id,
                                            query_specific_interface,
                                            build_witness);
+    case SemIR::CoreInterface::TrivialDestroyImpl:
+      return MakeTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                       query_specific_interface, build_witness);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::AddWith:
     case SemIR::CoreInterface::Copy:

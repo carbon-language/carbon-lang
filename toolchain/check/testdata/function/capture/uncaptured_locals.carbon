@@ -347,11 +347,10 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
@@ -365,7 +364,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %.0b3: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.299: %pattern_type.d94 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %return.patt.6fa: %pattern_type.d94 = return_slot_pattern %return.param_patt.299, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -385,7 +384,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %LocalHelper: %LocalHelper.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Nested.type: type = fn_type @Nested, @Outer(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Nested: %Nested.type = struct_value () [symbolic]
-// CHECK:STDOUT:   %t_type.patt: %pattern_type.9a587c.1 = value_binding_pattern t_type [concrete]
+// CHECK:STDOUT:   %t_type.patt: %pattern_type.9a5 = value_binding_pattern t_type [concrete]
 // CHECK:STDOUT:   %require_complete.9cd: <witness> = require_complete_type %LocalClass [symbolic]
 // CHECK:STDOUT:   %pattern_type.16b: type = pattern_type %LocalClass [symbolic]
 // CHECK:STDOUT:   %c_val.patt: %pattern_type.16b = ref_binding_pattern c_val [symbolic]
@@ -399,13 +398,6 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %bound_method.fb0: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.9f3: %i32 = int_value 3 [concrete]
-// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
-// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.5c4: <witness> = lookup_impl_witness %LocalClass, @DestroyImpl [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.91b: <witness> = lookup_impl_witness %LocalClass, @SubobjectDestroy [symbolic]
-// CHECK:STDOUT:   %Destroy.facet.50c: %Destroy.type = facet_value %LocalClass, (%DestroyImpl.lookup_impl_witness.5c4, %SubobjectDestroy.lookup_impl_witness.91b) [symbolic]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.b99: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.50c) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -475,10 +467,6 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %LocalHelper.type: type = fn_type @LocalHelper, @Outer(%T) [symbolic = %LocalHelper.type (constants.%LocalHelper.type)]
 // CHECK:STDOUT:   %LocalHelper: @Nested.%LocalHelper.type (%LocalHelper.type) = struct_value () [symbolic = %LocalHelper (constants.%LocalHelper)]
 // CHECK:STDOUT:   %LocalHelper.specific_fn.loc35_39.2: <specific function> = specific_function %LocalHelper, @LocalHelper(%T) [symbolic = %LocalHelper.specific_fn.loc35_39.2 (constants.%LocalHelper.specific_fn)]
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %LocalClass, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.5c4)]
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %LocalClass, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.91b)]
-// CHECK:STDOUT:   %Destroy.facet.loc33_5.3: %Destroy.type = facet_value %LocalClass, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc33_5.3 (constants.%Destroy.facet.50c)]
-// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: %i32 {
 // CHECK:STDOUT:   !entry:
@@ -487,13 +475,13 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:     %.loc32_24: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %t_type: type = wrapper_binding t_type, %T.ref
 // CHECK:STDOUT:     name_binding_decl {
-// CHECK:STDOUT:       %t_type.patt: %pattern_type.9a587c.1 = value_binding_pattern t_type [concrete = constants.%t_type.patt]
+// CHECK:STDOUT:       %t_type.patt: %pattern_type.9a5 = value_binding_pattern t_type [concrete = constants.%t_type.patt]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c_val.var: ref @Nested.%LocalClass (%LocalClass) = var_storage %c_val.var_patt.loc33_5.1
 // CHECK:STDOUT:     %.loc33_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc33_37.2: init @Nested.%LocalClass (%LocalClass) to %c_val.var = class_init () [symbolic = %LocalClass.val (constants.%LocalClass.val)]
-// CHECK:STDOUT:     %.loc33_5.1: init @Nested.%LocalClass (%LocalClass) = converted %.loc33_37.1, %.loc33_37.2 [symbolic = %LocalClass.val (constants.%LocalClass.val)]
-// CHECK:STDOUT:     assign %c_val.var, %.loc33_5.1
+// CHECK:STDOUT:     %.loc33_5: init @Nested.%LocalClass (%LocalClass) = converted %.loc33_37.1, %.loc33_37.2 [symbolic = %LocalClass.val (constants.%LocalClass.val)]
+// CHECK:STDOUT:     assign %c_val.var, %.loc33_5
 // CHECK:STDOUT:     %.loc33_23.1: type = splice_block %LocalClass.ref [symbolic = %LocalClass (constants.%LocalClass)] {
 // CHECK:STDOUT:       %.loc33_23.2: type = specific_constant @Outer.%LocalClass.decl, @Outer(constants.%T.67d) [symbolic = %LocalClass (constants.%LocalClass)]
 // CHECK:STDOUT:       %LocalClass.ref: type = name_ref LocalClass, %.loc33_23.2 [symbolic = %LocalClass (constants.%LocalClass)]
@@ -544,17 +532,9 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:     %specific_fn.loc39: <specific function> = specific_function %impl.elem0.loc39, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:     %bound_method.loc39_12.2: <bound method> = bound_method %b.ref, %specific_fn.loc39
 // CHECK:STDOUT:     %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc39_12.2(%b.ref)
-// CHECK:STDOUT:     %Destroy.facet.loc33_5.1: %Destroy.type = facet_value constants.%LocalClass, (constants.%DestroyImpl.lookup_impl_witness.5c4, constants.%SubobjectDestroy.lookup_impl_witness.91b) [symbolic = %Destroy.facet.loc33_5.3 (constants.%Destroy.facet.50c)]
-// CHECK:STDOUT:     %.loc33_5.2: %Destroy.type = converted constants.%LocalClass, %Destroy.facet.loc33_5.1 [symbolic = %Destroy.facet.loc33_5.3 (constants.%Destroy.facet.50c)]
-// CHECK:STDOUT:     %Destroy.facet.loc33_5.2: %Destroy.type = facet_value constants.%LocalClass, (constants.%DestroyImpl.lookup_impl_witness.5c4, constants.%SubobjectDestroy.lookup_impl_witness.91b) [symbolic = %Destroy.facet.loc33_5.3 (constants.%Destroy.facet.50c)]
-// CHECK:STDOUT:     %.loc33_5.3: %Destroy.type = converted constants.%LocalClass, %Destroy.facet.loc33_5.2 [symbolic = %Destroy.facet.loc33_5.3 (constants.%Destroy.facet.50c)]
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%c_val.var)
 // CHECK:STDOUT:     return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc33(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
@@ -562,7 +542,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Outer(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc6_19.2 => constants.%T.patt.3a0592.1
+// CHECK:STDOUT:   %T.patt.loc6_19.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc6_19.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,9 +558,5 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %LocalHelper.type => constants.%LocalHelper.type
 // CHECK:STDOUT:   %LocalHelper => constants.%LocalHelper
 // CHECK:STDOUT:   %LocalHelper.specific_fn.loc35_39.2 => constants.%LocalHelper.specific_fn
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness => constants.%DestroyImpl.lookup_impl_witness.5c4
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%SubobjectDestroy.lookup_impl_witness.91b
-// CHECK:STDOUT:   %Destroy.facet.loc33_5.3 => constants.%Destroy.facet.50c
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.2 => constants.%SelfDestruct.specific_fn.b99
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
