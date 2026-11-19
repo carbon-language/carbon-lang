@@ -186,21 +186,6 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- type.carbon
-library "[[@TEST_NAME]]";
-
-fn Make() -> type;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  type as Core.SubobjectDestroy;
-  type as Core.Destroy;
-  type as Core.TrivialDestroy;
-
-  var unused x: type = Make();
-  //@dump-sem-ir-end
-}
-
 // CHECK:STDOUT: --- trivial_bool.carbon = $trivial_bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

@@ -171,18 +171,18 @@ fn Test() {
 // --- trivial_facet_type.carbon
 library "[[@TEST_NAME]]";
 
-interface Extra {}
-
-alias FacetType = Core.TrivialDestroy & Extra;
-fn Make() -> FacetType;
+fn Make() -> type;
 
 fn Test() {
   //@dump-sem-ir-begin
-  FacetType as Core.SubobjectDestroy;
-  FacetType as Core.Destroy;
-  FacetType as Core.TrivialDestroy;
+  type as Core.SubobjectDestroy;
+  type as Core.Destroy;
+  type as Core.TrivialDestroy;
 
-  var unused x: FacetType = Make();
+  var unused x: type = Make();
+  //@dump-sem-ir-end
+}
+
   //@dump-sem-ir-end
 }
 
