@@ -170,12 +170,12 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !40 = !DILocation(line: 6, column: 5, scope: !32)
 // CHECK:STDOUT: !41 = !{!33}
 // CHECK:STDOUT: !42 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.15aa9db226b6d202", scope: null, file: !42, line: 36, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !49)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.15aa9db226b6d202", scope: null, file: !42, line: 35, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !49)
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !12)
-// CHECK:STDOUT: !48 = !DILocation(line: 36, column: 1, scope: !43)
+// CHECK:STDOUT: !48 = !DILocation(line: 35, column: 1, scope: !43)
 // CHECK:STDOUT: !49 = !{!44}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5da679f5f4cb5255", scope: null, file: !42, line: 36, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !56)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5da679f5f4cb5255", scope: null, file: !42, line: 35, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !56)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !12)
-// CHECK:STDOUT: !55 = !DILocation(line: 36, column: 1, scope: !50)
+// CHECK:STDOUT: !55 = !DILocation(line: 35, column: 1, scope: !50)
 // CHECK:STDOUT: !56 = !{!51}
 // CHECK:STDOUT:
