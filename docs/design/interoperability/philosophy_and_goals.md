@@ -158,6 +158,20 @@ native Carbon code. C++ code will not benefit from the same set of safety
 mechanisms that Carbon offers, so Carbon code calling into C++ will accept
 higher safety risks.
 
+Carbon code always has at most the
+[undefined behavior](/docs/design/program_behavior.md) of corresponding C++
+code. As long as interoperating C++ code follows a set of rules—where violations
+are recognizable as buggy or dangerous by C++ developers (such as
+`delete this;`) and checkable by a sanitizer—it will not compromise Carbon's
+safety checks. If C++ undefined behavior or unreasonable C++ code compromises
+Carbon's safety checks, Carbon still does not introduce additional undefined
+behavior based on its safety assumptions, so Carbon code retains less undefined
+behavior than the equivalent C++.
+
+> **TODO:** Document the specific rules for reasonable C++ code and any reactive
+> sanitizer support for detecting violations at the C++/Carbon boundary (see
+> [#8161](/proposals/p008161-defining-program-behavior.md#reasonable-c-code-and-compromised-safety-checks)).
+
 ### Fast and scalable development
 
 The interoperability layer will likely have tooling limitations similar to C++.
@@ -468,3 +482,5 @@ interoperability.
 
 -   Proposal
     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161)
