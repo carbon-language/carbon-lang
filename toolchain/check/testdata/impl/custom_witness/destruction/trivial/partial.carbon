@@ -113,6 +113,23 @@ fn Test() {
   partial Abstract as Core.TrivialDestroy;
 }
 
+// --- todo_fail_nontrivial_derived.carbon
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+base class Base {
+  var x: HasNonTrivialDestruction;
+}
+
+base class Derived {
+  extend base: Base;
+}
+
+fn Test() {
+  partial Derived as Core.TrivialDestroy;
+}
+
 // CHECK:STDOUT: --- trivial_empty_partial_class.carbon = $trivial_empty_partial_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

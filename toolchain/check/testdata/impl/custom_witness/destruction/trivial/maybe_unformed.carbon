@@ -43,6 +43,25 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
+// --- todo_fail_nontrivial_maybe_unformed_member.carbon
+library "[[@TEST_NAME]]";
+
+class HasNonTrivialDestruction {
+  impl as Core.DestroyImpl {
+    fn Op(unused self) {}
+  }
+}
+
+class HasNonTrivialMember {
+  var x: HasNonTrivialDestruction;
+}
+
+alias MaybeUnformed = Core.MaybeUnformed(HasNonTrivialMember);
+
+fn Test() {
+  MaybeUnformed as Core.TrivialDestroy;
+}
+
 // --- todo_fail_nontrivial_maybe_unformed_of_const.carbon
 library "[[@TEST_NAME]]";
 
