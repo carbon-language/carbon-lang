@@ -274,9 +274,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.edcc2ca63b38395b:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !97 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_10.1.next = getelementptr inbounds nuw { i32, ptr }, ptr %self, i32 0, i32 1, !dbg !99
+// CHECK:STDOUT:   %.loc7_10.1.next = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !99
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.bc2719126434d85a(ptr %.loc7_10.1.next), !dbg !99
-// CHECK:STDOUT:   %.loc7_10.4.data = getelementptr inbounds nuw { i32, ptr }, ptr %self, i32 0, i32 0, !dbg !99
+// CHECK:STDOUT:   %.loc7_10.4.data = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !99
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_10.4.data), !dbg !99
 // CHECK:STDOUT:   ret void, !dbg !99
 // CHECK:STDOUT: }
@@ -284,9 +284,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.08d9e38b928ba575:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !101 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_10.1.next = getelementptr inbounds nuw { i32, ptr }, ptr %self, i32 0, i32 1, !dbg !103
+// CHECK:STDOUT:   %.loc7_10.1.next = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !103
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.bc2719126434d85a(ptr %.loc7_10.1.next), !dbg !103
-// CHECK:STDOUT:   %.loc7_10.4.data = getelementptr inbounds nuw { i32, ptr }, ptr %self, i32 0, i32 0, !dbg !103
+// CHECK:STDOUT:   %.loc7_10.4.data = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !103
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_10.4.data), !dbg !103
 // CHECK:STDOUT:   ret void, !dbg !103
 // CHECK:STDOUT: }
@@ -296,8 +296,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMake.Main.e43630e9a6c38c3f(ptr sret({ i32, ptr }) %return) #0 !dbg !105 {
-// CHECK:STDOUT:   %data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !114
-// CHECK:STDOUT:   %next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !114
+// CHECK:STDOUT:   %data = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !114
+// CHECK:STDOUT:   %next = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !114
 // CHECK:STDOUT:   store ptr %return, ptr %next, align 8, !dbg !114
 // CHECK:STDOUT:   store i32 42, ptr %data, align 4, !dbg !114
 // CHECK:STDOUT:   ret void, !dbg !115

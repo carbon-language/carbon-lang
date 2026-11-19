@@ -27,9 +27,9 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [2 x { i32, i32, i32 }], align 4, !dbg !31
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !31
-// CHECK:STDOUT:   %.loc16_47.6.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 0, !dbg !32
+// CHECK:STDOUT:   %.loc16_47.6.array.index = getelementptr inbounds i8, ptr %_.var, i64 0, !dbg !32
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.6.array.index), !dbg !33
-// CHECK:STDOUT:   %.loc16_47.5.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 1, !dbg !32
+// CHECK:STDOUT:   %.loc16_47.5.array.index = getelementptr inbounds i8, ptr %_.var, i64 12, !dbg !32
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.5.array.index), !dbg !34
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.cb1358a8dfcca74f(ptr %_.var), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !36
@@ -38,11 +38,11 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.abce894028f59bc0:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 2, !dbg !39
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !39
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem2.tuple.elem), !dbg !39
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 1, !dbg !39
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !39
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !39
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !39
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -50,9 +50,9 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.192f70889bf95c53:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %self, i32 0, i64 1, !dbg !45
+// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 12, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %.loc16_3.1.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %self, i32 0, i64 0, !dbg !45
+// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %.loc16_3.4.array.index), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }

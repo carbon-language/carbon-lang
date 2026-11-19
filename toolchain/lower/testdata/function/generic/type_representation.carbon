@@ -94,13 +94,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.X.Main:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc38_24.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !52
+// CHECK:STDOUT:   %.loc38_24.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !52
 // CHECK:STDOUT:   %.loc38_24.2 = load i32, ptr %.loc38_24.1.a, align 4, !dbg !52
-// CHECK:STDOUT:   %.loc38_37.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !53
+// CHECK:STDOUT:   %.loc38_37.1.b = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !53
 // CHECK:STDOUT:   %.loc38_37.2 = load i32, ptr %.loc38_37.1.b, align 4, !dbg !53
-// CHECK:STDOUT:   %.loc38_39.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !54
+// CHECK:STDOUT:   %.loc38_39.2.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !54
 // CHECK:STDOUT:   store i32 %.loc38_24.2, ptr %.loc38_39.2.a, align 4, !dbg !54
-// CHECK:STDOUT:   %.loc38_39.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !54
+// CHECK:STDOUT:   %.loc38_39.4.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !54
 // CHECK:STDOUT:   store i32 %.loc38_37.2, ptr %.loc38_39.4.b, align 4, !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
@@ -115,9 +115,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.2508ed710019eba8:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !68
+// CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !68
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc44_13.1.b), !dbg !68
-// CHECK:STDOUT:   %.loc44_13.4.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !68
+// CHECK:STDOUT:   %.loc44_13.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !68
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc44_13.4.a), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
@@ -125,9 +125,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8b0bf151036f045a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !72 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !74
+// CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !74
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc44_13.1.b), !dbg !74
-// CHECK:STDOUT:   %.loc44_13.4.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !74
+// CHECK:STDOUT:   %.loc44_13.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !74
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc44_13.4.a), !dbg !74
 // CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
@@ -148,13 +148,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.35f6012581c5aabb:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !88 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !93
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !93
 // CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem0.loc59_12.1.tuple.elem, align 4, !dbg !93
-// CHECK:STDOUT:   %tuple.elem0.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !93
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !93
 // CHECK:STDOUT:   store i32 %tuple.elem0.loc59_12.1.tuple.elem.load, ptr %tuple.elem0.loc59_12.2.tuple.elem, align 4, !dbg !93
-// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !93
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !93
 // CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem1.loc59_12.1.tuple.elem, align 4, !dbg !93
-// CHECK:STDOUT:   %tuple.elem1.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !93
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !93
 // CHECK:STDOUT:   store i32 %tuple.elem1.loc59_12.1.tuple.elem.load, ptr %tuple.elem1.loc59_12.2.tuple.elem, align 4, !dbg !93
 // CHECK:STDOUT:   ret void, !dbg !94
 // CHECK:STDOUT: }
@@ -169,9 +169,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.35f6012581c5aabb:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !105 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !107
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !107
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !107
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !107
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !107
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !107
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
@@ -179,13 +179,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.3fdbec21075a186f:Copy.Main"(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %self) #0 !dbg !109 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 0, !dbg !114
+// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !114
 // CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem.load = load ptr, ptr %tuple.elem0.loc69_17.tuple.elem, align 8, !dbg !114
-// CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !115
+// CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !115
 // CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %tuple.elem0.loc69_51.tuple.elem, ptr %tuple.elem0.loc69_17.tuple.elem.load), !dbg !114
-// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 1, !dbg !116
+// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !116
 // CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem.load = load ptr, ptr %tuple.elem1.loc69_37.tuple.elem, align 8, !dbg !116
-// CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !115
+// CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !115
 // CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %tuple.elem1.loc69_51.tuple.elem, ptr %tuple.elem1.loc69_37.tuple.elem.load), !dbg !116
 // CHECK:STDOUT:   ret void, !dbg !117
 // CHECK:STDOUT: }
@@ -200,9 +200,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.3fdbec21075a186f:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !128 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !130
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !130
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %tuple.elem1.tuple.elem), !dbg !130
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %self, i32 0, i32 0, !dbg !130
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !130
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %tuple.elem0.tuple.elem), !dbg !130
 // CHECK:STDOUT:   ret void, !dbg !130
 // CHECK:STDOUT: }

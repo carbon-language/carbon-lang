@@ -154,12 +154,12 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: define noundef i32 @_Z1Gv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c = alloca %"class.Carbon::Main::C", align 4
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c)
 // CHECK:STDOUT:   %call = call noundef ptr @_ZN6Carbon4Main1CC1Ei(ptr noundef nonnull align 4 dereferenceable(4) %c, i32 noundef 42)
 // CHECK:STDOUT:   %i = getelementptr inbounds nuw %"class.Carbon::Main::C", ptr %c, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %i, align 4, !tbaa !4
 // CHECK:STDOUT:   %call1 = call noundef ptr @_ZN6Carbon4Main1CD1Ev(ptr noundef nonnull align 4 dead_on_return(4) dereferenceable(4) %c) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c)
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -194,7 +194,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CC.C.Main(ptr sret({ i32 }) %return, i32 %i) #4 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_19.2.i = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !58
+// CHECK:STDOUT:   %.loc8_19.2.i = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !58
 // CHECK:STDOUT:   store i32 %i, ptr %.loc8_19.2.i, align 4, !dbg !58
 // CHECK:STDOUT:   ret void, !dbg !59
 // CHECK:STDOUT: }
@@ -209,7 +209,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.d424893893628d5b:core.SubobjectDestroy.Core"(ptr %self) #4 !dbg !65 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_9.1.i = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !67
+// CHECK:STDOUT:   %.loc6_9.1.i = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !67
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc6_9.1.i), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
@@ -217,7 +217,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.08d9e38b928ba575:core.SubobjectDestroy.Core"(ptr %self) #4 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc6_9.1.i = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !73
+// CHECK:STDOUT:   %.loc6_9.1.i = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !73
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc6_9.1.i), !dbg !73
 // CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }

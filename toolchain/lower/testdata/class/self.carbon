@@ -32,7 +32,7 @@ fn C.Set(ref self: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_14.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc21_14.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !31
 // CHECK:STDOUT:   %.loc21_14.2 = load i32, ptr %.loc21_14.1.a, align 4, !dbg !31
 // CHECK:STDOUT:   ret i32 %.loc21_14.2, !dbg !32
 // CHECK:STDOUT: }
@@ -40,7 +40,7 @@ fn C.Set(ref self: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CSet.C.Main(ptr %self) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc25_7.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc25_7.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !37
 // CHECK:STDOUT:   store i32 1, ptr %.loc25_7.a, align 4, !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }

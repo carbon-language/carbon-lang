@@ -35,12 +35,12 @@ fn F() {
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !20
 // CHECK:STDOUT:   %.loc17_19.5.temp = alloca <{ i32, i1 }>, align 4, !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc16_43.3.temp), !dbg !15
-// CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 0, !dbg !15
-// CHECK:STDOUT:   %.loc16_43.7.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 1, !dbg !15
-// CHECK:STDOUT:   %.loc16_43.10.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 2, !dbg !15
-// CHECK:STDOUT:   %.loc16_43.13.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 3, !dbg !15
-// CHECK:STDOUT:   %.loc16_43.16.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 4, !dbg !15
-// CHECK:STDOUT:   %.loc16_43.19.array.index = getelementptr inbounds [6 x i32], ptr %.loc16_43.3.temp, i32 0, i64 5, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 0, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.7.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 4, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.10.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 8, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.13.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 12, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.16.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 16, !dbg !15
+// CHECK:STDOUT:   %.loc16_43.19.array.index = getelementptr inbounds i8, ptr %.loc16_43.3.temp, i64 20, !dbg !15
 // CHECK:STDOUT:   %Array.as.Iterate.impl.NewCursor.call = call i32 @"_CNewCursor.Array.ef119564f44a13e5.Core:Iterate.Core.ea5855de090934bd"(ptr @array.loc16_43.24), !dbg !20
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %var), !dbg !20
 // CHECK:STDOUT:   store i32 %Array.as.Iterate.impl.NewCursor.call, ptr %var, align 4, !dbg !20
@@ -74,9 +74,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.6f1424a1f3fc4182:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_19.1.has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 1, !dbg !37
+// CHECK:STDOUT:   %.loc17_19.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.8242e48f93ef210e(ptr %.loc17_19.1.has_value), !dbg !37
-// CHECK:STDOUT:   %.loc17_19.4.value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc17_19.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.38552a897eb918eb(ptr %.loc17_19.4.value), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
@@ -84,9 +84,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e60156a973847ad6:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_19.1.has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   %.loc17_19.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.8242e48f93ef210e(ptr %.loc17_19.1.has_value), !dbg !41
-// CHECK:STDOUT:   %.loc17_19.4.value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc17_19.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.38552a897eb918eb(ptr %.loc17_19.4.value), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
@@ -94,17 +94,17 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.85d5d6325bc2f620:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_43.1.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 5, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.1.array.index = getelementptr inbounds i8, ptr %self, i64 20, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.1.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 4, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.4.array.index = getelementptr inbounds i8, ptr %self, i64 16, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.4.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_43.7.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 3, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.7.array.index = getelementptr inbounds i8, ptr %self, i64 12, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.7.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_43.10.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 2, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.10.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.10.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_43.13.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 1, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.13.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.13.array.index), !dbg !45
-// CHECK:STDOUT:   %.loc16_43.16.array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i64 0, !dbg !45
+// CHECK:STDOUT:   %.loc16_43.16.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc16_43.16.array.index), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
@@ -121,18 +121,19 @@ fn F() {
 // CHECK:STDOUT: define linkonce_odr void @"_CNext.Array.ef119564f44a13e5.Core:Iterate.Core.ea5855de090934bd"(ptr sret(<{ i32, i1 }>) %return, ptr %self, ptr %cursor) #0 !dbg !55 {
 // CHECK:STDOUT:   %1 = load i32, ptr %cursor, align 4, !dbg !62
 // CHECK:STDOUT:   %2 = icmp slt i32 %1, 6, !dbg !62
-// CHECK:STDOUT:   br i1 %2, label %3, label %7, !dbg !63
+// CHECK:STDOUT:   br i1 %2, label %3, label %8, !dbg !63
 // CHECK:STDOUT:
 // CHECK:STDOUT: 3:                                                ; preds = %0
 // CHECK:STDOUT:   call void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %cursor), !dbg !65
 // CHECK:STDOUT:   %4 = load i32, ptr %cursor, align 4, !dbg !67
 // CHECK:STDOUT:   %5 = sub i32 %4, 1, !dbg !67
-// CHECK:STDOUT:   %array.index = getelementptr inbounds [6 x i32], ptr %self, i32 0, i32 %5, !dbg !66
-// CHECK:STDOUT:   %6 = load i32, ptr %array.index, align 4, !dbg !66
-// CHECK:STDOUT:   call void @_CSome.Optional.Core.29b2425ca9ad75a4(ptr %return, i32 %6), !dbg !68
+// CHECK:STDOUT:   %6 = sext i32 %5 to i64, !dbg !66
+// CHECK:STDOUT:   %array.index = getelementptr inbounds [4 x i8], ptr %self, i64 %6, !dbg !66
+// CHECK:STDOUT:   %7 = load i32, ptr %array.index, align 4, !dbg !66
+// CHECK:STDOUT:   call void @_CSome.Optional.Core.29b2425ca9ad75a4(ptr %return, i32 %7), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT:
-// CHECK:STDOUT: 7:                                                ; preds = %0
+// CHECK:STDOUT: 8:                                                ; preds = %0
 // CHECK:STDOUT:   call void @_CNone.Optional.Core.29b2425ca9ad75a4(ptr %return), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !75
 // CHECK:STDOUT: }
@@ -195,7 +196,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !154 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 1, !dbg !159
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %value, i64 4, !dbg !159
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !159
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !159
 // CHECK:STDOUT:   ret i1 %2, !dbg !160
@@ -203,7 +204,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CGet.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !162 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 0, !dbg !167
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw i8, ptr %value, i64 0, !dbg !167
 // CHECK:STDOUT:   %1 = load i32, ptr %value1, align 4, !dbg !167
 // CHECK:STDOUT:   ret i32 %1, !dbg !168
 // CHECK:STDOUT: }
@@ -219,16 +220,16 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CSome.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !178 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !187
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !187
 // CHECK:STDOUT:   store i32 %self, ptr %value, align 4, !dbg !187
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !189
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !189
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !189
 // CHECK:STDOUT:   ret void, !dbg !190
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CNone.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !192 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !199
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !199
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !199
 // CHECK:STDOUT:   ret void, !dbg !200
 // CHECK:STDOUT: }

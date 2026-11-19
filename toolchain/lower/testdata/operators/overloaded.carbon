@@ -37,11 +37,11 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) #0 !dbg !13 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !18
 // CHECK:STDOUT:   %.loc19_36.2 = load i8, ptr %.loc19_36.1.is_positive, align 1, !dbg !18
 // CHECK:STDOUT:   %.loc19_36.21 = trunc i8 %.loc19_36.2 to i1, !dbg !18
 // CHECK:STDOUT:   %.loc19_28 = xor i1 %.loc19_36.21, true, !dbg !19
-// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !20
 // CHECK:STDOUT:   %.loc19_48.3 = zext i1 %.loc19_28 to i8, !dbg !20
 // CHECK:STDOUT:   store i8 %.loc19_48.3, ptr %.loc19_48.2.is_positive, align 1, !dbg !20
 // CHECK:STDOUT:   ret void, !dbg !21
@@ -50,13 +50,13 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.124acaad20680602.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !30
 // CHECK:STDOUT:   %.loc24_33.2 = load i8, ptr %.loc24_33.1.is_positive, align 1, !dbg !30
 // CHECK:STDOUT:   %.loc24_33.21 = trunc i8 %.loc24_33.2 to i1, !dbg !30
 // CHECK:STDOUT:   br i1 %.loc24_33.21, label %and.rhs.loc24, label %and.result.loc24, !dbg !30
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc24:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw i8, ptr %other, i64 0, !dbg !31
 // CHECK:STDOUT:   %.loc24_55.2 = load i8, ptr %.loc24_55.1.is_positive, align 1, !dbg !31
 // CHECK:STDOUT:   %.loc24_55.22 = trunc i8 %.loc24_55.2 to i1, !dbg !31
 // CHECK:STDOUT:   br label %and.result.loc24, !dbg !30
@@ -67,14 +67,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   br i1 %.loc24_69.1, label %or.rhs, label %or.result, !dbg !32
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc24
-// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !33
 // CHECK:STDOUT:   %.loc25_38.2 = load i8, ptr %.loc25_38.1.is_positive, align 1, !dbg !33
 // CHECK:STDOUT:   %.loc25_38.23 = trunc i8 %.loc25_38.2 to i1, !dbg !33
 // CHECK:STDOUT:   %.loc25_30 = xor i1 %.loc25_38.23, true, !dbg !34
 // CHECK:STDOUT:   br i1 %.loc25_30, label %and.rhs.loc25, label %and.result.loc25, !dbg !34
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc25:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw i8, ptr %other, i64 0, !dbg !35
 // CHECK:STDOUT:   %.loc25_64.2 = load i8, ptr %.loc25_64.1.is_positive, align 1, !dbg !35
 // CHECK:STDOUT:   %.loc25_64.24 = trunc i8 %.loc25_64.2 to i1, !dbg !35
 // CHECK:STDOUT:   %.loc25_55 = xor i1 %.loc25_64.24, true, !dbg !36
@@ -86,7 +86,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc25, %and.result.loc24
 // CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc24 ], [ %1, %and.result.loc25 ]
-// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !37
 // CHECK:STDOUT:   %.loc25_77.3 = zext i1 %2 to i8, !dbg !37
 // CHECK:STDOUT:   store i8 %.loc25_77.3, ptr %.loc25_77.2.is_positive, align 1, !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
@@ -106,7 +106,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.4fdb30b3bf76b447:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc30_10.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !54
+// CHECK:STDOUT:   %.loc30_10.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !54
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.29e6aa423646b61a(ptr %.loc30_10.1.is_positive), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
@@ -114,7 +114,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.3e6115156c640ef2:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !56 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc30_10.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !58
+// CHECK:STDOUT:   %.loc30_10.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !58
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.29e6aa423646b61a(ptr %.loc30_10.1.is_positive), !dbg !58
 // CHECK:STDOUT:   ret void, !dbg !58
 // CHECK:STDOUT: }
