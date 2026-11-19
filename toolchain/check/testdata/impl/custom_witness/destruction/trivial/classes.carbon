@@ -17,7 +17,7 @@ class HasTrivialDestruction {}
 
 base class TrivialBase {}
 
-class ImplsDestroy {
+class HasNonTrivialDestruction {
   impl as Core.DestroyImpl {
     fn Op(unused self) {}
   }
@@ -58,7 +58,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 fn Test() {
-  ImplsDestroy as Core.TrivialDestroy;
+  HasNonTrivialDestruction as Core.TrivialDestroy;
 }
 
 // --- trivial_all_trivial_fields.carbon
@@ -90,7 +90,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 class NonTrivialFieldFirst {
-  var x: ImplsDestroy;
+  var x: HasNonTrivialDestruction;
   var y: HasTrivialDestruction;
 }
 
@@ -105,7 +105,7 @@ import library "types";
 
 class NonTrivialFieldSecond {
   var x: HasTrivialDestruction;
-  var y: ImplsDestroy;
+  var y: HasNonTrivialDestruction;
 }
 
 fn Test() {
@@ -145,7 +145,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 class HasNonTrivialField {
-  var x: ImplsDestroy;
+  var x: HasNonTrivialDestruction;
 }
 
 class NestedNonTrivialMember {
@@ -191,7 +191,7 @@ base class NonTrivialBase {
 
 base class DerivedFromNonTrivialBase {
   extend base: NonTrivialBase;
-  var y: ImplsDestroy;
+  var y: HasNonTrivialDestruction;
 }
 
 fn Test() {
@@ -211,7 +211,7 @@ base class NonTrivialBase {
 
 base class DerivedFromNonTrivialBase {
   extend base: NonTrivialBase;
-  var y: ImplsDestroy;
+  var y: HasNonTrivialDestruction;
 }
 
 class NonTrivialGrandparent {
@@ -270,7 +270,7 @@ class GenericClass(T: Core.Destroy) {
 }
 
 fn Test() {
-  GenericClass(ImplsDestroy) as Core.TrivialDestroy;
+  GenericClass(HasNonTrivialDestruction) as Core.TrivialDestroy;
 }
 
 // --- todo_fail_nontrivial_base_and_trivial_field.carbon
@@ -279,7 +279,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 base class NonTrivialBase {
-  var x: ImplsDestroy;
+  var x: HasNonTrivialDestruction;
 
   impl as Core.DestroyImpl {
     fn Op(unused self) {}
@@ -304,7 +304,7 @@ import library "types";
 
 class Derived {
   extend base: TrivialBase;
-  var n: ImplsDestroy;
+  var n: HasNonTrivialDestruction;
 }
 
 fn Test() {
@@ -374,6 +374,8 @@ fn Test() {
 // --- fail_todo_trivial_class_derived_from_abstract.carbon
 library "[[@TEST_NAME]]";
 
+// TODO: Support destroying classes that derive from abstract types.
+
 abstract class TrivialAbstract {}
 
 class Derived {
@@ -382,7 +384,6 @@ class Derived {
 
 fn Make() -> Derived;
 
-// TODO: Support destroying classes that derive from abstract types.
 fn Test() {
   //@dump-sem-ir-begin
   // CHECK:STDERR:        ╭─┤ fail_todo_trivial_class_derived_from_abstract.carbon:[[@LINE+8]]:3
@@ -1414,21 +1415,21 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Derived.ref.loc22: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %Core.ref.loc22: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %Derived.ref.loc23: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %Core.ref.loc23: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %SubobjectDestroy.ref: type = name_ref SubobjectDestroy, imports.%Core.SubobjectDestroy [concrete = constants.%SubobjectDestroy.type]
-// CHECK:STDOUT:   %Derived.ref.loc31: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %Core.ref.loc31: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %Derived.ref.loc32: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %Core.ref.loc32: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %Destroy.ref: type = name_ref Destroy, imports.%Core.Destroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Derived.ref.loc40: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %Core.ref.loc40: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %Derived.ref.loc41: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %Core.ref.loc41: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %TrivialDestroy.ref: type = name_ref TrivialDestroy, imports.%Core.TrivialDestroy [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %x.var: ref %Derived = var_storage %x.var_patt
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc56: ref %Derived = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %Derived to %.loc56 = call %Make.ref()
+// CHECK:STDOUT:   %.loc57: ref %Derived = splice_block %x.var {}
+// CHECK:STDOUT:   %Make.call: init %Derived to %.loc57 = call %Make.ref()
 // CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %Derived.ref.loc56: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %Derived.ref.loc57: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %x: ref %Derived = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.746 = ref_binding_pattern x [concrete = constants.%x.patt]
