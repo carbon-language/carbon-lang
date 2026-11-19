@@ -127,7 +127,8 @@ auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
   auto impls_trivial_destroy =
       LookupImplWitness(context, loc_id, type_const_id, interface_type_id);
 
-  if (impls_trivial_destroy.has_value() && !impls_trivial_destroy.has_error_value()) {
+  if (impls_trivial_destroy.has_value() &&
+      !impls_trivial_destroy.has_error_value()) {
     return SemIR::InstId::None;
   }
 
