@@ -117,7 +117,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_11.1.n = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc9_11.1.n = getelementptr inbounds nuw i8, ptr %a, i64 0, !dbg !29
 // CHECK:STDOUT:   %.loc9_11.2 = load i32, ptr %.loc9_11.1.n, align 4, !dbg !29
 // CHECK:STDOUT:   ret i32 %.loc9_11.2, !dbg !30
 // CHECK:STDOUT: }
@@ -125,7 +125,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_11.1.m = getelementptr inbounds nuw [32 x i8], ptr %a, i32 0, i32 16, !dbg !37
+// CHECK:STDOUT:   %.loc13_11.1.m = getelementptr inbounds nuw i8, ptr %a, i64 16, !dbg !37
 // CHECK:STDOUT:   %.loc13_11.2 = load i32, ptr %.loc13_11.1.m, align 4, !dbg !37
 // CHECK:STDOUT:   ret i32 %.loc13_11.2, !dbg !38
 // CHECK:STDOUT: }
@@ -173,7 +173,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !53 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_4.2.n = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %.loc9_4.2.n = getelementptr inbounds nuw i8, ptr %p, i64 0, !dbg !56
 // CHECK:STDOUT:   store i32 1, ptr %.loc9_4.2.n, align 4, !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !57
 // CHECK:STDOUT: }
@@ -181,7 +181,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_4.2.m = getelementptr inbounds nuw [32 x i8], ptr %p, i32 0, i32 16, !dbg !62
+// CHECK:STDOUT:   %.loc13_4.2.m = getelementptr inbounds nuw i8, ptr %p, i64 16, !dbg !62
 // CHECK:STDOUT:   store i32 1, ptr %.loc13_4.2.m, align 4, !dbg !62
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
@@ -228,7 +228,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !67 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !72
+// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw i8, ptr %a, i64 0, !dbg !72
 // CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !72
 // CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !73
 // CHECK:STDOUT: }
@@ -236,7 +236,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessM.Main(ptr %a) #0 !dbg !75 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_11.1.m = getelementptr inbounds nuw [4 x i8], ptr %a, i32 0, i32 0, !dbg !80
+// CHECK:STDOUT:   %.loc11_11.1.m = getelementptr inbounds nuw i8, ptr %a, i64 0, !dbg !80
 // CHECK:STDOUT:   %.loc11_11.2 = load i32, ptr %.loc11_11.1.m, align 4, !dbg !80
 // CHECK:STDOUT:   ret i32 %.loc11_11.2, !dbg !81
 // CHECK:STDOUT: }
@@ -284,7 +284,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignN.Main(ptr %p) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.n = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !88
+// CHECK:STDOUT:   %.loc7_4.2.n = getelementptr inbounds nuw i8, ptr %p, i64 0, !dbg !88
 // CHECK:STDOUT:   store i32 1, ptr %.loc7_4.2.n, align 4, !dbg !88
 // CHECK:STDOUT:   ret void, !dbg !89
 // CHECK:STDOUT: }
@@ -292,7 +292,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAssignM.Main(ptr %p) #0 !dbg !91 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_4.2.m = getelementptr inbounds nuw [4 x i8], ptr %p, i32 0, i32 0, !dbg !94
+// CHECK:STDOUT:   %.loc11_4.2.m = getelementptr inbounds nuw i8, ptr %p, i64 0, !dbg !94
 // CHECK:STDOUT:   store i32 1, ptr %.loc11_4.2.m, align 4, !dbg !94
 // CHECK:STDOUT:   ret void, !dbg !95
 // CHECK:STDOUT: }
@@ -339,7 +339,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessN.Main(ptr %a) #0 !dbg !99 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !104
+// CHECK:STDOUT:   %.loc7_11.1.n = getelementptr inbounds nuw i8, ptr %a, i64 8, !dbg !104
 // CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.n, align 4, !dbg !104
 // CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !105
 // CHECK:STDOUT: }
@@ -347,7 +347,7 @@ fn AccessP(a: Cpp.AnonUnionA) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessP.Main(ptr %a) #0 !dbg !107 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_12.1.p = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 8, !dbg !112
+// CHECK:STDOUT:   %.loc11_12.1.p = getelementptr inbounds nuw i8, ptr %a, i64 8, !dbg !112
 // CHECK:STDOUT:   %.loc11_12.2 = load ptr, ptr %.loc11_12.1.p, align 8, !dbg !112
 // CHECK:STDOUT:   %.loc11_10.2 = load i32, ptr %.loc11_12.2, align 4, !dbg !113
 // CHECK:STDOUT:   ret i32 %.loc11_10.2, !dbg !114

@@ -33,11 +33,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !29
-// CHECK:STDOUT:   %.loc18_21.3.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   %.loc18_21.3.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !30
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3.1, i64 4, i1 false), !dbg !29
-// CHECK:STDOUT:   %.loc19_17.1.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !32
+// CHECK:STDOUT:   %.loc19_17.1.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !32
 // CHECK:STDOUT:   %.loc19_17.2 = load i32, ptr %.loc19_17.1.a, align 4, !dbg !32
-// CHECK:STDOUT:   %.loc20_4.a = getelementptr inbounds nuw { i32 }, ptr %x.var, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   %.loc20_4.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !35
 // CHECK:STDOUT:   store i32 2, ptr %.loc20_4.a, align 4, !dbg !35
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %x.var), !dbg !29
 // CHECK:STDOUT:   ret i32 %.loc19_17.2, !dbg !37
@@ -46,7 +46,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.15e9ca085e5fab32:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_3.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !40
+// CHECK:STDOUT:   %.loc18_3.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !40
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_3.1.a), !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
@@ -54,7 +54,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8b0bf151036f045a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_3.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !46
+// CHECK:STDOUT:   %.loc18_3.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !46
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_3.1.a), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }

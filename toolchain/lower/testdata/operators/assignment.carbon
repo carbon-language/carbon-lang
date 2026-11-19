@@ -45,16 +45,16 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b.var = alloca { i32, i32 }, align 4, !dbg !41
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !41
-// CHECK:STDOUT:   %tuple.elem0.loc21.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !44
-// CHECK:STDOUT:   %tuple.elem1.loc21.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !44
+// CHECK:STDOUT:   %tuple.elem0.loc21.tuple.elem = getelementptr inbounds nuw i8, ptr %b.var, i64 0, !dbg !44
+// CHECK:STDOUT:   %tuple.elem1.loc21.tuple.elem = getelementptr inbounds nuw i8, ptr %b.var, i64 4, !dbg !44
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %b.var, ptr align 4 @tuple.380.loc21_5, i64 8, i1 false), !dbg !43
-// CHECK:STDOUT:   %tuple.elem0.loc22_10.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %tuple.elem0.loc22_10.1.tuple.elem = getelementptr inbounds nuw i8, ptr %b.var, i64 0, !dbg !45
 // CHECK:STDOUT:   %.loc22_10.1 = load i32, ptr %tuple.elem0.loc22_10.1.tuple.elem, align 4, !dbg !45
-// CHECK:STDOUT:   %tuple.elem0.loc22_10.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %tuple.elem0.loc22_10.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !45
 // CHECK:STDOUT:   store i32 %.loc22_10.1, ptr %tuple.elem0.loc22_10.2.tuple.elem, align 4, !dbg !45
-// CHECK:STDOUT:   %tuple.elem1.loc22_10.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %b.var, i32 0, i32 1, !dbg !45
+// CHECK:STDOUT:   %tuple.elem1.loc22_10.1.tuple.elem = getelementptr inbounds nuw i8, ptr %b.var, i64 4, !dbg !45
 // CHECK:STDOUT:   %.loc22_10.3 = load i32, ptr %tuple.elem1.loc22_10.1.tuple.elem, align 4, !dbg !45
-// CHECK:STDOUT:   %tuple.elem1.loc22_10.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !45
+// CHECK:STDOUT:   %tuple.elem1.loc22_10.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !45
 // CHECK:STDOUT:   store i32 %.loc22_10.3, ptr %tuple.elem1.loc22_10.2.tuple.elem, align 4, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %b.var), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !46
@@ -63,9 +63,9 @@ fn G() -> (i32, i32) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.35f6012581c5aabb:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !49
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !49
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }

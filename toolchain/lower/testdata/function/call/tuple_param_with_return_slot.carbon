@@ -28,15 +28,15 @@ fn Main() {
 // CHECK:STDOUT: define void @_CF.Main(ptr sret({ i32, i32, i32 }) %return, { i32 } %b, ptr %c) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.loc14_12.tuple.elem = extractvalue { i32 } %b, 0, !dbg !36
-// CHECK:STDOUT:   %tuple.elem0.loc14_17.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %tuple.elem0.loc14_17.tuple.elem = getelementptr inbounds nuw i8, ptr %c, i64 0, !dbg !37
 // CHECK:STDOUT:   %tuple.elem0.loc14_17.tuple.elem.load = load i32, ptr %tuple.elem0.loc14_17.tuple.elem, align 4, !dbg !37
-// CHECK:STDOUT:   %tuple.elem1.loc14_22.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %c, i32 0, i32 1, !dbg !38
+// CHECK:STDOUT:   %tuple.elem1.loc14_22.tuple.elem = getelementptr inbounds nuw i8, ptr %c, i64 4, !dbg !38
 // CHECK:STDOUT:   %tuple.elem1.loc14_22.tuple.elem.load = load i32, ptr %tuple.elem1.loc14_22.tuple.elem, align 4, !dbg !38
-// CHECK:STDOUT:   %tuple.elem0.loc14_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %tuple.elem0.loc14_24.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !39
 // CHECK:STDOUT:   store i32 %tuple.elem0.loc14_12.tuple.elem, ptr %tuple.elem0.loc14_24.tuple.elem, align 4, !dbg !39
-// CHECK:STDOUT:   %tuple.elem1.loc14_24.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !39
+// CHECK:STDOUT:   %tuple.elem1.loc14_24.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !39
 // CHECK:STDOUT:   store i32 %tuple.elem0.loc14_17.tuple.elem.load, ptr %tuple.elem1.loc14_24.tuple.elem, align 4, !dbg !39
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !39
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !39
 // CHECK:STDOUT:   store i32 %tuple.elem1.loc14_22.tuple.elem.load, ptr %tuple.elem2.tuple.elem, align 4, !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
@@ -54,11 +54,11 @@ fn Main() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.abce894028f59bc0:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 2, !dbg !47
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !47
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem2.tuple.elem), !dbg !47
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 1, !dbg !47
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !47
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !47
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !47
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }

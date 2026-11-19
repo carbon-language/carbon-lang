@@ -28,7 +28,8 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %arr, i32 %i) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_15.2.array.index = getelementptr inbounds [3 x i32], ptr %arr, i32 0, i32 %i, !dbg !37
+// CHECK:STDOUT:   %.loc14_15.2 = sext i32 %i to i64, !dbg !37
+// CHECK:STDOUT:   %.loc14_15.2.array.index = getelementptr inbounds [4 x i8], ptr %arr, i64 %.loc14_15.2, !dbg !37
 // CHECK:STDOUT:   %.loc14_15.3 = load i32, ptr %.loc14_15.2.array.index, align 4, !dbg !37
 // CHECK:STDOUT:   ret i32 %.loc14_15.3, !dbg !39
 // CHECK:STDOUT: }
@@ -38,9 +39,9 @@ fn G() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_20.3.temp = alloca [3 x i32], align 4, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_20.3.temp), !dbg !44
-// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 0, !dbg !44
-// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 1, !dbg !44
-// CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_20.3.temp, i32 0, i64 2, !dbg !44
+// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds i8, ptr %.loc18_20.3.temp, i64 0, !dbg !44
+// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds i8, ptr %.loc18_20.3.temp, i64 4, !dbg !44
+// CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds i8, ptr %.loc18_20.3.temp, i64 8, !dbg !44
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr @array.loc18_20.15, i32 1), !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.3c9880f178514995(ptr @array), !dbg !44
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !46
@@ -49,11 +50,11 @@ fn G() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.95c1f38708147abd:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_20.1.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 2, !dbg !49
+// CHECK:STDOUT:   %.loc18_20.1.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_20.1.array.index), !dbg !49
-// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 1, !dbg !49
+// CHECK:STDOUT:   %.loc18_20.4.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_20.4.array.index), !dbg !49
-// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 0, !dbg !49
+// CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_20.7.array.index), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }

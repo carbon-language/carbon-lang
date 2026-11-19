@@ -73,7 +73,7 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.daf9f875be2f7080:core.SubobjectDestroy.Core"(ptr %self) #3 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !22
+// CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !22
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc15_9.1.price), !dbg !22
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
@@ -81,7 +81,7 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5a23cc09585c55d2:core.SubobjectDestroy.Core"(ptr %self) #3 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !28
+// CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !28
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc15_9.1.price), !dbg !28
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
