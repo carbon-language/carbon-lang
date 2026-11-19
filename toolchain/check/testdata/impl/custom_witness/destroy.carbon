@@ -154,3 +154,120 @@ fn H() {
   // `Core.Destroy.Op` generated function.
   TestSameFacetValue(F(), G());
 }
+
+// --- fail_destroy_impl_used_before_definition.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+impl C as Core.DestroyImpl;
+
+fn CheckTypeImplsDestroy(unused T: Core.Destroy) {}
+
+fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_destroy_impl_used_before_definition.carbon:[[@LINE+26]]:25
+  // CHECK:STDERR:        │ fn CheckTypeImplsDestroy(unused T: Core.Destroy) {}
+  // CHECK:STDERR:        ·                                 ───────┬───────
+  // CHECK:STDERR:        ·                                        ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                           │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   CheckTypeImplsDestroy((C,));
+  // CHECK:STDERR:        ·                         ┳━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: accessing member from impl before it has a
+  // CHECK:STDERR:        ·                            ┃        defined value
+  // CHECK:STDERR:        ·                            ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_destroy_impl_used_before_definition.carbon:[[@LINE+13]]:25
+  // CHECK:STDERR:        │ fn CheckTypeImplsDestroy(unused T: Core.Destroy) {}
+  // CHECK:STDERR:        ·                                 ───────┬───────
+  // CHECK:STDERR:        ·                                        ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                           │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   CheckTypeImplsDestroy((C,));
+  // CHECK:STDERR:        ·                         ┳━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `(C,)` into type
+  // CHECK:STDERR:        ·                            ┃        implementing `Core.Destroy`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  CheckTypeImplsDestroy((C,));
+}
+
+impl C as Core.DestroyImpl {
+  fn Op(unused ref self) {}
+}
+
+// --- fail_destroy_impl_missing_op.carbon
+library "[[@TEST_NAME]]";
+
+class C {
+  // CHECK:STDERR:        ╭─┤ fail_destroy_impl_missing_op.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR: ->     │   impl as Core.DestroyImpl {}
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: missing implementation of Op in impl of interface DestroyImpl
+  // CHECK:STDERR:        ·           ┃        [ImplMissingFunction]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+  // CHECK:STDERR:        │   fn Op(ref self);
+  // CHECK:STDERR:        ·   ────────┬───────
+  // CHECK:STDERR:        ·           ╰──┤ associated function Op declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  impl as Core.DestroyImpl {}
+}
+
+fn CheckTypeImplsDestroy(unused T: Core.Destroy) {}
+
+fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_destroy_impl_missing_op.carbon:[[@LINE+13]]:25
+  // CHECK:STDERR:        │ fn CheckTypeImplsDestroy(unused T: Core.Destroy) {}
+  // CHECK:STDERR:        ·                                 ───────┬───────
+  // CHECK:STDERR:        ·                                        ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                           │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   CheckTypeImplsDestroy((C,));
+  // CHECK:STDERR:        ·                         ┳━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot convert type `(C,)` into type
+  // CHECK:STDERR:        ·                            ┃        implementing `Core.Destroy`
+  // CHECK:STDERR:        ·                            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  CheckTypeImplsDestroy((C,));
+}
+
+// --- fail_todo_prelude_without_destroy_impl.carbon
+// A `Core` library with `SubobjectDestroy` and `DestroyImpl`, but no impl of
+// `DestroyImpl`. Its name starts with `prelude` so that it doesn't import the
+// prelude.
+package Core library "[[@TEST_NAME]]";
+
+interface SubobjectDestroy {
+  fn Op(ref self);
+}
+
+interface DestroyImpl {
+  fn Op(ref self);
+}
+
+class C {}
+
+fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_todo_prelude_without_destroy_impl.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   (C,) as SubobjectDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `inst7A000052` declares a custom implementation for
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`, but doesn't define `Core.Destroy.Op`
+  // CHECK:STDERR:        ·      ┃        [MissingImplForCoreDestroyOp]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_todo_prelude_without_destroy_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   (C,) as SubobjectDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `inst7A000051` declares a custom implementation for
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`, but doesn't define `Core.Destroy.Op`
+  // CHECK:STDERR:        ·      ┃        [MissingImplForCoreDestroyOp]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  (C,) as SubobjectDestroy;
+}
