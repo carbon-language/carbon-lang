@@ -81,7 +81,7 @@ graph BT
 
     pointer{"*x
              &x"}
-    click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer.md"
+    click pointer "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/pointer_operators.md"
 
     negation["-x"]
     click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
