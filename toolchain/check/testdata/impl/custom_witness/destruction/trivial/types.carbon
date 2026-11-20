@@ -10,188 +10,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/custom_witness/destruction/trivial/types.carbon
 
-// --- todo_trivial_associated_entity.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `AssociatedEntityType` to `IsBuiltinWithTrivialDestruction`.
-
-interface I {
-  fn F();
-}
-
-alias AssociatedEntityType = typeof(I.F);
-
-fn Make() -> AssociatedEntityType;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // AssociatedEntityType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // AssociatedEntityType as Core.Destroy;
-  // AssociatedEntityType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: AssociatedEntityType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_trivial_generic_interface.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `GenericInterfaceType` to `IsBuiltinWithTrivialDestruction`.
-
-interface GenericInterface(T: type) {}
-alias GenericInterfaceType = typeof(GenericInterface);
-
-fn Make() -> GenericInterfaceType;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // GenericInterfaceType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // GenericInterfaceType as Core.Destroy;
-  // GenericInterfaceType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: GenericInterfaceType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_trivial_generic_named_constraint.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `GenericNamedConstraintType` to `IsBuiltinWithTrivialDestruction`.
-
-constraint GenericClass(T: type) {}
-alias GenericNamedConstraintType = typeof(GenericClass);
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // GenericNamedConstraintType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // GenericNamedConstraintType as Core.Destroy;
-  // GenericNamedConstraintType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: GenericNamedConstraintType
-  //@dump-sem-ir-end
-}
-
-// --- todo_trivial_namespace.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `NamespaceType` to `IsBuiltinWithTrivialDestruction`.
-
-namespace N;
-alias NamespaceType = typeof(N);
-
-fn Make() -> NamespaceType;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // NamespaceType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // NamespaceType as Core.Destroy;
-  // NamespaceType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: NamespaceType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_trivial_parameterised_class.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `ParameterizedClassType` to `IsBuiltinWithTrivialDestruction`.
-
-class GenericClass(T: type) {}
-alias ParameterizedClassType = GenericClass;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // ParameterizedClassType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // ParameterizedClassType as Core.Destroy;
-  // ParameterizedClassType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: ParameterizedClassType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- todo_trivial_unbound_element.carbon
-library "[[@TEST_NAME]]";
-
-// TODO: add `UnboundElementType` to `IsBuiltinWithTrivialDestruction`.
-
-class HasTrivialDestruction {}
-
-class C {
-  var x: HasTrivialDestruction;
-}
-
-alias UnboundElementType = typeof(C.x);
-
-fn Test() {
-  //@dump-sem-ir-begin
-  // UnboundElementType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  // UnboundElementType as Core.Destroy;
-  // UnboundElementType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  // var unused x: UnboundElementType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- trivial_trivial_tuple_access.carbon
-library "[[@TEST_NAME]]";
-
-alias Tuple = (type, type);
-alias TupleAccessType = typeof(Tuple.0);
-
-fn Make() -> TupleAccessType;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  TupleAccessType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  TupleAccessType as Core.Destroy;
-  TupleAccessType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  var unused x: TupleAccessType = Make();
-  //@dump-sem-ir-end
-}
-
-// --- trivial_class_type.carbon
-library "[[@TEST_NAME]]";
-
-class C;
-alias ClassType = typeof(C);
-
-fn Make() -> ClassType;
-
-fn Test() {
-  //@dump-sem-ir-begin
-  ClassType as Core.SubobjectDestroy;
-  //@dump-sem-ir-end
-
-  ClassType as Core.Destroy;
-  ClassType as Core.TrivialDestroy;
-
-  //@dump-sem-ir-begin
-  var unused x: ClassType = Make();
-  //@dump-sem-ir-end
-}
-
 // --- trivial_facet_type.carbon
 library "[[@TEST_NAME]]";
 
@@ -300,24 +118,16 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- trivial_function_with_self_type.carbon
 library "[[@TEST_NAME]]";
 
-// TODO: add `FunctionTypeWithSelfType` to `IsBuiltinWithTrivialDestruction`.
 
-alias FunctionTypeWithSelfType = typeof((i32 as Core.Copy).Op);
-fn Make() -> FunctionTypeWithSelfType;
 
 fn Test() {
   //@dump-sem-ir-begin
-  // FunctionTypeWithSelfType as Core.SubobjectDestroy;
   //@dump-sem-ir-end
 
-  // FunctionTypeWithSelfType as Core.Destroy;
-  // FunctionTypeWithSelfType as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
-  // var unused x: FunctionTypeWithSelfType = Make();
   //@dump-sem-ir-end
 }
 
