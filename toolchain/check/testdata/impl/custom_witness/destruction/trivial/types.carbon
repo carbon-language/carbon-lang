@@ -28,7 +28,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- trivial_bound_method_type.carbon
+// --- trivial_bound_method_type_via_class.carbon
 library "[[@TEST_NAME]]";
 
 class C {
@@ -47,7 +47,28 @@ fn Test(c: C) {
   BoundMethodType as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
-  var unused x: BoundMethodType =   Make(c);
+  var unused x: BoundMethodType = Make(c);
+  //@dump-sem-ir-end
+}
+
+// --- trivial_bound_method_type_via_impl.carbon
+
+interface I { fn H(self); }
+impl () as I { fn H(unused self) {} }
+alias BoundMethodType = typeof(().(I.H));
+fn Make() -> BoundMethodType;
+
+fn Test() {
+
+  //@dump-sem-ir-begin
+  BoundMethodType as Core.SubobjectDestroy;
+  //@dump-sem-ir-end
+
+  BoundMethodType as Core.Destroy;
+  BoundMethodType as Core.TrivialDestroy;
+
+  //@dump-sem-ir-begin
+  var unused x: BoundMethodType = Make();
   //@dump-sem-ir-end
 }
 
@@ -97,12 +118,12 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- trivial_function_type.carbon
+// --- trivial_function_type_via_function.carbon
 library "[[@TEST_NAME]]";
 
-fn G() {}
+fn F() {}
 
-alias FunctionType = typeof(G);
+alias FunctionType = typeof(F);
 fn Make() -> FunctionType;
 
 fn Test() {
@@ -118,16 +139,24 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
+// --- trivial_function_type_via_method.carbon
 library "[[@TEST_NAME]]";
 
+class C { fn M(self); }
 
+alias FunctionType = typeof(C.M);
+fn Make() -> FunctionType;
 
 fn Test() {
   //@dump-sem-ir-begin
+  FunctionType as Core.SubobjectDestroy;
   //@dump-sem-ir-end
 
+  FunctionType as Core.Destroy;
+  FunctionType as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
+  var unused x: FunctionType = Make();
   //@dump-sem-ir-end
 }
 
