@@ -104,6 +104,9 @@ query GetPrDetails($prNumber: Int!) {
         nodes {
           commit {
             oid
+            parents {
+              totalCount
+            }
           }
         }
       }
@@ -113,6 +116,18 @@ query GetPrDetails($prNumber: Int!) {
           body
           isMinimized
         }
+      }
+    }
+  }
+}
+"""
+
+_QUERY_PR_MERGE_COMMIT = """
+query GetPrMergeCommit($prNumber: Int!) {
+  repository(owner: "carbon-language", name: "carbon-lang") {
+    pullRequest(number: $prNumber) {
+      mergeCommit {
+        oid
       }
     }
   }
@@ -198,17 +213,29 @@ def _parse_pr_number(x: Any) -> Optional[int]:
     return None
 
 
+def _parse_oid(value: Any, field: str, pr_number: int) -> Optional[str]:
+    """Parses and validates an optional 40-character hex commit OID."""
+    if value is None:
+        return None
+    if isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{40}", value):
+        return value
+    raise ValueError(
+        f"PR #{pr_number}: Invalid commit OID format in '{field}': {value}"
+    )
+
+
 def _parse_and_validate_state(
     json_str: str,
     open_pr_numbers: set[int],
     max_merged_pr: int = 10000,
     pr_number: int = 0,
-) -> tuple[list[int], list[int], list[int], Optional[str]]:
+) -> tuple[list[int], list[int], list[int], Optional[str], Optional[str]]:
     """Parses and validates the state from a JSON string."""
     parsed_open: list[int] = []
     parsed_merged: list[int] = []
     parsed_ignored: list[int] = []
     first_commit: Optional[str] = None
+    review_base: Optional[str] = None
 
     raw_state = json.loads(json_str)
     if not isinstance(raw_state, dict):
@@ -261,17 +288,58 @@ def _parse_and_validate_state(
         else:
             parsed_ignored.append(val)
     if "first_commit" in raw_state:
-        fc = raw_state["first_commit"]
-        if fc is None:
-            first_commit = None
-        elif isinstance(fc, str) and re.fullmatch(r"[0-9a-fA-F]{40}", fc):
-            first_commit = fc
-        else:
-            raise ValueError(
-                f"PR #{pr_number}: Invalid commit OID format in "
-                f"'first_commit': {fc}"
+        first_commit = _parse_oid(
+            raw_state["first_commit"], "first_commit", pr_number
+        )
+    if "review_base" in raw_state:
+        review_base = _parse_oid(
+            raw_state["review_base"], "review_base", pr_number
+        )
+    return (
+        parsed_open,
+        parsed_merged,
+        parsed_ignored,
+        first_commit,
+        review_base,
+    )
+
+
+def _are_merged_deps_in_head(
+    client: github_helpers.Client,
+    head_oid: str,
+    merged_deps: list[int],
+    token: str,
+) -> bool:
+    """Returns true if every merged dep's merge commit is in `head_oid`."""
+    headers = {
+        "Authorization": f"bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    for dep in merged_deps:
+        res = client.execute(
+            _QUERY_PR_MERGE_COMMIT, variable_values={"prNumber": dep}
+        )
+        pr = res["repository"]["pullRequest"]
+        merge_oid = (
+            pr["mergeCommit"]["oid"] if pr and pr.get("mergeCommit") else None
+        )
+        if not merge_oid:
+            return False
+        url = (
+            "https://api.github.com/repos/carbon-language/carbon-lang/"
+            f"compare/{merge_oid}...{head_oid}"
+        )
+        try:
+            response = requests.get(
+                url, headers=headers, params={"per_page": 1}, timeout=30
             )
-    return parsed_open, parsed_merged, parsed_ignored, first_commit
+            response.raise_for_status()
+            if response.json().get("status") not in ("ahead", "identical"):
+                return False
+        except Exception as e:
+            _print_err(f"Error comparing {merge_oid[:8]}...{head_oid[:8]}: {e}")
+            return False
+    return True
 
 
 def _set_commit_status(
@@ -390,6 +458,7 @@ def _process_pr(
     parsed_merged_deps: list[int] = []
     parsed_ignored_deps: list[int] = []
     previous_first_commit: Optional[str] = None
+    previous_review_base: Optional[str] = None
 
     matching_comment = None
     for comment in comments:
@@ -410,9 +479,16 @@ def _process_pr(
                 parsed_merged_deps,
                 parsed_ignored_deps,
                 previous_first_commit,
+                previous_review_base,
             ) = _parse_and_validate_state(
                 body[start:end], open_pr_numbers, max_merged_pr, pr_number
             )
+        # Preserve the review link from comments created before `review_base`
+        # was persisted in the JSON state.
+        if previous_review_base is None:
+            match = re.search(r"/changes/([0-9a-fA-F]{40})\.\.HEAD\)", body)
+            if match:
+                previous_review_base = match.group(1)
 
     has_dependent_label = any(label["name"] == "dependent" for label in labels)
 
@@ -475,6 +551,8 @@ def _process_pr(
         description = "This PR has no open dependencies"
 
     first_non_dep_oid = None
+    review_base: Optional[str] = None
+    any_later_dep_oids = False
     if open_deps:
         dep_oids = set()
         for d in open_deps:
@@ -499,10 +577,9 @@ def _process_pr(
 
         # Find the most recent commit in the current PR that is also in the
         # last dependency PR.
-        last_dep_head_oid = None
         for oid in reversed(current_oids):
             if oid in last_dep_oids:
-                last_dep_head_oid = oid
+                review_base = oid
                 break
 
         # Detect non-linear history: any commit in the current PR that is in
@@ -510,6 +587,25 @@ def _process_pr(
         any_later_dep_oids = any(
             oid in dep_oids and oid not in last_dep_oids for oid in current_oids
         )
+    elif (
+        not ignored_deps
+        and merged_deps
+        and previous_review_base
+        and previous_review_base in current_oids
+    ):
+        # After dependencies squash-merge into `trunk`, their commits still
+        # appear in this PR's diff until this PR is rebased (dropping
+        # `previous_review_base`) or merges `trunk` past every merged
+        # dependency.
+        base_idx = current_oids.index(previous_review_base)
+        has_merge_after_base = any(
+            c["commit"].get("parents", {}).get("totalCount", 1) > 1
+            for c in commits[base_idx + 1 :]
+        )
+        if not has_merge_after_base or not _are_merged_deps_in_head(
+            client, pr_node["headRefOid"], merged_deps, token
+        ):
+            review_base = previous_review_base
 
     # Construct new comment
     timestamp = datetime.datetime.now(datetime.timezone.utc).strftime(
@@ -520,6 +616,8 @@ def _process_pr(
         "merged": merged_deps,
         "first_commit": first_non_dep_oid,
     }
+    if review_base:
+        new_state["review_base"] = review_base
     if ignored_deps:
         new_state["ignored"] = ignored_deps
     state_json = json.dumps(new_state)
@@ -528,10 +626,10 @@ def _process_pr(
 
     if open_deps:
         pr_list_str = ", ".join([f"#{num}" for num in open_deps])
-        if last_dep_head_oid:
+        if review_base:
             changes_url = (
                 "https://github.com/carbon-language/carbon-lang/pull/"
-                f"{pr_number}/changes/{last_dep_head_oid}..HEAD"
+                f"{pr_number}/changes/{review_base}..HEAD"
             )
             comment_body += (
                 f"Depends on {pr_list_str}, start review with "
@@ -552,7 +650,21 @@ def _process_pr(
         ignored_str = ", ".join([f"#{num}" for num in ignored_deps])
         comment_body += f"Dependency check overridden (ignoring {ignored_str})."
     elif merged_deps:
-        comment_body += "All dependency PRs are merged."
+        if review_base:
+            changes_url = (
+                "https://github.com/carbon-language/carbon-lang/pull/"
+                f"{pr_number}/changes/{review_base}..HEAD"
+            )
+            comment_body += (
+                "All dependency PRs are merged. Until this PR is rebased or "
+                "merges `trunk`, start review with "
+                f"[these changes]({changes_url})."
+            )
+        else:
+            comment_body += (
+                "All dependency PRs are merged; the full set of changes is now "
+                "ready to review."
+            )
     else:
         comment_body += "No open dependency PRs."
 
@@ -602,6 +714,7 @@ def _process_pr(
         and merged_deps == parsed_merged_deps
         and ignored_deps == parsed_ignored_deps
         and first_non_dep_oid == previous_first_commit
+        and review_base == previous_review_base
     ):
         return
 
