@@ -87,7 +87,6 @@ class Adapter {
 fn MakeAdapter() -> Adapter;
 
 fn Test() {
-  
   //@dump-sem-ir-begin
   Adapter as Core.SubobjectDestroy;
   //@dump-sem-ir-end
