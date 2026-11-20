@@ -933,8 +933,9 @@ Some common expressions in Carbon include:
 
     -   [Arithmetic](expressions/arithmetic.md): `-x`, `1 + 2`, `3 - 4`,
         `2 * 5`, `6 / 3`, `5 % 3`
-    -   [Bitwise](expressions/bitwise.md): `2 & 3`, `2 | 4`, `3 ^ 1`, `^7`
-    -   [Bit shift](expressions/bitwise.md): `1 << 3`, `8 >> 1`
+    -   [Bitwise](expressions/bitwise.md): `2 &&& 3`, `2 ||| 4`, `3 ^^^ 1`,
+        `~~~7`
+    -   [Bit shift](expressions/bitwise.md): `1 <<< 3`, `8 >>> 1`
     -   [Comparison](expressions/comparison_operators.md): `2 == 2`, `3 != 4`,
         `5 < 6`, `7 > 6`, `8 <= 8`, `8 >= 8`
     -   [Conversion](expressions/as_expressions.md): `2 as i32`
@@ -975,6 +976,8 @@ are applied to convert the expression to the target type.
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
+> -   Proposal
+>     [#8133: Tripled bitwise operators](https://github.com/carbon-language/carbon-lang/pull/8133)
 
 ## Declarations, Definitions, and Scopes
 
@@ -3350,12 +3353,12 @@ The interfaces that correspond to each operator are given by:
     -   `x / y`: `Div` or `DivWith(U)`
     -   `x % y`: `Mod` or `ModWith(U)`
 -   [Bitwise and shift operators](expressions/bitwise.md#extensibility):
-    -   `^x`: `BitComplement`
-    -   `x & y`: `BitAnd` or `BitAndWith(U)`
-    -   `x | y`: `BitOr` or `BitOrWith(U)`
-    -   `x ^ y`: `BitXor` or `BitXorWith(U)`
-    -   `x << y`: `LeftShift` or `LeftShiftWith(U)`
-    -   `x >> y`: `RightShift` or `RightShiftWith(U)`
+    -   `~~~x`: `BitComplement`
+    -   `x &&& y`: `BitAnd` or `BitAndWith(U)`
+    -   `x ||| y`: `BitOr` or `BitOrWith(U)`
+    -   `x ^^^ y`: `BitXor` or `BitXorWith(U)`
+    -   `x <<< y`: `LeftShift` or `LeftShiftWith(U)`
+    -   `x >>> y`: `RightShift` or `RightShiftWith(U)`
 -   Comparison:
     -   `x == y`, `x != y` overloaded by implementing
         [`Eq` or `EqWith(U)`](expressions/comparison_operators.md#equality)
@@ -3406,6 +3409,8 @@ implementing corresponding interfaces for the value's type.
 >     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 > -   Proposal
 >     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+> -   Proposal
+>     [#8133: Tripled bitwise operators](https://github.com/carbon-language/carbon-lang/pull/8133)
 
 #### Common type
 
@@ -3618,7 +3623,7 @@ conversions or overload selection that don't map completely into Carbon.
 
 In some cases, the operation might be written differently in the two languages.
 In those cases, they are matched according to which operation has the most
-similar semantics rather than using the same symbols. For example, the `^x`
+similar semantics rather than having the same spelling. For example, the `~~~x`
 operation and `BitComplement` interface in Carbon corresponds to the `~x`
 operation and `operator~` function in C++. Similarly, the `ImplicitAs(U)` Carbon
 interface corresponds to implicit conversions in C++, which can be written in

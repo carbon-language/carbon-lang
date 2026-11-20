@@ -86,7 +86,7 @@ graph BT
     negation["-x"]
     click negation "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
-    complement["^x"]
+    complement["~~~x"]
     click complement "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
     incDec["++x;
@@ -109,16 +109,19 @@ graph BT
     modulo["x % y"]
     click modulo "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/arithmetic.md"
 
-    bitwise_and>"x & y"]
-    bitwise_or>"x | y"]
-    bitwise_xor>"x ^ y"]
+    bitwise_and>"x &&& y"]
+    bitwise_or>"x ||| y"]
+    bitwise_xor>"x ^^^ y"]
     click bitwise_and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
     click bitwise_or "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
     click bitwise_xor "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
 
-    shift["x << y
-           x >> y"]
+    shift["x <<< y
+           x >>> y"]
     click shift "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/expressions/bitwise.md"
+
+    facet_and>"T & U"]
+    click facet_and "https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/generics/details.md#combining-interfaces-by-anding-facet-types"
 
     binaryOps((" "))
 
@@ -175,9 +178,9 @@ graph BT
     %% `as` at the same level as `where` and comparisons
     as -----> unary
 
-    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift --> unary
+    multiplication & modulo & bitwise_and & bitwise_or & bitwise_xor & shift & facet_and --> unary
     addition --> multiplication
-    binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift
+    binaryOps --> addition & modulo & bitwise_and & bitwise_or & bitwise_xor & shift & facet_and
 
     where --> binaryOps
     comparison --> binaryOps
@@ -333,17 +336,17 @@ Most expressions are modeled as operators:
 | Pointer    | [`*`](pointer_operators.md) (unary) | `*x`      | Pointer dereference: the object pointed to by `x`.                    |
 | Pointer    | [`&`](pointer_operators.md) (unary) | `&x`      | Address-of: a pointer to the object `x`.                              |
 | Arithmetic | [`-`](arithmetic.md) (unary)        | `-x`      | The negation of `x`.                                                  |
-| Bitwise    | [`^`](bitwise.md) (unary)           | `^x`      | The bitwise complement of `x`.                                        |
+| Bitwise    | [`~~~`](bitwise.md)                 | `~~~x`    | The bitwise complement of `x`.                                        |
 | Arithmetic | [`+`](arithmetic.md)                | `x + y`   | The sum of `x` and `y`.                                               |
 | Arithmetic | [`-`](arithmetic.md) (binary)       | `x - y`   | The difference of `x` and `y`.                                        |
 | Arithmetic | [`*`](arithmetic.md)                | `x * y`   | The product of `x` and `y`.                                           |
 | Arithmetic | [`/`](arithmetic.md)                | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
 | Arithmetic | [`%`](arithmetic.md)                | `x % y`   | `x` modulo `y`.                                                       |
-| Bitwise    | [`&`](bitwise.md)                   | `x & y`   | The bitwise AND of `x` and `y`.                                       |
-| Bitwise    | [<code>\|</code>](bitwise.md)       | <code>x \| y</code> | The bitwise OR of `x` and `y`.                              |
-| Bitwise    | [`^`](bitwise.md) (binary)          | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
-| Bitwise    | [`<<`](bitwise.md)                  | `x << y`  | `x` bit-shifted left `y` places.                                      |
-| Bitwise    | [`>>`](bitwise.md)                  | `x >> y`  | `x` bit-shifted right `y` places.                                     |
+| Bitwise    | [`&&&`](bitwise.md)                 | `x &&& y` | The bitwise AND of `x` and `y`.                                       |
+| Bitwise    | [<code>\|\|\|</code>](bitwise.md)   | <code>x \|\|\| y</code> | The bitwise OR of `x` and `y`.                          |
+| Bitwise    | [`^^^`](bitwise.md)                 | `x ^^^ y` | The bitwise XOR of `x` and `y`.                                       |
+| Bitwise    | [`<<<`](bitwise.md)                 | `x <<< y` | `x` bit-shifted left `y` places.                                      |
+| Bitwise    | [`>>>`](bitwise.md)                 | `x >>> y` | `x` bit-shifted right `y` places.                                     |
 | Conversion | [`as`](as_expressions.md)           | `x as T`  | Converts the value `x` to the type `T`.                               |
 | Comparison | [`==`](comparison_operators.md)     | `x == y`  | Equality: `true` if `x` is equal to `y`.                              |
 | Comparison | [`!=`](comparison_operators.md)     | `x != y`  | Inequality: `true` if `x` is not equal to `y`.                        |

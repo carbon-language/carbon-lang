@@ -90,7 +90,7 @@ tightly:
 -   prefix symbolic operators
     -   dereference (`*a`)
     -   negation (`-a`)
-    -   complement (`~a`)
+    -   complement (`~~~a`)
 -   postfix symbolic operators
     -   pointer type formation (`T*`),
     -   function call (`a(...)`),
