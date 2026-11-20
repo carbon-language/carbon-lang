@@ -311,9 +311,36 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
       std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
 }
 
+static auto ConstantKindAllowsPhase(SemIR::InstConstantKind constant_kind,
+                                    Phase phase) -> bool {
+  switch (constant_kind) {
+    case SemIR::InstConstantKind::Never:
+    case SemIR::InstConstantKind::Indirect:
+      return phase >= Phase::UnknownDueToError;
+    case SemIR::InstConstantKind::SymbolicOnly:
+      return phase != Phase::Concrete;
+    case SemIR::InstConstantKind::TemplateOnly:
+      return phase >= Phase::TemplateSymbolic;
+    case SemIR::InstConstantKind::MultiInstAction:
+    case SemIR::InstConstantKind::InstAction:
+      return phase >= Phase::TemplateSymbolic && phase != Phase::Runtime;
+    case SemIR::InstConstantKind::Always:
+    case SemIR::InstConstantKind::AlwaysUnique:
+      return phase != Phase::Runtime;
+    case SemIR::InstConstantKind::SymbolicOrReference:
+    case SemIR::InstConstantKind::Conditional:
+    case SemIR::InstConstantKind::WheneverPossible:
+    case SemIR::InstConstantKind::ConditionalUnique:
+      return true;
+  }
+}
+
 // Forms a `constant_id` describing a given evaluation result.
 static auto MakeConstantResult(Context& context, SemIR::Inst inst, Phase phase)
     -> SemIR::ConstantId {
+  CARBON_CHECK(ConstantKindAllowsPhase(inst.kind().constant_kind(), phase),
+               "{0} can't have phase {1}", inst.kind(), phase);
+
   switch (phase) {
     case Phase::Concrete:
       return context.constants().GetOrAdd(inst,
