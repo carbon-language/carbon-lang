@@ -253,11 +253,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          # Skip if no runner uploaded an artifact (e.g. if all benchmark jobs
-          # failed before producing JSON).
+          # `download-artifact` with `pattern` succeeds when 0 artifacts match;
+          # fail explicitly so missing nightly archives don't go unnoticed.
           if [[ ! -d bmf ]] || [[ -z "$(ls -A bmf)" ]]; then
-            echo "No nightly benchmark JSON artifacts found to attach."
-            exit 0
+            echo "::error::No nightly benchmark JSON artifacts found to attach."
+            exit 1
           fi
 
           # Find the newest nightly release pointing at the triggering commit.
