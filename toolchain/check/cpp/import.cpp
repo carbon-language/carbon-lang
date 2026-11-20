@@ -2008,8 +2008,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
               .virtual_index = virtual_index,
               .evaluation_mode = evaluation_mode,
               .self_param_id = FindSelfPattern(
-                  context, function_params_insts->implicit_param_patterns_id,
-                  function_params_insts->param_patterns_id),
+                  context, function_params_insts->param_patterns_id),
           }});
   context.imports().push_back(decl_id);
   return decl_id;

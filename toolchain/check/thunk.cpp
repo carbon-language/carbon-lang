@@ -214,8 +214,7 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
                                              signature.return_type_inst_id);
   auto return_form_inst_id = CloneInstId(context, signature_specific_id,
                                          signature.return_form_inst_id);
-  auto self_param_id =
-      FindSelfPattern(context, implicit_param_patterns_id, param_patterns_id);
+  auto self_param_id = FindSelfPattern(context, param_patterns_id);
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
