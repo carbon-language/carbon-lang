@@ -18,9 +18,11 @@ library "[[@TEST_NAME]]";
 fn Test() {
   //@dump-sem-ir-begin
   bool as Core.SubobjectDestroy;
+  //@dump-sem-ir-end
   bool as Core.Destroy;
   bool as Core.TrivialDestroy;
 
+  //@dump-sem-ir-begin
   var unused x: bool = true;
   //@dump-sem-ir-end
 }
@@ -33,9 +35,11 @@ library "[[@TEST_NAME]]";
 fn Test() {
   //@dump-sem-ir-begin
   // Core.CharLiteral as Core.SubobjectDestroy;
+  //@dump-sem-ir-end
   // Core.CharLiteral as Core.Destroy;
   // Core.CharLiteral as Core.TrivialDestroy;
 
+  //@dump-sem-ir-begin
   // var unused x: Core.CharLiteral = 'c';
   //@dump-sem-ir-end
 }
@@ -46,9 +50,11 @@ library "[[@TEST_NAME]]";
 fn Test() {
   //@dump-sem-ir-begin
   f64 as Core.SubobjectDestroy;
+  //@dump-sem-ir-end
   f64 as Core.Destroy;
   f64 as Core.TrivialDestroy;
 
+  //@dump-sem-ir-begin
   var unused x: f64 = 0.0;
   //@dump-sem-ir-end
 }
@@ -61,9 +67,11 @@ library "[[@TEST_NAME]]";
 fn Test() {
   //@dump-sem-ir-begin
   // Core.FloatLiteral as Core.SubobjectDestroy;
+  //@dump-sem-ir-end
   // Core.FloatLiteral as Core.Destroy;
   // Core.FloatLiteral as Core.TrivialDestroy;
 
+  //@dump-sem-ir-begin
   // var unused x: Core.FloatLiteral = 0.0;
   //@dump-sem-ir-end
 }
@@ -130,32 +138,23 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.ref: type = name_ref SubobjectDestroy, imports.%Core.SubobjectDestroy [concrete = constants.%SubobjectDestroy.type]
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %.loc5_3, (constants.%custom_witness.b80) [concrete = constants.%SubobjectDestroy.facet.a87]
 // CHECK:STDOUT:   %.loc5_8: %SubobjectDestroy.type = converted %.loc5_3, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.a87]
-// CHECK:STDOUT:   %.loc6_3: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %Core.ref.loc6: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %Destroy.ref: type = name_ref Destroy, imports.%Core.Destroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.facet.loc6: %Destroy.type = facet_value %.loc6_3, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc6_8: %Destroy.type = converted %.loc6_3, %Destroy.facet.loc6 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc7_3: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %Core.ref.loc7: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %TrivialDestroy.ref: type = name_ref TrivialDestroy, imports.%Core.TrivialDestroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.facet.loc7: %Destroy.type = facet_value %.loc7_3, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc7_8: %Destroy.type = converted %.loc7_3, %Destroy.facet.loc7 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %x.var: ref bool = var_storage %x.var_patt
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:   %impl.elem0: %.68a = impl_witness_access constants.%Copy.impl_witness.5e1, element0 [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %true, %impl.elem0 [concrete = constants.%bool.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.call: init bool = call %bound_method(%true) [concrete = constants.%true]
 // CHECK:STDOUT:   assign %x.var, %bool.as.Copy.impl.Op.call
-// CHECK:STDOUT:   %.loc9_17: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %.loc11_17: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %x: ref bool = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.831 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.831 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value bool, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.1: %Destroy.type = converted bool, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value bool, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted bool, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.1: %Destroy.type = facet_value bool, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_3.1: %Destroy.type = converted bool, %Destroy.facet.loc11_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.2: %Destroy.type = facet_value bool, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.778) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_3.2: %Destroy.type = converted bool, %Destroy.facet.loc11_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -244,35 +243,26 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.ref: type = name_ref SubobjectDestroy, imports.%Core.SubobjectDestroy [concrete = constants.%SubobjectDestroy.type]
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %f64.loc5, (constants.%custom_witness.b80) [concrete = constants.%SubobjectDestroy.facet.47f]
 // CHECK:STDOUT:   %.loc5: %SubobjectDestroy.type = converted %f64.loc5, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.47f]
-// CHECK:STDOUT:   %f64.loc6: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
-// CHECK:STDOUT:   %Core.ref.loc6: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %Destroy.ref: type = name_ref Destroy, imports.%Core.Destroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.facet.loc6: %Destroy.type = facet_value %f64.loc6, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc6: %Destroy.type = converted %f64.loc6, %Destroy.facet.loc6 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %f64.loc7: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
-// CHECK:STDOUT:   %Core.ref.loc7: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %TrivialDestroy.ref: type = name_ref TrivialDestroy, imports.%Core.TrivialDestroy [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.facet.loc7: %Destroy.type = facet_value %f64.loc7, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc7: %Destroy.type = converted %f64.loc7, %Destroy.facet.loc7 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %x.var: ref %f64.761 = var_storage %x.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 0e-1 [concrete = constants.%float.1f7]
 // CHECK:STDOUT:   %impl.elem0: %.b5b = impl_witness_access constants.%ImplicitAs.impl_witness.1d6, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.9d0]
-// CHECK:STDOUT:   %bound_method.loc9_3.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc11_3.1: <bound method> = bound_method %float, %impl.elem0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(constants.%int_64) [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_3.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.761 = call %bound_method.loc9_3.2(%float) [concrete = constants.%float.73e]
-// CHECK:STDOUT:   %.loc9_3.1: init %f64.761 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.73e]
-// CHECK:STDOUT:   assign %x.var, %.loc9_3.1
-// CHECK:STDOUT:   %f64.loc9: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
+// CHECK:STDOUT:   %bound_method.loc11_3.2: <bound method> = bound_method %float, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call: init %f64.761 = call %bound_method.loc11_3.2(%float) [concrete = constants.%float.73e]
+// CHECK:STDOUT:   %.loc11_3.1: init %f64.761 = converted %float, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%float.73e]
+// CHECK:STDOUT:   assign %x.var, %.loc11_3.1
+// CHECK:STDOUT:   %f64.loc11: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
 // CHECK:STDOUT:   %x: ref %f64.761 = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.667 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.667 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%f64.761, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%f64.761, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%f64.761, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.3: %Destroy.type = converted constants.%f64.761, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.1: %Destroy.type = facet_value constants.%f64.761, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_3.2: %Destroy.type = converted constants.%f64.761, %Destroy.facet.loc11_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc11_3.2: %Destroy.type = facet_value constants.%f64.761, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.a23) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_3.3: %Destroy.type = converted constants.%f64.761, %Destroy.facet.loc11_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
 // CHECK:STDOUT:   <elided>
