@@ -73,9 +73,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_47.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc9_47.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !31
 // CHECK:STDOUT:   %.loc9_47.2 = load i32, ptr %.loc9_47.1.a, align 4, !dbg !31
-// CHECK:STDOUT:   %.loc9_49.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !32
+// CHECK:STDOUT:   %.loc9_49.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !32
 // CHECK:STDOUT:   store i32 %.loc9_47.2, ptr %.loc9_49.2.b, align 4, !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -83,9 +83,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_47.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !40
+// CHECK:STDOUT:   %.loc12_47.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !40
 // CHECK:STDOUT:   %.loc12_47.2 = load i32, ptr %.loc12_47.1.b, align 4, !dbg !40
-// CHECK:STDOUT:   %.loc12_49.2.c = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc12_49.2.c = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !41
 // CHECK:STDOUT:   store i32 %.loc12_47.2, ptr %.loc12_49.2.c, align 4, !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
@@ -93,9 +93,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %b) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_35.1.b = getelementptr inbounds nuw { i32 }, ptr %b, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc20_35.1.b = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !49
 // CHECK:STDOUT:   %.loc20_35.2 = load i32, ptr %.loc20_35.1.b, align 4, !dbg !49
-// CHECK:STDOUT:   %.loc20_37.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !50
+// CHECK:STDOUT:   %.loc20_37.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !50
 // CHECK:STDOUT:   store i32 %.loc20_35.2, ptr %.loc20_37.2.b, align 4, !dbg !50
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
@@ -118,7 +118,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5bf3a215c2b17be3:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !58 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !60
+// CHECK:STDOUT:   %.loc20_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !60
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc20_19.1.b), !dbg !60
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
@@ -126,7 +126,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8c4b83ecd900f1ea:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !66
+// CHECK:STDOUT:   %.loc20_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !66
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc20_19.1.b), !dbg !66
 // CHECK:STDOUT:   ret void, !dbg !66
 // CHECK:STDOUT: }
@@ -242,7 +242,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5bf3a215c2b17be3:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !93 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_20.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !95
+// CHECK:STDOUT:   %.loc7_20.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !95
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_20.1.b), !dbg !95
 // CHECK:STDOUT:   ret void, !dbg !95
 // CHECK:STDOUT: }
@@ -250,7 +250,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8c4b83ecd900f1ea:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !97 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_20.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !99
+// CHECK:STDOUT:   %.loc7_20.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !99
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_20.1.b), !dbg !99
 // CHECK:STDOUT:   ret void, !dbg !99
 // CHECK:STDOUT: }
@@ -324,9 +324,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %b) #0 !dbg !117 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_35.1.b = getelementptr inbounds nuw { i32 }, ptr %b, i32 0, i32 0, !dbg !122
+// CHECK:STDOUT:   %.loc9_35.1.b = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !122
 // CHECK:STDOUT:   %.loc9_35.2 = load i32, ptr %.loc9_35.1.b, align 4, !dbg !122
-// CHECK:STDOUT:   %.loc9_37.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !123
+// CHECK:STDOUT:   %.loc9_37.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !123
 // CHECK:STDOUT:   store i32 %.loc9_35.2, ptr %.loc9_37.2.b, align 4, !dbg !123
 // CHECK:STDOUT:   ret void, !dbg !124
 // CHECK:STDOUT: }
@@ -353,7 +353,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5bf3a215c2b17be3:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !131 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !133
+// CHECK:STDOUT:   %.loc9_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !133
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_19.1.b), !dbg !133
 // CHECK:STDOUT:   ret void, !dbg !133
 // CHECK:STDOUT: }
@@ -361,7 +361,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8c4b83ecd900f1ea:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !135 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !137
+// CHECK:STDOUT:   %.loc9_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !137
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_19.1.b), !dbg !137
 // CHECK:STDOUT:   ret void, !dbg !137
 // CHECK:STDOUT: }
@@ -465,7 +465,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5bf3a215c2b17be3:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !164 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !166
+// CHECK:STDOUT:   %.loc8_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !166
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc8_19.1.b), !dbg !166
 // CHECK:STDOUT:   ret void, !dbg !166
 // CHECK:STDOUT: }
@@ -473,7 +473,7 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8c4b83ecd900f1ea:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !168 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_19.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !170
+// CHECK:STDOUT:   %.loc8_19.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !170
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc8_19.1.b), !dbg !170
 // CHECK:STDOUT:   ret void, !dbg !170
 // CHECK:STDOUT: }

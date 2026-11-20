@@ -58,7 +58,7 @@ TEST(SemIRTest, Yaml) {
 
   auto file = Yaml::Mapping(ElementsAre(
       Pair("names", Yaml::Mapping(SizeIs(2))),
-      Pair("import_irs", Yaml::Mapping(SizeIs(2))),
+      Pair("import_irs", Yaml::Mapping(SizeIs(3))),
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decl_signatures", Yaml::Mapping(SizeIs(0))),

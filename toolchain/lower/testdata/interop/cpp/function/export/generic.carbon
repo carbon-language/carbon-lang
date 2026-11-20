@@ -68,8 +68,8 @@ fn Run() {
 // CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
 // CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %"class.Carbon::Main::B", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b)
 // CHECK:STDOUT:   invoke void @_ZN6Carbon4MainL1FENS0_1AE()
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
@@ -81,9 +81,9 @@ fn Run() {
 // CHECK:STDOUT: invoke.cont3:                                     ; preds = %invoke.cont
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
 // CHECK:STDOUT: lpad:                                             ; preds = %entry
@@ -108,9 +108,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ehcleanup:                                        ; preds = %lpad2, %lpad
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   br label %eh.resume
 // CHECK:STDOUT:
 // CHECK:STDOUT: eh.resume:                                        ; preds = %ehcleanup

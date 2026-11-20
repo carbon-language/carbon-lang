@@ -2,7 +2,8 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-name: Setup build environment (macOS)
+name: Setup build environment
+description: Sets up uv, OS build dependencies, and Bazel configuration.
 inputs:
   matrix_runner:
     required: true

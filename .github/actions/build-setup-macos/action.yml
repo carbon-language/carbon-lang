@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 name: Setup build environment (macOS)
+description: Frees disk space and installs macOS build dependencies.
 inputs:
   matrix_runner:
     required: true

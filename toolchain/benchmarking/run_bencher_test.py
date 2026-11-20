@@ -6,15 +6,12 @@ Exceptions. See /LICENSE for license information.
 SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
-import io
 import json
 import re
 import subprocess
 import tempfile
 import unittest
-import zipfile
 from pathlib import Path
-from typing import Any
 from unittest import mock
 
 from toolchain.benchmarking import bencher_suites, run_bencher
@@ -115,29 +112,6 @@ class BencherSuitesTest(unittest.TestCase):
     def test_runs_yield_finite_quantile_intervals(self) -> None:
         for suite in SUITES:
             self.assertGreaterEqual(suite.runs, 6)
-
-    def test_tier_branches_and_runners(self) -> None:
-        self.assertEqual(Tier.CONTINUOUS.bencher_branch, "trunk")
-        self.assertEqual(
-            Tier.CONTINUOUS.runners, ("ubuntu-22.04", "ubuntu-22.04-arm")
-        )
-        self.assertEqual(Tier.NIGHTLY.bencher_branch, "nightly")
-        self.assertEqual(
-            Tier.NIGHTLY.runners,
-            ("ubuntu-22.04", "ubuntu-22.04-arm", "macos-26"),
-        )
-
-
-def _make_bmf_zip(runner: str, value: float) -> bytes:
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, mode="w") as zf:
-        zf.writestr(
-            f"bmf-{runner}.json",
-            json.dumps(
-                {"compile_benchmark::BM_Foo": {"latency": {"value": value}}}
-            ),
-        )
-    return buf.getvalue()
 
 
 class RunBencherTest(unittest.TestCase):
@@ -375,189 +349,6 @@ class RunBencherTest(unittest.TestCase):
                 ["--per-page", "2", "--page", "2"],
             )
             self.assertIn("uuid-total", mock_run.call_args_list[2].args[0])
-
-    def test_replay_artifacts_orders_chronologically_and_resets_once(
-        self,
-    ) -> None:
-        sha1 = "1" * 40
-        sha2 = "2" * 40
-        sha3 = "3" * 40
-        zips = {
-            1001: _make_bmf_zip("ubuntu-22.04", 10.0),
-            1002: _make_bmf_zip("ubuntu-22.04-arm", 11.0),
-            2002: _make_bmf_zip("ubuntu-22.04", 25.0),
-            3001: _make_bmf_zip("ubuntu-22.04", 30.0),
-            3002: _make_bmf_zip("ubuntu-22.04-arm", 31.0),
-        }
-        live_runs = "\n".join(
-            json.dumps(r)
-            for r in (
-                {
-                    "id": 100,
-                    "event": "push",
-                    "status": "completed",
-                    "conclusion": "success",
-                    "head_repo": "carbon-language/carbon-lang",
-                },
-                {
-                    "id": 104,
-                    "event": "pull_request",
-                    "status": "completed",
-                    "conclusion": "success",
-                    "head_repo": "fork/carbon-lang",
-                },
-            )
-        )
-        backfill_runs = "\n".join(
-            json.dumps(r)
-            for r in (
-                {
-                    "id": 101,
-                    "event": "workflow_dispatch",
-                    "status": "completed",
-                    "conclusion": "success",
-                    "head_repo": "carbon-language/carbon-lang",
-                },
-                {
-                    "id": 102,
-                    "event": "workflow_dispatch",
-                    "status": "completed",
-                    "conclusion": "success",
-                    "head_repo": "carbon-language/carbon-lang",
-                },
-            )
-        )
-        run_artifacts = {
-            100: [
-                {
-                    "id": 3001,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-{sha3}",
-                    "expired": False,
-                },
-                {
-                    "id": 3002,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-arm-{sha3}",
-                    "expired": False,
-                },
-            ],
-            101: [
-                {
-                    "id": 1001,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-{sha1}",
-                    "expired": False,
-                },
-                # Superseded by run 102 (`id=2002`) without even downloading
-                # `id=2001`.
-                {
-                    "id": 2001,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-{sha2}",
-                    "expired": False,
-                },
-                # Different tier (`nightly`) ignored before downloading.
-                {
-                    "id": 9001,
-                    "name": f"bencher-bmf-nightly-ubuntu-22.04-{sha2}",
-                    "expired": False,
-                },
-            ],
-            102: [
-                {
-                    "id": 1002,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-arm-{sha1}",
-                    "expired": False,
-                },
-                {
-                    "id": 2002,
-                    "name": f"bencher-bmf-continuous-ubuntu-22.04-{sha2}",
-                    "expired": False,
-                },
-            ],
-        }
-        bencher_calls: list[tuple[list[str], float]] = []
-
-        def fake_run(
-            cmd: list[str], **kwargs: Any
-        ) -> subprocess.CompletedProcess[Any]:
-            if cmd[:3] == ["git", "log", "--first-parent"]:
-                return subprocess.CompletedProcess(
-                    args=cmd,
-                    returncode=0,
-                    stdout=f"{sha1}:100\n{sha2}:200\n{sha3}:300\n",
-                )
-            if cmd[:2] == ["gh", "api"]:
-                endpoint = cmd[3] if cmd[2] == "--paginate" else cmd[2]
-                if "workflows/benchmarks.yaml/runs" in endpoint:
-                    return subprocess.CompletedProcess(
-                        args=cmd, returncode=0, stdout=live_runs
-                    )
-                if "workflows/benchmarks_backfill.yaml/runs" in endpoint:
-                    return subprocess.CompletedProcess(
-                        args=cmd, returncode=0, stdout=backfill_runs
-                    )
-                for rid, arts in run_artifacts.items():
-                    if f"actions/runs/{rid}/artifacts" in endpoint:
-                        out = "\n".join(json.dumps(a) for a in arts)
-                        return subprocess.CompletedProcess(
-                            args=cmd, returncode=0, stdout=out
-                        )
-                for aid, payload in zips.items():
-                    if endpoint.endswith(f"actions/artifacts/{aid}/zip"):
-                        return subprocess.CompletedProcess(
-                            args=cmd, returncode=0, stdout=payload
-                        )
-                raise AssertionError(f"Unexpected gh api call: {cmd}")
-            if cmd[:2] == ["bencher", "run"]:
-                file_idx = cmd.index("--file") + 1
-                val = json.loads(
-                    Path(cmd[file_idx]).read_text(encoding="utf-8")
-                )["compile_benchmark::BM_Foo"]["latency"]["value"]
-                bencher_calls.append((cmd, val))
-                return subprocess.CompletedProcess(args=cmd, returncode=0)
-            if cmd[:3] == ["bencher", "measure", "list"]:
-                return subprocess.CompletedProcess(
-                    args=cmd, returncode=0, stdout="[]"
-                )
-            raise AssertionError(f"Unexpected subprocess call: {cmd}")
-
-        with mock.patch("subprocess.run", side_effect=fake_run):
-            dry = run_bencher.replay_artifacts(
-                tier=Tier.CONTINUOUS, reset_branch=True, dry_run=True
-            )
-            self.assertEqual(
-                dry,
-                [
-                    (sha1, ["ubuntu-22.04", "ubuntu-22.04-arm"]),
-                    (sha2, ["ubuntu-22.04"]),
-                    (sha3, ["ubuntu-22.04", "ubuntu-22.04-arm"]),
-                ],
-            )
-            self.assertEqual(bencher_calls, [])
-
-            live = run_bencher.replay_artifacts(
-                tier=Tier.CONTINUOUS, reset_branch=True, dry_run=False
-            )
-            self.assertEqual(live, dry)
-
-        self.assertEqual(
-            [v for _, v in bencher_calls], [10.0, 11.0, 25.0, 30.0, 31.0]
-        )
-        self.assertEqual(
-            [c[c.index("--backdate") + 1] for c, _ in bencher_calls],
-            ["100", "100", "200", "300", "300"],
-        )
-        # Only `sha1`'s runner uploads carry `--start-point-reset`, sharing one
-        # idempotency key.
-        self.assertIn("--start-point-reset", bencher_calls[0][0])
-        self.assertIn("--start-point-reset", bencher_calls[1][0])
-        key0 = bencher_calls[0][0][
-            bencher_calls[0][0].index("--start-point-idempotency-key") + 1
-        ]
-        key1 = bencher_calls[1][0][
-            bencher_calls[1][0].index("--start-point-idempotency-key") + 1
-        ]
-        self.assertEqual(key0, key1)
-        for cmd, _ in bencher_calls[2:]:
-            self.assertNotIn("--start-point-reset", cmd)
 
 
 if __name__ == "__main__":

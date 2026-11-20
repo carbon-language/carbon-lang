@@ -36,36 +36,36 @@ fn Run() {
 // CHECK:STDOUT:   %d.var = alloca { i32, i32, i32 }, align 4, !dbg !52
 // CHECK:STDOUT:   %_.var.loc18 = alloca [3 x i32], align 4, !dbg !55
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc14), !dbg !43
-// CHECK:STDOUT:   %.loc14_29.3.array.index = getelementptr inbounds [1 x i32], ptr %_.var.loc14, i32 0, i64 0, !dbg !44
+// CHECK:STDOUT:   %.loc14_29.3.array.index = getelementptr inbounds i8, ptr %_.var.loc14, i64 0, !dbg !44
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc14, ptr align 4 @array.7dc.loc14_3.1, i64 4, i1 false), !dbg !43
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc15), !dbg !46
-// CHECK:STDOUT:   %.loc15_37.3.array.index = getelementptr inbounds [2 x double], ptr %_.var.loc15, i32 0, i64 0, !dbg !47
-// CHECK:STDOUT:   %.loc15_37.6.array.index = getelementptr inbounds [2 x double], ptr %_.var.loc15, i32 0, i64 1, !dbg !47
+// CHECK:STDOUT:   %.loc15_37.3.array.index = getelementptr inbounds i8, ptr %_.var.loc15, i64 0, !dbg !47
+// CHECK:STDOUT:   %.loc15_37.6.array.index = getelementptr inbounds i8, ptr %_.var.loc15, i64 8, !dbg !47
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc15, ptr align 8 @array.38b.loc15_3.1, i64 16, i1 false), !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !49
-// CHECK:STDOUT:   %.loc16_45.2.array.index = getelementptr inbounds [5 x {}], ptr %_.var.loc16, i32 0, i64 0, !dbg !50
-// CHECK:STDOUT:   %.loc16_45.5.array.index = getelementptr inbounds [5 x {}], ptr %_.var.loc16, i32 0, i64 1, !dbg !50
-// CHECK:STDOUT:   %.loc16_45.8.array.index = getelementptr inbounds [5 x {}], ptr %_.var.loc16, i32 0, i64 2, !dbg !50
-// CHECK:STDOUT:   %.loc16_45.11.array.index = getelementptr inbounds [5 x {}], ptr %_.var.loc16, i32 0, i64 3, !dbg !50
-// CHECK:STDOUT:   %.loc16_45.14.array.index = getelementptr inbounds [5 x {}], ptr %_.var.loc16, i32 0, i64 4, !dbg !50
+// CHECK:STDOUT:   %.loc16_45.2.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc16_45.5.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc16_45.8.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc16_45.11.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc16_45.14.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !50
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc16, ptr align 1 @array.29b.loc16_3.1, i64 0, i1 false), !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !52
-// CHECK:STDOUT:   %tuple.elem0.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !53
-// CHECK:STDOUT:   %tuple.elem1.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !53
-// CHECK:STDOUT:   %tuple.elem2.loc17.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !53
+// CHECK:STDOUT:   %tuple.elem0.loc17.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !53
+// CHECK:STDOUT:   %tuple.elem1.loc17.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 4, !dbg !53
+// CHECK:STDOUT:   %tuple.elem2.loc17.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 8, !dbg !53
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %d.var, ptr align 4 @tuple.80e.loc17_3.1, i64 12, i1 false), !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc18), !dbg !55
-// CHECK:STDOUT:   %tuple.elem0.loc18.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %tuple.elem0.loc18.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !56
 // CHECK:STDOUT:   %.loc18_26.1 = load i32, ptr %tuple.elem0.loc18.tuple.elem, align 4, !dbg !56
-// CHECK:STDOUT:   %.loc18_26.2.array.index = getelementptr inbounds [3 x i32], ptr %_.var.loc18, i32 0, i64 0, !dbg !56
+// CHECK:STDOUT:   %.loc18_26.2.array.index = getelementptr inbounds i8, ptr %_.var.loc18, i64 0, !dbg !56
 // CHECK:STDOUT:   store i32 %.loc18_26.1, ptr %.loc18_26.2.array.index, align 4, !dbg !56
-// CHECK:STDOUT:   %tuple.elem1.loc18.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 1, !dbg !56
+// CHECK:STDOUT:   %tuple.elem1.loc18.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 4, !dbg !56
 // CHECK:STDOUT:   %.loc18_26.4 = load i32, ptr %tuple.elem1.loc18.tuple.elem, align 4, !dbg !56
-// CHECK:STDOUT:   %.loc18_26.5.array.index = getelementptr inbounds [3 x i32], ptr %_.var.loc18, i32 0, i64 1, !dbg !56
+// CHECK:STDOUT:   %.loc18_26.5.array.index = getelementptr inbounds i8, ptr %_.var.loc18, i64 4, !dbg !56
 // CHECK:STDOUT:   store i32 %.loc18_26.4, ptr %.loc18_26.5.array.index, align 4, !dbg !56
-// CHECK:STDOUT:   %tuple.elem2.loc18.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %d.var, i32 0, i32 2, !dbg !56
+// CHECK:STDOUT:   %tuple.elem2.loc18.tuple.elem = getelementptr inbounds nuw i8, ptr %d.var, i64 8, !dbg !56
 // CHECK:STDOUT:   %.loc18_26.7 = load i32, ptr %tuple.elem2.loc18.tuple.elem, align 4, !dbg !56
-// CHECK:STDOUT:   %.loc18_26.8.array.index = getelementptr inbounds [3 x i32], ptr %_.var.loc18, i32 0, i64 2, !dbg !56
+// CHECK:STDOUT:   %.loc18_26.8.array.index = getelementptr inbounds i8, ptr %_.var.loc18, i64 8, !dbg !56
 // CHECK:STDOUT:   store i32 %.loc18_26.7, ptr %.loc18_26.8.array.index, align 4, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.3c9880f178514995(ptr %_.var.loc18), !dbg !55
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %d.var), !dbg !52
@@ -78,11 +78,11 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.95c1f38708147abd:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_3.1.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 2, !dbg !61
+// CHECK:STDOUT:   %.loc18_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !61
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_3.1.array.index), !dbg !61
-// CHECK:STDOUT:   %.loc18_3.4.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 1, !dbg !61
+// CHECK:STDOUT:   %.loc18_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !61
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_3.4.array.index), !dbg !61
-// CHECK:STDOUT:   %.loc18_3.7.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 0, !dbg !61
+// CHECK:STDOUT:   %.loc18_3.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !61
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc18_3.7.array.index), !dbg !61
 // CHECK:STDOUT:   ret void, !dbg !61
 // CHECK:STDOUT: }
@@ -90,11 +90,11 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.abce894028f59bc0:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !65 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 2, !dbg !67
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !67
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem2.tuple.elem), !dbg !67
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 1, !dbg !67
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !67
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !67
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !67
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !67
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
@@ -102,15 +102,15 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.9cad215553ee7c70:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !69 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds [5 x {}], ptr %self, i32 0, i64 4, !dbg !71
+// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !71
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %.loc16_3.1.array.index), !dbg !71
-// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds [5 x {}], ptr %self, i32 0, i64 3, !dbg !71
+// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !71
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %.loc16_3.4.array.index), !dbg !71
-// CHECK:STDOUT:   %.loc16_3.7.array.index = getelementptr inbounds [5 x {}], ptr %self, i32 0, i64 2, !dbg !71
+// CHECK:STDOUT:   %.loc16_3.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !71
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %.loc16_3.7.array.index), !dbg !71
-// CHECK:STDOUT:   %.loc16_3.10.array.index = getelementptr inbounds [5 x {}], ptr %self, i32 0, i64 1, !dbg !71
+// CHECK:STDOUT:   %.loc16_3.10.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !71
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %.loc16_3.10.array.index), !dbg !71
-// CHECK:STDOUT:   %.loc16_3.13.array.index = getelementptr inbounds [5 x {}], ptr %self, i32 0, i64 0, !dbg !71
+// CHECK:STDOUT:   %.loc16_3.13.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !71
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %.loc16_3.13.array.index), !dbg !71
 // CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT: }
@@ -118,9 +118,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7554b27c5eb591f2:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_3.1.array.index = getelementptr inbounds [2 x double], ptr %self, i32 0, i64 1, !dbg !75
+// CHECK:STDOUT:   %.loc15_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !75
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc15_3.1.array.index), !dbg !75
-// CHECK:STDOUT:   %.loc15_3.4.array.index = getelementptr inbounds [2 x double], ptr %self, i32 0, i64 0, !dbg !75
+// CHECK:STDOUT:   %.loc15_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !75
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc15_3.4.array.index), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !75
 // CHECK:STDOUT: }
@@ -128,7 +128,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.00c89ff9538689ad:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !77 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_3.1.array.index = getelementptr inbounds [1 x i32], ptr %self, i32 0, i64 0, !dbg !79
+// CHECK:STDOUT:   %.loc14_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !79
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc14_3.1.array.index), !dbg !79
 // CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }

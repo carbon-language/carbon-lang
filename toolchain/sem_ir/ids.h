@@ -468,6 +468,9 @@ inline constexpr GenericInstIndex GenericInstIndex::None =
 struct ImportIRId : public IdBase<ImportIRId> {
   static constexpr llvm::StringLiteral Label = "import_ir";
 
+  // The ID of the local file.
+  static const ImportIRId Local;
+
   // The implicit `api` import, for an `impl` file. A null entry is added if
   // there is none, as in an `api`, in which case this ID should not show up in
   // instructions.
@@ -481,7 +484,9 @@ struct ImportIRId : public IdBase<ImportIRId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-inline constexpr ImportIRId ImportIRId::ApiForImpl = ImportIRId(0);
+inline constexpr ImportIRId ImportIRId::Local = ImportIRId(0);
+inline constexpr ImportIRId ImportIRId::ApiForImpl =
+    ImportIRId(Local.index + 1);
 inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 
 // The ID of a `ClangDecl`.
