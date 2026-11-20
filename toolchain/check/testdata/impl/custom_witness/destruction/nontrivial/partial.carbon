@@ -44,16 +44,17 @@ base class Base {
 }
 
 alias Partial = partial Base;
-fn Make() -> Partial;
+fn MakePartial() -> Partial;
 
 fn Test() {
   //@dump-sem-ir-begin
   Partial as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Partial as Core.Destroy;
 
   //@dump-sem-ir-begin
-  var unused x: Partial = Make();
+  MakePartial();
   //@dump-sem-ir-end
 }
 
@@ -67,16 +68,17 @@ base class Base {
 }
 
 alias Partial = partial Base;
-fn Make() -> Base;
+fn MakePartial() -> Partial;
 
 fn Test() {
   //@dump-sem-ir-begin
   Partial as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Partial as Core.Destroy;
 
   //@dump-sem-ir-begin
-  var unused x: partial Base = Make();
+  MakePartial();
   //@dump-sem-ir-end
 }
 
@@ -87,16 +89,17 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 alias Partial = partial Abstract;
-fn Make() -> Partial;
+fn MakePartial() -> Partial;
 
 fn Test() {
   //@dump-sem-ir-begin
   Partial as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Partial as Core.Destroy;
 
   //@dump-sem-ir-begin
-  var unused x: Partial = Make();
+  MakePartial();
   //@dump-sem-ir-end
 }
 
@@ -115,16 +118,17 @@ base class Derived {
 }
 
 alias Partial = partial Derived;
-fn Make() -> Partial;
+fn MakePartial() -> Partial;
 
 fn Test() {
   //@dump-sem-ir-begin
   Partial as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Partial as Core.Destroy;
 
   //@dump-sem-ir-begin
-  var unused x: Partial = Make();
+  MakePartial();
   //@dump-sem-ir-end
 }
 
@@ -139,9 +143,8 @@ fn Test() {
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction: type = class_type @AlsoHasNonTrivialDestruction [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.ea4: type = struct_type {.x: %HasNonTrivialDestruction, .y: %AlsoHasNonTrivialDestruction} [concrete]
 // CHECK:STDOUT:   %.edf: type = partial_type %Base [concrete]
-// CHECK:STDOUT:   %pattern_type.234: type = pattern_type %.edf [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakePartial.type: type = fn_type @MakePartial [concrete]
+// CHECK:STDOUT:   %MakePartial: %MakePartial.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc15_11.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
@@ -165,8 +168,6 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.9a3: %SubobjectDestroy.type = facet_value %.edf, (%custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.1d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table.a5e, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.9a3) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.96b: %Destroy.type = facet_value %.edf, (%custom_witness.b80ef6.5, %DestroyImpl.impl_witness.1d2) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.234 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.234 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op: %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @HasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
@@ -200,23 +201,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %Partial.ref.loc15, (constants.%custom_witness.b80ef6.5) [concrete = constants.%SubobjectDestroy.facet.9a3]
 // CHECK:STDOUT:   %.loc15: %SubobjectDestroy.type = converted %Partial.ref.loc15, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.9a3]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %.edf = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc20_3.1: ref %.edf = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %.edf to %.loc20_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %Partial.ref.loc20: type = name_ref Partial, file.%Partial [concrete = constants.%.edf]
-// CHECK:STDOUT:   %x: ref %.edf = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.234 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.234 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.1: %Destroy.type = facet_value constants.%.edf, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.1d2) [concrete = constants.%Destroy.facet.96b]
-// CHECK:STDOUT:   %.loc20_3.2: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc20_3.1 [concrete = constants.%Destroy.facet.96b]
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.2: %Destroy.type = facet_value constants.%.edf, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.1d2) [concrete = constants.%Destroy.facet.96b]
-// CHECK:STDOUT:   %.loc20_3.3: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc20_3.2 [concrete = constants.%Destroy.facet.96b]
+// CHECK:STDOUT:   %MakePartial.ref: %MakePartial.type = name_ref MakePartial, file.%MakePartial.decl [concrete = constants.%MakePartial]
+// CHECK:STDOUT:   %.loc21_15.1: ref %.edf = temporary_storage
+// CHECK:STDOUT:   %MakePartial.call: init %.edf to %.loc21_15.1 = call %MakePartial.ref()
+// CHECK:STDOUT:   %.loc21_15.2: ref %.edf = temporary %.loc21_15.1, %MakePartial.call
+// CHECK:STDOUT:   %Destroy.facet.loc21_15.1: %Destroy.type = facet_value constants.%.edf, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.1d2) [concrete = constants.%Destroy.facet.96b]
+// CHECK:STDOUT:   %.loc21_15.3: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc21_15.1 [concrete = constants.%Destroy.facet.96b]
+// CHECK:STDOUT:   %Destroy.facet.loc21_15.2: %Destroy.type = facet_value constants.%.edf, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.1d2) [concrete = constants.%Destroy.facet.96b]
+// CHECK:STDOUT:   %.loc21_15.4: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc21_15.2 [concrete = constants.%Destroy.facet.96b]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc21_15.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,10 +253,9 @@ fn Test() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %.edf: type = partial_type %Base [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakePartial.type: type = fn_type @MakePartial [concrete]
+// CHECK:STDOUT:   %MakePartial: %MakePartial.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.234: type = pattern_type %.edf [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc14_11.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
@@ -273,8 +266,6 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.1d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.9a3) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %.edf, (%DestroyImpl.impl_witness.1d2, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.234 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.234 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -304,28 +295,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %Partial.ref.loc14, (constants.%custom_witness.b80ef6.2) [concrete = constants.%SubobjectDestroy.facet.9a3]
 // CHECK:STDOUT:   %.loc14: %SubobjectDestroy.type = converted %Partial.ref.loc14, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.9a3]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %.edf = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc19_3.1: ref %.edf = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %Base to %.loc19_3.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc19_3.2: init %.edf = as_compatible %Make.call
-// CHECK:STDOUT:   %.loc19_3.3: init %.edf = converted %Make.call, %.loc19_3.2
-// CHECK:STDOUT:   assign %x.var, %.loc19_3.3
-// CHECK:STDOUT:   %.loc19_17.1: type = splice_block %.loc19_17.2 [concrete = constants.%.edf] {
-// CHECK:STDOUT:     %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
-// CHECK:STDOUT:     %.loc19_17.2: type = partial_type %Base.ref [concrete = constants.%.edf]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %.edf = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.234 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.234 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc19_3.1: %Destroy.type = facet_value constants.%.edf, (constants.%DestroyImpl.impl_witness.1d2, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc19_3.4: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc19_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc19_3.2: %Destroy.type = facet_value constants.%.edf, (constants.%DestroyImpl.impl_witness.1d2, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc19_3.5: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc19_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %MakePartial.ref: %MakePartial.type = name_ref MakePartial, file.%MakePartial.decl [concrete = constants.%MakePartial]
+// CHECK:STDOUT:   %.loc20_15.1: ref %.edf = temporary_storage
+// CHECK:STDOUT:   %MakePartial.call: init %.edf to %.loc20_15.1 = call %MakePartial.ref()
+// CHECK:STDOUT:   %.loc20_15.2: ref %.edf = temporary %.loc20_15.1, %MakePartial.call
+// CHECK:STDOUT:   %Destroy.facet.loc20_15.1: %Destroy.type = facet_value constants.%.edf, (constants.%DestroyImpl.impl_witness.1d2, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc20_15.3: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc20_15.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc20_15.2: %Destroy.type = facet_value constants.%.edf, (constants.%DestroyImpl.impl_witness.1d2, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc20_15.4: %Destroy.type = converted constants.%.edf, %Destroy.facet.loc20_15.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_15.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,10 +322,9 @@ fn Test() {
 // CHECK:STDOUT:   %HasNonTrivialDestruction: type = class_type @HasNonTrivialDestruction [concrete]
 // CHECK:STDOUT:   %struct_type.x.y.ea4: type = struct_type {.x: %HasNonTrivialDestruction, .y: %AlsoHasNonTrivialDestruction} [concrete]
 // CHECK:STDOUT:   %.79f: type = partial_type %Abstract [concrete]
-// CHECK:STDOUT:   %pattern_type.5f8: type = pattern_type %.79f [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %MakePartial.type: type = fn_type @MakePartial [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakePartial: %MakePartial.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_11.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
@@ -370,8 +348,6 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.c03: %SubobjectDestroy.type = facet_value %.79f, (%custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.98a: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table.a5e, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c03) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.280: %Destroy.type = facet_value %.79f, (%custom_witness.b80ef6.5, %DestroyImpl.impl_witness.98a) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.5f8 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.5f8 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op: %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %HasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @HasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
@@ -405,23 +381,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %Partial.ref.loc10, (constants.%custom_witness.b80ef6.5) [concrete = constants.%SubobjectDestroy.facet.c03]
 // CHECK:STDOUT:   %.loc10: %SubobjectDestroy.type = converted %Partial.ref.loc10, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.c03]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %.79f = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc15_3.1: ref %.79f = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %.79f to %.loc15_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %Partial.ref.loc15: type = name_ref Partial, file.%Partial [concrete = constants.%.79f]
-// CHECK:STDOUT:   %x: ref %.79f = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.5f8 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.5f8 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc15_3.1: %Destroy.type = facet_value constants.%.79f, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.98a) [concrete = constants.%Destroy.facet.280]
-// CHECK:STDOUT:   %.loc15_3.2: %Destroy.type = converted constants.%.79f, %Destroy.facet.loc15_3.1 [concrete = constants.%Destroy.facet.280]
-// CHECK:STDOUT:   %Destroy.facet.loc15_3.2: %Destroy.type = facet_value constants.%.79f, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.98a) [concrete = constants.%Destroy.facet.280]
-// CHECK:STDOUT:   %.loc15_3.3: %Destroy.type = converted constants.%.79f, %Destroy.facet.loc15_3.2 [concrete = constants.%Destroy.facet.280]
+// CHECK:STDOUT:   %MakePartial.ref: %MakePartial.type = name_ref MakePartial, file.%MakePartial.decl [concrete = constants.%MakePartial]
+// CHECK:STDOUT:   %.loc16_15.1: ref %.79f = temporary_storage
+// CHECK:STDOUT:   %MakePartial.call: init %.79f to %.loc16_15.1 = call %MakePartial.ref()
+// CHECK:STDOUT:   %.loc16_15.2: ref %.79f = temporary %.loc16_15.1, %MakePartial.call
+// CHECK:STDOUT:   %Destroy.facet.loc16_15.1: %Destroy.type = facet_value constants.%.79f, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.98a) [concrete = constants.%Destroy.facet.280]
+// CHECK:STDOUT:   %.loc16_15.3: %Destroy.type = converted constants.%.79f, %Destroy.facet.loc16_15.1 [concrete = constants.%Destroy.facet.280]
+// CHECK:STDOUT:   %Destroy.facet.loc16_15.2: %Destroy.type = facet_value constants.%.79f, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.98a) [concrete = constants.%Destroy.facet.280]
+// CHECK:STDOUT:   %.loc16_15.4: %Destroy.type = converted constants.%.79f, %Destroy.facet.loc16_15.2 [concrete = constants.%Destroy.facet.280]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc16_15.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -469,9 +438,8 @@ fn Test() {
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction: type = class_type @AlsoHasNonTrivialDestruction [concrete]
 // CHECK:STDOUT:   %struct_type.base.y.a60: type = struct_type {.base: %Base, .y: %AlsoHasNonTrivialDestruction} [concrete]
 // CHECK:STDOUT:   %.546: type = partial_type %Derived [concrete]
-// CHECK:STDOUT:   %pattern_type.c1d: type = pattern_type %.546 [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakePartial.type: type = fn_type @MakePartial [concrete]
+// CHECK:STDOUT:   %MakePartial: %MakePartial.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc19_11.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
@@ -501,8 +469,6 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.6d7: %SubobjectDestroy.type = facet_value %.546, (%custom_witness.b80ef6.7) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.65f: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table.a5e, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6d7) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.f99: %Destroy.type = facet_value %.546, (%custom_witness.b80ef6.7, %DestroyImpl.impl_witness.65f) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.c1d = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.c1d = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %HasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @HasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
 // CHECK:STDOUT:   %HasNonTrivialDestruction.as.DestroyImpl.impl.Op: %HasNonTrivialDestruction.as.DestroyImpl.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op.type: type = fn_type @AlsoHasNonTrivialDestruction.as.DestroyImpl.impl.Op [concrete]
@@ -536,23 +502,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %Partial.ref.loc19, (constants.%custom_witness.b80ef6.7) [concrete = constants.%SubobjectDestroy.facet.6d7]
 // CHECK:STDOUT:   %.loc19: %SubobjectDestroy.type = converted %Partial.ref.loc19, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.6d7]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %.546 = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc24_3.1: ref %.546 = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %.546 to %.loc24_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %Partial.ref.loc24: type = name_ref Partial, file.%Partial [concrete = constants.%.546]
-// CHECK:STDOUT:   %x: ref %.546 = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.c1d = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.c1d = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.1: %Destroy.type = facet_value constants.%.546, (constants.%custom_witness.b80ef6.7, constants.%DestroyImpl.impl_witness.65f) [concrete = constants.%Destroy.facet.f99]
-// CHECK:STDOUT:   %.loc24_3.2: %Destroy.type = converted constants.%.546, %Destroy.facet.loc24_3.1 [concrete = constants.%Destroy.facet.f99]
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.2: %Destroy.type = facet_value constants.%.546, (constants.%custom_witness.b80ef6.7, constants.%DestroyImpl.impl_witness.65f) [concrete = constants.%Destroy.facet.f99]
-// CHECK:STDOUT:   %.loc24_3.3: %Destroy.type = converted constants.%.546, %Destroy.facet.loc24_3.2 [concrete = constants.%Destroy.facet.f99]
+// CHECK:STDOUT:   %MakePartial.ref: %MakePartial.type = name_ref MakePartial, file.%MakePartial.decl [concrete = constants.%MakePartial]
+// CHECK:STDOUT:   %.loc25_15.1: ref %.546 = temporary_storage
+// CHECK:STDOUT:   %MakePartial.call: init %.546 to %.loc25_15.1 = call %MakePartial.ref()
+// CHECK:STDOUT:   %.loc25_15.2: ref %.546 = temporary %.loc25_15.1, %MakePartial.call
+// CHECK:STDOUT:   %Destroy.facet.loc25_15.1: %Destroy.type = facet_value constants.%.546, (constants.%custom_witness.b80ef6.7, constants.%DestroyImpl.impl_witness.65f) [concrete = constants.%Destroy.facet.f99]
+// CHECK:STDOUT:   %.loc25_15.3: %Destroy.type = converted constants.%.546, %Destroy.facet.loc25_15.1 [concrete = constants.%Destroy.facet.f99]
+// CHECK:STDOUT:   %Destroy.facet.loc25_15.2: %Destroy.type = facet_value constants.%.546, (constants.%custom_witness.b80ef6.7, constants.%DestroyImpl.impl_witness.65f) [concrete = constants.%Destroy.facet.f99]
+// CHECK:STDOUT:   %.loc25_15.4: %Destroy.type = converted constants.%.546, %Destroy.facet.loc25_15.2 [concrete = constants.%Destroy.facet.f99]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc25_15.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
