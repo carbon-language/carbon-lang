@@ -16,17 +16,18 @@ library "[[@TEST_NAME]]";
 class HasTrivialDestruction {}
 
 alias MaybeUnformed = Core.MaybeUnformed(HasTrivialDestruction);
-fn Make() -> MaybeUnformed;
+fn MakeMaybeUnformed() -> MaybeUnformed;
 
 fn Test() {
   //@dump-sem-ir-begin
   MaybeUnformed as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   MaybeUnformed as Core.Destroy;
   MaybeUnformed as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
-  var unused x: MaybeUnformed = Make();
+  MakeMaybeUnformed();
   //@dump-sem-ir-end
 }
 
@@ -116,9 +117,8 @@ fn Test() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.generic: %MaybeUnformed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.f4e: type = class_type @MaybeUnformed, @MaybeUnformed(%HasTrivialDestruction) [concrete]
-// CHECK:STDOUT:   %pattern_type.2b2: type = pattern_type %MaybeUnformed.f4e [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakeMaybeUnformed.type: type = fn_type @MakeMaybeUnformed [concrete]
+// CHECK:STDOUT:   %MakeMaybeUnformed: %MakeMaybeUnformed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %.991: type = maybe_unformed_type %HasTrivialDestruction [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_17.4 [concrete]
@@ -131,8 +131,6 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.ce8: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7d1) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %MaybeUnformed.f4e, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.ce8) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.2b2 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.2b2 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -164,23 +162,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %MaybeUnformed.ref.loc10, (constants.%custom_witness.b80ef6.4) [concrete = constants.%SubobjectDestroy.facet.7d1]
 // CHECK:STDOUT:   %.loc10: %SubobjectDestroy.type = converted %MaybeUnformed.ref.loc10, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.7d1]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %MaybeUnformed.f4e = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc16_3.1: ref %MaybeUnformed.f4e = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %MaybeUnformed.f4e to %.loc16_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc16: type = name_ref MaybeUnformed, file.%MaybeUnformed.loc5_7 [concrete = constants.%MaybeUnformed.f4e]
-// CHECK:STDOUT:   %x: ref %MaybeUnformed.f4e = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.2b2 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.2b2 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.1: %Destroy.type = facet_value constants.%MaybeUnformed.f4e, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.ce8) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc16_3.2: %Destroy.type = converted constants.%MaybeUnformed.f4e, %Destroy.facet.loc16_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.2: %Destroy.type = facet_value constants.%MaybeUnformed.f4e, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.ce8) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc16_3.3: %Destroy.type = converted constants.%MaybeUnformed.f4e, %Destroy.facet.loc16_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %MakeMaybeUnformed.ref: %MakeMaybeUnformed.type = name_ref MakeMaybeUnformed, file.%MakeMaybeUnformed.decl [concrete = constants.%MakeMaybeUnformed]
+// CHECK:STDOUT:   %.loc17_21.1: ref %MaybeUnformed.f4e = temporary_storage
+// CHECK:STDOUT:   %MakeMaybeUnformed.call: init %MaybeUnformed.f4e to %.loc17_21.1 = call %MakeMaybeUnformed.ref()
+// CHECK:STDOUT:   %.loc17_21.2: ref %MaybeUnformed.f4e = temporary %.loc17_21.1, %MakeMaybeUnformed.call
+// CHECK:STDOUT:   %Destroy.facet.loc17_21.1: %Destroy.type = facet_value constants.%MaybeUnformed.f4e, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.ce8) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc17_21.3: %Destroy.type = converted constants.%MaybeUnformed.f4e, %Destroy.facet.loc17_21.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc17_21.2: %Destroy.type = facet_value constants.%MaybeUnformed.f4e, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.ce8) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc17_21.4: %Destroy.type = converted constants.%MaybeUnformed.f4e, %Destroy.facet.loc17_21.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_21.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

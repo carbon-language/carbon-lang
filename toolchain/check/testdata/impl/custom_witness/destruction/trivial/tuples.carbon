@@ -35,12 +35,13 @@ fn Test() {
   //@dump-sem-ir-begin
   Tuple as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
-  //@dump-sem-ir-begin
+    //@dump-sem-ir-begin
   var unused x: Tuple = Make();
-  //@dump-sem-ir-end
+    //@dump-sem-ir-end
 }
 
 // --- trivial_nonempty.carbon
@@ -49,17 +50,18 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 alias Tuple = (A, B);
-fn Make() -> Tuple;
+fn MakeTuple() -> Tuple;
 
 fn Test() {
   //@dump-sem-ir-begin
   Tuple as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
-  var unused x: Tuple = Make();
+  MakeTuple();
   //@dump-sem-ir-end
 }
 
@@ -91,17 +93,18 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 alias Tuple = (A, (B, A));
-fn Make() -> Tuple;
+fn MakeTuple() -> Tuple;
 
 fn Test() {
   //@dump-sem-ir-begin
   Tuple as Core.SubobjectDestroy;
   //@dump-sem-ir-end
+
   Tuple as Core.Destroy;
   Tuple as Core.TrivialDestroy;
 
   //@dump-sem-ir-begin
-  var unused x: Tuple = Make();
+  MakeTuple();
   //@dump-sem-ir-end
 }
 
@@ -171,19 +174,19 @@ fn Test() {
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
 // CHECK:STDOUT:   %Make.call: init %empty_tuple.type = call %Make.ref()
 // CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %.loc14_17.1: type = splice_block %.loc14_17.2 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %Tuple.ref.loc14: %empty_tuple.type = name_ref Tuple, file.%Tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc14_17.2: type = converted %Tuple.ref.loc14, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc15_17.1: type = splice_block %.loc15_17.2 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %Tuple.ref.loc15: %empty_tuple.type = name_ref Tuple, file.%Tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc15_17.2: type = converted %Tuple.ref.loc15, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_tuple.type = wrapper_binding x, %x.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.cb1 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc14_3.1: %Destroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc14_3.1: %Destroy.type = converted constants.%empty_tuple.type, %Destroy.facet.loc14_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc14_3.2: %Destroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc14_3.2: %Destroy.type = converted constants.%empty_tuple.type, %Destroy.facet.loc14_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc15_3.1: %Destroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc15_3.1: %Destroy.type = converted constants.%empty_tuple.type, %Destroy.facet.loc15_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc15_3.2: %Destroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc15_3.2: %Destroy.type = converted constants.%empty_tuple.type, %Destroy.facet.loc15_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
 // CHECK:STDOUT:   <elided>
@@ -201,10 +204,9 @@ fn Test() {
 // CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%A, %B) [concrete]
 // CHECK:STDOUT:   %tuple.type.1e7: type = tuple_type (%A, %B) [concrete]
-// CHECK:STDOUT:   %pattern_type.7c6: type = pattern_type %tuple.type.1e7 [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %MakeTuple.type: type = fn_type @MakeTuple [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakeTuple: %MakeTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_9.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
@@ -232,8 +234,6 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.995: %SubobjectDestroy.type = facet_value %tuple.type.1e7, (%custom_witness.b80ef6.4) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.f3a: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.995) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.c78: %Destroy.type = facet_value %tuple.type.1e7, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.f3a) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.7c6 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.7c6 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -261,26 +261,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value constants.%tuple.type.1e7, (constants.%custom_witness.b80ef6.4) [concrete = constants.%SubobjectDestroy.facet.995]
 // CHECK:STDOUT:   %.loc10: %SubobjectDestroy.type = converted %Tuple.ref.loc10, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.995]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %tuple.type.1e7 = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc16_3.1: ref %tuple.type.1e7 = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %tuple.type.1e7 to %.loc16_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %.loc16_17.1: type = splice_block %.loc16_17.2 [concrete = constants.%tuple.type.1e7] {
-// CHECK:STDOUT:     %Tuple.ref.loc16: %tuple.type.693 = name_ref Tuple, file.%Tuple [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc16_17.2: type = converted %Tuple.ref.loc16, constants.%tuple.type.1e7 [concrete = constants.%tuple.type.1e7]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.1e7 = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.7c6 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.7c6 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.1: %Destroy.type = facet_value constants.%tuple.type.1e7, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.f3a) [concrete = constants.%Destroy.facet.c78]
-// CHECK:STDOUT:   %.loc16_3.2: %Destroy.type = converted constants.%tuple.type.1e7, %Destroy.facet.loc16_3.1 [concrete = constants.%Destroy.facet.c78]
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.2: %Destroy.type = facet_value constants.%tuple.type.1e7, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.f3a) [concrete = constants.%Destroy.facet.c78]
-// CHECK:STDOUT:   %.loc16_3.3: %Destroy.type = converted constants.%tuple.type.1e7, %Destroy.facet.loc16_3.2 [concrete = constants.%Destroy.facet.c78]
+// CHECK:STDOUT:   %MakeTuple.ref: %MakeTuple.type = name_ref MakeTuple, file.%MakeTuple.decl [concrete = constants.%MakeTuple]
+// CHECK:STDOUT:   %.loc17_13.1: ref %tuple.type.1e7 = temporary_storage
+// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.1e7 to %.loc17_13.1 = call %MakeTuple.ref()
+// CHECK:STDOUT:   %.loc17_13.2: ref %tuple.type.1e7 = temporary %.loc17_13.1, %MakeTuple.call
+// CHECK:STDOUT:   %Destroy.facet.loc17_13.1: %Destroy.type = facet_value constants.%tuple.type.1e7, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.f3a) [concrete = constants.%Destroy.facet.c78]
+// CHECK:STDOUT:   %.loc17_13.3: %Destroy.type = converted constants.%tuple.type.1e7, %Destroy.facet.loc17_13.1 [concrete = constants.%Destroy.facet.c78]
+// CHECK:STDOUT:   %Destroy.facet.loc17_13.2: %Destroy.type = facet_value constants.%tuple.type.1e7, (constants.%custom_witness.b80ef6.4, constants.%DestroyImpl.impl_witness.f3a) [concrete = constants.%Destroy.facet.c78]
+// CHECK:STDOUT:   %.loc17_13.4: %Destroy.type = converted constants.%tuple.type.1e7, %Destroy.facet.loc17_13.2 [concrete = constants.%Destroy.facet.c78]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_13.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,10 +314,9 @@ fn Test() {
 // CHECK:STDOUT:   %tuple.f99: %tuple.type.bd0 = tuple_value (%A, %tuple.0e1) [concrete]
 // CHECK:STDOUT:   %tuple.type.df2: type = tuple_type (%B, %A) [concrete]
 // CHECK:STDOUT:   %tuple.type.e0b: type = tuple_type (%A, %tuple.type.df2) [concrete]
-// CHECK:STDOUT:   %pattern_type.a21: type = pattern_type %tuple.type.e0b [concrete]
-// CHECK:STDOUT:   %Make.type: type = fn_type @Make [concrete]
+// CHECK:STDOUT:   %MakeTuple.type: type = fn_type @MakeTuple [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %Make: %Make.type = struct_value () [concrete]
+// CHECK:STDOUT:   %MakeTuple: %MakeTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_9.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
@@ -361,8 +350,6 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.4ff: %SubobjectDestroy.type = facet_value %tuple.type.e0b, (%custom_witness.b80ef6.5) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.ecd: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.4ff) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.3c6: %Destroy.type = facet_value %tuple.type.e0b, (%custom_witness.b80ef6.5, %DestroyImpl.impl_witness.ecd) [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.a21 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.a21 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -391,27 +378,16 @@ fn Test() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value constants.%tuple.type.e0b, (constants.%custom_witness.b80ef6.5) [concrete = constants.%SubobjectDestroy.facet.4ff]
 // CHECK:STDOUT:   %.loc10_9.2: %SubobjectDestroy.type = converted %Tuple.ref.loc10, %SubobjectDestroy.facet [concrete = constants.%SubobjectDestroy.facet.4ff]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %x.var: ref %tuple.type.e0b = var_storage %x.var_patt
-// CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc16_3.1: ref %tuple.type.e0b = splice_block %x.var {}
-// CHECK:STDOUT:   %Make.call: init %tuple.type.e0b to %.loc16_3.1 = call %Make.ref()
-// CHECK:STDOUT:   assign %x.var, %Make.call
-// CHECK:STDOUT:   %.loc16_17.1: type = splice_block %.loc16_17.3 [concrete = constants.%tuple.type.e0b] {
-// CHECK:STDOUT:     %Tuple.ref.loc16: %tuple.type.bd0 = name_ref Tuple, file.%Tuple [concrete = constants.%tuple.f99]
-// CHECK:STDOUT:     %.loc16_17.2: type = converted constants.%tuple.0e1, constants.%tuple.type.df2 [concrete = constants.%tuple.type.df2]
-// CHECK:STDOUT:     %.loc16_17.3: type = converted %Tuple.ref.loc16, constants.%tuple.type.e0b [concrete = constants.%tuple.type.e0b]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %tuple.type.e0b = wrapper_binding x, %x.var
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.a21 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.a21 = var_pattern %x.patt [concrete = constants.%x.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.1: %Destroy.type = facet_value constants.%tuple.type.e0b, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.ecd) [concrete = constants.%Destroy.facet.3c6]
-// CHECK:STDOUT:   %.loc16_3.2: %Destroy.type = converted constants.%tuple.type.e0b, %Destroy.facet.loc16_3.1 [concrete = constants.%Destroy.facet.3c6]
-// CHECK:STDOUT:   %Destroy.facet.loc16_3.2: %Destroy.type = facet_value constants.%tuple.type.e0b, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.ecd) [concrete = constants.%Destroy.facet.3c6]
-// CHECK:STDOUT:   %.loc16_3.3: %Destroy.type = converted constants.%tuple.type.e0b, %Destroy.facet.loc16_3.2 [concrete = constants.%Destroy.facet.3c6]
+// CHECK:STDOUT:   %MakeTuple.ref: %MakeTuple.type = name_ref MakeTuple, file.%MakeTuple.decl [concrete = constants.%MakeTuple]
+// CHECK:STDOUT:   %.loc17_13.1: ref %tuple.type.e0b = temporary_storage
+// CHECK:STDOUT:   %MakeTuple.call: init %tuple.type.e0b to %.loc17_13.1 = call %MakeTuple.ref()
+// CHECK:STDOUT:   %.loc17_13.2: ref %tuple.type.e0b = temporary %.loc17_13.1, %MakeTuple.call
+// CHECK:STDOUT:   %Destroy.facet.loc17_13.1: %Destroy.type = facet_value constants.%tuple.type.e0b, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.ecd) [concrete = constants.%Destroy.facet.3c6]
+// CHECK:STDOUT:   %.loc17_13.3: %Destroy.type = converted constants.%tuple.type.e0b, %Destroy.facet.loc17_13.1 [concrete = constants.%Destroy.facet.3c6]
+// CHECK:STDOUT:   %Destroy.facet.loc17_13.2: %Destroy.type = facet_value constants.%tuple.type.e0b, (constants.%custom_witness.b80ef6.5, constants.%DestroyImpl.impl_witness.ecd) [concrete = constants.%Destroy.facet.3c6]
+// CHECK:STDOUT:   %.loc17_13.4: %Destroy.type = converted constants.%tuple.type.e0b, %Destroy.facet.loc17_13.2 [concrete = constants.%Destroy.facet.3c6]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%x.var)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_13.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
