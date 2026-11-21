@@ -6,12 +6,6 @@
 
 set -euo pipefail
 
-if ! command -v tree-sitter >/dev/null 2>&1; then
-  echo "tree-sitter command not found" >&2
-  echo "please run npm install -g tree-sitter-cli" >&2
-  exit 1
-fi
-
 DIR="$(dirname -- "$(readlink -f -- "$0")")"
 ROOT="$(git -C "$DIR" rev-parse --show-toplevel)"
 
