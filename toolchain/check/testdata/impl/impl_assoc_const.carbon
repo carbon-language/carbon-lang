@@ -414,7 +414,7 @@ class CD { }
 // CHECK:STDERR:        ╭─┤ fail_where_rewrite_function.carbon:[[@LINE+7]]:12
 // CHECK:STDERR: ->     │ impl CD as IF where .F = 0 {
 // CHECK:STDERR:        ·            ━━━━━━━┳━━━━━━━
-// CHECK:STDERR:        ·                   ┗━━┫ error: rewrite specified for associated function F
+// CHECK:STDERR:        ·                   ┗━━┫ error: assigning to associated function F
 // CHECK:STDERR:        ·                      ┃        [RewriteForAssociatedFunction]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

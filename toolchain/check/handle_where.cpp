@@ -9,6 +9,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/identified_facet_type.h"
+#include "toolchain/check/impl.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
@@ -289,6 +290,9 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
 
   // Rewrites always contain a designator since the LHS must be one. This is
   // checked elsewhere.
+
+  // TODO: Diagnose if the LHS is an associated function instead of an
+  // associated constant decl.
 
   // Convert rhs to type of lhs.
   auto lhs_type_id = context.insts().Get(lhs_id).type_id();
@@ -648,8 +652,8 @@ auto HandleParseNode(Context& /*context*/,
 
 auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
     -> bool {
-  [[maybe_unused]] auto rhs_inst_id = context.node_stack().PopExpr();
-  [[maybe_unused]] auto lhs_name_id =
+  auto rhs_inst_id = context.node_stack().PopExpr();
+  auto lhs_name_id =
       context.node_stack()
           .Pop<Parse::NodeKind::IdentifierNameNotBeforeSignature>();
   auto scope_inst_id =
@@ -658,7 +662,10 @@ auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
     return true;
   }
 
-  return context.TODO(node_id, "where assignment decl");
+  auto impl_decl = context.insts().GetAs<SemIR::ImplDecl>(scope_inst_id);
+  const auto& impl = context.impls().Get(impl_decl.impl_id);
+  SetImplWitnessTableEntry(context, node_id, impl, lhs_name_id, rhs_inst_id);
+  return true;
 }
 
 }  // namespace Carbon::Check

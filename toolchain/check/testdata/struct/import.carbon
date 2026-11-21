@@ -326,7 +326,7 @@ fn F() -> {.x: i32} {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.0fa: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.774]
-// CHECK:STDOUT:   %Main.import_ref.406: %struct_type.x = import_ref Main//symbolic_decl, loc10_37, loaded [concrete = constants.%struct]
+// CHECK:STDOUT:   %Main.import_ref.406: %struct_type.x = import_ref Main//symbolic_decl, loc10_13, loaded [concrete = constants.%struct]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.406), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.89c: %struct_type.x = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %struct_type.x = assoc_const_decl @value [concrete] {}
