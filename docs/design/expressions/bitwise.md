@@ -199,34 +199,34 @@ package Core;
 
 // Unary `^`.
 interface BitComplementPrimitive(
-    implicit_into anchor Self: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
-  fn Op(fwd self: Self) -> fwd ResultForm;
+    implicit_into anchor Self: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self) -> fwd ResultExtType;
 }
 constraint BitComplement {
   let Result: type;
-  extend require form(val Self) impls
+  extend require exttype(val Self) impls
       BitComplementPrimitive
-      where .ResultForm = form(var Result);
+      where .ResultExtType = exttype(var Result);
 }
 ```
 
 ```
 // Binary `&`.
 interface BitAndWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint BitAndWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      BitAndWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      BitAndWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitAnd {
   extend BitAndWith(Self) where .Result = Self;
@@ -236,18 +236,18 @@ constraint BitAnd {
 ```
 // Binary `|`.
 interface BitOrWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint BitOrWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      BitOrWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      BitOrWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitOr {
   extend BitOrWith(Self) where .Result = Self;
@@ -257,18 +257,18 @@ constraint BitOr {
 ```
 // Binary `^`.
 interface BitXorWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint BitXorWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      BitXorWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      BitXorWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitXor {
   extend BitXorWith(Self) where .Result = Self;
@@ -280,18 +280,18 @@ Note that the shift operators anchor on the type of the left argument.
 ```
 // Binary `<<`.
 interface LeftShiftWithPrimitive(
-    implicit_into anchor Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into anchor Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint LeftShiftWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      LeftShiftWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      LeftShiftWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint LeftShift {
   extend LeftShiftWith(Self) where .Result = Self;
@@ -301,18 +301,18 @@ constraint LeftShift {
 ```
 // Binary `>>`.
 interface RightShiftWithPrimitive(
-    implicit_into anchor Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into anchor Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint RightShiftWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      RightShiftWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      RightShiftWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint RightShift {
   extend RightShiftWith(Self) where .Result = Self;
@@ -323,15 +323,15 @@ These interfaces are used to rewrite uses of the bitwise and shift operators:
 
 -   The expression `^x` is rewritten to `x.(BitComplementPrimitive.Op)()`.
 -   The expression `x & y` is rewritten to
-    `x.(BitAndWithPrimitive(formof(y)).Op)(y)`.
+    `x.(BitAndWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x | y` is rewritten to
-    `x.(BitOrWithPrimitive(formof(y)).Op)(y)`.
+    `x.(BitOrWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x ^ y` is rewritten to
-    `x.(BitXorWithPrimitive(formof(y)).Op)(y)`.
+    `x.(BitXorWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x << y` is rewritten to
-    `x.(LeftShiftWithPrimitive(formof(y)).Op)(y)`.
+    `x.(LeftShiftWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x >> y` is rewritten to
-    `x.(RightShiftWithPrimitive(formof(y)).Op)(y)`.
+    `x.(RightShiftWithPrimitive(exttypeof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.

@@ -256,8 +256,8 @@ The `EqWithPrimitive` interface is used to define the semantics of the `==` and
 
 ```
 interface EqWithPrimitive(
-    implicit_into Self: Core.Form,
-    implicit_into U: Core.Form) {
+    implicit_into Self: Core.ExtType,
+    implicit_into U: Core.ExtType) {
   fn Equal(fwd self: Self, fwd u: U) -> bool;
   default fn NotEqual(fwd self: Self, fwd u: U) -> bool {
     return not ((fwd self) == (fwd u));
@@ -265,7 +265,7 @@ interface EqWithPrimitive(
 }
 constraint EqWith(U: type) {
   extend require impls
-      ValSelf(EqWithPrimitive(form(val U)));
+      ValSelf(EqWithPrimitive(exttype(val U)));
 }
 // FIXME: anchor
 constraint Eq {
@@ -275,8 +275,9 @@ constraint Eq {
 
 The `==` and `!=` operators are rewritten as follows:
 
--   The expression `x == y` calls `x.(EqWithPrimitive(formof(y)).Equal)(y)`.
--   The expression `x != y` calls `x.(EqWithPrimitive(formof(y)).NotEqual)(y)`.
+-   The expression `x == y` calls `x.(EqWithPrimitive(exttypeof(y)).Equal)(y)`.
+-   The expression `x != y` calls
+    `x.(EqWithPrimitive(exttypeof(y)).NotEqual)(y)`.
 
 ```
 class Path {
@@ -367,8 +368,8 @@ choice Ordering {
   Incomparable
 }
 interface OrderedWithPrimitive(
-    implicit_into Self: Core.Form,
-    implicit_into U: Core.Form) {
+    implicit_into Self: Core.ExtType,
+    implicit_into U: Core.ExtType) {
   fn Compare(fwd self: Self, fwd u: U) -> Ordering;
   default fn Less(fwd self: Self, fwd u: U) -> bool {
     return self.Compare(fwd u) == Ordering.Less;
@@ -391,7 +392,7 @@ interface OrderedWithPrimitive(
 }
 constraint OrderedWith(U: type) {
   extend require impls
-      ValSelf(OrderedWithPrimitive(form(val U)));
+      ValSelf(OrderedWithPrimitive(exttype(val U)));
 }
 // FIXME: anchor
 constraint Ordered {
@@ -407,13 +408,14 @@ impl Ordering as Ordered;
 
 The comparison operators are rewritten as follows:
 
--   The expression `x < y` calls `x.(OrderedWithPrimitive(formof(y)).Less)(y)`.
+-   The expression `x < y` calls
+    `x.(OrderedWithPrimitive(exttypeof(y)).Less)(y)`.
 -   The expression `x <= y` calls
-    `x.(OrderedWithPrimitive(formof(y)).LessOrEquivalent)(y)`.
+    `x.(OrderedWithPrimitive(exttypeof(y)).LessOrEquivalent)(y)`.
 -   The expression `x > y` calls
-    `x.(OrderedWithPrimitive(formof(y)).Greater)(y)`.
+    `x.(OrderedWithPrimitive(exttypeof(y)).Greater)(y)`.
 -   The expression `x >= y` calls
-    `x.(OrderedWithPrimitive(formof(y)).GreaterOrEquivalent)(y)`.
+    `x.(OrderedWithPrimitive(exttypeof(y)).GreaterOrEquivalent)(y)`.
 
 For example:
 

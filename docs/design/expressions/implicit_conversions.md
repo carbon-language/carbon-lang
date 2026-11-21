@@ -231,17 +231,17 @@ package Core;
 // generally only want to perform a single implicit
 // type conversion. Perhaps it should have `anchor`?
 interface ImplicitAsPrimitive(
-    implicit_into Self: Form, Dest: type) {
+    implicit_into Self: ExtType, Dest: type) {
   final extend impl as AsPrimitive(Dest);
   // Inherited from AsPrimitive(Dest):
-  // let implicit_from ResultForm: Form where .type = Dest;
+  // let implicit_from ResultExtType: ExtType where .type = Dest;
   // fn Convert(fwd self: Self)
-  //     -> fwd ResultForm;
+  //     -> fwd ResultExtType;
 }
 constraint ImplicitAs(Dest: type) {
-  extend require form(val Self) as
+  extend require exttype(val Self) as
       ImplicitAsPrimitive(Dest)
-      where .ResultForm = form(var Dest);
+      where .ResultExtType = exttype(var Dest);
 }
 ```
 

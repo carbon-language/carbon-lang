@@ -176,31 +176,31 @@ permitted by this rule may only be allowed in certain contexts.
 ## Extensibility
 
 Explicit casts can be defined for user-defined types such as
-[classes](/docs/design/classes.md) by implementing the `AsPrimitive` form
-interface or `As` named constraint:
+[classes](/docs/design/classes.md) by implementing the `AsPrimitive` extended
+type interface or `As` named constraint:
 
 ```carbon
 package Core;
 
-interface AsPrimitive(implicit_into Self: Form,
+interface AsPrimitive(implicit_into Self: ExtType,
                       Dest: type) {
   // FIXME: Need to get the unqualified version
   // of `Dest` without `const`/`partial` here.
-  let implicit_from ResultForm: Form where .type = Dest;
+  let implicit_from ResultExtType: ExtType where .type = Dest;
   fn Convert(fwd self: Self)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint As(Dest: type) {
-  extend require form(val Self) as
+  extend require exttype(val Self) as
       AsPrimitive(Dest)
-      where .ResultForm = form(var Dest);
+      where .ResultExtType = exttype(var Dest);
 }
 ```
 
 The expression `x as U` is rewritten to `x.(AsPrimitive(U).Convert)()`. Observe
 that the destination type is specified as an input parameter, but the resulting
-form is specified as an associated constant by the `impl` (though it is required
-to have a matching type). This allows
+extended type is specified as an associated constant by the `impl` (though it is
+required to have a matching type). This allows
 [conversion between compatible types](#compatible-types) to preserve category.
 
 **Note:** This rewrite causes the expression `U` to be implicitly converted to

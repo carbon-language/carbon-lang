@@ -55,22 +55,22 @@ A subscript expression has the form "_lhs_ `[` _index_ `]`". As in C++, this
 syntax has the same precedence as `.`, `->`, and function calls, and associates
 left-to-right with all of them.
 
-Its semantics are defined in terms of the following form interface:
+Its semantics are defined in terms of the following extended type interface:
 
 ```carbon
 package Core;
 
 interface IndexWithPrimitive(
-    implicit_into anchor Self: Form,
-    implicit_into Subscript: Form) {
-  let implicit_from ResultForm: Form;
+    implicit_into anchor Self: ExtType,
+    implicit_into Subscript: ExtType) {
+  let implicit_from ResultExtType: ExtType;
   fn Op(fwd self: Self, fwd subscript: Subscript)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 ```
 
 The expression "_lhs_ `[` _index_ `]`" is rewritten to "_lhs_
-`.(IndexWithPrimitive(formof(` _index_ `)).Op)(` _index_ `)`".
+`.(IndexWithPrimitive(exttypeof(` _index_ `)).Op)(` _index_ `)`".
 
 The named constraint `IndexWith` covers the case of indexing into an object that
 owns the storage for its elements, like an array or C++'s `std::vector`:
@@ -81,11 +81,11 @@ owns the storage for its elements, like an array or C++'s `std::vector`:
 constraint IndexValWith(SubscriptType: type) {
   let ElementType: type;
 
-  require form(val Self) impls
-     IndexWithPrimitive(form(val SubscriptType))
-     where .ResultForm = form(val ElementType);
+  require exttype(val Self) impls
+     IndexWithPrimitive(exttype(val SubscriptType))
+     where .ResultExtType = exttype(val ElementType);
   alias At = ValSelf(IndexWithPrimitive(
-      form(val SubscriptType))).Op;
+      exttype(val SubscriptType))).Op;
 }
 
 // `lhs[index]` is a ref expression when `lhs`
@@ -93,11 +93,11 @@ constraint IndexValWith(SubscriptType: type) {
 constraint IndexRefWith(SubscriptType: type) {
   let ElementType: type;
 
-  require form(ref Self) impls
-     IndexWithPrimitive(form(val SubscriptType))
-     where .ResultForm = form(ref ElementType);
+  require exttype(ref Self) impls
+     IndexWithPrimitive(exttype(val SubscriptType))
+     where .ResultExtType = exttype(ref ElementType);
   alias Ref = RefSelf(IndexWithPrimitive(
-      form(val SubscriptType))).Op;
+      exttype(val SubscriptType))).Op;
 }
 
 // `lhs[index]` is a reference expression or value
@@ -126,19 +126,19 @@ and
 constraint IndirectIndexWith(SubscriptType: type) {
   let ElementType: type;
 
-  require form(val Self) impls
-     IndexWithPrimitive(form(val SubscriptType))
-     where .ResultForm = form(ref ElementType);
+  require exttype(val Self) impls
+     IndexWithPrimitive(exttype(val SubscriptType))
+     where .ResultExtType = exttype(ref ElementType);
   alias Ref = ValSelf(IndexWithPrimitive(
-      form(val SubscriptType))).Op;
+      exttype(val SubscriptType))).Op;
 }
 ```
 
 Note that both `IndexValWith` and `IndexIndirectWith` require
-`form(val Self) as IndexWithPrimitive(form(val SubscriptType))`, with different
-result forms, and so conflict. However, a type that defines an `impl` of
-`IndirectIndexWith` will also satisfy the `IndexValWith`, `IndexRefWith`, and
-`IndexWith` constraints due to implicit conversions.
+`exttype(val Self) as IndexWithPrimitive(exttype(val SubscriptType))`, with
+different result extended types, and so conflict. However, a type that defines
+an `impl` of `IndirectIndexWith` will also satisfy the `IndexValWith`,
+`IndexRefWith`, and `IndexWith` constraints due to implicit conversions.
 
 ### Examples
 

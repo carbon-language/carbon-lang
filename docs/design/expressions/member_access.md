@@ -51,8 +51,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 > **TODO:** Update the simple (`a.b`), compound (`a.(m)`), and `impl`
-> (`a.impl(m)`) member access and `impl` lookup rules to generalize for form
-> interfaces and form facets, as proposed in
+> (`a.impl(m)`) member access and `impl` lookup rules to generalize for extended
+> type interfaces and extended type facets, as proposed in
 > [proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389).
 
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded

@@ -220,35 +220,35 @@ following family of interfaces:
 package Core;
 
 // Unary `-`.
-interface NegatePrimitive(implicit_into anchor Self: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+interface NegatePrimitive(implicit_into anchor Self: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint Negate {
   let Result: type;
-  extend require form(val Self) impls
+  extend require exttype(val Self) impls
       NegatePrimitive
-      where .ResultForm = form(var Result);
+      where .ResultExtType = exttype(var Result);
 }
 ```
 
 ```
 // Binary `+`.
 interface AddWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint AddWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      AddWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      AddWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Add {
   extend AddWith(Self) where .Result = Self;
@@ -258,18 +258,18 @@ constraint Add {
 ```
 // Binary `-`.
 interface SubWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint SubWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      SubWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      SubWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Sub {
   extend SubWith(Self) where .Result = Self;
@@ -279,18 +279,18 @@ constraint Sub {
 ```
 // Binary `*`.
 interface MulWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint MulWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      MulWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      MulWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Mul {
   extend MulWith(Self) where .Result = Self;
@@ -300,18 +300,18 @@ constraint Mul {
 ```
 // Binary `/`.
 interface DivWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint DivWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      DivWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      DivWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Div {
   extend DivWith(Self) where .Result = Self;
@@ -321,18 +321,18 @@ constraint Div {
 ```
 // Binary `%`.
 interface ModWithPrimitive(
-    implicit_into Self: Form,
-    implicit_into U: Form) {
-  default let implicit_from ResultForm: Form
-      = form(var Self.type);
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
   fn Op(fwd self: Self, fwd other: U)
-      -> fwd ResultForm;
+      -> fwd ResultExtType;
 }
 constraint ModWith(U: type) {
   let Result: type;
-  extend require form(val Self) impls
-      ModWithPrimitive(form(val U))
-      where .ResultForm = form(var Result);
+  extend require exttype(val Self) impls
+      ModWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Mod {
   extend ModWith(Self) where .Result = Self;
@@ -343,15 +343,15 @@ These interfaces are used to rewrite uses of arithmetic operators:
 
 -   The expression `-x` is rewritten to `x.(NegatePrimitive.Op)()`.
 -   The expression `x + y` is rewritten to
-    `x.(AddWithPrimitive(formof(y)).Op)(y)`.
+    `x.(AddWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x - y` is rewritten to
-    `x.(SubWithPrimitive(formof(y)).Op)(y)`.
+    `x.(SubWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x * y` is rewritten to
-    `x.(MulWithPrimitive(formof(y)).Op)(y)`.
+    `x.(MulWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x / y` is rewritten to
-    `x.(DivWithPrimitive(formof(y)).Op)(y)`.
+    `x.(DivWithPrimitive(exttypeof(y)).Op)(y)`.
 -   The expression `x % y` is rewritten to
-    `x.(ModWithPrimitive(formof(y)).Op)(y)`.
+    `x.(ModWithPrimitive(exttypeof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
