@@ -64,8 +64,8 @@ interface IndexWithPrimitive(
     implicit_into anchor Self: Form,
     implicit_into Subscript: Form) {
   let implicit_from ResultForm: Form;
-  fn Op(self:? Self, subscript:? Subscript)
-      ->? ResultForm;
+  fn Op(fwd self: Self, fwd subscript: Subscript)
+      -> fwd ResultForm;
 }
 ```
 

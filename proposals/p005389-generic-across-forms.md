@@ -95,9 +95,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Different form literal syntax](#different-form-literal-syntax)
     -   [`ref` on an argument controls its category](#ref-on-an-argument-controls-its-category)
     -   [Replace `require` for interface-interface requirements](#replace-require-for-interface-interface-requirements)
-    -   [Modifiers and pattern operators on `:?` bindings](#modifiers-and-pattern-operators-on--bindings)
+    -   [Modifiers and pattern operators on `fwd` bindings](#modifiers-and-pattern-operators-on-fwd-bindings)
     -   [Separate template and symbolic phases in `Core.Form`](#separate-template-and-symbolic-phases-in-coreform)
     -   [`alias` of a reference expression](#alias-of-a-reference-expression)
+    -   [`fwd` on call arguments](#fwd-on-call-arguments)
 
 <!-- tocstop -->
 
@@ -110,7 +111,7 @@ We propose:
 -   A `form(`...`)` literal syntax for writing values of these form types.
 -   Form facet types for expressing constraints on form types, which may be
     composed using `&`.
--   `:?` binding and `->?` return syntax parameterized by a form value.
+-   `fwd` binding modifier and return syntax parameterized by a form value.
 -   Form versions of interfaces, facets, and facet types.
 -   Use these new form facet types to create new "primitive" versions of the
     operator interfaces, like `Core.CallPrimitive`, that allow control over the
@@ -261,10 +262,12 @@ In short, this proposal introduces:
     form.
 -   form facet types that are restricted versions of `Core.Form`, such as
     `Core.NoValForm`.
--   a binding _name_`:?`_form value_, where the form of the binding is
-    determined by the _form value_.
--   a return syntax `->? `_form value_, where the form of the return is
-    determined by the _form value_.
+-   a `fwd` binding modifier `fwd `_name_`: `_form value_, where the form of the
+    binding is determined by the _form value_, along with a `fwd` marker on call
+    arguments with generic form.
+-   a `fwd` return tag `fwd `_form value_ (usable anywhere `val`, `ref`, or
+    `var` is allowed in a `->` return clause), where the form of that part of
+    the return is determined by the _form value_.
 -   form interfaces, where the `Self` is of type `Core.Form` or a form facet
     type instead of `type`.
 -   that an `impl` of a form interface, or an interface with form parameters,
@@ -341,8 +344,8 @@ In short, this proposal introduces:
 -   new `Primitive` form interfaces for other other operators that allow control
     over form, not just type. The previous interface names are replaced with
     named constraints that allow you to continue to use types.
--   `auto` may now be used to deduce a form in a `:?` form binding or `->?` form
-    return.
+-   `auto` may now be used to deduce a form in a `fwd` form binding or `-> fwd`
+    form return.
     -   This is used implicitly for positional parameters.
     -   This is used to give a new definition of the `alias` construct.
     -   This new `alias` construct doesn't apply to namespaces, so a new
@@ -356,9 +359,9 @@ First, we introduce the new special type `Core.Form` that describe the form of
 bindings (such as function parameters or in a `let` declaration), returns, or
 expressions.
 
--   The new `:?` syntax takes a form value to
+-   The new `fwd` binding modifier takes a form value to
     [specify the form of a binding](#specifying-the-form-of-a-binding).
--   The new `->?` syntax takes a form value to
+-   The new `fwd` return tag takes a form value to
     [specify the form of a return](#specifying-the-form-of-a-return).
 
 Values of `Core.Form` are compile-time only, like types. Form values can be
@@ -380,7 +383,7 @@ single `"compile time"` phase:
 
 -   Whether a compile-time constant is concrete, template-dependent, or
     checked-symbolic is a property of the constant itself (and becomes concrete
-    under substitution). A `:?` binding with a compile-time form binds to that
+    under substitution). A `fwd` binding with a compile-time form binds to that
     constant, giving the bound name `"template"` expression phase when the
     constant is concrete or template-dependent and `"symbolic"` expression phase
     when it is a checked-symbolic constant. Note that this is different from
@@ -480,9 +483,9 @@ These may be nested, as in
 ) as Core.Form
 ```
 
-Note that `:?` and `->?` cast their right argument to `Core.Form`, much like `:`
-and `->` cast their right argument to `type`, so the `as Core.Form` can be left
-off in those positions.
+Note that `fwd` bindings and `fwd` return tags cast their `Core.Form` operand to
+`Core.Form`, much like ordinary `:` bindings and `->` return types cast their
+operand to `type`, so the `as Core.Form` can be left off in those positions.
 
 This was
 [discussed on 2025-06-04](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.stp5dpvithkz).
@@ -542,16 +545,20 @@ feature is pulling its weight.
 
 ### Specifying the form of a binding
 
-The `n :? B` binding syntax creates a binding to the name `n` with form given by
-`B`. Note that `B` will be implicitly converted to `Core.Form`, much like a `:`
-binding will implicitly convert its right-hand argument to `type`. Example:
+The `fwd n: B` binding syntax creates a binding to the name `n` with form given
+by `B` (as suggested in
+[leads issue #6932](https://github.com/carbon-language/carbon-lang/issues/6932)
+and
+[proposal #7254](p007254-replace-and-with-keywords-and-contextual-defaults.md#extended-types)).
+With the `fwd` modifier, `B` is implicitly converted to `Core.Form`, rather than
+implicitly converting the right-hand side of `:` to `type`. Example:
 
 ```carbon
-fn VarFn(x:? form(var i32));
+fn VarFn(fwd x: form(var i32));
 // is equivalent to:
 fn VarFn(var x: i32);
 
-fn RefFn(x:? form(ref i32));
+fn RefFn(fwd x: form(ref i32));
 // is equivalent to:
 fn RefFn(ref x: i32);
 ```
@@ -560,7 +567,7 @@ While this is valid, this is not how this feature is expected to be used.
 Instead, the form value will typically be a generic parameter.
 
 ```carbon
-fn Explicit(generic PF: Core.Form, arg:? PF);
+fn Explicit(generic PF: Core.Form, fwd arg: PF);
 
 //  ✅ Valid since `5` can be passed to a
 // `var _: i32` parameter.
@@ -579,37 +586,62 @@ A `Core.Form` parameter is deducible from an argument expression, see
 of a binding is _about_ the expressions it binds to. In contrast, the result of
 a `var` and `ref` binding is a reference expression in both cases.
 
-A `:?` binding cannot appear directly or indirectly in a pattern operator other
-than `unused` or be modified by a keyword binding modifier. This disallows
-patterns like `var x:? PF`, `ref x:? PF`, `generic x:? PF`, and
-`template x:? PF`, as well as `var` declarations like `var x:? auto = y;`. Note
-that `each` is part of an
+When passing an expression whose form is symbolic (for example, a `fwd`
+parameter or a call returning a symbolic form) as an argument to a function or
+operator, the argument is marked with `fwd` at the call site (analogously to
+marking a concrete reference argument with `ref` when passing it to a `ref`
+parameter). When moving from a symbolic-form binding with `~`, `fwd` precedes
+`~`, as in `F(fwd ~y)`. As with `ref`, `fwd` is not written on method receivers
+(such as `c.Go()`) or on the callable expression in a function call (such as
+`f()`). See [the "Forwarding" section](#forwarding) and
+[the alternative considered](#fwd-on-call-arguments).
+
+A `fwd` binding cannot appear directly or indirectly in a pattern operator other
+than `unused` or be combined with another keyword binding modifier (such as
+`ref`, `generic`, `template`, or `runtime`). This disallows patterns like
+`var fwd x: PF`, `ref fwd x: PF`, `generic fwd x: PF`, and `template fwd x: PF`,
+as well as `var` declarations like `var fwd x: auto = y;`. In contexts where a
+contextual default phase applies (such as deduced `[...]` parameter lists, where
+parameters default to `generic`), `fwd` overrides the contextual default rather
+than combining with it. Note that `each` is part of an
 [_each-name_](/docs/design/variadics.md#packs-and-each-names) rather than a
-binding modifier, so `each x:? each PF` is allowed. Nesting a `:?` binding
+binding modifier, so `fwd each x: each PF` is allowed. Nesting a `fwd` binding
 inside tuple patterns, struct patterns, pack expansions, and
 [`unused` patterns](/docs/design/pattern_matching.md#unused) (as well as
-anonymous `_:? PF` bindings) is allowed.
+anonymous `fwd _: PF` bindings) is allowed.
 
 ### Specifying the form of a return
 
-The `->? R` return syntax specifies a return with form `R`. The `R` will be
-implicitly converted to `Core.Form`, much like the expression to the right of
-`->` will be implicitly converted to `type`.
+A `fwd R` return tag specifies a return with form `R`, where `R` is implicitly
+converted to `Core.Form` rather than `type`. `fwd` is allowed anywhere a
+[category tag](/docs/design/values.md#function-calls-and-returns) (`val`, `ref`,
+or `var`) is allowed in a `->` return clause — both at top level (`-> fwd R` and
+`-> fwd auto`) and nested inside compound tuple or struct return forms (as
+discussed in
+[leads issue #6932](https://github.com/carbon-language/carbon-lang/issues/6932)
+and
+[proposal #7254](p007254-replace-and-with-keywords-and-contextual-defaults.md#extended-types)).
 
 ```carbon
 // Equivalent to: `fn Init() -> i32;`
-fn Init() ->? form(var i32);
+fn Init() -> fwd form(var i32);
 
 // Equivalent to: `fn Val() -> val i32;`
-fn Val() ->? form(val i32);
+fn Val() -> fwd form(val i32);
 
 // Equivalent to: `fn Ref() -> ref i32;`
-fn Ref() ->? form(ref i32);
+fn Ref() -> fwd form(ref i32);
 
 // Determines the return form from the
 // argument. `Param(form(ref i32))`
 // returns an `i32` ref.
-fn Param(generic RF: Core.Form) ->? RF;
+fn Param(generic RF: Core.Form) -> fwd RF;
+
+// `fwd` may also be nested inside tuple and struct return forms:
+fn Pair(generic R1: Core.Form, generic R2: Core.Form)
+    -> (fwd R1, fwd R2);
+fn Struct(generic R1: Core.Form)
+    -> {.a: fwd R1, .b: ref i32};
 ```
 
 ### Form interfaces
@@ -623,15 +655,15 @@ parentheses `(`...`)`, similar to the `self` parameter of methods in
 ```carbon
 interface Callback(Self: Core.Form) {
   // Uses `Self` as the form of a
-  // parameter using `:?`.
-  fn Go(self:? Self);
+  // parameter using `fwd`.
+  fn Go(fwd self: Self);
 }
 
 interface DefaultConstructible
     (Self: Core.Form) {
   // Uses `Self` as the form of the
-  // return using `->?`.
-  fn MakeDefault() ->? Self;
+  // return using `fwd`.
+  fn MakeDefault() -> fwd Self;
 }
 ```
 
@@ -687,9 +719,9 @@ Now look at how this works analogously with the `Core.Form` interface
 // Since `Callback` is declared `Callback(Self: Core.Form)`, that means
 // `CF` is a facet of a `Core.Form`, which means a `Core.Form` that is
 // known to implement `Callback`. Since `CF` is a facet of a `Core.Form`,
-// it has an implicit conversion to `Core.Form`, so it can be used to the
-// right of a `:?` to give a form to `c`.
-fn InvokeCallback[CF: Callback](c:? CF) {
+// it has an implicit conversion to `Core.Form`, so it can be used in a
+// `fwd` binding to give a form to `c`.
+fn InvokeCallback[CF: Callback](fwd c: CF) {
   c.Go();
   // - Looks up `Go` using the form of `c`:
   //   - If the form is a paren form, allow `.0`, `.1` access
@@ -697,11 +729,11 @@ fn InvokeCallback[CF: Callback](c:? CF) {
   //   - If the form is primitive, look in its type (as above)
   //   - Since the form `CF` is symbolic, look in `CF`'s type (`Callback`),
   //     finding `Callback.Go` (which has signature
-  //     `Callback(Self: Core.Form).fn Go(self:? Self)`)
+  //     `Callback(Self: Core.Form).fn Go(fwd self: Self)`)
   //   - Since `Callback.Go` is an associated entity, perform `impl` lookup
   //     using the *form* of `c` (`CF as Core.Form`) as `Self`
   // - Requires the *form* of `c` to implement `Callback`
-  //   - Satisfied by the bindings `c:? CF` and `CF: Callback`
+  //   - Satisfied by the bindings `fwd c: CF` and `CF: Callback`
   // - Performs instance binding of `c` to that member, then calls it
 }
 ```
@@ -717,7 +749,7 @@ class V {}
 impl form(val V) as Callback {
   // Notice the form of the `self` parameter is
   // `form(val V)`, the value of `Self`. This is the
-  // same as `fn Go(self:? Self)`...
+  // same as `fn Go(fwd self: Self)`...
   fn Go(self: V) {
     Core.Print("Printed!");
   }
@@ -787,7 +819,7 @@ constants.
 ```carbon
 interface OneArg(P: Core.Form) {
   let Result: Core.Form;
-  fn Fun(self, a:? P) -> Result;
+  fn Fun(self, fwd a: P) -> fwd Result;
 }
 
 impl MyType as OneArg(form(val i32)) {
@@ -969,14 +1001,14 @@ to `i64`. More precisely, if we create a function `F` with `PF` as the form of
 its parameter, and `y` a binding with form `SRC` (also a `Form` value), as in
 
 ```carbon
-fn F(x:? PF);
-fn G(y:? SRC) {
-  F(~y);
+fn F(fwd x: PF);
+fn G(fwd y: SRC) {
+  F(fwd ~y);
 }
 ```
 
-then `SRC` is a value of `ConvertsInto(PF)` if and only if the call `F(~y)` is
-legal.
+then `SRC` is a value of `ConvertsInto(PF)` if and only if the call `F(fwd ~y)`
+is legal.
 
 Note that this depends on the meaning of the planned move operator `~`. In this
 case, we need:
@@ -988,15 +1020,16 @@ case, we need:
 -   `~i` when `i` is a `var` parameter gives you an initializing expression that
     initializes an object to the state that `i` was in before the expression.
 
-Defining `ConvertsInto` in terms of forwarding a parameter `y:? SRC` by way of
-`~y` ensures that the notional `impl`s and [adapters](#facets-create-adapters)
-for [`implicit_into`](#implicit_into-interface-parameter-variance) work by
+Defining `ConvertsInto` in terms of forwarding a parameter `fwd y: SRC` by way
+of `fwd ~y` ensures that the notional `impl`s and
+[adapters](#facets-create-adapters) for
+[`implicit_into`](#implicit_into-interface-parameter-variance) work by
 definition. Alternatively, `ConvertsInto` could be framed in terms of passing an
-expression of form `SRC` directly to `F` (such as `F(Y())` for `fn Y() ->? SRC;`
-when `SRC` is a valid return form). We expect the upcoming definition of moves
-to make these two formulations equivalent, because input-to-input forwarding
-`~y` of a `var` parameter `y` will be able to reuse `y`'s caller-allocated `var`
-storage without requiring `Core.Move`.
+expression of form `SRC` directly to `F` (such as `F(fwd Y())` for
+`fn Y() -> fwd SRC;` when `SRC` is a valid return form). We expect the upcoming
+definition of moves to make these two formulations equivalent, because
+input-to-input forwarding `fwd ~y` of a `var` parameter `y` will be able to
+reuse `y`'s caller-allocated `var` storage without requiring `Core.Move`.
 
 As an example, `ConvertsInto(form(var i64))` includes the facets of
 `form(val i32)`, `form(ref i16)`, and `formof(3)`, since this code is legal:
@@ -1012,7 +1045,7 @@ fn G2(ref y2: i16) {
   F(~y2);
 }
 
-fn G3(y3:? formof(3)) {
+fn G3(fwd y3: formof(3)) {
   F(~y3);
 }
 ```
@@ -1047,7 +1080,7 @@ with the `implicit_into` keyword binding modifier, as in this example:
 ```carbon
 interface I(implicit_into Self: Core.Form,
             implicit_into P: Core.Form) {
-  fn F(self:? Self, a:? P);
+  fn F(fwd self: Self, fwd a: P);
 }
 
 impl form(ref u64) as I(form(var i64)) {
@@ -1077,12 +1110,12 @@ alias ForwardTo =
 impl forall [PF1: ConvertsInto(form(ref u64)),
              PF2: ConvertsInto(form(var i64))]
     PF1 as I(PF2) {
-  fn F(self:? PF1, a:? PF2) {
+  fn F(fwd self: PF1, fwd a: PF2) {
     // This is allowed, by the definition of
     // `ConvertsInto` and that the form of `self`
     // of `ForwardTo` is `ref _: u64` and
     // the form of its argument is `var _: i64`.
-    (~self).(ForwardTo)(~a);
+    (~self).(ForwardTo)(fwd ~a);
   }
 }
 
@@ -1136,7 +1169,7 @@ Consequences:
     within the interface definition, as either:
 
     -   the
-        [form of an associated function parameter, after `:?`](#specifying-the-form-of-a-binding),
+        [form of an associated function `fwd` parameter](#specifying-the-form-of-a-binding),
         or
     -   the argument to
         [an `implicit_from` interface parameter](#implicit_from-variance) that
@@ -1169,7 +1202,7 @@ A few things to note here:
     impl forall [PF2: ConvertsInto(form(var i64))]
         exact form(ref u64) as I(PF2) {
 
-      fn F(ref self: u64, a:? PF2) {
+      fn F(ref self: u64, fwd a: PF2) {
         // Performs an implicit conversion of `a`
         // to call the original implementation that
         // has one `var _: i64` parameter.
@@ -1193,7 +1226,7 @@ a parameter constraint:
 ```carbon
 interface I(implicit_into Self: Core.Form,
             implicit_into P: Core.Form) {
-  fn F(self:? Self, a:? P);
+  fn F(fwd self: Self, fwd a: P);
 }
 
 class C(P: I(form(val i16))) { ... }
@@ -1301,7 +1334,7 @@ example shows an `implicit_from` associated constant:
 ```carbon
 interface Factory {
   let implicit_from Result: Core.Form;
-  fn Create(self) ->? Result;
+  fn Create(self) -> fwd Result;
 }
 
 fn UseFactory
@@ -1350,7 +1383,7 @@ This example shows an `implicit_from` interface parameter, using
 ```carbon
 interface Registry(implicit_from P: Core.Form) {
   fn Register[FN: Core.CallPrimitive(P)](ref self, f: FN);
-  fn DefaultArg() ->? P;
+  fn DefaultArg() -> fwd P;
 }
 ```
 
@@ -1363,8 +1396,8 @@ create a function `F` with `RF` as the form of its return, and `G()` a function
 returning form `DEST` (also a `Form` value), as in
 
 ```carbon
-fn F() ->? RF;
-fn G() ->? DEST {
+fn F() -> fwd RF;
+fn G() -> fwd DEST {
   return F();
 }
 ```
@@ -1423,7 +1456,7 @@ in a
 [covariant position](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>)
 within an interface definition, either:
 
--   [the form of an associated function return, after a `->?`](#specifying-the-form-of-a-return),
+-   [the form of an associated function `fwd` return](#specifying-the-form-of-a-return),
     as in `Factory.Create` and `Registry.DefaultArg`
     [earlier](#implicit_from-variance), or
 -   the argument to
@@ -1443,8 +1476,8 @@ interface CallPrimitive(
     implicit_into anchor Self: Form,
     ... implicit_into each Param: Form) {
   let implicit_from ResultForm: Form;
-  fn Op(self:? Self, ... each args:? each Param)
-      ->? ResultForm;
+  fn Op(fwd self: Self, ... fwd each args: each Param)
+      -> fwd ResultForm;
 }
 ```
 
@@ -1469,11 +1502,12 @@ interface.
 | `call(_: i32)`          | `CallPrimitive(form(val i32))`                      |
 | `call(_: i32, _: bool)` | `CallPrimitive(form(val i32), form(val bool))`      |
 | `call(var _: bool)`     | `CallPrimitive(form(var bool))`                     |
-| `call(_:? X)`           | `CallPrimitive(X)`                                  |
+| `call(fwd _: X)`        | `CallPrimitive(X)`                                  |
 | `call(... _: each T)`   | `CallPrimitive(... form(val each T))`               |
 | `call() -> i32`         | `CallPrimitive() where .ResultForm = form(var i32)` |
 | `call() -> val i32`     | `CallPrimitive() where .ResultForm = form(val i32)` |
 | `call() -> ()`          | `CallPrimitive() where .ResultForm = form(var ())`  |
+| `call() -> fwd R`       | `CallPrimitive() where .ResultForm = R`             |
 
 Note: If "`->` _\<return-type\>_" is not included at the end, the return type is
 unconstrained. Use `-> ()` to mean "returns nothing."
@@ -1691,7 +1725,7 @@ a named constraint default, as in:
 interface DefaultResult {
   default let ResultForm: Core.Form
       = form(var Self);
-  fn F() ->? ResultForm;
+  fn F() -> fwd ResultForm;
 }
 constraint C {
   let Result: type;
@@ -1717,7 +1751,7 @@ the constraint of a generic parameter, as in this example:
 
 ```carbon
 fn H[T: call(_: i32) & call(_: i64)]
-    (g:? T, x: i16) {
+    (fwd g: T, x: i16) {
   // ❌ Ambiguous whether it uses
   // `call(_: i32)` or `call(_:i64)`.
   g(x);
@@ -1743,7 +1777,7 @@ constraint X(Self: Core.Form) {
   }
 }
 
-fn J[T: X](g:? T, x: i16) {
+fn J[T: X](fwd g: T, x: i16) {
   // ✅ Uses `call(_: i32)`.
   g(x);
 }
@@ -1879,7 +1913,7 @@ constraints, in terms of a general `MemberBind` interface:
 ```carbon
 interface MemberBind(implicit_into LHS: Core.Form) {
   let implicit_from ResultForm: Core.Form;
-  fn Op(self, lhs:? LHS) ->? ResultForm;
+  fn Op(self, fwd lhs: LHS) -> fwd ResultForm;
 }
 
 // Formerly BindToValue
@@ -2014,7 +2048,7 @@ interface AddWithPrimitive(
     implicit_into Self: Form,
     implicit_into P: Form) {
   let implicit_from ResultForm: Form;
-  fn Op(self:? Self, rhs:? P) ->? ResultForm;
+  fn Op(fwd self: Self, fwd rhs: P) -> fwd ResultForm;
 }
 ```
 
@@ -2027,8 +2061,8 @@ This "Primitive" interface has some changes:
     [`anchor`](#modifiers-for-coherence).
 -   The associated constant controlling the return is marked
     [`implicit_from`](#implicit_from-variance).
--   Uses [`:?`](#specifying-the-form-of-a-binding) and
-    [`->?`](#specifying-the-form-of-a-return) instead of `:` and `->`.
+-   Uses [`fwd` bindings](#specifying-the-form-of-a-binding) and
+    [`fwd` returns](#specifying-the-form-of-a-return).
 
 For
 [progressive disclosure](/docs/project/principles/progressive_disclosure.md), we
@@ -2087,14 +2121,17 @@ Note that the common type interfaces are unchanged.
 > an `impl` using a `ref` form must be marked with `ref` at the callsite, as in
 > `(ref out_stream) << x;`. This was discussed in
 > [#interop on 2026-01-23](https://discord.com/channels/655572317891461132/768530752592805919/1464427960026005648).
+> Similarly, operator operands with generic form are marked with `fwd`, as in
+> `(fwd self) == (fwd u)`.
 
 ### `auto` form
 
 If `auto` is used in a position where a `Core.Form` is expected, such as in a
-`:?` binding or `->?` return, the whole form is deduced, not just the type.
+`fwd` binding or `-> fwd` return, the whole form is deduced, not just the type.
 
-For `:? auto` parameters, specifically, the deduced form will not be `ref`
-(using `val` instead) unless the argument expression is marked `ref`. See
+For `fwd` `auto` parameters, specifically, the deduced form will not be `ref`
+(using `val` instead) unless the argument expression is marked `ref` (or `fwd`
+for a generic-form expression). See
 [the "Deducing a form value" section](#deducing-a-form-value).
 
 #### `auto` form bindings
@@ -2103,9 +2140,9 @@ This allows us to create a binding to another value without changing its phase
 or category.
 
 ```carbon
-let x:? auto = y;
+let fwd x: auto = y;
 // Equivalent to (if it was allowed):
-let [P: Core.Form] x:? P = y;
+let [P: Core.Form] fwd x: P = y;
 
 // In contrast,
 let a: auto = b;
@@ -2135,9 +2172,9 @@ This was discussed on
 introduced in
 [proposal #3848](p003848-lambdas.md#positional-parameters),
 previously had type `auto`. This proposal changes them to have `auto` form. So
-`fn F {`...`}` acts as if it had signature `fn F(... _:? auto)`. This means that
-an argument that is a reference expression that is modified by the function body
-must be marked `ref`, as in:
+`fn F {`...`}` acts as if it had signature `fn F(... fwd _: auto)`. This means
+that an argument that is a reference expression that is modified by the function
+body must be marked `ref`, as in:
 
 ```
 var x: i32 = 1;
@@ -2165,7 +2202,7 @@ So we give `alias` a definition in terms of `let` bindings instead of operating
 on names:
 
 > `alias A = B;` converts `B` to a value `V` (which must be a compile-time
-> expression), then means `let A:? auto = V;`
+> expression), then means `let fwd A: auto = V;`
 
 ```carbon
 alias a = 7;
@@ -2190,7 +2227,7 @@ fn F(generic T: type, template X: i32) {
 In order to support renaming a variable, we allow an additional form:
 
 > `alias ref A = R;` means `let ref A: auto = R;` (equivalently,
-> `let A:? auto = R;`)
+> `let fwd A: auto = R;`)
 
 where `R` is a reference expression with address known at compile time (such as
 the name of a variable). This syntax was decided in
@@ -2311,13 +2348,13 @@ class E(T: type) {
 
 #### `auto` form returns
 
-Using `->? auto` as the return of a function causes the return form, not just
+Using `-> fwd auto` as the return of a function causes the return form, not just
 type, to be determined by the form of the return expression. For example,
 returning a reference expression will result in a `ref` return, as in:
 
 ```carbon
 // Equivalent to ...`-> ref i32`:
-fn Id(ref x: i32) ->? auto {
+fn Id(ref x: i32) -> fwd auto {
   return x;
 }
 ```
@@ -2545,9 +2582,9 @@ impl form(val OverloadedCallable) as
     call() -> i32 {
   // `Self` is a `Core.Form` value equal to
   // `form(val OverloadedCallable)` so
-  // `self:? Self` is the same as
+  // `fwd self: Self` is the same as
   // `self: OverloadedCallable`.
-  fn Op(self:? Self) -> i32 {
+  fn Op(fwd self: Self) -> i32 {
     return self.x;
   }
 }
@@ -2576,7 +2613,7 @@ fn InvokeRef[T: call[ref](_: i32) -> ()]
 // `Core.Form` facet type. Category of `f`
 // will be deduced from the argument.
 fn InvokeForm[PF: call() -> i32]
-    (f:? PF) -> i32 {
+    (fwd f: PF) -> i32 {
   return f();
 }
 
@@ -2669,7 +2706,7 @@ capture the argument's expression category, phase, and compile-time value.
 -   A reference expression argument will deduce a `ref` form.
 
 ```carbon
-fn Deduced[PF: Core.Form](arg:? PF);
+fn Deduced[PF: Core.Form](fwd arg: PF);
 
 let l: bool = true;
 // Deduces PF = form(val bool).
@@ -2706,7 +2743,7 @@ a legal value of the form facet type.
     `var`/initializing.
 
 ```carbon
-fn NoVar[P: Core.NoVarForm](x:? P);
+fn NoVar[P: Core.NoVarForm](fwd x: P);
 
 // Deduces P = form(val i32)
 NoVar(Make());
@@ -2717,20 +2754,21 @@ the result (as in `var`/initializing for `Core.NoValForm & Core.NoRefForm`).
 However, this case would generally be better supported by a
 [type facet type](#converting-from-a-form-facet-type-to-a-type-facet-type).
 
-An argument expression will only deduce a `ref` form if it is marked `ref`.
+An argument expression will only deduce a `ref` form if it is marked `ref` (or
+`fwd`, for a generic-form expression that may instantiate to a reference).
 Otherwise, it is as if the parameter has a `& Core.NoRefForm` restriction. This
 was discussed
 [in #pointers-and-references on Discord on 2025-06-18](https://discord.com/channels/655572317891461132/753021843459538996/1385028689904926763).
 
 ### Compile-time parameter equal to a specified value
 
-The [`:?` binding syntax](#specifying-the-form-of-a-binding) and
+The [`fwd` binding syntax](#specifying-the-form-of-a-binding) and
 [`formof` operator for computing a form value](#formof) may be combined to write
 a parameter binding that will only match a single specified value, as in:
 
 ```carbon
 // Argument must be a compile-time value equal to `i32`
-fn F(_:? formof(i32));
+fn F(fwd _: formof(i32));
 
 // ✅ Allowed
 F(i32);
@@ -2765,7 +2803,7 @@ giving a method to work around ordering constraints on parameters:
 
 ```carbon
 fn DoACast[U: type, T: ImplicitAs(U)]
-    (x: T, _:? formof(U)) -> U {
+    (x: T, fwd _: formof(U)) -> U {
   return x as U;
 }
 
@@ -2792,7 +2830,7 @@ For example:
 // This function can only be passed values of type
 // `bool`. `T` will be deduced from the argument
 // type, but can only have the value `bool`.
-fn ExactlyBool[T:? formof(bool)](x: T);
+fn ExactlyBool[fwd T: formof(bool)](x: T);
 
 // ✅ Allowed
 ExactlyBool(true);
@@ -2829,7 +2867,7 @@ parameter instead of what was declared for `ExactlyBool`:
 ```
 fn ErasedByGeneric
     [T: call(_: bool) -> (),
-     U: ImplicitAs(bool)](f:? T, x: U) {
+     U: ImplicitAs(bool)](fwd f: T, x: U) {
   // The deduction of parameters to `f`
   // is done by this point, so nothing to
   // prevent conversion of `x` to `bool`.
@@ -2912,7 +2950,7 @@ or equivalently:
 class __F_Type {}
 let generic F: __F_Type = {};
 impl forall [T: type] __F_Type as
-    call[val](_:? formof(T), _: T) -> T;
+    call[val](fwd _: formof(T), _: T) -> T;
 ```
 
 An explicit `template` parameter, such as `fn H(template T: type, x: T) -> T;`,
@@ -2955,7 +2993,7 @@ the caller, as in:
 
 ```carbon
 fn GenericCaller[PF: call() -> i32]
-    (f:? PF) -> i32 {
+    (fwd f: PF) -> i32 {
   return f();
 }
 
@@ -2979,13 +3017,13 @@ fn CallThroughPointer[T: type](p: T*)
 
 impl forall
     [... each P: Core.Form,
-     // Or: `T: call[ref](... _:? each P)`
+     // Or: `T: call[ref](... fwd _: each P)`
      T: Core.RefSelf(Core.CallPrimitive(... each P))]
     form(val CalledThroughPointer(T)) as
     Core.CallPrimitive(... each P) {
   where ResultForm = T.ResultForm;
-  fn (self, ... each param:? each P) ->? ResultForm {
-    return (*self.p)(... ~each param);
+  fn (self, ... fwd each param: each P) -> fwd ResultForm {
+    return (*self.p)(... fwd ~each param);
   }
 }
 
@@ -3016,11 +3054,11 @@ to call it with and performs the call:
 
 ```carbon
 fn Apply[... each ArgT: Core.Form,
-         FNT: call(... _:? each ArgT)]
-        (f:? FNT,
-         ... each arg:? each ArgT)
-        ->? FNT.ResultForm {
-  return (~f)(... ~each arg);
+         FNT: call(... fwd _: each ArgT)]
+        (fwd f: FNT,
+         ... fwd each arg: each ArgT)
+        -> fwd FNT.ResultForm {
+  return (~f)(... fwd ~each arg);
 }
 ```
 
@@ -3031,19 +3069,21 @@ fn Apply[... each ArgT: Core.Form,
 > expected to reuse its caller-allocated `var` storage without requiring
 > `Core.Move`; see [`Core.ConvertsInto`](#coreconvertsinto).
 
-> **Note:** An expression with generic form need not specify `ref` when used as
-> an argument.
+> **Note:** An expression with generic form is marked with `fwd` (rather than
+> `ref`) when passed as an argument, since whether it instantiates to a
+> reference is not known at definition time. See
+> [the alternative considered](#fwd-on-call-arguments).
 
 This works with `Apply` calling `f` once. To support multiple calls, we drop
 support for using `var` parameters with initializing argument expressions:
 
 ```carbon
 fn Apply2[... each ArgT: Core.NoVarForm,
-          FNT: call(... _:? each ArgT) &
+          FNT: call(... fwd _: each ArgT) &
                 Core.NoVarForm]
-         (f:? FNT, ... each arg:? each ArgT) {
-  f(... each arg);
-  f(... each arg);
+         (fwd f: FNT, ... fwd each arg: each ArgT) {
+  f(... fwd each arg);
+  f(... fwd each arg);
 }
 ```
 
@@ -3054,7 +3094,7 @@ Input-to-output forwarding is where argument forms are returned from a function,
 as in:
 
 ```carbon
-fn Id[F: Core.NoVarForm](x:? F) ->? F {
+fn Id[F: Core.NoVarForm](fwd x: F) -> fwd F {
   return x;
 }
 ```
@@ -3071,7 +3111,7 @@ in.
 > ```carbon
 > fn Moves
 >     [F: Core.Form where .type impls Core.Move]
->     (x:? F) ->? F {
+>     (fwd x: F) -> fwd F {
 >   return ~x;
 > }
 > ```
@@ -3099,11 +3139,11 @@ argument lists using tuple patterns, such as this definition of `ApplySum`
 ```carbon
 // Multiple variadic parameters have to be passed as tuples.
 fn ApplySum[... each ArgF: Core.NoVarForm,
-            Fn: call(... _:? each ArgF) -> i32 & Core.NoVarForm]
-           (f:? Fn,
-            (... each a:? each ArgF),
-            (... each b:? each ArgF)) -> i32 {
-  return f(... each a) + f(... each b);
+            Fn: call(... fwd _: each ArgF) -> i32 & Core.NoVarForm]
+           (fwd f: Fn,
+            (... fwd each a: each ArgF),
+            (... fwd each b: each ArgF)) -> i32 {
+  return f(... fwd each a) + f(... fwd each b);
 }
 ```
 
@@ -3219,7 +3259,7 @@ with a reference to the array, and a value if you started with a value.
 One possible approach would be to have something like:
 
 ```carbon
-fn AccessX[PF: ValOrRef(Self)](self:? PF) ->? FormWithCategory(PF, D);
+fn AccessX[PF: ValOrRef(Self)](fwd self: PF) -> fwd FormWithCategory(PF, D);
 ```
 
 `ValOrRef(Self)` (passed a type and returns a form facet type) is equivalent to
@@ -3369,20 +3409,20 @@ we determined that is expected to change once we support
 [functions executed at compile-time](#compile-time-calls).
 
 The additional type information couldn't be used to determine the variance of a
-form parameter, since forms after `:?` can appear in positions with different
-variance, as
+form parameter, since forms in `fwd` bindings can appear in positions with
+different variance, as
 [discussed on 2025-06-24](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.dqgfbeb33txh).
 
 Example:
 
 ```carbon
 interface CallbackRegistry(PF: Core.Form) {
-  fn Register[T: CallPrimitive(PF)](f:? T);
+  fn Register[T: CallPrimitive(PF)](fwd f: T);
 }
 
 class CR { }
 impl CR as CallbackRegistry(form(val i32)) {
-  fn Register[T: call(_: i32)](f:? T) {
+  fn Register[T: call(_: i32)](fwd f: T) {
     let i: i32 = 999999;
     f(i);
   }
@@ -3559,9 +3599,8 @@ values. However, we also needed a way to compose `form(`...`)`, `formof(`...`)`,
 and arbitrary `Core.Form` expressions (such as generic form parameters) into
 compound form values. Allowing mixed elements inside `form(`...`)` (such as
 `form((var i32, ref f64, formof(7)))`) would require a dedicated grammar
-distinct from both `->` return forms (where a bare expression is a type with
-implicit `var` category, not a `Core.Form` value) and `->?` (which expects a
-`Core.Form` expression directly). The
+distinct from `->` return forms (where a bare expression is a type with implicit
+`var` category, and a `Core.Form` expression must be prefixed with `fwd`). The
 [compound form approach we settled on](#compound-form-values) had the advantage
 of supporting all the composition we wanted without needing any dedicated
 syntax. It is a bit verbose, but that is perhaps acceptable given that this
@@ -3661,20 +3700,21 @@ interface, named constraint, or `where` facet types on `Self` (avoiding
 This was discussed on
 [2025-05-08](https://docs.google.com/document/d/1Yt-i5AmF76LSvD4TrWRIAE_92kii6j5yFiW-S7ahzlg/edit?tab=t.0#heading=h.vdognq1upsf5).
 
-### Modifiers and pattern operators on `:?` bindings
+### Modifiers and pattern operators on `fwd` bindings
 
-We considered allowing keyword modifiers (such as `template` or `ref`) on `:?`
-bindings, or allowing `:?` bindings inside `var` or `ref` patterns, to override
-aspects of the form specified after `:?`. We decided to disallow these for two
+We considered allowing other keyword modifiers (such as `template` or `ref`) on
+`fwd` bindings, or allowing `fwd` bindings inside `var` or `ref` patterns, to
+override aspects of the specified form. We decided to disallow these for two
 reasons:
 
--   Patterns such as `ref x:? form(val i32)`, `var x:? form(val i32)`, or
-    `var (x:? form(val i32), y: i32)` have multiple plausible interpretations
+-   Patterns such as `ref fwd x: form(val i32)`, `var fwd x: form(val i32)`, or
+    `var (fwd x: form(val i32), y: i32)` have multiple plausible interpretations
     (such as overwriting the form's category, failing to match, or performing a
     conversion), and lack clear motivating use cases.
--   Allowing `template`, `generic`, `ref`, or `var` would provide syntax for
-    coercing a form binding to some phases and categories, without any
-    corresponding syntax for coercing it to runtime phase or value category.
+-   Allowing `template`, `generic`, `runtime`, `ref`, or `var` would provide
+    syntax for coercing a form binding to some phases and categories, without
+    any corresponding syntax for coercing it to value category (and with
+    confusing interactions with contextual default phases).
 
 This was discussed on
 [PR #5389](https://github.com/carbon-language/carbon-lang/pull/5389#discussion_r2824307199)
@@ -3710,7 +3750,7 @@ chose a single `"compile time"` phase instead for three reasons:
 -   Whether a compile-time constant is concrete, template-dependent, or
     checked-symbolic is already carried by the constant itself, so a single
     `"compile time"` phase still preserves `"template"` and `"symbolic"`
-    expression phases across `:?` bindings, `alias`, and forwarding.
+    expression phases across `fwd` bindings, `alias`, and forwarding.
 
 This was discussed in
 [a suggestion thread on PR #5389](https://github.com/carbon-language/carbon-lang/pull/5389#discussion_r2337766010).
@@ -3761,3 +3801,34 @@ This was discussed on
 [2026-04-02](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.h6lecvcwu214#heading=h.vvcml6bfo69q)
 and
 [2026-11-18](https://docs.google.com/document/d/1mjllGO3ZCL4qGt9uJHUtcxKoHAGEY7Y999ie4EtBWB8/edit?tab=t.uvyw2c4zrz9e#heading=h.edvediz60r3d).
+
+### `fwd` on call arguments
+
+[Proposal #7254](p007254-replace-and-with-keywords-and-contextual-defaults.md#extended-types)
+raised the open question of whether `fwd` should be required on call arguments,
+analogously to how `ref` is required on arguments for reference parameters. We
+considered three options:
+
+-   **Never write `fwd` on call arguments**: An expression with generic form
+    would be passed without any marker (for example, `F(~y)` and
+    `(~f)(... ~each arg)`), while concrete reference expressions passed to a
+    `ref` or deduced `fwd` parameter would continue to require `ref`.
+-   **Require `fwd` on every argument to a `fwd` parameter**: Any call passing
+    an argument to a parameter declared with `fwd` would write `fwd` on the
+    argument. This would unnecessarily couple the caller to how the callee is
+    declared, without any change to how the argument is passed. This works
+    against Carbon's
+    [evolution goal](/docs/project/goals.md#software-and-language-evolution). In
+    addition, concrete reference arguments should continue to be visibly marked
+    `ref` rather than `fwd` (or redundantly `fwd ref`), matching
+    [the rule for `ref` on deduced form parameters](#deducing-a-form-value).
+-   **Require `fwd` when passing an expression with generic form (chosen)**:
+    Call sites passing concrete expressions follow the normal rules (no marker
+    for values and initializing expressions, `ref` for references), while call
+    sites passing an expression whose form is generic mark the argument with
+    `fwd` (for example, `F(fwd ~y)`, `(~f)(... fwd ~each arg)`, and
+    `self.Compare(fwd u)`).
+
+We went with the last option to highlight the unusual argument forwarding at the
+call site, including that the argument might be passed by `ref`, allowing
+mutation, without imposing `fwd` on callers passing concrete arguments.

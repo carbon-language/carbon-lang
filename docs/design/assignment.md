@@ -178,7 +178,7 @@ package Core;
 // Simple `=`.
 interface AssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint AssignWith(U: type) {
   extend require impls
@@ -198,7 +198,7 @@ The statement `x = y;` is rewritten to
 // Compound `+=`.
 interface AddAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint AddAssignWith(U: type) {
   extend require impls
@@ -213,7 +213,7 @@ constraint AddAssign {
 // Compound `-=`.
 interface SubAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint SubAssignWith(U: type) {
   extend require impls
@@ -228,7 +228,7 @@ constraint SubAssign {
 // Compound `*=`.
 interface MulAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint MulAssignWith(U: type) {
   extend require impls
@@ -243,7 +243,7 @@ constraint MulAssign {
 // Compound `/=`.
 interface DivAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint DivAssignWith(U: type) {
   extend require impls
@@ -258,7 +258,7 @@ constraint DivAssign {
 // Compound `%=`.
 interface ModAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint ModAssignWith(U: type) {
   extend require impls
@@ -297,7 +297,7 @@ These assignment statements are rewritten as follows:
 // Compound `&=`.
 interface BitAndAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint BitAndAssignWith(U: type) {
   extend require impls
@@ -312,7 +312,7 @@ constraint BitAndAssign {
 // Compound `|=`.
 interface BitOrAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint BitOrAssignWith(U: type) {
   extend require impls
@@ -327,7 +327,7 @@ constraint BitOrAssign {
 // Compound `^=`.
 interface BitXorAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint BitXorAssignWith(U: type) {
   extend require impls
@@ -342,7 +342,7 @@ constraint BitXorAssign {
 // Compound `<<=`.
 interface LeftShiftAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint LeftShiftAssignWith(U: type) {
   extend require impls
@@ -357,7 +357,7 @@ constraint LeftShiftAssign {
 // Compound `>>=`.
 interface RightShiftAssignWithPrimitive
     (implicit_into U: Form) {
-  fn Op(ref self, other:? U);
+  fn Op(ref self, fwd other: U);
 }
 constraint RightShiftAssignWith(U: type) {
   extend require impls

@@ -258,9 +258,9 @@ The `EqWithPrimitive` interface is used to define the semantics of the `==` and
 interface EqWithPrimitive(
     implicit_into Self: Core.Form,
     implicit_into U: Core.Form) {
-  fn Equal(self:? Self, u:? U) -> bool;
-  default fn NotEqual(self:? Self, u:? U) -> bool {
-    return not (self == u);
+  fn Equal(fwd self: Self, fwd u: U) -> bool;
+  default fn NotEqual(fwd self: Self, fwd u: U) -> bool {
+    return not ((fwd self) == (fwd u));
   }
 }
 constraint EqWith(U: type) {
@@ -369,22 +369,22 @@ choice Ordering {
 interface OrderedWithPrimitive(
     implicit_into Self: Core.Form,
     implicit_into U: Core.Form) {
-  fn Compare(self:? Self, u:? U) -> Ordering;
-  default fn Less(self:? Self, u:? U) -> bool {
-    return self.Compare(u) == Ordering.Less;
+  fn Compare(fwd self: Self, fwd u: U) -> Ordering;
+  default fn Less(fwd self: Self, fwd u: U) -> bool {
+    return self.Compare(fwd u) == Ordering.Less;
   }
   default fn LessOrEquivalent
-      (self:? Self, u:? U) -> bool {
-    let c: Ordering = self.Compare(u);
+      (fwd self: Self, fwd u: U) -> bool {
+    let c: Ordering = self.Compare(fwd u);
     return c == Ordering.Less
         or c == Ordering.Equivalent;
   }
-  default fn Greater(self:? Self, u:? U) -> bool {
-    return self.Compare(u) == Ordering.Greater;
+  default fn Greater(fwd self: Self, fwd u: U) -> bool {
+    return self.Compare(fwd u) == Ordering.Greater;
   }
   default fn GreaterOrEquivalent
-      (self:? Self, u:? U) -> bool {
-    let c: Ordering = self.Compare(u);
+      (fwd self: Self, fwd u: U) -> bool {
+    let c: Ordering = self.Compare(fwd u);
     return c == Ordering.Greater
         or c == Ordering.Equivalent;
   }
