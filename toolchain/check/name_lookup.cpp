@@ -366,8 +366,7 @@ static auto DiagnoseInvalidQualifiedNameAccess(
 // Returns whether the access is prohibited by the access modifiers.
 static auto IsAccessProhibited(Context& context,
                                std::optional<AccessInfo> access_info,
-                               SemIR::AccessKind access_kind,
-                               bool is_parent_access) -> bool {
+                               SemIR::AccessKind access_kind) -> bool {
   // Namespace members are always available within the current library;
   // filtering of private names happens in import, not here.
   if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
@@ -381,9 +380,7 @@ static auto IsAccessProhibited(Context& context,
     case SemIR::AccessKind::Protected:
       return access_info->highest_allowed_access == SemIR::AccessKind::Public;
     case SemIR::AccessKind::Private:
-      return access_info->highest_allowed_access !=
-                 SemIR::AccessKind::Private ||
-             is_parent_access;
+      return access_info->highest_allowed_access != SemIR::AccessKind::Private;
     case SemIR::AccessKind::Hidden:
       return true;
   }
@@ -393,7 +390,7 @@ auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(context, access_info, access_kind, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -623,8 +620,19 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                      .highest_allowed_access = SemIR::AccessKind::Protected};
     }
 
+    // Conditionally update the `AccessInfo` to allow access to a private
+    // member from outside its scope, if that scope provides private access to
+    // the accessing scope (e.g. via `friend`).
+    if (access_kind == SemIR::AccessKind::Private && access_info.has_value() &&
+        scope_result.is_found()) {
+      auto scope_constant = GetConstantValueInSpecific(
+          context.sem_ir(), specific_id, name_scope.inst_id());
+      access_info->highest_allowed_access =
+          GetHighestAllowedAccess(context, scope_constant);
+    }
+
     auto is_access_prohibited =
-        IsAccessProhibited(context, access_info, access_kind, is_parent_access);
+        IsAccessProhibited(context, access_info, access_kind);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.

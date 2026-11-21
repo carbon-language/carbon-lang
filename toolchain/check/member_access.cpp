@@ -113,10 +113,22 @@ auto GetHighestAllowedAccess(Context& context,
   }
 
   // TODO: Support other types.
+  auto class_id = SemIR::ClassId::None;
+  auto type_id =
+      context.constant_values().GetInst(name_scope_const_id).type_id();
   if (auto class_type =
           context.constant_values().TryGetInstAs<SemIR::ClassType>(
               name_scope_const_id)) {
-    auto class_info = context.classes().Get(class_type->class_id);
+    class_id = class_type->class_id;
+  } else if (auto param_class_type =
+                 context.types()
+                     .GetAsInst(type_id)
+                     .TryAs<SemIR::ParameterizedClassType>()) {
+    class_id = param_class_type->class_id;
+  }
+
+  if (class_id.has_value()) {
+    const auto& class_info = context.classes().Get(class_id);
 
     // Check if private access is allowed.
     while (access_context_scope_id.has_value()) {
