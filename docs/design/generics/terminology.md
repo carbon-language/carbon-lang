@@ -313,6 +313,10 @@ corresponding to
 These patterns use the keywords `runtime`, `generic`, and `template` to override
 the contextual defaults when necessary.
 
+> **TODO:** Update this section to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-binding):
+> `fwd` binding patterns parameterized by a `Core.ExtType` value.
+
 The name being declared, which is the identifier to the left of the `:` is
 called a _binding_, or more specifically a _runtime binding_, _compile-time
 binding_, _checked generic binding_, or _template generic binding_. The
@@ -333,6 +337,12 @@ long as it has an implicit conversion to `type` that may be performed at compile
 time.
 
 ## Facet type
+
+> **TODO:** Update this section and [Facet](#facet) to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#extended-type-facet-types):
+> generalizing facet types and facets to include extended type facet types
+> (`Core.ExtType`, `Core.No*ExtType`, extended type interfaces, and named
+> extended type constraints) and extended type facets.
 
 A _facet type_ is a [type](#types-and-type) whose values are some subset of the
 values of `type`, determined by a set of [type constraints](#type-constraints):
@@ -393,6 +403,14 @@ argument values (usually the types of those values) to the explicit parameters.
 See more [here](overview.md#deduced-parameters).
 
 ## Interface
+
+> **TODO:** Update this section and [Named constraints](#named-constraints) to
+> reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> extended type interfaces (`Self: Core.ExtType`), named extended type
+> constraints, associated constants and `match_first` in named constraints, and
+> variant interface parameters and associated constants (`implicit_into` and
+> `implicit_from`; see [Interface variance](variance.md)).
 
 An interface is an API constraint used in a function signature to provide
 encapsulation. Encapsulation here means that callers of the function only need

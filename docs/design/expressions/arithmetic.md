@@ -217,18 +217,38 @@ Arithmetic operators can be provided for user-defined types by implementing the
 following family of interfaces:
 
 ```
+package Core;
+
 // Unary `-`.
-interface Negate {
-  default let Result: type = Self;
-  fn Op(self) -> Result;
+interface NegatePrimitive(implicit_into anchor Self: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self)
+      -> fwd ResultExtType;
+}
+constraint Negate {
+  let Result: type;
+  extend require exttype(val Self) impls
+      NegatePrimitive
+      where .ResultExtType = exttype(var Result);
 }
 ```
 
 ```
 // Binary `+`.
-interface AddWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface AddWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint AddWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      AddWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Add {
   extend AddWith(Self) where .Result = Self;
@@ -237,9 +257,19 @@ constraint Add {
 
 ```
 // Binary `-`.
-interface SubWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface SubWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint SubWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      SubWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Sub {
   extend SubWith(Self) where .Result = Self;
@@ -248,9 +278,19 @@ constraint Sub {
 
 ```
 // Binary `*`.
-interface MulWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface MulWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint MulWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      MulWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Mul {
   extend MulWith(Self) where .Result = Self;
@@ -259,9 +299,19 @@ constraint Mul {
 
 ```
 // Binary `/`.
-interface DivWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface DivWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint DivWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      DivWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Div {
   extend DivWith(Self) where .Result = Self;
@@ -270,23 +320,38 @@ constraint Div {
 
 ```
 // Binary `%`.
-interface ModWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface ModWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint ModWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      ModWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint Mod {
   extend ModWith(Self) where .Result = Self;
 }
 ```
 
-Given `x: T` and `y: U`:
+These interfaces are used to rewrite uses of arithmetic operators:
 
--   The expression `-x` is rewritten to `x.(Negate.Op)()`.
--   The expression `x + y` is rewritten to `x.(AddWith(U).Op)(y)`.
--   The expression `x - y` is rewritten to `x.(SubWith(U).Op)(y)`.
--   The expression `x * y` is rewritten to `x.(MulWith(U).Op)(y)`.
--   The expression `x / y` is rewritten to `x.(DivWith(U).Op)(y)`.
--   The expression `x % y` is rewritten to `x.(ModWith(U).Op)(y)`.
+-   The expression `-x` is rewritten to `x.(NegatePrimitive.Op)()`.
+-   The expression `x + y` is rewritten to
+    `x.(AddWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x - y` is rewritten to
+    `x.(SubWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x * y` is rewritten to
+    `x.(MulWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x / y` is rewritten to
+    `x.(DivWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x % y` is rewritten to
+    `x.(ModWithPrimitive(exttypeof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -316,6 +381,8 @@ to give the semantics described above.
     [#1083: Arithmetic](https://github.com/carbon-language/carbon-lang/pull/1083)
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+-   Proposal
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 -   Proposal

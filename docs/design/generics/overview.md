@@ -305,6 +305,13 @@ You may combine interfaces into new facet types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
+> **TODO:** Update the Interfaces and Facet types sections to reflect these
+> changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> extended type interfaces (`Self: Core.ExtType`), extended type facet types,
+> and `Core.ValSelf`/`Core.RefSelf`/`Core.VarSelf`. See
+> [Extended types](/docs/design/extended_types.md).
+
 ### Generic functions
 
 We want to be able to call generic functions just like ordinary functions, and
@@ -464,6 +471,11 @@ fn BothDraws[T: Renderable & EndOfGame](game_state: T*) {
 ```
 
 #### Named constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#named-constraints):
+> named extended type constraints, associated constants in named constraints,
+> and `match_first` blocks in named constraints.
 
 You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can
@@ -672,6 +684,13 @@ multiple implementations with the same type structure, they must be listed in
 priority order in a prioritization block.
 
 ### Operator overloading
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> operator interfaces are replaced by `Primitive` extended type interfaces with
+> named constraints (such as `AddWithPrimitive` and `AddWith`), and `like` is
+> replaced by `implicit_into`/`implicit_from` [interface variance](variance.md)
+> with `anchor`/`exact` modifiers.
 
 To overload an operator, implement the corresponding interface from the standard
 library. For example, to define how the unary `-` operator behaves for a type,

@@ -40,6 +40,11 @@ control flow can reach the end of the function body. In other words,
 `fn DoNothing() -> i32 {}` would be invalid because execution will reach the end
 of the function body without returning a value.
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-return):
+> returning expressions for `-> fwd R`, `-> fwd auto`, and nested `fwd` extended
+> return types.
+
 ### Returning empty tuples
 
 Returning an empty tuple `()` is special, and similar to C++'s `void` returns.

@@ -1242,6 +1242,14 @@ Assert(&sp1.first == &sp1.key);
 **Future work:** This needs to be connected to the broader design of aliases,
 once that lands.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#alias):
+> the new `alias` definition (in class scope, limited to compile-time constants
+> by way of `let fwd A: auto = V;`),
+> [`using`](/proposals/p005389-generic-across-extended-types.md#using), and
+> [implicit conversions of `self`](/proposals/p005389-generic-across-extended-types.md#implicit-conversions-of-self)
+> when aliasing methods of another class. See [Aliases](aliases.md).
+
 ### Inheritance
 
 Carbon supports
@@ -1610,6 +1618,13 @@ The partial class type for a base class type like `MyBaseType` is written
 -   The keyword `partial` is only valid for a `base` or `abstract` class. For
     final classes, there is no need for a second type.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#with-partial):
+> how `partial` conversions interact with expression categories by way of
+> `ImplicitAsPrimitive` (`C -> partial C` preserves `val`, `ref`, and `var`
+> categories; `partial C -> C` is only allowed for `var` initializing
+> expressions).
+
 ##### Usage
 
 The general pattern is that base classes can define constructors returning the
@@ -1819,6 +1834,14 @@ implements interfaces that are implemented for the adapted type, as well as
 applications of adapters to generics, see
 [Adapting types](/docs/design/generics/details.md#adapting-types) in the
 generics design.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> adapters automatically implement
+> [`Core.AsPrimitive`](/proposals/p005389-generic-across-extended-types.md#primitive-conversion-interfaces)
+> (preserving expression category), and forming a facet of an interface with
+> variant parameters implicitly
+> [creates an adapter](/docs/design/generics/variance.md#facets-create-adapters).
 
 **Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
