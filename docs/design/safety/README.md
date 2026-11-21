@@ -86,6 +86,14 @@ type conversion shouldn't also allow unsafe out-of-lifetime access. This is
 separate from the _soundness_ implications of an unsafe operation, which may not
 be as easily narrowed.
 
+For example, the [`unsafe as` operator][unsafe as] applies to a single
+conversion expression, and each built-in `unsafe as` conversion has a narrow
+semantic capability, such as removing `const` or `Core.MaybeUnformed` without
+also permitting out-of-lifetime access.
+
+[unsafe as]:
+    /docs/design/expressions/as_expressions.md#unsafe-as-expressions
+
 > **Future work**: More fully expand on the soundness principles and model for
 > safe Carbon code. This is an interesting and important area of the design that
 > isn't currently fleshed out in detail.
