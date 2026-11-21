@@ -51,7 +51,7 @@ guarantees. Our safety strategy has to address how C++ code fits into it, and
 provide an incremental path from where the code is at today towards increasing
 levels of safety.
 
-Ultimately, Carbon will both provide a [memory-safe language], _and_ provide a
+Ultimately, Carbon both provides a [memory-safe language], _and_ provides a
 language that is a target for mechanical migration from C++ and optimizes even
 further for interop with unsafe C++ with minimal friction.
 
@@ -59,7 +59,7 @@ further for interop with unsafe C++ with minimal friction.
 
 ## Safe and unsafe code
 
-Carbon will have both _safe_ and _unsafe_ code. Safe code provides limits on the
+Carbon has both _safe_ and _unsafe_ code. Safe code provides limits on the
 potential behavior of the program even in the face of [bugs] in order to
 [prevent][preventing vulnerabilities] [safety bugs] from becoming
 [vulnerabilities]. Unsafe code is any code or operation which lacks limits or
@@ -110,7 +110,7 @@ keyword. This mode is designed to satisfy the requirements of a
 _Permissive Carbon_ is a mode optimized for interop with C++ and automated
 migration from C++. In this mode, some unsafe code does not require an `unsafe`
 keyword: specific aspects of C++ interop or pervasive patterns that occur when
-migrating from C++. However, not _all_ unsafe code will omit the keyword, the
+migrating from C++. However, not _all_ unsafe code omits the keyword; the
 permissive mode is designed to be minimal in the unsafe code allowed.
 
 Modes can be configured on an individual file as part of the package
@@ -133,7 +133,7 @@ expressivity is available at that finer granularity through explicitly marking
 
 ## Safe library ecosystem
 
-Carbon will need access to memory-safe library ecosystems, both for
+Carbon needs access to memory-safe library ecosystems, both for
 general-purpose, multi-platform functionality and for platform-specific
 functionality. Currently, the industry is investing a massive amount
 of effort to build out a sufficient ecosystem of general, multi-platform
@@ -145,11 +145,10 @@ we should work to reuse them and avoid duplication.
 
 **Carbon's strategy for safe and generally reusable cross-platform libraries is
 to leverage Rust libraries through interop.** This is a major motivating reason
-for seamless and safe Rust interop. The Carbon project will work to avoid
-creating duplication between the growing Rust library ecosystem and any future
-Carbon library ecosystem. Carbon's ecosystem will be focused instead on
-libraries and functionality that would either be missing or only available in
-C++.
+for seamless and safe Rust interop. The Carbon project works to avoid creating
+duplication between the growing Rust library ecosystem and any future Carbon
+library ecosystem. Carbon's ecosystem is focused instead on libraries and
+functionality that would either be missing or only available in C++.
 
 Platform-specific functionality is typically developed in that platform's native
 language, whether that is Swift for Apple platforms or Kotlin for Android.
@@ -160,7 +159,7 @@ in the relevant languages on those platforms.
 ## Build modes
 
 Where Carbon's safety mode governs the language rules applied to unsafe code,
-Carbon's build modes will change the _behavior_ of unsafe code.
+Carbon's build modes change the _behavior_ of unsafe code.
 
 There are two primary build modes:
 
@@ -170,49 +169,49 @@ There are two primary build modes:
 -   **Debug**: the primary build mode during development, focuses on
     high-quality developer experience.
 
-The release build will include a baseline of [hardening] necessary to uphold the
+The release build includes a baseline of [hardening] necessary to uphold the
 run-time enforcement components of our
 [memory safety model](#carbons-memory-safety-model) below. This means, for
 example, that bounds checking is enabled in the release build. There is
 [evidence] that the cost of these hardening steps is low. Following the specific
-guidance of our top priority for [performance control], Carbon will provide ways
-to write unsafe code that disables the run-time enforcement, enabling the
-control of any overhead incurred.
+guidance of our top priority for [performance control], Carbon provides ways to
+write unsafe code that disables the run-time enforcement, enabling the control
+of any overhead incurred.
 
 [hardening]: terminology.md#hardening
 [evidence]: https://chandlerc.blog/posts/2024/11/story-time-bounds-checking/
 [performance control]: /docs/project/goals.md#performance-critical-software
 
-The debug build will change the actual behavior of both safe and unsafe code
-with detectable [bugs] or detectable undefined or erroneous behavior to have
-[fail-stop] behavior and provide detailed diagnostics to enable better
-debugging. This mode will at least provide similar bug [detection] capabilities
-to [AddressSanitizer] and [MemorySanitizer].
+The debug build changes the actual behavior of both safe and unsafe code with
+detectable [bugs] or detectable undefined or erroneous behavior to have
+[fail-stop] behavior and provides detailed diagnostics to enable better
+debugging. This mode at least provides similar bug [detection] capabilities to
+[AddressSanitizer] and [MemorySanitizer].
 
 [fail-stop]: terminology.md#fail-stop
 [detection]: terminology.md#detecting
 [AddressSanitizer]: https://clang.llvm.org/docs/AddressSanitizer.html
 [MemorySanitizer]: https://clang.llvm.org/docs/MemorySanitizer.html
 
-Carbon will also have additional build modes to provide specific, narrow
-capabilities that cannot be reasonably combined into either of the above build
-modes. Each of these is expected to be an extension of either the debug or
-release build for that specific purpose. For example:
+Carbon also has additional build modes to provide specific, narrow capabilities
+that cannot be reasonably combined into either of the above build modes. Each of
+these is expected to be an extension of either the debug or release build for
+that specific purpose. For example:
 
 -   Debug + [ThreadSanitizer]: [detection] of [data-races][data-race safety].
 -   Release + specialized [hardening]: some users can afford significant
-    run-time overhead in order to use additional hardening. Carbon will have
-    several specialized build modes in this space. Hardening techniques in this
-    space include [Control-Flow Integrity (CFI)][cfi] and hardware-accelerated
-    address sanitizing ([HWASAN]).
+    run-time overhead in order to use additional hardening. Carbon has several
+    specialized build modes in this space. Hardening techniques in this space
+    include [Control-Flow Integrity (CFI)][cfi] and hardware-accelerated address
+    sanitizing ([HWASAN]).
 
 [ThreadSanitizer]: https://clang.llvm.org/docs/ThreadSanitizer.html
 [cfi]: https://clang.llvm.org/docs/ControlFlowIntegrity.html
 [hwasan]:
     https://clang.llvm.org/docs/HardwareAssistedAddressSanitizerDesign.html
 
-Carbon will provide a way to disable the default hardening in release builds,
-but not in a supported way. Its use is expected to be strictly for benchmarking
+Carbon provides a way to disable the default hardening in release builds, but
+not in a supported way. Its use is expected to be strictly for benchmarking
 purposes.
 
 ## Constraints
@@ -249,8 +248,8 @@ applied usefully such as with [PKeys], they are robust.
 
 ## Carbon's memory safety model
 
-Carbon will use a hybrid of different techniques to achieve [memory safety] in
-its safe code, largely broken down by the categories of memory safety:
+Carbon uses a hybrid of different techniques to achieve [memory safety] in its
+safe code, largely broken down by the categories of memory safety:
 
 -   [Type safety]: compile-time enforcement, the same as other statically typed
     languages with generic type systems.
@@ -265,14 +264,14 @@ its safe code, largely broken down by the categories of memory safety:
 [temporal safety]: terminology.md#temporal-safety
 [data-race safety]: terminology.md#data-race-safety
 
-**At this high level, this means Carbon's memory safety model will largely match
+**At this high level, this means Carbon's memory safety model largely matches
 Rust's.** The only minor deviation at this level from Rust is the use of
-run-time enforcement for initialization, where Carbon will more heavily leverage
+run-time enforcement for initialization, where Carbon more heavily leverages
 run-time techniques such as automatic initialization and dynamic "optional"
 semantics to improve the ergonomics in Carbon.
 
-However, Carbon and Rust will have substantial differences in the _details_ of
-how they approach both temporal and data-race safety.
+However, Carbon and Rust have substantial differences in the _details_ of how
+they approach both temporal and data-race safety.
 
 ### Compile-time enforcement
 
@@ -306,7 +305,7 @@ only accessed with its correct runtime type. Carbon's type safety is not fully
 static since it has runtime type tests and conversions. Examples include
 base-to-derived dynamic downcasts, determining whether an optional value is
 present, and executing different code depending on which alternative is present
-in a sum type. To be safe, the language will enforce, through the language
+in a sum type. To be safe, the language enforces, through the language
 specification and compiler, that alternatives of a sum or optional type are only
 accessed after a successful runtime test that the runtime state matches, through
 (future) language constructs like `if let`, `guard let`, and `match`. In
@@ -370,16 +369,15 @@ fn Run() {
   var p: i32* = &x[0];
   // 3. a free or reallocation that invalidates that pointer, and
   x.PushBack(4000);
-  // 4. a use of that now-dangling pointer, which Carbon
-  //    will diagnose.
+  // 4. a use of that now-dangling pointer, which Carbon diagnoses.
   Core.Print(*p);
 }
 ```
 
-Carbon will detect and diagnose these at compile time using these safety
+Carbon detects and diagnoses these at compile time using these safety
 ingredients:
 
--   The allocation will have an owner.
+-   The allocation has an owner.
 -   Owners have a place set that the allocations live in.
 -   Pointers have a place set that says which places the pointer can point to.
     -   Local pointers may omit that place set and have it determined by the
