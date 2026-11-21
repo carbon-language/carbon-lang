@@ -85,6 +85,7 @@ auto HandleParseNode(Context& context, Parse::AliasId /*node_id*/) -> bool {
     CARBON_DIAGNOSTIC(AliasRequiresConstantValue, Error,
                       "alias refers to a runtime value");
     context.emitter().Emit(expr_node, AliasRequiresConstantValue);
+    expr_id = SemIR::ErrorInst::InstId;
   }
   auto alias_id = AddInst<SemIR::AliasBinding>(
       context, name_context.loc_id,
