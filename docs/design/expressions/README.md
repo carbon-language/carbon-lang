@@ -324,6 +324,17 @@ is syntactic sugar for `(` `*` _expression_ `)` `.` _..._.
 
 ## Operators
 
+> **TODO:** Update the precedence diagram above and the operator descriptions
+> below to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+>
+> -   the `fwd` prefix marker on generic-extended-type call arguments and
+>     operator operands (for example, `(fwd self) == (fwd u)`),
+> -   marking operator operands with `ref` when selecting an `impl` taking a
+>     `ref` extended type (for example, `(ref out_stream) << x;`),
+> -   `exttype(...)` and `exttypeof(...)` extended type expressions, and
+> -   `call(...)` / `call[val/ref/var](...)` facet type expressions.
+
 Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |

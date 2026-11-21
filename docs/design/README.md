@@ -688,6 +688,10 @@ address of an object in memory in Carbon.
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
+> **TODO:** Add a summary of extended types (`Core.ExtType`, `fwd`) linking to
+> [Extended types](extended_types.md) to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md).
+
 ### Expression categories
 
 A Carbon expression produces a value, references an object, or initializes an
@@ -2506,6 +2510,10 @@ class C {
 
 ### Namespaces
 
+> **TODO:** Update this section to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#namespace-aliases):
+> namespace aliases (`namespace C = A.B;` and `private namespace D = A.B;`).
+
 A `namespace` declaration defines a name that may be used as a prefix of names
 declared afterward. When defining a member of a namespace, other members of that
 namespace are considered in scope and may be found by
@@ -2597,6 +2605,13 @@ Our naming conventions are:
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
 ### Aliases
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#alias):
+> `alias A = B;` is defined on compile-time values as `let fwd A: auto = V;`
+> (with `alias ref A = R;` for compile-time-known references), `using` provides
+> a shorthand, and namespaces instead use [`namespace C = A.B;`](#namespaces).
+> See [Aliases](aliases.md).
 
 `alias` declares a name as equivalent to another name, for example:
 
@@ -3314,6 +3329,14 @@ declaration may be used to
 >     [#1088: Generic details 10: interface-implemented requirements](https://github.com/carbon-language/carbon-lang/pull/1088)
 
 ### Operator overloading
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> operator interfaces are generalized to `Primitive` extended type interfaces
+> (including `Core.CallPrimitive` and `call(...)` for function calls, and
+> returning references by way of `ref` extended return types rather than
+> pointers), with type-oriented named constraints, and `like` is replaced by
+> `implicit_into`/`implicit_from` [interface variance](generics/variance.md).
 
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type

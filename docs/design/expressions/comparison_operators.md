@@ -438,6 +438,11 @@ fn F(a: MyWidget, b: MyWidget) -> bool {
 }
 ```
 
+> **TODO:** Update the following to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#modifiers-for-coherence):
+> use `anchor` instead of `like`, and resolve the `FIXME: anchor` comments on
+> `Eq` and `Ordered` above.
+
 As for `EqWith`, the
 [`like` operator](/docs/design/generics/details.md#like-operator-for-implicit-conversions)
 can be used to permit implicit conversions when invoking a comparison, and

@@ -206,6 +206,22 @@ of `TT2`.
 
 See [here](/docs/design/values.md#type-conversions).
 
+> **TODO:** Update the built-in conversions above to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+>
+> -   category-preserving derived-to-base conversions by way of
+>     `ImplicitAsPrimitive`,
+> -   [`partial` conversions](/proposals/p005389-generic-across-extended-types.md#with-partial)
+>     (`C -> partial C` preserving category; `partial C -> C` restricted to
+>     `var` initializing expressions),
+> -   [`const` conversions](/proposals/p005389-generic-across-extended-types.md#with-const)
+>     (`C -> const C` preserving category; `exttype(val const C) ->
+>     exttype(val C)` and `ref const C` by way of value acquisition), and
+> -   [extended type facet](/proposals/p005389-generic-across-extended-types.md#extended-type-facet-types)
+>     and
+>     [compound extended type](/proposals/p005389-generic-across-extended-types.md#compound-extended-type-values)
+>     conversions to `Core.ExtType`.
+
 ## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
@@ -247,6 +263,11 @@ constraint ImplicitAs(Dest: type) {
 
 When attempting to implicitly convert an expression `x` to type `U`, the
 expression is rewritten to `x.(ImplicitAs(U).Convert)()`.
+
+> **TODO:** Update this rewrite to `x.(ImplicitAsPrimitive(U).Convert)()` and
+> resolve the `FIXME` above regarding `implicit_into` / `anchor` on
+> `ImplicitAsPrimitive` to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-conversion-interfaces).
 
 Note that implicit conversions are not transitive. Even if an
 `impl A as ImplicitAs(B)` and an `impl B as ImplicitAs(C)` are both provided, an

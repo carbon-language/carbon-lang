@@ -225,6 +225,11 @@ namespace, and the result is the package or namespace member with that name.
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
 
+> **TODO:** Update this paragraph and example to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#namespace-aliases):
+> namespaces are aliased with `namespace MyNS = MyNamespace;` rather than
+> `alias`.
+
 ```carbon
 namespace MyNamespace;
 fn MyNamespace.MyFunction() {}
@@ -277,6 +282,15 @@ A search for a name within an extended type searches for the name in its
 [type component](/docs/design/values.md#extended-types). Note that this means
 that the extended type of an expression never affects simple member access into
 that expression, except through its type component.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> the
+> [`.type` property on `Core.ExtType` values](/proposals/p005389-generic-across-extended-types.md#type-property-of-extended-type-values)
+> and simple member lookup on expressions with a symbolic
+> [extended type facet](/proposals/p005389-generic-across-extended-types.md#extended-type-interfaces)
+> (which looks up in the extended type facet type and performs `impl` lookup
+> with the extended type as `Self`).
 
 ### `extend`
 
@@ -1099,6 +1113,19 @@ instance binding depends on what instance member `M` was found:
     ```
 
 ### Member binding interfaces
+
+> **TODO:** Update this section and
+> [Inheritance and other implicit conversions](#inheritance-and-other-implicit-conversions)
+> to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-member-binding-interface):
+>
+> -   `Bind`, `BindToValue`, and `BindToRef` are replaced with the single
+>     `MemberBind(implicit_into LHS: Core.ExtType)` interface and named
+>     constraints `BindToVal` and `BindToRef` (dropping `Bind`, and allowing
+>     `BindToVal` to match reference expressions by way of `implicit_into`),
+> -   bound method examples should use `Core.CallPrimitive` / `call[val]`
+>     instead of `Call`, and
+> -   [implicit conversions of `self`](/proposals/p005389-generic-across-extended-types.md#implicit-conversions-of-self).
 
 Instance binding in `x.(y)` or `x.y` is defined in terms of rewrites to invoking
 an interface method, like other operators. There are two interfaces used,

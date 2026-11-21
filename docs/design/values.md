@@ -733,6 +733,13 @@ one of the field extended types to be proper.
 > **Open question:** Should there be a way to specify symbolic or template phase
 > in extended return types?
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-return):
+> the `fwd` return tag (`-> fwd R`,
+> [`-> fwd auto`](/proposals/p005389-generic-across-extended-types.md#auto-extended-type-returns),
+> and nested `fwd` inside tuple and struct extended return types) wherever
+> `val`, `ref`, or `var` is allowed.
+
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
@@ -806,6 +813,14 @@ The model of initialization of returns also facilitates the use of
 directly observe the storage provided for initialization of a function's return.
 
 ## Extended types
+
+> **TODO:** Update this section and cross-link to
+> [Extended types](extended_types.md) to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> `Core.ExtType` values (`exttype(...)`, `exttypeof(...)`, compound tuple and
+> struct `as Core.ExtType`, `.type`, and the single `"compile time"` phase in
+> `Core.ExtType`), extended type facet types, and `Core.ConvertsInto` /
+> `Core.ConvertsFrom`.
 
 We typically treat the category and type of an expression as independent
 properties. However, in some cases we need to deal with them as an integrated
@@ -980,12 +995,11 @@ type conversions. Conversions involving struct, tuple, and array types are
 described here because of their unique interactions with extended types of
 expressions.
 
-> **TODO:** A forthcoming proposal is expected to update the type conversion
-> interfaces to permit user-defined conversions to depend on the extended type
-> of the input, and customize the extended type of the output. Once that is
-> done, these "built in" conversions should be presented as implementations of
-> those interfaces, possibly with some "magic" for things like introspecting on
-> struct field names.
+> **TODO:** Update these "built in" conversions to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-conversion-interfaces),
+> presenting them as implementations of `Core.AsPrimitive` and
+> `Core.ImplicitAsPrimitive`, possibly with some "magic" for things like
+> introspecting on struct field names.
 
 Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
@@ -1316,6 +1330,12 @@ avoid inadvertent loss of `const`-qualification.
 
 The syntax details of `const` are also covered in the
 [type operators](/docs/design/expressions/type_operators.md) documentation.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#with-const):
+> `const` conversions with expression categories by way of `ImplicitAsPrimitive`
+> (`C -> const C` preserving category; `exttype(val const C) -> exttype(val C)`
+> and `ref const C` by way of `implicit_into` and value acquisition).
 
 ## Lifetime overloading
 

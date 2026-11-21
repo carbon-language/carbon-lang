@@ -233,6 +233,13 @@ For example:
 
 This ensures that `each` remains most tightly attached to the binding name.
 
+> **TODO:** Update this section (and the `Apply` example below) to reflect these
+> changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-binding):
+> `... fwd each x: each PET` pack expansion patterns, `... fwd each arg`
+> argument pack expansions, and variadic `Core.ExtType`
+> [forwarding](/proposals/p005389-generic-across-extended-types.md#forwarding).
+
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 

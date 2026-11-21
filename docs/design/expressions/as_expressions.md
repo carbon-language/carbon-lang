@@ -206,6 +206,13 @@ required to have a matching type). This allows
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> [compound tuple and struct `as Core.ExtType` conversions](/proposals/p005389-generic-across-extended-types.md#compound-extended-type-values),
+> resolving the `FIXME` in `AsPrimitive` above for unqualified `Dest`
+> (stripping `const`/`partial`), and `as` interactions with `partial` and
+> `const` extended types.
+
 ## Alternatives considered
 
 -   [Allow `as` to perform some unsafe conversions](/proposals/p000845-as-expressions.md#allow-as-to-perform-some-unsafe-conversions)

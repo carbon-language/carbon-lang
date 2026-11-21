@@ -28,6 +28,15 @@ Carbon provides the following operators to transform or produce types:
     type.
 -   [`typeof(x)`](#typeof) produces the static type of the expression `x`.
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#extended-types-and-values):
+> `exttype(val/ref/var T)` literals, `exttypeof(x)` (analogous to `typeof(x)`
+> without runtime evaluation), the `.type` property on `Core.ExtType` values,
+> and
+> [`call(...)` / `call[val/ref/var](...)`](/proposals/p005389-generic-across-extended-types.md#call)
+> facet type expressions (linking to
+> [Extended types](/docs/design/extended_types.md)).
+
 The pointer type operator is also covered as one of the
 [pointer operators](pointer_operators.md).
 

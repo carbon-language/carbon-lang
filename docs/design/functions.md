@@ -185,7 +185,10 @@ The return type of a function or lambda can be specified using a return clause
         defined using `=>` cannot have a separate forward declaration.
 
 > **TODO:** Update this section to cover extended return types, as discussed
-> [here](values.md#function-calls-and-returns).
+> [here](values.md#function-calls-and-returns), including `-> fwd R`,
+> `-> fwd auto`, and nested `fwd` return tags from
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-return)
+> (while noting that `=>` continues to deduce only type).
 
 #### Unused parameters
 
@@ -240,6 +243,12 @@ statement must have an expression that is convertible to the return type, and a
 > of the expression.
 
 ## Positional parameters
+
+> **TODO:** Update this section to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#positional-parameters):
+> positional parameters change from `auto` type to `auto` extended type
+> (`fn F(... fwd _: auto)`), so arguments mutated by reference must be marked
+> `ref` at the call site.
 
 Positional parameters, denoted by a dollar sign followed by a non-negative
 integer (for example, `$3`), are auto-typed parameters defined within the
@@ -731,6 +740,19 @@ Function calls are divided into _direct calls_ and _indirect calls_.
 
 ### Direct calls
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+>
+> -   marking call-site arguments that have a symbolic extended type with `fwd`
+>     (alongside `ref` for concrete reference arguments),
+> -   [deducing `Core.ExtType` parameters](/proposals/p005389-generic-across-extended-types.md#deducing-an-extended-type-value)
+>     (including the `ref`/`fwd` call-site marker rule and category conversions
+>     for `Core.No*ExtType`),
+> -   [exact-value compile-time parameters](/proposals/p005389-generic-across-extended-types.md#compile-time-parameter-equal-to-a-specified-value)
+>     (`fwd _: exttypeof(V)`), and
+> -   [exact type matching](/proposals/p005389-generic-across-extended-types.md#parameter-requires-exact-type-match)
+>     (`[fwd T: exttypeof(bool)](x: T)`).
+
 A call expression is a _direct call_ when the callee:
 
 -   is the name of a parameterized entity, like a generic class or interface, or
@@ -780,6 +802,26 @@ The result of the call expression depends on the callee:
     the `self` value in the bound method value.
 
 ### Indirect calls and the `Call` interface
+
+> **TODO:** Update this section and
+> [Overloaded call operator](#overloaded-call-operator) to reflect these changes
+> in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-call-interface):
+>
+> -   the `Core.Call` interface is replaced with the `Core.CallPrimitive`
+>     extended type interface and the
+>     [`Core.Call` named constraint](/proposals/p005389-generic-across-extended-types.md#corecall-named-constraint),
+> -   the
+>     [`call(...)` and `call[val/ref/var](...)`](/proposals/p005389-generic-across-extended-types.md#call)
+>     facet type syntax,
+> -   modeling
+>     [deduced parameters](/proposals/p005389-generic-across-extended-types.md#representing-deduced-parameters)
+>     and
+>     [explicit compile-time parameters](/proposals/p005389-generic-across-extended-types.md#representing-explicit-compile-time-parameters)
+>     by way of parameterized `impl`s of `CallPrimitive`,
+> -   [implicit conversions on indirect calls](/proposals/p005389-generic-across-extended-types.md#conversions-when-calling-a-function-argument)
+>     by way of interface variance, and
+> -   [callables that may or may not mutate](/proposals/p005389-generic-across-extended-types.md#callables-that-may-or-may-not-mutate).
 
 A generic parameter can be constrained to be a callable type using the `Call`
 interface:

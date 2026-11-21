@@ -103,6 +103,11 @@ as contexts requiring a type will implicitly convert their operand to a type:
 fn F(x: (i32, i32)) -> (i32, i32);
 ```
 
+> **TODO:** Update this section to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#compound-extended-type-values):
+> the analogous conversion from a tuple of `Core.ExtType` values to a compound
+> tuple extended type (`as Core.ExtType`).
+
 ### Operations performed field-wise
 
 Like some other aggregate data types like

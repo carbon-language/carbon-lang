@@ -234,6 +234,13 @@ strategy prevent some features that we considered important, as described in
 
 ## Interfaces
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#extended-type-interfaces):
+> extended type interfaces (`interface I(Self: Core.ExtType)` or another
+> extended type facet type), explicit `Self: type`, and `Self` being omitted
+> from the argument list when referencing the interface. See
+> [Extended types](/docs/design/extended_types.md).
+
 An [interface](terminology.md#interface), defines an API that a given type can
 implement. For example, an interface capturing a linear-algebra vector API might
 have two methods:
@@ -293,6 +300,15 @@ class Point_Inline {
 ```
 
 ### `extend impl`
+
+> **TODO:** Update this section,
+> [Interface extension](#interface-extension), and
+> [Declaring implementations](#declaring-implementations) to reflect these
+> changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#extend):
+> `extend impl`, `extend final impl`, and `extend require` now allow an explicit
+> type or extended type to be specified before `as` or `impls` instead of
+> requiring `Self` to be omitted.
 
 Interfaces that are implemented inline with the `extend` keyword contribute to
 the type's API:
@@ -878,6 +894,18 @@ concept, for which interfaces are a building block.
 
 ## Facet types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+>
+> -   [extended type facet types and extended type facets](/docs/design/extended_types.md#extended-type-facet-types),
+> -   converting extended type facet types to type facet types by way of
+>     `Core.ValSelf`, `Core.RefSelf`, `Core.VarSelf`, named constraints, or
+>     `where ... impls`,
+> -   constraining extended type facet types with `where .type = T` and
+>     `where .type impls C`, and
+> -   forming facets of interfaces with variant parameters
+>     [creating adapter types](variance.md#facets-create-adapters).
+
 A [facet type](terminology.md#facet-type) consists of a set of requirements and
 a set of names. Requirements are typically a set of interfaces that a type must
 satisfy, though other kinds of requirements are added below. The names are
@@ -936,6 +964,17 @@ the requirements that are known at that time may be used.
 >     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ## Named constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#named-constraints):
+>
+> -   [named extended type constraints](/proposals/p005389-generic-across-extended-types.md#named-extended-type-constraints)
+>     (`constraint C(Self: Core.ExtType)` and explicit `Self: type`),
+> -   [associated constants in named constraints](/proposals/p005389-generic-across-extended-types.md#associated-constants-in-named-constraints)
+>     (deducible `let` declarations and `final let`),
+> -   [`match_first` blocks in named constraints](/proposals/p005389-generic-across-extended-types.md#match_first-in-named-constraints),
+>     and
+> -   [interaction between `anchor`, `exact`, and named constraints](/proposals/p005389-generic-across-extended-types.md#interaction-between-anchor-exact-and-named-constraints).
 
 If the interfaces discussed above are the building blocks for facet types,
 [named constraints](terminology.md#named-constraints) describe how they may be
@@ -1819,6 +1858,12 @@ be detected in function overloading.
 
 ## Adapting types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> adapters automatically implement `Core.AsPrimitive` (preserving expression
+> category), and forming a facet of an interface with variant parameters
+> implicitly [creates an adapter](variance.md#facets-create-adapters).
+
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
@@ -2194,6 +2239,13 @@ fn Render(w: Window) {
 > **TODO:** Update this section to reflect the new rules and guidance on
 > associated constants in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> `Core.ExtType` associated constants,
+> [`implicit_from` covariant associated constants](variance.md#implicit_from-variance-covariance),
+> and
+> [associated constants in named constraints](/proposals/p005389-generic-across-extended-types.md#associated-constants-in-named-constraints).
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
@@ -2515,6 +2567,11 @@ and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support these, but call them "associated types."
 
 ## Parameterized interfaces
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> `Core.ExtType` interface parameters and variant (`implicit_into` and
+> `implicit_from`) parameters. See [Interface variance](variance.md).
 
 Associated constants don't change the fact that a type can only implement an
 interface at most once.
@@ -3451,6 +3508,12 @@ breaking existing code.
 
 #### Implements constraints
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#whereimpls):
+> `where A impls B` when `A` is an extended type or extended type facet and `B`
+> is an extended type facet type, as well as `where .type = T` and
+> `where .type impls C` on extended type facet types.
+
 An _implements constraint_ is written `where T impls C`, and expresses that the
 facet `T` must implement the requirements of facet type `C`. This is more
 flexible than using
@@ -3505,6 +3568,11 @@ in `T: I where .Self impls C`, is represented by an
 [extends](terminology.md#extending-an-impl) `I`.
 
 ##### Implied constraints
+
+> **TODO:** Update this section to reflect
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#implied-constraints):
+> implied constraints do not apply to interfaces with variant parameters. See
+> [Interface variance](variance.md#implied-constraints).
 
 Imagine we have a checked-generic function that accepts an arbitrary
 [`HashMap` parameterized type](#parameterized-types):
@@ -3984,6 +4052,13 @@ Whichever approach is used, the result is `NameOfConstraint` is a compile-time
 constant that is equivalent to `C where <condition>`.
 
 ## Other constraints as facet types
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> extended type facet types (`Core.NoValExtType`, `Core.NoRefExtType`,
+> `Core.NoVarExtType`, `Core.NoCompileTimeExtType`, `Core.NoRunTimeExtType`),
+> `Core.ConvertsInto`, and `Core.ConvertsFrom`. See
+> [Extended types](/docs/design/extended_types.md).
 
 There are some constraints that Carbon naturally represents as named facet
 types. These can either be used directly to constrain a facet binding, or in a
@@ -4689,6 +4764,14 @@ most specific implementation is chosen, for some definition of "specific."
 
 #### Type structure of an impl declaration
 
+> **TODO:** Update this section and [Overlap rule](#overlap-rule) to reflect
+> these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> extended types in `impl`s, `(type, extended type)` pairs and multiple type
+> structures for variant parameters, and `impl` lookup updates for interfaces
+> with variant parameters. See
+> [Interface variance](variance.md#coherence-and-impl-lookup).
+
 Given an impl declaration, find the type structure by deleting deduced
 parameters and replacing type parameters by a `?`. The type structure of this
 declaration:
@@ -4722,6 +4805,15 @@ either in the current library or be publicly defined in some library this
 library depends on.
 
 #### Orphan rule
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#extended-types-in-impls):
+>
+> -   using the `.type` property (including by way of `where .type = ...` in a
+>     `forall` clause) for extended types in the orphan rule, and
+> -   how variant (`implicit_into`) parameters interact with the orphan rule and
+>     the
+>     [`anchor` and `exact` coherence modifiers](variance.md#anchor-and-exact-modifiers).
 
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
 given `impl` can only be defined where it is always visible when it could be
@@ -6464,6 +6556,14 @@ Multiple `==` clauses are allowed in an `observe` declaration, so you may write
 
 ## Operator overloading
 
+> **TODO:** Update this section and [Binary operators](#binary-operators) to
+> reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-versions-of-other-operator-interfaces):
+> operator interfaces (`Negate`, `As`, `MulWith`, `OrderedWith`, and so on) are
+> replaced by `Primitive` extended type interfaces and named constraints, and
+> operator operands selecting a `ref` or generic extended type `impl` are marked
+> with `ref` or `fwd`.
+
 Operations are overloaded for a type by implementing an interface specific to
 that interface for that type. For example, types implement
 [the `Negate` interface](/docs/design/expressions/arithmetic.md#extensibility)
@@ -6602,8 +6702,10 @@ if (positive > even) { ... }
 
 ### `like` operator for implicit conversions
 
-> **TODO:** Update to reflect
-> [proposal #5389](https://github.com/carbon-language/carbon-lang/pull/5389).
+> **TODO:** Replace this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#implicit_into-interface-parameter-variance):
+> `like` is replaced by `implicit_into`/`implicit_from` interface variance and
+> `anchor`/`exact` coherence modifiers. See [Interface variance](variance.md).
 
 Because the type of the operands is directly used to select the operator
 interface implementation, there are no automatic implicit conversions, unlike
