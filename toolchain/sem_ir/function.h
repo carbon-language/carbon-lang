@@ -504,12 +504,26 @@ auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
 auto GetCallee(const File& sem_ir, InstId callee_id,
                SpecificId caller_specific_id = SpecificId::None) -> Callee;
 
+// Returns information for the function corresponding to callee_id in
+// caller_specific_id, where the callee instruction and the caller specific may
+// be in different files. Returns the file in which the callee entity was found
+// and the callee information in that file.
+auto GetCallee(const File& callee_ir, InstId callee_id,
+               const File& caller_specific_ir, SpecificId caller_specific_id)
+    -> std::pair<const File*, Callee>;
+
 // Like `GetCallee`, but restricts to the `Function` callee kind.
 //
 // It is invalid to call this with a callee that has an error inside it.
 auto GetCalleeAsFunction(const File& sem_ir, InstId callee_id,
                          SpecificId caller_specific_id = SpecificId::None)
     -> CalleeFunction;
+
+// Cross-file version of `GetCalleeAsFunction`.
+auto GetCalleeAsFunction(const File& callee_ir, InstId callee_id,
+                         const File& caller_specific_ir,
+                         SpecificId caller_specific_id)
+    -> std::pair<const File*, CalleeFunction>;
 
 struct DecomposedVirtualFunction {
   // The canonical instruction from the `fn_decl_const_id`.

@@ -42,9 +42,9 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
     auto category_from_kind = untyped_inst.kind().expr_category();
 
     auto handle_function_return =
-        [&](SemIR::FunctionId function_id,
+        [&](const File& callee_ir, SemIR::FunctionId function_id,
             SemIR::SpecificId resolved_specific_id) -> ExprCategory {
-      const auto& function = ir->functions().Get(function_id);
+      const auto& function = callee_ir.functions().Get(function_id);
       if (function.return_form_inst_id == ErrorInst::InstId) {
         return ExprCategory::Error;
       }
@@ -69,13 +69,13 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
       }
 
       auto return_form_id =
-          function.GetDeclaredReturnForm(*ir, resolved_specific_id);
+          function.GetDeclaredReturnForm(callee_ir, resolved_specific_id);
       if (!return_form_id.has_value()) {
         // Treat as equivalent to `-> ()`.
         return ExprCategory::ReprInitializing;
       }
 
-      auto return_form = ir->insts().Get(return_form_id);
+      auto return_form = callee_ir.insts().Get(return_form_id);
       CARBON_KIND_SWITCH(return_form) {
         case CARBON_KIND(InitForm _):
           return ExprCategory::ReprInitializing;
@@ -109,17 +109,15 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
         inst_id = import_ir_inst.inst_id();
         return std::nullopt;
       } else if constexpr (std::same_as<TypedInstT, Call>) {
-        // TODO: Handle the case where the specific is from a different file.
-        // `GetCallee` doesn't support that case currently.
-        auto callee =
-            GetCallee(*ir, inst.callee_id,
-                      ir == specific_ir ? specific_id : SpecificId::None);
+        auto [callee_ir, callee] =
+            GetCallee(*ir, inst.callee_id, *specific_ir, specific_id);
         CARBON_KIND_SWITCH(callee) {
           case CARBON_KIND(SemIR::CalleeError _): {
             return ExprCategory::Error;
           }
           case CARBON_KIND(SemIR::CalleeFunction callee_function): {
-            return handle_function_return(callee_function.function_id,
+            return handle_function_return(*callee_ir,
+                                          callee_function.function_id,
                                           callee_function.resolved_specific_id);
           }
           case CARBON_KIND(SemIR::CalleeNonFunction _): {
@@ -131,7 +129,8 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
           }
           case CARBON_KIND(SemIR::CalleeCppFunctionPointer function_ptr): {
             return handle_function_return(
-                ir->clang_function_pointer_types()
+                *callee_ir,
+                callee_ir->clang_function_pointer_types()
                     .Get(function_ptr.function_type_id)
                     .function_id,
                 SemIR::SpecificId::None);
@@ -265,6 +264,7 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
                                             bool allow_transitive)
     -> std::pair<const File*, InstId> {
   const File* ir = &sem_ir;
+  const File* specific_ir = &specific_sem_ir;
   while (true) {
     Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -321,6 +321,7 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
         }
         init_id = inst.inst_id;
         specific_id = inst.specific_id;
+        specific_ir = ir;
         continue;
       }
       case CARBON_KIND(SpecificConstant inst): {
@@ -329,6 +330,7 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
         }
         init_id = inst.inst_id;
         specific_id = inst.specific_id;
+        specific_ir = ir;
         continue;
       }
       case CARBON_KIND(ArrayInit init): {
@@ -354,31 +356,34 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
           return {ir, InstId::None};
         }
         auto [const_sem_ir, const_id] = GetConstantValueInSpecific(
-            specific_sem_ir, specific_id, *ir, inst.inst_id);
+            *specific_ir, specific_id, *ir, inst.inst_id);
         ir = const_sem_ir;
         init_id =
             ir->constant_values().GetInstAs<SemIR::InstValue>(const_id).inst_id;
+        specific_id = SpecificId::None;
         continue;
       }
       case CARBON_KIND(Call call): {
-        auto callee_function =
-            GetCalleeAsFunction(*ir, call.callee_id, specific_id);
-        const auto& function = ir->functions().Get(callee_function.function_id);
+        auto [callee_ir, callee_function] =
+            GetCalleeAsFunction(*ir, call.callee_id, *specific_ir, specific_id);
+        const auto& function =
+            callee_ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
           return {ir, InstId::None};
         }
         auto [return_form_sem_ir, return_form_constant_id] =
-            GetConstantValueInSpecific(specific_sem_ir,
-                                       callee_function.resolved_specific_id,
-                                       *ir, function.return_form_inst_id);
-        ir = return_form_sem_ir;
-        auto return_form = ir->insts().Get(
-            ir->constant_values().GetInstId(return_form_constant_id));
+            GetConstantValueInSpecific(
+                *callee_ir, callee_function.resolved_specific_id, *callee_ir,
+                function.return_form_inst_id);
+        auto return_form = return_form_sem_ir->insts().Get(
+            return_form_sem_ir->constant_values().GetInstId(
+                return_form_constant_id));
         CARBON_KIND_SWITCH(return_form) {
           case CARBON_KIND(InitForm init_form): {
-            auto type_id = ir->types().GetTypeIdForTypeInstId(
+            auto type_id = return_form_sem_ir->types().GetTypeIdForTypeInstId(
                 init_form.type_component_inst_id);
-            if (!InitRepr::ForType(*ir, type_id).MightBeInPlace()) {
+            if (!InitRepr::ForType(*return_form_sem_ir, type_id)
+                     .MightBeInPlace()) {
               return {ir, InstId::None};
             }
 

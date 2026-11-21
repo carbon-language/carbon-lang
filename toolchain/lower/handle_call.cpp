@@ -686,46 +686,24 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   llvm::ArrayRef<SemIR::InstId> arg_ids =
       context.sem_ir().inst_blocks().Get(inst.args_id);
 
-  // TODO: This duplicates the SpecificId handling in `GetCallee`.
-
-  // TODO: Should the `bound_method` be removed when forming the `call`
-  // instruction? The `self` parameter is transferred into the call argument
-  // list.
-  FunctionContext::InstInFile callee = {.file = &context.sem_ir(),
-                                        .inst_id = inst.callee_id};
-  if (auto bound_method = SemIR::TryGetCalleeAsBoundMethod(
-          context.sem_ir(), callee.inst_id, SemIR::SpecificId::None)) {
-    callee.inst_id = bound_method->function_decl_id;
-  }
-
   // Find the callee that the call instruction was type-checked against. This
   // determines the meaning of the `arg_ids`.
   auto inst_callee_function =
-      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
+      SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
 
   // Map to the callee in the specific. This might be in a different file than
   // the one we're currently lowering.
-  if (context.specific_id().has_value()) {
-    auto [const_file, const_id] = GetConstantValueInSpecific(
-        context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
-        callee.inst_id);
-    callee.file = const_file;
-    callee.inst_id = const_file->constant_values().GetInstIdIfValid(const_id);
-    CARBON_CHECK(callee.inst_id.has_value(),
-                 "Missing callee lowering call to {0}",
-                 context.sem_ir().insts().Get(inst.callee_id));
-  }
-
-  auto callee_function =
-      SemIR::GetCalleeAsFunction(*callee.file, callee.inst_id);
+  auto [callee_file, callee_function] = SemIR::GetCalleeAsFunction(
+      context.sem_ir(), inst.callee_id, context.specific_sem_ir(),
+      context.specific_id());
 
   const SemIR::Function& function =
-      callee.file->functions().Get(callee_function.function_id);
-  context.AddCallToCurrentFingerprint(callee.file->check_ir_id(),
+      callee_file->functions().Get(callee_function.function_id);
+  context.AddCallToCurrentFingerprint(callee_file->check_ir_id(),
                                       callee_function.function_id,
                                       callee_function.resolved_specific_id);
 
-  if (auto builtin_kind = function.GetBuiltinFunctionKind(*callee.file);
+  if (auto builtin_kind = function.GetBuiltinFunctionKind(*callee_file);
       builtin_kind != SemIR::BuiltinFunctionKind::None) {
     HandleBuiltinCall(context, inst_id, builtin_kind, arg_ids);
     return;
@@ -734,7 +712,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   // Get the function info for the callee. If the callee has incomplete types,
   // fall back to using the information from the call instruction.
   const auto& function_info =
-      context.GetFileContext(callee.file)
+      context.GetFileContext(callee_file)
           .GetOrCreateFunctionInfo(callee_function.function_id,
                                    callee_function.resolved_specific_id,
                                    &context.GetFileContext(&context.sem_ir()),
