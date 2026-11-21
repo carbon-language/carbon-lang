@@ -382,7 +382,7 @@ to give the semantics described above.
 -   Proposal
     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 -   Proposal

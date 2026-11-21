@@ -556,6 +556,6 @@ in general. That decision is left to a future proposal.
 -   Issue
     [#710: Default comparison for data classes](https://github.com/carbon-language/carbon-lang/issues/710)
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

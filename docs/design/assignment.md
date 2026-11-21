@@ -443,4 +443,4 @@ impl MyString as AddAssignWith(MyString) {
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)

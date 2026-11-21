@@ -271,6 +271,6 @@ types.
 -   Proposal
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)

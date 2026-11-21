@@ -220,4 +220,4 @@ type `type`. The program is invalid if this conversion is not possible.
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)

@@ -1,4 +1,4 @@
-# Generic across forms
+# Generic across extended types
 
 <!--
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM

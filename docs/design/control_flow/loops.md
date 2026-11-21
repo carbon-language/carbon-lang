@@ -124,7 +124,7 @@ values:
 
 > **Note:** The above uses the deduced extended type syntax `fwd range: auto`
 > from
-> [proposal #5389](/proposals/p005389-generic-across-forms.md#auto-extended-type-bindings).
+> [proposal #5389](/proposals/p005389-generic-across-extended-types.md#auto-extended-type-bindings).
 > TODO: Update this link once design docs are updated to reflect that proposal.
 
 > **Note:** Any temporaries in `<range>` will remain live until the end of the

@@ -183,7 +183,7 @@ class Span(T: type) {
 -   Proposal
     [#2006: Values, variables, and pointers](https://github.com/carbon-language/carbon-lang/pull/2006)
 -   Proposal
-    [#5389: Generic across forms](https://github.com/carbon-language/carbon-lang/pull/5389)
+    [#5389: Generic across extended types](https://github.com/carbon-language/carbon-lang/pull/5389)
 -   Proposal
     [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
 -   Proposal
