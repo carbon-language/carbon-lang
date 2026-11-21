@@ -499,7 +499,14 @@ fn F() {
   (fn => 0);
 }
 
-// CHECK:STDOUT: --- empty.carbon
+// --- dependent_terse_return.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+  (fn [T: Core.Copy](x: T) => x);
+}
+
+// CHECK:STDOUT: --- empty.carbon = $empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -522,7 +529,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- identity.carbon
+// CHECK:STDOUT: --- identity.carbon = $identity
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -668,7 +675,7 @@ fn F() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- terse_identity.carbon
+// CHECK:STDOUT: --- terse_identity.carbon = $terse_identity
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -851,7 +858,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc12_36.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_identity.carbon
+// CHECK:STDOUT: --- generic_identity.carbon = $generic_identity
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1112,7 +1119,7 @@ fn F() {
 // CHECK:STDOUT:   %specific_impl_fn.loc5_60.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_nested.carbon
+// CHECK:STDOUT: --- generic_nested.carbon = $generic_nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1607,7 +1614,7 @@ fn F() {
 // CHECK:STDOUT:   %specific_impl_fn.loc8_16.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- control_flow.carbon
+// CHECK:STDOUT: --- control_flow.carbon = $control_flow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -59,8 +59,8 @@ fn Call() -> i32 {
 // CHECK:STDOUT: attributes #2 = { noinline nounwind optnone }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!1}
-// CHECK:STDOUT: !llvm.module.flags = !{!10, !11, !12, !18, !19}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!17}
+// CHECK:STDOUT: !llvm.module.flags = !{!10, !11, !12, !13, !19, !20}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!18}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !0, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -70,14 +70,15 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !5 = distinct !DISubprogram(name: "Call", linkageName: "_CCall.Main", scope: null, file: !0, line: 12, type: !4, spFlags: DISPFlagDefinition, unit: !1)
 // CHECK:STDOUT: !8 = !DILocation(line: 13, column: 10, scope: !5)
 // CHECK:STDOUT: !9 = !DILocation(line: 13, column: 3, scope: !5)
-// CHECK:STDOUT: !10 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !11 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !12 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !13 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !14 = !{!"omnipotent char", !13, i64 0}
-// CHECK:STDOUT: !15 = !{!"int", !14, i64 0}
-// CHECK:STDOUT: !16 = !{!"__libc_errno", !15, i64 0}
-// CHECK:STDOUT: !17 = !{!16, !15, i64 0}
-// CHECK:STDOUT: !18 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !19 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !10 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !11 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !12 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !13 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !14 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !15 = !{!"omnipotent char", !14, i64 0}
+// CHECK:STDOUT: !16 = !{!"int", !15, i64 0}
+// CHECK:STDOUT: !17 = !{!"__libc_errno", !16, i64 0}
+// CHECK:STDOUT: !18 = !{!17, !16, i64 0}
+// CHECK:STDOUT: !19 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !20 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT:

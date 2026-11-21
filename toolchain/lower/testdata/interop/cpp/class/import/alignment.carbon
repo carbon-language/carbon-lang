@@ -68,7 +68,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [4 x i8], align 4, !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !47
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.d4cda66b3640b619"(ptr %a.var), !dbg !47
-// CHECK:STDOUT:   %.loc25.n = getelementptr inbounds nuw [4 x i8], ptr %a.var, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc25.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !49
 // CHECK:STDOUT:   store i32 %n, ptr %.loc25.n, align 4, !dbg !49
 // CHECK:STDOUT:   call void @_Z4TakeI16NaturallyAlignedEvRT_(ptr %a.var), !dbg !53
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.c6278a5929156fb0(ptr %a.var), !dbg !47
@@ -99,7 +99,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [16 x i8], align 16, !dbg !62
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !62
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.34933c1c343bd645"(ptr %a.var), !dbg !62
-// CHECK:STDOUT:   %.loc33.n = getelementptr inbounds nuw [16 x i8], ptr %a.var, i32 0, i32 0, !dbg !64
+// CHECK:STDOUT:   %.loc33.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !64
 // CHECK:STDOUT:   store i32 %n, ptr %.loc33.n, align 4, !dbg !64
 // CHECK:STDOUT:   call void @_Z4TakeI14ExtraAlignmentEvRT_(ptr %a.var), !dbg !68
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.22e5fe87740af61e(ptr %a.var), !dbg !62
@@ -130,7 +130,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [4 x i8], align 1, !dbg !77
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !77
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.3e10857902c69c1a"(ptr %a.var), !dbg !77
-// CHECK:STDOUT:   %.loc42.n = getelementptr inbounds nuw [4 x i8], ptr %a.var, i32 0, i32 0, !dbg !79
+// CHECK:STDOUT:   %.loc42.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !79
 // CHECK:STDOUT:   store i32 %n, ptr %.loc42.n, align 4, !dbg !79
 // CHECK:STDOUT:   call void @_Z4TakeI6PackedEvRT_(ptr %a.var), !dbg !83
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.13f1a30fe506004f(ptr %a.var), !dbg !77
@@ -201,8 +201,8 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!35}
-// CHECK:STDOUT: !llvm.module.flags = !{!134, !135, !136, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!139}
+// CHECK:STDOUT: !llvm.module.flags = !{!134, !135, !136, !137, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!140}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -275,10 +275,11 @@ fn Packed(n: i32) {
 // CHECK:STDOUT: !131 = !{!130, !130, i64 0}
 // CHECK:STDOUT: !132 = !{!"p1 _ZTS6Packed", !127, i64 0}
 // CHECK:STDOUT: !133 = !{!132, !132, i64 0}
-// CHECK:STDOUT: !134 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !135 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !136 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !137 = !{!"int", !126, i64 0}
-// CHECK:STDOUT: !138 = !{!"__libc_errno", !137, i64 0}
-// CHECK:STDOUT: !139 = !{!138, !137, i64 0}
+// CHECK:STDOUT: !134 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !135 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !136 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !137 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !138 = !{!"int", !126, i64 0}
+// CHECK:STDOUT: !139 = !{!"__libc_errno", !138, i64 0}
+// CHECK:STDOUT: !140 = !{!139, !138, i64 0}
 // CHECK:STDOUT:

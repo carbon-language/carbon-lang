@@ -27,7 +27,7 @@ interface Interface {
   fn F();
 }
 
-// CHECK:STDOUT: --- fail_redeclare_member.carbon
+// CHECK:STDOUT: --- fail_redeclare_member.carbon = $fail_redeclare_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

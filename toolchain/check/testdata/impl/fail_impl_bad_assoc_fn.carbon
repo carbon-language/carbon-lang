@@ -265,7 +265,7 @@ class SelfNestedBadReturnType {
 }
 
 
-// CHECK:STDOUT: --- fail_impl_bad_assoc_fn.carbon
+// CHECK:STDOUT: --- fail_impl_bad_assoc_fn.carbon = $fail_impl_bad_assoc_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

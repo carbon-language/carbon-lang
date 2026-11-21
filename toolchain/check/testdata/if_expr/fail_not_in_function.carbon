@@ -113,13 +113,13 @@ fn F() {
   }
 }
 
-// CHECK:STDOUT: --- fail_basic.carbon
+// CHECK:STDOUT: --- fail_basic.carbon = $fail_basic
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_types.carbon
+// CHECK:STDOUT: --- fail_types.carbon = $fail_types
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_in_param.carbon
+// CHECK:STDOUT: --- fail_in_param.carbon = $fail_in_param
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_class.carbon
+// CHECK:STDOUT: --- fail_class.carbon = $fail_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -133,7 +133,7 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nested_class.carbon
+// CHECK:STDOUT: --- fail_nested_class.carbon = $fail_nested_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -10,8 +10,7 @@
 namespace Carbon::Check {
 
 auto FullPatternStack::StartPatternInitializer() -> void {
-  CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
-               kind_stack_.back() == Kind::NameBindingDecl);
+  CARBON_CHECK(IsAnyNameBindingDeclKind(kind_stack_.back()));
   for (auto& [name_id, inst_id] : bind_name_stack_.PeekArray()) {
     CARBON_CHECK(
         inst_id == SemIR::InstId::InitTombstone,

@@ -121,7 +121,7 @@ import Other library "other_conflict";
 
 var c: Other.C = {};
 
-// CHECK:STDOUT: --- other_define.carbon
+// CHECK:STDOUT: --- other_define.carbon = $other_define
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -154,7 +154,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_extern.carbon
+// CHECK:STDOUT: --- other_extern.carbon = $other_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -179,7 +179,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_conflict.carbon
+// CHECK:STDOUT: --- other_conflict.carbon = $other_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -208,7 +208,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- define.carbon
+// CHECK:STDOUT: --- define.carbon = $define
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -272,7 +272,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern.carbon
+// CHECK:STDOUT: --- fail_extern.carbon = $fail_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -322,7 +322,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
+// CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon = $fail_todo_merge_define_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -387,7 +387,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

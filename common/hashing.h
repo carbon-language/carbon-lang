@@ -282,10 +282,16 @@ class Hasher {
         data.size() * sizeof(T)));
   }
 
-  // An out-of-line, throughput-optimized routine for incorporating a
-  // dynamically sized sequence when the sequence size is guaranteed to be >32.
-  // The size is always incorporated into the state.
-  auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void;
+  // Incorporates a dynamically sized byte sequence into `buffer` and returns
+  // the updated hash buffer.
+  //
+  // This is an out-of-line, throughput-optimized routine for sequences whose
+  // size is guaranteed to be >32. The size is always incorporated into the
+  // state. Taking and returning the buffer by value in a pure `static` function
+  // keeps callers' `Hasher` objects in registers across the out-of-line call
+  // boundary.
+  [[gnu::pure]] static auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes,
+                                                uint64_t buffer) -> uint64_t;
 
   // Utility functions to read data of various sizes efficiently into a
   // 64-bit value. These pointers need-not be aligned, and can alias other
@@ -487,7 +493,8 @@ inline auto CarbonHashValue(llvm::ArrayRef<T> values) -> HashCode {
   return static_cast<HashCode>(hasher);
 }
 
-inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(
+    llvm::ArrayRef<std::byte> bytes) -> HashCode {
   Hasher hasher;
   hasher.HashSizedBytes(bytes);
   return static_cast<HashCode>(hasher);
@@ -495,16 +502,19 @@ inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes) -> HashCode {
 
 // Hashing implementation for `llvm::StringRef`. We forward all the other
 // string-like types that support heterogeneous lookup to this one.
-inline auto CarbonHashValue(llvm::StringRef value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(llvm::StringRef value)
+    -> HashCode {
   return CarbonHashValue(llvm::ArrayRef(
       reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
 
-inline auto CarbonHashValue(std::string_view value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(std::string_view value)
+    -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
-inline auto CarbonHashValue(const std::string& value) -> HashCode {
+[[clang::always_inline]] inline auto CarbonHashValue(const std::string& value)
+    -> HashCode {
   return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
@@ -607,7 +617,7 @@ concept CanHashAsRawDataType = std::same_as<T, std::nullptr_t> ||
 // overloads, either here, or via ADL. Note that similar to
 // `HasCarbonHashValue`, this must not be moved above any of those overloads.
 template <typename T>
-inline auto DispatchImpl(const T& value) -> HashCode {
+[[clang::always_inline]] inline auto DispatchImpl(const T& value) -> HashCode {
   if constexpr (HasCarbonHashValue<T>) {
     // If we have an explicit overload for `CarbonHashValue`, call it. This may
     // be provided above or via ADL, and is preferred as it represents an
@@ -638,7 +648,7 @@ inline auto DispatchImpl(const T& value) -> HashCode {
 }  // namespace InternalHashDispatch
 
 template <typename T>
-inline auto HashValue(const T& value) -> HashCode {
+[[clang::always_inline]] inline auto HashValue(const T& value) -> HashCode {
   return InternalHashDispatch::DispatchImpl(value);
 }
 
@@ -928,10 +938,12 @@ inline auto Hasher::HashRaw(const T& value) -> void {
 
   // Hashing the size isn't relevant here, but is harmless, so fall back to a
   // common code path.
-  HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)));
+  buffer = HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)),
+                               buffer);
 }
 
-inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
+[[clang::always_inline]] inline auto Hasher::HashSizedBytes(
+    llvm::ArrayRef<std::byte> bytes) -> void {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
 
@@ -1029,7 +1041,7 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
     return;
   }
 
-  HashSizedBytesLarge(bytes);
+  buffer = HashSizedBytesLarge(bytes, buffer);
 }
 
 }  // namespace Carbon

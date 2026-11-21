@@ -20,7 +20,7 @@ fn CallF(ab: ({}, {}), c: {}) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- pattern_in_signature.carbon
+// CHECK:STDOUT: --- pattern_in_signature.carbon = $pattern_in_signature
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

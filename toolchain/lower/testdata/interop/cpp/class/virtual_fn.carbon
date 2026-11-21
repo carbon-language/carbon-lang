@@ -95,7 +95,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: define dso_local void @_Z16delete_new_Finalv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p)
 // CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !4
@@ -105,11 +105,11 @@ void delete_new_Base() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.notnull:                                   ; preds = %entry
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %0, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %0, i64 noundef 8) #12
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.end:                                       ; preds = %delete.notnull, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %p) #8
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %p)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -142,7 +142,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nobuiltin nounwind
-// CHECK:STDOUT: declare void @_ZdlPvm(ptr noundef, i64 noundef) #4
+// CHECK:STDOUT: declare void @_ZdlPvm(ptr allocptr noundef, i64 noundef) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.end.p0(ptr captures(none)) #1
@@ -151,7 +151,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: define dso_local void @_Z15delete_new_Basev() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p)
 // CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !6
@@ -167,7 +167,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.end:                                       ; preds = %delete.notnull, %entry
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %p) #8
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %p)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -217,7 +217,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e9cc9e95545cc62f:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !43
+// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !43
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
@@ -225,7 +225,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.28387b086eba9957:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !47
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
@@ -256,7 +256,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.294df737cd074d60:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_17.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !64
+// CHECK:STDOUT:   %.loc17_17.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !64
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc17_17.1.base), !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
@@ -302,7 +302,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #12
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -335,7 +335,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #12
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -385,8 +385,8 @@ void delete_new_Base() {
 // CHECK:STDOUT: attributes #12 = { builtin nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!28}
-// CHECK:STDOUT: !llvm.module.flags = !{!98, !99, !100, !11, !12}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!103}
+// CHECK:STDOUT: !llvm.module.flags = !{!98, !99, !100, !101, !11, !12}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!104}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -460,10 +460,11 @@ void delete_new_Base() {
 // CHECK:STDOUT: !92 = !{!91, !91, i64 0}
 // CHECK:STDOUT: !95 = !{}
 // CHECK:STDOUT: !96 = !{i64 8}
-// CHECK:STDOUT: !98 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !99 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !100 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !101 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !102 = !{!"__libc_errno", !101, i64 0}
-// CHECK:STDOUT: !103 = !{!102, !101, i64 0}
+// CHECK:STDOUT: !98 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !99 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !100 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !101 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !102 = !{!"int", !1, i64 0}
+// CHECK:STDOUT: !103 = !{!"__libc_errno", !102, i64 0}
+// CHECK:STDOUT: !104 = !{!103, !102, i64 0}
 // CHECK:STDOUT:

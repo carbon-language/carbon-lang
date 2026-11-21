@@ -61,11 +61,12 @@ auto DeclNameStack::MakeUnqualifiedName(SemIR::LocId loc_id,
   return context;
 }
 
-auto DeclNameStack::PushScopeAndStartName() -> void {
+auto DeclNameStack::PushScopeAndStartName(
+    ScopeStack::NonConstantAccess non_constant_access) -> void {
   decl_name_stack_.push_back(MakeEmptyNameContext());
 
   // Create a scope for any parameters introduced in this name.
-  context_->scope_stack().PushForDeclName();
+  context_->scope_stack().PushForDeclName(non_constant_access);
 
   UpdateAccessContext();
 }

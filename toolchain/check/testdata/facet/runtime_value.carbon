@@ -187,7 +187,7 @@ fn F(T: type) {
   T.G();
 }
 
-// CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
+// CHECK:STDOUT: --- facet_value_copy_from_reference.carbon = $facet_value_copy_from_reference
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -212,7 +212,7 @@ fn F(T: type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
+// CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon = $fail_todo_facet_copy_narrowing_from_reference
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

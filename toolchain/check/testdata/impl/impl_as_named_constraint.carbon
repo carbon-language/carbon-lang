@@ -326,7 +326,7 @@ class C;
 // CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as N {}
-// CHECK:STDERR:        · ━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·      ┗━━┫ error: associated constant I1 not given a value in impl of interface I
 // CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
@@ -521,7 +521,7 @@ constraint J {
 // CHECK:STDERR:
 impl () as J {}
 
-// CHECK:STDOUT: --- fail_error_self_in_require.carbon
+// CHECK:STDOUT: --- fail_error_self_in_require.carbon = $fail_error_self_in_require
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

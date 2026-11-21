@@ -96,7 +96,7 @@ interface I {
   protected fn F(self);
 }
 
-// CHECK:STDOUT: --- fail_abstract.carbon
+// CHECK:STDOUT: --- fail_abstract.carbon = $fail_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -124,7 +124,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Abstract.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_default.carbon
+// CHECK:STDOUT: --- fail_default.carbon = $fail_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Default;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_virtual.carbon
+// CHECK:STDOUT: --- fail_virtual.carbon = $fail_virtual
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -168,7 +168,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Virtual.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_protected.carbon
+// CHECK:STDOUT: --- fail_protected.carbon = $fail_protected
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -184,7 +184,7 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @Protected;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_private_member.carbon
+// CHECK:STDOUT: --- fail_private_member.carbon = $fail_private_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -254,7 +254,7 @@ interface I {
 // CHECK:STDOUT:   %self.patt.loc12_16.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_protected_member.carbon
+// CHECK:STDOUT: --- fail_protected_member.carbon = $fail_protected_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

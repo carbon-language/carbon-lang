@@ -111,7 +111,7 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !68
+// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !68
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
@@ -119,7 +119,7 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.b25525d21a9bd472:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !72
+// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !72
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
@@ -145,13 +145,13 @@ fn DoThing() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %d.var = alloca { [16 x i8] }, align 8, !dbg !83
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !83
-// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !84
 // CHECK:STDOUT:   call void @_ZN4BaseC1Ev.carbon_thunk.(ptr %.loc31_44.1.base), !dbg !85
-// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !84
-// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !84
-// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw i8, ptr %.loc31_44.7.base, i64 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw i8, ptr %.loc31_44.8.base, i64 0, !dbg !84
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !84
-// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !88
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !88
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !89
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9ede905be876779b(ptr %d.var), !dbg !83
 // CHECK:STDOUT:   ret void, !dbg !90
@@ -241,8 +241,8 @@ fn DoThing() {
 // CHECK:STDOUT: attributes #8 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!40}
-// CHECK:STDOUT: !llvm.module.flags = !{!115, !116, !117, !7, !8}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!119}
+// CHECK:STDOUT: !llvm.module.flags = !{!115, !116, !117, !118, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!120}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -314,9 +314,10 @@ fn DoThing() {
 // CHECK:STDOUT: !109 = !{!"p1 _ZTSN6Carbon4Main7DerivedE", !2, i64 0}
 // CHECK:STDOUT: !110 = !{!109, !109, i64 0}
 // CHECK:STDOUT: !112 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !115 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !116 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !117 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !118 = !{!"__libc_errno", !112, i64 0}
-// CHECK:STDOUT: !119 = !{!118, !112, i64 0}
+// CHECK:STDOUT: !115 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !116 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !117 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !118 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !119 = !{!"__libc_errno", !112, i64 0}
+// CHECK:STDOUT: !120 = !{!119, !112, i64 0}
 // CHECK:STDOUT:

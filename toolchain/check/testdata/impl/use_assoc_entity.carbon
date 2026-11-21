@@ -256,7 +256,7 @@ impl forall [T: type] T as J where .T = () {
   }
 }
 
-// --- fail_todo_associated_constant_use_before_value_known.carbon
+// --- fail_associated_constant_use_before_value_known.carbon
 library "[[@TEST_NAME]]";
 
 interface J {
@@ -266,52 +266,22 @@ interface J {
 
 class A {}
 
-// TODO: Make sure this behaves reasonably once we support `where` declarations.
-
-// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+22]]:1
-// CHECK:STDERR:        │   let T: type;
-// CHECK:STDERR:        ·       ───┬───
-// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl A as J {
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface J
-// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
-// CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+11]]:1
-// CHECK:STDERR:        │   let U: type;
-// CHECK:STDERR:        ·       ───┬───
-// CHECK:STDERR:        ·          ╰──┤ associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl A as J {
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: associated constant U not given a value in impl of interface J
-// CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:3
-  // CHECK:STDERR: ->     │   where .U = T;
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+13]]:13
+  // CHECK:STDERR: ->     │   where U = T;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:3
-  // CHECK:STDERR: ->     │   where .U = T;
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
-  // CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   where U = T;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `where assignment decl` [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  where .U = T;
-  // CHECK:STDERR:        ╭─┤ fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:3
-  // CHECK:STDERR: ->     │   where .T = ();
-  // CHECK:STDERR:        ·   ━━┳━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  where .T = ();
+  where U = T;
+  where T = ();
 }
 
 // --- associated_fn_use_in_def_before_decl.carbon
@@ -532,7 +502,7 @@ fn F() {
 }
 
 
-// CHECK:STDOUT: --- associated_type_in_method_signature.carbon
+// CHECK:STDOUT: --- associated_type_in_method_signature.carbon = $associated_type_in_method_signature
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -865,7 +835,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc6_20.2 => constants.%return.patt.e4a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_impl_with_associated_type_in_signature.carbon
+// CHECK:STDOUT: --- extend_impl_with_associated_type_in_signature.carbon = $extend_impl_with_associated_type_in_signature
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1035,7 +1005,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_associated_fn_in_impl.carbon
+// CHECK:STDOUT: --- use_associated_fn_in_impl.carbon = $use_associated_fn_in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1065,7 +1035,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_associated_constant_in_impl.carbon
+// CHECK:STDOUT: --- use_associated_constant_in_impl.carbon = $use_associated_constant_in_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1154,7 +1124,7 @@ fn F() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_extend_fn.carbon
+// CHECK:STDOUT: --- call_extend_fn.carbon = $call_extend_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1191,7 +1161,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_extend_constant.carbon
+// CHECK:STDOUT: --- use_extend_constant.carbon = $use_extend_constant
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1242,7 +1212,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon
+// CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon = $associated_fn_use_in_def_before_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1272,7 +1242,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_non-type_in_function.carbon
+// CHECK:STDOUT: --- use_non-type_in_function.carbon = $use_non-type_in_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -39,10 +39,10 @@ void f() {
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::OneArg", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,8 +105,8 @@ void f() {
 // CHECK:STDOUT: attributes #6 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
-// CHECK:STDOUT: !llvm.module.flags = !{!39, !40, !41, !3, !4}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!43}
+// CHECK:STDOUT: !llvm.module.flags = !{!39, !40, !41, !42, !3, !4}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!44}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !3 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !4 = !{i32 2, !"Debug Info Version", i32 3}
@@ -139,9 +139,10 @@ void f() {
 // CHECK:STDOUT: !36 = !{!35, !35, i64 0}
 // CHECK:STDOUT: !37 = !{!"int", !33, i64 0}
 // CHECK:STDOUT: !38 = !{!37, !37, i64 0}
-// CHECK:STDOUT: !39 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !40 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !41 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !42 = !{!"__libc_errno", !37, i64 0}
-// CHECK:STDOUT: !43 = !{!42, !37, i64 0}
+// CHECK:STDOUT: !39 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"__libc_errno", !37, i64 0}
+// CHECK:STDOUT: !44 = !{!43, !37, i64 0}
 // CHECK:STDOUT:

@@ -113,7 +113,7 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
 
   // The specific interface in here, if any, is populated by the `where`
   // expression that introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(
+  context.declaring_impl_decls().Push(
       {.self_id = self_type.type_id.AsConstantId(),
        .specific_interface = SemIR::SpecificInterface::None});
   return true;
@@ -151,7 +151,7 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
 
   // The specific interface in here, if any, is populated by the `where`
   // expression that introduces a `.Self` in the impl's constraint facet type.
-  context.declaring_impl_decls().push_back(
+  context.declaring_impl_decls().Push(
       {.self_id = context.constant_values().Get(self_inst_id),
        .specific_interface = SemIR::SpecificInterface::None});
   return true;
@@ -228,7 +228,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
 
   // Witnesses for this impl in the DeclaredFacetType of the decl will have
   // been evaluated to ImplSelfWitness.
-  context.declaring_impl_decls().pop_back();
+  context.declaring_impl_decls().Pop();
 
   // Convert the constraint expression to a type. This contains all constraints,
   // including rewrites and other constrains on the RHS of `where`.
@@ -484,10 +484,10 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
       context.generics().GetSelfSpecific(impl.generic_id));
   StartGenericDefinition(context, impl.generic_id);
   ImplWitnessStartDefinition(context, impl);
-  CheckRequireDeclsSatisfied(context, node_id, impl, full_constraint_id,
-                             identified_id);
   context.inst_block_stack().Push();
-  context.node_stack().Push(node_id, impl_id);
+  context.PushImplDefinitionStart({.impl_id = impl_id,
+                                   .full_constraint_id = full_constraint_id,
+                                   .identified_id = identified_id});
 
   // TODO: Handle the case where there's control flow in the impl body. For
   // example:
@@ -502,11 +502,14 @@ auto HandleParseNode(Context& context, Parse::ImplDefinitionStartId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::ImplDefinitionId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::ImplDefinitionId node_id)
     -> bool {
-  auto impl_id =
-      context.node_stack().Pop<Parse::NodeKind::ImplDefinitionStart>();
+  auto [impl_id, full_constraint_id, identified_id] =
+      context.PopImplDefinitionStart();
   auto& impl = context.impls().Get(impl_id);
+
+  CheckImplRequirementsAtEndOfDefinition(context, node_id, impl,
+                                         full_constraint_id, identified_id);
 
   FinishImplWitness(context, impl);
 

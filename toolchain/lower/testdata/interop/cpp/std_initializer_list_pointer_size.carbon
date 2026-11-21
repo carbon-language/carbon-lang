@@ -92,12 +92,12 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc13_50.3.temp = alloca [3 x i32], align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc13_50.3.temp), !dbg !17
-// CHECK:STDOUT:   %.loc13_50.4.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 0, !dbg !17
-// CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 1, !dbg !17
-// CHECK:STDOUT:   %.loc13_50.10.array.index = getelementptr inbounds [3 x i32], ptr %.loc13_50.3.temp, i32 0, i64 2, !dbg !17
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !16
+// CHECK:STDOUT:   %.loc13_50.4.array.index = getelementptr inbounds i8, ptr %.loc13_50.3.temp, i64 0, !dbg !17
+// CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds i8, ptr %.loc13_50.3.temp, i64 4, !dbg !17
+// CHECK:STDOUT:   %.loc13_50.10.array.index = getelementptr inbounds i8, ptr %.loc13_50.3.temp, i64 8, !dbg !17
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !16
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !16
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !16
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw i8, ptr %_.var, i64 8, !dbg !16
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !16
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !19
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.c1f9a57dcd9034c0(ptr @array), !dbg !17
@@ -108,11 +108,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.95c1f38708147abd:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_50.1.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 2, !dbg !23
+// CHECK:STDOUT:   %.loc13_50.1.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc13_50.1.array.index), !dbg !23
-// CHECK:STDOUT:   %.loc13_50.4.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 1, !dbg !23
+// CHECK:STDOUT:   %.loc13_50.4.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc13_50.4.array.index), !dbg !23
-// CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i64 0, !dbg !23
+// CHECK:STDOUT:   %.loc13_50.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc13_50.7.array.index), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }
@@ -126,12 +126,12 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_36.3.temp), !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_36.5.temp), !dbg !29
-// CHECK:STDOUT:   %.loc18_36.6.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.5.temp, i32 0, i64 0, !dbg !29
-// CHECK:STDOUT:   %.loc18_36.9.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.5.temp, i32 0, i64 1, !dbg !29
-// CHECK:STDOUT:   %.loc18_36.12.array.index = getelementptr inbounds [3 x i32], ptr %.loc18_36.5.temp, i32 0, i64 2, !dbg !29
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.3.temp, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc18_36.6.array.index = getelementptr inbounds i8, ptr %.loc18_36.5.temp, i64 0, !dbg !29
+// CHECK:STDOUT:   %.loc18_36.9.array.index = getelementptr inbounds i8, ptr %.loc18_36.5.temp, i64 4, !dbg !29
+// CHECK:STDOUT:   %.loc18_36.12.array.index = getelementptr inbounds i8, ptr %.loc18_36.5.temp, i64 8, !dbg !29
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw i8, ptr %.loc18_36.3.temp, i64 0, !dbg !29
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !29
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.3.temp, i32 0, i32 8, !dbg !29
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw i8, ptr %.loc18_36.3.temp, i64 8, !dbg !29
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !29
 // CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr %.loc18_36.3.temp, ptr %_.var), !dbg !28
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !31
@@ -176,15 +176,15 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %.loc23_69.19.temp = alloca [3 x [1 x i8]], align 1, !dbg !35
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !34
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc23_69.19.temp), !dbg !35
-// CHECK:STDOUT:   %.loc23_69.20.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 0, !dbg !35
+// CHECK:STDOUT:   %.loc23_69.20.array.index = getelementptr inbounds i8, ptr %.loc23_69.19.temp, i64 0, !dbg !35
 // CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.20.array.index), !dbg !35
-// CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 1, !dbg !35
+// CHECK:STDOUT:   %.loc23_69.18.array.index = getelementptr inbounds i8, ptr %.loc23_69.19.temp, i64 1, !dbg !35
 // CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.18.array.index), !dbg !35
-// CHECK:STDOUT:   %.loc23_69.17.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %.loc23_69.19.temp, i32 0, i64 2, !dbg !35
+// CHECK:STDOUT:   %.loc23_69.17.array.index = getelementptr inbounds i8, ptr %.loc23_69.19.temp, i64 2, !dbg !35
 // CHECK:STDOUT:   call void @_ZN15nontrivial_dtorC1Ev.carbon_thunk_tuple.(ptr %.loc23_69.17.array.index), !dbg !35
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !34
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !34
 // CHECK:STDOUT:   store ptr %.loc23_69.19.temp, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !34
-// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !34
+// CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.size = getelementptr inbounds nuw i8, ptr %_.var, i64 8, !dbg !34
 // CHECK:STDOUT:   store i64 3, ptr %initializer_list.initializer_list.call.init_list.size, align 8, !dbg !34
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.1eeb6e704b5694d3(ptr %.loc23_69.19.temp), !dbg !35
@@ -214,11 +214,11 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.9e21ffe3f520886e:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_69.1.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 2, !dbg !41
+// CHECK:STDOUT:   %.loc23_69.1.array.index = getelementptr inbounds i8, ptr %self, i64 2, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.d494e56ab76fb5f0(ptr %.loc23_69.1.array.index), !dbg !41
-// CHECK:STDOUT:   %.loc23_69.4.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 1, !dbg !41
+// CHECK:STDOUT:   %.loc23_69.4.array.index = getelementptr inbounds i8, ptr %self, i64 1, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.d494e56ab76fb5f0(ptr %.loc23_69.4.array.index), !dbg !41
-// CHECK:STDOUT:   %.loc23_69.7.array.index = getelementptr inbounds [3 x [1 x i8]], ptr %self, i32 0, i64 0, !dbg !41
+// CHECK:STDOUT:   %.loc23_69.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.d494e56ab76fb5f0(ptr %.loc23_69.7.array.index), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
@@ -305,8 +305,8 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!109, !110, !111, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!113}
+// CHECK:STDOUT: !llvm.module.flags = !{!109, !110, !111, !112, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!114}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -391,9 +391,10 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT: !106 = !{i64 0, i64 8, !104, i64 8, i64 8, !105}
 // CHECK:STDOUT: !107 = !{!"p1 _ZTS15nontrivial_dtor", !95, i64 0}
 // CHECK:STDOUT: !108 = !{!107, !107, i64 0}
-// CHECK:STDOUT: !109 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !110 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !111 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !112 = !{!"__libc_errno", !100, i64 0}
-// CHECK:STDOUT: !113 = !{!112, !100, i64 0}
+// CHECK:STDOUT: !109 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !110 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !111 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !112 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !113 = !{!"__libc_errno", !100, i64 0}
+// CHECK:STDOUT: !114 = !{!113, !100, i64 0}
 // CHECK:STDOUT:

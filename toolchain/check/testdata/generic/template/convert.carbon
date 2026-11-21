@@ -304,7 +304,7 @@ fn Run() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- convert.carbon
+// CHECK:STDOUT: --- convert.carbon = $convert
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -461,7 +461,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_16.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_dependent_target_from_literal.carbon
+// CHECK:STDOUT: --- initialize_dependent_target_from_literal.carbon = $initialize_dependent_target_from_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -615,7 +615,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_3.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_primitive.carbon
+// CHECK:STDOUT: --- initialize_primitive.carbon = $initialize_primitive
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -759,7 +759,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_3.5 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_tuple.carbon
+// CHECK:STDOUT: --- initialize_from_tuple.carbon = $initialize_from_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1147,7 +1147,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3.14 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_nested_literal.carbon
+// CHECK:STDOUT: --- initialize_from_nested_literal.carbon = $initialize_from_nested_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1680,7 +1680,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc9_3.14 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as.carbon
+// CHECK:STDOUT: --- as.carbon = $as.2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1852,7 +1852,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_18.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as_type.carbon
+// CHECK:STDOUT: --- as_type.carbon = $as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2021,7 +2021,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc6_16.6 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- splice_inst_storage_arg.carbon
+// CHECK:STDOUT: --- splice_inst_storage_arg.carbon = $splice_inst_storage_arg
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2321,7 +2321,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc13_32.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- initialize_from_template_method_call.carbon
+// CHECK:STDOUT: --- initialize_from_template_method_call.carbon = $initialize_from_template_method_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

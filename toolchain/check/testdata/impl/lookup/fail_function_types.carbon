@@ -22,18 +22,10 @@ impl forall [T: type] T as Z {
 }
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_function_type_with_self_type.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        ╭─┤ fail_function_type_with_self_type.carbon:[[@LINE+6]]:3
   // CHECK:STDERR: ->     │   &(().(Z.G)) as type;
   // CHECK:STDERR:        ·   ┳ ━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_function_type_with_self_type.carbon:[[@LINE+8]]:3
-  // CHECK:STDERR: ->     │   &(().(Z.G)) as type;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert non-type value of type `<type of G in () as Z>*` to
-  // CHECK:STDERR:        ·      ┃        `type` with `as`
-  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &(().(Z.G)) as type;
@@ -45,18 +37,10 @@ library "[[@TEST_NAME]]";
 fn F() {
   // This does an impl lookup for `As` with `FunctionType` in the self type.
   //
-  // CHECK:STDERR:        ╭─┤ fail_function_type.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        ╭─┤ fail_function_type.carbon:[[@LINE+6]]:3
   // CHECK:STDERR: ->     │   &F as type;
   // CHECK:STDERR:        ·   ╻╺
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_function_type.carbon:[[@LINE+8]]:3
-  // CHECK:STDERR: ->     │   &F as type;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert non-type value of type `<type of F>*` to `type`
-  // CHECK:STDERR:        ·      ┃        with `as`
-  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &F as type;

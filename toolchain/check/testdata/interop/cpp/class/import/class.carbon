@@ -266,7 +266,7 @@ class Generic(x: Core.Copy) {
 fn GenericUse(p2: Generic(Cpp.Class1)) {
 }
 
-// CHECK:STDOUT: --- import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon = $import_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -304,7 +304,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition.carbon
+// CHECK:STDOUT: --- import_definition.carbon = $import_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -342,7 +342,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_declaration_and_definition.carbon
+// CHECK:STDOUT: --- import_declaration_and_definition.carbon = $import_declaration_and_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -380,7 +380,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_static_member_function.carbon
+// CHECK:STDOUT: --- import_static_member_function.carbon = $import_static_member_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -411,7 +411,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_static_data_member.carbon
+// CHECK:STDOUT: --- import_static_data_member.carbon = $import_static_data_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +452,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_data_member.carbon
+// CHECK:STDOUT: --- import_data_member.carbon = $import_data_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -509,7 +509,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_dynamic.carbon
+// CHECK:STDOUT: --- call_dynamic.carbon = $call_dynamic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -572,7 +572,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_to_inherit_public.carbon
+// CHECK:STDOUT: --- import_to_inherit_public.carbon = $import_to_inherit_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -627,7 +627,7 @@ fn GenericUse(p2: Generic(Cpp.Class1)) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_template.carbon
+// CHECK:STDOUT: --- import_template.carbon = $import_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

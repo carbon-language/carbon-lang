@@ -97,7 +97,7 @@ library "[[@TEST_NAME]]";
 
 //@include-in-dumps
 
-// CHECK:STDOUT: --- function.carbon
+// CHECK:STDOUT: --- function.carbon = $function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -188,7 +188,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   return %.loc20_11
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class.carbon
+// CHECK:STDOUT: --- class.carbon = $class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -231,7 +231,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.I();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_params.carbon
+// CHECK:STDOUT: --- call_params.carbon = $call_params
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -295,7 +295,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- file_without_ranges.carbon
+// CHECK:STDOUT: --- file_without_ranges.carbon = $file_without_ranges
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -321,7 +321,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_dump_file.carbon
+// CHECK:STDOUT: --- explicit_dump_file.carbon = $explicit_dump_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {

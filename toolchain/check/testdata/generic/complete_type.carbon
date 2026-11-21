@@ -96,7 +96,7 @@ fn F(generic T: type, p: T*) {
 
 fn G(p: B*) { F(B, p); }
 
-// CHECK:STDOUT: --- fail_incomplete_in_class.carbon
+// CHECK:STDOUT: --- fail_incomplete_in_class.carbon = $fail_incomplete_in_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -220,7 +220,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %complete_type.loc24_1.2 => constants.%complete_type.a68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- incomplete_in_function.carbon
+// CHECK:STDOUT: --- incomplete_in_function.carbon = $incomplete_in_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -356,7 +356,7 @@ fn G(p: B*) { F(B, p); }
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.85b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incomplete_in_function_at_eof.carbon
+// CHECK:STDOUT: --- fail_incomplete_in_function_at_eof.carbon = $fail_incomplete_in_function_at_eof
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -165,7 +165,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
   return d;
 }
 
-// CHECK:STDOUT: --- fail_adapt_copyable.carbon
+// CHECK:STDOUT: --- fail_adapt_copyable.carbon = $fail_adapt_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -388,7 +388,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt_copyable_tuple.carbon
+// CHECK:STDOUT: --- adapt_copyable_tuple.carbon = $adapt_copyable_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -775,7 +775,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_not_copyable.carbon
+// CHECK:STDOUT: --- fail_adapt_not_copyable.carbon = $fail_adapt_not_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -897,7 +897,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc21_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_not_copyable_indirect.carbon
+// CHECK:STDOUT: --- fail_adapt_not_copyable_indirect.carbon = $fail_adapt_not_copyable_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1116,7 +1116,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc23_3.5(%self.param: ref %AdaptNoncopyableIndirect) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt_copyable_struct.carbon
+// CHECK:STDOUT: --- adapt_copyable_struct.carbon = $adapt_copyable_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

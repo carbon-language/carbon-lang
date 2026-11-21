@@ -25,7 +25,7 @@ fn Run() {
   F();
 }
 
-// CHECK:STDOUT: --- fail_runtime_implicit_param.carbon
+// CHECK:STDOUT: --- fail_runtime_implicit_param.carbon = $fail_runtime_implicit_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

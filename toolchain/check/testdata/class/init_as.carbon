@@ -28,7 +28,7 @@ fn G() -> i32 {
   return v.a;
 }
 
-// CHECK:STDOUT: --- init_as.carbon
+// CHECK:STDOUT: --- init_as.carbon = $init_as
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

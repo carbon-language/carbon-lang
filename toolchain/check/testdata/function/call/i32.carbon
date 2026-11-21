@@ -20,7 +20,7 @@ fn Main() {
   var unused b: i32 = Echo(1);
 }
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

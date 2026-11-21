@@ -107,8 +107,8 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!32}
-// CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!48}
+// CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !47, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!49}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -127,11 +127,12 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: !41 = !{!"omnipotent char", !40, i64 0}
 // CHECK:STDOUT: !42 = !{!"int", !41, i64 0}
 // CHECK:STDOUT: !43 = !{!42, !42, i64 0}
-// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !47 = !{!"__libc_errno", !42, i64 0}
-// CHECK:STDOUT: !48 = !{!47, !42, i64 0}
+// CHECK:STDOUT: !44 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !45 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !46 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !47 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !48 = !{!"__libc_errno", !42, i64 0}
+// CHECK:STDOUT: !49 = !{!48, !42, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
@@ -160,21 +161,21 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: declare i32 @_CIdentity.Other(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #2 !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #2 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !54
-// CHECK:STDOUT:   %Identity.call = call i32 @_CIdentity.Other(i32 %.1), !dbg !54
-// CHECK:STDOUT:   store i32 %Identity.call, ptr %_1, align 4, !dbg !54
-// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !55
+// CHECK:STDOUT:   %Identity.call = call i32 @_CIdentity.Other(i32 %.1), !dbg !55
+// CHECK:STDOUT:   store i32 %Identity.call, ptr %_1, align 4, !dbg !55
+// CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!50}
-// CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!48}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!51}
+// CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !47, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!49}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -186,16 +187,17 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: !41 = !{!"omnipotent char", !40, i64 0}
 // CHECK:STDOUT: !42 = !{!"int", !41, i64 0}
 // CHECK:STDOUT: !43 = !{!42, !42, i64 0}
-// CHECK:STDOUT: !44 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !45 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !46 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !47 = !{!"__libc_errno", !42, i64 0}
-// CHECK:STDOUT: !48 = !{!47, !42, i64 0}
-// CHECK:STDOUT: !49 = !DIFile(filename: "b.carbon", directory: "")
-// CHECK:STDOUT: !50 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !49, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Identity__carbon_thunk", linkageName: "_CIdentity__carbon_thunk.Other", scope: null, file: !18, line: 4, type: !34, spFlags: DISPFlagDefinition, unit: !50, retainedNodes: !55)
-// CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !51, type: !20)
-// CHECK:STDOUT: !53 = !DILocalVariable(arg: 2, scope: !51, type: !20)
-// CHECK:STDOUT: !54 = !DILocation(line: 4, column: 1, scope: !51)
-// CHECK:STDOUT: !55 = !{!52, !53}
+// CHECK:STDOUT: !44 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !45 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !46 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !47 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !48 = !{!"__libc_errno", !42, i64 0}
+// CHECK:STDOUT: !49 = !{!48, !42, i64 0}
+// CHECK:STDOUT: !50 = !DIFile(filename: "b.carbon", directory: "")
+// CHECK:STDOUT: !51 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !50, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "Identity__carbon_thunk", linkageName: "_CIdentity__carbon_thunk.Other", scope: null, file: !18, line: 4, type: !34, spFlags: DISPFlagDefinition, unit: !51, retainedNodes: !56)
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !20)
+// CHECK:STDOUT: !54 = !DILocalVariable(arg: 2, scope: !52, type: !20)
+// CHECK:STDOUT: !55 = !DILocation(line: 4, column: 1, scope: !52)
+// CHECK:STDOUT: !56 = !{!53, !54}
 // CHECK:STDOUT:

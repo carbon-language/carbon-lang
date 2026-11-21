@@ -18,7 +18,7 @@
 
 namespace Carbon::Check {
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId /*specific_id*/,
                                         SemIR::ConstantId const_id)
     -> SemIR::ConstantDependence {
@@ -27,43 +27,43 @@ static auto OperandDependenceInSpecific(Context& context,
   if (!const_id.is_symbolic()) {
     return SemIR::ConstantDependence::None;
   }
-  return context.constant_values().GetSymbolicConstant(const_id).dependence;
+  return sem_ir.constant_values().GetSymbolicConstant(const_id).dependence;
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::TypeId type_id)
     -> SemIR::ConstantDependence {
   // A type operand makes the instruction dependent if it is a
   // template-dependent type.
-  return OperandDependenceInSpecific(context, specific_id,
-                                     context.types().GetConstantId(type_id));
+  return OperandDependenceInSpecific(sem_ir, specific_id,
+                                     sem_ir.types().GetConstantId(type_id));
 }
 
-auto OperandDependence(Context& context, SemIR::TypeId type_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::TypeId type_id)
     -> SemIR::ConstantDependence {
-  return OperandDependenceInSpecific(context, SemIR::SpecificId::None, type_id);
+  return OperandDependenceInSpecific(sem_ir, SemIR::SpecificId::None, type_id);
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::InstId inst_id)
     -> SemIR::ConstantDependence {
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent.
   return std::max(
-      OperandDependenceInSpecific(context, specific_id,
-                                  context.insts().Get(inst_id).type_id()),
-      OperandDependenceInSpecific(context, specific_id,
-                                  context.constant_values().Get(inst_id)));
+      OperandDependenceInSpecific(sem_ir, specific_id,
+                                  sem_ir.insts().Get(inst_id).type_id()),
+      OperandDependenceInSpecific(sem_ir, specific_id,
+                                  sem_ir.constant_values().Get(inst_id)));
 }
 
-auto OperandDependence(Context& context, SemIR::InstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::InstId inst_id)
     -> SemIR::ConstantDependence {
-  return OperandDependenceInSpecific(context, SemIR::SpecificId::None, inst_id);
+  return OperandDependenceInSpecific(sem_ir, SemIR::SpecificId::None, inst_id);
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::MetaInstId inst_id)
     -> SemIR::ConstantDependence {
@@ -75,32 +75,32 @@ static auto OperandDependenceInSpecific(Context& context,
   // constant value is dependent in this specific.
   return std::max(
       OperandDependenceInSpecific(
-          context, specific_id,
-          GetTypeOfInstInSpecific(context.sem_ir(), specific_id, inst_id)),
-      OperandDependenceInSpecific(context, specific_id,
-                                  SemIR::GetConstantValueInSpecific(
-                                      context.sem_ir(), specific_id, inst_id)));
+          sem_ir, specific_id,
+          GetTypeOfInstInSpecific(sem_ir, specific_id, inst_id)),
+      OperandDependenceInSpecific(
+          sem_ir, specific_id,
+          SemIR::GetConstantValueInSpecific(sem_ir, specific_id, inst_id)));
 }
 
-auto OperandDependence(Context& context, SemIR::MetaInstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::MetaInstId inst_id)
     -> SemIR::ConstantDependence {
-  return OperandDependenceInSpecific(context, SemIR::SpecificId::None, inst_id);
+  return OperandDependenceInSpecific(sem_ir, SemIR::SpecificId::None, inst_id);
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::TypeInstId inst_id)
     -> SemIR::ConstantDependence {
   // An instruction operand makes the instruction dependent if its type or
   // constant value is dependent. TypeInstId has type `TypeType` which is
   // concrete, so we only need to look at the constant value.
-  return OperandDependenceInSpecific(context, specific_id,
-                                     context.constant_values().Get(inst_id));
+  return OperandDependenceInSpecific(sem_ir, specific_id,
+                                     sem_ir.constant_values().Get(inst_id));
 }
 
-auto OperandDependence(Context& context, SemIR::TypeInstId inst_id)
+auto OperandDependence(const SemIR::File& sem_ir, SemIR::TypeInstId inst_id)
     -> SemIR::ConstantDependence {
-  return OperandDependenceInSpecific(context, SemIR::SpecificId::None, inst_id);
+  return OperandDependenceInSpecific(sem_ir, SemIR::SpecificId::None, inst_id);
 }
 
 template <typename IdT>
@@ -108,62 +108,49 @@ template <typename IdT>
            SameAsOneOf<IdT, SemIR::IdAndKind::NoneType, SemIR::AbsoluteInstId,
                        SemIR::BoolValue, SemIR::CallParamIndex,
                        SemIR::ClangDeclId, SemIR::ElementIndex, SemIR::NameId>
-static auto OperandDependenceInSpecific(Context& /*context*/,
+static auto OperandDependenceInSpecific(const SemIR::File& /*sem_ir*/,
                                         SemIR::SpecificId /*specific_id*/,
                                         IdT /*id*/)
     -> SemIR::ConstantDependence {
   return SemIR::ConstantDependence::None;
 }
 
-template <typename BundleT>
-static auto OperandDependenceInSpecific(Context& context,
-                                        SemIR::SpecificId specific_id,
-                                        SemIR::BundleId<BundleT> bundle_id)
-    -> SemIR::ConstantDependence {
-  return std::apply(
-      [&](auto... ids) {
-        return std::max(
-            {OperandDependenceInSpecific(context, specific_id, ids)...});
-      },
-      context.bundles().GetAsTuple(bundle_id));
-}
-
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::InstBlockId inst_block_id)
     -> SemIR::ConstantDependence {
   auto result = SemIR::ConstantDependence::None;
-  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
-    result = std::max(
-        result, OperandDependenceInSpecific(context, specific_id, arg_id));
+  for (auto arg_id : sem_ir.inst_blocks().Get(inst_block_id)) {
+    result = std::max(result,
+                      OperandDependenceInSpecific(sem_ir, specific_id, arg_id));
   }
   return result;
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::MetaInstBlockId inst_block_id)
     -> SemIR::ConstantDependence {
   auto result = SemIR::ConstantDependence::None;
-  for (auto arg_id : context.inst_blocks().Get(inst_block_id)) {
+  for (auto arg_id : sem_ir.inst_blocks().Get(inst_block_id)) {
     result =
         std::max(result, OperandDependenceInSpecific(
-                             context, specific_id, SemIR::MetaInstId(arg_id)));
+                             sem_ir, specific_id, SemIR::MetaInstId(arg_id)));
   }
   return result;
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::SpecificId inner_specific_id)
     -> SemIR::ConstantDependence {
-  auto specific = context.specifics().Get(inner_specific_id);
-  return OperandDependenceInSpecific(context, specific_id, specific.args_id);
+  auto specific = sem_ir.specifics().Get(inner_specific_id);
+  return OperandDependenceInSpecific(sem_ir, specific_id, specific.args_id);
 }
 
 template <typename IdT>
   requires SemIR::Internal::IsIdKindType<IdT>
-static auto OperandDependenceInSpecific(Context& /*context*/,
+static auto OperandDependenceInSpecific(const SemIR::File& /*sem_ir*/,
                                         SemIR::SpecificId /*specific_id*/,
                                         IdT /*id*/)
     -> SemIR::ConstantDependence {
@@ -171,12 +158,25 @@ static auto OperandDependenceInSpecific(Context& /*context*/,
   CARBON_FATAL("Unexpected argument kind for action: {}", IdT::Label);
 }
 
-static auto OperandDependenceInSpecific(Context& context,
+template <typename BundleT>
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
+                                        SemIR::SpecificId specific_id,
+                                        SemIR::BundleId<BundleT> bundle_id)
+    -> SemIR::ConstantDependence {
+  return std::apply(
+      [&](auto... ids) {
+        return std::max(
+            {OperandDependenceInSpecific(sem_ir, specific_id, ids)...});
+      },
+      sem_ir.bundles().GetAsTuple(bundle_id));
+}
+
+static auto OperandDependenceInSpecific(const SemIR::File& sem_ir,
                                         SemIR::SpecificId specific_id,
                                         SemIR::IdAndKind arg)
     -> SemIR::ConstantDependence {
   return arg.Dispatch<SemIR::ConstantDependence>([&](auto id) {
-    return OperandDependenceInSpecific(context, specific_id, id);
+    return OperandDependenceInSpecific(sem_ir, specific_id, id);
   });
 }
 
@@ -207,13 +207,13 @@ auto ActionIsPerformable(Context& context, SemIR::Inst action_inst,
     }
   }
 
-  return OperandDependenceInSpecific(context, specific_id,
+  return OperandDependenceInSpecific(context.sem_ir(), specific_id,
                                      action_inst.type_id()) <
              SemIR::ConstantDependence::Template &&
-         OperandDependenceInSpecific(context, specific_id,
+         OperandDependenceInSpecific(context.sem_ir(), specific_id,
                                      action_inst.arg0_and_kind()) <
              SemIR::ConstantDependence::Template &&
-         OperandDependenceInSpecific(context, specific_id,
+         OperandDependenceInSpecific(context.sem_ir(), specific_id,
                                      action_inst.arg1_and_kind()) <
              SemIR::ConstantDependence::Template;
 }

@@ -215,7 +215,7 @@ impl forall [T: type] D as N(T) {}
 // CHECK:STDERR:
 impl forall [T: type] D as N(T*) {}
 
-// CHECK:STDOUT: --- basic_import_generic_interface.carbon
+// CHECK:STDOUT: --- basic_import_generic_interface.carbon = $basic_import_generic_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -355,7 +355,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.loc5_27.2 => constants.%I.type.184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic_import_generic_interface.impl.carbon
+// CHECK:STDOUT: --- basic_import_generic_interface.impl.carbon = $basic_import_generic_interface.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -584,7 +584,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.a15
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic_import_generic_constraint.carbon
+// CHECK:STDOUT: --- basic_import_generic_constraint.carbon = $basic_import_generic_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -723,7 +723,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.loc5_27.2 => constants.%I.type.184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic_import_generic_constraint.impl.carbon
+// CHECK:STDOUT: --- basic_import_generic_constraint.impl.carbon = $basic_import_generic_constraint.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -944,7 +944,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_generic.carbon
+// CHECK:STDOUT: --- import_generic.carbon = $import_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1229,7 +1229,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.loc15_27.2 => constants.%I.type.184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_generic.impl.carbon
+// CHECK:STDOUT: --- fail_import_generic.impl.carbon = $fail_import_generic.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1703,7 +1703,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %.loc49_33 => constants.%.f39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_generic_with_different_specific.carbon
+// CHECK:STDOUT: --- import_generic_with_different_specific.carbon = $import_generic_with_different_specific
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1905,7 +1905,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type.loc10_27.2 => constants.%I.type.184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_generic_with_different_specific.impl.carbon
+// CHECK:STDOUT: --- import_generic_with_different_specific.impl.carbon = $import_generic_with_different_specific.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2247,7 +2247,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_generic_decl.carbon
+// CHECK:STDOUT: --- fail_import_generic_decl.carbon = $fail_import_generic_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2477,7 +2477,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %J.impl_witness.loc27_33.2 => constants.%J.impl_witness.ac6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_generic_decl.impl.carbon
+// CHECK:STDOUT: --- fail_import_generic_decl.impl.carbon = $fail_import_generic_decl.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

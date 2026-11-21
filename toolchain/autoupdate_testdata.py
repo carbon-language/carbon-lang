@@ -110,9 +110,10 @@ def main() -> None:
     if args.files:
         repo_root = Path(__file__).parents[1]
         file_tests = []
-        # Filter down to just test files.
+        # Filter down to just test files. Most are Carbon files, but some
+        # driver tests are C++ files.
         for f in args.files:
-            if f.endswith(".carbon"):
+            if f.endswith((".carbon", ".cpp")):
                 path = str(Path(f).resolve().relative_to(repo_root))
                 if path.count("/testdata/"):
                     file_tests.append(path)

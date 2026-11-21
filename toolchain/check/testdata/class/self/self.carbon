@@ -109,7 +109,7 @@ class Class {
 }
 
 
-// CHECK:STDOUT: --- self.carbon
+// CHECK:STDOUT: --- self.carbon = $self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -267,7 +267,7 @@ class Class {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_syntax_mismatch.carbon
+// CHECK:STDOUT: --- fail_self_syntax_mismatch.carbon = $fail_self_syntax_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -359,7 +359,7 @@ class Class {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_self_type_mismatch.carbon = $fail_self_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -424,7 +424,7 @@ class Class {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_self_value.carbon
+// CHECK:STDOUT: --- fail_return_self_value.carbon = $fail_return_self_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -105,7 +105,7 @@ fn InstanceCallImportFail() {
 }
 
 
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -323,7 +323,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %self.patt.loc12_8.2 => constants.%self.patt.713
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non-instance_success.carbon
+// CHECK:STDOUT: --- import_non-instance_success.carbon = $import_non-instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -428,7 +428,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.036
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance.carbon
+// CHECK:STDOUT: --- fail_import_non-instance.carbon = $fail_import_non-instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -520,7 +520,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon
+// CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon = $fail_import_non-instance_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -615,7 +615,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_instance_success.carbon
+// CHECK:STDOUT: --- import_instance_success.carbon = $import_instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -785,7 +785,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.88e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_instance.carbon
+// CHECK:STDOUT: --- fail_import_instance.carbon = $fail_import_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -958,6 +958,82 @@ TEST_F(LexerTest, RawIdentifierIntroducerAtEndOfFile) {
   }
 }
 
+TEST_F(LexerTest, SourceEndsNearBlockBoundary) {
+  // The source is scanned in 64-byte blocks, with any final partial block
+  // padded with zero bytes. Check sources ending just before, at, and just
+  // after the end of a block, so the final block has 1, 63, or 64 bytes.
+  for (int size : {1, 2, 63, 64, 65, 127, 128, 129}) {
+    SCOPED_TRACE(llvm::formatv("Size: {0}", size));
+
+    // An identifier that ends at the end of the source.
+    std::string id(size, 'a');
+    auto& id_buffer = compile_helper_.GetTokenizedBuffer(id);
+    EXPECT_FALSE(id_buffer.has_errors());
+    EXPECT_THAT(
+        id_buffer,
+        HasTokens(llvm::ArrayRef<ExpectedToken>{
+            {.kind = TokenKind::FileStart},
+            {.kind = TokenKind::Identifier, .line = 1, .column = 1, .text = id},
+            {.kind = TokenKind::FileEnd, .line = 1},
+        }));
+
+    // A newline that is the last byte of the source.
+    std::string line_text(size - 1, 'a');
+    std::string line_source = line_text + "\n";
+    auto& line_buffer = compile_helper_.GetTokenizedBuffer(line_source);
+    EXPECT_FALSE(line_buffer.has_errors());
+    llvm::SmallVector<ExpectedToken> line_expected = {
+        {.kind = TokenKind::FileStart}};
+    if (!line_text.empty()) {
+      line_expected.push_back({.kind = TokenKind::Identifier,
+                               .line = 1,
+                               .column = 1,
+                               .text = line_text});
+    }
+    line_expected.push_back({.kind = TokenKind::FileEnd, .line = 1});
+    EXPECT_THAT(line_buffer, HasTokens(llvm::ArrayRef(line_expected)));
+
+    // A newline just before the last byte of the source, which starts a
+    // one-byte line.
+    std::string next_line_source = line_text + "\nb";
+    auto& next_line_buffer =
+        compile_helper_.GetTokenizedBuffer(next_line_source);
+    EXPECT_FALSE(next_line_buffer.has_errors());
+    llvm::SmallVector<ExpectedToken> next_line_expected(
+        line_expected.begin(), line_expected.end() - 1);
+    next_line_expected.push_back(
+        {.kind = TokenKind::Identifier, .line = 2, .column = 1, .text = "b"});
+    next_line_expected.push_back({.kind = TokenKind::FileEnd, .line = 2});
+    EXPECT_THAT(next_line_buffer,
+                HasTokens(llvm::ArrayRef(next_line_expected)));
+  }
+}
+
+TEST_F(LexerTest, IdentifiersAcrossBlocks) {
+  // The ends of identifiers are found with 64-bit loads from a bitmap built
+  // from 64-byte blocks of the source. Check identifiers starting at a range of
+  // offsets, with lengths around these sizes.
+  for (int offset : {0, 1, 6, 7, 8, 63, 64}) {
+    for (int length : {1, 2, 56, 57, 58, 63, 64, 65, 127, 128, 129}) {
+      SCOPED_TRACE(llvm::formatv("Offset: {0}, length: {1}", offset, length));
+      std::string id(length, 'a');
+      std::string source = std::string(offset, ' ') + id + " b";
+      auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+      EXPECT_FALSE(buffer.has_errors());
+      EXPECT_THAT(
+          buffer,
+          HasTokens(llvm::ArrayRef<ExpectedToken>{
+              {.kind = TokenKind::FileStart},
+              {.kind = TokenKind::Identifier, .column = offset + 1, .text = id},
+              {.kind = TokenKind::Identifier,
+               .column = offset + length + 2,
+               .text = "b"},
+              {.kind = TokenKind::FileEnd},
+          }));
+    }
+  }
+}
+
 TEST_F(LexerTest, StringLiterals) {
   llvm::StringLiteral testcase = R"(
     "hello world\n"

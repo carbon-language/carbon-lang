@@ -65,7 +65,7 @@ fn Call2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CF.A.Main:I.Main"(ptr %self) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_16.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc15_16.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !29
 // CHECK:STDOUT:   %.loc15_16.2 = load i32, ptr %.loc15_16.1.n, align 4, !dbg !29
 // CHECK:STDOUT:   ret i32 %.loc15_16.2, !dbg !30
 // CHECK:STDOUT: }
@@ -108,7 +108,7 @@ fn Call2(c: C) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.C.Main(ptr %self) #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_34.1.i = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc10_34.1.i = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !49
 // CHECK:STDOUT:   %.loc10_34.2 = load i32, ptr %.loc10_34.1.i, align 4, !dbg !49
 // CHECK:STDOUT:   ret i32 %.loc10_34.2, !dbg !50
 // CHECK:STDOUT: }

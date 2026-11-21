@@ -218,7 +218,7 @@ class A {
   }
 }
 
-// CHECK:STDOUT: --- fail_private_field_access.carbon
+// CHECK:STDOUT: --- fail_private_field_access.carbon = $fail_private_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -371,7 +371,12 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_protected_field_access.carbon
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_protected_field_access.carbon = $fail_protected_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -394,7 +399,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- instance_private_field_access_on_self.carbon
+// CHECK:STDOUT: --- instance_private_field_access_on_self.carbon = $instance_private_field_access_on_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -456,7 +461,7 @@ class A {
 // CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- out_of_line_instance_private_field_access_on_self.carbon
+// CHECK:STDOUT: --- out_of_line_instance_private_field_access_on_self.carbon = $out_of_line_instance_private_field_access_on_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -506,7 +511,7 @@ class A {
 // CHECK:STDOUT:   return %Circle.SomeInternalFunction.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- public_global_access.carbon
+// CHECK:STDOUT: --- public_global_access.carbon = $public_global_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -519,7 +524,6 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, @__global_init.%x.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
@@ -527,12 +531,15 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, @A.%x
+// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref @A.%x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.global_ref
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %x.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_global_access.carbon
+// CHECK:STDOUT: --- fail_global_access.carbon = $fail_global_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -559,6 +566,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref.loc20: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %A.ref.loc32: type = name_ref A, file.%A.decl [concrete = constants.%A]
@@ -566,7 +574,7 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- self_access.carbon
+// CHECK:STDOUT: --- self_access.carbon = $self_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

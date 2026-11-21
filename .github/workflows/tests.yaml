@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -67,6 +67,7 @@ jobs:
             formulae.brew.sh:443
             github.com:443
             go.dev:443
+            index.crates.io:443
             mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
@@ -79,11 +80,13 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.astral.sh:443
             releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -119,7 +122,7 @@ jobs:
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test ${{ matrix.config.flags }} \
-            --target_pattern_file=$TARGETS_FILE
+            --target_pattern_file="$TARGETS_FILE"
 
       # See "Disk space before build" in `test-setup`.
       - name: Disk space after build

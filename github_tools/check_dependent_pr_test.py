@@ -7,6 +7,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import json
+import os
 import unittest
 from typing import Any
 from unittest import mock
@@ -45,7 +46,10 @@ class TestCheckDependentPR(unittest.TestCase):
         open_deps: list[int],
         merged_deps: list[int] = None,
         first_commit: str = None,
+        ignored_deps: list[int] = None,
+        review_base: str = None,
         comment_id: str = "comment_id",
+        extra_body: str = "",
     ) -> dict[str, str]:
         """Builds a boilerplate PR comment."""
         state: dict[str, Any] = {
@@ -54,9 +58,16 @@ class TestCheckDependentPR(unittest.TestCase):
         }
         if first_commit:
             state["first_commit"] = first_commit
+        if review_base:
+            state["review_base"] = review_base
+        if ignored_deps:
+            state["ignored"] = ignored_deps
+        body = f"<!-- check_dependent_pr {json.dumps(state)} -->"
+        if extra_body:
+            body += f"\n{extra_body}"
         return {
             "id": comment_id,
-            "body": f"<!-- check_dependent_pr {json.dumps(state)} -->",
+            "body": body,
         }
 
     def _make_pr_response(
@@ -66,6 +77,7 @@ class TestCheckDependentPR(unittest.TestCase):
         commits: list[str],
         comments: list[dict[str, str]] = None,
         has_dependent_label: bool = False,
+        merge_commits: set[str] = None,
     ) -> dict[str, Any]:
         """Builds a boilerplate GitHub response for a PR."""
         labels = (
@@ -73,6 +85,7 @@ class TestCheckDependentPR(unittest.TestCase):
             if has_dependent_label
             else []
         )
+        merge_set = merge_commits or set()
         return {
             "repository": {
                 "pullRequest": {
@@ -80,7 +93,19 @@ class TestCheckDependentPR(unittest.TestCase):
                     "headRefOid": head_ref_oid,
                     "labels": {"nodes": labels},
                     "commits": {
-                        "nodes": [{"commit": {"oid": oid}} for oid in commits]
+                        "nodes": [
+                            {
+                                "commit": {
+                                    "oid": oid,
+                                    "parents": {
+                                        "totalCount": (
+                                            2 if oid in merge_set else 1
+                                        )
+                                    },
+                                }
+                            }
+                            for oid in commits
+                        ]
                     },
                     "comments": {"nodes": comments if comments else []},
                 }
@@ -126,6 +151,10 @@ class TestCheckDependentPR(unittest.TestCase):
         calls = self.mock_client.execute.call_args_list
         self.assertIn("addLabelsToLabelable", calls[1][0][0])
         self.assertIn("addComment", calls[2][0][0])
+        self.assertIn(
+            check_dependent_pr._DOCS_URL,
+            calls[2][1]["variable_values"]["body"],
+        )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
@@ -220,6 +249,10 @@ class TestCheckDependentPR(unittest.TestCase):
         calls = self.mock_client.execute.call_args_list
         self.assertIn("addLabelsToLabelable", calls[1][0][0])
         self.assertIn("addComment", calls[2][0][0])
+        self.assertIn(
+            check_dependent_pr._DOCS_URL,
+            calls[2][1]["variable_values"]["body"],
+        )
         self._assert_status(
             _OID2, "pending", "This PR has open dependencies: #1"
         )
@@ -250,7 +283,11 @@ class TestCheckDependentPR(unittest.TestCase):
             pr_id="pr_6",
             head_ref_oid=_OID2,
             commits=[_OID1, _OID2],
-            comments=[self._make_comment(open_deps=[1], first_commit=_OID2)],
+            comments=[
+                self._make_comment(
+                    open_deps=[1], first_commit=_OID2, review_base=_OID1
+                )
+            ],
             has_dependent_label=True,
         )
         check_dependent_pr._process_pr(
@@ -563,6 +600,264 @@ class TestCheckDependentPR(unittest.TestCase):
         self.assertIn(
             "first: 1",
             check_dependent_pr._QUERY_MAX_MERGED_PR,
+        )
+
+    def test_process_pr_override(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID3,
+            commits=[_OID1, _OID3],
+            comments=[self._make_comment(open_deps=[1], first_commit=_OID3)],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={1: {_OID1}, 3: {_OID1, _OID3}},
+            pr_to_head={1: _OID1, 3: _OID3},
+            open_pr_numbers={1, 3},
+            label_id="label_dependent",
+            token="test_token",
+            override=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self.assertIn('"ignored": [1]', calls[2][1]["variable_values"]["body"])
+        self._assert_status(
+            _OID3, "success", "Dependency check overridden (ignoring #1)"
+        )
+
+        # Subsequent push keeps #1 ignored, while still catching new dep #2.
+        self.mock_post.reset_mock()
+        self.mock_client.reset_mock()
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID4,
+            commits=[_OID1, _OID2, _OID4],
+            comments=[self._make_comment(open_deps=[], ignored_deps=[1])],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={
+                1: {_OID1},
+                2: {_OID1, _OID2},
+                3: {_OID1, _OID2, _OID4},
+            },
+            pr_to_head={1: _OID1, 2: _OID2, 3: _OID4},
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        self._assert_status(
+            _OID4, "pending", "This PR has open dependencies: #2"
+        )
+
+    def test_process_pr_recheck(self) -> None:
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID2],
+            comments=[self._make_comment(open_deps=[1], ignored_deps=[3])],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={1: {_OID1}, 2: {_OID2}, 3: {_OID3}},
+            pr_to_head={1: _OID1, 2: _OID2, 3: _OID3},
+            open_pr_numbers={1, 2, 3},
+            label_id="label_dependent",
+            token="test_token",
+            recheck=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self.assertIn("updateIssueComment", calls[2][0][0])
+        self._assert_status(
+            _OID2, "success", "This PR has no open dependencies"
+        )
+
+    def test_process_pr_recheck_removes_label_without_comment(self) -> None:
+        # Adding `dependent` to an independent PR forces a re-check, which
+        # removes the label again without posting a comment.
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_2",
+            head_ref_oid=_OID2,
+            commits=[_OID2],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=2,
+            pr_to_commits={2: {_OID2}},
+            pr_to_head={2: _OID2},
+            open_pr_numbers={2},
+            label_id="label_dependent",
+            token="test_token",
+            recheck=True,
+        )
+        calls = self.mock_client.execute.call_args_list
+        self.assertEqual(len(calls), 2)
+        self.assertIn("removeLabelsFromLabelable", calls[1][0][0])
+        self._assert_status(
+            _OID2, "success", "This PR has no open dependencies"
+        )
+
+    def test_process_pr_preserves_link_on_merge_and_clears_on_rebase(
+        self,
+    ) -> None:
+        # Existing comment from before `review_base` was stored in JSON still
+        # preserves the link when the dependency merges.
+        legacy_link = (
+            "Depends on #1, start review with "
+            "[these changes](https://github.com/carbon-language/carbon-lang/"
+            f"pull/3/changes/{_OID1}..HEAD)"
+        )
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID2,
+            commits=[_OID1, _OID2],
+            comments=[
+                self._make_comment(open_deps=[1], extra_body=legacy_link)
+            ],
+            has_dependent_label=True,
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={3: {_OID1, _OID2}},
+            pr_to_head={3: _OID2},
+            open_pr_numbers={3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        calls = self.mock_client.execute.call_args_list
+        body = calls[2][1]["variable_values"]["body"]
+        self.assertIn(f'"review_base": "{_OID1}"', body)
+        self.assertIn(f"/pull/3/changes/{_OID1}..HEAD", body)
+        self._assert_status(
+            _OID2, "success", "This PR has no open dependencies"
+        )
+
+        # Rebasing drops `_OID1` from the PR commits, clearing the link.
+        self.mock_post.reset_mock()
+        self.mock_client.reset_mock()
+        self.mock_client.execute.return_value = self._make_pr_response(
+            pr_id="pr_3",
+            head_ref_oid=_OID3,
+            commits=[_OID3],
+            comments=[
+                self._make_comment(
+                    open_deps=[], merged_deps=[1], review_base=_OID1
+                )
+            ],
+        )
+        check_dependent_pr._process_pr(
+            self.mock_client,
+            pr_number=3,
+            pr_to_commits={3: {_OID3}},
+            pr_to_head={3: _OID3},
+            open_pr_numbers={3},
+            label_id="label_dependent",
+            token="test_token",
+        )
+        body = self.mock_client.execute.call_args_list[1][1]["variable_values"][
+            "body"
+        ]
+        self.assertNotIn("/changes/", body)
+        self.assertIn("full set of changes is now ready to review", body)
+        self.assertNotIn("review_base", body)
+
+    def test_process_pr_clears_link_only_when_trunk_merge_includes_dep(
+        self,
+    ) -> None:
+        dep_merge_resp = {
+            "repository": {"pullRequest": {"mergeCommit": {"oid": _OID9}}}
+        }
+
+        # Merging a stale `trunk` (before dep #1 merged -> `diverged`) keeps
+        # the review link.
+        self.mock_client.execute.side_effect = [
+            self._make_pr_response(
+                pr_id="pr_3",
+                head_ref_oid=_OID3,
+                commits=[_OID1, _OID2, _OID3],
+                comments=[
+                    self._make_comment(
+                        open_deps=[], merged_deps=[1], review_base=_OID1
+                    )
+                ],
+                merge_commits={_OID3},
+            ),
+            dep_merge_resp,
+        ]
+        with mock.patch("requests.get") as mock_get:
+            mock_get.return_value.json.return_value = {"status": "diverged"}
+            check_dependent_pr._process_pr(
+                self.mock_client,
+                pr_number=3,
+                pr_to_commits={3: {_OID1, _OID2, _OID3}},
+                pr_to_head={3: _OID3},
+                open_pr_numbers={3},
+                label_id="label_dependent",
+                token="test_token",
+            )
+        # Comment state unchanged (review_base stayed `_OID1`), so no update.
+        self.assertEqual(self.mock_client.execute.call_count, 2)
+
+        # Merging `trunk` after dep #1 landed (`ahead`) clears the link.
+        self.mock_post.reset_mock()
+        self.mock_client.reset_mock()
+        self.mock_client.execute.side_effect = [
+            self._make_pr_response(
+                pr_id="pr_3",
+                head_ref_oid=_OID4,
+                commits=[_OID1, _OID2, _OID3, _OID4],
+                comments=[
+                    self._make_comment(
+                        open_deps=[], merged_deps=[1], review_base=_OID1
+                    )
+                ],
+                merge_commits={_OID3, _OID4},
+            ),
+            dep_merge_resp,
+            {},
+        ]
+        with mock.patch("requests.get") as mock_get:
+            mock_get.return_value.json.return_value = {"status": "ahead"}
+            check_dependent_pr._process_pr(
+                self.mock_client,
+                pr_number=3,
+                pr_to_commits={3: {_OID1, _OID2, _OID3, _OID4}},
+                pr_to_head={3: _OID4},
+                open_pr_numbers={3},
+                label_id="label_dependent",
+                token="test_token",
+            )
+        body = self.mock_client.execute.call_args_list[2][1]["variable_values"][
+            "body"
+        ]
+        self.assertNotIn("/changes/", body)
+        self.assertIn("full set of changes is now ready to review", body)
+        self.assertNotIn("review_base", body)
+
+    def test_set_commit_status_links_workflow_run(self) -> None:
+        with mock.patch.dict(
+            os.environ,
+            {
+                "GITHUB_SERVER_URL": "https://github.com",
+                "GITHUB_REPOSITORY": "carbon-language/carbon-lang",
+                "GITHUB_RUN_ID": "42",
+            },
+        ):
+            check_dependent_pr._set_commit_status(
+                _OID1, "success", "ok", "test_token", dry_run=False
+            )
+        _, kwargs = self.mock_post.call_args
+        self.assertEqual(
+            kwargs["json"]["target_url"],
+            "https://github.com/carbon-language/carbon-lang/actions/runs/42",
         )
 
 

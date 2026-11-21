@@ -122,11 +122,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class EnclosingA(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   fn MemberF[U: type](x: T, y: U);
-  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·                 ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
-  // CHECK:STDERR:        ·                    ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn MemberF[U: type](x: T, y: U);
@@ -184,7 +185,7 @@ void CallUnsupportedF() {
 }
 ''';
 
-// CHECK:STDOUT: --- generic_facet.carbon
+// CHECK:STDOUT: --- generic_facet.carbon = $generic_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -527,7 +528,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %C.val => constants.%C.val.b0d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- generic_type_impls_interface.carbon
+// CHECK:STDOUT: --- generic_type_impls_interface.carbon = $generic_type_impls_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -34,6 +34,9 @@ auto InNonStaticFieldDecl(Context& context) -> bool;
 // Whether a static class var decl is currently being checked.
 auto InStaticClassScopeVar(Context& context) -> bool;
 
+// Whether a class scope `let` is currently being checked.
+auto InClassScopeLet(Context& context) -> bool;
+
 // Returns the `FieldDecl` in the class scope corresponding to the given field
 // of the class's object representation, or `nullopt` if there is none, such as
 // for a base class. If the class was imported, this loads the field. See

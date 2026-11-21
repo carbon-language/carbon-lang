@@ -2045,7 +2045,115 @@ class B {
   }
 }
 
-// CHECK:STDOUT: --- import_non_function_member_public.carbon
+// --- fail_access_private_parent_member_in_unrelated_class.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+16]]:8
+    // CHECK:STDERR:        │   static void F() {}
+    // CHECK:STDERR:        ·               ┬
+    // CHECK:STDERR:        ·               ╰──┤ declared private here [CppInteropParseNote]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     T::F();
+    // CHECK:STDERR:        ·        ┳
+    // CHECK:STDERR:        ·        ┗━━┫ error: 'F' is a private member of 'Base' [CppInteropParseError]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR:        │   a.G();
+    // CHECK:STDERR:        ·     ┬
+    // CHECK:STDERR:        ·     ╰──┤ in instantiation of member function 'A<Carbon::Main::Derived>::G'
+    // CHECK:STDERR:        ·        │ requested here
+    // CHECK:STDERR:        ·        │ [CppInteropParseNote]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
+// --- access_private_parent_member_in_unrelated_class_with_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  // This test is identical to
+  // fail_access_private_parent_member_in_unrelated_class except for this
+  // friend decl:
+  template <typename> friend class A;
+
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
+// --- fail_access_private_parent_member_in_unrelated_fn.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+base class A {
+  private fn F();
+}
+
+class B {
+  extend base: A;
+}
+
+inline Cpp '''
+int G() {
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR:        │   private fn F();
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::B::F();
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: 'F' is a private member of 'Carbon::Main::A'
+  // CHECK:STDERR:        ·                 ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  Carbon::B::F();
+}
+''';
+
+// CHECK:STDOUT: --- import_non_function_member_public.carbon = $import_non_function_member_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2095,7 +2203,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_function_member_public_extend.carbon
+// CHECK:STDOUT: --- import_non_function_member_public_extend.carbon = $import_non_function_member_public_extend
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2142,7 +2250,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon
+// CHECK:STDOUT: --- import_non_function_member_protected_extend_call_in_member.carbon = $import_non_function_member_protected_extend_call_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2226,7 +2334,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_member_public.carbon
+// CHECK:STDOUT: --- import_function_member_public.carbon = $import_function_member_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2273,7 +2381,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon
+// CHECK:STDOUT: --- fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon = $fail_todo_import_function_member_protected_extend_call_instance_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2306,7 +2414,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon
+// CHECK:STDOUT: --- import_function_member_protected_extend_call_static_in_member.carbon = $import_function_member_protected_extend_call_static_in_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2356,7 +2464,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public.carbon
+// CHECK:STDOUT: --- import_overload_set_public.carbon = $import_overload_set_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2483,7 +2591,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_protected_base.carbon
+// CHECK:STDOUT: --- import_overload_set_protected_base.carbon = $import_overload_set_protected_base
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2715,7 +2823,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon
+// CHECK:STDOUT: --- import_overload_set_public_base_class_call_public.carbon = $import_overload_set_public_base_class_call_public
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2794,7 +2902,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon
+// CHECK:STDOUT: --- import_overload_set_public_base_class_derived_call_non_private.carbon = $import_overload_set_public_base_class_derived_call_non_private
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2930,7 +3038,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon
+// CHECK:STDOUT: --- import_overload_set_protected_base_class_derived_call_non_private.carbon = $import_overload_set_protected_base_class_derived_call_non_private
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3066,7 +3174,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_public_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_public_access_allowed.carbon = $base_class_public_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3190,7 +3298,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_base_class_public_access_denied.carbon
+// CHECK:STDOUT: --- fail_base_class_public_access_denied.carbon = $fail_base_class_public_access_denied
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3219,7 +3327,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_protected_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_protected_access_allowed.carbon = $base_class_protected_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3319,7 +3427,7 @@ class B {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- base_class_public_protected_access_allowed.carbon
+// CHECK:STDOUT: --- base_class_public_protected_access_allowed.carbon = $base_class_public_protected_access_allowed
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -747,6 +747,27 @@ CARBON_PARSE_STATE(RequirementOperatorFinish)
 //   (state done)
 CARBON_PARSE_STATE(WhereFinish)
 
+// Handles a `where` assignment decl after the introducer.
+//
+// where <identifier> = <...>
+//       ^~~~~~~~~~~~~~
+//   1. Expr
+//   2. WhereAssignmentDecl
+//
+// where <???> ;
+//       ^~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(WhereAssignment)
+
+// Handles the end of a `where` assignment decl.
+//
+// where <...> ;
+//             ^
+// where <???> ;
+//       ^~~~~~~
+//   (state done)
+CARBON_PARSE_STATE(WhereAssignmentDecl)
+
 // Handles the `;` for an expression statement, which is different from most
 // keyword statements.
 //
@@ -761,8 +782,8 @@ CARBON_PARSE_STATE(ExprStatementFinish)
 //
 // friend <identifier> ;
 //        ^~~~~~~~~~~~~~
-// friend ??? ;
-//        ^~~~~
+// friend <???> ;
+//        ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(FriendDecl)
 
@@ -1032,7 +1053,7 @@ CARBON_PARSE_STATE(Package)
 // alias <...>
 //      ^
 //   1. DeclNameAndParams
-//   2. AliasInitializer
+//   2. AliasAfterName
 CARBON_PARSE_STATE(Alias)
 
 // Handles `alias` after the name.

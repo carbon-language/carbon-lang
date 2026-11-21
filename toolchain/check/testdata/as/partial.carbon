@@ -109,7 +109,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add_partial.carbon
+// CHECK:STDOUT: --- add_partial.carbon = $add_partial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -168,7 +168,8 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.53b = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.53b = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %X = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %X = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %X.ref.loc15_46: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc15_38: type = partial_type %X.ref.loc15_46 [concrete = constants.%.d74]
 // CHECK:STDOUT:   %.loc15_35.1: %.d74 = as_compatible %value.ref
@@ -196,7 +197,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.12c = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.db8 = global_ref file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %X.ref.loc17_45: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc17_37: type = partial_type %X.ref.loc17_45 [concrete = constants.%.d74]
 // CHECK:STDOUT:   %ptr.loc17_46: type = ptr_type %.loc17_37 [concrete = constants.%ptr.44a]
@@ -229,7 +231,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- remove_partial_in_init.carbon
+// CHECK:STDOUT: --- remove_partial_in_init.carbon = $remove_partial_in_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -332,7 +334,7 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc12_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_remove_partial.carbon
+// CHECK:STDOUT: --- unsafe_remove_partial.carbon = $unsafe_remove_partial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -351,7 +353,8 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %value.ref: %.d74 = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %.d74 = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %.d74 = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %X.ref.loc14_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc14_34.1: %X = as_compatible %value.ref
 // CHECK:STDOUT:   %.loc14_34.2: %X = converted %value.ref, %.loc14_34.1
@@ -373,7 +376,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.990 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.44a = name_ref ptr, file.%ptr.loc10_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.44a = global_ref file.%ptr.loc10_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.44a = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %X.ref.loc16_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %ptr.loc16_37: type = ptr_type %X.ref.loc16_36 [concrete = constants.%ptr.db8]
 // CHECK:STDOUT:   %.loc16_33.1: %ptr.db8 = as_compatible %ptr.ref

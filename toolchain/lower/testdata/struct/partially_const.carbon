@@ -21,10 +21,10 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, i32, i32 }) %return, i32 %n) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_33.3.a = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   %.loc14_33.5.b = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 1, !dbg !30
+// CHECK:STDOUT:   %.loc14_33.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !30
+// CHECK:STDOUT:   %.loc14_33.5.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !30
 // CHECK:STDOUT:   store i32 %n, ptr %.loc14_33.5.b, align 4, !dbg !30
-// CHECK:STDOUT:   %.loc14_33.8.c = getelementptr inbounds nuw { i32, i32, i32 }, ptr %return, i32 0, i32 2, !dbg !30
+// CHECK:STDOUT:   %.loc14_33.8.c = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !30
 // CHECK:STDOUT:   store i32 0, ptr %.loc14_33.3.a, align 4, !dbg !30
 // CHECK:STDOUT:   store i32 0, ptr %.loc14_33.8.c, align 4, !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31

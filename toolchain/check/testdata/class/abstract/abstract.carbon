@@ -291,7 +291,7 @@ fn Assign(ref a: Abstract) {
   a = a;
 }
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -340,7 +340,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -394,7 +394,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var_function_param.carbon
+// CHECK:STDOUT: --- fail_abstract_var_function_param.carbon = $fail_abstract_var_function_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -443,7 +443,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -502,7 +502,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_adapter.carbon
+// CHECK:STDOUT: --- fail_abstract_adapter.carbon = $fail_abstract_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,7 +549,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- define_and_call_abstract_param.carbon
+// CHECK:STDOUT: --- define_and_call_abstract_param.carbon = $define_and_call_abstract_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -620,7 +620,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_nonabstract_derived.carbon
+// CHECK:STDOUT: --- return_nonabstract_derived.carbon = $return_nonabstract_derived
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -719,7 +719,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return %.loc13_31 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_abstract.carbon
+// CHECK:STDOUT: --- fail_return_abstract.carbon = $fail_return_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -807,7 +807,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_abstract_subobject.carbon
+// CHECK:STDOUT: --- access_abstract_subobject.carbon = $access_abstract_subobject
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -944,7 +944,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return %.loc18_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon
+// CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon = $fail_abstract_let_temporary_struct_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1006,7 +1006,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon
+// CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon = $fail_todo_abstract_let_temporary
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1101,7 +1101,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_call_abstract_return.carbon
+// CHECK:STDOUT: --- fail_call_abstract_return.carbon = $fail_call_abstract_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1163,7 +1163,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon
+// CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon = $fail_assign_to_abstract_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

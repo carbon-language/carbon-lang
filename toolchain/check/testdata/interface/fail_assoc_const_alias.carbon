@@ -82,7 +82,7 @@ interface C {
 }
 
 
-// CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon
+// CHECK:STDOUT: --- alias_to_different_interface_with_requires.carbon = $alias_to_different_interface_with_requires
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -171,7 +171,7 @@ interface C {
 // CHECK:STDOUT:   %return.patt.loc14_11.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_with_compound_member_access.carbon
+// CHECK:STDOUT: --- call_with_compound_member_access.carbon = $call_with_compound_member_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

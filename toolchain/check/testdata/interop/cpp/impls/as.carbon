@@ -132,7 +132,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- conversions.carbon
+// CHECK:STDOUT: --- conversions.carbon = $conversions
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -305,7 +305,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- conditionally_explicit.carbon
+// CHECK:STDOUT: --- conditionally_explicit.carbon = $conditionally_explicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -514,7 +514,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conditionally_explicit_implicit.carbon
+// CHECK:STDOUT: --- fail_conditionally_explicit_implicit.carbon = $fail_conditionally_explicit_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

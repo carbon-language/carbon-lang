@@ -118,7 +118,7 @@ fn Run() {
 }
 
 
-// CHECK:STDOUT: --- value.carbon
+// CHECK:STDOUT: --- value.carbon = $value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -384,7 +384,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_35(%self.param: ref %EmptyRange.c31) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var.carbon
+// CHECK:STDOUT: --- var.carbon = $var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -660,7 +660,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_39(%self.param: ref %EmptyRange.c31) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple.carbon
+// CHECK:STDOUT: --- tuple.carbon = $tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -968,7 +968,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10_60(%self.param: ref %EmptyRange.7d6) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_class.carbon
+// CHECK:STDOUT: --- tuple_class.carbon = $tuple_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

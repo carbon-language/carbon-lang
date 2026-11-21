@@ -160,7 +160,7 @@ class Core {
 let n: type = i32;
 
 
-// CHECK:STDOUT: --- fail_missing_prelude.carbon
+// CHECK:STDOUT: --- fail_missing_prelude.carbon = $fail_missing_prelude
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -185,13 +185,13 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_empty.carbon
+// CHECK:STDOUT: --- prelude_empty.carbon = $prelude_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_prelude_member.carbon
+// CHECK:STDOUT: --- fail_missing_prelude_member.carbon = $fail_missing_prelude_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -225,7 +225,7 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_fake_int.carbon
+// CHECK:STDOUT: --- prelude_fake_int.carbon = $prelude_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -420,7 +420,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.b39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_fake_int.carbon
+// CHECK:STDOUT: --- fail_use_fake_int.carbon = $fail_use_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -500,8 +500,7 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc23_17: %X = converted @__global_init.%.loc23_17.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc23_12: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc23: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
@@ -571,6 +570,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %Int.call: init %X to %.loc23_17.1 = call %Int.specific_fn()
 // CHECK:STDOUT:   %.loc23_17.2: type = converted %Int.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc23_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.4: %X = converted %.loc23_17.3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -653,7 +653,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_use_in_prelude.carbon
+// CHECK:STDOUT: --- prelude_use_in_prelude.carbon = $prelude_use_in_prelude
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -700,13 +700,8 @@ let n: type = i32;
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_28.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_15.1: ref %Int.3c6 = temporary_storage
-// CHECK:STDOUT:   %.loc8_15.2: init %Int.3c6 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.3: init %Int.3c6 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.4: ref %Int.3c6 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.10c]
-// CHECK:STDOUT:   %.loc8_15.5: %Int.3c6 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.3c6 [concrete = constants.%Int.3c6]
-// CHECK:STDOUT:   %n: %Int.3c6 = wrapper_binding n, %.loc8_15.5
+// CHECK:STDOUT:   %.loc8: type = type_literal constants.%Int.3c6 [concrete = constants.%Int.3c6]
+// CHECK:STDOUT:   %n: %Int.3c6 = wrapper_binding n, @__global_init.%.loc8_15.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.27f = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -732,7 +727,12 @@ let n: type = i32;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8_15.2: ref %Int.3c6 = temporary_storage
+// CHECK:STDOUT:   %.loc8_15.3: init %Int.3c6 to %.loc8_15.2 = class_init () [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.4: init %Int.3c6 = converted %.loc8_15.1, %.loc8_15.3 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.5: ref %Int.3c6 = temporary %.loc8_15.2, %.loc8_15.4 [concrete = constants.%.10c]
+// CHECK:STDOUT:   %.loc8_15.6: %Int.3c6 = acquire_value %.loc8_15.5 [concrete = constants.%Int.val]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -754,7 +754,7 @@ let n: type = i32;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
+// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon = $fail_prelude_as_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -845,7 +845,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %N.loc28_31.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_class.carbon
+// CHECK:STDOUT: --- fail_prelude_as_class.carbon = $fail_prelude_as_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -265,6 +265,7 @@ toolchain_files(
 toolchain_files(
     name = "libc_internal_libcxx_hdrs",
     srcs = ["@llvm-project//libc:libcxx_shared_headers_hdrs"],
+    base_package = "@llvm-project//libc",
     prefix = "runtimes/libc/internal/",
 )
 

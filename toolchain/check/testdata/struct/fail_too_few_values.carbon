@@ -22,7 +22,7 @@
 // CHECK:STDERR:
 var x: {.a: i32, .b: i32} = {.a = 1};
 
-// CHECK:STDOUT: --- fail_too_few_values.carbon
+// CHECK:STDOUT: --- fail_too_few_values.carbon = $fail_too_few_values
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -32,6 +32,79 @@
 
 namespace Carbon::SemIR {
 
+auto TextualNamespace::Name::GetFullName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  llvm::StringMapEntry<NameResult>* value = value_;
+  while (value->second.ambiguous && value->second.fallback) {
+    value = value->second.fallback.value_;
+  }
+  return value->first();
+}
+
+auto TextualNamespace::Name::GetBaseName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  return value_->first().take_front(base_name_size_);
+}
+
+auto TextualNamespace::AllocateNameWithSuffixes(
+    std::string full_name, llvm::ArrayRef<ssize_t> name_sizes) -> Name {
+  // The best (shortest) name for this instruction so far, and the current
+  // name for it.
+  Name best;
+  Name current;
+
+  const size_t base_name_size = name_sizes[0];
+
+  // Add `name` as a name for this entity.
+  auto add_name = [&](llvm::StringRef name, bool mark_ambiguous = true) {
+    auto [it, added] = allocated_.insert({name, NameResult()});
+    Name new_name = Name(it, base_name_size);
+
+    if (!added) {
+      if (mark_ambiguous) {
+        // This name was allocated for a different instruction. Mark it as
+        // ambiguous and keep looking for a name for this instruction.
+        new_name.SetAmbiguous();
+      }
+    } else {
+      if (!best) {
+        best = new_name;
+      } else {
+        CARBON_CHECK(current);
+        current.SetFallback(new_name);
+      }
+      current = new_name;
+    }
+    return added;
+  };
+
+  int previous_size = -1;
+  for (auto name_size : name_sizes) {
+    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
+    previous_size = name_size;
+    if (name_size > 0) {
+      add_name(llvm::StringRef(full_name).take_front(name_size));
+    }
+  }
+  CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
+               "`name_sizes` doesn't end with the size of `full_name`");
+
+  // Append numbers until we find an available name.
+  full_name.push_back('.');
+  auto name_size_without_counter = full_name.size();
+  for (int counter = 1;; ++counter) {
+    full_name.resize(name_size_without_counter);
+    llvm::raw_string_ostream(full_name) << counter;
+    if (add_name(full_name, /*mark_ambiguous=*/false)) {
+      return best;
+    }
+  }
+}
+
 class InstNamer::NamingContext {
  public:
   explicit NamingContext(InstNamer* inst_namer, InstNamer::ScopeId scope_id,
@@ -105,7 +178,10 @@ class InstNamer::NamingContext {
 
 InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
     : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
-  insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
+  CARBON_CHECK(sem_ir_->is_complete(),
+               "Can't create InstNamer for pending SemIR::File");
+  insts_.resize(sem_ir->insts().size(),
+                {ScopeId::None, TextualNamespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
   generic_scopes_.resize(sem_ir->generics().size(), ScopeId::None);
@@ -324,63 +400,12 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
   return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
 }
 
-auto InstNamer::Namespace::Name::GetFullName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  llvm::StringMapEntry<NameResult>* value = value_;
-  while (value->second.ambiguous && value->second.fallback) {
-    value = value->second.fallback.value_;
-  }
-  return value->first();
-}
-
-auto InstNamer::Namespace::Name::GetBaseName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  return value_->first().take_front(base_name_size_);
-}
-
-auto InstNamer::Namespace::AllocateName(
+auto InstNamer::FileNamespace::AllocateName(
     const InstNamer& inst_namer,
     std::variant<LocId, uint64_t> loc_id_or_fingerprint, std::string name)
     -> Name {
-  // The best (shortest) name for this instruction so far, and the current
-  // name for it.
-  Name best;
-  Name current;
-
-  const size_t base_name_size = name.size();
-
-  // Add `name` as a name for this entity.
-  auto add_name = [&](bool mark_ambiguous = true) {
-    auto [it, added] = allocated_.insert({name, NameResult()});
-    Name new_name = Name(it, base_name_size);
-
-    if (!added) {
-      if (mark_ambiguous) {
-        // This name was allocated for a different instruction. Mark it as
-        // ambiguous and keep looking for a name for this instruction.
-        new_name.SetAmbiguous();
-      }
-    } else {
-      if (!best) {
-        best = new_name;
-      } else {
-        CARBON_CHECK(current);
-        current.SetFallback(new_name);
-      }
-      current = new_name;
-    }
-    return added;
-  };
-
-  // Use the given name if it's available.
-  if (!name.empty()) {
-    add_name();
-  }
-
+  llvm::SmallVector<ssize_t, 5> name_sizes;
+  name_sizes.push_back(name.size());
   // Append location information to try to disambiguate.
   if (auto* loc_id = std::get_if<LocId>(&loc_id_or_fingerprint)) {
     *loc_id = inst_namer.sem_ir_->insts().GetCanonicalLocId(*loc_id);
@@ -390,11 +415,11 @@ auto InstNamer::Namespace::AllocateName(
       auto token = tree.node_token(loc_id->node_id());
       llvm::raw_string_ostream(name)
           << ".loc" << tree.tokens().GetLineNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
 
       llvm::raw_string_ostream(name)
           << "_" << tree.tokens().GetColumnNumber(token);
-      add_name();
+      name_sizes.push_back(name.size());
     }
   } else {
     uint64_t fingerprint = std::get<uint64_t>(loc_id_or_fingerprint);
@@ -405,21 +430,11 @@ auto InstNamer::Namespace::AllocateName(
     for (int n : llvm::seq(1, 7)) {
       out.write_hex((fingerprint >> (64 - 4 * n)) & 0xF);
       if (n >= 3) {
-        add_name();
+        name_sizes.push_back(name.size());
       }
     }
   }
-
-  // Append numbers until we find an available name.
-  name.push_back('.');
-  auto name_size_without_counter = name.size();
-  for (int counter = 1;; ++counter) {
-    name.resize(name_size_without_counter);
-    llvm::raw_string_ostream(name) << counter;
-    if (add_name(/*mark_ambiguous=*/false)) {
-      return best;
-    }
-  }
+  return AllocateNameWithSuffixes(std::move(name), name_sizes);
 }
 
 auto InstNamer::AddBlockLabel(
@@ -1184,6 +1199,28 @@ auto InstNamer::NamingContext::NameInst() -> void {
     }
     case CARBON_KIND(GenericNamedConstraintType inst): {
       AddEntityNameAndMaybePush(inst.named_constraint_id, ".type");
+      return;
+    }
+    case CARBON_KIND(GlobalRef inst): {
+      EntityNameId entity_name_id = EntityNameId::None;
+      CARBON_KIND_SWITCH(sem_ir().insts().Get(inst.inst_id)) {
+        case CARBON_KIND_ANY(AnyBinding, binding):
+          entity_name_id = binding.entity_name_id;
+          break;
+        case CARBON_KIND_ANY(AnyImportRef, import_ref):
+          entity_name_id = import_ref.entity_name_id;
+          break;
+        case CARBON_KIND(ExportDecl export_decl):
+          entity_name_id = export_decl.entity_name_id;
+          break;
+        default:
+          break;
+      }
+      if (entity_name_id.has_value()) {
+        AddInstEntityNameId(entity_name_id, ".global_ref");
+      } else {
+        AddInstName("global_ref");
+      }
       return;
     }
     case CARBON_KIND(ImplDecl inst): {

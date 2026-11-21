@@ -54,6 +54,7 @@ auto ScopeStack::VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       SemIR::SpecificId specific_id,
                       CleanupScopeKind cleanup_scope_kind,
+                      NonConstantAccess non_constant_access,
                       bool lexical_lookup_has_load_error) -> void {
   // If this scope doesn't have a specific of its own, it lives in the enclosing
   // scope's specific, if any.
@@ -73,6 +74,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
        .lexical_lookup_has_load_error =
            LexicalLookupHasLoadError() || lexical_lookup_has_load_error,
        .cleanup_scope_kind = cleanup_scope_kind,
+       .non_constant_access = non_constant_access,
        .cleanup_scope_depth = CleanupScopeDepth(destroy_id_stack_.size())});
   if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
@@ -100,9 +102,11 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
   VerifyNextCompileTimeBindIndex("Push", scope_stack_.back());
 }
 
-auto ScopeStack::PushForDeclName() -> void {
+auto ScopeStack::PushForDeclName(NonConstantAccess non_constant_access)
+    -> void {
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       CleanupScopeKind::None, /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::None, non_constant_access,
+       /*lexical_lookup_has_load_error=*/false);
   MarkNestingIfInReturnScope();
 }
 
@@ -113,11 +117,12 @@ auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
   CARBON_CHECK(scope_inst_id.has_value());
   CARBON_DCHECK(!sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
   Push(scope_inst_id, scope_id, specific_id, CleanupScopeKind::None,
-       lexical_lookup_has_load_error);
+       NonConstantAccess::Disallowed, lexical_lookup_has_load_error);
   MarkNestingIfInReturnScope();
 }
 
-auto ScopeStack::PushForSameRegion(CleanupScopeKind cleanup_scope_kind)
+auto ScopeStack::PushForSameRegion(CleanupScopeKind cleanup_scope_kind,
+                                   NonConstantAccess non_constant_access)
     -> void {
   if (cleanup_scope_kind == CleanupScopeKind::Inherited &&
       Peek().cleanup_scope_kind == CleanupScopeKind::None) {
@@ -125,7 +130,8 @@ auto ScopeStack::PushForSameRegion(CleanupScopeKind cleanup_scope_kind)
   }
 
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       cleanup_scope_kind, /*lexical_lookup_has_load_error=*/false);
+       cleanup_scope_kind, non_constant_access,
+       /*lexical_lookup_has_load_error=*/false);
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
@@ -134,7 +140,8 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   const auto& function = sem_ir().functions().Get(function_decl.function_id);
   auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
   Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
-       CleanupScopeKind::Owned, /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::Owned, NonConstantAccess::Permitted,
+       /*lexical_lookup_has_load_error=*/false);
 
   return_scope_stack_.push_back(
       {.decl_id = scope_inst_id, .cleanup_scope_depth = cleanup_scope_depth()});
@@ -278,7 +285,7 @@ auto ScopeStack::LookupInLexicalScopesWithin(SemIR::NameId name_id,
 auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
                                        SemIR::LocId use_loc_id,
                                        bool is_reachable)
-    -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>> {
+    -> std::pair<LexicalResult, llvm::ArrayRef<NonLexicalScope>> {
   // Find the results from lexical scopes. These will be combined with results
   // from non-lexical scopes such as namespaces and classes.
   llvm::ArrayRef<LexicalLookup::Result> lexical_results =
@@ -286,8 +293,9 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
 
   // If we have no lexical results, check all non-lexical scopes.
   if (lexical_results.empty()) {
-    return {LexicalLookupHasLoadError() ? SemIR::ErrorInst::InstId
-                                        : SemIR::InstId::None,
+    return {{.inst_id = LexicalLookupHasLoadError() ? SemIR::ErrorInst::InstId
+                                                    : SemIR::InstId::None,
+             .scope_index = ScopeIndex::None},
             non_lexical_scope_stack_};
   }
 
@@ -302,8 +310,22 @@ auto ScopeStack::LookupInLexicalScopes(SemIR::NameId name_id,
         return scope.scope_index < index;
       });
   return {
-      lexical_results.back().inst_id,
+      {.inst_id = lexical_results.back().inst_id,
+       .scope_index = lexical_results.back().scope_index},
       llvm::ArrayRef(first_non_lexical_scope, non_lexical_scope_stack_.end())};
+}
+
+auto ScopeStack::GetNonConstantAccess(ScopeIndex target_scope_index) const
+    -> NonConstantAccess {
+  for (const auto& entry : llvm::reverse(scope_stack_)) {
+    if (entry.index <= target_scope_index) {
+      break;
+    }
+    if (entry.non_constant_access != NonConstantAccess::Permitted) {
+      return entry.non_constant_access;
+    }
+  }
+  return NonConstantAccess::Permitted;
 }
 
 auto ScopeStack::LookupOrAddName(SemIR::NameId name_id, SemIR::InstId target_id,

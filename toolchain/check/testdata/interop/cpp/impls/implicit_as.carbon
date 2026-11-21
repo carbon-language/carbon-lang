@@ -447,7 +447,7 @@ fn InitFromStruct() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- implicit_conversions.carbon
+// CHECK:STDOUT: --- implicit_conversions.carbon = $implicit_conversions
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -605,7 +605,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_expr_category.carbon
+// CHECK:STDOUT: --- fail_expr_category.carbon = $fail_expr_category
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -640,7 +640,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_access.carbon
+// CHECK:STDOUT: --- fail_access.carbon = $fail_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -761,7 +761,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deleted.carbon
+// CHECK:STDOUT: --- fail_deleted.carbon = $fail_deleted
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -819,7 +819,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_explicit.carbon
+// CHECK:STDOUT: --- fail_explicit.carbon = $fail_explicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -877,7 +877,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- i32_to_int.carbon
+// CHECK:STDOUT: --- i32_to_int.carbon = $i32_to_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -945,7 +945,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon
+// CHECK:STDOUT: --- fail_no_u32_to_int_conversion_in_carbon.carbon = $fail_no_u32_to_int_conversion_in_carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1015,7 +1015,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- default_constructor.carbon
+// CHECK:STDOUT: --- default_constructor.carbon = $default_constructor
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1082,7 +1082,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- construct_multi_argument.carbon
+// CHECK:STDOUT: --- construct_multi_argument.carbon = $construct_multi_argument
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1305,7 +1305,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon
+// CHECK:STDOUT: --- fail_todo_aggregate_from_tuple.carbon = $fail_todo_aggregate_from_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1368,7 +1368,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_aggregate_from_struct.carbon
+// CHECK:STDOUT: --- fail_todo_aggregate_from_struct.carbon = $fail_todo_aggregate_from_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1431,7 +1431,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non_aggregate_from_tuple.carbon
+// CHECK:STDOUT: --- non_aggregate_from_tuple.carbon = $non_aggregate_from_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1607,7 +1607,7 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon
+// CHECK:STDOUT: --- fail_non_aggregate_from_struct.carbon = $fail_non_aggregate_from_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

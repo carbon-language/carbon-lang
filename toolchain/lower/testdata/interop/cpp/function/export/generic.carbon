@@ -68,8 +68,8 @@ fn Run() {
 // CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
 // CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
 // CHECK:STDOUT:   %agg.tmp1 = alloca %"class.Carbon::Main::B", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b)
 // CHECK:STDOUT:   invoke void @_ZN6Carbon4MainL1FENS0_1AE()
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
@@ -81,9 +81,9 @@ fn Run() {
 // CHECK:STDOUT: invoke.cont3:                                     ; preds = %invoke.cont
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
 // CHECK:STDOUT: lpad:                                             ; preds = %entry
@@ -108,9 +108,9 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ehcleanup:                                        ; preds = %lpad2, %lpad
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   br label %eh.resume
 // CHECK:STDOUT:
 // CHECK:STDOUT: eh.resume:                                        ; preds = %ehcleanup
@@ -255,8 +255,8 @@ fn Run() {
 // CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!15}
-// CHECK:STDOUT: !llvm.module.flags = !{!86, !87, !88, !4, !5}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!91}
+// CHECK:STDOUT: !llvm.module.flags = !{!86, !87, !88, !89, !4, !5}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!92}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !4 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !5 = !{i32 2, !"Debug Info Version", i32 3}
@@ -321,10 +321,11 @@ fn Run() {
 // CHECK:STDOUT: !83 = !{!82, !82, i64 0}
 // CHECK:STDOUT: !84 = !{!"p1 _ZTSN6Carbon4Main1BE", !81, i64 0}
 // CHECK:STDOUT: !85 = !{!84, !84, i64 0}
-// CHECK:STDOUT: !86 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !87 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !88 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !89 = !{!"int", !80, i64 0}
-// CHECK:STDOUT: !90 = !{!"__libc_errno", !89, i64 0}
-// CHECK:STDOUT: !91 = !{!90, !89, i64 0}
+// CHECK:STDOUT: !86 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !87 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !88 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !89 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !90 = !{!"int", !80, i64 0}
+// CHECK:STDOUT: !91 = !{!"__libc_errno", !90, i64 0}
+// CHECK:STDOUT: !92 = !{!91, !90, i64 0}
 // CHECK:STDOUT:

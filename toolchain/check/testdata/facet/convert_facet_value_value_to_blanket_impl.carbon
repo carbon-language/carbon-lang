@@ -21,7 +21,7 @@ fn Feed[T: Eats](unused e: T) {}
 
 fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 
-// CHECK:STDOUT: --- convert_facet_value_value_to_blanket_impl.carbon
+// CHECK:STDOUT: --- convert_facet_value_value_to_blanket_impl.carbon = $convert_facet_value_value_to_blanket_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

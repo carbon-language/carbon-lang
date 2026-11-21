@@ -1117,7 +1117,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto rewrite_as_constants =
           [&](auto rewrite) -> IdentifiedFacetType::Rewrite {
         return {context.constant_values().Get(
-                    GetImplWitnessAccessWithoutSubstitution(context,
+                    GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
                                                             rewrite.lhs_id)),
                 context.constant_values().Get(rewrite.rhs_id)};
       };
@@ -1128,7 +1128,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto rewrite_as_constants =
           [&](auto rewrite) -> IdentifiedFacetType::Equivalent {
         return {context.constant_values().Get(
-                    GetImplWitnessAccessWithoutSubstitution(context,
+                    GetImplWitnessAccessWithoutSubstitution(context.sem_ir(),
                                                             rewrite.lhs_id)),
                 context.constant_values().Get(rewrite.rhs_id)};
       };

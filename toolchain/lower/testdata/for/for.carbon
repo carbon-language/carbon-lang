@@ -77,9 +77,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.6f1424a1f3fc4182:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_33.1.has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 1, !dbg !37
+// CHECK:STDOUT:   %.loc19_33.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.8242e48f93ef210e(ptr %.loc19_33.1.has_value), !dbg !37
-// CHECK:STDOUT:   %.loc19_33.4.value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc19_33.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.38552a897eb918eb(ptr %.loc19_33.4.value), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
@@ -87,9 +87,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e60156a973847ad6:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_33.1.has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   %.loc19_33.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.8242e48f93ef210e(ptr %.loc19_33.1.has_value), !dbg !41
-// CHECK:STDOUT:   %.loc19_33.4.value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %self, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc19_33.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.38552a897eb918eb(ptr %.loc19_33.4.value), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
@@ -97,9 +97,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7e86931818f7778c:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_32.1.end = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !45
+// CHECK:STDOUT:   %.loc19_32.1.end = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc19_32.1.end), !dbg !45
-// CHECK:STDOUT:   %.loc19_32.4.start = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %.loc19_32.4.start = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc19_32.4.start), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
@@ -107,9 +107,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.30087fca60df1631:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_32.1.end = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !49
+// CHECK:STDOUT:   %.loc19_32.1.end = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc19_32.1.end), !dbg !49
-// CHECK:STDOUT:   %.loc19_32.4.start = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc19_32.4.start = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc19_32.4.start), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
@@ -119,7 +119,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !54 {
-// CHECK:STDOUT:   %start = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !59
+// CHECK:STDOUT:   %start = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !59
 // CHECK:STDOUT:   %1 = load i32, ptr %start, align 4, !dbg !59
 // CHECK:STDOUT:   ret i32 %1, !dbg !60
 // CHECK:STDOUT: }
@@ -130,7 +130,7 @@ fn For() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !69
 // CHECK:STDOUT:   %2 = load i32, ptr %cursor, align 4, !dbg !70
 // CHECK:STDOUT:   store i32 %2, ptr %1, align 4, !dbg !69
-// CHECK:STDOUT:   %end = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !73
+// CHECK:STDOUT:   %end = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !73
 // CHECK:STDOUT:   %3 = load i32, ptr %end, align 4, !dbg !73
 // CHECK:STDOUT:   %4 = load i32, ptr %1, align 4, !dbg !72
 // CHECK:STDOUT:   %5 = icmp slt i32 %4, %3, !dbg !72
@@ -209,7 +209,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !162 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 1, !dbg !167
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %value, i64 4, !dbg !167
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !167
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !167
 // CHECK:STDOUT:   ret i1 %2, !dbg !168
@@ -217,7 +217,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CGet.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !170 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 0, !dbg !175
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw i8, ptr %value, i64 0, !dbg !175
 // CHECK:STDOUT:   %1 = load i32, ptr %value1, align 4, !dbg !175
 // CHECK:STDOUT:   ret i32 %1, !dbg !176
 // CHECK:STDOUT: }
@@ -233,16 +233,16 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CSome.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !186 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !195
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !195
 // CHECK:STDOUT:   store i32 %self, ptr %value, align 4, !dbg !195
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !197
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !197
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !197
 // CHECK:STDOUT:   ret void, !dbg !198
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CNone.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !200 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !207
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !207
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !207
 // CHECK:STDOUT:   ret void, !dbg !208
 // CHECK:STDOUT: }

@@ -86,7 +86,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 //@dump-sem-ir-end
 
 
-// CHECK:STDOUT: --- use_generic_impl.carbon
+// CHECK:STDOUT: --- use_generic_impl.carbon = $use_generic_impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -110,7 +110,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   return %Double.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_convert_symbolic.carbon
+// CHECK:STDOUT: --- use_convert_symbolic.carbon = $use_convert_symbolic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

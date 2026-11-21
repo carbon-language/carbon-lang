@@ -289,7 +289,7 @@ let bad3: i32 = LeftShiftByLit(an_i32, 12);
 // CHECK:STDERR:
 let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 
-// CHECK:STDOUT: --- i32.carbon
+// CHECK:STDOUT: --- i32.carbon = $i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -308,7 +308,7 @@ let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT:   return %LeftShift.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- u32.carbon
+// CHECK:STDOUT: --- u32.carbon = $u32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

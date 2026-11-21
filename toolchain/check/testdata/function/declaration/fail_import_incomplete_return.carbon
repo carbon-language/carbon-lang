@@ -106,7 +106,7 @@ fn CallFAndGIncomplete() {
   ReturnDUsed();
 }
 
-// CHECK:STDOUT: --- fail_incomplete_return.carbon
+// CHECK:STDOUT: --- fail_incomplete_return.carbon = $fail_incomplete_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -222,7 +222,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_imported.carbon
+// CHECK:STDOUT: --- fail_use_imported.carbon = $fail_use_imported
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

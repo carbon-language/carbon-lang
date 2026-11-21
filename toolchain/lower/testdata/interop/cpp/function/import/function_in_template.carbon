@@ -57,8 +57,8 @@ fn F() {
 // CHECK:STDOUT: attributes #1 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!36}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -73,9 +73,10 @@ fn F() {
 // CHECK:STDOUT: !29 = !{!"omnipotent char", !28, i64 0}
 // CHECK:STDOUT: !30 = !{!"int", !29, i64 0}
 // CHECK:STDOUT: !31 = !{!30, !30, i64 0}
-// CHECK:STDOUT: !32 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !33 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !34 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !35 = !{!"__libc_errno", !30, i64 0}
-// CHECK:STDOUT: !36 = !{!35, !30, i64 0}
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !30, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !30, i64 0}
 // CHECK:STDOUT:

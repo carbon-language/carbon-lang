@@ -877,6 +877,10 @@ class Stringifier {
     sem_ir_->ints().Get(inst.int_id).print(*out_, /*isSigned=*/true);
   }
 
+  auto StringifyInst(InstId /*inst_id*/, GlobalRef inst) -> void {
+    step_stack_->PushInstId(inst.inst_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, IdentifiedWitness inst) -> void {
     step_stack_->Push(
         inst.query_self_inst_id, " as ",
