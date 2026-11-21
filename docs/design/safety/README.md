@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Safe and unsafe code](#safe-and-unsafe-code)
 -   [Safety modes](#safety-modes)
+    -   [Undefined behavior across safety modes](#undefined-behavior-across-safety-modes)
 -   [Memory safety model](#memory-safety-model)
     -   [Data races versus unsynchronized temporal safety](#data-races-versus-unsynchronized-temporal-safety)
 -   [Safe library ecosystem](#safe-library-ecosystem)
@@ -28,8 +29,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 One of Carbon's core goals is [practical safety]. This is referring to _[code
 safety]_ as opposed to the larger space of [systems safety]. The largest aspect
 of code safety at the language level is [memory safety], but this also applies
-to other aspects of code safety such as avoiding undefined behavior in other
-forms.
+to other aspects of code safety such as avoiding
+[undefined behavior](/docs/design/program_behavior.md) in other forms.
 
 [practical safety]:
     /docs/project/goals.md#practical-safety-and-testing-mechanisms
@@ -122,6 +123,24 @@ expressivity is available at that finer granularity through explicitly marking
 > **Future work**: Define how to mark `import`s of permissive libraries in
 > various contexts, balancing ergonomic burden against the potential for
 > surprising amounts of unsafety in dependencies.
+
+### Undefined behavior across safety modes
+
+-   Fully strict Carbon code (without `unsafe` operations or C++) has no
+    [undefined behavior](/docs/design/program_behavior.md).
+-   Execution within Carbon, with no C++, can only have undefined behavior in
+    permissive mode or after execution passes through an operation marked
+    `unsafe`.
+-   Permissive Carbon has a subset of the undefined behavior of corresponding
+    C++ even without safety annotations (some C++ UB is diagnosed at compile
+    time, such as ODR violations, and some becomes
+    [erroneous behavior](/docs/design/program_behavior.md), such as signed
+    integer arithmetic overflow). Carbon code always has at most the undefined
+    behavior of corresponding C++.
+-   Adding safety annotations to permissive code or switching to strict mode
+    never introduces undefined behavior. The compiler may optimize based on
+    safety information, but not in ways that introduce undefined behavior if
+    unsafe, permissive, or C++ code compromises those safety assumptions.
 
 ## Memory safety model
 
@@ -229,7 +248,8 @@ overhead incurred.
 [performance control]: /docs/project/goals.md#performance-critical-software
 
 The debug build will change the actual behavior of both safe and unsafe code
-with detectable bugs or detectable undefined or erroneous behavior to have
+with detectable bugs or detectable
+[undefined or erroneous behavior](/docs/design/program_behavior.md) to have
 [fail-stop] behavior and provide detailed diagnostics to enable better
 debugging. This mode will at least provide similar bug [detection] capabilities
 to [AddressSanitizer] and [MemorySanitizer].
@@ -298,3 +318,5 @@ they are robust.
     [#196: Language-level safety strategy](https://github.com/carbon-language/carbon-lang/pull/196).
 -   Proposal
     [#5914: Updating Carbon's safety strategy](https://github.com/carbon-language/carbon-lang/pull/5914).
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161).

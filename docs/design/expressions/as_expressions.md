@@ -54,7 +54,8 @@ For example:
     not unsurprising, because there is more than one possible expected behavior
     for an input value that is not within the destination type, and those
     behaviors are not substantially the same -- we could perform two's
-    complement wrapping, saturate, or produce undefined behavior analogous to
+    complement wrapping, saturate, or produce
+    [erroneous behavior](/docs/design/program_behavior.md) analogous to
     arithmetic overflow.
 -   A conversion from `iM` to `fN` can be unsurprising, because even though
     there may be a choice of which way to round, the possible values are
@@ -116,7 +117,7 @@ var c: i32 = a + b as i64;
 var d: i32 = a as i64 + b;
 
 // OK, `(-a) as f64`, not `-(a as f64)`.
-// Unfortunately, the former is undefined if `a` is `i32.MinValue()`;
+// Unfortunately, the former is erroneous behavior if `a` is `i32.MinValue()`;
 // the latter is not.
 var u: f64 = -a as f64;
 

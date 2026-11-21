@@ -460,15 +460,18 @@ if desired, but does not require that. The read of the underlying object can
 also be deferred until the value expression itself is used. Once an object is
 bound to a value expression in this way, any mutation to the object or its
 storage ends the lifetime of the value binding, and makes any use of the value
-expression an error.
+expression [erroneous behavior](/docs/design/program_behavior.md).
 
-> Note: this is _not_ intended to ever become "undefined behavior", but instead
-> just "erroneous". We want to be able to detect and report such code as having
-> a bug, but do not want unbounded UB and are not aware of important
-> optimizations that this would inhibit.
+> Note: this is _not_ undefined behavior, but instead
+> [erroneous behavior](/docs/design/program_behavior.md). We want to be able to
+> detect and report such code as having a bug without permitting unbounded UB.
 >
-> _Open issue:_ We need a common definition of erroneous behavior that we can
-> use here (and elsewhere). Once we have that, we should cite it here.
+> **TODO:** Document the pointer-value-representation scope and permitted reload
+> semantics for mutating an object bound to an active value expression, as
+> adopted in
+> [#5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md#mututation-restriction-on-objects-bound-to-a-value)
+> and
+> [#8161](/proposals/p008161-defining-program-behavior.md#mutating-an-immutable-value).
 
 > Note: this restriction is also **experimental** -- we may want to strengthen
 > or weaken it based on experience, especially with C++ interop and a more
@@ -1539,6 +1542,7 @@ itself.
 -   [Proposal #5545: Expression form basics][#5545]
 -   [Proposal #7254: Replace `:!` and `:?` with keywords and contextual
     defaults][#7254]
+-   [Proposal #8161: Defining program behavior][#8161]
 
 [#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 [#339]: /proposals/p000339-var-statement.md
@@ -1547,3 +1551,4 @@ itself.
 [#2006]: /proposals/p002006-values-variables-pointers-and-references.md
 [#5545]: /proposals/p005545-expression-form-basics.md
 [#7254]: /proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md
+[#8161]: /proposals/p008161-defining-program-behavior.md

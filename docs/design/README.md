@@ -470,18 +470,17 @@ and [`while`](#while), and
 The signed-integer type with bit width `N` may be written `iN`, as long as `N`
 is a positive multiple of 8. For example, `i32` is a signed 32-bit integer.
 Signed-integer
-[overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is a
-programming error:
+[overflow](expressions/arithmetic.md#overflow-and-other-error-conditions) is
+[erroneous behavior](program_behavior.md):
 
--   In a development build, overflow will be caught immediately when it happens
-    at runtime.
--   In a performance build, the optimizer can assume that such conditions don't
-    occur. As a consequence, if they do, the behavior of the program is not
-    defined.
--   In a hardened build, overflow does not result in undefined behavior.
-    Instead, either the program will be aborted, or the arithmetic will evaluate
-    to a mathematically incorrect result, such as a two's complement result or
-    zero.
+-   In a [debug build](/docs/design/safety/README.md#build-modes), overflow is
+    caught at runtime with
+    [fail-stop](/docs/design/safety/terminology.md#fail-stop) behavior and a
+    diagnostic.
+-   In a [release build](/docs/design/safety/README.md#build-modes), overflow
+    does not result in undefined behavior. Instead, either the program halts, or
+    the arithmetic evaluates to a defined (though mathematically incorrect)
+    result, such as a two's complement result or zero.
 
 The unsigned-integer types may be written `uN`, with `N` a positive multiple
 of 8. Unsigned integer types wrap around on overflow; we strongly advise that
@@ -518,6 +517,8 @@ may be limited to integers of at most 128 bits due to LLVM limitations.
 >     [#1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083)
 > -   Proposal
 >     [#2015: Numeric type literal syntax](https://github.com/carbon-language/carbon-lang/pull/2015)
+> -   Proposal
+>     [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161)
 
 #### Integer literals
 
@@ -2132,13 +2133,19 @@ initialization for the [hardened build mode](#build-modes). For example, this
 causes integers to be set to `0` when in unformed state in this mode.
 
 Any operation on an unformed object _other_ than destruction or assignment from
-a fully formed value is an error, even if its in-memory representation is that
-of a valid value for that type.
+a fully formed value is [erroneous behavior](program_behavior.md), even if its
+in-memory representation is that of a valid value for that type.
+
+> **TODO:** Update the unformed-state build-mode details above to reflect the
+> current [build modes](/docs/design/safety/README.md#build-modes) and
+> [erroneous behavior](/proposals/p008161-defining-program-behavior.md#changes-to-existing-undefined-behavior-cases).
 
 > References:
 >
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+> -   Proposal
+>     [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161)
 
 #### Move
 
@@ -3872,7 +3879,10 @@ the critical underpinnings of such abstractions.
 
 #### Abstract machine and execution model
 
-> **TODO:**
+> **TODO:** Document Carbon's abstract machine, execution model, and
+> [program behavior](program_behavior.md) (including the "as-if" rule, erroneous
+> behavior, and undefined behavior adopted in
+> [#8161](/proposals/p008161-defining-program-behavior.md)).
 
 #### Co-routines
 
