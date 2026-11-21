@@ -311,6 +311,8 @@ static auto LatestPhase(Phase a, Phase b) -> Phase {
       std::max(static_cast<uint8_t>(a), static_cast<uint8_t>(b)));
 }
 
+// Returns whether an inst with the given constant kind can have the given
+// phase.
 static auto ConstantKindAllowsPhase(SemIR::InstConstantKind constant_kind,
                                     Phase phase) -> bool {
   switch (constant_kind) {
