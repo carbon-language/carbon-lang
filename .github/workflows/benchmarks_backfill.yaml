@@ -1,0 +1,290 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Temporary `action-test` workflow for backfilling historical benchmark data.
+#
+# Playbook (toggle `if: github.ref_name == 'action-test'` vs `'disabled'` on
+# the active job and adjust CLI args inline, then push to `action-test`):
+#   1. Phase 1 (active): `plan` (`--target=nightly`) + `collect` -> collects
+#      missing `nightly` + `continuous` BMF artifacts for nightly tags.
+#   2. Phase 2: `plan` (`--target=continuous`) + `collect` -> collects
+#      remaining `continuous` BMF artifacts for code commits.
+#   3. Phase 3: disable `plan`, enable `attach-releases` -> run with
+#      `--dry-run`, verify, then remove `--dry-run` to attach
+#      `benchmarks-bmf-*.tar.gz` to historical Nightly Releases.
+#   4. Phase 4: disable `attach-releases`, enable `replay` -> smoke-test
+#      `--tier=nightly --branch=action-test` (`--dry-run` then live), then
+#      replay live `--tier=nightly --branch=nightly` and
+#      `--tier=continuous --branch=trunk`.
+#   5. Cleanup: reset `action-test` back to `trunk`.
+name: Benchmarks Backfill
+
+on:
+  push:
+    branches: [action-test]
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  plan:
+    name: Plan backfill
+    if: github.ref_name == 'action-test'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read # To check existing BMF artifacts.
+      contents: read # For actions/checkout and git fetch of trunk/tags.
+    outputs:
+      has_work: ${{ steps.plan.outputs.has_work }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+
+      - name: Checkout backfill scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Fetch trunk history and tags
+        run: |
+          git fetch --no-recurse-submodules --filter=blob:none --tags origin \
+            +refs/heads/trunk:refs/remotes/origin/trunk
+
+      - name: Compute backfill plan
+        id: plan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 ./toolchain/benchmarking/backfill_bencher.py plan \
+            --target=nightly \
+            --github-output="$GITHUB_OUTPUT"
+
+  collect:
+    name: Collect (${{ matrix.short_sha }}, ${{ matrix.runner }})
+    needs: [plan]
+    if: needs.plan.outputs.has_work == 'true'
+    timeout-minutes: 180
+    permissions:
+      contents: read # For actions/checkout.
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            download.gnome.org:443
+            downloads.sourceforge.net:443
+            files.pythonhosted.org:443
+            github.com:443
+            go.dev:443
+            index.crates.io:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
+            releases.bazel.build:443
+            results-receiver.actions.githubusercontent.com:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            storage.googleapis.com:443
+            www.googleapis.com:443
+
+      - name: Checkout latest benchmarking tools
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout target commit and overlay benchmarking tools
+        env:
+          TARGET_SHA: ${{ matrix.sha }}
+        run: |
+          git fetch --depth=1 origin "$TARGET_SHA"
+          git checkout --detach FETCH_HEAD
+          rm -rf .github/actions
+          git checkout "$GITHUB_SHA" -- \
+            .github/actions \
+            scripts/bench_runner.py \
+            toolchain/benchmarking/bencher_suites.py \
+            toolchain/benchmarking/run_bencher.py
+
+      - name: Set up remote cache access
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          [[ -n "$REMOTE_CACHE_KEY" ]]
+          echo "$REMOTE_CACHE_KEY" | base64 -d > "$RUNNER_TEMP/remote_cache_key.json"
+
+      - uses: ./.github/actions/build-setup-common
+        with:
+          matrix_runner: ${{ matrix.runner }}
+          remote_cache_upload:
+            --google_credentials=${{ runner.temp }}/remote_cache_key.json
+
+      - name: Run nightly benchmarks
+        if: matrix.need_nightly
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          BMF_FILE: ${{ runner.temp }}/bmf-nightly/bmf-${{ matrix.runner }}.json
+        run: |
+          ./toolchain/benchmarking/run_bencher.py run \
+            --ci \
+            --tier=nightly \
+            --output="$BMF_FILE"
+
+      - name: Upload nightly BMF artifact
+        if: matrix.need_nightly
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          if-no-files-found: error
+          overwrite: true
+          name: bencher-bmf-nightly-${{ matrix.runner }}-${{ matrix.sha }}
+          path: ${{ runner.temp }}/bmf-nightly/bmf-${{ matrix.runner }}.json
+
+      - name: Run continuous benchmarks
+        if: matrix.need_continuous
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          BMF_FILE:
+            ${{ runner.temp }}/bmf-continuous/bmf-${{ matrix.runner }}.json
+        run: |
+          ./toolchain/benchmarking/run_bencher.py run \
+            --ci \
+            --tier=continuous \
+            --output="$BMF_FILE"
+
+      - name: Upload continuous BMF artifact
+        if: matrix.need_continuous
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          if-no-files-found: error
+          overwrite: true
+          name: bencher-bmf-continuous-${{ matrix.runner }}-${{ matrix.sha }}
+          path: ${{ runner.temp }}/bmf-continuous/bmf-${{ matrix.runner }}.json
+
+  attach-releases:
+    name: Attach backfilled BMF archives to Nightly Releases
+    if: github.ref_name == 'disabled'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # To download saved BMF artifacts.
+      contents: write # To upload missing archives to historical Nightly Releases.
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.core.windows.net:443
+            *.blob.storage.azure.net:443
+            api.github.com:443
+            github.com:443
+            uploads.github.com:443
+
+      - name: Checkout backfill scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Fetch trunk history and tags
+        run: |
+          git fetch --no-recurse-submodules --filter=blob:none --tags origin \
+            +refs/heads/trunk:refs/remotes/origin/trunk
+
+      - name: Attach missing nightly BMF archives
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 ./toolchain/benchmarking/backfill_bencher.py attach-releases \
+            --dry-run
+
+  replay:
+    name: Replay BMF artifacts to Bencher
+    if: github.ref_name == 'disabled'
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # To download saved BMF artifacts.
+      contents: read # For actions/checkout and git fetch of trunk history.
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.core.windows.net:443
+            *.blob.storage.azure.net:443
+            api.bencher.dev:443
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+
+      - name: Checkout backfill scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Fetch trunk history and tags
+        run: |
+          git fetch --no-recurse-submodules --filter=blob:none --tags origin \
+            +refs/heads/trunk:refs/remotes/origin/trunk
+
+      - name: Install Bencher CLI
+        uses: bencherdev/bencher@7de3c69a85380826613050826b4bce062be2f07d # v0.6.16
+
+      - name: Replay BMF artifacts to Bencher
+        env:
+          BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 ./toolchain/benchmarking/backfill_bencher.py replay \
+            --tier=nightly \
+            --branch=action-test \
+            --dry-run

@@ -1,0 +1,458 @@
+"""Temporary backfill helpers for the `action-test` workflow."""
+
+__copyright__ = """
+Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+Exceptions. See /LICENSE for license information.
+SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+"""
+
+import argparse
+import io
+import json
+import re
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import uuid
+import zipfile
+from pathlib import Path
+from typing import Any, Optional
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(_REPO_ROOT))
+from toolchain.benchmarking.bencher_suites import (  # noqa: E402
+    TRUNK_THRESHOLDS,
+    Tier,
+)
+from toolchain.benchmarking.run_bencher import (  # noqa: E402
+    BmfValidationError,
+    format_threshold_args,
+    sync_measure_units,
+    validate_bmf,
+)
+
+REPO = "carbon-language/carbon-lang"
+PROJECT = "carbon-lang"
+GIT_REF = "refs/remotes/origin/trunk"
+SINCE_REF = "v0.0.0-0.nightly.2026.11.01"
+NIGHTLY_TAG_PREFIX = "v0.0.0-0.nightly."
+
+RUNNERS = ("ubuntu-22.04", "ubuntu-22.04-arm")
+TRUSTED_BRANCHES = frozenset({"trunk", "action-test"})
+_ARTIFACT_NAME_RE = re.compile(
+    r"^bencher-bmf-(continuous|nightly)-([A-Za-z0-9._-]+)-([0-9a-f]{40})$"
+)
+
+
+def _git(*args: str) -> str:
+    return subprocess.run(
+        ["git", *args],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+
+
+def _gh_api_json_lines(
+    endpoint: str, jq_expr: str, paginate: bool = True
+) -> list[dict[str, Any]]:
+    cmd = ["gh", "api", *(["--paginate"] if paginate else []), endpoint]
+    out = subprocess.run(
+        [*cmd, "--jq", jq_expr], capture_output=True, text=True, check=True
+    ).stdout
+    return [json.loads(line) for line in out.splitlines() if line.strip()]
+
+
+def _load_commits(git_ref: str) -> dict[str, tuple[int, int]]:
+    since_sha = _git("rev-parse", "--verify", f"{SINCE_REF}^{{commit}}").strip()
+    out = _git(
+        "log",
+        "--first-parent",
+        "--reverse",
+        "--format=%H:%ct",
+        f"{SINCE_REF}^..{git_ref}",
+    )
+    commits = {
+        sha: (idx, int(epoch))
+        for idx, line in enumerate(out.splitlines())
+        for sha, epoch in [line.strip().split(":", 1)]
+    }
+    if since_sha not in commits:
+        raise BmfValidationError(
+            f"{SINCE_REF} ({since_sha[:12]}) not in {git_ref} first-parent."
+        )
+    return commits
+
+
+def _load_code_shas(git_ref: str) -> list[str]:
+    out = _git(
+        "log",
+        "--first-parent",
+        "--reverse",
+        "--format=%H",
+        f"{SINCE_REF}^..{git_ref}",
+        "--",
+        ".",
+        ":(exclude)*.md",
+        ":(top,exclude)LICENSE",
+        ":(top,exclude)CODEOWNERS",
+        ":(top,exclude).gitignore",
+        ":(top,exclude).gitattributes",
+        ":(top,exclude).gitmodules",
+        ":(top,exclude).git-blame-ignore-revs",
+    )
+    return [line.strip() for line in out.splitlines() if line.strip()]
+
+
+def _load_nightly_tags(
+    commits: dict[str, tuple[int, int]],
+) -> list[tuple[str, str]]:
+    out = _git(
+        "for-each-ref",
+        "--sort=refname",
+        "--format=%(refname:short) %(objectname) %(*objectname)",
+        f"refs/tags/{NIGHTLY_TAG_PREFIX}*",
+    )
+    tags: list[tuple[str, str]] = []
+    for line in out.splitlines():
+        parts = line.split()
+        if len(parts) >= 2:
+            sha = parts[2] if len(parts) >= 3 else parts[1]
+            if sha in commits:
+                tags.append((parts[0], sha))
+    return tags
+
+
+def _list_bmf_artifacts() -> dict[tuple[Tier, str, str], int]:
+    items = _gh_api_json_lines(
+        f"repos/{REPO}/actions/artifacts?per_page=100",
+        ".artifacts[] | {id, name, expired, "
+        "head_branch: .workflow_run.head_branch, "
+        "repo_id: .workflow_run.repository_id, "
+        "head_repo_id: .workflow_run.head_repository_id}",
+    )
+    selected: dict[tuple[Tier, str, str], int] = {}
+    for art in items:
+        repo_id = art.get("repo_id")
+        if (
+            art.get("expired")
+            or repo_id is None
+            or repo_id != art.get("head_repo_id")
+            or art.get("head_branch") not in TRUSTED_BRANCHES
+        ):
+            continue
+        m = _ARTIFACT_NAME_RE.fullmatch(str(art.get("name", "")))
+        if m is None:
+            continue
+        tier, runner, sha = Tier(m.group(1)), m.group(2), m.group(3)
+        if runner not in RUNNERS:
+            continue
+        key = (tier, sha, runner)
+        selected[key] = max(selected.get(key, -1), int(art["id"]))
+    return selected
+
+
+def _download_bmf_artifact(artifact_id: int) -> bytes:
+    zip_bytes = subprocess.run(
+        ["gh", "api", f"repos/{REPO}/actions/artifacts/{artifact_id}/zip"],
+        capture_output=True,
+        check=True,
+    ).stdout
+    try:
+        with zipfile.ZipFile(io.BytesIO(zip_bytes)) as zf:
+            infos = zf.infolist()
+            if len(infos) != 1:
+                raise BmfValidationError("Expected 1 BMF file in artifact zip.")
+            bmf_bytes = zf.read(infos[0].filename)
+        validate_bmf(json.loads(bmf_bytes.decode("utf-8")))
+    except (UnicodeDecodeError, json.JSONDecodeError, zipfile.BadZipFile) as e:
+        raise BmfValidationError(f"Invalid BMF artifact zip: {e}") from e
+    return bmf_bytes
+
+
+def _check_no_active_benchmark_runs() -> None:
+    runs = _gh_api_json_lines(
+        f"repos/{REPO}/actions/workflows/benchmarks.yaml/runs?per_page=20",
+        ".workflow_runs[] | {id, status}",
+        paginate=False,
+    )
+    active = [r["id"] for r in runs if r.get("status") != "completed"]
+    if active:
+        raise RuntimeError(f"Live `benchmarks.yaml` run(s) active: {active}")
+
+
+def _run_bencher_with_retry(cmd: list[str]) -> None:
+    for attempt in range(1, 4):
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        if proc.stdout:
+            sys.stdout.write(proc.stdout)
+        if proc.stderr:
+            sys.stderr.write(proc.stderr)
+        if proc.returncode == 0:
+            return
+        output = f"{proc.stdout}\n{proc.stderr}".lower()
+        if ("429" in output or "too many requests" in output) and attempt < 3:
+            print(
+                f"Bencher HTTP 429 (attempt {attempt}/3); sleeping 30s...",
+                file=sys.stderr,
+            )
+            time.sleep(30)
+            continue
+        raise subprocess.CalledProcessError(
+            proc.returncode, cmd, proc.stdout, proc.stderr
+        )
+
+
+def plan_backfill(
+    target: str, git_ref: str, github_output: Optional[Path]
+) -> None:
+    commits = _load_commits(git_ref)
+    if target == "nightly":
+        target_shas = list(
+            dict.fromkeys(sha for _, sha in _load_nightly_tags(commits))
+        )
+        tiers = (Tier.NIGHTLY, Tier.CONTINUOUS)
+    else:
+        target_shas = _load_code_shas(git_ref)
+        tiers = (Tier.CONTINUOUS,)
+
+    existing = _list_bmf_artifacts()
+    matrix: list[dict[str, Any]] = []
+    skipped = 0
+    for sha in target_shas:
+        for runner in RUNNERS:
+            need_nightly = (
+                Tier.NIGHTLY in tiers
+                and (Tier.NIGHTLY, sha, runner) not in existing
+            )
+            need_continuous = (
+                Tier.CONTINUOUS in tiers
+                and (Tier.CONTINUOUS, sha, runner) not in existing
+            )
+            if need_nightly or need_continuous:
+                matrix.append(
+                    {
+                        "sha": sha,
+                        "short_sha": sha[:12],
+                        "runner": runner,
+                        "need_nightly": need_nightly,
+                        "need_continuous": need_continuous,
+                    }
+                )
+            else:
+                skipped += 1
+
+    print(
+        f"plan target={target}: {len(target_shas)} commits, "
+        f"{skipped} pairs skipped, {len(matrix)} jobs",
+        file=sys.stderr,
+    )
+    if github_output is not None:
+        matrix_json = json.dumps({"include": matrix}, separators=(",", ":"))
+        with github_output.open("a", encoding="utf-8") as f:
+            f.write(f"has_work={'true' if matrix else 'false'}\n")
+            f.write(f"matrix={matrix_json}\n")
+
+
+def attach_nightly_releases(git_ref: str, dry_run: bool) -> None:
+    if not dry_run:
+        _check_no_active_benchmark_runs()
+    commits = _load_commits(git_ref)
+    releases = _gh_api_json_lines(
+        f"repos/{REPO}/releases?per_page=100",
+        ".[] | select(.draft | not) | {tag_name, assets: [.assets[].name]}",
+        paginate=True,
+    )
+    assets_by_tag = {str(r["tag_name"]): list(r["assets"]) for r in releases}
+    existing = _list_bmf_artifacts()
+
+    plan: list[tuple[str, str, list[str]]] = []
+    missing: list[str] = []
+    for tag, sha in _load_nightly_tags(commits):
+        if tag not in assets_by_tag:
+            print(f"SKIP {tag}: no published Release.", file=sys.stderr)
+            continue
+        if any(
+            a.startswith("benchmarks-bmf-") and a.endswith(".tar.gz")
+            for a in assets_by_tag[tag]
+        ):
+            print(f"SKIP {tag}: already has BMF archive.", file=sys.stderr)
+            continue
+        missing.extend(
+            f"{tag} ({sha[:12]}, {r})"
+            for r in RUNNERS
+            if (Tier.NIGHTLY, sha, r) not in existing
+        )
+        plan.append((tag, sha, list(RUNNERS)))
+
+    print(
+        f"attach-releases (dry_run={dry_run}): {len(plan)} release(s)",
+        file=sys.stderr,
+    )
+    if missing:
+        raise BmfValidationError(
+            f"Missing {len(missing)} nightly artifact(s): {', '.join(missing)}"
+        )
+    if dry_run or not plan:
+        return
+
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_root = Path(tmp_dir)
+        for tag, sha, runners in plan:
+            archive_path = (
+                tmp_root / f"benchmarks-bmf-{tag.removeprefix('v')}.tar.gz"
+            )
+            with tarfile.open(archive_path, "w:gz") as tf:
+                for runner in runners:
+                    payload = _download_bmf_artifact(
+                        existing[(Tier.NIGHTLY, sha, runner)]
+                    )
+                    info = tarfile.TarInfo(name=f"bmf-{runner}.json")
+                    info.size = len(payload)
+                    tf.addfile(info, io.BytesIO(payload))
+            subprocess.run(
+                [
+                    "gh",
+                    "release",
+                    "upload",
+                    tag,
+                    str(archive_path),
+                    "--repo",
+                    REPO,
+                ],
+                check=True,
+            )
+
+
+def replay_artifacts(
+    tier: Tier, branch: str, git_ref: str, dry_run: bool
+) -> None:
+    commits = _load_commits(git_ref)
+    if not dry_run and branch in {"trunk", "nightly"}:
+        _check_no_active_benchmark_runs()
+
+    existing = _list_bmf_artifacts()
+    if tier == Tier.NIGHTLY:
+        expected_shas = list(
+            dict.fromkeys(sha for _, sha in _load_nightly_tags(commits))
+        )
+    else:
+        expected_shas = _load_code_shas(git_ref)
+
+    missing = [
+        f"{sha[:12]}:{r}"
+        for sha in expected_shas
+        for r in RUNNERS
+        if (tier, sha, r) not in existing
+    ]
+
+    plan = [
+        (sha, runners)
+        for sha in commits
+        if (runners := [r for r in RUNNERS if (tier, sha, r) in existing])
+    ]
+    print(
+        f"replay tier={tier.value} branch={branch} dry_run={dry_run}: "
+        f"{len(plan)}/{len(expected_shas)} commits present",
+        file=sys.stderr,
+    )
+    for sha, runners in plan:
+        print(f"  {sha[:12]} {runners}", file=sys.stderr)
+    if missing:
+        raise BmfValidationError(
+            f"Missing {len(missing)} required {tier.value} artifact(s): "
+            + ", ".join(missing)
+        )
+    if not plan:
+        raise BmfValidationError(f"No {tier.value} artifacts found to replay.")
+    if dry_run:
+        return
+
+    reset_key = str(uuid.uuid4())
+    threshold_args = (
+        []
+        if branch == "action-test"
+        else format_threshold_args(TRUNK_THRESHOLDS)
+    )
+    call_idx = 0
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        tmp_root = Path(tmp_dir)
+        for commit_idx, (sha, runners) in enumerate(plan):
+            epoch = str(commits[sha][1])
+            for runner_idx, runner in enumerate(runners):
+                bmf_path = tmp_root / f"{sha}-{runner}.json"
+                bmf_path.write_bytes(
+                    _download_bmf_artifact(existing[(tier, sha, runner)])
+                )
+                cmd = [
+                    "bencher",
+                    "run",
+                    "--project",
+                    PROJECT,
+                    "--branch",
+                    branch,
+                    "--hash",
+                    sha,
+                    "--testbed",
+                    runner,
+                    "--backdate",
+                    epoch,
+                    "--adapter",
+                    "json",
+                    "--file",
+                    str(bmf_path),
+                    "--thresholds-reset",
+                    *threshold_args,
+                ]
+                if commit_idx == 0 and runner_idx == 0:
+                    cmd.extend(
+                        [
+                            "--start-point-reset",
+                            "--start-point-idempotency-key",
+                            reset_key,
+                        ]
+                    )
+                if call_idx > 0:
+                    time.sleep(1.1)
+                _run_bencher_with_retry(cmd)
+                call_idx += 1
+
+    sync_measure_units(project=PROJECT)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--git-ref", default=GIT_REF)
+    sub = parser.add_subparsers(dest="subcommand", required=True)
+
+    p_plan = sub.add_parser("plan")
+    p_plan.add_argument(
+        "--target", choices=("nightly", "continuous"), required=True
+    )
+    p_plan.add_argument("--github-output", type=Path)
+
+    p_attach = sub.add_parser("attach-releases")
+    p_attach.add_argument("--dry-run", action="store_true")
+
+    p_replay = sub.add_parser("replay")
+    p_replay.add_argument(
+        "--tier", choices=("nightly", "continuous"), required=True
+    )
+    p_replay.add_argument("--branch", required=True)
+    p_replay.add_argument("--dry-run", action="store_true")
+
+    ns = parser.parse_args()
+    if ns.subcommand == "plan":
+        plan_backfill(ns.target, ns.git_ref, ns.github_output)
+    elif ns.subcommand == "attach-releases":
+        attach_nightly_releases(ns.git_ref, ns.dry_run)
+    elif ns.subcommand == "replay":
+        replay_artifacts(Tier(ns.tier), ns.branch, ns.git_ref, ns.dry_run)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
