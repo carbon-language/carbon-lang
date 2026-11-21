@@ -99,9 +99,9 @@ alignas(64) static constexpr std::array<uint64_t, 9> SizeMasks8 = [] {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Size-specific byte comparisons (`Ne*`) and `StringBytesNe`.
+// Size-specific byte comparisons (`BytesNe*`) and `StringBytesNe`.
 //
-// `StringBytesNe` and each `Ne*` function below compare bytes at `lhs` and
+// `StringBytesNe` and each `BytesNe*` function below compare bytes at `lhs` and
 // `rhs` for the size or size range in the function's name. They return zero
 // when all of the bytes are equal and some non-zero 64-bit value otherwise,
 // rather than a `bool` or `bcmp`'s `int`. Callers may only compare the result
@@ -115,7 +115,7 @@ alignas(64) static constexpr std::array<uint64_t, 9> SizeMasks8 = [] {
 
 // Compares `size` bytes for `size` in 1..8, reading no further than those
 // bytes.
-[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeExact1To8(
+[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto BytesNeExact1To8(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
   return LoadExact1To8(lhs, size) ^ LoadExact1To8(rhs, size);
 }
@@ -136,8 +136,8 @@ alignas(64) static constexpr std::array<uint64_t, 9> SizeMasks8 = [] {
 // on `size` (adding a cycle of address-generation latency) and inputs in the
 // first 8 bytes of a page—including the start of any page-aligned buffer—can't
 // use it.
-static auto NeOverread1To8(const std::byte* lhs, const std::byte* rhs,
-                           size_t size) -> uint64_t {
+static auto BytesNeOverread1To8(const std::byte* lhs, const std::byte* rhs,
+                                size_t size) -> uint64_t {
   auto ne_bits = XorBytes<uint64_t>(lhs, rhs);
 #if defined(__BMI2__)
   ne_bits = _bzhi_u64(ne_bits, 8 * size);
@@ -159,8 +159,8 @@ static auto NeOverread1To8(const std::byte* lhs, const std::byte* rhs,
 // the result, and x86-64 fuses the first compare with a load and with the
 // branch. The branch is only taken for inputs that differ, where the caller's
 // branch on the result is no easier to predict.
-static auto Ne9To16(const std::byte* lhs, const std::byte* rhs, size_t size)
-    -> uint64_t {
+static auto BytesNe9To16(const std::byte* lhs, const std::byte* rhs,
+                         size_t size) -> uint64_t {
   if (LLVM_UNLIKELY(Load<uint64_t>(lhs) != Load<uint64_t>(rhs))) {
     return 1;
   }
@@ -170,39 +170,42 @@ static auto Ne9To16(const std::byte* lhs, const std::byte* rhs, size_t size)
 
 #if CARBON_STRING_BYTES_NE_AARCH64
 
-static auto Ne17To32(const std::byte* lhs, const std::byte* rhs, size_t size)
-    -> uint64_t {
-  // Comparing `__uint128_t` keeps the loads and compares in general registers
-  // (`ldp` + `cmp` + `ccmp`), avoiding the latency of moving a result from Neon
-  // to general registers; LLVM would vectorize 64-bit comparisons into Neon.
-  //
-  // Combining the two halves with `|` rather than `||` loads both halves
-  // unconditionally and folds all four 64-bit compares into a single branchless
-  // `cmp` and `ccmp` chain, rather than splitting them across an early-exit
-  // branch.
-  //
-  // The tails are addressed from the ends of the inputs, rather than with a
-  // shared `size - 16` offset. LLVM computes that offset as part of the
-  // comparison of `size` that leads here, and a 16-byte load into general
-  // registers (`ldp`) can't add a register offset to its address, so each tail
-  // load would then wait an extra cycle for a second addition.
+// Comparing `__uint128_t` keeps the loads and compares in general registers
+// (`ldp` + `cmp` + `ccmp`), avoiding the latency of moving a result from Neon
+// to general registers; LLVM would vectorize 64-bit comparisons into Neon.
+//
+// Combining the two halves with `|` rather than `||` loads both halves
+// unconditionally and folds all four 64-bit compares into a single branchless
+// `cmp` and `ccmp` chain, rather than splitting them across an early-exit
+// branch.
+//
+// The tails are addressed from the ends of the inputs, rather than with a
+// shared `size - 16` offset. LLVM computes that offset as part of the
+// comparison of `size` that leads here, and a 16-byte load into general
+// registers (`ldp`) can't add a register offset to its address, so each tail
+// load would then wait an extra cycle for a second addition.
+static auto BytesNe17To32(const std::byte* lhs, const std::byte* rhs,
+                          size_t size) -> uint64_t {
   return (XorBytes<__uint128_t>(lhs, rhs) |
           XorBytes<__uint128_t>(lhs + size - 16, rhs + size - 16)) != 0;
 }
 
-// `Ne33To64` and `NeOver64` pair two 32-byte comparisons:
-// - `Ne32Neon` for predicted early-exit checks, where Neon's higher throughput
-//   wins and its Neon-to-general-register latency is hidden by the next check.
-// - `Ne32` when producing the final return value, where `__uint128_t` keeps the
-//   comparison in general registers (`ldp` + `cmp` + `ccmp`) to avoid that
-//   Neon-to-general-register latency (LLVM would vectorize 64-bit comparisons).
+// `BytesNe33To64` and `BytesNeOver64` pair two 32-byte comparisons:
+// - `BytesNe32Neon` for predicted early-exit checks, where Neon's higher
+//   throughput wins and its Neon-to-general-register latency is hidden by the
+//   next check.
+// - `BytesNe32` when producing the final return value, where `__uint128_t`
+//   keeps the comparison in general registers (`ldp` + `cmp` + `ccmp`) to avoid
+//   that Neon-to-general-register latency (LLVM would vectorize 64-bit
+//   comparisons).
 
-static auto Ne32(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
+static auto BytesNe32(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
   return (XorBytes<__uint128_t>(lhs, rhs) |
           XorBytes<__uint128_t>(lhs + 16, rhs + 16)) != 0;
 }
 
-static auto Ne32Neon(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
+static auto BytesNe32Neon(const std::byte* lhs, const std::byte* rhs)
+    -> uint64_t {
   uint8x16_t eq_bytes =
       vceqq_u8(Load<uint8x16_t>(lhs), Load<uint8x16_t>(rhs)) &
       vceqq_u8(Load<uint8x16_t>(lhs + 16), Load<uint8x16_t>(rhs + 16));
@@ -213,47 +216,48 @@ static auto Ne32Neon(const std::byte* lhs, const std::byte* rhs) -> uint64_t {
   return ~vgetq_lane_u64(vreinterpretq_u64_u32(min_lanes), 0);
 }
 
-static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
-    -> uint64_t {
-  if (Ne32Neon(lhs, rhs)) {
+static auto BytesNe33To64(const std::byte* lhs, const std::byte* rhs,
+                          size_t size) -> uint64_t {
+  if (BytesNe32Neon(lhs, rhs)) {
     return 1;
   }
-  return Ne32(lhs + size - 32, rhs + size - 32);
+  return BytesNe32(lhs + size - 32, rhs + size - 32);
 }
 
-[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeOver64(
+[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto BytesNeOver64(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
   // Compare 32 bytes at a time, finishing with the last 32 bytes, which can
   // overlap bytes that were already compared.
   size_t last = size - 32;
   for (size_t i = 0; i < last; i += 32) {
-    if (Ne32Neon(lhs + i, rhs + i)) {
+    if (BytesNe32Neon(lhs + i, rhs + i)) {
       return 1;
     }
   }
-  return Ne32(lhs + last, rhs + last);
+  return BytesNe32(lhs + last, rhs + last);
 }
 
 #elif CARBON_STRING_BYTES_NE_X86
 
-// `Ne17To32` and `Ne33To64` compare bytes with `pcmpeqb` and extract a bitmask
-// with `pmovmskb`, whereas reducing `XorBytes` with `ptest` (`_mm*_testz_si*`)
-// below also needs `setcc` to materialize the return value. On Zen 5 that gets
-// the result to the caller's branch 2 to 3 cycles sooner, without adding ops.
+// `BytesNe17To32` and `BytesNe33To64` compare bytes with `pcmpeqb` and extract
+// a bitmask with `pmovmskb`, whereas reducing `XorBytes` with `ptest`
+// (`_mm*_testz_si*`) below also needs `setcc` to materialize the return value.
+// On Zen 5 that gets the result to the caller's branch 2 to 3 cycles sooner,
+// without adding ops.
 //
 // TODO: Switch to scalar code once LLVM vectorizes it well. Today it builds a
 // 256-bit compare with `vinserti128` for 17-32 bytes on x86-64-v3.
 
-static auto Ne17To32(const std::byte* lhs, const std::byte* rhs, size_t size)
-    -> uint64_t {
+static auto BytesNe17To32(const std::byte* lhs, const std::byte* rhs,
+                          size_t size) -> uint64_t {
   __m128i eq = _mm_cmpeq_epi8(Load<__m128i>(lhs), Load<__m128i>(rhs)) &
                _mm_cmpeq_epi8(Load<__m128i>(lhs + size - 16),
                               Load<__m128i>(rhs + size - 16));
   return static_cast<uint32_t>(_mm_movemask_epi8(eq)) ^ 0xffffU;
 }
 
-static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
-    -> uint64_t {
+static auto BytesNe33To64(const std::byte* lhs, const std::byte* rhs,
+                          size_t size) -> uint64_t {
 #if defined(__AVX2__)
   __m256i eq = _mm256_cmpeq_epi8(Load<__m256i>(lhs), Load<__m256i>(rhs)) &
                _mm256_cmpeq_epi8(Load<__m256i>(lhs + size - 32),
@@ -271,20 +275,20 @@ static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
 #endif
 }
 
-// `NeOver64` takes its result from the first 32 bytes, and checks the other
-// bytes with predicted branches. Loading the first 32 bytes before the others
-// keeps the other loads from delaying the result. Every size also compares the
-// next 32 bytes, so loading them before branching on the size keeps a
-// mispredicted branch from delaying them.
+// `BytesNeOver64` takes its result from the first 32 bytes, and checks the
+// other bytes with predicted branches. Loading the first 32 bytes before the
+// others keeps the other loads from delaying the result. Every size also
+// compares the next 32 bytes, so loading them before branching on the size
+// keeps a mispredicted branch from delaying them.
 //
-// `NeOver64` uses `XorBytes` and `ptest` (`_mm*_testz_si*`) rather than
+// `BytesNeOver64` uses `XorBytes` and `ptest` (`_mm*_testz_si*`) rather than
 // `pcmpeqb` and `pmovmskb`, even though `pmovmskb` would have 2 to 4 cycles
 // lower latency on Zen 5: with AVX2, LLVM replaces the last branch with a
 // `cmov` when returning a `pmovmskb` mask, so that the result waits for every
-// byte; without AVX2, it hoists and shares the first compare with `Ne33To64`,
-// costing 2 cycles on that path.
+// byte; without AVX2, it hoists and shares the first compare with
+// `BytesNe33To64`, costing 2 cycles on that path.
 #if defined(__AVX2__)
-[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeOver64(
+[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto BytesNeOver64(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
   auto head_xor = XorBytes<__m256i>(lhs, rhs);
   auto second_xor = XorBytes<__m256i>(lhs + 32, rhs + 32);
@@ -329,7 +333,7 @@ static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
 // Without AVX2, each 32-byte comparison takes twice the instructions. To keep
 // the code small, this has a single loop of 128-byte blocks, and every size
 // finishes with the same check of the last 64 bytes.
-[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeOver64(
+[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto BytesNeOver64(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
   auto xor_32 = [](const std::byte* a, const std::byte* b) -> __m128i {
     return XorBytes<__m128i>(a, b) | XorBytes<__m128i>(a + 16, b + 16);
@@ -369,7 +373,7 @@ static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
 
 // Rely on `memcmp` for other architectures, hoping for a dynamically selected
 // implementation.
-[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto NeOver16(
+[[clang::noinline]] CARBON_STRING_BYTES_NE_CC static auto BytesNeOver16(
     const std::byte* lhs, const std::byte* rhs, size_t size) -> uint64_t {
   return std::memcmp(lhs, rhs, size) != 0;
 }
@@ -401,8 +405,8 @@ static auto Ne33To64(const std::byte* lhs, const std::byte* rhs, size_t size)
 // each comparison. In exchange, this function has to save any general register
 // it uses beyond the result's and, on x86-64, a single scratch register. It
 // never does: sizes up to 64 only need those and vector registers, and the rest
-// are tail calls to functions (`NeExact1To8` and `NeOver64`) that save what
-// they use when they run.
+// are tail calls to functions (`BytesNeExact1To8` and `BytesNeOver64`) that
+// save what they use when they run.
 //
 // TODO: Contribute this to LLVM libc's `bcmp`.
 [[clang::noinline, gnu::aligned(64)]] CARBON_STRING_BYTES_NE_CC auto
@@ -420,24 +424,24 @@ StringBytesNe(const std::byte* lhs, const std::byte* rhs, size_t size)
     // Zen 5, a fused load-op holds its integer ALU scheduler slot through the
     // load.
     if (LLVM_LIKELY(Read8StaysInPage(lhs) & Read8StaysInPage(rhs))) {
-      return NeOverread1To8(lhs, rhs, size);
+      return BytesNeOverread1To8(lhs, rhs, size);
     }
 #endif
-    [[clang::musttail]] return NeExact1To8(lhs, rhs, size);
+    [[clang::musttail]] return BytesNeExact1To8(lhs, rhs, size);
   }
   if (size <= 16) {
-    return Ne9To16(lhs, rhs, size);
+    return BytesNe9To16(lhs, rhs, size);
   }
 #if CARBON_STRING_BYTES_NE_AARCH64 || CARBON_STRING_BYTES_NE_X86
   if (size <= 32) {
-    return Ne17To32(lhs, rhs, size);
+    return BytesNe17To32(lhs, rhs, size);
   }
   if (size <= 64) {
-    return Ne33To64(lhs, rhs, size);
+    return BytesNe33To64(lhs, rhs, size);
   }
-  [[clang::musttail]] return NeOver64(lhs, rhs, size);
+  [[clang::musttail]] return BytesNeOver64(lhs, rhs, size);
 #else
-  [[clang::musttail]] return NeOver16(lhs, rhs, size);
+  [[clang::musttail]] return BytesNeOver16(lhs, rhs, size);
 #endif
 }
 
