@@ -6,18 +6,17 @@
 #
 # Playbook (toggle `if: github.ref_name == 'action-test'` vs `'disabled'` on
 # the active job and adjust CLI args inline, then push to `action-test`):
-#   1. Phase 1 (active): `plan` (`--target=nightly`) + `collect` -> collects
-#      missing `nightly` + `continuous` BMF artifacts for nightly tags.
-#   2. Phase 2: `plan` (`--target=continuous`) + `collect` -> collects
-#      remaining `continuous` BMF artifacts for code commits.
-#   3. Phase 3: disable `plan`, enable `attach-releases` -> run with
+#   1. Phase 1 (active): `plan` + `collect` -> collects all missing `nightly`
+#      and `continuous` BMF artifacts since `v0.0.0-0.nightly.2026.11.01` in
+#      one pass (sharing builds when a commit needs both tiers).
+#   2. Phase 2: disable `plan`, enable `attach-releases` -> run with
 #      `--dry-run`, verify, then remove `--dry-run` to attach
 #      `benchmarks-bmf-*.tar.gz` to historical Nightly Releases.
-#   4. Phase 4: disable `attach-releases`, enable `replay` -> smoke-test
+#   3. Phase 3: disable `attach-releases`, enable `replay` -> smoke-test
 #      `--tier=nightly --branch=action-test` (`--dry-run` then live), then
 #      replay live `--tier=nightly --branch=nightly` and
 #      `--tier=continuous --branch=trunk`.
-#   5. Cleanup: reset `action-test` back to `trunk`.
+#   4. Cleanup: reset `action-test` back to `trunk`.
 name: Benchmarks Backfill
 
 on:
@@ -71,7 +70,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 ./toolchain/benchmarking/backfill_bencher.py plan \
-            --target=nightly \
             --github-output="$GITHUB_OUTPUT"
 
   collect:

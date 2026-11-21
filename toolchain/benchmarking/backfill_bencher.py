@@ -206,18 +206,13 @@ def _run_bencher_with_retry(cmd: list[str]) -> None:
         )
 
 
-def plan_backfill(
-    target: str, git_ref: str, github_output: Optional[Path]
-) -> None:
+def plan_backfill(git_ref: str, github_output: Optional[Path]) -> None:
     commits = _load_commits(git_ref)
-    if target == "nightly":
-        target_shas = list(
-            dict.fromkeys(sha for _, sha in _load_nightly_tags(commits))
-        )
-        tiers = (Tier.NIGHTLY, Tier.CONTINUOUS)
-    else:
-        target_shas = _load_code_shas(git_ref)
-        tiers = (Tier.CONTINUOUS,)
+    nightly_shas = {sha for _, sha in _load_nightly_tags(commits)}
+    code_shas = set(_load_code_shas(git_ref))
+    target_shas = [
+        sha for sha in commits if sha in nightly_shas or sha in code_shas
+    ]
 
     existing = _list_bmf_artifacts()
     matrix: list[dict[str, Any]] = []
@@ -225,11 +220,11 @@ def plan_backfill(
     for sha in target_shas:
         for runner in RUNNERS:
             need_nightly = (
-                Tier.NIGHTLY in tiers
+                sha in nightly_shas
                 and (Tier.NIGHTLY, sha, runner) not in existing
             )
             need_continuous = (
-                Tier.CONTINUOUS in tiers
+                sha in code_shas
                 and (Tier.CONTINUOUS, sha, runner) not in existing
             )
             if need_nightly or need_continuous:
@@ -246,8 +241,9 @@ def plan_backfill(
                 skipped += 1
 
     print(
-        f"plan target={target}: {len(target_shas)} commits, "
-        f"{skipped} pairs skipped, {len(matrix)} jobs",
+        f"plan: {len(target_shas)} commits ({len(nightly_shas)} nightly, "
+        f"{len(code_shas)} continuous), {skipped} pairs skipped, "
+        f"{len(matrix)} jobs",
         file=sys.stderr,
     )
     if github_output is not None:
@@ -429,9 +425,6 @@ def main() -> int:
     sub = parser.add_subparsers(dest="subcommand", required=True)
 
     p_plan = sub.add_parser("plan")
-    p_plan.add_argument(
-        "--target", choices=("nightly", "continuous"), required=True
-    )
     p_plan.add_argument("--github-output", type=Path)
 
     p_attach = sub.add_parser("attach-releases")
@@ -446,7 +439,7 @@ def main() -> int:
 
     ns = parser.parse_args()
     if ns.subcommand == "plan":
-        plan_backfill(ns.target, ns.git_ref, ns.github_output)
+        plan_backfill(ns.git_ref, ns.github_output)
     elif ns.subcommand == "attach-releases":
         attach_nightly_releases(ns.git_ref, ns.dry_run)
     elif ns.subcommand == "replay":
