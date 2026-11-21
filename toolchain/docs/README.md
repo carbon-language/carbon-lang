@@ -43,6 +43,7 @@ The main components are:
 -   [Diagnostics](diagnostics.md): Produces diagnostic output.
 -   [Diagnostics rendering](diagnostics_rendering.md): Draws diagnostics on a
     terminal.
+-   [Format](format.md): Formats Carbon source code.
 -   Compilation flow:
 
     1.  Source: Load the file into a
