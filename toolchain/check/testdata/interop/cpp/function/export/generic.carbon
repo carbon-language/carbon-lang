@@ -198,18 +198,6 @@ fn F[T: type](unused c: C(T)) {}
 inline Cpp '''
 void G() {
   Carbon::C<Carbon::A> c;
-  // CHECK:STDERR:        ╭─┤ generic_class_param.carbon:[[@LINE+12]]:3
-  // CHECK:STDERR:        │ fn F[T: type](unused c: C(T)) {}
-  // CHECK:STDERR:        ·                               ┬
-  // CHECK:STDERR:        ·                               ╰──┤ candidate template ignored: couldn't infer
-  // CHECK:STDERR:        ·                                  │ template argument 'T'
-  // CHECK:STDERR:        ·                                  │ [CppInteropParseNote]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   Carbon::F(c);
-  // CHECK:STDERR:        ·   ━━━━┳━━━━
-  // CHECK:STDERR:        ·       ┗━━┫ error: no matching function for call to 'F' [CppInteropParseError]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   Carbon::F(c);
 }
 ''';
