@@ -32,7 +32,7 @@ permissions: {}
 jobs:
   plan:
     name: Plan backfill
-    if: github.ref_name == 'action-test'
+    if: github.ref_name == 'disabled'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -199,7 +199,7 @@ jobs:
 
   attach-releases:
     name: Attach backfilled BMF archives to Nightly Releases
-    if: github.ref_name == 'disabled'
+    if: github.ref_name == 'action-test'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
@@ -235,12 +235,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 ./toolchain/benchmarking/backfill_bencher.py attach-releases \
-            --dry-run
+          python3 ./toolchain/benchmarking/backfill_bencher.py attach-releases
 
   replay:
     name: Replay BMF artifacts to Bencher
-    if: github.ref_name == 'disabled'
+    if: github.ref_name == 'action-test'
     timeout-minutes: 45
     runs-on: ubuntu-latest
     permissions:
@@ -284,5 +283,4 @@ jobs:
         run: |
           python3 ./toolchain/benchmarking/backfill_bencher.py replay \
             --tier=nightly \
-            --branch=action-test \
-            --dry-run
+            --branch=action-test
