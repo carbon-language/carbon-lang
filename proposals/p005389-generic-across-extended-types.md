@@ -387,6 +387,9 @@ A primitive `Core.ExtType` has (at least):
     function is run")
 -   for compile time phase, a specific compile-time value
 
+> **Future work:** Once we have a "compile-time evaluation" proposal, "run time"
+> should likely be replaced by "eval time."
+
 Unlike [extended types of expressions](/docs/design/values.md#extended-types),
 which distinguish `"template"` and `"symbolic"` expression phases,
 `Core.ExtType` uses a single `"compile time"` phase:
@@ -1555,6 +1558,11 @@ type, as in:
 | `call[val]()` | `ValSelf(CallPrimitive())` |
 | `call[ref]()` | `RefSelf(CallPrimitive())` |
 | `call[var]()` | `VarSelf(CallPrimitive())` |
+
+> **FIXME: QUESTION:** Should this be changed to reflect the fact that
+> [proposal #7016: "Updating `self` syntax and adding `static` member variables"](https://github.com/carbon-language/carbon-lang/pull/7016)
+> changed the method syntax to put `self` inside the explicit parameter list in
+> round parens `(`...`)`?
 
 These can be combined, so `call[ref](var _: bool, _: i32*) -> ref i32` gives the
 facet type:
