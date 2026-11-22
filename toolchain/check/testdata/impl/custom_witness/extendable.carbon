@@ -47,6 +47,13 @@ library "[[@TEST_NAME]]";
 class C {}
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C as Core.Extendable;
+  // CHECK:STDERR:        ·   ━━┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `C` into type implementing `Core.Extendable`
+  // CHECK:STDERR:        ·        ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   C as Core.Extendable;
 }
 
@@ -60,6 +67,13 @@ class C {
 }
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_derived_from_base_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C as Core.Extendable;
+  // CHECK:STDERR:        ·   ━━┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `C` into type implementing `Core.Extendable`
+  // CHECK:STDERR:        ·        ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   C as Core.Extendable;
 }
 
@@ -69,6 +83,14 @@ library "[[@TEST_NAME]]";
 base class B {}
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_partial_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   partial B as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `partial B` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   partial B as Core.Extendable;
 }
 
@@ -76,6 +98,14 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_tuple.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   ((), ()) as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `((), ())` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   ((), ()) as Core.Extendable;
 }
 
@@ -83,6 +113,14 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_struct.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   {.a: ()} as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `{.a: ()}` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   {.a: ()} as Core.Extendable;
 }
 
@@ -90,6 +128,13 @@ fn Test() {
 library "[[@TEST_NAME]]";
 
 fn Test[T: type]() {
+  // CHECK:STDERR:        ╭─┤ fail_symbolic.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   T as Core.Extendable;
+  // CHECK:STDERR:        ·   ━━┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `T` into type implementing `Core.Extendable`
+  // CHECK:STDERR:        ·        ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   T as Core.Extendable;
 }
 
