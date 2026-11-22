@@ -368,26 +368,12 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorNotId node_id)
   return true;
 }
 
-// Returns whether `partial` can be applied to `type`. A class type can't be
-// final, and a symbolic type has to implement `Core.Extendable`.
-static auto CanApplyPartial(Context& context, SemIR::LocId loc_id,
-                            TypeExpr type) -> bool {
-  if (auto class_type =
-          context.types().TryGetAs<SemIR::ClassType>(type.type_id)) {
-    return context.classes().Get(class_type->class_id).inheritance_kind !=
-           SemIR::Class::InheritanceKind::Final;
-  }
-
-  auto type_const_id = context.types().GetConstantId(type.type_id);
-  if (!type_const_id.is_symbolic()) {
-    return false;
-  }
-
+// Returns whether the symbolic type `type_const_id` implements
+// `Core.Extendable`, which `partial` requires of a generic type.
+static auto ImplementsExtendable(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ConstantId type_const_id) -> bool {
   auto extendable_id =
       LookupNameInCore(context, loc_id, CoreIdentifier::Extendable);
-  if (extendable_id == SemIR::ErrorInst::InstId) {
-    return false;
-  }
   return LookupImplWitness(context, loc_id, type_const_id,
                            context.constant_values().Get(extendable_id),
                            /*diagnose=*/false)
@@ -398,8 +384,24 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorPartialId node_id)
     -> bool {
   auto value_id = context.node_stack().PopExpr();
   auto inner_type = ExprAsType(context, node_id, value_id);
+  auto class_type =
+      context.types().TryGetAs<SemIR::ClassType>(inner_type.type_id);
+  auto type_const_id = context.types().GetConstantId(inner_type.type_id);
 
-  if (!CanApplyPartial(context, node_id, inner_type)) {
+  if (!class_type && type_const_id.is_symbolic()) {
+    // A generic type isn't known to be final, but it has to implement
+    // `Core.Extendable`.
+    if (!ImplementsExtendable(context, node_id, type_const_id)) {
+      CARBON_DIAGNOSTIC(PartialOnNonExtendable, Error,
+                        "`partial` applied to type {0} which does not "
+                        "implement `Core.Extendable`",
+                        InstIdAsType);
+      context.emitter().Emit(node_id, PartialOnNonExtendable,
+                             inner_type.inst_id);
+    }
+  } else if (!class_type ||
+             context.classes().Get(class_type->class_id).inheritance_kind ==
+                 SemIR::Class::InheritanceKind::Final) {
     CARBON_DIAGNOSTIC(PartialOnFinal, Error,
                       "`partial` applied to final type {0}", SemIR::TypeId);
     context.emitter().Emit(node_id, PartialOnFinal, inner_type.type_id);

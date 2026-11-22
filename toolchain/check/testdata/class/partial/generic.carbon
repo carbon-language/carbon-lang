@@ -83,11 +83,12 @@ library "[[@TEST_NAME]]";
 
 interface I {}
 
-// CHECK:STDERR:        ╭─┤ fail_period_self_unconstrained.carbon:[[@LINE+7]]:27
+// CHECK:STDERR:        ╭─┤ fail_period_self_unconstrained.carbon:[[@LINE+8]]:27
 // CHECK:STDERR: ->     │ fn F[unused T: type where partial .Self impls I]() {}
-// CHECK:STDERR:        ·                           ━━━┳━━━━━━━━━
-// CHECK:STDERR:        ·                              ┗━━┫ error: `partial` applied to final type `.Self`
-// CHECK:STDERR:        ·                                 ┃        [PartialOnFinal]
+// CHECK:STDERR:        ·                           ┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·                           ┗━━┫ error: `partial` applied to type `.Self` which
+// CHECK:STDERR:        ·                              ┃        does not implement `Core.Extendable`
+// CHECK:STDERR:        ·                              ┃        [PartialOnNonExtendable]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F[unused T: type where partial .Self impls I]() {}
@@ -532,11 +533,11 @@ fn G(c: C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %b.ref: ref %B = name_ref b, %b
-// CHECK:STDOUT:   %.loc26_5: %B = ref_tag %b.ref
-// CHECK:STDOUT:   %Extendable.facet.loc26_10.1: %Extendable.type = facet_value constants.%B, (constants.%custom_witness) [concrete = constants.%Extendable.facet]
-// CHECK:STDOUT:   %.loc26_10.1: %Extendable.type = converted constants.%B, %Extendable.facet.loc26_10.1 [concrete = constants.%Extendable.facet]
-// CHECK:STDOUT:   %Extendable.facet.loc26_10.2: %Extendable.type = facet_value constants.%B, (constants.%custom_witness) [concrete = constants.%Extendable.facet]
-// CHECK:STDOUT:   %.loc26_10.2: %Extendable.type = converted constants.%B, %Extendable.facet.loc26_10.2 [concrete = constants.%Extendable.facet]
+// CHECK:STDOUT:   %.loc13_5: %B = ref_tag %b.ref
+// CHECK:STDOUT:   %Extendable.facet.loc13_10.1: %Extendable.type = facet_value constants.%B, (constants.%custom_witness) [concrete = constants.%Extendable.facet]
+// CHECK:STDOUT:   %.loc13_10.1: %Extendable.type = converted constants.%B, %Extendable.facet.loc13_10.1 [concrete = constants.%Extendable.facet]
+// CHECK:STDOUT:   %Extendable.facet.loc13_10.2: %Extendable.type = facet_value constants.%B, (constants.%custom_witness) [concrete = constants.%Extendable.facet]
+// CHECK:STDOUT:   %.loc13_10.2: %Extendable.type = converted constants.%B, %Extendable.facet.loc13_10.2 [concrete = constants.%Extendable.facet]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%Extendable.facet) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %ptr.3dc = call %F.specific_fn(%b.ref)
 // CHECK:STDOUT:   <elided>
