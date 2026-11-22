@@ -77,8 +77,8 @@ fn F() -> i32 {
 // CHECK:STDOUT: !43 = !{null, !20}
 // CHECK:STDOUT: !44 = !DISubroutineType(types: !43)
 // CHECK:STDOUT: !45 = !DILocation(line: 19, column: 3, scope: !35)
-// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !44, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !52)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 34, type: !44, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !52)
 // CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !46, type: !20)
-// CHECK:STDOUT: !51 = !DILocation(line: 32, column: 1, scope: !46)
+// CHECK:STDOUT: !51 = !DILocation(line: 34, column: 1, scope: !46)
 // CHECK:STDOUT: !52 = !{!47}
 // CHECK:STDOUT:

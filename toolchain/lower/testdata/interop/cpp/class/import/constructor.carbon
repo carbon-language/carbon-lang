@@ -267,9 +267,9 @@ fn Four() {
 // CHECK:STDOUT: !31 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !18, line: 10, type: !22, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !32 = !DILocation(line: 11, column: 18, scope: !31)
 // CHECK:STDOUT: !35 = !DILocation(line: 10, column: 1, scope: !31)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !23)
-// CHECK:STDOUT: !41 = !DILocation(line: 32, column: 1, scope: !36)
+// CHECK:STDOUT: !41 = !DILocation(line: 34, column: 1, scope: !36)
 // CHECK:STDOUT: !42 = !{!37}
 // CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
@@ -398,9 +398,9 @@ fn Four() {
 // CHECK:STDOUT: !69 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !61, spFlags: DISPFlagDefinition, unit: !59)
 // CHECK:STDOUT: !72 = !DILocation(line: 9, column: 28, scope: !69)
 // CHECK:STDOUT: !73 = !DILocation(line: 9, column: 21, scope: !69)
-// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !59, retainedNodes: !80)
+// CHECK:STDOUT: !74 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !59, retainedNodes: !80)
 // CHECK:STDOUT: !75 = !DILocalVariable(arg: 1, scope: !74, type: !23)
-// CHECK:STDOUT: !79 = !DILocation(line: 32, column: 1, scope: !74)
+// CHECK:STDOUT: !79 = !DILocation(line: 34, column: 1, scope: !74)
 // CHECK:STDOUT: !80 = !{!75}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -575,13 +575,13 @@ fn Four() {
 // CHECK:STDOUT: !105 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.055ae7235dade271", scope: null, file: !4, line: 9, type: !61, spFlags: DISPFlagDefinition, unit: !82)
 // CHECK:STDOUT: !108 = !DILocation(line: 9, column: 28, scope: !105)
 // CHECK:STDOUT: !109 = !DILocation(line: 9, column: 21, scope: !105)
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d07982f4dd457e72", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !82, retainedNodes: !116)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d07982f4dd457e72", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !82, retainedNodes: !116)
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !110, type: !23)
-// CHECK:STDOUT: !115 = !DILocation(line: 32, column: 1, scope: !110)
+// CHECK:STDOUT: !115 = !DILocation(line: 34, column: 1, scope: !110)
 // CHECK:STDOUT: !116 = !{!111}
-// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3d110fbad655625b", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !82, retainedNodes: !123)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3d110fbad655625b", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !82, retainedNodes: !123)
 // CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !23)
-// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 1, scope: !117)
+// CHECK:STDOUT: !122 = !DILocation(line: 34, column: 1, scope: !117)
 // CHECK:STDOUT: !123 = !{!118}
 // CHECK:STDOUT: !124 = !{!"p1 _ZTS26ImplicitlyDefaultedDefault", !45, i64 0}
 // CHECK:STDOUT: !125 = !{!124, !124, i64 0}
@@ -771,9 +771,9 @@ fn Four() {
 // CHECK:STDOUT: !156 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !154, line: 6, type: !22, spFlags: DISPFlagDefinition, unit: !155)
 // CHECK:STDOUT: !157 = !DILocation(line: 7, column: 24, scope: !156)
 // CHECK:STDOUT: !160 = !DILocation(line: 6, column: 1, scope: !156)
-// CHECK:STDOUT: !161 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.8073a50a45cfdc9c", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !155, retainedNodes: !167)
+// CHECK:STDOUT: !161 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.8073a50a45cfdc9c", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !155, retainedNodes: !167)
 // CHECK:STDOUT: !162 = !DILocalVariable(arg: 1, scope: !161, type: !23)
-// CHECK:STDOUT: !166 = !DILocation(line: 32, column: 1, scope: !161)
+// CHECK:STDOUT: !166 = !DILocation(line: 34, column: 1, scope: !161)
 // CHECK:STDOUT: !167 = !{!162}
 // CHECK:STDOUT: !168 = !{!"p1 _ZTS7Derived", !45, i64 0}
 // CHECK:STDOUT: !169 = !{!168, !168, i64 0}
@@ -1141,9 +1141,9 @@ fn Four() {
 // CHECK:STDOUT: !218 = !DILocation(line: 28, column: 26, scope: !217)
 // CHECK:STDOUT: !221 = !DILocation(line: 29, column: 26, scope: !217)
 // CHECK:STDOUT: !224 = !DILocation(line: 27, column: 1, scope: !217)
-// CHECK:STDOUT: !225 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b81987abcfec64c8", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !173, retainedNodes: !231)
+// CHECK:STDOUT: !225 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b81987abcfec64c8", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !173, retainedNodes: !231)
 // CHECK:STDOUT: !226 = !DILocalVariable(arg: 1, scope: !225, type: !23)
-// CHECK:STDOUT: !230 = !DILocation(line: 32, column: 1, scope: !225)
+// CHECK:STDOUT: !230 = !DILocation(line: 34, column: 1, scope: !225)
 // CHECK:STDOUT: !231 = !{!226}
 // CHECK:STDOUT: !232 = !{!"p1 _ZTS9MultiArgC", !45, i64 0}
 // CHECK:STDOUT: !233 = !{!232, !232, i64 0}

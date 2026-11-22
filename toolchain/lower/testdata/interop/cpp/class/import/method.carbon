@@ -428,9 +428,9 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: !83 = !DILocation(line: 8, column: 14, scope: !75)
 // CHECK:STDOUT: !84 = !DILocation(line: 6, column: 1, scope: !75)
 // CHECK:STDOUT: !85 = !{!76}
-// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6fb12317fdf5c9b3", scope: null, file: !10, line: 32, type: !81, spFlags: DISPFlagDefinition, unit: !71, retainedNodes: !92)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6fb12317fdf5c9b3", scope: null, file: !10, line: 34, type: !81, spFlags: DISPFlagDefinition, unit: !71, retainedNodes: !92)
 // CHECK:STDOUT: !87 = !DILocalVariable(arg: 1, scope: !86, type: !72)
-// CHECK:STDOUT: !91 = !DILocation(line: 32, column: 1, scope: !86)
+// CHECK:STDOUT: !91 = !DILocation(line: 34, column: 1, scope: !86)
 // CHECK:STDOUT: !92 = !{!87}
 // CHECK:STDOUT: !93 = !{!"p1 _ZTS9NeedThunk", !36, i64 0}
 // CHECK:STDOUT: !94 = !{!93, !93, i64 0}

@@ -88,8 +88,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !36 = !DILocation(line: 15, column: 3, scope: !23)
 // CHECK:STDOUT: !37 = !DILocation(line: 19, column: 10, scope: !23)
 // CHECK:STDOUT: !38 = !DILocation(line: 19, column: 3, scope: !23)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !35, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !45)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 34, type: !35, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !45)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !39, type: !20)
-// CHECK:STDOUT: !44 = !DILocation(line: 32, column: 1, scope: !39)
+// CHECK:STDOUT: !44 = !DILocation(line: 34, column: 1, scope: !39)
 // CHECK:STDOUT: !45 = !{!40}
 // CHECK:STDOUT:

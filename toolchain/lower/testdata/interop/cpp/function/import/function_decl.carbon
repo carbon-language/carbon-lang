@@ -511,9 +511,9 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !81 = !DILocation(line: 13, column: 11, scope: !69)
 // CHECK:STDOUT: !82 = !DILocation(line: 14, column: 10, scope: !69)
 // CHECK:STDOUT: !83 = !DILocation(line: 14, column: 3, scope: !69)
-// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !62, spFlags: DISPFlagDefinition, unit: !57, retainedNodes: !90)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 34, type: !62, spFlags: DISPFlagDefinition, unit: !57, retainedNodes: !90)
 // CHECK:STDOUT: !85 = !DILocalVariable(arg: 1, scope: !84, type: !58)
-// CHECK:STDOUT: !89 = !DILocation(line: 32, column: 1, scope: !84)
+// CHECK:STDOUT: !89 = !DILocation(line: 34, column: 1, scope: !84)
 // CHECK:STDOUT: !90 = !{!85}
 // CHECK:STDOUT: !91 = !{!31, !31, i64 0}
 // CHECK:STDOUT:

@@ -408,9 +408,9 @@ fn Call3() {
 // CHECK:STDOUT: !105 = !DILocation(line: 24, column: 11, scope: !104)
 // CHECK:STDOUT: !106 = !DILocation(line: 24, column: 3, scope: !104)
 // CHECK:STDOUT: !107 = !DILocation(line: 22, column: 1, scope: !104)
-// CHECK:STDOUT: !108 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !10, line: 32, type: !91, spFlags: DISPFlagDefinition, unit: !89, retainedNodes: !114)
+// CHECK:STDOUT: !108 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !10, line: 34, type: !91, spFlags: DISPFlagDefinition, unit: !89, retainedNodes: !114)
 // CHECK:STDOUT: !109 = !DILocalVariable(arg: 1, scope: !108, type: !23)
-// CHECK:STDOUT: !113 = !DILocation(line: 32, column: 1, scope: !108)
+// CHECK:STDOUT: !113 = !DILocation(line: 34, column: 1, scope: !108)
 // CHECK:STDOUT: !114 = !{!109}
 // CHECK:STDOUT: !115 = !{!"p1 _ZTS1X", !59, i64 0}
 // CHECK:STDOUT: !116 = !{!115, !115, i64 0}

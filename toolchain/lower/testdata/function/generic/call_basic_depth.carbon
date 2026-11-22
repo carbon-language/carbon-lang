@@ -135,9 +135,9 @@ fn M() -> i32 {
 // CHECK:STDOUT: !54 = !DILocation(line: 26, column: 3, scope: !46)
 // CHECK:STDOUT: !56 = !DILocation(line: 27, column: 3, scope: !46)
 // CHECK:STDOUT: !57 = !{!47}
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 34, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !20)
-// CHECK:STDOUT: !63 = !DILocation(line: 32, column: 1, scope: !58)
+// CHECK:STDOUT: !63 = !DILocation(line: 34, column: 1, scope: !58)
 // CHECK:STDOUT: !64 = !{!59}
 // CHECK:STDOUT: !65 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main.2fad9574e050607e", scope: null, file: !18, line: 19, type: !38, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !74)
 // CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !65, type: !20)

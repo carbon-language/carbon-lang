@@ -188,13 +188,13 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !58 = !DILocation(line: 30, column: 10, scope: !56)
 // CHECK:STDOUT: !59 = !{!57}
 // CHECK:STDOUT: !60 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !60, line: 36, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !67)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !60, line: 40, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !67)
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !6)
-// CHECK:STDOUT: !65 = !DILocation(line: 38, column: 5, scope: !61)
-// CHECK:STDOUT: !66 = !DILocation(line: 36, column: 1, scope: !61)
+// CHECK:STDOUT: !65 = !DILocation(line: 42, column: 5, scope: !61)
+// CHECK:STDOUT: !66 = !DILocation(line: 40, column: 1, scope: !61)
 // CHECK:STDOUT: !67 = !{!62}
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.29e6aa423646b61a", scope: null, file: !60, line: 36, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !74)
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.29e6aa423646b61a", scope: null, file: !60, line: 40, type: !12, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !74)
 // CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !6)
-// CHECK:STDOUT: !73 = !DILocation(line: 36, column: 1, scope: !68)
+// CHECK:STDOUT: !73 = !DILocation(line: 40, column: 1, scope: !68)
 // CHECK:STDOUT: !74 = !{!69}
 // CHECK:STDOUT:

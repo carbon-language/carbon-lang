@@ -220,10 +220,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !64 = !DILocation(line: 12, column: 3, scope: !46)
 // CHECK:STDOUT: !65 = !DILocation(line: 5, column: 1, scope: !46)
 // CHECK:STDOUT: !66 = !{!47}
-// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !45, retainedNodes: !73)
+// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !45, retainedNodes: !73)
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !67, type: !36)
-// CHECK:STDOUT: !70 = !DILocation(line: 33, column: 5, scope: !67)
-// CHECK:STDOUT: !72 = !DILocation(line: 32, column: 1, scope: !67)
+// CHECK:STDOUT: !70 = !DILocation(line: 35, column: 5, scope: !67)
+// CHECK:STDOUT: !72 = !DILocation(line: 34, column: 1, scope: !67)
 // CHECK:STDOUT: !73 = !{!68}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -312,10 +312,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !99 = !DILocation(line: 15, column: 3, scope: !76)
 // CHECK:STDOUT: !100 = !DILocation(line: 5, column: 1, scope: !76)
 // CHECK:STDOUT: !101 = !{!77}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !75, retainedNodes: !108)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !75, retainedNodes: !108)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !36)
-// CHECK:STDOUT: !105 = !DILocation(line: 33, column: 5, scope: !102)
-// CHECK:STDOUT: !107 = !DILocation(line: 32, column: 1, scope: !102)
+// CHECK:STDOUT: !105 = !DILocation(line: 35, column: 5, scope: !102)
+// CHECK:STDOUT: !107 = !DILocation(line: 34, column: 1, scope: !102)
 // CHECK:STDOUT: !108 = !{!103}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -393,10 +393,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !126 = !DILocation(line: 11, column: 5, scope: !111)
 // CHECK:STDOUT: !127 = !DILocation(line: 5, column: 1, scope: !111)
 // CHECK:STDOUT: !128 = !{!112}
-// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !110, retainedNodes: !135)
+// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !110, retainedNodes: !135)
 // CHECK:STDOUT: !130 = !DILocalVariable(arg: 1, scope: !129, type: !36)
-// CHECK:STDOUT: !132 = !DILocation(line: 33, column: 5, scope: !129)
-// CHECK:STDOUT: !134 = !DILocation(line: 32, column: 1, scope: !129)
+// CHECK:STDOUT: !132 = !DILocation(line: 35, column: 5, scope: !129)
+// CHECK:STDOUT: !134 = !DILocation(line: 34, column: 1, scope: !129)
 // CHECK:STDOUT: !135 = !{!130}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -496,10 +496,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !167 = !DILocation(line: 18, column: 3, scope: !138)
 // CHECK:STDOUT: !168 = !DILocation(line: 5, column: 1, scope: !138)
 // CHECK:STDOUT: !169 = !{!139}
-// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !137, retainedNodes: !176)
+// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !137, retainedNodes: !176)
 // CHECK:STDOUT: !171 = !DILocalVariable(arg: 1, scope: !170, type: !36)
-// CHECK:STDOUT: !173 = !DILocation(line: 33, column: 5, scope: !170)
-// CHECK:STDOUT: !175 = !DILocation(line: 32, column: 1, scope: !170)
+// CHECK:STDOUT: !173 = !DILocation(line: 35, column: 5, scope: !170)
+// CHECK:STDOUT: !175 = !DILocation(line: 34, column: 1, scope: !170)
 // CHECK:STDOUT: !176 = !{!171}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -599,9 +599,9 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !208 = !DILocation(line: 18, column: 3, scope: !179)
 // CHECK:STDOUT: !209 = !DILocation(line: 5, column: 1, scope: !179)
 // CHECK:STDOUT: !210 = !{!180}
-// CHECK:STDOUT: !211 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !178, retainedNodes: !217)
+// CHECK:STDOUT: !211 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.19e832a74bd4c748", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !178, retainedNodes: !217)
 // CHECK:STDOUT: !212 = !DILocalVariable(arg: 1, scope: !211, type: !36)
-// CHECK:STDOUT: !214 = !DILocation(line: 33, column: 5, scope: !211)
-// CHECK:STDOUT: !216 = !DILocation(line: 32, column: 1, scope: !211)
+// CHECK:STDOUT: !214 = !DILocation(line: 35, column: 5, scope: !211)
+// CHECK:STDOUT: !216 = !DILocation(line: 34, column: 1, scope: !211)
 // CHECK:STDOUT: !217 = !{!212}
 // CHECK:STDOUT:

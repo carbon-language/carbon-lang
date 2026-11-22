@@ -90,9 +90,9 @@ fn Call() -> i32 {
 // CHECK:STDOUT: !42 = !{null, !27}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DILocation(line: 24, column: 3, scope: !33)
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !17, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !51)
+// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !17, line: 34, type: !43, spFlags: DISPFlagDefinition, unit: !26, retainedNodes: !51)
 // CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !45, type: !27)
-// CHECK:STDOUT: !50 = !DILocation(line: 32, column: 1, scope: !45)
+// CHECK:STDOUT: !50 = !DILocation(line: 34, column: 1, scope: !45)
 // CHECK:STDOUT: !51 = !{!46}
 // CHECK:STDOUT: !52 = !{i32 2, !"debugger-tuning", !"gdb"}
 // CHECK:STDOUT: !53 = !{i32 8, !"PIC Level", i32 2}

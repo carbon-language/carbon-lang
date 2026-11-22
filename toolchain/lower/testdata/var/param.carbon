@@ -96,10 +96,10 @@ fn G() {
 // CHECK:STDOUT: !23 = !DILocation(line: 15, column: 5, scope: !21)
 // CHECK:STDOUT: !24 = !DILocation(line: 15, column: 3, scope: !21)
 // CHECK:STDOUT: !25 = !DILocation(line: 14, column: 1, scope: !21)
-// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d59e052b8dad42e", scope: null, file: !4, line: 32, type: !16, spFlags: DISPFlagDefinition, unit: !13, retainedNodes: !32)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d59e052b8dad42e", scope: null, file: !4, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !13, retainedNodes: !32)
 // CHECK:STDOUT: !27 = !DILocalVariable(arg: 1, scope: !26, type: !14)
-// CHECK:STDOUT: !29 = !DILocation(line: 33, column: 5, scope: !26)
-// CHECK:STDOUT: !31 = !DILocation(line: 32, column: 1, scope: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 35, column: 5, scope: !26)
+// CHECK:STDOUT: !31 = !DILocation(line: 34, column: 1, scope: !26)
 // CHECK:STDOUT: !32 = !{!27}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -155,9 +155,9 @@ fn G() {
 // CHECK:STDOUT: !36 = !DILocation(line: 11, column: 6, scope: !35)
 // CHECK:STDOUT: !37 = !DILocation(line: 14, column: 3, scope: !35)
 // CHECK:STDOUT: !38 = !DILocation(line: 13, column: 1, scope: !35)
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d59e052b8dad42e", scope: null, file: !4, line: 32, type: !16, spFlags: DISPFlagDefinition, unit: !34, retainedNodes: !45)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d59e052b8dad42e", scope: null, file: !4, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !34, retainedNodes: !45)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !39, type: !14)
-// CHECK:STDOUT: !42 = !DILocation(line: 33, column: 5, scope: !39)
-// CHECK:STDOUT: !44 = !DILocation(line: 32, column: 1, scope: !39)
+// CHECK:STDOUT: !42 = !DILocation(line: 35, column: 5, scope: !39)
+// CHECK:STDOUT: !44 = !DILocation(line: 34, column: 1, scope: !39)
 // CHECK:STDOUT: !45 = !{!40}
 // CHECK:STDOUT:

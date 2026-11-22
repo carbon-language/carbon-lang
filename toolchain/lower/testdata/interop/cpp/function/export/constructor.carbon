@@ -128,9 +128,9 @@ void f() {
 // CHECK:STDOUT: !22 = !DILocation(line: 6, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !{!20, !21}
 // CHECK:STDOUT: !24 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f5db22251d2a7ef4", scope: null, file: !24, line: 36, type: !12, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !31)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f5db22251d2a7ef4", scope: null, file: !24, line: 40, type: !12, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !31)
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !8)
-// CHECK:STDOUT: !30 = !DILocation(line: 36, column: 1, scope: !25)
+// CHECK:STDOUT: !30 = !DILocation(line: 40, column: 1, scope: !25)
 // CHECK:STDOUT: !31 = !{!26}
 // CHECK:STDOUT: !32 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !33 = !{!"omnipotent char", !32, i64 0}

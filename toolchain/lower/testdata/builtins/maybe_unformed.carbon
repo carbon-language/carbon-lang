@@ -228,16 +228,16 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !93 = !DILocation(line: 55, column: 19, scope: !92)
 // CHECK:STDOUT: !94 = !DILocation(line: 55, column: 3, scope: !92)
 // CHECK:STDOUT: !95 = !DILocation(line: 54, column: 1, scope: !92)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d6c9c9ca086f431", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !102)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d6c9c9ca086f431", scope: null, file: !26, line: 34, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !102)
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !39)
-// CHECK:STDOUT: !101 = !DILocation(line: 32, column: 1, scope: !96)
+// CHECK:STDOUT: !101 = !DILocation(line: 34, column: 1, scope: !96)
 // CHECK:STDOUT: !102 = !{!97}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0cad517913c41b8", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !109)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0cad517913c41b8", scope: null, file: !26, line: 34, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !109)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !36)
-// CHECK:STDOUT: !108 = !DILocation(line: 32, column: 1, scope: !103)
+// CHECK:STDOUT: !108 = !DILocation(line: 34, column: 1, scope: !103)
 // CHECK:STDOUT: !109 = !{!104}
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fd9d713231488556", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !116)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fd9d713231488556", scope: null, file: !26, line: 34, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !116)
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !110, type: !39)
-// CHECK:STDOUT: !115 = !DILocation(line: 32, column: 1, scope: !110)
+// CHECK:STDOUT: !115 = !DILocation(line: 34, column: 1, scope: !110)
 // CHECK:STDOUT: !116 = !{!111}
 // CHECK:STDOUT:

@@ -68,8 +68,8 @@ fn Main() {
 // CHECK:STDOUT: !28 = !{null, !27}
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
 // CHECK:STDOUT: !30 = !DILocation(line: 17, column: 1, scope: !23)
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.61b5bb2079973306", scope: null, file: !6, line: 32, type: !29, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !37)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.61b5bb2079973306", scope: null, file: !6, line: 34, type: !29, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !37)
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !31, type: !27)
-// CHECK:STDOUT: !36 = !DILocation(line: 32, column: 1, scope: !31)
+// CHECK:STDOUT: !36 = !DILocation(line: 34, column: 1, scope: !31)
 // CHECK:STDOUT: !37 = !{!32}
 // CHECK:STDOUT:

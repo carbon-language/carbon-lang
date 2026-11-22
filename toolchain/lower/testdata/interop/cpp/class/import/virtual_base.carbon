@@ -219,9 +219,9 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !38 = !DILocation(line: 16, column: 10, scope: !33)
 // CHECK:STDOUT: !39 = !DILocation(line: 16, column: 3, scope: !33)
 // CHECK:STDOUT: !40 = !{!34}
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0bd72ff7739b134", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0bd72ff7739b134", scope: null, file: !10, line: 34, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !23)
-// CHECK:STDOUT: !46 = !DILocation(line: 32, column: 1, scope: !41)
+// CHECK:STDOUT: !46 = !DILocation(line: 34, column: 1, scope: !41)
 // CHECK:STDOUT: !47 = !{!42}
 // CHECK:STDOUT: !48 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !49 = !{!"omnipotent char", !48, i64 0}

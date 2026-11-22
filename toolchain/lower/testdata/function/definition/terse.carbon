@@ -235,13 +235,13 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 2, scope: !84, type: !20)
 // CHECK:STDOUT: !89 = !DILocation(line: 10, column: 56, scope: !84)
 // CHECK:STDOUT: !92 = !{!85, !86}
-// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ad01ed096e1f14e2", scope: null, file: !10, line: 32, type: !36, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !99)
+// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ad01ed096e1f14e2", scope: null, file: !10, line: 34, type: !36, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !99)
 // CHECK:STDOUT: !94 = !DILocalVariable(arg: 1, scope: !93, type: !32)
-// CHECK:STDOUT: !97 = !DILocation(line: 34, column: 5, scope: !93)
-// CHECK:STDOUT: !98 = !DILocation(line: 32, column: 1, scope: !93)
+// CHECK:STDOUT: !97 = !DILocation(line: 36, column: 5, scope: !93)
+// CHECK:STDOUT: !98 = !DILocation(line: 34, column: 1, scope: !93)
 // CHECK:STDOUT: !99 = !{!94}
-// CHECK:STDOUT: !100 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !72, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !106)
+// CHECK:STDOUT: !100 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 34, type: !72, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !106)
 // CHECK:STDOUT: !101 = !DILocalVariable(arg: 1, scope: !100, type: !20)
-// CHECK:STDOUT: !105 = !DILocation(line: 32, column: 1, scope: !100)
+// CHECK:STDOUT: !105 = !DILocation(line: 34, column: 1, scope: !100)
 // CHECK:STDOUT: !106 = !{!101}
 // CHECK:STDOUT:

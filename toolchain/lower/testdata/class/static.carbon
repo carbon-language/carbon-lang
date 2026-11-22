@@ -162,9 +162,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !52 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !36, type: !26, spFlags: DISPFlagDefinition, unit: !37)
 // CHECK:STDOUT: !53 = !DILocation(line: 5, column: 10, scope: !52)
 // CHECK:STDOUT: !54 = !DILocation(line: 0, scope: !52)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !14, line: 32, type: !40, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
+// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !14, line: 34, type: !40, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
 // CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !55, type: !38)
-// CHECK:STDOUT: !60 = !DILocation(line: 32, column: 1, scope: !55)
+// CHECK:STDOUT: !60 = !DILocation(line: 34, column: 1, scope: !55)
 // CHECK:STDOUT: !61 = !{!56}
 // CHECK:STDOUT: !62 = !{i32 2, !"debugger-tuning", !"gdb"}
 // CHECK:STDOUT: !63 = !{i32 8, !"PIC Level", i32 2}
