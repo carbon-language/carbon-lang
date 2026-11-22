@@ -8,6 +8,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/custom_witness.h"
 #include "toolchain/check/decl_name_stack.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -265,6 +266,17 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
       context, node_id, self_type_inst_id, full_constraint_type_inst_id);
   if (!identified_id.has_value()) {
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+  }
+
+  // `Core.Extendable` is only implemented by its custom witness, for `base` and
+  // `abstract` classes.
+  if (identified_id.has_value() &&
+      GetCoreInterface(context, specific_interface.interface_id) ==
+          SemIR::CoreInterface::Extendable) {
+    CARBON_DIAGNOSTIC(ImplOfExtendable, Error,
+                      "explicit impl of `Core.Extendable`; implemented "
+                      "automatically for `base` and `abstract` classes");
+    context.emitter().Emit(node_id, ImplOfExtendable);
   }
 
   // Store an instruction in the decl's eval block that contains the target

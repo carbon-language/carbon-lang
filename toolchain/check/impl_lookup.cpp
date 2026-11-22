@@ -839,6 +839,12 @@ static auto FindNonFinalWitness(
     return true;
   }
 
+  // `Core.Extendable` is only implemented by its custom witness, so impls of it
+  // are never used.
+  if (core_interface == SemIR::CoreInterface::Extendable) {
+    return false;
+  }
+
   auto query_type_structure = BuildTypeStructure(
       context, context.constant_values().GetInstId(req_self_const_id),
       req_specific_interface);
@@ -1273,7 +1279,10 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   }
 
   // Only consider candidates when a custom witness didn't apply.
-  if (!used_custom_witness) {
+  // `Core.Extendable` is only implemented by its custom witness, so impls of it
+  // are never used.
+  if (!used_custom_witness &&
+      core_interface != SemIR::CoreInterface::Extendable) {
     for (const auto& candidate : candidates.impls) {
       auto impl_id = candidate.impl_id;
       const auto& impl = *candidate.impl;
