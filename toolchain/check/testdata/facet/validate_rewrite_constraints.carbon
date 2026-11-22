@@ -50,9 +50,9 @@ fn G() {
   //
   // CHECK:STDERR:        ╭─┤ fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn F(generic U: type, unused generic T: I(U) where .X = ()) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F({}, C);
   // CHECK:STDERR:        ·   ┳━━━━━━━

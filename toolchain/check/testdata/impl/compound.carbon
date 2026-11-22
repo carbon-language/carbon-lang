@@ -37,15 +37,12 @@ impl {.b: ()} as NonInstance2 {
 }
 
 fn NonInstanceCall2(n: {.b: ()}) {
-  // CHECK:STDERR:        ╭─┤ fail_non-instance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_non-instance.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   n.(NonInstance2.F2)();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.b: ()}` into
-  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance2`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `{.b: ()}` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance2)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        type implementing `NonInstance2`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n.(NonInstance2.F2)();
@@ -63,15 +60,12 @@ impl {.c: ()} as NonInstance3 {
 }
 
 fn NonInstanceCallIndirect(p: {.c: ()}*) {
-  // CHECK:STDERR:        ╭─┤ fail_non-instance_indirect.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_non-instance_indirect.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   p->(NonInstance3.F3)();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.c: ()}` into
-  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance3`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `{.c: ()}` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance3)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        type implementing `NonInstance3`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(NonInstance3.F3)();

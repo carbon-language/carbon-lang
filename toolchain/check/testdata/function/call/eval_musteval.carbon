@@ -31,9 +31,9 @@ musteval fn MustEval(unused n: i32) {}
 fn RuntimeArg(n: i32) {
   // CHECK:STDERR:        ╭─┤ fail_no_eval_musteval.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ musteval fn MustEval(unused n: i32) {}
-  // CHECK:STDERR:        · ──────────────────┬──────────────────
-  // CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·             ────┬───
+  // CHECK:STDERR:        ·                 ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                    │ [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   MustEval(n);
   // CHECK:STDERR:        ·   ━━━━━┳━━━━━
@@ -68,9 +68,9 @@ musteval fn MustEval(unused n: i32) {}
 musteval fn CallMustEval(n: i32) {
   // CHECK:STDERR:        ╭─┤ fail_todo_musteval_calls_musteval.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ musteval fn MustEval(unused n: i32) {}
-  // CHECK:STDERR:        · ──────────────────┬──────────────────
-  // CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·             ────┬───
+  // CHECK:STDERR:        ·                 ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                    │ [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   MustEval(n);
   // CHECK:STDERR:        ·   ━━━━━┳━━━━━

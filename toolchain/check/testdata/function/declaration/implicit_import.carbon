@@ -42,8 +42,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_api.carbon
 // CHECK:STDERR:        │ extern fn A();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_extern_api.impl.carbon:[[@LINE+7]]:1
@@ -73,7 +73,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_impl.carbon
 // CHECK:STDERR:        │ fn A();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

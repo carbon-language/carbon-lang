@@ -261,8 +261,8 @@ interface Z {}
 interface Y {
   // CHECK:STDERR:        ╭─┤ fail_inside_interface.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ interface Y {
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ·           ┬
+  // CHECK:STDERR:        ·           ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   match_first {
   // CHECK:STDERR:        ·   ━┳━━━━━━━━━━━
@@ -283,8 +283,8 @@ interface Z {}
 constraint N {
   // CHECK:STDERR:        ╭─┤ fail_inside_constraint.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ constraint N {
-  // CHECK:STDERR:        · ───────┬──────
-  // CHECK:STDERR:        ·        ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ in enclosing scope here [MatchFirstInWrongScopeNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   match_first {
   // CHECK:STDERR:        ·   ━┳━━━━━━━━━━━

@@ -63,25 +63,30 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+6]]:1
-// CHECK:STDERR: ->     │ class C;
-// CHECK:STDERR:        · ━━━━┳━━━
-// CHECK:STDERR:        ·     ┗━━┫ error: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 class C;
 
 fn F() -> array(C, 5)*;
 
 inline Cpp '''
 void G() {
+  // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+23]]:35
+  // CHECK:STDERR:        │ class C;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
+  // CHECK:STDERR:        ·                                   ┳
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: use of incomplete Carbon type `C`
+  // CHECK:STDERR:        ·                                      ┃        [IncompleteTypeInCppUse]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+12]]:33
   // CHECK:STDERR:        │ class C;
   // CHECK:STDERR:        ·        ┬
   // CHECK:STDERR:        ·        ╰──┤ forward declaration of 'Carbon::Main::C' [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
-  // CHECK:STDERR:        ·                   ─────────────╴╻
+  // CHECK:STDERR:        ·                   ━━━━━━━━━━━━━╸╻
   // CHECK:STDERR:        ·                                 ┗━━┫ error: subscript of pointer to incomplete
   // CHECK:STDERR:        ·                                    ┃        type 'Carbon::Main::C'
   // CHECK:STDERR:        ·                                    ┃        [CppInteropParseError]

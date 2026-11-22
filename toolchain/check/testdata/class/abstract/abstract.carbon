@@ -95,15 +95,15 @@ abstract class Abstract {
 
 class Adapter {
   // TODO(#4387): This should probably be valid
-  // CHECK:STDERR:        ╭─┤ fail_abstract_adapter.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_abstract_adapter.carbon:[[@LINE+11]]:9
   // CHECK:STDERR:        │ abstract class Abstract {
   // CHECK:STDERR:        · ────────────┬────────────
   // CHECK:STDERR:        ·             ╰──┤ class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   adapt Abstract;
-  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: adapted type `Abstract` is an abstract type
-  // CHECK:STDERR:        ·             ┃        [AbstractTypeInAdaptDecl]
+  // CHECK:STDERR:        ·         ━━━━┳━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: adapted type `Abstract` is an abstract type
+  // CHECK:STDERR:        ·                ┃        [AbstractTypeInAdaptDecl]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt Abstract;
@@ -209,9 +209,9 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/destroy.carbon
   // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·             │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused l: Abstract = {};
@@ -239,9 +239,9 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/destroy.carbon
   // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·             │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused l: Abstract = {.base = {}} as Derived;
@@ -282,12 +282,10 @@ abstract class Abstract {
 }
 
 fn Assign(ref a: Abstract) {
-  // CHECK:STDERR:        ╭─┤ fail_assign_to_abstract_ref.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR:        ╭─┤ fail_assign_to_abstract_ref.carbon:[[@LINE+6]]:7
   // CHECK:STDERR: ->     │   a = a;
   // CHECK:STDERR:        ·       ┳
   // CHECK:STDERR:        ·       ┗━━┫ error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·       ╰────┤ type `Abstract` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = a;
@@ -1217,10 +1215,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Assign(%a.param: ref %Abstract) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref.loc15_3: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc15_7: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %.loc15: %Abstract = acquire_value %a.ref.loc15_7
-// CHECK:STDOUT:   assign %a.ref.loc15_3, <error>
+// CHECK:STDOUT:   %a.ref.loc13_3: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc13_7: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %.loc13: %Abstract = acquire_value %a.ref.loc13_7
+// CHECK:STDOUT:   assign %a.ref.loc13_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -29,13 +29,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_aggregate.h";
 
 fn Make() {
-  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_init.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_init.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var _: Cpp.X = {};
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
   // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `{}` to `Cpp.X`
-  // CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·         ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(Cpp.X)`
-  // CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·            ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: Cpp.X = {};

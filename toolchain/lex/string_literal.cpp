@@ -285,7 +285,7 @@ static auto CheckIndent(DiagnosticEmitter& emitter, llvm::StringRef text,
         "only whitespace is permitted before the closing `'''` of a "
         "multi-line string");
     emitter.Build(indent.end(), ContentBeforeStringTerminator)
-        .Attach(SourceLoc::Range(indent.end(), content.end()))
+        .ExtraRange(SourceLoc::Range(indent.end(), content.end()))
         .Emit();
   }
 
@@ -305,7 +305,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                       "code point specified by `\\u{{...}}` escape is greater "
                       "than 0x10FFFF");
     emitter.Build(digits.begin(), UnicodeEscapeTooLarge)
-        .Attach(SourceLoc::Range(digits))
+        .ExtraRange(SourceLoc::Range(digits))
         .Emit();
     return false;
   }
@@ -315,7 +315,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                       "code point specified by `\\u{{...}}` escape is a "
                       "surrogate character");
     emitter.Build(digits.begin(), UnicodeEscapeSurrogate)
-        .Attach(SourceLoc::Range(digits))
+        .ExtraRange(SourceLoc::Range(digits))
         .Emit();
     return false;
   }
@@ -396,7 +396,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
             "decimal digit follows `\\0` escape sequence. Use `\\x00` instead "
             "of `\\0` if the next character is a digit");
         emitter.Build(escape_begin, DecimalEscapeSequence)
-            .Attach(escape_through(content.begin() + 1))
+            .ExtraRange(escape_through(content.begin() + 1))
             .Emit();
         return;
       }
@@ -418,7 +418,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
           content.take_front(2).take_while(IsUpperHexDigit).size();
       emitter
           .Build(SourceLoc::Before(bad_digit), HexadecimalEscapeMissingDigits)
-          .Attach(escape_through(bad_digit))
+          .ExtraRange(escape_through(bad_digit))
           .Emit();
       break;
     }
@@ -444,7 +444,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       emitter
           .Build(SourceLoc::Before(remaining.begin()),
                  UnicodeEscapeMissingBracedDigits)
-          .Attach(escape_through(remaining.begin()))
+          .ExtraRange(escape_through(remaining.begin()))
           .Emit();
       break;
     }
@@ -452,7 +452,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       CARBON_DIAGNOSTIC(UnknownEscapeSequence, Error,
                         "unrecognized escape sequence `{0}`", char);
       emitter.Build(escape_begin, UnknownEscapeSequence, first)
-          .Attach(escape_through(content.begin()))
+          .ExtraRange(escape_through(content.begin()))
           .Emit();
       break;
   }
@@ -485,12 +485,12 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
             MismatchedIndentInString, Error,
             "indentation does not match that of the closing `'''` in "
             "multi-line string literal");
-        CARBON_DIAGNOSTIC_LABEL(ClosingDelimiterIndent, Info,
+        CARBON_DIAGNOSTIC_LABEL(ClosingDelimiterIndent,
                                 "closing `'''` is indented to here");
         auto diag = emitter.Build(line_start, MismatchedIndentInString);
         // A line with no leading whitespace has no indent to mark.
         if (contents.begin() != line_start) {
-          diag.Attach(SourceLoc::Range(line_start, contents.begin()));
+          diag.ExtraRange(SourceLoc::Range(line_start, contents.begin()));
         }
         diag.Attach(SourceLoc::Range(indent), ClosingDelimiterIndent).Emit();
       }
@@ -544,7 +544,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "whitespace other than plain space must be expressed with an "
               "escape sequence in a string literal");
           emitter.Build(contents.begin(), InvalidHorizontalWhitespaceInString)
-              .Attach(SourceLoc::Range(contents.take_front(after_space)))
+              .ExtraRange(SourceLoc::Range(contents.take_front(after_space)))
               .Emit();
           // Include the whitespace in the string contents for error recovery.
           AppendFrontOfContents(buffer_cursor, contents, after_space);
@@ -590,7 +590,7 @@ auto StringLiteral::ComputeCharLiteralValue(
     CARBON_DIAGNOSTIC(CharLiteralRaw, Error,
                       "unexpected `#` before character literal");
     emitter.Build(text_.begin(), CharLiteralRaw)
-        .Attach(SourceLoc::Range(text_))
+        .ExtraRange(SourceLoc::Range(text_))
         .Emit();
   }
 
@@ -622,7 +622,7 @@ auto StringLiteral::ComputeCharLiteralValue(
         CARBON_DIAGNOSTIC(CharLiteralEmpty, Error, "empty character literal");
         // The character goes between the quotes.
         emitter.Build(SourceLoc::Before(content_.begin()), CharLiteralEmpty)
-            .Attach(SourceLoc::Range(text_))
+            .ExtraRange(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -640,7 +640,7 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
         emitter.Build(text_.begin(), CharLiteralControlCharacter, result)
-            .Attach(SourceLoc::Range(text_))
+            .ExtraRange(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -651,7 +651,7 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "as escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
         emitter.Build(text_.begin(), CharLiteralHexEscape, result)
-            .Attach(SourceLoc::Range(text_))
+            .ExtraRange(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -661,14 +661,14 @@ auto StringLiteral::ComputeCharLiteralValue(
     case llvm::sourceExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralUnderflow, Error, "incomplete UTF-8");
       emitter.Build(text_.begin(), CharLiteralUnderflow)
-          .Attach(SourceLoc::Range(text_))
+          .ExtraRange(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
     case llvm::targetExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralOverflow, Error, "too many characters");
       emitter.Build(text_.begin(), CharLiteralOverflow)
-          .Attach(SourceLoc::Range(text_))
+          .ExtraRange(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
@@ -676,7 +676,7 @@ auto StringLiteral::ComputeCharLiteralValue(
       CARBON_DIAGNOSTIC(CharLiteralInvalidUTF8, Error,
                         "invalid UTF-8 character");
       emitter.Build(text_.begin(), CharLiteralInvalidUTF8)
-          .Attach(SourceLoc::Range(text_))
+          .ExtraRange(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
@@ -694,7 +694,7 @@ auto StringLiteral::ComputeStringValue(llvm::BumpPtrAllocator& allocator,
         MultiLineStringWithDoubleQuotes, Error,
         "use `'''` delimiters for a multi-line string literal, not `\"\"\"`");
     emitter.Build(text_.begin(), MultiLineStringWithDoubleQuotes)
-        .Attach(SourceLoc::Range(text_.take_front(hash_level_ + 3)))
+        .ExtraRange(SourceLoc::Range(text_.take_front(hash_level_ + 3)))
         .Emit();
   }
   llvm::StringRef indent = IsMultiLine(kind_)

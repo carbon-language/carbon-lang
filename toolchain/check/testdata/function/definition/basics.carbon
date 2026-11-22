@@ -19,8 +19,8 @@ class C;
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+11]]:13
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(unused n: C) {}
 // CHECK:STDERR:        ·             ┳━━━

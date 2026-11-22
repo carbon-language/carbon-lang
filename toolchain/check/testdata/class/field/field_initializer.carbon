@@ -63,15 +63,12 @@ var C: Class = {.not_a_field = 456};
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR:        ╭─┤ fail_field_initializer_wrong_type.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR:        ╭─┤ fail_field_initializer_wrong_type.carbon:[[@LINE+8]]:20
   // CHECK:STDERR: ->     │   var field: i32 = ();
   // CHECK:STDERR:        ·                    ┳━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
-  // CHECK:STDERR:        ·                    │  ┃        to `i32`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        to `i32`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var field: i32 = ();

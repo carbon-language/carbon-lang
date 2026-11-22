@@ -27,8 +27,8 @@ fn ReturnDUsed() -> D;
 fn Call() {
   // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ class C;
-  // CHECK:STDERR:        · ────┬───
-  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn ReturnCUsed() -> C;
   // CHECK:STDERR:        ·                  ──┬─
@@ -43,8 +43,8 @@ fn Call() {
   ReturnCUsed();
   // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ class D;
-  // CHECK:STDERR:        · ────┬───
-  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn ReturnDUsed() -> D;
   // CHECK:STDERR:        ·                  ──┬─
@@ -68,17 +68,16 @@ library "[[@TEST_NAME]]";
 import library "incomplete_return";
 
 fn CallFAndGIncomplete() {
-  // CHECK:STDERR:        ╭─┤ fail_use_imported.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        ╭─┤ fail_use_imported.carbon:[[@LINE+16]]:3
   // CHECK:STDERR: ->     │   ReturnCUnused();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: function returns incomplete type `C`
   // CHECK:STDERR:        ·             ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── imported from: fail_use_imported.carbon [InImport]
   // CHECK:STDERR:        ├─┤ fail_incomplete_return.carbon
   // CHECK:STDERR:        │ class C;
-  // CHECK:STDERR:        · ────┬───
-  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn ReturnCUnused() -> C;
   // CHECK:STDERR:        ·                    ──┬─
@@ -86,17 +85,16 @@ fn CallFAndGIncomplete() {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ReturnCUnused();
-  // CHECK:STDERR:        ╭─┤ fail_use_imported.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        ╭─┤ fail_use_imported.carbon:[[@LINE+16]]:3
   // CHECK:STDERR: ->     │   ReturnCUsed();
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
   // CHECK:STDERR:        ·         ┗━━┫ error: function returns incomplete type `C`
   // CHECK:STDERR:        ·            ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── imported from: fail_use_imported.carbon [InImport]
   // CHECK:STDERR:        ├─┤ fail_incomplete_return.carbon
   // CHECK:STDERR:        │ class C;
-  // CHECK:STDERR:        · ────┬───
-  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn ReturnCUsed() -> C;
   // CHECK:STDERR:        ·                  ──┬─
@@ -247,7 +245,7 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc43_17.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc41_17.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.f61: %SubobjectDestroy.type = facet_value %D, (%custom_witness.b80ef6.2) [concrete]
@@ -311,25 +309,25 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:   %ReturnCUsed.ref: %ReturnCUsed.type = name_ref ReturnCUsed, imports.%Main.ReturnCUsed [concrete = constants.%ReturnCUsed]
 // CHECK:STDOUT:   %ReturnCUsed.call: init <error> = call %ReturnCUsed.ref()
 // CHECK:STDOUT:   %ReturnDUnused.ref: %ReturnDUnused.type = name_ref ReturnDUnused, imports.%Main.ReturnDUnused [concrete = constants.%ReturnDUnused]
-// CHECK:STDOUT:   %.loc43_17.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUnused.call: init %D to %.loc43_17.1 = call %ReturnDUnused.ref()
-// CHECK:STDOUT:   %.loc43_17.2: ref %D = temporary %.loc43_17.1, %ReturnDUnused.call
-// CHECK:STDOUT:   %Destroy.facet.loc43_17.1: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc43_17.3: %Destroy.type = converted constants.%D, %Destroy.facet.loc43_17.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc43_17.2: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc43_17.4: %Destroy.type = converted constants.%D, %Destroy.facet.loc43_17.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc41_17.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUnused.call: init %D to %.loc41_17.1 = call %ReturnDUnused.ref()
+// CHECK:STDOUT:   %.loc41_17.2: ref %D = temporary %.loc41_17.1, %ReturnDUnused.call
+// CHECK:STDOUT:   %Destroy.facet.loc41_17.1: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc41_17.3: %Destroy.type = converted constants.%D, %Destroy.facet.loc41_17.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc41_17.2: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc41_17.4: %Destroy.type = converted constants.%D, %Destroy.facet.loc41_17.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.1: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
-// CHECK:STDOUT:   %SelfDestruct.call.loc43: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc43_17.2)
+// CHECK:STDOUT:   %SelfDestruct.call.loc41: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc41_17.2)
 // CHECK:STDOUT:   %ReturnDUsed.ref: %ReturnDUsed.type = name_ref ReturnDUsed, imports.%Main.ReturnDUsed [concrete = constants.%ReturnDUsed]
-// CHECK:STDOUT:   %.loc44_15.1: ref %D = temporary_storage
-// CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc44_15.1 = call %ReturnDUsed.ref()
-// CHECK:STDOUT:   %.loc44_15.2: ref %D = temporary %.loc44_15.1, %ReturnDUsed.call
-// CHECK:STDOUT:   %Destroy.facet.loc44_15.1: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc44_15.3: %Destroy.type = converted constants.%D, %Destroy.facet.loc44_15.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc44_15.2: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc44_15.4: %Destroy.type = converted constants.%D, %Destroy.facet.loc44_15.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc42_15.1: ref %D = temporary_storage
+// CHECK:STDOUT:   %ReturnDUsed.call: init %D to %.loc42_15.1 = call %ReturnDUsed.ref()
+// CHECK:STDOUT:   %.loc42_15.2: ref %D = temporary %.loc42_15.1, %ReturnDUsed.call
+// CHECK:STDOUT:   %Destroy.facet.loc42_15.1: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc42_15.3: %Destroy.type = converted constants.%D, %Destroy.facet.loc42_15.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc42_15.2: %Destroy.type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc42_15.4: %Destroy.type = converted constants.%D, %Destroy.facet.loc42_15.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.2: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
-// CHECK:STDOUT:   %SelfDestruct.call.loc44: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc44_15.2)
+// CHECK:STDOUT:   %SelfDestruct.call.loc42: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc42_15.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -339,9 +337,9 @@ fn CallFAndGIncomplete() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUnused [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc43_17.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc41_17.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc43_17.2(%self.param: ref %D) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc41_17.2(%self.param: ref %D) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ReturnDUsed [from "fail_incomplete_return.carbon"];
 // CHECK:STDOUT:
