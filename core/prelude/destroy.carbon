@@ -28,6 +28,10 @@ constraint Destroy {
   extend require impls SubobjectDestroy & DestroyImpl;
 }
 
+// Implemented by base and abstract classes so that `partial` can be applied
+// to generic types.
+interface Extendable {}
+
 // TODO: uncomment when `require impls` adds a witness table entry.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;

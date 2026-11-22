@@ -31,6 +31,8 @@ constraint Destroy {
   extend require impls SubobjectDestroy & DestroyImpl;
 }
 
+interface Extendable {}
+
 // TODO: uncomment when `require impls` adds a witness table entry.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;

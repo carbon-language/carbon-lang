@@ -623,6 +623,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppRangeForIterateWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
 
+    // `Extendable` is handled by custom_witness.cpp for all types.
+    case SemIR::CoreInterface::Extendable:
     // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
     case SemIR::CoreInterface::FloatFitsIn:

@@ -341,6 +341,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
       case SemIR::CoreInterface::DivAssignWith:
       case SemIR::CoreInterface::DivWith:
       case SemIR::CoreInterface::EqWith:
+      case SemIR::CoreInterface::Extendable:
       case SemIR::CoreInterface::Inc:
       case SemIR::CoreInterface::IntFitsIn:
       case SemIR::CoreInterface::ModAssignWith:

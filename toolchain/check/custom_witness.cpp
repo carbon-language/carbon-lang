@@ -884,6 +884,30 @@ static auto RequireCompleteConversionType(Context& context, SemIR::LocId loc_id,
   });
 }
 
+// Builds a witness for `Core.Extendable` if `partial` can be applied to the
+// query self, which is the case for `base` and `abstract` classes.
+static auto MakeExtendableWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  auto self_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
+  auto class_type = context.types().TryGetAs<SemIR::ClassType>(self_type_id);
+  if (!class_type ||
+      context.classes().Get(class_type->class_id).inheritance_kind ==
+          SemIR::Class::InheritanceKind::Final) {
+    return std::nullopt;
+  }
+
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {});
+}
+
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -1061,6 +1085,9 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterface query_specific_interface,
                          bool build_witness) -> std::optional<SemIR::InstId> {
   switch (core_interface) {
+    case SemIR::CoreInterface::Extendable:
+      return MakeExtendableWitness(context, loc_id, query_self_const_id,
+                                   query_specific_interface, build_witness);
     case SemIR::CoreInterface::FloatFitsIn:
       return MakeFloatFitsInWitness(context, loc_id, query_self_const_id,
                                     query_specific_interface, build_witness);
