@@ -57,6 +57,27 @@ fn Test(ref b: B) {
   //@dump-sem-ir-end
 }
 
+// --- period_self.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  fn Op(ref self);
+}
+
+base class B {}
+
+impl partial B as I {
+  fn Op(ref unused self) {}
+}
+
+fn F[T: Core.Extendable where partial .Self impls I](ref t: T) {
+  (t as partial T).(I.Op)();
+}
+
+fn G(ref b: B) {
+  F(ref b);
+}
+
 // --- fail_period_self_unconstrained.carbon
 library "[[@TEST_NAME]]";
 

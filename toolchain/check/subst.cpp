@@ -45,6 +45,13 @@ auto SubstInstCallbacks::RebuildSpecific(SemIR::SpecificId orig_specific_id,
 auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
                                         SemIR::Inst new_inst) const
     -> SemIR::InstId {
+  // `loc_id` is checked against `new_inst`, but it's only used when an
+  // instruction is added. We clear it when it isn't used, since it isn't always
+  // a valid location for `new_inst`.
+  if (new_inst.kind().constant_needs_inst_id() ==
+      SemIR::InstConstantNeedsInstIdKind::No) {
+    loc_id = SemIR::LocId::None;
+  }
   auto const_id =
       EvalOrAddInst(context(), SemIR::LocIdAndInst::RuntimeVerified(
                                    context().sem_ir(), loc_id, new_inst));
