@@ -12,8 +12,14 @@
 namespace Carbon::SemIR {
 
 CppFile::CppFile(std::shared_ptr<clang::CompilerInstance> clang,
-                 llvm::LLVMContext* llvm_context)
-    : clang_(std::move(clang)), llvm_context_(llvm_context) {}
+                 std::unique_ptr<clang::MangleContext> mangle_context,
+                 llvm::LLVMContext* llvm_context,
+                 clang::CodeGenerator* code_generator, CppDomain* cpp_domain)
+    : clang_(std::move(clang)),
+      mangle_context_(std::move(mangle_context)),
+      llvm_context_(llvm_context),
+      code_generator_(code_generator),
+      cpp_domain_(cpp_domain) {}
 
 CppFile::~CppFile() = default;
 
@@ -43,11 +49,6 @@ auto CppFile::ast_context() -> clang::ASTContext& {
 
 auto CppFile::ast_context() const -> const clang::ASTContext& {
   return clang_->getASTContext();
-}
-
-auto CppFile::CreateMangleContext() -> void {
-  CARBON_CHECK(!mangle_context_);
-  mangle_context_.reset(ast_context().createMangleContext());
 }
 
 auto CppFile::mangle_context() const -> clang::MangleContext& {

@@ -68,9 +68,12 @@ void F();
 
 void G() {
   // This is not found because it looks for the identifier `Cpp`, not the keyword `Cpp`.
-  // CHECK:STDERR: fail_carbon_cpp.carbon:[[@LINE+4]]:11: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    14 |   Carbon::Cpp::F();
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR:        ╭─┤ fail_carbon_cpp.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   Carbon::Cpp::F();
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
+  // CHECK:STDERR:        ·           ┗━━┫ error: no member named 'Cpp' in namespace 'Carbon'
+  // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Carbon::Cpp::F();
 }
@@ -84,17 +87,23 @@ import Cpp;
 alias r#Cpp = Cpp;
 
 inline Cpp '''
-void F();
+void FRaw();
 
-void G() {
-  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+8]]:16: error: semantics TODO: `interop with translation unit decl` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::Cpp::F();
-  // CHECK:STDERR:                ^
+void GRaw() {
+  // CHECK:STDERR:        ╭─┤ fail_carbon_raw_cpp.carbon:[[@LINE+14]]:16
+  // CHECK:STDERR: ->     │   Carbon::Cpp::FRaw();
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        ·                ┗━━┫ error: semantics TODO: `interop with translation unit decl`
+  // CHECK:STDERR:        ·                   ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+4]]:11: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::Cpp::F();
-  // CHECK:STDERR:       |   ~~~~~~~~^
+  // CHECK:STDERR:        ╭─┤ fail_carbon_raw_cpp.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   Carbon::Cpp::FRaw();
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
+  // CHECK:STDERR:        ·           ┗━━┫ error: no member named 'Cpp' in namespace 'Carbon'
+  // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  Carbon::Cpp::F();
+  Carbon::Cpp::FRaw();
 }
 ''';

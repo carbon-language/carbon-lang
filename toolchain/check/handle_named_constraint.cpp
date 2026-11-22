@@ -7,6 +7,7 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/merge.h"
 #include "toolchain/check/modifiers.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/ids.h"
@@ -69,17 +70,11 @@ static auto BuildNamedConstraintDecl(Context& context,
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
           name_context, decl_inst_id, introducer.modifier_set.GetAccessKind());
-  if (auto existing_decl = TryGetExistingDecl(context, name, lookup_result,
-                                              constraint_info, is_definition)) {
-    auto existing_constraint_decl =
-        existing_decl->As<SemIR::NamedConstraintDecl>();
-    constraint_decl.named_constraint_id =
-        existing_constraint_decl.named_constraint_id;
-    constraint_decl.type_id = existing_constraint_decl.type_id;
-    // TODO: If the new declaration is a definition, keep its parameter
-    // and implicit parameter lists rather than the ones from the
-    // previous declaration.
-
+  if (TryMergeRedecl(context, name_context, lookup_result,
+                     MergeRedeclEntityInfo<SemIR::NamedConstraint>{
+                         .new_entity_decl = constraint_decl,
+                         .new_entity = constraint_info},
+                     is_definition)) {
     auto prev_decl_generic_id = context.named_constraints()
                                     .Get(constraint_decl.named_constraint_id)
                                     .generic_id;

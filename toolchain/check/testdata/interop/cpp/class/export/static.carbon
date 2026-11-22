@@ -14,13 +14,13 @@
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class PublicClass {
   static var x: i32 = 123;
 }
 
 inline Cpp '''
-int F() {
-  return Carbon::C::x;
+int PublicStatic() {
+  return Carbon::PublicClass::x;
 }
 ''';
 
@@ -28,19 +28,25 @@ int F() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class C {
+class PrivateClass {
   private static var x: i32 = 123;
 }
 
 inline Cpp '''
-int F() {
-  // CHECK:STDERR: fail_static_private.carbon:[[@LINE+7]]:21: error: 'x' is a private member of 'Carbon::C' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   return Carbon::C::x;
-  // CHECK:STDERR:       |                     ^
-  // CHECK:STDERR: fail_static_private.carbon:[[@LINE-8]]:23: note: implicitly declared private here [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   private static var x: i32 = 123;
-  // CHECK:STDERR:       |                       ^
+int PrivateStatic() {
+  // CHECK:STDERR:        ╭─┤ fail_static_private.carbon:[[@LINE+13]]:32
+  // CHECK:STDERR:        │   private static var x: i32 = 123;
+  // CHECK:STDERR:        ·                       ┬
+  // CHECK:STDERR:        ·                       ╰──┤ implicitly declared private here
+  // CHECK:STDERR:        ·                          │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return Carbon::PrivateClass::x;
+  // CHECK:STDERR:        ·                                ┳
+  // CHECK:STDERR:        ·                                ┗━━┫ error: 'x' is a private member of
+  // CHECK:STDERR:        ·                                   ┃        'Carbon::Main::PrivateClass'
+  // CHECK:STDERR:        ·                                   ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  return Carbon::C::x;
+  return Carbon::PrivateClass::x;
 }
 ''';

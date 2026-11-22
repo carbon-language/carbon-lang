@@ -13,9 +13,14 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Overview](#overview)
 -   [Matching redeclarations of an entity](#matching-redeclarations-of-an-entity)
     -   [Details](#details)
+        -   [Modifier keywords](#modifier-keywords)
+        -   [Syntactic matching and scopes](#syntactic-matching-and-scopes)
 -   [`extern` and `extern library`](#extern-and-extern-library)
     -   [Valid scopes for `extern`](#valid-scopes-for-extern)
     -   [Effect on indirect imports](#effect-on-indirect-imports)
+        -   [Indirect imports of non-`extern` types](#indirect-imports-of-non-extern-types)
+    -   [Using imported declarations](#using-imported-declarations)
+    -   [Validation for non-owning `extern library` declarations](#validation-for-non-owning-extern-library-declarations)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
@@ -23,7 +28,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Entities may have up to three declarations:
+Entities may have up to four declarations:
 
 -   An optional, owning forward declaration.
     -   For example, `class MyClass;`.
@@ -32,6 +37,9 @@ Entities may have up to three declarations:
 -   A required, owning definition.
     -   For example, `class MyClass { ... }`.
     -   The definition might be the _only_ declaration.
+-   An optional, owning declaration in a `match_first` block.
+    -   This only applies to `impl` declarations.
+    -   This must be in the same file as the first owning declaration.
 -   An optional, non-owning `extern library "<owning_library>"` declaration.
     -   For example, `extern library "OtherLibrary" class MyClass;`.
     -   It must be in a separate library from the definition.
@@ -60,6 +68,11 @@ fn DoSomething() {
   ...
 }
 ```
+
+An `impl` may appear in at most one `match_first` block, and only once within
+it. A declaration in a `match_first` block may be the forward declaration or the
+definition. It may also be a fourth declaration that is neither, and which is
+only allowed to exist within such a block.
 
 ## Matching redeclarations of an entity
 
@@ -94,22 +107,144 @@ fn A.F(n: (i32)) {}
 
 ### Details
 
-TODO: Figure out what details to pull from
-[#3762](https://github.com/carbon-language/carbon-lang/pull/3762) and
-[#3763](https://github.com/carbon-language/carbon-lang/pull/3763).
+#### Modifier keywords
+
+As a rule of thumb, modifier keywords are required when, if prior optional
+declarations were removed, the lack of the modifier keyword would change
+behavior.
+
+-   `extend` in `extend impl` is only on the declaration in the class body
+    (whether that is a forward declaration or definition).
+-   Class and interface modifiers other than `extend` (`abstract`, `base`,
+    `final`) exist only on the definition, not on the forward declaration.
+-   Function modifiers (`override`, `virtual`, `default`, `abstract`, `final`)
+    must match between forward declaration and definition (though `abstract`
+    functions won't have definitions).
+-   If any owning declaration has the `extern` modifier, all owning declarations
+    must have it.
+-   Access modifiers (`private` and `protected`) must match across all
+    declarations and definitions, including between an `extern library
+    "<owning_library>"` declaration and the owning `extern` declaration.
+
+> References:
+>
+> -   ["Modifier keywords" in proposal #3762](/proposals/p003762-merging-forward-declarations.md#modifier-keywords)
+> -   [Proposal #3980: "Singular `extern` declarations"](/proposals/p003980-singular-extern-declarations.md#proposal)
+
+#### Syntactic matching and scopes
+
+Two owned declarations _syntactically match_ if the sequence of tokens in
+the declaration following the introducer keyword and the optional scope, up
+to the semicolon or open brace, is identical, except for `unused` modifiers
+on parameters.
+
+An entity may be redeclaration in a different scope using a qualified
+declaration:
+
+-   Take the portion of the declaration from the introducer up to the end of
+    the scope.
+-   Replace the introducer keyword with the introducer keyword of the scope.
+-   Replace the trailing `.` with a `;`.
+-   The result must be a valid declaration of the scope, ignoring
+    restrictions on how often the scope can be redeclared.
+
+Put another way: each portion of the qualified name must not differ from the
+declaration of the corresponding entity.
+
+For example:
+
+```carbon
+namespace N;
+
+class N.C(T:! type) {
+  class D(U:! type) {
+    fn F(a: T, b: U);
+  }
+}
+
+fn N.C(T:! type).D(U:! type).F(a: T, b: U) {}
+```
+
+In this function definition:
+
+-   `F(a: T, b: U)` does not differ from the declaration of `F`.
+-   `class N.C(T:! type).D(U:! type);` would be a valid redeclaration of `D`,
+    because:
+    -   `D(U:! type)` does not differ from the declaration of `D`.
+    -   `class N.C(T:! type);` would be a valid redeclaration of `C`, because:
+        -   `C(T:! type)` does not differ from the declaration of `C`.
+        -   `namespace N;` would be a valid redeclaration of `N`.
+
+So this is a valid definition of `F`.
+
+Note that this means that, for example, all members of a class must use the same
+name for each generic parameter of that class. It cannot be `T` in one
+out-of-line member definition and `ElementType` in another, or the scope in the
+out-of-line definition would not match.
+
+To redeclare an `impl` after the end of the `class` scope it was declared
+in, that scope may be re-entered as part of the `impl` redeclaration, in the
+same way, except with parentheses around the name of the `impl`, as in
+`impl X.(as Y) { ... }`.
+See
+["Declaring implementations" in the "Generics: details" design document](generics/details.md#declaring-implementations).
+
+The members of an `impl` are not required to syntactically match the
+corresponding members of the interface they are implementing since:
+
+-   We don't want to syntactically couple declarations that could be
+    in different libraries or packages. Such coupling would make refactorings
+    that change the way that code is expressed but not its meaning either
+    difficult or impossible.
+-   The associated function in an `impl` is expected to have different syntax
+    than that in the interface in some cases. The two declarations are in
+    different scopes, so will refer to the same types in different ways. And the
+    declaration in the `impl` is declared with knowledge of the `Self` type and
+    associated constants for the interface, which we allow to be used
+    directly in the declaration of the function.
+
+See
+["`impl` members vs `interface` members" in the "Generics: details" design document](generics/details.md#impl-members-vs-interface-members).
+
+For `let` and `var` declarations with a single name binding
+(`let Scope.A: Type = Value;`), the end of the declaration is at the `=` or
+`;` rather than at the `}` or `;`. Note though it is an open question
+whether this form permits redeclarations. An arbitrary pattern that is not a
+single binding (`let (A: Type1, B: Type2) = Value;`) does not permit
+redeclarations.
+
+Any unqualified names used in syntactic matching will resolve to the same entity
+in redeclarations due to the poisoning of failed unqualified lookups.
+See
+["Unqualified name lookup" in the "Name lookup" design document](name_lookup.md#unqualified-name-lookup).
+
+> References:
+>
+> -   [Proposal #3763: "Matching redeclarations"](/proposals/p003763-matching-redeclarations.md#proposal),
+>     including sections:
+>     -   ["Scope differences"](/proposals/p003763-matching-redeclarations.md#scope-differences)
+>     -   ["`let` and `var` declarations"](/proposals/p003763-matching-redeclarations.md#let-and-var-declarations)
+>     -   ["Unqualified name lookup"](/proposals/p003763-matching-redeclarations.md#unqualified-name-lookup)
+> -   ["Declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#declarations)
+> -   [Proposal #5366: "The name of an `impl` in `class` scope"](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)
 
 ## `extern` and `extern library`
 
 There are two forms of the `extern` modifier:
 
 -   On an owning declaration, `extern` limits access to the definition.
-    -   The entity must be directly imported in order to use of the definition.
+    -   The entity must be directly imported in order to use the definition;
+        otherwise it is incomplete.
     -   An `extern library` declaration is optional.
+    -   Like all owning declarations, owning `extern` declarations use syntactic
+        matching for redeclarations.
 -   On a non-owning declaration, `extern library` allows references to an entity
     without depending on the owning library.
     -   The library name indicates where the entity is defined.
     -   This can be used to improve build performance, such as by splitting out
         a declaration in order to reduce a library's dependencies.
+    -   `extern library` declarations only use semantic matching for
+        redeclarations, not syntactic matching.
 
 For example, a use of both might look like:
 
@@ -151,6 +286,11 @@ extern fn MyClassFactory(val: i32) -> MyClass* {
   return c;
 }
 ```
+
+> References:
+>
+> -   ["Impact on indirect imports" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#impact-on-indirect-imports)
+> -   ["No syntactic matching for `extern library` declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#no-syntactic-matching-for-extern-library-declarations)
 
 ### Valid scopes for `extern`
 
@@ -205,6 +345,82 @@ fn ValidUse() -> i32 {
 }
 ```
 
+#### Indirect imports of non-`extern` types
+
+Non-`extern` entities are complete if their definition is imported, even if that
+import is indirect, as in:
+
+```
+library "a";
+
+class C { fn F(); }
+```
+
+```
+library "b";
+import library "a";
+
+fn G() -> C;
+```
+
+```
+library "c";
+import library "b";
+
+// Valid: `C` is complete here, even though it's not in name lookup.
+G().F();
+```
+
+> References:
+>
+> -   ["Indirect imports of non-`extern` types" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#indirect-imports-of-non-extern-types)
+
+### Using imported declarations
+
+Since `extern library "a" class C;` must be imported by the owning library, we
+allow uses of the imported name prior to its declaration within the same file.
+This means the following works:
+
+```
+library "extern";
+
+extern library "use_extern" class MyType;
+```
+
+```
+library "use_extern";
+import library "extern";
+
+// Uses the `extern library` declaration.
+fn Foo(val: MyType*);
+
+extern class MyType {
+  fn Bar[ref self: Self]() { Foo(&self); }
+}
+```
+
+> References:
+>
+> -   ["Using imported declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#using-imported-declarations)
+
+### Validation for non-owning `extern library` declarations
+
+We offer some validation that the library in `extern library` is correct, in the
+sense of being the single non-owning library declaring that entity and naming
+the single owning library. When the owning library is incorrect, it's very
+likely to be detected in two cases:
+
+-   A compile-time error when the owning library imports the non-owning library,
+    when the owning declaration is evaluated.
+-   A link-time error as a fallback.
+
+Other cases, such as when both libraries are independently imported, may or may
+not be caught, dependent upon the cost of validation.
+
+> References:
+>
+> -   ["Validation for non-owning `extern library` declarations" in proposal #3980](/proposals/p003980-singular-extern-declarations.md#validation-for-non-owning-extern-library-declarations)
+
 ## Alternatives considered
 
 -   [Other modifier keyword merging approaches](/proposals/p003762-merging-forward-declarations.md#other-modifier-keyword-merging-approaches)
@@ -229,6 +445,7 @@ fn ValidUse() -> i32 {
 -   [Other `extern` syntaxes](/proposals/p003980-singular-extern-declarations.md#other-extern-syntaxes)
 -   [Have types with `extern` members re-export them](/proposals/p003980-singular-extern-declarations.md#have-types-with-extern-members-re-export-them)
 -   [Require syntactic matching for `extern library` declarations](/proposals/p003980-singular-extern-declarations.md#require-syntactic-matching-for-extern-library-declarations)
+-   [Use semantic match for the scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#use-semantic-match-for-the-scope)
 
 ## References
 
@@ -238,3 +455,9 @@ fn ValidUse() -> i32 {
     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   Proposal
     [#3980: Singular `extern` declarations](https://github.com/carbon-language/carbon-lang/pull/3980)
+-   Proposal
+    [#5337: Interface extension and `final impl` update](https://github.com/carbon-language/carbon-lang/pull/5337)
+-   Proposal
+    [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
+-   Proposal
+    [#7493: Disallow impl in match_first twice](https://github.com/carbon-language/carbon-lang/pull/7493)

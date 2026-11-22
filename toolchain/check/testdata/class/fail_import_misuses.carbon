@@ -25,23 +25,31 @@ library "[[@TEST_NAME]]";
 
 import library "a";
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:1: error: redeclaration of `class Empty` is redundant [RedeclRedundant]
-// CHECK:STDERR: class Empty {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class Empty {
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ class Empty {
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: redeclaration of `class Empty` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ class Empty {
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Empty {
 }
 
-// CHECK:STDERR: fail_b.carbon:[[@LINE+8]]:8: error: binding pattern has incomplete type `Incomplete` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var a: Incomplete;
-// CHECK:STDERR:        ^~~~~~~~~~
-// CHECK:STDERR: fail_b.carbon:[[@LINE-16]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:7:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Incomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_b.carbon:[[@LINE+13]]:8
+// CHECK:STDERR: ->     │ var a: Incomplete;
+// CHECK:STDERR:        ·        ┳━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `Incomplete` in name
+// CHECK:STDERR:        ·           ┃        binding declaration
+// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ a.carbon
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Incomplete;

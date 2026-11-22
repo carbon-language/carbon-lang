@@ -15,17 +15,24 @@ library "[[@TEST_NAME]]";
 
 // `self` is not a valid parameter of a class declaration even when placed in
 // the explicit parameter list.
-// CHECK:STDERR: fail_self_param.carbon:[[@LINE+4]]:9: error: `self` parameter only allowed on functions [SelfParameterNotAllowed]
-// CHECK:STDERR: class C(self: type, x: self) {}
-// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_self_param.carbon:[[@LINE+7]]:9
+// CHECK:STDERR: ->     │ class C(self: type, x: self) {}
+// CHECK:STDERR:        ·         ━━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: `self` parameter only allowed on functions
+// CHECK:STDERR:        ·                 ┃        [SelfParameterNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C(self: type, x: self) {}
-// CHECK:STDERR: fail_self_param.carbon:[[@LINE+7]]:8: error: 1 argument passed to generic class expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: var v: C(());
-// CHECK:STDERR:        ^~~~~
-// CHECK:STDERR: fail_self_param.carbon:[[@LINE-4]]:1: note: calling generic class declared here [InCallToEntity]
-// CHECK:STDERR: class C(self: type, x: self) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_self_param.carbon:[[@LINE+11]]:8
+// CHECK:STDERR:        │ class C(self: type, x: self) {}
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var v: C(());
+// CHECK:STDERR:        ·        ━━┳━━
+// CHECK:STDERR:        ·          ┗━━┫ error: 1 argument passed to generic class expecting 2 arguments
+// CHECK:STDERR:        ·             ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v: C(());
 
@@ -34,13 +41,19 @@ library "[[@TEST_NAME]]";
 
 // `self` in the implicit parameter list of a class declaration is reported as
 // both being in the wrong list and not allowed on a class at all.
-// CHECK:STDERR: fail_self_param_implicit.carbon:[[@LINE+8]]:9: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
-// CHECK:STDERR: class C[self: type](x: self) {}
-// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_self_param_implicit.carbon:[[@LINE+14]]:9
+// CHECK:STDERR: ->     │ class C[self: type](x: self) {}
+// CHECK:STDERR:        ·         ━━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: `self` must be declared in the explicit parameter list
+// CHECK:STDERR:        ·                 ┃        [SelfInImplicitParamList]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_self_param_implicit.carbon:[[@LINE+4]]:9: error: `self` parameter only allowed on functions [SelfParameterNotAllowed]
-// CHECK:STDERR: class C[self: type](x: self) {}
-// CHECK:STDERR:         ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_self_param_implicit.carbon:[[@LINE+7]]:9
+// CHECK:STDERR: ->     │ class C[self: type](x: self) {}
+// CHECK:STDERR:        ·         ━━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: `self` parameter only allowed on functions
+// CHECK:STDERR:        ·                 ┃        [SelfParameterNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C[self: type](x: self) {}
 var v: C(());

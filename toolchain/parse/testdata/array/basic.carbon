@@ -11,19 +11,18 @@
 var x: array(i32, 10);
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'ArrayExprKeyword', text: 'array'},
-// CHECK:STDOUT:             {kind: 'ArrayExprOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'ArrayExprComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '10'},
-// CHECK:STDOUT:           {kind: 'ArrayExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─ArrayExprKeyword 'array'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprOpenParen '('
+// CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   │ ├─ArrayExprComma ','
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '10'
+// CHECK:STDOUT:   │ │   ├─ArrayExpr ')'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

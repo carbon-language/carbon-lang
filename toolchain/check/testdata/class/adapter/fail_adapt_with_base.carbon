@@ -12,12 +12,16 @@
 class Simple {};
 base class AdaptWithVirtual {
   virtual fn F(self);
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE+7]]:3: error: adapter with virtual function [AdaptWithVirtual]
-  // CHECK:STDERR:   adapt Simple;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_adapt_with_base.carbon:[[@LINE-4]]:3: note: first virtual function declaration is here [AdaptWithVirtualHere]
-  // CHECK:STDERR:   virtual fn F(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_adapt_with_base.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │   virtual fn F(self);
+  // CHECK:STDERR:        ·   ─────────┬─────────
+  // CHECK:STDERR:        ·            ╰──┤ first virtual function declaration is here
+  // CHECK:STDERR:        ·               │ [AdaptWithVirtualHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   adapt Simple;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: adapter with virtual function [AdaptWithVirtual]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt Simple;
 }

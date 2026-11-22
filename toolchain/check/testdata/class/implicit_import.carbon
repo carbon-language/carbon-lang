@@ -34,13 +34,16 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+8]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redecl_after_def.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redecl_after_def.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ redecl_after_def.carbon
+// CHECK:STDERR:        │ class C {}
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C;
 
@@ -54,13 +57,16 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+8]]:1: error: redefinition of `class C` [RedeclRedef]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: redef_after_def.carbon:4:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: class C {}
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redef_after_def.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ class C {}
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redefinition of `class C` [RedeclRedef]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ redef_after_def.carbon
+// CHECK:STDERR:        │ class C {}
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C {}
 
@@ -75,19 +81,24 @@ alias B = C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+8]]:7: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: class B {}
-// CHECK:STDERR:       ^
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: alias B = C;
-// CHECK:STDERR:       ^
+// CHECK:STDERR:        ╭─┤ fail_def_alias.impl.carbon:[[@LINE+12]]:7
+// CHECK:STDERR: ->     │ class B {}
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: duplicate name `B` being declared in the same scope
+// CHECK:STDERR:        ·          ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ def_alias.carbon
+// CHECK:STDERR:        │ alias B = C;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class B {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -100,9 +111,10 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.impl.carbon
+// CHECK:STDOUT: --- basic.impl.carbon = $basic.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -117,7 +129,7 @@ class B {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "basic.carbon"] {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -125,9 +137,10 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl_after_def.carbon
+// CHECK:STDOUT: --- redecl_after_def.carbon = $redecl_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -148,9 +161,10 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redecl_after_def.impl.carbon = $fail_redecl_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -170,16 +184,17 @@ class B {}
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C {
+// CHECK:STDOUT: class @C [from "redecl_after_def.carbon"] {
 // CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.8f2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redef_after_def.carbon
+// CHECK:STDOUT: --- redef_after_def.carbon = $redef_after_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -200,13 +215,14 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon
+// CHECK:STDOUT: --- fail_redef_after_def.impl.carbon = $fail_redef_after_def.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.08d9e3.1: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %C.08d9e3.2: type = class_type @C.loc12 [concrete]
+// CHECK:STDOUT:   %C.08d9e3.2: type = class_type @C.loc15 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -221,7 +237,7 @@ class B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C.loc12 [concrete = constants.%C.08d9e3.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C.loc15 [concrete = constants.%C.08d9e3.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1 [from "redef_after_def.carbon"] {
@@ -231,7 +247,7 @@ class B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.loc12 {
+// CHECK:STDOUT: class @C.loc15 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -239,9 +255,10 @@ class B {}
 // CHECK:STDOUT:   .Self = constants.%C.08d9e3.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def_alias.carbon
+// CHECK:STDOUT: --- def_alias.carbon = $def_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -257,9 +274,10 @@ class B {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_alias.impl.carbon
+// CHECK:STDOUT: --- fail_def_alias.impl.carbon = $fail_def_alias.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]

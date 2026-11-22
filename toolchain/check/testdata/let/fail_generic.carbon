@@ -14,18 +14,24 @@
 
 // TODO: Should this be valid?
 fn F(unused a: i32) -> i32 {
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic T: type = i32;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_generic.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic T: type = i32;
+  // CHECK:STDERR:        ·               ━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic T: type = i32;
   let x: T = 5;
   return x;
 }
 
-// CHECK:STDOUT: --- fail_generic.carbon
+// CHECK:STDOUT: --- fail_generic.carbon = $fail_generic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT: }

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_BASE_CLANG_INVOCATION_H_
 #define CARBON_TOOLCHAIN_BASE_CLANG_INVOCATION_H_
 
+#include <memory>
 #include <string>
 
 #include "clang/Basic/Diagnostic.h"
@@ -37,8 +38,10 @@ class ClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
 };
 
 // Builds and returns a clang `CompilerInvocation` to use when building code for
-// interop, from a list of clang driver arguments. Emits diagnostics to
-// `consumer` if the arguments are invalid.
+// interop, from a list of clang driver arguments. Validates the target options
+// and canonicalizes `TargetOptions::Features` via
+// `clang::TargetInfo::CreateTargetInfo`. Emits diagnostics to `consumer` if the
+// arguments or target options are invalid.
 auto BuildClangInvocation(Diagnostics::Consumer& consumer,
                           llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                           const InstallPaths& install_paths,

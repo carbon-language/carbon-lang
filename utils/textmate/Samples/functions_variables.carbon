@@ -28,6 +28,7 @@ generic a: T = b;
 a: A in some_list;
 var a: T;
 let b: T;
+let unused c: T = d;
 binding: T;
 generic binding: T;
 var
@@ -37,3 +38,30 @@ fn F(ref a: A, const ref b: B);
 fn F() -> T;
 fn F() -> T.U { return val; }
 fn F() -> i32 => return val;
+
+// --- lambdas and positional parameters
+
+var explicit: auto = fn (x: i32) -> i32 { return x + 1; };
+var expression: auto = fn (x: i32) => x + 1;
+var positional: auto = fn { Print($0, $1, $42); };
+
+// --- raw identifiers
+
+r#class
+r#if
+r#i32
+var r#var: i32 = r#class;
+
+// --- member access through a pointer
+
+p->field;
+p->Method(a);
+p->0;
+(*p).field;
+t.0.1;
+q.value()->size();
+
+// --- builtin function definitions
+
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
+fn Bits(n: IntLiteral) -> type = "int.make_type_signed";

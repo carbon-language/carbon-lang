@@ -148,6 +148,32 @@ auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
     -> bool {
+  // `auto` is currently only supported as the entire return type of a
+  // function, as in `fn F() -> auto`, or as the type in a primitive return
+  // form, as in `fn F() -> ref auto`. In those cases, `auto` is the only child
+  // of a `ReturnType` node or a primitive form node, so is immediately followed
+  // by it in postorder. There is always a following node, because the tree ends
+  // with `FileEnd`.
+  //
+  // `HandleReturnSpecifier` recognizes the `auto`, so the value we push here is
+  // just a placeholder. For a primitive form, the primitive form handler will
+  // use the placeholder as its type component.
+  //
+  // TODO: Using parse tree lookahead is a hack; stop doing this. Ideally we'd
+  // fix this as part of a change to accept and handle `auto` more broadly.
+  auto next_node_kind =
+      context.parse_tree().node_kind(Parse::NodeId(node_id.index + 1));
+  bool is_return_type = next_node_kind == Parse::NodeKind::ReturnType;
+  bool is_return_primitive_form =
+      (next_node_kind == Parse::NodeKind::RefPrimitiveForm ||
+       next_node_kind == Parse::NodeKind::ValPrimitiveForm ||
+       next_node_kind == Parse::NodeKind::VarPrimitiveForm) &&
+      context.parse_tree().node_kind(Parse::NodeId(node_id.index + 2)) ==
+          Parse::NodeKind::ReturnType;
+  if (is_return_type || is_return_primitive_form) {
+    context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+    return true;
+  }
   return context.TODO(node_id, "HandleAutoTypeLiteral");
 }
 

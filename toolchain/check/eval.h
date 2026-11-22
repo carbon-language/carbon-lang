@@ -50,13 +50,12 @@ auto TryEvalInst(Context& context, InstT inst) -> SemIR::ConstantId {
   return TryEvalInstUnsafe(context, SemIR::InstId::None, inst);
 }
 
-// Evaluates the eval block for a region of a specific. Produces a block
+// Evaluates the eval block for a region of a specific. Writes a block
 // containing the evaluated constant values of the instructions in the eval
-// block. The returned bool indicates whether the region has an error.
+// block to the specific.
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::SpecificId specific_id,
-                             SemIR::GenericInstIndex::Region region)
-    -> std::pair<SemIR::InstBlockId, bool>;
+                             SemIR::GenericInstIndex::Region region) -> void;
 
 }  // namespace Carbon::Check
 

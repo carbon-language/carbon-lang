@@ -8,19 +8,20 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_bad_name.carbon
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+4]]:5: error: expected pattern [ExpectedPattern]
-// CHECK:STDERR: let ? = 4;
-// CHECK:STDERR:     ^
+// CHECK:STDERR:        ╭─┤ fail_bad_name.carbon:[[@LINE+6]]:4
+// CHECK:STDERR: ->     │ let ? = 4;
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let ? = 4;
 
 // CHECK:STDOUT: - filename: fail_bad_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '?', has_error: yes},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '4'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ ├─InvalidParse '?' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '4'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

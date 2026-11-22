@@ -33,16 +33,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_name_without_scope.carbon:[[@LINE+4]]:28: error: member name `b` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   let unused b: Cpp.Enum = Cpp.b;
-  // CHECK:STDERR:                            ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_name_without_scope.carbon:[[@LINE+7]]:28
+  // CHECK:STDERR: ->     │   let unused b: Cpp.Enum = Cpp.b;
+  // CHECK:STDERR:        ·                            ━━┳━━
+  // CHECK:STDERR:        ·                              ┗━━┫ error: member name `b` not found in `Cpp`
+  // CHECK:STDERR:        ·                                 ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: Cpp.Enum = Cpp.b;
 }
 
-// CHECK:STDOUT: --- import_enum.carbon
+// CHECK:STDOUT: --- import_enum.carbon = $import_enum
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Enum: type = class_type @Enum [concrete]

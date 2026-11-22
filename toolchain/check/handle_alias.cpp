@@ -23,7 +23,11 @@ auto HandleParseNode(Context& context, Parse::AliasIntroducerId /*node_id*/)
   StartGenericDecl(context);
   // Optional modifiers and the name follow.
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Alias>();
-  context.decl_name_stack().PushScopeAndStartName();
+  // Aliases can't have non-constant targets, but we diagnose that later. Don't
+  // diagnose references to enclosing non-constant state in name lookup since
+  // that would produce a less useful error message.
+  context.decl_name_stack().PushScopeAndStartName(
+      ScopeStack::NonConstantAccess::Permitted);
   return true;
 }
 

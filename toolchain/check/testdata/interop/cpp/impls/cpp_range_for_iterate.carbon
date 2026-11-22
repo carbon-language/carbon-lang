@@ -90,6 +90,33 @@ fn Test() {
   Core.AssertIsRange(Cpp.ConstRangeWithSentinel);
 }
 
+// --- methods_overloaded.carbon
+library "[[@TEST_NAME]]";
+
+import Core library "cpp_range_for_iterate";
+
+import Cpp inline '''c++
+struct OverloadedRange {
+  struct ConstIterator {};
+  struct ConstSentinel {};
+  struct Iterator {};
+  struct Sentinel {};
+
+  auto begin() -> Iterator;
+  auto end() -> Sentinel;
+  auto begin() const -> ConstIterator;
+  auto end() const -> ConstSentinel;
+};
+''';
+
+fn Test() {
+  Core.AssertIsRange(Cpp.OverloadedRange);
+  // We should pick the const overloads.
+  let _: Core.CppRangeForIterate where
+    .Iterator = Cpp.OverloadedRange.ConstIterator and
+    .Sentinel = Cpp.OverloadedRange.ConstSentinel = Cpp.OverloadedRange;
+}
+
 // --- adl_return_same_types.carbon
 library "[[@TEST_NAME]]";
 
@@ -111,7 +138,6 @@ fn Test() {
 }
 
 // --- fail_todo_adl_returns_same_types_mutable.carbon
-// CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
 // TODO: merge with adl_returns_same_types.carbon when passing.
 library "[[@TEST_NAME]]";
 
@@ -122,27 +148,50 @@ namespace N {
 class MutableRange {
   struct Iterator {};
 public:
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+11]]:34: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto begin(MutableRange&) -> Iterator;
-  // CHECK:STDERR:                                  ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+22]]:15
+  // CHECK:STDERR: ->     │   friend auto begin(MutableRange&) -> Iterator;
+  // CHECK:STDERR:        ·               ┳                  ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━━━┫ error: value expression passed to
+  // CHECK:STDERR:        ·                                  │  ┃        reference parameter
+  // CHECK:STDERR:        ·                                  │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                  ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                       │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableRange&) -> Iterator;
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+10]]:32: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto end(MutableRange&) -> Iterator;
-  // CHECK:STDERR:                                ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+22]]:15
+  // CHECK:STDERR: ->     │   friend auto end(MutableRange&) -> Iterator;
+  // CHECK:STDERR:        ·               ┳                ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━┫ error: value expression passed to reference
+  // CHECK:STDERR:        ·                                │  ┃        parameter
+  // CHECK:STDERR:        ·                                │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                     │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn End(self) -> Sentinel;
+  // CHECK:STDERR:        ·   ────────────┬────────────
+  // CHECK:STDERR:        ·               ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                  │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend auto end(MutableRange&) -> Iterator;
 };
@@ -183,11 +232,13 @@ import Cpp inline '''c++
 namespace N {
 class MutableRangeWithSentinel {
   struct Iterator {
-    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+5]]:31: error: unknown type name 'ValueType' [CppInteropParseError]
-    // CHECK:STDERR:    14 |     auto operator*() const -> ValueType&;
-    // CHECK:STDERR:       |                               ^
+    // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+7]]:31
+    // CHECK:STDERR: ->     │     auto operator*() const -> ValueType&;
+    // CHECK:STDERR:        ·                               ┳
+    // CHECK:STDERR:        ·                               ┗━━┫ error: unknown type name 'ValueType'
+    // CHECK:STDERR:        ·                                  ┃        [CppInteropParseError]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
     auto operator*() const -> ValueType&;
     auto operator++() -> Iterator&;
   };
@@ -197,27 +248,52 @@ class MutableRangeWithSentinel {
     friend auto operator!=(Sentinel, Iterator) -> bool;
   };
 public:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+11]]:46: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto begin(MutableRangeWithSentinel&) -> Iterator;
-  // CHECK:STDERR:                                              ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+23]]:15
+  // CHECK:STDERR: ->     │   friend auto begin(MutableRangeWithSentinel&) -> Iterator;
+  // CHECK:STDERR:        ·               ┳                              ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ error: value expression passed
+  // CHECK:STDERR:        ·                                              │  ┃        to reference parameter
+  // CHECK:STDERR:        ·                                              │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                              ╰────┤ initializing function
+  // CHECK:STDERR:        ·                                                   │ parameter
+  // CHECK:STDERR:        ·                                                   │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableRangeWithSentinel&) -> Iterator;
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+10]]:44: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto end(MutableRangeWithSentinel&) -> Sentinel;
-  // CHECK:STDERR:                                            ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+23]]:15
+  // CHECK:STDERR: ->     │   friend auto end(MutableRangeWithSentinel&) -> Sentinel;
+  // CHECK:STDERR:        ·               ┳                            ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ error: value expression passed
+  // CHECK:STDERR:        ·                                            │  ┃        to reference parameter
+  // CHECK:STDERR:        ·                                            │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                            ╰────┤ initializing function
+  // CHECK:STDERR:        ·                                                 │ parameter
+  // CHECK:STDERR:        ·                                                 │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn End(self) -> Sentinel;
+  // CHECK:STDERR:        ·   ────────────┬────────────
+  // CHECK:STDERR:        ·               ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                  │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend auto end(MutableRangeWithSentinel&) -> Sentinel;
 };
@@ -229,7 +305,6 @@ fn Test() {
 }
 
 // --- fail_todo_adl_overloads.carbon
-// CHECK:STDERR: fail_todo_adl_overloads.carbon: error: value expression passed to reference parameter [ValueForRefParam]
 library "[[@TEST_NAME]]";
 
 import Core library "cpp_range_for_iterate";
@@ -240,27 +315,50 @@ class MutableAndConstRange {
   struct Iterator {};
   struct ConstIterator {};
 public:
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+11]]:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto begin(MutableAndConstRange&) -> Iterator;
-  // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn Begin(self) -> Iterator;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_overloads.carbon:[[@LINE+22]]:15
+  // CHECK:STDERR: ->     │   friend auto begin(MutableAndConstRange&) -> Iterator;
+  // CHECK:STDERR:        ·               ┳                          ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ error: value expression passed to
+  // CHECK:STDERR:        ·                                          │  ┃        reference parameter
+  // CHECK:STDERR:        ·                                          │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                          ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                               │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn Begin(self) -> Iterator;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableAndConstRange&) -> Iterator;
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+10]]:40: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   friend auto end(MutableAndConstRange&) -> Iterator;
-  // CHECK:STDERR:                                        ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn End(self) -> Sentinel;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33: note: initializing generic parameter `R` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
-  // CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_adl_overloads.carbon:[[@LINE+22]]:15
+  // CHECK:STDERR: ->     │   friend auto end(MutableAndConstRange&) -> Iterator;
+  // CHECK:STDERR:        ·               ┳                        ┬
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━┫ error: value expression passed to
+  // CHECK:STDERR:        ·                                        │  ┃        reference parameter
+  // CHECK:STDERR:        ·                                        │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                                        ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                             │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │   fn End(self) -> Sentinel;
+  // CHECK:STDERR:        ·   ────────────┬────────────
+  // CHECK:STDERR:        ·               ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                  │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn AssertIsRange(unused generic R: IsRange where .Result = true) {}
+  // CHECK:STDERR:        ·                                 ┬──────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ initializing generic parameter `R` declared
+  // CHECK:STDERR:        ·                                    │ here
+  // CHECK:STDERR:        ·                                    │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend auto end(MutableAndConstRange&) -> Iterator;
 
@@ -359,48 +457,87 @@ struct EndFunctionDeleted {
 ''';
 
 fn Test() {
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:47: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    38 |   Core.AssertIsNotRange(Cpp.BeginMethodDeleted);
-  // CHECK:STDERR:       |                                               ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-24]]:8: note: 'begin' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:     7 |   auto begin() = delete;
-  // CHECK:STDERR:       |        ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
-  // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+20]]:47
+  // CHECK:STDERR:        │   auto begin() = delete;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ 'begin' has been explicitly marked deleted here
+  // CHECK:STDERR:        ·           │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Core.AssertIsNotRange(Cpp.BeginMethodDeleted);
+  // CHECK:STDERR:        ·                                               ┳
+  // CHECK:STDERR:        ·                                               ┗━━┫ error: attempt to use a
+  // CHECK:STDERR:        ·                                                  ┃        deleted function
+  // CHECK:STDERR:        ·                                                  ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │ fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
+  // CHECK:STDERR:        ·                                    ┬───────────────────────────────
+  // CHECK:STDERR:        ·                                    ╰──┤ initializing generic parameter `S`
+  // CHECK:STDERR:        ·                                       │ declared here
+  // CHECK:STDERR:        ·                                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.BeginMethodDeleted);
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:45: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    49 |   Core.AssertIsNotRange(Cpp.EndMethodDeleted);
-  // CHECK:STDERR:       |                                             ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-29]]:8: note: 'end' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    13 |   auto end() = delete;
-  // CHECK:STDERR:       |        ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
-  // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+19]]:45
+  // CHECK:STDERR:        │   auto end() = delete;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ 'end' has been explicitly marked deleted here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Core.AssertIsNotRange(Cpp.EndMethodDeleted);
+  // CHECK:STDERR:        ·                                             ┳
+  // CHECK:STDERR:        ·                                             ┗━━┫ error: attempt to use a deleted
+  // CHECK:STDERR:        ·                                                ┃        function
+  // CHECK:STDERR:        ·                                                ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │ fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
+  // CHECK:STDERR:        ·                                    ┬───────────────────────────────
+  // CHECK:STDERR:        ·                                    ╰──┤ initializing generic parameter `S`
+  // CHECK:STDERR:        ·                                       │ declared here
+  // CHECK:STDERR:        ·                                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.EndMethodDeleted);
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:49: error: call to deleted function 'begin' [CppInteropParseError]
-  // CHECK:STDERR:    60 |   Core.AssertIsNotRange(Cpp.BeginFunctionDeleted);
-  // CHECK:STDERR:       |                                                 ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-36]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:    17 |   friend auto begin(const BeginFunctionDeleted&) = delete;
-  // CHECK:STDERR:       |               ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
-  // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+20]]:49
+  // CHECK:STDERR:        │   friend auto begin(const BeginFunctionDeleted&) = delete;
+  // CHECK:STDERR:        ·               ┬
+  // CHECK:STDERR:        ·               ╰──┤ candidate function has been explicitly deleted
+  // CHECK:STDERR:        ·                  │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Core.AssertIsNotRange(Cpp.BeginFunctionDeleted);
+  // CHECK:STDERR:        ·                                                 ┳
+  // CHECK:STDERR:        ·                                                 ┗━━┫ error: call to deleted
+  // CHECK:STDERR:        ·                                                    ┃        function 'begin'
+  // CHECK:STDERR:        ·                                                    ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │ fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
+  // CHECK:STDERR:        ·                                    ┬───────────────────────────────
+  // CHECK:STDERR:        ·                                    ╰──┤ initializing generic parameter `S`
+  // CHECK:STDERR:        ·                                       │ declared here
+  // CHECK:STDERR:        ·                                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.BeginFunctionDeleted);
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:47: error: call to deleted function 'end' [CppInteropParseError]
-  // CHECK:STDERR:    71 |   Core.AssertIsNotRange(Cpp.EndFunctionDeleted);
-  // CHECK:STDERR:       |                                               ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-41]]:15: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   friend auto end(const EndFunctionDeleted&) = delete;
-  // CHECK:STDERR:       |               ^
-  // CHECK:STDERR: cpp_range_for_iterate.carbon:22:36: note: initializing generic parameter `S` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
-  // CHECK:STDERR:                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+20]]:47
+  // CHECK:STDERR:        │   friend auto end(const EndFunctionDeleted&) = delete;
+  // CHECK:STDERR:        ·               ┬
+  // CHECK:STDERR:        ·               ╰──┤ candidate function has been explicitly deleted
+  // CHECK:STDERR:        ·                  │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Core.AssertIsNotRange(Cpp.EndFunctionDeleted);
+  // CHECK:STDERR:        ·                                               ┳
+  // CHECK:STDERR:        ·                                               ┗━━┫ error: call to deleted
+  // CHECK:STDERR:        ·                                                  ┃        function 'end'
+  // CHECK:STDERR:        ·                                                  ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ cpp_range_for_iterate.carbon
+  // CHECK:STDERR:        │ fn AssertIsNotRange(unused generic S: IsRange where .Result = false) {}
+  // CHECK:STDERR:        ·                                    ┬───────────────────────────────
+  // CHECK:STDERR:        ·                                    ╰──┤ initializing generic parameter `S`
+  // CHECK:STDERR:        ·                                       │ declared here
+  // CHECK:STDERR:        ·                                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Core.AssertIsNotRange(Cpp.EndFunctionDeleted);
 }

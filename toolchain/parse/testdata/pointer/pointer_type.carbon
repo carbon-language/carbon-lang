@@ -17,58 +17,57 @@ fn F(p: i32*) -> i32* {
 var T: type = if true then i32* else f64*;
 
 // CHECK:STDOUT: - filename: pointer_type.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'p'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 13},
-// CHECK:STDOUT:             {kind: 'FloatTypeLiteral', text: 'f32'},
-// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorPlus', text: '+', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:               {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InfixOperatorStar', text: '*', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InfixOperatorStar', text: '*', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InfixOperatorStar', text: '*', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 35},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:         {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IfExprThen', text: 'then', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'FloatTypeLiteral', text: 'f64'},
-// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IfExprElse', text: 'else', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'p'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ │ ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │   ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ ╭─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─FloatTypeLiteral 'f32'
+// CHECK:STDOUT:   │ │   ╭─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │   ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │     │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │     ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │   ╭─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ │   ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │   ╭─IntLiteral '3'
+// CHECK:STDOUT:   │ │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ │ ╭─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'p'
+// CHECK:STDOUT:   │ │ │ ├─PrefixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │   ╭─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │   ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │ │ ╭─FloatTypeLiteral 'f64'
+// CHECK:STDOUT:   │ │ ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ ├─IfExprElse 'else'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

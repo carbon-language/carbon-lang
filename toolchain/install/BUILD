@@ -41,13 +41,13 @@ load(
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
 load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
-load("bazel/make_include_copts.bzl", "make_include_copts")
 load(
     "install_filegroups.bzl",
     "filtered_toolchain_files",
@@ -121,6 +121,7 @@ cc_binary(
         "//common:bazel_working_dir",
         "//common:error",
         "//common:exe_path",
+        "//common:filesystem",
         "//common:init_llvm",
         "//common:version_stamp",
         "//toolchain/base:install_paths",
@@ -264,6 +265,7 @@ toolchain_files(
 toolchain_files(
     name = "libc_internal_libcxx_hdrs",
     srcs = ["@llvm-project//libc:libcxx_shared_headers_hdrs"],
+    base_package = "@llvm-project//libc",
     prefix = "runtimes/libc/internal/",
 )
 
@@ -323,7 +325,6 @@ toolchain_files(
         "bazel/carbon_clang_variables.bzl",
         "bazel/carbon_detected_variables.tpl.bzl",
         "bazel/carbon_toolchain.bzl",
-        "bazel/make_include_copts.bzl",
     ],
 )
 
@@ -567,6 +568,16 @@ cc_library(
 
         # TODO: Remove this once we are building sanitizer runtime libraries.
         "-fno-sanitize=all",
+
+        # While the toolchain is built without exceptions, libc++ internally
+        # must be built with them enabled. It's explicitly allowed to build the
+        # libc++ and libc++abi library implementations with different flags
+        # than the client (our toolchain) uses, even though they both include
+        # the same headers from the libraries.
+        "-fexceptions",
+        # Like exceptions, these libraries are built internally with RTTI
+        # enabled, while the toolchain is built without.
+        "-frtti",
     ],
     hdrs_check = "strict",
     includes = [

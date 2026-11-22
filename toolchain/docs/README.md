@@ -41,6 +41,8 @@ The main components are:
 
 -   [Driver](driver.md): Provides commands and ties together compilation flow.
 -   [Diagnostics](diagnostics.md): Produces diagnostic output.
+-   [Diagnostics rendering](diagnostics_rendering.md): Draws diagnostics on a
+    terminal.
 -   Compilation flow:
 
     1.  Source: Load the file into a

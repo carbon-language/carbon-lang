@@ -29,12 +29,15 @@ var x: () = F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F();
 
@@ -43,12 +46,15 @@ extern fn F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+7]]:1: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fn F();
-// CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-4]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redecl_extern.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F();
 
@@ -57,14 +63,20 @@ fn F();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
-  // CHECK:STDERR:   extern fn F();
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_member_extern.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   extern fn F();
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `extern` not allowed; requires file or namespace scope
+  // CHECK:STDERR:        ·         ┃        [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+4]]:3: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
-  // CHECK:STDERR:   extern fn G(self);
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_member_extern.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   extern fn G(self);
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `extern` not allowed; requires file or namespace scope
+  // CHECK:STDERR:        ·         ┃        [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extern fn G(self);
 }
@@ -75,19 +87,24 @@ library "[[@TEST_NAME]]";
 
 import library "basic";
 
-// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+8]]:1: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
-// CHECK:STDERR: extern library "basic" fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: basic.carbon:4:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern fn F();
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_extern_library_in_importer.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern library "basic" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: cannot declare imported `fn F` as `extern library`
+// CHECK:STDERR:        ·                   ┃        [ExternLibraryInImporter]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ basic.carbon
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "basic" fn F();
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -101,9 +118,10 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic_use.carbon
+// CHECK:STDOUT: --- basic_use.carbon = $basic_use
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
@@ -145,9 +163,10 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl.carbon
+// CHECK:STDOUT: --- fail_redecl.carbon = $fail_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -157,14 +176,15 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_extern.carbon
+// CHECK:STDOUT: --- fail_redecl_extern.carbon = $fail_redecl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -174,20 +194,21 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc12: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_member_extern.carbon
+// CHECK:STDOUT: --- fail_member_extern.carbon = $fail_member_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   %C.G.type: type = fn_type @C.G [concrete]
 // CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -205,7 +226,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   %C.F.decl: %C.F.type = fn_decl @C.F [concrete = constants.%C.F] {} {}
 // CHECK:STDOUT:   %C.G.decl: %C.G.type = fn_decl @C.G [concrete = constants.%C.G] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type = value_param_pattern [concrete = constants.%self.param_patt]
-// CHECK:STDOUT:     %self.patt: %pattern_type = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
@@ -224,9 +245,10 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G(%self.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_in_importer.carbon
+// CHECK:STDOUT: --- fail_extern_library_in_importer.carbon = $fail_extern_library_in_importer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }

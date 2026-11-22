@@ -39,9 +39,12 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_invalid_size.carbon:[[@LINE+4]]:20: error: unsupported floating-point bit width 931 [CompileTimeFloatBitWidth]
-// CHECK:STDERR: var invalid_float: Float(931);
-// CHECK:STDERR:                    ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_invalid_size.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ var invalid_float: Float(931);
+// CHECK:STDERR:        ·                    ━━━━━┳━━━━
+// CHECK:STDERR:        ·                         ┗━━┫ error: unsupported floating-point bit width 931
+// CHECK:STDERR:        ·                            ┃        [CompileTimeFloatBitWidth]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var invalid_float: Float(931);
 
@@ -52,15 +55,19 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 var dyn_size: i32 = 64;
-// CHECK:STDERR: fail_dyn_size.carbon:[[@LINE+4]]:10: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-// CHECK:STDERR: var dyn: Float(dyn_size);
-// CHECK:STDERR:          ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_dyn_size.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ var dyn: Float(dyn_size);
+// CHECK:STDERR:        ·          ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot evaluate type expression
+// CHECK:STDERR:        ·                    ┃        [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var dyn: Float(dyn_size);
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Float.type: type = fn_type @Float [concrete]
 // CHECK:STDOUT:   %Float: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32.be0: Core.IntLiteral = int_value 32 [concrete]

@@ -9,45 +9,54 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var a: ();
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR: ->     │   let var a: ();
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier in associated constant declaration
+  // CHECK:STDERR:        ·         ┃        [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let var a: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var b: ();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   var b: ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var b: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var c: ();
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR: ->     │   let var c: ();
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier in associated constant declaration
+  // CHECK:STDERR:        ·         ┃        [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let var c: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   var d: ();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   var d: ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var d: ();
 }
 
 // CHECK:STDOUT: - filename: fail_in_interface.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'InvalidParseStart', text: 'var', has_error: yes},
-// CHECK:STDOUT:       {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' has_error
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─InvalidParseStart 'var' has_error
+// CHECK:STDOUT:   │ ├─InvalidParseSubtree ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

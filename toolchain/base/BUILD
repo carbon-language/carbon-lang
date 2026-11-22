@@ -24,7 +24,6 @@ cc_library(
         ":value_store",
         ":yaml",
         "//common:check",
-        "//common:hashing",
         "//common:set",
         "@llvm-project//llvm:Support",
     ],
@@ -55,6 +54,7 @@ cc_test(
         ":shared_value_stores",
         ":value_ids",
         ":value_store",
+        "//common:hashing_llvm",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
@@ -67,13 +67,14 @@ cc_library(
     hdrs = ["clang_invocation.h"],
     deps = [
         ":install_paths",
-        "//common:check",
         "//common:string_helpers",
         "//toolchain/diagnostics:emitter",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
+        "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 
@@ -92,8 +93,27 @@ cc_library(
 cc_library(
     name = "for_each_macro",
     hdrs = ["for_each_macro.h"],
+)
+
+cc_library(
+    name = "grouped_value_store",
+    hdrs = ["grouped_value_store.h"],
     deps = [
+        ":id_tag",
+        "//common:check",
         "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "grouped_value_store_test",
+    size = "small",
+    srcs = ["grouped_value_store_test.cpp"],
+    deps = [
+        ":grouped_value_store",
+        ":index_base",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
     ],
 )
 
@@ -220,6 +240,29 @@ cc_library(
 )
 
 cc_library(
+    name = "stable_stack",
+    hdrs = [
+        "stable_stack.h",
+    ],
+    deps = [
+        ":mem_usage",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "stable_stack_test",
+    size = "small",
+    srcs = ["stable_stack_test.cpp"],
+    deps = [
+        ":stable_stack",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "timings",
     hdrs = ["timings.h"],
     deps = [
@@ -292,6 +335,7 @@ cc_library(
         ":value_store",
         ":yaml",
         "//common:check",
+        "//common:hashing_llvm",
         "//common:hashtable_key_context",
         "//common:ostream",
         "//common:set",
@@ -356,6 +400,7 @@ cc_library(
         ":value_ids",
         ":value_store",
         ":yaml",
+        "//common:hashing_llvm",
         "@llvm-project//llvm:Support",
     ],
 )

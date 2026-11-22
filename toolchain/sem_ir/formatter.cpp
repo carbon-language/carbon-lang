@@ -54,12 +54,14 @@ static auto GetTentativeScopes(const SemIR::File& sem_ir)
 }
 
 Formatter::Formatter(
-    const File* sem_ir, int total_ir_count,
+    const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
+    const SemIR::GetInstNamersStore& inst_namers,
     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
-      inst_namer_(sem_ir_, total_ir_count),
+      short_file_names_(short_file_names),
+      inst_namer_(inst_namers.Get(sem_ir->check_ir_id())()),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
@@ -98,7 +100,8 @@ Formatter::Formatter(
 }
 
 auto Formatter::Format() -> void {
-  out() << "--- " << sem_ir_->filename() << "\n";
+  out() << "--- " << sem_ir_->filename() << " = $"
+        << short_file_names_->Get(sem_ir_->check_ir_id()) << "\n";
 
   for (auto [scope_id, insts] : GetTentativeScopes(*sem_ir_)) {
     FormatTopLevelScope(scope_id, insts);
@@ -169,8 +172,11 @@ static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
     case Parse::NodeKind::ChoiceDefinitionStart:
     case Parse::NodeKind::ClassDefinitionStart:
     case Parse::NodeKind::FunctionDefinitionStart:
+    case Parse::NodeKind::FunctionTerseDefinitionStart:
     case Parse::NodeKind::ImplDefinitionStart:
     case Parse::NodeKind::InterfaceDefinitionStart:
+    case Parse::NodeKind::LambdaDefinitionStart:
+    case Parse::NodeKind::LambdaTerseDefinitionStart:
     case Parse::NodeKind::NamedConstraintDefinitionStart:
       return true;
     default:
@@ -570,13 +576,20 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
 
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
+  // The return type might not have been deduced if checking stopped early.
   FormatFunctionSignature(fn.call_params_id,
                           fn.call_param_ranges.return_begin(),
-                          fn.GetDeclaredReturnForm(*sem_ir_));
+                          fn.has_pending_deduced_return_type()
+                              ? InstId::None
+                              : fn.GetDeclaredReturnForm(*sem_ir_));
+  if (fn.has_deduced_return_type()) {
+    out() << " [deduced]";
+  }
 
-  if (fn.builtin_function_kind() != BuiltinFunctionKind::None) {
+  if (auto builtin_kind = fn.GetBuiltinFunctionKind(*sem_ir_);
+      builtin_kind != BuiltinFunctionKind::None) {
     out() << " = \""
-          << FormatEscaped(fn.builtin_function_kind().name(),
+          << FormatEscaped(builtin_kind.name(),
                            /*use_hex_escapes=*/true)
           << "\"";
   }
@@ -644,7 +657,11 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
     }
     out() << " => ";
     if (specific_inst_id) {
-      FormatName(*specific_inst_id);
+      if (specific_inst_id->has_value()) {
+        FormatName(*specific_inst_id);
+      } else {
+        out() << "<not constant>";
+      }
     } else {
       out() << "<missing>";
     }
@@ -1639,7 +1656,8 @@ auto Formatter::FormatArg(DeclaredFacetTypeId id) -> void {
 
 auto Formatter::FormatArg(FieldId id) -> void {
   const auto& field = sem_ir_->fields().Get(id);
-  out() << field.index;
+  FormatName(field.name_id);
+  out() << ", " << field.index;
   if (field.initializer_id.has_value()) {
     out() << ", initializer = ";
     out() << field.initializer_id;
@@ -1705,7 +1723,7 @@ auto Formatter::FormatArg(ExprRegionId id) -> void {
 auto Formatter::FormatArg(RealId id) -> void {
   // TODO: Format with a `.` when the exponent is near zero.
   const auto& real = sem_ir_->reals().Get(id);
-  real.mantissa.print(out(), /*isSigned=*/false);
+  real.mantissa.print(out(), /*isSigned=*/true);
   out() << (real.is_decimal ? 'e' : 'p') << real.exponent;
 }
 
@@ -1714,6 +1732,12 @@ auto Formatter::FormatArg(StringLiteralValueId id) -> void {
         << FormatEscaped(sem_ir_->string_literal_values().Get(id),
                          /*use_hex_escapes=*/true)
         << '"';
+}
+
+auto Formatter::FormatArg(ClangDeclId id) -> void { out() << id; }
+
+auto Formatter::FormatArg(ClangFunctionPointerTypeId id) -> void {
+  out() << id;
 }
 
 auto Formatter::FormatReturnSlotArg(InstId dest_id) -> void {
@@ -1741,6 +1765,9 @@ auto Formatter::FormatName(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   FormatName(specific.generic_id);
   FormatArg(specific.args_id);
+  if (specific.identified) {
+    out() << ":identified";
+  }
 }
 
 auto Formatter::FormatName(SpecificInterfaceId id) -> void {
@@ -1809,6 +1836,8 @@ auto Formatter::FormatTypeOfInst(InstId id) -> void {
   FormatConstant(sem_ir_->types().GetConstantId(type_id));
 }
 
+// TODO: Should this use shorthand file names instead of shorthand library
+// names?
 auto Formatter::GetImportIRLabel(ImportIRId id) -> std::string {
   CARBON_CHECK(id.has_value(),
                "Callers are responsible for checking `id.has_value`");

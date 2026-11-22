@@ -34,21 +34,27 @@ library "[[@TEST_NAME]]";
 namespace NS;
 
 fn F() -> {} {
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:9: error: name `NS` not found [NameNotFound]
-  // CHECK:STDERR:   alias NS.a = {};
-  // CHECK:STDERR:         ^~
+  // CHECK:STDERR:        ╭─┤ fail_local_in_namespace.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   alias NS.a = {};
+  // CHECK:STDERR:        ·         ━┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `NS` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+4]]:10: error: member name `a` not found in `NS` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return NS.a;
-  // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_local_in_namespace.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return NS.a;
+  // CHECK:STDERR:        ·          ━━┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: member name `a` not found in `NS`
+  // CHECK:STDERR:        ·               ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return NS.a;
 }
 
-// CHECK:STDOUT: --- in_namespace.carbon
+// CHECK:STDOUT: --- in_namespace.carbon = $in_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

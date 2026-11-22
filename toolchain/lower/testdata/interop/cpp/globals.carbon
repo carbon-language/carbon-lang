@@ -35,12 +35,12 @@ fn MyF() {
 
 // --- inline.h
 
-struct C {
-  C();
-  ~C();
+struct InlineC {
+  InlineC();
+  ~InlineC();
   void f();
 };
-inline C inline_global;
+inline InlineC inline_global;
 
 // --- import_inline.carbon
 
@@ -132,7 +132,7 @@ fn ReadVarTemplateWithConstructor() -> Cpp.Y* {
 
 // --- static_template.h
 
-struct X {
+struct StaticTmplX {
   template<typename T> static T static_tmpl = T();
 };
 
@@ -147,11 +147,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "static_template.h";
 
 fn ReadStaticVarTemplate() -> i32 {
-  return Cpp.X.static_tmpl(i32);
+  return Cpp.StaticTmplX.static_tmpl(i32);
 }
 
 fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
-  return &Cpp.X.static_tmpl(Cpp.Y);
+  return &Cpp.StaticTmplX.static_tmpl(Cpp.Y);
 }
 
 // CHECK:STDOUT: ; ---
@@ -165,33 +165,34 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: @global = dso_local global %class.C zeroinitializer, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define void @_CMyF.Main() #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !15
+// CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!24}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "import_global.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{null}
-// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 1, scope: !12)
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !23 = !DIFile(filename: "import_global.carbon", directory: "")
+// CHECK:STDOUT: !24 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !23, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !25 = !{null}
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "MyF", linkageName: "_CMyF.Main", scope: null, file: !23, line: 6, type: !26, spFlags: DISPFlagDefinition, unit: !24)
+// CHECK:STDOUT: !31 = !DILocation(line: 6, column: 1, scope: !27)
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_inline.carbon'
@@ -199,11 +200,11 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.C = type { i8 }
+// CHECK:STDOUT: %struct.InlineC = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $inline_global = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @inline_global = linkonce_odr dso_local global %struct.C zeroinitializer, comdat, align 1
+// CHECK:STDOUT: @inline_global = linkonce_odr dso_local global %struct.InlineC zeroinitializer, comdat, align 1
 // CHECK:STDOUT: @_ZGV13inline_global = linkonce_odr dso_local global i64 0, comdat($inline_global), align 8
 // CHECK:STDOUT: @__dso_handle = external hidden global i8
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @__cxx_global_var_init, ptr @inline_global }]
@@ -224,11 +225,11 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT:   br i1 %tobool, label %init, label %init.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: init:                                             ; preds = %init.check
-// CHECK:STDOUT:   invoke void @_ZN1CC1Ev(ptr noundef nonnull align 1 dereferenceable(1) @inline_global)
+// CHECK:STDOUT:   invoke void @_ZN7InlineCC1Ev(ptr noundef nonnull align 1 dereferenceable(1) @inline_global)
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
 // CHECK:STDOUT: invoke.cont:                                      ; preds = %init
-// CHECK:STDOUT:   %2 = call i32 @__cxa_atexit(ptr @_ZN1CD1Ev, ptr @inline_global, ptr @__dso_handle) #1
+// CHECK:STDOUT:   %2 = call i32 @__cxa_atexit(ptr @_ZN7InlineCD1Ev, ptr @inline_global, ptr @__dso_handle) #1
 // CHECK:STDOUT:   call void @__cxa_guard_release(ptr @_ZGV13inline_global) #1
 // CHECK:STDOUT:   br label %init.end
 // CHECK:STDOUT:
@@ -256,12 +257,12 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare i32 @__cxa_guard_acquire(ptr) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1CC1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #2
+// CHECK:STDOUT: declare void @_ZN7InlineCC1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @__gxx_personality_v0(...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: declare void @_ZN1CD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #3
+// CHECK:STDOUT: declare void @_ZN7InlineCD1Ev(ptr noundef nonnull align 1 dereferenceable(1)) unnamed_addr #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: declare i32 @__cxa_atexit(ptr, ptr, ptr) #1
@@ -273,13 +274,13 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: declare void @__cxa_guard_release(ptr) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallF.Main() #1 !dbg !12 {
+// CHECK:STDOUT: define void @_CCallF.Main() #1 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1C1fEv(ptr @inline_global), !dbg !15
-// CHECK:STDOUT:   ret void, !dbg !16
+// CHECK:STDOUT:   call void @_ZN7InlineC1fEv(ptr @inline_global), !dbg !44
+// CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1C1fEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
+// CHECK:STDOUT: declare void @_ZN7InlineC1fEv(ptr noundef nonnull align 1 dereferenceable(1)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @inline_global, { 2, 3, 4, 0, 1 }
@@ -290,27 +291,28 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!39}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "import_inline.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{null}
-// CHECK:STDOUT: !15 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !16 = !DILocation(line: 6, column: 1, scope: !12)
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !25 = !{null}
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
+// CHECK:STDOUT: !38 = !DIFile(filename: "import_inline.carbon", directory: "")
+// CHECK:STDOUT: !39 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !38, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "CallF", linkageName: "_CCallF.Main", scope: null, file: !38, line: 6, type: !26, spFlags: DISPFlagDefinition, unit: !39)
+// CHECK:STDOUT: !44 = !DILocation(line: 7, column: 3, scope: !43)
+// CHECK:STDOUT: !45 = !DILocation(line: 6, column: 1, scope: !43)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'todo_import_thread_local.carbon'
@@ -333,7 +335,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %call = call noundef i32 @_Z4initv()
 // CHECK:STDOUT:   %0 = call align 4 ptr @llvm.threadlocal.address.p0(ptr align 4 @thread_local_global_with_init)
-// CHECK:STDOUT:   store i32 %call, ptr %0, align 4, !tbaa !12
+// CHECK:STDOUT:   store i32 %call, ptr %0, align 4, !tbaa !4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,17 +345,17 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: declare nonnull ptr @llvm.threadlocal.address.p0(ptr nonnull) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CThreadLocalStore.Main() #3 !dbg !13 {
+// CHECK:STDOUT: define void @_CThreadLocalStore.Main() #3 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   store i32 42, ptr @thread_local_global, align 4, !dbg !16
-// CHECK:STDOUT:   ret void, !dbg !17
+// CHECK:STDOUT:   store i32 42, ptr @thread_local_global, align 4, !dbg !52
+// CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CThreadLocalTriggerInit.Main() #3 !dbg !18 {
+// CHECK:STDOUT: define i32 @_CThreadLocalTriggerInit.Main() #3 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14 = load i32, ptr @thread_local_global_with_init, align 4, !dbg !22
-// CHECK:STDOUT:   ret i32 %.loc14, !dbg !23
+// CHECK:STDOUT:   %.loc14 = load i32, ptr @thread_local_global_with_init, align 4, !dbg !57
+// CHECK:STDOUT:   ret i32 %.loc14, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: uwtable
@@ -361,7 +363,7 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %0 = load i8, ptr @__tls_guard, align 1
 // CHECK:STDOUT:   %guard.uninitialized = icmp eq i8 %0, 0
-// CHECK:STDOUT:   br i1 %guard.uninitialized, label %init, label %exit, !prof !24
+// CHECK:STDOUT:   br i1 %guard.uninitialized, label %init, label %exit, !prof !59
 // CHECK:STDOUT:
 // CHECK:STDOUT: init:                                             ; preds = %entry
 // CHECK:STDOUT:   store i8 1, ptr @__tls_guard, align 1
@@ -396,35 +398,36 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #5 = { uwtable "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!47}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "todo_import_thread_local.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = !{!9, !9, i64 0}
-// CHECK:STDOUT: !13 = distinct !DISubprogram(name: "ThreadLocalStore", linkageName: "_CThreadLocalStore.Main", scope: null, file: !1, line: 9, type: !14, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !14 = !DISubroutineType(types: !15)
-// CHECK:STDOUT: !15 = !{null}
-// CHECK:STDOUT: !16 = !DILocation(line: 10, column: 3, scope: !13)
-// CHECK:STDOUT: !17 = !DILocation(line: 9, column: 1, scope: !13)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "ThreadLocalTriggerInit", linkageName: "_CThreadLocalTriggerInit.Main", scope: null, file: !1, line: 13, type: !19, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
-// CHECK:STDOUT: !20 = !{!21}
-// CHECK:STDOUT: !21 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !22 = !DILocation(line: 14, column: 10, scope: !18)
-// CHECK:STDOUT: !23 = !DILocation(line: 14, column: 3, scope: !18)
-// CHECK:STDOUT: !24 = !{!"branch_weights", i32 1, i32 1023}
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !4 = !{!3, !3, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !25 = !{null}
+// CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
+// CHECK:STDOUT: !46 = !DIFile(filename: "todo_import_thread_local.carbon", directory: "")
+// CHECK:STDOUT: !47 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !46, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !48 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !49 = !{!48}
+// CHECK:STDOUT: !50 = !DISubroutineType(types: !49)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "ThreadLocalStore", linkageName: "_CThreadLocalStore.Main", scope: null, file: !46, line: 9, type: !26, spFlags: DISPFlagDefinition, unit: !47)
+// CHECK:STDOUT: !52 = !DILocation(line: 10, column: 3, scope: !51)
+// CHECK:STDOUT: !53 = !DILocation(line: 9, column: 1, scope: !51)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "ThreadLocalTriggerInit", linkageName: "_CThreadLocalTriggerInit.Main", scope: null, file: !46, line: 13, type: !50, spFlags: DISPFlagDefinition, unit: !47)
+// CHECK:STDOUT: !57 = !DILocation(line: 14, column: 10, scope: !54)
+// CHECK:STDOUT: !58 = !DILocation(line: 14, column: 3, scope: !54)
+// CHECK:STDOUT: !59 = !{!"branch_weights", i32 1, i32 1023}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_static.carbon'
@@ -437,36 +440,37 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: @_ZN1X1nE = linkonce_odr dso_local global i32 42, comdat, align 4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CReadStatic.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CReadStatic.Main() #0 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN1X1nE, align 4, !dbg !16
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !17
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN1X1nE, align 4, !dbg !65
+// CHECK:STDOUT:   ret i32 %.loc7, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!61}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "import_static.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "ReadStatic", linkageName: "_CReadStatic.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 10, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !12)
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
+// CHECK:STDOUT: !48 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !49 = !{!48}
+// CHECK:STDOUT: !50 = !DISubroutineType(types: !49)
+// CHECK:STDOUT: !60 = !DIFile(filename: "import_static.carbon", directory: "")
+// CHECK:STDOUT: !61 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !60, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "ReadStatic", linkageName: "_CReadStatic.Main", scope: null, file: !60, line: 6, type: !50, spFlags: DISPFlagDefinition, unit: !61)
+// CHECK:STDOUT: !65 = !DILocation(line: 7, column: 10, scope: !62)
+// CHECK:STDOUT: !66 = !DILocation(line: 7, column: 3, scope: !62)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_var_template.carbon'
@@ -480,47 +484,48 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: @_Z4tmplI1YE = external global %struct.Y, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CReadVarTemplate.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CReadVarTemplate.Main() #0 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_Z4tmplIiE, align 4, !dbg !16
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !17
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @_Z4tmplIiE, align 4, !dbg !74
+// CHECK:STDOUT:   ret i32 %.loc7, !dbg !75
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReadVarTemplateWithConstructor.Main() #0 !dbg !18 {
+// CHECK:STDOUT: define ptr @_CReadVarTemplateWithConstructor.Main() #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_Z4tmplI1YE, !dbg !22
+// CHECK:STDOUT:   ret ptr @_Z4tmplI1YE, !dbg !79
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!68}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "import_var_template.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "ReadVarTemplate", linkageName: "_CReadVarTemplate.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 10, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "ReadVarTemplateWithConstructor", linkageName: "_CReadVarTemplateWithConstructor.Main", scope: null, file: !1, line: 10, type: !19, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
-// CHECK:STDOUT: !20 = !{!21}
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !DILocation(line: 11, column: 3, scope: !18)
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
+// CHECK:STDOUT: !40 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !48 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !49 = !{!48}
+// CHECK:STDOUT: !50 = !DISubroutineType(types: !49)
+// CHECK:STDOUT: !67 = !DIFile(filename: "import_var_template.carbon", directory: "")
+// CHECK:STDOUT: !68 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !67, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !69 = !{!40}
+// CHECK:STDOUT: !70 = !DISubroutineType(types: !69)
+// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "ReadVarTemplate", linkageName: "_CReadVarTemplate.Main", scope: null, file: !67, line: 6, type: !50, spFlags: DISPFlagDefinition, unit: !68)
+// CHECK:STDOUT: !74 = !DILocation(line: 7, column: 10, scope: !71)
+// CHECK:STDOUT: !75 = !DILocation(line: 7, column: 3, scope: !71)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "ReadVarTemplateWithConstructor", linkageName: "_CReadVarTemplateWithConstructor.Main", scope: null, file: !67, line: 10, type: !70, spFlags: DISPFlagDefinition, unit: !68)
+// CHECK:STDOUT: !79 = !DILocation(line: 11, column: 3, scope: !76)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'import_static_template.carbon'
@@ -528,51 +533,52 @@ fn ReadStaticVarTemplateWithConstructor() -> Cpp.Y* {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %struct.Y = type { i8 }
+// CHECK:STDOUT: %struct.Y.26 = type { i8 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_ZN1X11static_tmplIiEE = external global i32, align 4
-// CHECK:STDOUT: @_ZN1X11static_tmplI1YEE = external global %struct.Y, align 1
+// CHECK:STDOUT: @_ZN11StaticTmplX11static_tmplIiEE = external global i32, align 4
+// CHECK:STDOUT: @_ZN11StaticTmplX11static_tmplI1YEE = external global %struct.Y.26, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CReadStaticVarTemplate.Main() #0 !dbg !12 {
+// CHECK:STDOUT: define i32 @_CReadStaticVarTemplate.Main() #0 !dbg !82 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN1X11static_tmplIiEE, align 4, !dbg !16
-// CHECK:STDOUT:   ret i32 %.loc7, !dbg !17
+// CHECK:STDOUT:   %.loc7 = load i32, ptr @_ZN11StaticTmplX11static_tmplIiEE, align 4, !dbg !85
+// CHECK:STDOUT:   ret i32 %.loc7, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CReadStaticVarTemplateWithConstructor.Main() #0 !dbg !18 {
+// CHECK:STDOUT: define ptr @_CReadStaticVarTemplateWithConstructor.Main() #0 !dbg !87 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr @_ZN1X11static_tmplI1YEE, !dbg !22
+// CHECK:STDOUT:   ret ptr @_ZN11StaticTmplX11static_tmplI1YEE, !dbg !90
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !5, !6}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!7}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!81}
+// CHECK:STDOUT: !llvm.module.flags = !{!32, !33, !34, !35, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!37}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "import_static_template.carbon", directory: "")
-// CHECK:STDOUT: !2 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !3 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !4 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !5 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !6 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !7 = !{!8, !9, i64 0}
-// CHECK:STDOUT: !8 = !{!"__libc_errno", !9, i64 0}
-// CHECK:STDOUT: !9 = !{!"int", !10, i64 0}
-// CHECK:STDOUT: !10 = !{!"omnipotent char", !11, i64 0}
-// CHECK:STDOUT: !11 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !12 = distinct !DISubprogram(name: "ReadStaticVarTemplate", linkageName: "_CReadStaticVarTemplate.Main", scope: null, file: !1, line: 6, type: !13, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !13 = !DISubroutineType(types: !14)
-// CHECK:STDOUT: !14 = !{!15}
-// CHECK:STDOUT: !15 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
-// CHECK:STDOUT: !16 = !DILocation(line: 7, column: 10, scope: !12)
-// CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !12)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "ReadStaticVarTemplateWithConstructor", linkageName: "_CReadStaticVarTemplateWithConstructor.Main", scope: null, file: !1, line: 10, type: !19, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !19 = !DISubroutineType(types: !20)
-// CHECK:STDOUT: !20 = !{!21}
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !DILocation(line: 11, column: 3, scope: !18)
+// CHECK:STDOUT: !1 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !2 = !{!"omnipotent char", !1, i64 0}
+// CHECK:STDOUT: !3 = !{!"int", !2, i64 0}
+// CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !32 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !33 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !34 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !35 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !36 = !{!"__libc_errno", !3, i64 0}
+// CHECK:STDOUT: !37 = !{!36, !3, i64 0}
+// CHECK:STDOUT: !40 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !48 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !49 = !{!48}
+// CHECK:STDOUT: !50 = !DISubroutineType(types: !49)
+// CHECK:STDOUT: !69 = !{!40}
+// CHECK:STDOUT: !70 = !DISubroutineType(types: !69)
+// CHECK:STDOUT: !80 = !DIFile(filename: "import_static_template.carbon", directory: "")
+// CHECK:STDOUT: !81 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !80, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "ReadStaticVarTemplate", linkageName: "_CReadStaticVarTemplate.Main", scope: null, file: !80, line: 6, type: !50, spFlags: DISPFlagDefinition, unit: !81)
+// CHECK:STDOUT: !85 = !DILocation(line: 7, column: 10, scope: !82)
+// CHECK:STDOUT: !86 = !DILocation(line: 7, column: 3, scope: !82)
+// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "ReadStaticVarTemplateWithConstructor", linkageName: "_CReadStaticVarTemplateWithConstructor.Main", scope: null, file: !80, line: 10, type: !70, spFlags: DISPFlagDefinition, unit: !81)
+// CHECK:STDOUT: !90 = !DILocation(line: 11, column: 3, scope: !87)
 // CHECK:STDOUT:

@@ -112,9 +112,12 @@ static auto CloneBindingPattern(Context& context, SemIR::InstId pattern_id,
     phase = entity_name.is_template ? BindingPhase::Template
                                     : BindingPhase::Symbolic;
   }
-  pattern.entity_name_id = AddBindingEntityName(context, entity_name.name_id,
-                                                /*form_id=*/SemIR::InstId::None,
-                                                entity_name.is_unused, phase);
+  // The type of the clone is the result of substitution, so the type as
+  // written in the original declaration no longer describes it.
+  pattern.entity_name_id = AddBindingEntityName(
+      context, entity_name.name_id,
+      /*type_inst_id=*/SemIR::TypeInstId::None,
+      /*form_id=*/SemIR::InstId::None, entity_name.is_unused, phase);
   if (pattern.kind == SemIR::WrapperBindingPattern::Kind) {
     // Now that we're inside the binding pattern, we can use CloneInstId.
     pattern.subpattern_id =
@@ -216,8 +219,9 @@ static auto CloneFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   // Perform callee-side pattern matching to rebuild the parameter list.
   context.inst_block_stack().Push();
-  auto match_results = CalleePatternMatch(context, implicit_param_patterns_id,
-                                          param_patterns_id, return_pattern_id);
+  auto match_results =
+      CalleePatternMatch(context, loc_id, implicit_param_patterns_id,
+                         param_patterns_id, return_pattern_id);
   auto pattern_block_id = context.pattern_block_stack().Pop();
   auto decl_block_id = context.inst_block_stack().Pop();
 
@@ -273,7 +277,7 @@ auto PerformThunkCall(Context& context, SemIR::LocId loc_id,
   auto& function = context.functions().Get(function_id);
 
   auto [args_vec, ignored_call_args] =
-      ThunkPatternMatch(context, param_pattern_ids, call_arg_ids);
+      ThunkPatternMatch(context, loc_id, param_pattern_ids, call_arg_ids);
   llvm::ArrayRef<SemIR::InstId> args = args_vec;
 
   if (override_self_type_id.has_value()) {
@@ -328,11 +332,11 @@ static auto StartThunkFunctionDefinition(Context& context,
                                          SemIR::InstId callee_id) {
   // The check below produces diagnostics referring to the signature, so also
   // note the callee.
-  Diagnostics::AnnotationScope annot_scope(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(ThunkCallee, Note,
-                          "while building thunk calling this function");
-        builder.Note(callee_id, ThunkCallee);
+        CARBON_DIAGNOSTIC_LABEL(ThunkCallee,
+                                "while building thunk calling this function");
+        builder.Attach(callee_id, ThunkCallee);
       });
 
   StartFunctionDefinition(context, thunk_id, function_id);
@@ -350,13 +354,14 @@ static auto BuildThunkDefinition(Context& context,
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
-  Diagnostics::AnnotationScope annot_scope(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC(
-            ThunkSignature, Note,
+        CARBON_DIAGNOSTIC_LABEL(
+            ThunkSignature,
             "while building thunk to match the signature of this function");
-        builder.Note(context.functions().Get(signature_id).first_owning_decl_id,
-                     ThunkSignature);
+        builder.Attach(
+            context.functions().Get(signature_id).first_owning_decl_id,
+            ThunkSignature);
       });
 
   const auto& function = context.functions().Get(function_id);
@@ -551,9 +556,7 @@ auto BuildDestroyThunk(Context& context, SemIR::LocId loc_id,
   auto self_inst_id = params[0];
 
   // Build the function body. This calls the `Destroy` operator on `self`.
-  auto destroy_inst_id = BuildUnaryOperator(
-      context, loc_id, {.interface_name = CoreIdentifier::Destroy},
-      self_inst_id);
+  auto destroy_inst_id = BuildSelfDestructCall(context, self_inst_id);
   DiscardExpr(context, destroy_inst_id);
   BuildReturnWithNoExpr(context, loc_id);
 

@@ -27,8 +27,10 @@ The lexer handles matching for `()`, `[]`, and `{}`. When a bracket lacks a
 match, it will insert a "recovery" token to produce a match. As a consequence,
 the lexer's output should always have matched brackets, even with invalid code.
 
-While bracket matching could use hints such as contextual clues from
-indentation, that is not yet implemented.
+Where the missing bracket belongs is decided by a search over candidate repairs,
+using indentation, structural facts about the language, and formatting
+conventions as evidence. See
+[mismatched bracket recovery](lex/mismatched_brackets.md).
 
 ## Alternatives considered
 

@@ -16,9 +16,11 @@
 
 package A;
 
-// CHECK:STDERR: fail_default_api.carbon:[[@LINE+4]]:1: error: file cannot import itself [ImportSelf]
-// CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_default_api.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import library default;
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: file cannot import itself [ImportSelf]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library default;
 
@@ -26,17 +28,25 @@ import library default;
 
 impl package A;
 
-// CHECK:STDERR: fail_default.impl.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
-// CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_default.impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ import library default;
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: explicit import of `api` from `impl` file is redundant with implicit
+// CHECK:STDERR:        ·    ┃        import
+// CHECK:STDERR:        ·    ┃        [ExplicitImportApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library default;
 
 // --- fail_main_import_default.carbon
 
-// CHECK:STDERR: fail_main_import_default.carbon:[[@LINE+4]]:1: error: explicit import of `api` from `impl` file is redundant with implicit import [ExplicitImportApi]
-// CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_import_default.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ import library default;
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: explicit import of `api` from `impl` file is redundant with implicit
+// CHECK:STDERR:        ·    ┃        import
+// CHECK:STDERR:        ·    ┃        [ExplicitImportApi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library default;
 
@@ -44,19 +54,21 @@ import library default;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_main_lib_import_default.carbon:[[@LINE+4]]:1: error: cannot import `Main//default` [ImportMainDefaultLibrary]
-// CHECK:STDERR: import library default;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_main_lib_import_default.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ import library default;
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: cannot import `Main//default` [ImportMainDefaultLibrary]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library default;
 
-// CHECK:STDOUT: --- fail_default_api.carbon
+// CHECK:STDOUT: --- fail_default_api.carbon = $fail_default_api
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_default.impl.carbon
+// CHECK:STDOUT: --- fail_default.impl.carbon = $fail_default.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
@@ -64,13 +76,13 @@ import library default;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_import_default.carbon
+// CHECK:STDOUT: --- fail_main_import_default.carbon = $fail_main_import_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib_import_default.carbon
+// CHECK:STDOUT: --- fail_main_lib_import_default.carbon = $fail_main_lib_import_default
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

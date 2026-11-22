@@ -2,9 +2,8 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// ARGS: compile --phase=check --share-cpp-ast %s
-//
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// EXTRA-ARGS: --share-cpp-ast
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -33,12 +32,19 @@ fn CallA() -> i32 {
   return Cpp.GetA();
 }
 
-// --- todo_a_leaks.carbon
+// --- fail_a_does_not_leak.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
 
 fn CallLeakedA() -> i32 {
-  // TODO: This should not be found as we have not imported "a.h".
+  // This should not be found as we have not imported "a.h".
+  // CHECK:STDERR:        ╭─┤ fail_a_does_not_leak.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return Cpp.GetA();
+  // CHECK:STDERR:        ·          ━━━━┳━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: member name `GetA` not found in `Cpp`
+  // CHECK:STDERR:        ·                 ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   return Cpp.GetA();
 }
 
@@ -62,3 +68,110 @@ fn CallAIndirect() -> i32 {
 fn CallB() -> i32 {
   return Cpp.GetB();
 }
+
+// --- pkg_a.carbon
+package PkgA;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+alias TypeAlias = i32;
+namespace N;
+class N.SameNested {}
+
+inline Cpp '''
+void CheckPkgA(Carbon::SameName, Carbon::N::SameNested) {
+  Carbon::TypeAlias x = 0;
+  static_assert(sizeof(x) == 4);
+}
+''';
+
+fn TestPkgA(s: SameName, n: N.SameNested) {
+  Cpp.Accept(s);
+  Cpp.CheckPkgA(s, n);
+}
+
+// --- pkg_b.carbon
+package PkgB;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+alias TypeAlias = i64;
+namespace N;
+class N.SameNested {}
+
+inline Cpp '''
+void CheckPkgB(Carbon::SameName, Carbon::N::SameNested) {
+  Carbon::TypeAlias x = 0;
+  static_assert(sizeof(x) == 8);
+}
+''';
+
+fn TestPkgB(s: SameName, n: N.SameNested) {
+  Cpp.Accept(s);
+  Cpp.CheckPkgB(s, n);
+}
+
+// --- use_both_packages.carbon
+library "[[@TEST_NAME]]";
+import PkgA;
+import PkgB;
+import Cpp inline '''
+// SameName and N::SameNested in PkgA and PkgB have distinct C++ DeclContexts
+// (Carbon::PkgA vs Carbon::PkgB), so overloading on them in C++ succeeds.
+void OverloadByPackage(Carbon::PkgA::SameName*) {}
+void OverloadByPackage(Carbon::PkgB::SameName*) {}
+void OverloadNestedByPackage(Carbon::PkgA::N::SameNested*) {}
+void OverloadNestedByPackage(Carbon::PkgB::N::SameNested*) {}
+''';
+
+// --- export_in_c.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class ExportedClass {}
+namespace N;
+class N.ExportedNested {}
+
+inline Cpp '''
+using UseExported = Carbon::ExportedClass;
+using UseNested = Carbon::N::ExportedNested;
+''';
+
+// --- fail_carbon_export_does_not_leak.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+namespace N;
+
+inline Cpp '''
+// CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+8]]:23
+// CHECK:STDERR: ->     │ using Leak1 = Carbon::ExportedClass;
+// CHECK:STDERR:        ·               ━━━━━━━╸╻
+// CHECK:STDERR:        ·                       ┗━━┫ error: no type named 'ExportedClass' in namespace
+// CHECK:STDERR:        ·                          ┃        'Carbon'
+// CHECK:STDERR:        ·                          ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+using Leak1 = Carbon::ExportedClass;
+// CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+8]]:26
+// CHECK:STDERR: ->     │ using Leak2 = Carbon::N::ExportedNested;
+// CHECK:STDERR:        ·               ━━━━━━━━━━╸╻
+// CHECK:STDERR:        ·                          ┗━━┫ error: no type named 'ExportedNested' in namespace
+// CHECK:STDERR:        ·                             ┃        'Carbon::N'
+// CHECK:STDERR:        ·                             ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+using Leak2 = Carbon::N::ExportedNested;
+// CHECK:STDERR:        ╭─┤ fail_carbon_export_does_not_leak.carbon:[[@LINE+7]]:23
+// CHECK:STDERR: ->     │ using Leak3 = Carbon::PkgA::SameName;
+// CHECK:STDERR:        ·               ━━━━━━━╸╻
+// CHECK:STDERR:        ·                       ┗━━┫ error: no member named 'PkgA' in namespace 'Carbon'
+// CHECK:STDERR:        ·                          ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+using Leak3 = Carbon::PkgA::SameName;
+''';

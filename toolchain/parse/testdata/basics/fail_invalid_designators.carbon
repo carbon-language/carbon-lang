@@ -10,34 +10,40 @@
 
 // NOTE: Move to its own directory when more tests are added.
 fn F() {
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   a.;
-  // CHECK:STDERR:     ^
+  // CHECK:STDERR:        ╭─┤ fail_invalid_designators.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   a.;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.;
-  // CHECK:STDERR: fail_invalid_designators.carbon:[[@LINE+4]]:5: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
-  // CHECK:STDERR:   a.fn;
-  // CHECK:STDERR:     ^~
+  // CHECK:STDERR:        ╭─┤ fail_invalid_designators.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.fn;
+  // CHECK:STDERR:        ·     ┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: expected identifier after `.`; prefix reserved word with `r#` to
+  // CHECK:STDERR:        ·        ┃        form a valid identifier
+  // CHECK:STDERR:        ·        ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.fn;
 }
 
 // CHECK:STDOUT: - filename: fail_invalid_designators.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: ';', has_error: yes},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature ';' has_error
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'fn'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

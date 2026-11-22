@@ -547,6 +547,51 @@ TEST_F(RuntimesCacheTest, Lookup) {
               Eq(runtimes.base_dir().Stat()->unix_inode()));
 }
 
+TEST_F(RuntimesCacheTest, LookupTargetCpuFeatures) {
+  Runtimes::Cache::Features base_features = {
+      .target = "x86_64-unknown-linux-gnu",
+      .cpu = "x86-64-v3",
+      .tune_cpu = "znver4",
+      .target_features = {"+avx2", "+bmi2"},
+  };
+  auto base_runtimes = *cache_.Lookup(base_features);
+
+  // Looking up identical features should return the same cache directory.
+  auto same_runtimes = *cache_.Lookup(base_features);
+  EXPECT_THAT(same_runtimes.base_path(), Eq(base_runtimes.base_path()));
+
+  // Changing `cpu` should produce a distinct cache directory.
+  auto diff_cpu = base_features;
+  diff_cpu.cpu = "x86-64-v4";
+  EXPECT_THAT(cache_.Lookup(diff_cpu)->base_path(),
+              Ne(base_runtimes.base_path()));
+
+  // Changing `tune_cpu` should produce a distinct cache directory.
+  auto diff_tune = base_features;
+  diff_tune.tune_cpu = "skylake";
+  EXPECT_THAT(cache_.Lookup(diff_tune)->base_path(),
+              Ne(base_runtimes.base_path()));
+
+  // Changing `target_features` should produce a distinct cache directory.
+  auto diff_features = base_features;
+  diff_features.target_features = {"+avx2"};
+  EXPECT_THAT(cache_.Lookup(diff_features)->base_path(),
+              Ne(base_runtimes.base_path()));
+
+  // Shifting characters across field boundaries should not collide.
+  auto boundary1 = *cache_.Lookup({
+      .target = "x86_64-unknown-linux-gnu",
+      .cpu = "ab",
+      .tune_cpu = "c",
+  });
+  auto boundary2 = *cache_.Lookup({
+      .target = "x86_64-unknown-linux-gnu",
+      .cpu = "a",
+      .tune_cpu = "bc",
+  });
+  EXPECT_THAT(boundary1.base_path(), Ne(boundary2.base_path()));
+}
+
 TEST_F(RuntimesCacheTest, LookupFailsIfCannotCreateDir) {
   // Create a read-only directory with the cache in it to cause failures.
   std::filesystem::path ro_cache_path = tmp_dir_.path() / "ro_cache";

@@ -79,10 +79,10 @@ auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool;
 //       llvm::ArrayRef<llvm::StringRef> interned_strings)
 //       : interned_strings_(interned_strings) {}
 //
-//   auto HashKey(llvm::StringRef s, uint64_t seed) const -> HashCode {
+//   auto HashKey(llvm::StringRef s) const -> HashCode {
 //     return HashValue(s);
 //   }
-//   auto HashKey(int index_key, uint64_t seed) const -> HashCode {
+//   auto HashKey(int index_key) const -> HashCode {
 //     return HashKey(interned_strings_[index_key]);
 //   }
 //
@@ -99,7 +99,7 @@ auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool;
 // ```
 struct DefaultKeyContext {
   template <typename AnyKeyT>
-  auto HashKey(const AnyKeyT& key, uint64_t seed) const -> HashCode;
+  auto HashKey(const AnyKeyT& key) const -> HashCode;
 
   template <typename AnyKeyT, typename TableKeyT>
   auto KeyEq(const AnyKeyT& lhs_key, const TableKeyT& rhs_key) const -> bool;
@@ -138,7 +138,7 @@ class TranslatingKeyContext {
   }
 
   template <typename AnyKeyT>
-  auto HashKey(const AnyKeyT& key, uint64_t seed) const -> HashCode;
+  auto HashKey(const AnyKeyT& key) const -> HashCode;
 
   template <typename AnyKeyT, typename TableKeyT>
   auto KeyEq(const AnyKeyT& lhs_key, const TableKeyT& rhs_key) const -> bool;
@@ -162,9 +162,44 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
+// The calling convention of `StringBytesNe`. Where it's available, a call
+// preserves more of the caller's registers than the default convention does:
+// every general register but the result's and one scratch register on x86-64,
+// and seven more of them on AArch64. Callers then don't have to save and
+// restore that much of their own state around each comparison.
+#if defined(__x86_64__) || defined(__aarch64__)
+#define CARBON_STRING_BYTES_NE_CC [[clang::preserve_most]]
+#else
+#define CARBON_STRING_BYTES_NE_CC
+#endif
+
+// Returns zero if the `size` bytes at `lhs` and `rhs` are equal, and a non-zero
+// value otherwise. Which non-zero value is unspecified, so callers may only
+// compare the result with zero. It's like `bcmp`, but faster for short and
+// medium sizes. It's out of line, which keeps callers small enough to inline,
+// and `pure`, which lets callers keep values loaded from memory in registers
+// across the call.
+[[gnu::pure]] CARBON_STRING_BYTES_NE_CC auto StringBytesNe(const std::byte* lhs,
+                                                           const std::byte* rhs,
+                                                           size_t size)
+    -> uint64_t;
+
+inline auto CarbonHashtableEq(llvm::StringRef lhs, llvm::StringRef rhs)
+    -> bool {
+  return lhs.size() == rhs.size() &&
+         StringBytesNe(reinterpret_cast<const std::byte*>(lhs.data()),
+                       reinterpret_cast<const std::byte*>(rhs.data()),
+                       lhs.size()) == 0;
+}
+
 inline auto CarbonHashtableEq(llvm::StringRef lhs, const std::string& rhs)
     -> bool {
-  return lhs == rhs;
+  return CarbonHashtableEq(lhs, llvm::StringRef(rhs));
+}
+
+inline auto CarbonHashtableEq(const std::string& lhs, const std::string& rhs)
+    -> bool {
+  return CarbonHashtableEq(llvm::StringRef(lhs), llvm::StringRef(rhs));
 }
 
 template <typename T>
@@ -216,9 +251,8 @@ inline auto HashtableEq(const LeftT& lhs, const RightT& rhs) -> bool {
 }
 
 template <typename AnyKeyT>
-auto DefaultKeyContext::HashKey(const AnyKeyT& key, uint64_t seed) const
-    -> HashCode {
-  return HashValue(key, seed);
+auto DefaultKeyContext::HashKey(const AnyKeyT& key) const -> HashCode {
+  return HashValue(key);
 }
 
 template <typename AnyKeyT, typename TableKeyT>
@@ -229,13 +263,13 @@ auto DefaultKeyContext::KeyEq(const AnyKeyT& lhs_key,
 
 template <typename DerivedT>
 template <typename AnyKeyT>
-auto TranslatingKeyContext<DerivedT>::HashKey(const AnyKeyT& key,
-                                              uint64_t seed) const -> HashCode {
+auto TranslatingKeyContext<DerivedT>::HashKey(const AnyKeyT& key) const
+    -> HashCode {
   const DerivedT& self = *static_cast<const DerivedT*>(this);
   if constexpr (requires { self.TranslateKey(key); }) {
-    return HashValue(self.TranslateKey(key), seed);
+    return HashValue(self.TranslateKey(key));
   } else {
-    return HashValue(key, seed);
+    return HashValue(key);
   }
 }
 

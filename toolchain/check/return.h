@@ -36,6 +36,14 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
 // Checks and builds SemIR for a `return var;` statement.
 auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id) -> void;
 
+// Deduces the return type of the current function, which must have an
+// undeduced return type, from the `return` statements in its body, and
+// completes the initialization of their return values. Called at the end of the
+// function body. Returns false if there are no `return` statements to deduce
+// from, after diagnosing that.
+auto DeduceReturnTypeAtEndOfBody(Context& context,
+                                 SemIR::FunctionId function_id) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_RETURN_H_

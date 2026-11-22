@@ -14,17 +14,21 @@
 
 // --- fail_implicit.impl.carbon
 
-// CHECK:STDERR: fail_implicit.impl.carbon:[[@LINE+4]]:1: error: corresponding API for 'Implicit' not found [LibraryApiNotFound]
-// CHECK:STDERR: impl package Implicit;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_implicit.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl package Implicit;
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: corresponding API for 'Implicit' not found
+// CHECK:STDERR:        ·               ┃        [LibraryApiNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl package Implicit;
 
 var a: () = A();
 
-// CHECK:STDOUT: --- fail_implicit.impl.carbon
+// CHECK:STDOUT: --- fail_implicit.impl.carbon = $fail_implicit.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
@@ -40,9 +44,9 @@ var a: () = A();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %a.var: ref %empty_tuple.type = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc8_9.1: type = splice_block %.loc8_9.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc8_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc8_9.3: type = converted %.loc8_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc11_9.1: type = splice_block %.loc11_9.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc11_9.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc11_9.3: type = converted %.loc11_9.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: ref %empty_tuple.type = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {

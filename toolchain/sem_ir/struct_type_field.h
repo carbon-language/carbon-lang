@@ -28,9 +28,8 @@ using StructTypeFieldsStore =
     BlockValueStore<StructTypeFieldsId, StructTypeField, Tag<CheckIRId>>;
 
 // See common/hashing.h. Supports canonicalization of fields.
-inline auto CarbonHashValue(const StructTypeField& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const StructTypeField& value) -> HashCode {
+  Hasher hasher;
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }

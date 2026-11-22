@@ -80,12 +80,12 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+7]]:9: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
-  // CHECK:STDERR:   while ({}) {}
-  // CHECK:STDERR:         ^~~~
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+4]]:9: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   while ({}) {}
-  // CHECK:STDERR:         ^~~~
+  // CHECK:STDERR:        ╭─┤ fail_bad_condition.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   while ({}) {}
+  // CHECK:STDERR:        ·         ━┳━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `{}` to `bool`
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   while ({}) {}
 }
@@ -94,35 +94,44 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
-  // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   continue;
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
-  // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   break;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   break;
   while (false) {
     continue;
     break;
   }
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `continue` can only be used in a loop [ContinueOutsideLoop]
-  // CHECK:STDERR:   continue;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   continue;
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `continue` can only be used in a loop [ContinueOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   continue;
-  // CHECK:STDERR: fail_bad_break_continue.carbon:[[@LINE+4]]:3: error: `break` can only be used in a loop [BreakOutsideLoop]
-  // CHECK:STDERR:   break;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_bad_break_continue.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   break;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `break` can only be used in a loop [BreakOutsideLoop]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   break;
 }
 
-// CHECK:STDOUT: --- while.carbon
+// CHECK:STDOUT: --- while.carbon = $while
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Cond.type: type = fn_type @Cond [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cond: %Cond.type = struct_value () [concrete]
@@ -164,9 +173,10 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unreachable_end.carbon
+// CHECK:STDOUT: --- unreachable_end.carbon = $unreachable_end
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Cond.type: type = fn_type @Cond [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cond: %Cond.type = struct_value () [concrete]
@@ -208,9 +218,10 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- break_continue.carbon
+// CHECK:STDOUT: --- break_continue.carbon = $break_continue
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]

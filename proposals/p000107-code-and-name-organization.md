@@ -757,13 +757,13 @@ approaches looks like:
         -   Alternative: `library "Boost/Random.Uniform" namespace Boost;`
     -   Specifying namespaces:
         -   Proposal: `package BoostRandom namespace Distributions;`
-        -   Alternative:
-            `library "Boost/Random.Uniform" namespace Boost.Random.Distributions;`
+        -   Alternative: `library "Boost/Random.Uniform" namespace
+            Boost.Random.Distributions;`
     -   Combined:
         -   Proposal:
             `package BoostRandom library "Uniform" namespace Distributions;`
-        -   Alternative:
-            `library "Boost/Random.Uniform" namespace Boost.Random.Distributions;`
+        -   Alternative: `library "Boost/Random.Uniform" namespace
+            Boost.Random.Distributions;`
 -   `import` changes:
     -   Trivial:
         -   Proposal: `import BoostRandom;`

@@ -68,7 +68,8 @@ auto NodeIdTraversal::Next() -> std::optional<Parse::NodeId> {
 
     // If we've reached the start of a deferred definition, skip to the end of
     // it, and track that we need to check it later.
-    if (node_id == next_deferred_definition_.start_id()) {
+    if (node_id == next_deferred_definition_.start_id() &&
+        !context_->parse_tree().node_has_error(node_id)) {
       const auto& definition_info =
           context_->parse_tree().deferred_definitions().Get(
               next_deferred_definition_.index());

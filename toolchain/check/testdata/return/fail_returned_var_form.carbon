@@ -12,12 +12,17 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_returned_var_form.carbon
 
 fn Mismatch() -> ref () {
-  // CHECK:STDERR: fail_returned_var_form.carbon:[[@LINE+7]]:3: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR:   returned var v: () = ();
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_returned_var_form.carbon:[[@LINE-4]]:18: note: return form declared here [ReturnFormHereNote]
-  // CHECK:STDERR: fn Mismatch() -> ref () {
-  // CHECK:STDERR:                  ^~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_returned_var_form.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn Mismatch() -> ref () {
+  // CHECK:STDERR:        ·                  ───┬──
+  // CHECK:STDERR:        ·                     ╰──┤ return form declared here [ReturnFormHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var v: () = ();
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `returned var` declaration in function with non-initializing
+  // CHECK:STDERR:        ·      ┃        return form
+  // CHECK:STDERR:        ·      ┃        [ReturnedVarNotInit]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var v: () = ();
   return var;

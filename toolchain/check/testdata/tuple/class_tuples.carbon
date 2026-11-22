@@ -21,12 +21,13 @@ class D {}
 
 var c: C;
 var d: D;
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+7]]:19: error: cannot implicitly convert expression of type `C` to `C*` [ConversionFailure]
-// CHECK:STDERR: var x: (C*, C*) = (c, d);
-// CHECK:STDERR:                   ^~~~~~
-// CHECK:STDERR: fail_element_type_mismatch.carbon:[[@LINE+4]]:19: note: type `C` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: (C*, C*) = (c, d);
-// CHECK:STDERR:                   ^~~~~~
+// CHECK:STDERR:        ╭─┤ fail_element_type_mismatch.carbon:[[@LINE+8]]:19
+// CHECK:STDERR: ->     │ var x: (C*, C*) = (c, d);
+// CHECK:STDERR:        ·                   ┳━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: cannot implicitly convert expression of type `C`
+// CHECK:STDERR:        ·                      ┃        to `C*`
+// CHECK:STDERR:        ·                      ┃        [ConversionFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: (C*, C*) = (c, d);
 
@@ -36,12 +37,17 @@ library "[[@TEST_NAME]]";
 class Complete {}
 class Incomplete;
 
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE+7]]:8: error: binding pattern has incomplete type `(Complete, Incomplete)` in name binding declaration [IncompleteTypeInBindingDecl]
-// CHECK:STDERR: var t: (Complete, Incomplete);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nested_incomplete.carbon:[[@LINE-5]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Incomplete;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_nested_incomplete.carbon:[[@LINE+12]]:8
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var t: (Complete, Incomplete);
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `(Complete, Incomplete)`
+// CHECK:STDERR:        ·           ┃        in name binding declaration
+// CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var t: (Complete, Incomplete);
 
@@ -52,12 +58,13 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+7]]:16: error: cannot implicitly convert expression of type `type` to `C` [ConversionFailure]
-// CHECK:STDERR: var x: (C, ) = (C, );
-// CHECK:STDERR:                ^~~~~
-// CHECK:STDERR: fail_type_assign.carbon:[[@LINE+4]]:16: note: type `type` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: (C, ) = (C, );
-// CHECK:STDERR:                ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_type_assign.carbon:[[@LINE+8]]:16
+// CHECK:STDERR: ->     │ var x: (C, ) = (C, );
+// CHECK:STDERR:        ·                ┳━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type `type`
+// CHECK:STDERR:        ·                   ┃        to `C`
+// CHECK:STDERR:        ·                   ┃        [ConversionFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: (C, ) = (C, );
 
@@ -67,11 +74,12 @@ library "[[@TEST_NAME]]";
 class C {}
 
 var c: C;
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+7]]:8: error: cannot implicitly convert non-type value of type `C` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: var x: c;
-// CHECK:STDERR:        ^
-// CHECK:STDERR: fail_value_as_type.carbon:[[@LINE+4]]:8: note: type `C` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: c;
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ╭─┤ fail_value_as_type.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ var x: c;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert non-type value of type `C` to
+// CHECK:STDERR:        ·           ┃        `type`
+// CHECK:STDERR:        ·           ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: c;

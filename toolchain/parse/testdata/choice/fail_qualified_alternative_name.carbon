@@ -9,20 +9,21 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_qualified_alternative_name.carbon
 
 choice X {
-  // CHECK:STDERR: fail_qualified_alternative_name.carbon:[[@LINE+4]]:4: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
-  // CHECK:STDERR:   A.B
-  // CHECK:STDERR:    ^
+  // CHECK:STDERR:        ╭─┤ fail_qualified_alternative_name.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   A.B
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   A.B
 }
 
 // CHECK:STDOUT: - filename: fail_qualified_alternative_name.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '}', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   ├─ChoiceDefinition '}' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -20,25 +20,33 @@ namespace Nested;
 // --- fail_conflict.carbon
 
 import Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+7]]:11: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: namespace Other;
-// CHECK:STDERR:           ^~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-4]]:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: import Other;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_conflict.carbon:[[@LINE+11]]:11
+// CHECK:STDERR:        │ import Other;
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ namespace Other;
+// CHECK:STDERR:        ·           ━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: duplicate name `Other` being declared in the same scope
+// CHECK:STDERR:        ·                ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:10: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
-// CHECK:STDERR: fn Other.Nested.F();
-// CHECK:STDERR:          ^~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-12]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:3:1: note: package imported here [QualifiedDeclOutsidePackageSource]
-// CHECK:STDERR: namespace Nested;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_conflict.carbon:[[@LINE+12]]:10
+// CHECK:STDERR: ->     │ fn Other.Nested.F();
+// CHECK:STDERR:        ·          ━━━┳━━
+// CHECK:STDERR:        ·             ┗━━┫ error: imported packages cannot be used for declarations
+// CHECK:STDERR:        ·                ┃        [QualifiedDeclOutsidePackage]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fn.carbon
+// CHECK:STDERR:        │ namespace Nested;
+// CHECK:STDERR:        · ────────┬────────
+// CHECK:STDERR:        ·         ╰──┤ package imported here [QualifiedDeclOutsidePackageSource]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Other.Nested.F();
 
-// CHECK:STDOUT: --- fn.carbon
+// CHECK:STDOUT: --- fn.carbon = $fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -56,9 +64,10 @@ fn Other.Nested.F();
 // CHECK:STDOUT:   %Nested: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }

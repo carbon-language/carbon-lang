@@ -8,16 +8,17 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_no_intro_with_semi.carbon
 
-// CHECK:STDERR: fail_no_intro_with_semi.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: foo;
-// CHECK:STDERR: ^~~
+// CHECK:STDERR:        ╭─┤ fail_no_intro_with_semi.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ foo;
+// CHECK:STDERR:        · ━┳━
+// CHECK:STDERR:        ·  ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 foo;
 
 // CHECK:STDOUT: - filename: fail_no_intro_with_semi.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: 'foo', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─InvalidParseStart 'foo' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

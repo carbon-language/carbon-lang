@@ -76,12 +76,13 @@ import library "int_ops";
 
 fn F() {
   // Ensure our testing machinery works.
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `Expect(0)` to `Expect(1)` with `as` [ConversionFailure]
-  // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_self_test.carbon:[[@LINE+4]]:3: note: type `Expect(0)` does not implement interface `Core.As(Expect(1))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Test(Int32ToInt32(0)) as Expect(1 as i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_self_test.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Test(Int32ToInt32(0)) as Expect(1 as i32);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert expression of type `Expect(0)` to `Expect(1)` with
+  // CHECK:STDERR:        ·      ┃        `as`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Test(Int32ToInt32(0)) as Expect(1 as i32);
 }
@@ -245,13 +246,19 @@ import library "int_ops";
 
 let not_constant: Core.IntLiteral = 0;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:33: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
-// CHECK:STDERR:                                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:16:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_not_constant.carbon:[[@LINE+14]]:33
+// CHECK:STDERR: ->     │ let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
+// CHECK:STDERR:        ·                                 ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: non-constant call to
+// CHECK:STDERR:        ·                                    ┃        compile-time-only function
+// CHECK:STDERR:        ·                                    ┃        [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ int_ops.carbon
+// CHECK:STDERR:        │ fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
+// CHECK:STDERR:        ·    ────────┬────────
+// CHECK:STDERR:        ·            ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·               │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);
 
@@ -287,9 +294,10 @@ fn F() {
 
 }
 
-// CHECK:STDOUT: --- runtime_call.carbon
+// CHECK:STDOUT: --- runtime_call.carbon = $runtime_call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]

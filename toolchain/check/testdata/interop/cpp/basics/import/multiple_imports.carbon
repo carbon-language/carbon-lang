@@ -27,7 +27,7 @@ import Cpp library "file1.h";
 import Cpp library "file2.h";
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- multiple_imports.carbon
+// CHECK:STDOUT: --- multiple_imports.carbon = $multiple_imports
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {

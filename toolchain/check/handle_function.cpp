@@ -23,6 +23,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -50,17 +51,40 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   return true;
 }
 
-// Handles a `->` or `->?` return declaration.
-static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
-    -> bool {
+// Handles a `->` or `->?` return specifier.
+static auto HandleReturnSpecifier(Context& context,
+                                  Parse::AnyReturnSpecifierId node_id) -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
-  Context::FormExpr form_expr = [&]() {
-    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
-      return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
-    } else {
-      return FormExprAsForm(context, expr_node_id, expr_inst_id);
-    }
-  }();
+  // `-> T` provides a type expression, whereas `-> val T`, `-> ref T`,
+  // `-> var T`, and `->? F` provide a form.
+  auto expr_kind = context.parse_tree().node_kind(expr_node_id);
+  bool is_primitive_form = expr_kind == Parse::ValPrimitiveFormId::Kind ||
+                           expr_kind == Parse::RefPrimitiveFormId::Kind ||
+                           expr_kind == Parse::VarPrimitiveFormId::Kind;
+  bool is_return_type =
+      context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind &&
+      !is_primitive_form;
+  if (is_return_type && expr_kind == Parse::NodeKind::AutoTypeLiteral) {
+    // `-> auto`: the return type is deduced from the function body, so there is
+    // no return form or pattern yet. Push a marker in place of the pattern; see
+    // `PopReturnSpecifier`.
+    context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+    return true;
+  }
+  if (is_primitive_form &&
+      context.insts()
+              .GetAs<SemIR::AnyPrimitiveForm>(expr_inst_id)
+              .type_component_id == SemIR::AutoType::TypeInstId) {
+    // `-> ref auto`, `-> val auto`, or `-> var auto`: the category is known but
+    // the type is deduced from the function body. Push the primitive form,
+    // whose type component is `auto`, as a marker in place of the pattern; see
+    // `PopReturnSpecifier`.
+    context.node_stack().Push(node_id, expr_inst_id);
+    return true;
+  }
+  Context::FormExpr form_expr =
+      is_return_type ? ReturnExprAsForm(context, expr_node_id, expr_inst_id)
+                     : FormExprAsForm(context, expr_node_id, expr_inst_id);
   context.PushReturnForm(form_expr);
   context.node_stack().Push(node_id,
                             AddReturnPattern(context, node_id, form_expr));
@@ -68,11 +92,11 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -95,14 +119,10 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    // TODO: Once we are saving the modifiers for a function, add check that
-    // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
+                                      is_definition);
+  // TODO: add check that functions in interfaces may only be defined if they
+  // are marked `default` or `final`.
 
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
@@ -135,129 +155,14 @@ static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
       .Default(SemIR::Function::EvaluationMode::None);
 }
 
-// Tries to merge new_function into prev_function_id. Since new_function won't
-// have a definition even if one is upcoming, set is_definition to indicate the
-// planned result.
-//
-// If merging is successful, returns true and may update the previous function.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeFunctionRedecl(Context& context,
-                                Parse::AnyFunctionDeclId node_id,
-                                SemIR::Function& new_function,
-                                bool new_is_definition,
-                                SemIR::FunctionId prev_function_id,
-                                SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_function = context.functions().Get(prev_function_id);
-
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
-    return false;
-  }
-
-  DiagnoseIfInvalidRedecl(
-      context, Lex::TokenKind::Fn, prev_function.name_id,
-      RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
-                 prev_function.has_definition_started()),
-      prev_import_ir_id);
-  if (new_is_definition && prev_function.has_definition_started()) {
-    return false;
-  }
-
-  if (!prev_function.first_owning_decl_id.has_value()) {
-    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
-  }
-  if (new_is_definition) {
-    // Track the signature from the definition, so that IDs in the body
-    // match IDs in the signature.
-    prev_function.MergeDefinition(new_function);
-  }
-  if (prev_import_ir_id.has_value()) {
-    ReplacePrevInstForMerge(context, new_function.parent_scope_id,
-                            prev_function.name_id,
-                            new_function.first_owning_decl_id);
-  }
-  return true;
-}
-
-// Check whether this is a redeclaration, merging if needed.
-static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           const DeclNameStack::NameContext& name_context,
-                           SemIR::FunctionDecl& function_decl,
-                           SemIR::Function& function_info, bool is_definition)
-    -> void {
-  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
-  // impl scope: if the name was referenced before being declared, we will have
-  // produced an error already.
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
-            name_context.parent_scope_id)) {
-      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                           name_context.poisoning_loc_id, name_context.loc_id);
-    }
-    return;
-  }
-
-  auto prev_id = name_context.prev_inst_id();
-  if (!prev_id.has_value()) {
-    return;
-  }
-
-  auto prev_function_id = SemIR::FunctionId::None;
-  auto prev_type_id = SemIR::TypeId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
-  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
-    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope.
-      auto function_decl =
-          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case SemIR::ImportRefLoaded::Kind: {
-      auto import_ir_inst = GetCanonicalImportIRInst(context, prev_id);
-
-      // Verify the decl so that things like aliases are name conflicts.
-      const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
-              import_ir_inst.inst_id())) {
-        break;
-      }
-
-      // Use the type to get the ID.
-      if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
-              context.constant_values().GetConstantInstId(prev_id))) {
-        if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
-                struct_value->type_id)) {
-          prev_function_id = function_type->function_id;
-          prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id();
-        }
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          SemIR::LocId(prev_id));
-    return;
-  }
-
-  if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
-                          prev_function_id, prev_import_ir_id)) {
-    // When merging, use the existing function rather than adding a new one.
-    function_decl.function_id = prev_function_id;
-    function_decl.type_id = prev_type_id;
-  }
+// Returns the implementation modifier as an enum.
+static auto GetInterfaceModifier(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::InterfaceModifier {
+  using enum SemIR::Function::InterfaceModifier;
+  return modifier_set.ToEnum<SemIR::Function::InterfaceModifier>()
+      .Case(KeywordModifierSet::Default, Default)
+      .Case(KeywordModifierSet::Final, Final)
+      .Default(None);
 }
 
 // Adds the declaration to name lookup when appropriate.
@@ -479,17 +384,65 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
-// Diagnoses when positional params aren't supported. Reassigns the pattern
-// block if needed.
-static auto DiagnosePositionalParams(Context& context,
-                                     SemIR::Function& function_info) -> void {
-  if (function_info.param_patterns_id.has_value()) {
-    return;
+// Diagnoses if a deduced return type is not permitted for the given function
+// declaration, and returns whether it is permitted. If not, clears any virtual
+// modifier, because a virtual function needs a known return type.
+static auto CheckDeducedReturnTypeAllowed(
+    Context& context, Parse::AnyFunctionDeclId node_id,
+    Parse::NodeId return_node_id, bool is_definition, bool is_extern,
+    SemIR::Function::VirtualModifier& virtual_modifier,
+    const std::optional<SemIR::Inst>& parent_scope_inst) -> bool {
+  enum class Reason : int8_t { Builtin, Extern, InterfaceMember, Virtual };
+  std::optional<Reason> reason;
+  if (context.parse_tree().node_kind(node_id) ==
+      Parse::NodeKind::BuiltinFunctionDefinitionStart) {
+    // A builtin function has no body to deduce from.
+    reason = Reason::Builtin;
+  } else if (is_extern) {
+    // An `extern` function is declared elsewhere.
+    reason = Reason::Extern;
+  } else if (parent_scope_inst &&
+             parent_scope_inst->Is<SemIR::InterfaceWithSelfDecl>()) {
+    // An associated function's return type is part of the interface's contract
+    // with its impls, so shouldn't depend on a `default` definition.
+    // TODO: A `final` function can't be overridden, so deducing its return
+    // type from its definition would be reasonable. Consider allowing that
+    // once calls to generic functions with deduced return types are supported.
+    reason = Reason::InterfaceMember;
+  } else if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
+    // The vtable is built before the function body is checked.
+    reason = Reason::Virtual;
+    virtual_modifier = SemIR::Function::VirtualModifier::None;
+  }
+  if (reason) {
+    CARBON_DIAGNOSTIC(DeducedReturnTypeNotAllowed, Error,
+                      "{0:=0:builtin function|=1:`extern` function|=2:"
+                      "interface member|=3:virtual function} with deduced "
+                      "return type",
+                      Diagnostics::IntAsSelect);
+    context.emitter().Emit(return_node_id, DeducedReturnTypeNotAllowed,
+                           static_cast<int>(*reason));
+    return false;
   }
 
-  context.TODO(function_info.latest_decl_id(),
-               "function with positional parameters");
-  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
+  // The return type is deduced from the function body, so only a definition
+  // can declare one. As a consequence, the function can't be redeclared.
+  if (!is_definition) {
+    CARBON_DIAGNOSTIC(DeducedReturnTypeNotDefinition, Error,
+                      "forward declaration of function with deduced return "
+                      "type");
+    context.emitter().Emit(return_node_id, DeducedReturnTypeNotDefinition);
+    return false;
+  }
+
+  if (parent_scope_inst && parent_scope_inst->Is<SemIR::ImplDecl>()) {
+    // TODO: The impl witness and any thunks are built before the function body
+    // is checked.
+    context.TODO(return_node_id, "deduced return type for `impl` member");
+    return false;
+  }
+
+  return true;
 }
 
 // Build a FunctionDecl describing the signature of a function. This
@@ -499,21 +452,17 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  }
+  auto return_specifier = PopReturnSpecifier(context);
 
-  auto name = PopNameComponent(context, return_pattern_id);
+  auto name = PopNameComponent(context, return_specifier.pattern_id,
+                               return_specifier.has_return_specifier());
   auto name_context = context.decl_name_stack().FinishName(name);
+
+  bool is_terse_definition = context.parse_tree().node_kind(node_id) ==
+                             Parse::NodeKind::FunctionTerseDefinitionStart;
+  if (is_terse_definition) {
+    AdjustReturnSpecifierForTerseDefinition(context, node_id, return_specifier);
+  }
 
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
@@ -545,6 +494,15 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
+  auto interface_modifier = GetInterfaceModifier(introducer.modifier_set);
+
+  // If the return type is deduced in a context where that's not allowed, we
+  // will treat the function as having an invalid return type.
+  bool is_invalid_deduced_return =
+      return_specifier.is_deduced() &&
+      !CheckDeducedReturnTypeAllowed(context, node_id, return_specifier.node_id,
+                                     is_definition, is_extern, virtual_modifier,
+                                     parent_scope_inst);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -554,26 +512,33 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{name_context.MakeEntityWithParamsBase(
-                          name, decl_id, is_extern, introducer.extern_library),
-                      {.call_param_patterns_id = name.call_param_patterns_id,
-                       .call_params_id = name.call_params_id,
-                       .call_param_ranges = name.param_ranges,
-                       .return_type_inst_id = return_type_inst_id,
-                       .return_form_inst_id = return_form_inst_id,
-                       .return_pattern_id = return_pattern_id,
-                       .virtual_modifier = virtual_modifier,
-                       .evaluation_mode = evaluation_mode,
-                       .self_param_id = self_param_id}};
+  auto function_info = SemIR::Function{
+      name_context.MakeEntityWithParamsBase(name, decl_id, is_extern,
+                                            introducer.extern_library),
+      {
+          .call_param_patterns_id = name.call_param_patterns_id,
+          .call_params_id = name.call_params_id,
+          .call_param_ranges = name.param_ranges,
+          .return_type_inst_id = return_specifier.form.type_component_inst_id,
+          .return_form_inst_id = return_specifier.form.form_inst_id,
+          .return_pattern_id = return_specifier.pattern_id,
+          .virtual_modifier = virtual_modifier,
+          .evaluation_mode = evaluation_mode,
+          .interface_modifier = interface_modifier,
+          .deduced_return_kind = return_specifier.deduced_return_kind,
+          .self_param_id = self_param_id,
+      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
 
-  DiagnosePositionalParams(context, function_info);
+  CheckFunctionParams(context, function_info);
 
-  TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
-                 is_definition);
+  TryMergeRedecl(
+      context, name_context, std::nullopt,
+      MergeRedeclEntityInfo<SemIR::Function>{.new_entity_decl = function_decl,
+                                             .new_entity = function_info},
+      is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
@@ -598,6 +563,13 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
 
+  // If we diagnosed the deduced return type, recover by giving the function an
+  // invalid return type.
+  if (is_invalid_deduced_return) {
+    SetDeducedReturnType(context, function_decl.function_id,
+                         return_specifier.node_id, SemIR::ErrorInst::TypeId);
+  }
+
   // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
   if (is_definition &&
@@ -613,8 +585,12 @@ static auto BuildFunctionDecl(Context& context,
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
                        name_context.parent_scope_id, decl_id);
 
-  ValidateForEntryPoint(context, node_id, function_decl.function_id,
-                        function_info);
+  // If the return type is deduced, we validate the entry point at the end of
+  // the definition, once the return type is known.
+  if (!return_specifier.is_deduced()) {
+    ValidateForEntryPoint(context, node_id, function_decl.function_id,
+                          function_info);
+  }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required_by_decl().push_back(decl_id);
@@ -663,6 +639,10 @@ static auto CheckUnusedBindingsInPattern(Context& context,
         }
         break;
       }
+      case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+        work_list.push_back(default_value_pattern.subpattern_id);
+        break;
+      }
       default:
         break;
     }
@@ -698,14 +678,14 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
   StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
+auto HandleFunctionDefinitionSuspend(
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id)
     -> DeferredDefinitionWorklist::SuspendedFunction {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -716,11 +696,27 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 }
 
 auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void {
   context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
+}
+
+static auto HandleFunctionDefinitionFinish(Context& context,
+                                           Parse::AnyFunctionDeclId fn_node_id,
+                                           SemIR::FunctionId function_id)
+    -> void {
+  FinishFunctionDefinition(context, function_id);
+
+  // If the function has a deduced return type, we can now perform any delayed
+  // checks of its signature.
+  const auto& function = context.functions().Get(function_id);
+  if (function.has_deduced_return_type()) {
+    ValidateForEntryPoint(context, fn_node_id, function_id, function);
+  }
+
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
 }
 
 auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
@@ -735,26 +731,34 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     -> bool {
-  SemIR::FunctionId function_id =
-      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
+  auto [start_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionDefinitionStart>();
 
-  // If the `}` of the function is reachable, reject if we need a return value
-  // and otherwise add an implicit `return;`.
-  if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
-      CARBON_DIAGNOSTIC(
-          MissingReturnStatement, Error,
-          "missing `return` at end of function with declared return type");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             MissingReturnStatement);
-    } else {
-      AddReturnInstWithCleanups(context, node_id);
-    }
-  }
+  CheckFunctionReturnOnFinish(context, node_id, function_id);
+  HandleFunctionDefinitionFinish(context, start_node_id, function_id);
+  return true;
+}
 
-  FinishFunctionDefinition(context, function_id);
-  context.decl_name_stack().PopScope(/*check_unused=*/true);
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  HandleFunctionDefinitionAfterSignature(context, node_id, function_id,
+                                         decl_id);
+  return true;
+}
 
+auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
+    -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto [signature_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionTerseDefinitionStart>();
+
+  CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
+  HandleFunctionDefinitionFinish(context, signature_node_id, function_id);
   return true;
 }
 
@@ -818,11 +822,6 @@ auto HandleParseNode(Context& context,
   }
   context.decl_name_stack().PopScope();
   return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
 }  // namespace Carbon::Check

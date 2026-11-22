@@ -13,32 +13,31 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: let_tuple.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'i'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'TuplePattern', text: ')', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'StringLiteral', text: '"hello"'},
-// CHECK:STDOUT:           {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:         {kind: 'TupleLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 25},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'i'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─TuplePattern ')'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─StringLiteral '"hello"'
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

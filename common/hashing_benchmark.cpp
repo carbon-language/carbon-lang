@@ -13,6 +13,7 @@
 #include "absl/random/random.h"
 #include "common/hashing.h"
 #include "llvm/ADT/Hashing.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -145,7 +146,7 @@ struct RandStrings {
       s = rand_sizes<MaxSize>[i];
     } else {
       // Prevent `s` from being constant folded when we directly use `MaxSize`.
-      benchmark::DoNotOptimize(s);
+      Testing::DoNotOptimize(s);
     }
     bytes += s;
     return llvm::StringRef(
@@ -157,9 +158,9 @@ struct HashBenchBase {
   uint64_t seed;
 
   HashBenchBase() {
-    // The real-world use case we care about is in a hash table where we'll mix
-    // in some seed state, likely some ASLR address. To simulate this for
-    // benchmarking, compute a seed from the address of a stack local variable.
+    // The Abseil and LLVM hash tables mix in some seed state, likely some ASLR
+    // address. To simulate this for benchmarking, compute a seed from the
+    // address of a stack local variable.
     volatile char key;
     key = 42;
     // Rinse this through a volatile variable as well so returning it isn't
@@ -170,10 +171,10 @@ struct HashBenchBase {
   }
 };
 
-struct CarbonHashBench : HashBenchBase {
+struct CarbonHashBench {
   template <typename T>
   auto operator()(const T& value) -> uint64_t {
-    return static_cast<uint64_t>(HashValue(value, seed));
+    return static_cast<uint64_t>(HashValue(value));
   }
 };
 
@@ -205,7 +206,7 @@ auto BM_LatencyHash(benchmark::State& state) -> void {
   // sizes.
   while (state.KeepRunningBatch(NumSizes)) {
     for (ssize_t i = 0; i < NumSizes; ++i) {
-      benchmark::DoNotOptimize(x = h(v.Get(i, x)));
+      Testing::DoNotOptimize(x = h(v.Get(i, x)));
     }
   }
   state.SetBytesProcessed(v.bytes);

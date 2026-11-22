@@ -107,9 +107,10 @@ The choice to require NFC is really four choices:
         same glyph, such as with pre-combined diacritics versus with diacritics
         expressed as separate combining characters, or with combining characters
         in a different order, would be considered different characters.
-    -   If we use a canonical normalization form, all ways of encoding diacritics
-        are considered to form the same character, but ligatures such as `ﬃ` are
-        considered distinct from the character sequence that they decompose into.
+    -   If we use a canonical normalization form, all ways of encoding
+        diacritics are considered to form the same character, but ligatures such
+        as `ﬃ` are considered distinct from the character sequence that they
+        decompose into.
     -   If we use a compatibility normalization form, ligatures are considered
         equivalent to the character sequence that they decompose into.
 
@@ -124,19 +125,19 @@ The choice to require NFC is really four choices:
     See also the discussion of [homoglyphs](#homoglyphs) below.
 
 2.  Composition: we use a composed normalization form rather than a decomposed
-    normalization form. For example, `ō` is encoded as U+014D (LATIN SMALL LETTER
-    O WITH MACRON) in a composed form and as U+006F (LATIN SMALL LETTER O),
-    U+0304 (COMBINING MACRON) in a decomposed form. The composed form results in
-    smaller representations whenever the two differ, but the decomposed form is a
-    little easier for algorithmic processing (for example, typo correction and
-    homoglyph detection).
+    normalization form. For example, `ō` is encoded as U+014D (LATIN SMALL
+    LETTER O WITH MACRON) in a composed form and as U+006F (LATIN SMALL LETTER
+    O), U+0304 (COMBINING MACRON) in a decomposed form. The composed form
+    results in smaller representations whenever the two differ, but the
+    decomposed form is a little easier for algorithmic processing (for example,
+    typo correction and homoglyph detection).
 
 3.  We require source files to be in our chosen form, rather than converting to
     that form as necessary.
 
 4.  We require that the entire contents of the file be normalized, rather than
-    restricting our attention to only identifiers, or only identifiers and string
-    literals.
+    restricting our attention to only identifiers, or only identifiers and
+    string literals.
 
 ### Characters in identifiers and whitespace
 

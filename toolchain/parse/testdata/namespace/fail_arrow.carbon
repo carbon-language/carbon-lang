@@ -10,20 +10,23 @@
 
 namespace Foo;
 
-// CHECK:STDERR: fail_arrow.carbon:[[@LINE+4]]:10: error: `class` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR: class Foo->Bar {}
-// CHECK:STDERR:          ^~
+// CHECK:STDERR:        ╭─┤ fail_arrow.carbon:[[@LINE+8]]:10
+// CHECK:STDERR: ->     │ class Foo->Bar {}
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: `class` declarations must either end with a `;` or have a
+// CHECK:STDERR:        ·             ┃        `{ ... }` block for a definition
+// CHECK:STDERR:        ·             ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Foo->Bar {}
 
 // CHECK:STDOUT: - filename: fail_arrow.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─Namespace ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─ClassDecl '}' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

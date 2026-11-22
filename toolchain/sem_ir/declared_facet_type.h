@@ -66,8 +66,8 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
 
   // Requirements on types other than the generic self.
   struct TypeImplsInterface {
-    // A facet or type value, which is required to implement the interface.
-    // Must be a canonical instruction to ensure comparison works correctly.
+    // A facet that is required to implement the interface. Must be a canonical
+    // instruction to ensure comparison works correctly.
     InstId self_type;
     SpecificInterface specific_interface;
 
@@ -75,8 +75,8 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
                            const TypeImplsInterface& rhs) -> bool = default;
   };
   struct TypeImplsNamedConstraint {
-    // A facet or type value, which is required to implement the constraint.
-    // Must be a canonical instruction to ensure comparison works correctly.
+    // A facet that is required to implement the constraint. Must be a canonical
+    // instruction to ensure comparison works correctly.
     InstId self_type;
     SpecificNamedConstraint specific_named_constraint;
 
@@ -121,27 +121,12 @@ struct DeclaredFacetType : Printable<DeclaredFacetType> {
   // has any other requirements.
   auto TryAsSingleExtend() const -> std::optional<SingleExtendFacetType>;
 
-  // Returns whether the facet type has no constraints, making it the facet type
-  // version of `TypeType`.
-  auto HasNoConstraints() const -> bool;
-
   // Returns whether the facet type only contains constraints that are extended
   // by the facet type. If true, `ExtendedOnly()` would be a no-op.
   auto IsExtendedOnly() const -> bool;
 
   friend auto operator==(const DeclaredFacetType& lhs,
-                         const DeclaredFacetType& rhs) -> bool {
-    return lhs.extend_constraints == rhs.extend_constraints &&
-           lhs.self_impls_constraints == rhs.self_impls_constraints &&
-           lhs.extend_named_constraints == rhs.extend_named_constraints &&
-           lhs.self_impls_named_constraints ==
-               rhs.self_impls_named_constraints &&
-           lhs.type_impls_interfaces == rhs.type_impls_interfaces &&
-           lhs.type_impls_named_constraints ==
-               rhs.type_impls_named_constraints &&
-           lhs.rewrite_constraints == rhs.rewrite_constraints &&
-           lhs.other_requirements == rhs.other_requirements;
-  }
+                         const DeclaredFacetType& rhs) -> bool = default;
 };
 
 constexpr DeclaredFacetType::RewriteConstraint
@@ -152,9 +137,8 @@ using DeclaredFacetTypeStore =
     CanonicalValueStore<DeclaredFacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
 
 // See common/hashing.h.
-inline auto CarbonHashValue(const DeclaredFacetType& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const DeclaredFacetType& value) -> HashCode {
+  Hasher hasher;
   hasher.HashArray(llvm::ArrayRef(value.extend_constraints));
   hasher.HashArray(llvm::ArrayRef(value.self_impls_constraints));
   hasher.HashArray(llvm::ArrayRef(value.extend_named_constraints));

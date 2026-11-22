@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -49,26 +49,32 @@ jobs:
             api.github.com:443
             api.ipify.org:443
             bcr.bazel.build:443
+            download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
+            formulae.brew.sh:443
             github.com:443
             go.dev:443
+            index.crates.io:443
             mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             pypi.org:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
             release-assets.githubusercontent.com:443
             releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443
 
       - name: Checkout branch
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -76,9 +82,9 @@ jobs:
         env:
           REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
         run: |
-          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "$REMOTE_CACHE_KEY" | base64 -d > "$HOME/remote_cache_key.json"
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
-              >> $GITHUB_ENV
+              >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/build-setup-common
         with:
@@ -87,14 +93,14 @@ jobs:
 
       - name: Get nightly date
         run: |
-          echo "nightly_date=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
+          echo "nightly_date=$(date '+%Y.%m.%d')" >> "$GITHUB_ENV"
 
       - name: Build release
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c opt --stamp --remote_download_toplevel \
-            --pre_release=nightly --nightly_date=${nightly_date} \
+            --pre_release=nightly --nightly_date="${nightly_date}" \
             //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz \
             //toolchain/install:carbon_toolchain_tar_gz_test
@@ -108,15 +114,16 @@ jobs:
           VERSION=$( \
             ./bazel-bin/toolchain/carbon version \
             | cut -d' ' -f5 | cut -d'+' -f1)
-          echo "release_version=$VERSION" >> $GITHUB_ENV
+          echo "release_version=$VERSION" >> "$GITHUB_ENV"
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create \
+            --target "$GITHUB_SHA" \
             --title "Nightly build ${nightly_date}" \
             --generate-notes \
             --prerelease \
-            v${release_version} \
+            "v${release_version}" \
             "bazel-bin/toolchain/install/carbon_toolchain-${release_version}.tar.gz"

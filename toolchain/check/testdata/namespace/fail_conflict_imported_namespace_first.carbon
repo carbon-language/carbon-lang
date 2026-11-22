@@ -24,19 +24,23 @@ package Example;
 
 import library "namespace";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+8]]:4: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS();
-// CHECK:STDERR:    ^~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_conflict.carbon:[[@LINE+12]]:4
+// CHECK:STDERR: ->     │ fn NS();
+// CHECK:STDERR:        ·    ━┳
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `NS` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ namespace.carbon
+// CHECK:STDERR:        │ namespace NS;
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NS();
 
 fn NS.Foo();
 
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon = $namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -54,9 +58,10 @@ fn NS.Foo();
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]

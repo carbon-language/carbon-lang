@@ -10,13 +10,14 @@
 #include "clang/Driver/Driver.h"
 #include "common/bazel_working_dir.h"
 #include "common/error.h"
+#include "common/filesystem.h"
 #include "common/init_llvm.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/Driver.h"
 #include "llvm/Support/Error.h"
-#include "llvm/Support/LLVMDriver.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/driver/driver.h"
 #include "toolchain/install/busybox_info.h"
@@ -128,7 +129,8 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   }
 
   Driver driver(fs, &install_paths, stdin, &llvm::outs(), &llvm::errs(),
-                /*fuzzing=*/false, /*enable_leaking=*/true);
+                Filesystem::Stderr(), /*fuzzing=*/false,
+                /*enable_leaking=*/true);
   bool success = driver.RunCommand(args).success;
   return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

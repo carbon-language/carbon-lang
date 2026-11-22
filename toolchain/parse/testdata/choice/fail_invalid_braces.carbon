@@ -8,26 +8,30 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_invalid_braces.carbon
 
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:22: error: choice definition expected [ExpectedChoiceDefinition]
-// CHECK:STDERR: choice InvalidBraces |
-// CHECK:STDERR:                      ^
+// CHECK:STDERR:        ╭─┤ fail_invalid_braces.carbon:[[@LINE+7]]:22
+// CHECK:STDERR: ->     │ choice InvalidBraces |
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: choice definition expected
+// CHECK:STDERR:        ·                         ┃        [ExpectedChoiceDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 choice InvalidBraces |
   Some
-// CHECK:STDERR: fail_invalid_braces.carbon:[[@LINE+4]]:1: error: unrecognized declaration introducer [UnrecognizedDecl]
-// CHECK:STDERR: |
-// CHECK:STDERR: ^
+// CHECK:STDERR:        ╭─┤ fail_invalid_braces.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ |
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 |
 
 // CHECK:STDOUT: - filename: fail_invalid_braces.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'InvalidBraces'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: '|', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: '|', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'InvalidParseStart', text: '|', has_error: yes},
-// CHECK:STDOUT:     {kind: 'InvalidParseSubtree', text: '|', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'InvalidBraces'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart '|' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition '|' has_error
+// CHECK:STDOUT:   │ ╭─InvalidParseStart '|' has_error
+// CHECK:STDOUT:   ├─InvalidParseSubtree '|' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

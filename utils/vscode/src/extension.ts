@@ -290,7 +290,10 @@ export function activate(context: ExtensionContext) {
 
   const clientOptions: LanguageClientOptions = {
     documentSelector: [
-      { language: 'carbon' },
+      { scheme: 'file', language: 'carbon' },
+      // Test files are sent to the server so that it can provide navigation
+      // within the SemIR in their `// CHECK:STDOUT:` lines.
+      { scheme: 'file', language: 'carbon-testdata' },
     ],
   };
 

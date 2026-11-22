@@ -16,10 +16,12 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -62,12 +64,9 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                          llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
-      specific_vtables_(sem_ir.specifics(), nullptr) {
-  // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
-  CARBON_CHECK(
-      !cpp_code_generator_ ||
-      (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
+      specific_vtables_(sem_ir.specifics(), nullptr),
+      mangler_(sem_ir, context.total_ir_count(),
+               context.mangle_string_fingerprint()) {
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
@@ -119,18 +118,23 @@ auto FileContext::LowerDefinitions() -> void {
   LowerGlobalVariables(sem_ir().top_inst_block_id());
 
   // Lower static class variable definitions.
-  for (auto class_info : sem_ir().classes().values()) {
+  for (const auto& class_info : sem_ir().classes().values()) {
     auto inst_block_id = class_info.body_block_id;
     if (inst_block_id.has_value()) {
       LowerGlobalVariables(inst_block_id);
     }
   }
 
+  // Lower any additional global variables defined outside of the top block.
+  LowerGlobalVariables(SemIR::InstBlockId::ExtraGlobalVariables);
+
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
-    // If we created a declaration and the function definition is not imported,
-    // build a definition.
+    // If we created a declaration and the function definition is needed but not
+    // imported, build a definition.
     if (functions_.Get(id) && fn_info.definition_id.has_value() &&
+        fn_info.special_function_kind !=
+            SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk &&
         !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
       BuildFunctionDefinition(id);
     }
@@ -172,6 +176,7 @@ auto FileContext::LowerDefinitions() -> void {
         .unused_param_indices =
             std::move(function_type_info.unused_param_indices),
         .llvm_function = llvm_function,
+        .return_kind = function_type_info.return_kind,
         .inexact = function_type_info.inexact};
     functions_.Set(global_ctor_id, function_info);
 
@@ -184,10 +189,14 @@ auto FileContext::LowerDefinitions() -> void {
 }
 
 auto FileContext::Finalize() -> void {
-  if (cpp_code_generator_) {
+  // TODO: This is an ugly way to check if we're supposed to finalize this code
+  // generator. Context::Finalize should finalize its own code generator, but
+  // doesn't have a reference to its `ASTContext`.
+  if (cpp_file() &&
+      cpp_file()->code_generator() == context().cpp_code_generator()) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
-    cpp_code_generator_->HandleTranslationUnit(
+    cpp_file()->code_generator()->HandleTranslationUnit(
         const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
   }
 
@@ -286,8 +295,7 @@ auto FileContext::GetOrCreateFunctionInfo(
 auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
     -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(inst_block_id)) {
-    // Only `VarStorage` indicates a global variable declaration in the
-    // top instruction block.
+    // `VarStorage` indicates a global variable declaration.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
       // Get the global variable declaration. We created this when lowering the
       // constant unless the variable is unnamed, in which case we need to
@@ -306,6 +314,40 @@ auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
       global_variables_.Insert(inst_id, llvm_var);
       llvm_var->setInitializer(
           llvm::Constant::getNullValue(llvm_var->getValueType()));
+      continue;
+    }
+
+    // A non-constant global `let` binding is placed outside `__global_init`
+    // only if its initializer is constant. In that case, statically initialize
+    // its global storage rather than initializing it in `__global_init`.
+    if (auto binding =
+            sem_ir().insts().TryGetAs<SemIR::WrapperBinding>(inst_id)) {
+      const auto& entity_name =
+          sem_ir().entity_names().Get(binding->entity_name_id);
+      if (entity_name.name_id == SemIR::NameId::Underscore ||
+          sem_ir().constant_values().Get(inst_id).is_constant()) {
+        continue;
+      }
+      auto value_const_id = sem_ir().constant_values().Get(binding->value_id);
+      if (!value_const_id.is_concrete()) {
+        // TODO: Support non-constant `let` bindings in generic classes.
+        continue;
+      }
+      auto* llvm_var = GetOrCreateGlobalBinding(inst_id);
+      if (!llvm_var) {
+        // The absence of a variable indicates that no storage is required for
+        // this value -- that is, it has an empty value representation.
+        continue;
+      }
+      // For a type with a pointer value representation, the lowered constant
+      // is the object representation, which is what the global holds.
+      auto* init =
+          constants_.Get(sem_ir().constant_values().GetInstId(value_const_id));
+      CARBON_CHECK(init->getType() == llvm_var->getValueType(),
+                   "Constant initializer type mismatch for {0}", *binding);
+      llvm_var->setInitializer(init);
+      // A value binding is immutable.
+      llvm_var->setConstant(true);
     }
   }
 }
@@ -316,12 +358,54 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
-  auto* function_address = dyn_cast<llvm::Function>(
-      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_decl),
-                                           /*isForDefinition=*/false));
+  // TODO: This code generator can be for the wrong AST if we're not using
+  // --share-cpp-ast.
+  auto* function_address =
+      dyn_cast<llvm::Function>(context().cpp_code_generator()->GetAddrOfGlobal(
+          CreateGlobalDecl(cpp_decl),
+          /*isForDefinition=*/false));
   CARBON_CHECK(function_address);
 
   return function_address;
+}
+
+auto FileContext::GetCppThunkLLVMFunction(
+    const FunctionTypeInfo& function_type_info, clang::FunctionDecl* cpp_decl)
+    -> llvm::Function* {
+  // Ask Clang for its function for the thunk, creating its declaration if it
+  // doesn't exist yet. Clang names it based on the thunk's asm label, which
+  // may differ from Carbon's name for it in the IR (for example, `\01`-prefixed
+  // on targets with a global symbol prefix). Using Clang's function means that
+  // C++ calls to the thunk refer to its definition in the IR.
+  // TODO: This code generator can be for the wrong AST if we're not using
+  // --share-cpp-ast.
+  auto* llvm_function =
+      dyn_cast<llvm::Function>(context().cpp_code_generator()->GetAddrOfGlobal(
+          CreateGlobalDecl(cpp_decl), /*isForDefinition=*/false));
+  CARBON_CHECK(llvm_function);
+
+  // The thunk takes all of its parameters by reference, so Clang should lower
+  // them the same way we do. However, some C++ ABIs return `this` from
+  // constructors; `BuildFunctionBody` handles that.
+  auto* cpp_type = llvm_function->getFunctionType();
+  auto* carbon_type = function_type_info.type;
+  CARBON_CHECK(llvm::equal(cpp_type->params(), carbon_type->params()),
+               "C++ thunk parameter types don't match: {0} vs {1}", *cpp_type,
+               *carbon_type);
+  CARBON_CHECK(
+      cpp_type->getReturnType() == carbon_type->getReturnType() ||
+          (carbon_type->getReturnType()->isVoidTy() &&
+           llvm_function->hasParamAttribute(0, llvm::Attribute::Returned)),
+      "C++ thunk return types don't match: {0} vs {1}", *cpp_type,
+      *carbon_type);
+  CARBON_CHECK(function_type_info.sret_type == nullptr,
+               "C++ thunks return through an explicit output parameter");
+
+  for (auto [name_id, arg] : llvm::zip_equal(function_type_info.param_name_ids,
+                                             llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
+  }
+  return llvm_function;
 }
 
 auto FileContext::HandleReferencedSpecificFunction(
@@ -360,18 +444,23 @@ auto FileContext::GetOrCreateLLVMFunction(
                      "Specific functions cannot have C++ definitions");
         return HandleReferencedCppFunction(clang_decl->decl()->getAsFunction());
       }
+      if (function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::CppThunk) {
+        CARBON_CHECK(!specific_id.has_value(),
+                     "Specific functions cannot be C++ thunks");
+        return GetCppThunkLLVMFunction(function_type_info,
+                                       clang_decl->decl()->getAsFunction());
+      }
     }
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.Mangle(function_id, specific_id);
+  std::string mangled_name = mangler_.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
     // file. That's OK.
     // TODO: If the prior function was inexact and the new one is not, we should
     // lower this new one and replace the existing function with it.
-    // TODO: Check-fail or maybe diagnose if the two LLVM functions are not
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM functions are not
     // produced by declarations of the same Carbon function. Name collisions
     // between non-private members of the same library should have been
     // diagnosed by check if detected, but it's not clear that check will
@@ -422,7 +511,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   }
 
   // Don't lower builtins.
-  if (function.builtin_function_kind() != SemIR::BuiltinFunctionKind::None) {
+  if (function.GetBuiltinFunctionKind(sem_ir()) !=
+      SemIR::BuiltinFunctionKind::None) {
     return std::nullopt;
   }
 
@@ -442,8 +532,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       {fallback_file, fallback_function_id, fallback_specific_id}};
   auto function_type_info =
       BuildFunctionTypeInfo(llvm::ArrayRef(func_infos, fallback_file ? 2 : 1));
-  auto* llvm_function =
-      GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  llvm::Function* llvm_function = nullptr;
+  // If we're calling a function pointer, we don't need an LLVM function.
+  if (function.special_function_kind !=
+      SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk) {
+    llvm_function =
+        GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  }
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,
@@ -452,6 +547,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
            .unused_param_indices =
                std::move(function_type_info.unused_param_indices),
            .llvm_function = llvm_function,
+           .return_kind = function_type_info.return_kind,
            .inexact = function_type_info.inexact}};
 }
 
@@ -511,8 +607,8 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
         &context().tree_and_subtrees_getters(), &sem_ir());
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
-                          /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+                          Parse::LocExtent::Subtree);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Lowering function ";
     if (specific_id.has_value()) {
       output << SemIR::StringifySpecific(sem_ir(), specific_id);
@@ -522,7 +618,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     }
     output << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   // Note that `definition_function` is potentially from a different SemIR::File
@@ -560,11 +656,16 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // Specific functions are emitted in each file they are referenced in.
     linkage = llvm::Function::LinkOnceODRLinkage;
   } else if (declaration_function.special_function_kind ==
-                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+             SemIR::Function::SpecialFunctionKind::CppThunk) {
+    // A C++ thunk that we define wraps a Carbon function for use from C++. It
+    // is emitted in each file that exposes the function to C++.
+    linkage = llvm::Function::LinkOnceODRLinkage;
+  } else if (declaration_function.special_function_kind ==
+                 SemIR::Function::SpecialFunctionKind::Generated ||
              declaration_function.special_function_kind ==
                  SemIR::Function::SpecialFunctionKind::Thunk) {
-    // TODO: Emit CoreWitness functions and thunks in files where they're called
-    // instead of in files where they're defined. That should allow
+    // TODO: Emit custom witness functions and thunks in files where they're
+    // called instead of in files where they're defined. That should allow
     // LinkOnceODRLinkage.
     linkage = llvm::Function::WeakODRLinkage;
   }
@@ -670,6 +771,23 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     lower_block(block_id);
   }
 
+  // Some C++ ABIs return `this` from constructors. If Clang's declaration of a
+  // C++ thunk does that, return the parameter it marks as `returned` instead
+  // of returning nothing.
+  if (declaration_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::CppThunk &&
+      !function_info->llvm_function->getReturnType()->isVoidTy() &&
+      function_info->type->getReturnType()->isVoidTy()) {
+    auto* this_arg = function_info->llvm_function->getArg(0);
+    for (auto& llvm_block : *function_info->llvm_function) {
+      auto* ret = dyn_cast<llvm::ReturnInst>(llvm_block.getTerminator());
+      if (ret && !ret->getReturnValue()) {
+        llvm::ReturnInst::Create(llvm_context(), this_arg, ret->getIterator());
+        ret->eraseFromParent();
+      }
+    }
+  }
+
   // LLVM requires that the entry block has no predecessors.
   auto* entry_block = &function_info->llvm_function->getEntryBlock();
   if (entry_block->hasNPredecessorsOrMore(1)) {
@@ -689,14 +807,27 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   if (!context().di_compile_unit()) {
     return nullptr;
   }
-  auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
-  CARBON_CHECK(name, "Unexpected special name for function: {0}",
-               function.name_id);
+  llvm::StringRef name = "";
+  if (function.name_id.has_value()) {
+    auto maybe_name =
+        sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(maybe_name, "Unexpected special name for function: {0}",
+                 function.name_id);
+    name = *maybe_name;
+  }
   auto loc = GetLocForDI(function.definition_id);
   llvm::DISubroutineType* subroutine_type = function_info.di_type;
+  // A function named by Clang from an asm label has a `\01` marker followed
+  // by the target's global prefix, if any. Use the unprefixed name, matching
+  // other functions.
+  llvm::StringRef linkage_name = function_info.llvm_function->getName();
+  if (linkage_name.consume_front("\1")) {
+    if (char global_prefix = llvm_module().getDataLayout().getGlobalPrefix()) {
+      linkage_name.consume_front(llvm::StringRef(&global_prefix, 1));
+    }
+  }
   auto* subprogram = context().di_builder().createFunction(
-      context().di_compile_unit(), *name,
-      function_info.llvm_function->getName(),
+      context().di_compile_unit(), name, linkage_name,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
@@ -724,7 +855,9 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // llvm::GlobalVariable.
   if (const auto* clang_decl =
           sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
-    auto* constant = cpp_code_generator_->GetAddrOfGlobal(
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    auto* constant = context().cpp_code_generator()->GetAddrOfGlobal(
         CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
     if (constant) {
@@ -737,9 +870,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  auto mangled_name = mangler_.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
   // If the variable doesn't have an externally-visible name, demote it to
@@ -752,12 +883,77 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
           ("var.anon" + inst_namer_->GetUnscopedNameFor(var_storage.pattern_id))
               .str();
     }
+  } else if (auto* existing = llvm_module().getNamedGlobal(mangled_name)) {
+    // We might have already declared this variable while lowering a different
+    // file, such as when lowering a specific of a generic function from the
+    // file that defines the variable. Reuse that declaration rather than
+    // creating a new one, which LLVM would rename to avoid the collision.
+    //
+    // TODO: CHECK-fail or maybe diagnose if the two LLVM variables are not
+    // produced by declarations of the same Carbon variable. Name collisions
+    // between non-private members of the same library should have been
+    // diagnosed by check if detected, but it's not clear that check will
+    // always be able to see this problem. In theory, name collisions could
+    // also occur due to fingerprint collision.
+    return existing;
   }
 
   auto* type = GetType(var_storage.type_id);
   return new llvm::GlobalVariable(llvm_module(), type,
                                   /*isConstant=*/false, linkage,
                                   /*Initializer=*/nullptr, mangled_name);
+}
+
+auto FileContext::GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+    -> llvm::GlobalVariable* {
+  if (auto result = global_bindings_.Lookup(binding_inst_id)) {
+    return result.value();
+  }
+
+  auto binding = sem_ir().insts().GetAs<SemIR::WrapperBinding>(binding_inst_id);
+  llvm::Type* type = nullptr;
+  if (SemIR::IsRefCategory(SemIR::GetExprCategory(sem_ir(), binding_inst_id))) {
+    type = llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0);
+  } else {
+    auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), binding.type_id);
+    switch (value_rep.kind) {
+      case SemIR::ValueRepr::Unknown:
+      case SemIR::ValueRepr::Dependent:
+        CARBON_FATAL("Unexpected incomplete or dependent global binding: {0}",
+                     binding);
+      case SemIR::ValueRepr::None:
+        global_bindings_.Insert(binding_inst_id, nullptr);
+        return nullptr;
+      case SemIR::ValueRepr::Copy:
+        type = GetType(value_rep.type_id);
+        break;
+      case SemIR::ValueRepr::Pointer:
+        type = GetType(sem_ir().GetPointeeType(value_rep.type_id));
+        break;
+      case SemIR::ValueRepr::Custom:
+        CARBON_FATAL("TODO: Support global binding with custom value repr");
+    }
+  }
+
+  auto mangled_name =
+      mangler_.MangleGlobalBinding(binding.entity_name_id, binding_inst_id);
+  auto linkage = llvm::GlobalVariable::ExternalLinkage;
+  if (mangled_name.empty()) {
+    // If the variable doesn't have an externally-visible name, demote it to
+    // internal linkage and invent a plausible name that shouldn't collide with
+    // any of our real manglings.
+    linkage = llvm::GlobalVariable::InternalLinkage;
+    if (inst_namer_) {
+      mangled_name =
+          ("let.anon" + inst_namer_->GetUnscopedNameFor(binding_inst_id)).str();
+    }
+  }
+
+  auto* global_var = new llvm::GlobalVariable(
+      llvm_module(), type, /*isConstant=*/false, linkage,
+      /*Initializer=*/nullptr, mangled_name);
+  global_bindings_.Insert(binding_inst_id, global_var);
+  return global_var;
 }
 
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
@@ -770,17 +966,31 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
-        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
-    return cpp_code_generator_->GetAddrOfVTable(
+    // Find the clang decl corresponding to this vtable and specific. For
+    // generic classes this will be a `ClassTemplateSpecializationDecl`,
+    // otherwise it will be a regular `CXXRecordDecl`.
+    auto lookup_id = SemIR::InstId::None;
+    if (class_info.generic_id.has_value()) {
+      SemIR::ClassType class_type{SemIR::TypeType::TypeId, vtable.class_id,
+                                  specific_id};
+      auto const_id = sem_ir().constants().Get(class_type);
+      lookup_id = sem_ir().constant_values().GetInstId(const_id);
+    } else {
+      lookup_id = class_info.first_decl_id();
+    }
+    const auto* clang_decl = sem_ir().clang_decls().Lookup(lookup_id);
+    CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
+                 class_info.name_id);
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    return context().cpp_code_generator()->GetAddrOfVTable(
         clang::BaseSubobject(cxx_record_decl,
                              clang::CharUnits::fromQuantity(0)),
         cxx_record_decl);
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.MangleVTable(class_info, specific_id);
+  std::string mangled_name = mangler_.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
           .insts()

@@ -109,27 +109,18 @@ auto EvalOrAddInst(Context& context, LocT loc, InstT inst)
 
 // Adds an instruction and enqueues it to be added to the eval block of the
 // enclosing generic, returning the produced ID. The instruction is expected to
-// be a dependent template instantiation action.
-auto AddDependentActionInst(Context& context,
-                            SemIR::LocIdAndInst loc_id_and_inst)
+// have a template constant value.
+auto AddTemplateConstantInstToEvalBlock(Context& context,
+                                        SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId;
 
-// Convenience wrapper for AddDependentActionInst.
+// Convenience wrapper for AddTemplateConstantInstToEvalBlock.
 template <typename InstT, typename LocT>
   requires std::convertible_to<LocT, SemIR::LocId>
-auto AddDependentActionInst(Context& context, LocT loc, InstT inst)
+auto AddTemplateConstantInstToEvalBlock(Context& context, LocT loc, InstT inst)
     -> SemIR::InstId {
-  return AddDependentActionInst(context, SemIR::LocIdAndInst(loc, inst));
-}
-
-// Like AddDependentActionInst, but for instructions with a type_id of
-// `TypeType`, which is encoded in the return type of `TypeInstId`.
-template <typename InstT, typename LocT>
-  requires std::convertible_to<LocT, SemIR::LocId>
-auto AddDependentActionTypeInst(Context& context, LocT loc, InstT inst)
-    -> SemIR::TypeInstId {
-  return context.types().GetAsTypeInstId(
-      AddDependentActionInst(context, loc, inst));
+  return AddTemplateConstantInstToEvalBlock(context,
+                                            SemIR::LocIdAndInst(loc, inst));
 }
 
 // Adds an instruction to the current block, returning the produced ID. The
@@ -209,10 +200,11 @@ struct WrapInstForSpecificResult {
 };
 
 // Given a potentially generic instruction `inst_id`, this returns an inst ID
-// whose constant value is the same as the substituted constant value of
-// `inst_id` in `specific_id`. If the result is not `inst_id` itself, it will be
-// a newly created inst whose location is `loc_id`. If `specific_id` is `None`,
-// it is treated as the self-specific, so `inst_id` is passed through unchanged.
+// whose type and constant value are the same as the substituted type and
+// constant value of `inst_id` in `specific_id`. If the result is not `inst_id`
+// itself, it will be a newly created inst whose location is `loc_id`. If
+// `specific_id` is `None`, it is treated as the self-specific, so `inst_id` is
+// passed through unchanged.
 //
 // This also returns the type ID of the result, as a convenience for the caller.
 auto WrapInstForSpecific(Context& context, SemIR::LocId loc_id,
@@ -224,6 +216,12 @@ auto WrapInstForSpecific(Context& context, SemIR::LocId loc_id,
 auto BuildNameRef(Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
                   SemIR::InstId inst_id, SemIR::SpecificId specific_id)
     -> SemIR::InstId;
+
+// Get a location to use in diagnostics from the `inst_id` if possible. If the
+// instruction is canonical, then it has no location, and the `fallback` will be
+// used instead.
+auto GetInstLocationOrFallback(Context& context, SemIR::InstId inst_id,
+                               SemIR::LocId fallback) -> SemIR::LocId;
 
 }  // namespace Carbon::Check
 

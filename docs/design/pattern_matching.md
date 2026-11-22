@@ -414,8 +414,9 @@ matches if all of these sub-matches succeed.
 
 A struct can be matched with a struct pattern.
 
--   _struct-pattern_ ::= `{` [_field-pattern_ [`,` _field-pattern_ ]\* ] `}`
--   _struct-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `}`
+-   _struct-pattern_ ::= `{` [_field-pattern_ [`,` _field-pattern_ ]\* `,`? ]
+    `}`
+-   _struct-pattern_ ::= `{` [_field-pattern_ `,`]+ `_` `,`? `}`
 -   _field-pattern_ ::= _designator_ `=` _pattern_
 -   _field-pattern_ ::= _binding-pattern_
 -   _pattern_ ::= _struct-pattern_
@@ -860,8 +861,8 @@ Evaluation of the last line involves 6 function calls:
 1.  Call `MakeA`.
 2.  Call `A.(Core.ImplicitAsPrimitive(C)).Convert`, to convert the `A` object to
     a `C` value, as part of type conversion.
-3.  Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`, as
-    part of category conversion.
+3.  Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`,
+    as part of category conversion.
 4.  Call `MakeB`.
 5.  Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
 6.  Call `B.(Core.Copy).Op`.

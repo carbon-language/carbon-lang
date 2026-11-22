@@ -7,6 +7,7 @@
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/import.h"
@@ -16,6 +17,9 @@
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
+#include "toolchain/check/literal.h"
+#include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -36,7 +40,9 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     -> std::optional<clang::OverloadedOperatorKind> {
   switch (interface_name) {
       // Unary operators.
-    case CoreIdentifier::Destroy:
+    case CoreIdentifier::DestroyImpl:
+    case CoreIdentifier::SubobjectDestroy:
+    case CoreIdentifier::SelfDestruct:
     case CoreIdentifier::As:
     case CoreIdentifier::ImplicitAs:
     case CoreIdentifier::Iterate:
@@ -195,6 +201,12 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
       return clang::OO_Subscript;
     }
 
+    // C++ `operator[]` is found through `IndexWith`, which subscripting falls
+    // back to.
+    case CoreIdentifier::IndirectIndexWith: {
+      return std::nullopt;
+    }
+
     default: {
       context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
                                          interface_name));
@@ -251,15 +263,9 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                .type_id = GetSingletonType(
                                    context, SemIR::IntLiteralType::TypeInstId),
                                .int_id = context.ints().Add(size)}));
-  auto array_type_inst_id = AddTypeInst(
-      context,
-      SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), loc_id,
-          SemIR::ArrayType{.type_id = SemIR::TypeType::TypeId,
-                           .bound_id = bound_id,
-                           .element_type_inst_id = element_type_inst_id}));
   auto array_type_id =
-      context.types().GetTypeIdForTypeInstId(array_type_inst_id);
+      MakeArrayType(context, loc_id, element_type_inst_id, bound_id).type_id;
+  TryToCompleteType(context, array_type_id, loc_id);
 
   // Create a builtin function to perform the conversion from array type to
   // initializer list type. We name the synthesized function as if it were a
@@ -271,8 +277,9 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                 {.parent_scope_id = init_list_class.scope_id,
                                  .name_id = init_list_class.name_id,
                                  .param_type_ids = {array_type_id},
-                                 .param_kind = ParamPatternKind::Value,
-                                 .return_type_id = init_list_type_id});
+                                 .param_kinds = {ParamPatternKind::Value},
+                                 .return_form = ReturnExprAsForm(
+                                     context, loc_id, init_list_type_inst_id)});
 
   auto& function = context.functions().Get(function_id);
   CARBON_CHECK(IsValidBuiltinDeclaration(
@@ -490,6 +497,13 @@ namespace {
 struct OverloadedOperatorInfo {
   enum ReturnType { FirstArgType, Bool };
 
+  // The name of the interface containing the operator function. This affects
+  // the mangled name and canonicalization of Generated functions.
+  //
+  // This must always be set, so we pick a default value that does not represent
+  // an interface, so is never correct.
+  CoreIdentifier interface_name = CoreIdentifier::VoidBase;
+
   // The name for the function used to implement this operator. This is usually
   // `Op`. This mostly only affects the mangled name, but might show up in
   // diagnostics.
@@ -516,44 +530,53 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
     // Bitwise operators. In C++, the return type is computed with the usual
     // arithmetic conversions, but we will just use the type of the arguments.
     table[clang::OO_Amp] = {
+        .interface_name = CoreIdentifier::BitAndWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntAnd,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Pipe] = {
+        .interface_name = CoreIdentifier::BitOrWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntOr,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Caret] = {
+        .interface_name = CoreIdentifier::BitXorWith,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntXor,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
     table[clang::OO_Tilde] = {
+        .interface_name = CoreIdentifier::BitComplement,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntComplement,
         .return_type = OverloadedOperatorInfo::ReturnType::FirstArgType};
 
     // Comparison operators.
     table[clang::OO_EqualEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Equal,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_ExclaimEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::NotEqual,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntNeq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Less] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Less,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLess,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_LessEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::LessOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntLessEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_Greater] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::Greater,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreater,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
     table[clang::OO_GreaterEqual] = {
+        .interface_name = CoreIdentifier::OrderedWith,
         .op_name = CoreIdentifier::GreaterOrEquivalent,
         .builtin_kind = SemIR::BuiltinFunctionKind::IntGreaterEq,
         .return_type = OverloadedOperatorInfo::ReturnType::Bool};
-
     return table;
   }();
   return OpTable[kind];
@@ -570,6 +593,9 @@ static auto TryBuildBuiltinOperator(
   if (info.builtin_kind == SemIR::BuiltinFunctionKind::None) {
     return SemIR::InstId::None;
   }
+
+  CARBON_CHECK(info.interface_name != CoreIdentifier::VoidBase,
+               "builtin operator interface was not specified");
 
   // Import the argument types. For now, we only accept enum types.
   // TODO: Consider expanding this to other types.
@@ -616,8 +642,10 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  return MakeBuiltinOperatorFunction(context, arg_type_ids, return_type_id,
-                                     info.op_name, info.builtin_kind);
+  return MakeBuiltinOperatorFunction(
+      context, loc_id, arg_type_ids, return_type_id, info.op_name,
+      info.builtin_kind,
+      GetCoreInterfaceId(context, loc_id, info.interface_name));
 }
 
 namespace {
@@ -626,13 +654,13 @@ struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
   SemIR::TypeId arg_type_id;
   SemIR::LocId loc_id;
 
-  void operator()(auto& builder) const {
+  auto operator()() const -> DiagnosticBuilder {
     CARBON_DIAGNOSTIC(
-        IncompleteOperandTypeInCppOperatorLookup, Context,
+        IncompleteOperandTypeInCppOperatorLookup, Error,
         "looking up a C++ operator with incomplete operand type {0}",
         SemIR::TypeId);
-    builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                    arg_type_id);
+    return context.emitter().Build(
+        loc_id, IncompleteOperandTypeInCppOperatorLookup, arg_type_id);
   }
 };
 }  // namespace
@@ -645,11 +673,11 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
     -> SemIR::InstId {
-  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // Register a context scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   if (op.interface_name == CoreIdentifier::ImplicitAs ||
       op.interface_name == CoreIdentifier::As) {
@@ -705,11 +733,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // Register a context scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   // We can only handle concrete types in LookupCppOperator.
   for (auto arg_id : arg_ids) {

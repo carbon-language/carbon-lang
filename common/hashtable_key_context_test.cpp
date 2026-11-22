@@ -7,6 +7,16 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <string>
+
+#include "common/hashing_llvm.h"
+
+#if __has_include(<sys/mman.h>)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
 namespace Carbon {
 namespace {
 
@@ -57,6 +67,121 @@ TEST(HashtableKeyContextTest, HashtableEq) {
   EXPECT_FALSE(
       HashtableEq(CustomExtEq{.x = 1, .y = 2}, CustomExtEq{.x = 3, .y = 4}));
 }
+
+TEST(HashtableKeyContextTest, HashtableEqStrings) {
+  EXPECT_TRUE(HashtableEq(llvm::StringRef(), llvm::StringRef("")));
+  EXPECT_TRUE(HashtableEq(llvm::StringRef("abc"), std::string("abc")));
+  EXPECT_TRUE(HashtableEq(std::string("abc"), llvm::StringRef("abc")));
+  EXPECT_TRUE(HashtableEq(std::string("abc"), std::string("abc")));
+  EXPECT_FALSE(HashtableEq(llvm::StringRef("abc"), llvm::StringRef("abcd")));
+  EXPECT_FALSE(HashtableEq(std::string("abc"), std::string("abz")));
+  for (size_t size = 0; size <= 600; ++size) {
+    // Offsetting `lhs` in its allocation covers each of its alignments, which
+    // larger sizes depend on. Each string ends its allocation, so ASan catches
+    // any read past its end, and any read before its start with no offset.
+    for (size_t offset = 0; offset < 32; ++offset) {
+      auto lhs_storage = std::make_unique<char[]>(offset + size);
+      auto rhs_storage = std::make_unique<char[]>(size);
+      char* lhs = lhs_storage.get() + offset;
+      char* rhs = rhs_storage.get();
+      for (size_t i = 0; i < size; ++i) {
+        lhs[i] = rhs[i] = static_cast<char>('a' + i % 26);
+      }
+      llvm::StringRef lhs_ref(lhs, size);
+      llvm::StringRef rhs_ref(rhs, size);
+      EXPECT_TRUE(HashtableEq(lhs_ref, rhs_ref))
+          << "size=" << size << " offset=" << offset;
+      for (size_t i = 0; i < size; ++i) {
+        rhs[i] ^= 1;
+        EXPECT_FALSE(HashtableEq(lhs_ref, rhs_ref))
+            << "size=" << size << " offset=" << offset << " i=" << i;
+        rhs[i] ^= 1;
+      }
+    }
+  }
+}
+
+// Short strings can be compared by reading past their ends, so check that the
+// bytes that follow them don't affect the result.
+TEST(HashtableKeyContextTest, HashtableEqStringsIgnoresFollowingBytes) {
+  for (size_t size = 0; size <= 32; ++size) {
+    std::string str(size, 'a');
+    // Equal strings, followed by bytes that all differ.
+    std::string lhs = str + std::string(64, 'x');
+    std::string rhs = str + std::string(64, 'y');
+    EXPECT_TRUE(HashtableEq(llvm::StringRef(lhs.data(), size),
+                            llvm::StringRef(rhs.data(), size)))
+        << "size=" << size;
+    if (size == 0) {
+      continue;
+    }
+    // Strings that differ in their last byte, followed by the same bytes.
+    rhs = lhs;
+    rhs[size - 1] = 'b';
+    EXPECT_FALSE(HashtableEq(llvm::StringRef(lhs.data(), size),
+                             llvm::StringRef(rhs.data(), size)))
+        << "size=" << size;
+  }
+}
+
+#if __has_include(<sys/mman.h>)
+// Compares strings next to inaccessible pages, so that reading anything outside
+// the pages that hold their bytes faults.
+TEST(HashtableKeyContextTest, HashtableEqStringsNextToInaccessiblePages) {
+  auto page = static_cast<size_t>(sysconf(_SC_PAGESIZE));
+  void* mapping = mmap(nullptr, 3 * page, PROT_READ | PROT_WRITE,
+                       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  ASSERT_NE(mapping, MAP_FAILED);
+  // Only the middle page is accessible.
+  char* begin = static_cast<char*>(mapping) + page;
+  char* end = begin + page;
+  ASSERT_EQ(mprotect(begin - page, page, PROT_NONE), 0);
+  ASSERT_EQ(mprotect(end, page, PROT_NONE), 0);
+
+  // Comparing empty strings can't read anything, even through dangling
+  // pointers.
+  const char* inaccessible[] = {begin - page,
+                                begin - 1,
+                                end,
+                                end + page - 1,
+                                reinterpret_cast<const char*>(1),
+                                reinterpret_cast<const char*>(8)};
+  for (const char* data : inaccessible) {
+    EXPECT_TRUE(HashtableEq(llvm::StringRef(data, 0), llvm::StringRef()));
+    EXPECT_TRUE(
+        HashtableEq(llvm::StringRef(begin, 0), llvm::StringRef(data, 0)));
+    EXPECT_TRUE(HashtableEq(llvm::StringRef(data, 0), llvm::StringRef(end, 0)));
+  }
+
+  // Compare a string that starts a little after the first inaccessible page
+  // with one that ends a little before the last.
+  for (size_t size = 1; size <= 64; ++size) {
+    for (size_t offset = 0; offset < 16; ++offset) {
+      char* lhs = begin + offset;
+      char* rhs = end - offset - size;
+      for (size_t i = 0; i < size; ++i) {
+        lhs[i] = rhs[i] = static_cast<char>('a' + i % 26);
+      }
+      llvm::StringRef lhs_ref(lhs, size);
+      llvm::StringRef rhs_ref(rhs, size);
+      EXPECT_TRUE(HashtableEq(lhs_ref, rhs_ref))
+          << "size=" << size << " offset=" << offset;
+      EXPECT_TRUE(HashtableEq(rhs_ref, lhs_ref))
+          << "size=" << size << " offset=" << offset;
+      for (size_t i = 0; i < size; ++i) {
+        rhs[i] ^= 1;
+        EXPECT_FALSE(HashtableEq(lhs_ref, rhs_ref))
+            << "size=" << size << " offset=" << offset << " i=" << i;
+        EXPECT_FALSE(HashtableEq(rhs_ref, lhs_ref))
+            << "size=" << size << " offset=" << offset << " i=" << i;
+        rhs[i] ^= 1;
+      }
+    }
+  }
+
+  ASSERT_EQ(munmap(mapping, 3 * page), 0);
+}
+#endif
 
 TEST(HashtableKeyContextTest, HashtableEqAPInt) {
   // Hashtable equality doesn't assert on mismatched bit width, it includes the
@@ -119,9 +244,8 @@ TEST(HashtableKeyContextTest, HashtableEqAPFloat) {
 struct CustomHash {
   int x;
 
-  friend auto CarbonHashValue(const CustomHash& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(value.x + 42, seed);
+  friend auto CarbonHashValue(const CustomHash& value) -> HashCode {
+    return HashValue(value.x + 42);
   }
 };
 
@@ -153,20 +277,15 @@ TEST(HashtableKeyContextTest, DefaultKeyContext) {
   EXPECT_FALSE(HashtableEq(zero_float, neg_zero_float));
 
   // Also check hash dispatching.
-  uint64_t seed = 1234;
-  EXPECT_THAT(context.HashKey(42, seed), Eq(HashValue(42, seed)));
-  EXPECT_THAT(context.HashKey(CustomHash{.x = 1234}, seed),
-              Eq(HashValue(CustomHash{.x = 1234}, seed)));
-  EXPECT_THAT(context.HashKey(one_64, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(one_128, seed), Eq(HashValue(one_128, seed)));
-  EXPECT_THAT(context.HashKey(one_64, seed),
-              Ne(context.HashKey(one_128, seed)));
-  EXPECT_THAT(context.HashKey(zero_float, seed),
-              Eq(HashValue(zero_float, seed)));
-  EXPECT_THAT(context.HashKey(neg_zero_float, seed),
-              Eq(HashValue(neg_zero_float, seed)));
-  EXPECT_THAT(context.HashKey(zero_float, seed),
-              Ne(context.HashKey(neg_zero_float, seed)));
+  EXPECT_THAT(context.HashKey(42), Eq(HashValue(42)));
+  EXPECT_THAT(context.HashKey(CustomHash{.x = 1234}),
+              Eq(HashValue(CustomHash{.x = 1234})));
+  EXPECT_THAT(context.HashKey(one_64), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(one_128), Eq(HashValue(one_128)));
+  EXPECT_THAT(context.HashKey(one_64), Ne(context.HashKey(one_128)));
+  EXPECT_THAT(context.HashKey(zero_float), Eq(HashValue(zero_float)));
+  EXPECT_THAT(context.HashKey(neg_zero_float), Eq(HashValue(neg_zero_float)));
+  EXPECT_THAT(context.HashKey(zero_float), Ne(context.HashKey(neg_zero_float)));
 }
 
 struct TestTranslatingKeyContext
@@ -189,13 +308,12 @@ TEST(HashtableKeyContextTest, TranslatingKeyContext) {
 
   TestTranslatingKeyContext context = {.array = values};
 
-  uint64_t seed = 1234;
-  EXPECT_THAT(context.HashKey(0, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(1, seed), Eq(HashValue(two_64, seed)));
-  EXPECT_THAT(context.HashKey(2, seed), Eq(HashValue(one_128, seed)));
-  EXPECT_THAT(context.HashKey(3, seed), Eq(HashValue(two_128, seed)));
-  EXPECT_THAT(context.HashKey(4, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(5, seed), Eq(HashValue(one_64, seed)));
+  EXPECT_THAT(context.HashKey(0), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(1), Eq(HashValue(two_64)));
+  EXPECT_THAT(context.HashKey(2), Eq(HashValue(one_128)));
+  EXPECT_THAT(context.HashKey(3), Eq(HashValue(two_128)));
+  EXPECT_THAT(context.HashKey(4), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(5), Eq(HashValue(one_64)));
 
   EXPECT_TRUE(context.KeyEq(one_64, 0));
   EXPECT_TRUE(context.KeyEq(one_64, 4));

@@ -41,12 +41,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a: C);
-// CHECK:STDERR: fail_parens.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: interface Foo(a: (C)) {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_parens.carbon:[[@LINE-4]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:        ╭─┤ fail_parens.carbon:[[@LINE+12]]:18
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ comparing with previous declaration here
+// CHECK:STDERR:        ·                     │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo(a: (C)) {}
+// CHECK:STDERR:        ·                  ┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: redeclaration syntax differs here
+// CHECK:STDERR:        ·                     ┃        [RedeclParamSyntaxDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: (C)) {}
 
@@ -57,12 +62,17 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a: C);
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: interface Foo(a: r#C) {}
-// CHECK:STDERR:                  ^~~
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE-4]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:        ╭─┤ fail_raw_identifier.carbon:[[@LINE+12]]:18
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ comparing with previous declaration here
+// CHECK:STDERR:        ·                     │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo(a: r#C) {}
+// CHECK:STDERR:        ·                  ━┳━
+// CHECK:STDERR:        ·                   ┗━━┫ error: redeclaration syntax differs here
+// CHECK:STDERR:        ·                      ┃        [RedeclParamSyntaxDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: r#C) {}
 
@@ -80,22 +90,30 @@ interface Bar(a: D);
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: interface Foo(a: C) {}
-// CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: two_file.carbon:7:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_two_file.impl.carbon:[[@LINE+12]]:11
+// CHECK:STDERR: ->     │ interface Foo(a: C) {}
+// CHECK:STDERR:        ·           ━┳━
+// CHECK:STDERR:        ·            ┗━━┫ error: duplicate name `Foo` being declared in the same scope
+// CHECK:STDERR:        ·               ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ two_file.carbon
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: C) {}
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Bar` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: interface Bar(a: D) {}
-// CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_todo_two_file.impl.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: two_file.carbon:8:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: interface Bar(a: D);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_two_file.impl.carbon:[[@LINE+12]]:11
+// CHECK:STDERR: ->     │ interface Bar(a: D) {}
+// CHECK:STDERR:        ·           ━┳━
+// CHECK:STDERR:        ·            ┗━━┫ error: duplicate name `Bar` being declared in the same scope
+// CHECK:STDERR:        ·               ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ two_file.carbon
+// CHECK:STDERR:        │ interface Bar(a: D);
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Bar(a: D) {}
 
@@ -107,12 +125,17 @@ class C {}
 alias D = C;
 
 interface Foo(a: C);
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE+7]]:15: error: redeclaration differs at parameter 1 [RedeclParamDiffers]
-// CHECK:STDERR: interface Foo(b: D) {}
-// CHECK:STDERR:               ^~~~
-// CHECK:STDERR: fail_name_mismatch.carbon:[[@LINE-4]]:15: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR:               ^~~~
+// CHECK:STDERR:        ╭─┤ fail_name_mismatch.carbon:[[@LINE+12]]:15
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·               ──┬─
+// CHECK:STDERR:        ·                 ╰──┤ previous declaration's corresponding parameter here
+// CHECK:STDERR:        ·                    │ [RedeclParamPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo(b: D) {}
+// CHECK:STDERR:        ·               ━━┳━
+// CHECK:STDERR:        ·                 ┗━━┫ error: redeclaration differs at parameter 1
+// CHECK:STDERR:        ·                    ┃        [RedeclParamDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(b: D) {}
 
@@ -124,12 +147,17 @@ class C {}
 alias D = C;
 
 interface Foo(a: C);
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: interface Foo(a: D) {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE-4]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:        ╭─┤ fail_alias.carbon:[[@LINE+12]]:18
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ comparing with previous declaration here
+// CHECK:STDERR:        ·                     │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo(a: D) {}
+// CHECK:STDERR:        ·                  ┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: redeclaration syntax differs here
+// CHECK:STDERR:        ·                     ┃        [RedeclParamSyntaxDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: D) {}
 
@@ -141,12 +169,17 @@ class C {}
 alias D = C;
 
 interface Foo[a: C]();
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE+7]]:18: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: interface Foo[a: D]() {}
-// CHECK:STDERR:                  ^
-// CHECK:STDERR: fail_deduced_alias.carbon:[[@LINE-4]]:18: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: interface Foo[a: C]();
-// CHECK:STDERR:                  ^
+// CHECK:STDERR:        ╭─┤ fail_deduced_alias.carbon:[[@LINE+12]]:18
+// CHECK:STDERR:        │ interface Foo[a: C]();
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ comparing with previous declaration here
+// CHECK:STDERR:        ·                     │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo[a: D]() {}
+// CHECK:STDERR:        ·                  ┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: redeclaration syntax differs here
+// CHECK:STDERR:        ·                     ┃        [RedeclParamSyntaxDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo[a: D]() {}
 
@@ -167,13 +200,17 @@ alias D = C;
 // TODO: This fails because importing interfaces doesn't work well. It should
 // fail due to `C` versus `D`, but may succeed if importing interfaces is fixed
 // before syntax matching on imports is supported.
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE+8]]:11: error: duplicate name `Foo` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: interface Foo(a: D) {}
-// CHECK:STDERR:           ^~~
-// CHECK:STDERR: fail_alias_two_file.impl.carbon:[[@LINE-10]]:1: in import [InImport]
-// CHECK:STDERR: alias_two_file.carbon:6:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: interface Foo(a: C);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_alias_two_file.impl.carbon:[[@LINE+12]]:11
+// CHECK:STDERR: ->     │ interface Foo(a: D) {}
+// CHECK:STDERR:        ·           ━┳━
+// CHECK:STDERR:        ·            ┗━━┫ error: duplicate name `Foo` being declared in the same scope
+// CHECK:STDERR:        ·               ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ alias_two_file.carbon
+// CHECK:STDERR:        │ interface Foo(a: C);
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: D) {}
 
@@ -184,38 +221,47 @@ library "[[@TEST_NAME]]";
 class C {}
 
 interface Foo(a: const C);
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+11]]:18: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
-// CHECK:STDERR: interface Foo(a: const (const C)) {}
-// CHECK:STDERR:                  ^~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_repeat_const.carbon:[[@LINE+20]]:18
+// CHECK:STDERR: ->     │ interface Foo(a: const (const C)) {}
+// CHECK:STDERR:        ·                  ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ warning: `const` applied repeatedly to the same type has
+// CHECK:STDERR:        ·                     ┃          no additional effect
+// CHECK:STDERR:        ·                     ┃          [RepeatedConst]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE+7]]:24: error: redeclaration syntax differs here [RedeclParamSyntaxDiffers]
-// CHECK:STDERR: interface Foo(a: const (const C)) {}
-// CHECK:STDERR:                        ^
-// CHECK:STDERR: fail_repeat_const.carbon:[[@LINE-8]]:24: note: comparing with previous declaration here [RedeclParamSyntaxPrevious]
-// CHECK:STDERR: interface Foo(a: const C);
-// CHECK:STDERR:                        ^
+// CHECK:STDERR:        ╭─┤ fail_repeat_const.carbon:[[@LINE+12]]:24
+// CHECK:STDERR:        │ interface Foo(a: const C);
+// CHECK:STDERR:        ·                        ┬
+// CHECK:STDERR:        ·                        ╰──┤ comparing with previous declaration here
+// CHECK:STDERR:        ·                           │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ interface Foo(a: const (const C)) {}
+// CHECK:STDERR:        ·                        ┳
+// CHECK:STDERR:        ·                        ┗━━┫ error: redeclaration syntax differs here
+// CHECK:STDERR:        ·                           ┃        [RedeclParamSyntaxDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: const (const C)) {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6: type = generic_interface_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo.generic: %Foo.type.bc6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo, @Foo(%a)> [symbolic]
-// CHECK:STDOUT:   %Self.a95: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo, @Foo(%a)> [symbolic]
+// CHECK:STDOUT:   %Self.4d3: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Bar.type.3f0: type = generic_interface_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar.generic: %Bar.type.3f0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.type.ab7: type = facet_type <@Bar, @Bar(%a)> [symbolic]
-// CHECK:STDOUT:   %Self.a90: %Bar.type.ab7 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Bar.type.309: type = facet_type <@Bar, @Bar(%a)> [symbolic]
+// CHECK:STDOUT:   %Self.3ee: %Bar.type.309 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -229,37 +275,37 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.bc6 = interface_decl @Foo [concrete = constants.%Foo.generic] {
-// CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc8: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref.loc7 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc7: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc8: %Foo.type.bc6 = interface_decl @Foo [concrete = constants.%Foo.generic] {
-// CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc8: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %C.ref.loc8 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc8: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc8: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc8: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc8: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc10: %Bar.type.3f0 = interface_decl @Bar [concrete = constants.%Bar.generic] {
-// CHECK:STDOUT:     %a.patt.loc10_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc11: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: type = splice_block %D.ref.loc10 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc10: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc10: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref.loc10: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc10_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc10_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Bar.decl.loc11: %Bar.type.3f0 = interface_decl @Bar [concrete = constants.%Bar.generic] {
-// CHECK:STDOUT:     %a.patt.loc10_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc11: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11: type = splice_block %D.ref.loc11 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc11: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref.loc11: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc11: %C = symbolic_binding a, 0 [symbolic = %a.loc10_16.1 (constants.%a)]
@@ -267,15 +313,15 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Foo(%a.loc7_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc7_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc7: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.loc7_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo, @Foo(%a.loc7_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc8_21.2: @Foo.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc8_21.2 (constants.%Self.a95)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo, @Foo(%a.loc7_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc8_21.2: @Foo.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc8_21.2 (constants.%Self.4d3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc8_21.1: @Foo.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc8_21.2 (constants.%Self.a95)]
+// CHECK:STDOUT:     %Self.loc8_21.1: @Foo.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc8_21.2 (constants.%Self.4d3)]
 // CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -287,15 +333,15 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Bar(%a.loc10_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc10_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc10: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc10 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.loc10_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc10_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%a.loc10_16.1)> [symbolic = %Bar.type (constants.%Bar.type.ab7)]
-// CHECK:STDOUT:   %Self.loc11_21.2: @Bar.%Bar.type (%Bar.type.ab7) = symbolic_binding Self, 1 [symbolic = %Self.loc11_21.2 (constants.%Self.a90)]
+// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar, @Bar(%a.loc10_16.1)> [symbolic = %Bar.type (constants.%Bar.type.309)]
+// CHECK:STDOUT:   %Self.loc11_21.2: @Bar.%Bar.type (%Bar.type.309) = symbolic_binding Self, 1 [symbolic = %Self.loc11_21.2 (constants.%Self.3ee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc11_21.1: @Bar.%Bar.type (%Bar.type.ab7) = symbolic_binding Self, 1 [symbolic = %Self.loc11_21.2 (constants.%Self.a90)]
+// CHECK:STDOUT:     %Self.loc11_21.1: @Bar.%Bar.type (%Bar.type.309) = symbolic_binding Self, 1 [symbolic = %Self.loc11_21.2 (constants.%Self.3ee)]
 // CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -315,34 +361,34 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc7_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.patt.loc7 => constants.%a.patt
 // CHECK:STDOUT:   %a.loc7_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.a95) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.4d3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc10_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.patt.loc10 => constants.%a.patt
 // CHECK:STDOUT:   %a.loc10_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.a90) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.3ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- spacing.carbon
+// CHECK:STDOUT: --- spacing.carbon = $spacing
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6: type = generic_interface_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo.generic: %Foo.type.bc6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo, @Foo(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo, @Foo(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -352,19 +398,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl.loc6: %Foo.type.bc6 = interface_decl @Foo [concrete = constants.%Foo.generic] {
-// CHECK:STDOUT:     %a.patt.loc6_23.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc7: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %C.ref.loc6 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc6: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc6: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc6: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_23.2: %C = symbolic_binding a, 0 [symbolic = %a.loc6_23.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl.loc7: %Foo.type.bc6 = interface_decl @Foo [concrete = constants.%Foo.generic] {
-// CHECK:STDOUT:     %a.patt.loc6_23.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.patt.loc7: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref.loc7 [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen.loc7: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen.loc7: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref.loc7: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7: %C = symbolic_binding a, 0 [symbolic = %a.loc6_23.1 (constants.%a)]
@@ -372,15 +418,15 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @Foo(%a.loc6_23.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc6_23.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.patt.loc6: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6 (constants.%a.patt)]
 // CHECK:STDOUT:   %a.loc6_23.1: %C = symbolic_binding a, 0 [symbolic = %a.loc6_23.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo, @Foo(%a.loc6_23.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc7_23.2: @Foo.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc7_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo, @Foo(%a.loc6_23.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc7_23.2: @Foo.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc7_23.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc7_23.1: @Foo.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc7_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc7_23.1: @Foo.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc7_23.2 (constants.%Self)]
 // CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -400,29 +446,29 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc6_23.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.patt.loc6 => constants.%a.patt
 // CHECK:STDOUT:   %a.loc6_23.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_parens.carbon
+// CHECK:STDOUT: --- fail_parens.carbon = $fail_parens
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc19 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc14, @Foo.loc14(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc19, @Foo.loc19(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -435,19 +481,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc6_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.bc6a25.2 = interface_decl @Foo.loc14 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc14_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc19: %Foo.type.bc6a25.2 = interface_decl @Foo.loc19 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc19_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc19_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc19: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc14_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc14_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc19_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc19_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,20 +504,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc14(%a.loc14_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc14_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc14_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc14_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc19(%a.loc19_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc19_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc19_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc19_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc19_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc14, @Foo.loc14(%a.loc14_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc14_23.2: @Foo.loc14.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc14_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc19, @Foo.loc19(%a.loc19_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc19_23.2: @Foo.loc19.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc19_23.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc14_23.1: @Foo.loc14.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc14_23.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc14 [concrete]
+// CHECK:STDOUT:     %Self.loc19_23.1: @Foo.loc19.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc19_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc19 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc14_23.1
+// CHECK:STDOUT:     .Self = %Self.loc19_23.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -491,30 +537,30 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc14(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc14_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc14_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc19(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc19_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc19_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_identifier.carbon
+// CHECK:STDOUT: --- fail_raw_identifier.carbon = $fail_raw_identifier
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc14 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc19 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc14, @Foo.loc14(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc19, @Foo.loc19(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -527,19 +573,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc6_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc14: %Foo.type.bc6a25.2 = interface_decl @Foo.loc14 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc14_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc19: %Foo.type.bc6a25.2 = interface_decl @Foo.loc19 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc19_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc19_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc14: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc19: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc14_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc14_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc19_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc19_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -550,20 +596,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc14(%a.loc14_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc14_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc14_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc14_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc14_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc19(%a.loc19_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc19_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc19_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc19_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc19_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc14, @Foo.loc14(%a.loc14_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc14_23.2: @Foo.loc14.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc14_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc19, @Foo.loc19(%a.loc19_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc19_23.2: @Foo.loc19.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc19_23.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc14_23.1: @Foo.loc14.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc14_23.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc14 [concrete]
+// CHECK:STDOUT:     %Self.loc19_23.1: @Foo.loc19.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc19_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc19 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc14_23.1
+// CHECK:STDOUT:     .Self = %Self.loc19_23.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -583,21 +629,21 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc14(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc14_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc14_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc19(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc19_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc19_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon
+// CHECK:STDOUT: --- two_file.carbon = $two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
@@ -621,7 +667,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
@@ -630,7 +676,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc8_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc8_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc8_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc8_16.1 (constants.%a)]
@@ -669,11 +715,11 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc8_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_todo_two_file.impl.carbon = $fail_todo_two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -682,16 +728,16 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc12 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc16 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc12, @Foo.loc12(%a)> [symbolic]
-// CHECK:STDOUT:   %Self.a95: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc16, @Foo.loc16(%a)> [symbolic]
+// CHECK:STDOUT:   %Self.4d3: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Bar.type.3f06c8.1: type = generic_interface_type @Bar.1 [concrete]
 // CHECK:STDOUT:   %Bar.generic.b3011f.1: %Bar.type.3f06c8.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.type.3f06c8.2: type = generic_interface_type @Bar.loc21 [concrete]
+// CHECK:STDOUT:   %Bar.type.3f06c8.2: type = generic_interface_type @Bar.loc29 [concrete]
 // CHECK:STDOUT:   %Bar.generic.b3011f.2: %Bar.type.3f06c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Bar.type.ab7: type = facet_type <@Bar.loc21, @Bar.loc21(%a)> [symbolic]
-// CHECK:STDOUT:   %Self.a90: %Bar.type.ab7 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Bar.type.309: type = facet_type <@Bar.loc29, @Bar.loc29(%a)> [symbolic]
+// CHECK:STDOUT:   %Self.3ee: %Bar.type.309 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -714,23 +760,23 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_24.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_24.2 = import <none>
-// CHECK:STDOUT:   %Foo.decl: %Foo.type.bc6a25.2 = interface_decl @Foo.loc12 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc12_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc12_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl: %Foo.type.bc6a25.2 = interface_decl @Foo.loc16 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc16_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc12: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc16: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc12_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc12_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc16_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc16_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Bar.decl: %Bar.type.3f06c8.2 = interface_decl @Bar.loc21 [concrete = constants.%Bar.generic.b3011f.2] {
-// CHECK:STDOUT:     %a.patt.loc21_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc21_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Bar.decl: %Bar.type.3f06c8.2 = interface_decl @Bar.loc29 [concrete = constants.%Bar.generic.b3011f.2] {
+// CHECK:STDOUT:     %a.patt.loc29_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc29_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc21: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc29: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, imports.%Main.D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc21_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc21_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc29_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc29_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -741,20 +787,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc12(%a.loc12_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc12_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc12_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc12_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc12_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc16(%a.loc16_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc16_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc16_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc16_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc16_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc12, @Foo.loc12(%a.loc12_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc12_21.2: @Foo.loc12.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc12_21.2 (constants.%Self.a95)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc16, @Foo.loc16(%a.loc16_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc16_21.2: @Foo.loc16.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc16_21.2 (constants.%Self.4d3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc12_21.1: @Foo.loc12.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc12_21.2 (constants.%Self.a95)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc12 [concrete]
+// CHECK:STDOUT:     %Self.loc16_21.1: @Foo.loc16.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc16_21.2 (constants.%Self.4d3)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc16 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc12_21.1
+// CHECK:STDOUT:     .Self = %Self.loc16_21.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -768,20 +814,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Bar.loc21(%a.loc21_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc21_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc21_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc21_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc21_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Bar.loc29(%a.loc29_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc29_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc29_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc29_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc29_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar.loc21, @Bar.loc21(%a.loc21_16.1)> [symbolic = %Bar.type (constants.%Bar.type.ab7)]
-// CHECK:STDOUT:   %Self.loc21_21.2: @Bar.loc21.%Bar.type (%Bar.type.ab7) = symbolic_binding Self, 1 [symbolic = %Self.loc21_21.2 (constants.%Self.a90)]
+// CHECK:STDOUT:   %Bar.type: type = facet_type <@Bar.loc29, @Bar.loc29(%a.loc29_16.1)> [symbolic = %Bar.type (constants.%Bar.type.309)]
+// CHECK:STDOUT:   %Self.loc29_21.2: @Bar.loc29.%Bar.type (%Bar.type.309) = symbolic_binding Self, 1 [symbolic = %Self.loc29_21.2 (constants.%Self.3ee)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc21_21.1: @Bar.loc21.%Bar.type (%Bar.type.ab7) = symbolic_binding Self, 1 [symbolic = %Self.loc21_21.2 (constants.%Self.a90)]
-// CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar.loc21 [concrete]
+// CHECK:STDOUT:     %Self.loc29_21.1: @Bar.loc29.%Bar.type (%Bar.type.309) = symbolic_binding Self, 1 [symbolic = %Self.loc29_21.2 (constants.%Self.3ee)]
+// CHECK:STDOUT:     %Bar.WithSelf.decl = interface_with_self_decl @Bar.loc29 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc21_21.1
+// CHECK:STDOUT:     .Self = %Self.loc29_21.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -800,33 +846,33 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc12(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc12_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc12_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc16(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc16_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc16_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.a95) {}
+// CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self.4d3) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.1(constants.%a) {
 // CHECK:STDOUT:   %a.patt => constants.%a.patt
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.loc21(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc21_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc21_16.1 => constants.%a
+// CHECK:STDOUT: specific @Bar.loc29(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc29_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc29_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.a90) {}
+// CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.3ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_mismatch.carbon
+// CHECK:STDOUT: --- fail_name_mismatch.carbon = $fail_name_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
@@ -834,10 +880,10 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type = symbolic_binding_pattern b, 0 [symbolic]
 // CHECK:STDOUT:   %b: %C = symbolic_binding b, 0 [symbolic]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc20 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc15, @Foo.loc15(%b)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc20, @Foo.loc20(%b)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -853,19 +899,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.bc6a25.2 = interface_decl @Foo.loc15 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %b.patt.loc15_16.1: %pattern_type = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_16.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc20: %Foo.type.bc6a25.2 = interface_decl @Foo.loc20 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %b.patt.loc20_16.1: %pattern_type = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc20_16.2 (constants.%b.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc20: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %b.loc15_16.2: %C = symbolic_binding b, 0 [symbolic = %b.loc15_16.1 (constants.%b)]
+// CHECK:STDOUT:     %b.loc20_16.2: %C = symbolic_binding b, 0 [symbolic = %b.loc20_16.1 (constants.%b)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -876,20 +922,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc15(%b.loc15_16.2: %C) {
-// CHECK:STDOUT:   %b.patt.loc15_16.2: %pattern_type = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc15_16.2 (constants.%b.patt)]
-// CHECK:STDOUT:   %b.loc15_16.1: %C = symbolic_binding b, 0 [symbolic = %b.loc15_16.1 (constants.%b)]
+// CHECK:STDOUT: generic interface @Foo.loc20(%b.loc20_16.2: %C) {
+// CHECK:STDOUT:   %b.patt.loc20_16.2: %pattern_type = symbolic_binding_pattern b, 0 [symbolic = %b.patt.loc20_16.2 (constants.%b.patt)]
+// CHECK:STDOUT:   %b.loc20_16.1: %C = symbolic_binding b, 0 [symbolic = %b.loc20_16.1 (constants.%b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc15, @Foo.loc15(%b.loc15_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc15_21.2: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_21.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc20, @Foo.loc20(%b.loc20_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc20_21.2: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_21.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc15_21.1: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_21.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Self.loc20_21.1: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_21.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc20 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc15_21.1
+// CHECK:STDOUT:     .Self = %Self.loc20_21.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -909,30 +955,30 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%b) {
-// CHECK:STDOUT:   %b.patt.loc15_16.2 => constants.%b.patt
-// CHECK:STDOUT:   %b.loc15_16.1 => constants.%b
+// CHECK:STDOUT: specific @Foo.loc20(constants.%b) {
+// CHECK:STDOUT:   %b.patt.loc20_16.2 => constants.%b.patt
+// CHECK:STDOUT:   %b.loc20_16.1 => constants.%b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%b, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias.carbon
+// CHECK:STDOUT: --- fail_alias.carbon = $fail_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc20 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc15, @Foo.loc15(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc20, @Foo.loc20(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -948,19 +994,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.bc6a25.2 = interface_decl @Foo.loc15 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc15_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc20: %Foo.type.bc6a25.2 = interface_decl @Foo.loc20 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc20_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc20: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc20_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc20_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -971,20 +1017,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc15(%a.loc15_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc15_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc20(%a.loc20_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc20_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc20_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc20_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc15, @Foo.loc15(%a.loc15_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc15_21.2: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_21.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc20, @Foo.loc20(%a.loc20_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc20_21.2: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_21.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc15_21.1: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_21.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Self.loc20_21.1: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_21.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc20 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc15_21.1
+// CHECK:STDOUT:     .Self = %Self.loc20_21.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1004,30 +1050,30 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc15_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc20(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc20_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc20_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduced_alias.carbon
+// CHECK:STDOUT: --- fail_deduced_alias.carbon = $fail_deduced_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc7 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc15 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc20 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc15, @Foo.loc15(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc20, @Foo.loc20(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1043,19 +1089,19 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc7_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc7_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc7: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc7_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc7_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc15: %Foo.type.bc6a25.2 = interface_decl @Foo.loc15 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc15_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc20: %Foo.type.bc6a25.2 = interface_decl @Foo.loc20 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc20_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc15: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc20: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc15_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc20_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc20_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1066,20 +1112,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc15(%a.loc15_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc15_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc15_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc15_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc20(%a.loc20_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc20_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc20_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc20_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc20_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc15, @Foo.loc15(%a.loc15_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc15_23.2: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_23.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc20, @Foo.loc20(%a.loc20_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc20_23.2: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_23.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc15_23.1: @Foo.loc15.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc15_23.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc15 [concrete]
+// CHECK:STDOUT:     %Self.loc20_23.1: @Foo.loc20.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc20_23.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc20 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc15_23.1
+// CHECK:STDOUT:     .Self = %Self.loc20_23.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1099,21 +1145,21 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc7_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc15(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc15_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc15_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc20(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc20_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc20_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_two_file.carbon
+// CHECK:STDOUT: --- alias_two_file.carbon = $alias_two_file
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
@@ -1131,7 +1177,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %C.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc6_16.1 (constants.%a)]
@@ -1158,23 +1204,23 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_alias_two_file.impl.carbon = $fail_alias_two_file.impl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %C = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.1 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc17 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc21 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.8ee: type = facet_type <@Foo.loc17, @Foo.loc17(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.8ee = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.137: type = facet_type <@Foo.loc21, @Foo.loc21(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.137 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1195,14 +1241,14 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %default.import.loc2_30.2 = import <none>
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %D: type = alias_binding D, %C.ref [concrete = constants.%C]
-// CHECK:STDOUT:   %Foo.decl: %Foo.type.bc6a25.2 = interface_decl @Foo.loc17 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc17_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc17_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl: %Foo.type.bc6a25.2 = interface_decl @Foo.loc21 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc21_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc21_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc17: type = splice_block %D.ref [concrete = constants.%C] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc21: type = splice_block %D.ref [concrete = constants.%C] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %D.ref: type = name_ref D, file.%D [concrete = constants.%C]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc17_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc17_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc21_16.2: %C = symbolic_binding a, 0 [symbolic = %a.loc21_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1213,20 +1259,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc17(%a.loc17_16.2: %C) {
-// CHECK:STDOUT:   %a.patt.loc17_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc17_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc17_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc17_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc21(%a.loc21_16.2: %C) {
+// CHECK:STDOUT:   %a.patt.loc21_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc21_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc21_16.1: %C = symbolic_binding a, 0 [symbolic = %a.loc21_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc17, @Foo.loc17(%a.loc17_16.1)> [symbolic = %Foo.type (constants.%Foo.type.8ee)]
-// CHECK:STDOUT:   %Self.loc17_21.2: @Foo.loc17.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc17_21.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc21, @Foo.loc21(%a.loc21_16.1)> [symbolic = %Foo.type (constants.%Foo.type.137)]
+// CHECK:STDOUT:   %Self.loc21_21.2: @Foo.loc21.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc21_21.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc17_21.1: @Foo.loc17.%Foo.type (%Foo.type.8ee) = symbolic_binding Self, 1 [symbolic = %Self.loc17_21.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc17 [concrete]
+// CHECK:STDOUT:     %Self.loc21_21.1: @Foo.loc21.%Foo.type (%Foo.type.137) = symbolic_binding Self, 1 [symbolic = %Self.loc21_21.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc21 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc17_21.1
+// CHECK:STDOUT:     .Self = %Self.loc21_21.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1245,31 +1291,31 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc17(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc17_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc17_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc21(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc21_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc21_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_repeat_const.carbon
+// CHECK:STDOUT: --- fail_repeat_const.carbon = $fail_repeat_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %const: type = const_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %const [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type = symbolic_binding_pattern a, 0 [symbolic]
 // CHECK:STDOUT:   %a: %const = symbolic_binding a, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.bc6a25.1: type = generic_interface_type @Foo.loc6 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.1: %Foo.type.bc6a25.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc18 [concrete]
+// CHECK:STDOUT:   %Foo.type.bc6a25.2: type = generic_interface_type @Foo.loc27 [concrete]
 // CHECK:STDOUT:   %Foo.generic.d3ea5a.2: %Foo.type.bc6a25.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.type.b25: type = facet_type <@Foo.loc18, @Foo.loc18(%a)> [symbolic]
-// CHECK:STDOUT:   %Self: %Foo.type.b25 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %Foo.type.758: type = facet_type <@Foo.loc27, @Foo.loc27(%a)> [symbolic]
+// CHECK:STDOUT:   %Self: %Foo.type.758 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1282,22 +1328,22 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:     %a.patt.loc6_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc6_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %const [concrete = constants.%const] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %const: type = const_type %C.ref [concrete = constants.%const]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a.loc6_16.2: %const = symbolic_binding a, 0 [symbolic = %a.loc6_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Foo.decl.loc18: %Foo.type.bc6a25.2 = interface_decl @Foo.loc18 [concrete = constants.%Foo.generic.d3ea5a.2] {
-// CHECK:STDOUT:     %a.patt.loc18_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Foo.decl.loc27: %Foo.type.bc6a25.2 = interface_decl @Foo.loc27 [concrete = constants.%Foo.generic.d3ea5a.2] {
+// CHECK:STDOUT:     %a.patt.loc27_16.1: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc27_16.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc18: type = splice_block %const.loc18_18 [concrete = constants.%const] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc27: type = splice_block %const.loc27_18 [concrete = constants.%const] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc18_25: type = const_type %C.ref [concrete = constants.%const]
-// CHECK:STDOUT:       %const.loc18_18: type = const_type %const.loc18_25 [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc27_25: type = const_type %C.ref [concrete = constants.%const]
+// CHECK:STDOUT:       %const.loc27_18: type = const_type %const.loc27_25 [concrete = constants.%const]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a.loc18_16.2: %const = symbolic_binding a, 0 [symbolic = %a.loc18_16.1 (constants.%a)]
+// CHECK:STDOUT:     %a.loc27_16.2: %const = symbolic_binding a, 0 [symbolic = %a.loc27_16.1 (constants.%a)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1308,20 +1354,20 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   interface;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic interface @Foo.loc18(%a.loc18_16.2: %const) {
-// CHECK:STDOUT:   %a.patt.loc18_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc18_16.2 (constants.%a.patt)]
-// CHECK:STDOUT:   %a.loc18_16.1: %const = symbolic_binding a, 0 [symbolic = %a.loc18_16.1 (constants.%a)]
+// CHECK:STDOUT: generic interface @Foo.loc27(%a.loc27_16.2: %const) {
+// CHECK:STDOUT:   %a.patt.loc27_16.2: %pattern_type = symbolic_binding_pattern a, 0 [symbolic = %a.patt.loc27_16.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %a.loc27_16.1: %const = symbolic_binding a, 0 [symbolic = %a.loc27_16.1 (constants.%a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc18, @Foo.loc18(%a.loc18_16.1)> [symbolic = %Foo.type (constants.%Foo.type.b25)]
-// CHECK:STDOUT:   %Self.loc18_35.2: @Foo.loc18.%Foo.type (%Foo.type.b25) = symbolic_binding Self, 1 [symbolic = %Self.loc18_35.2 (constants.%Self)]
+// CHECK:STDOUT:   %Foo.type: type = facet_type <@Foo.loc27, @Foo.loc27(%a.loc27_16.1)> [symbolic = %Foo.type (constants.%Foo.type.758)]
+// CHECK:STDOUT:   %Self.loc27_35.2: @Foo.loc27.%Foo.type (%Foo.type.758) = symbolic_binding Self, 1 [symbolic = %Self.loc27_35.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc18_35.1: @Foo.loc18.%Foo.type (%Foo.type.b25) = symbolic_binding Self, 1 [symbolic = %Self.loc18_35.2 (constants.%Self)]
-// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc18 [concrete]
+// CHECK:STDOUT:     %Self.loc27_35.1: @Foo.loc27.%Foo.type (%Foo.type.758) = symbolic_binding Self, 1 [symbolic = %Self.loc27_35.2 (constants.%Self)]
+// CHECK:STDOUT:     %Foo.WithSelf.decl = interface_with_self_decl @Foo.loc27 [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = %Self.loc18_35.1
+// CHECK:STDOUT:     .Self = %Self.loc27_35.1
 // CHECK:STDOUT:     witness = ()
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -1341,9 +1387,9 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Foo.loc18(constants.%a) {
-// CHECK:STDOUT:   %a.patt.loc18_16.2 => constants.%a.patt
-// CHECK:STDOUT:   %a.loc18_16.1 => constants.%a
+// CHECK:STDOUT: specific @Foo.loc27(constants.%a) {
+// CHECK:STDOUT:   %a.patt.loc27_16.2 => constants.%a.patt
+// CHECK:STDOUT:   %a.loc27_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}

@@ -114,6 +114,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     }
 
     case Call::Kind:
+    case SpliceInst::Kind:
     case TypeOfInst::Kind: {
       return Step::TemplateType();
     }
@@ -130,7 +131,9 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
 
     case AssociatedEntityType::Kind:
     case BoolType::Kind:
+    case BoundMethodType::Kind:
     case CharLiteralType::Kind:
+    case CppFunctionPointerType::Kind:
     case CppOverloadSetType::Kind:
     case CppTemplateNameType::Kind:
     case FacetType::Kind:
@@ -139,13 +142,11 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     case FormType::Kind:
     case FunctionType::Kind:
     case FunctionTypeWithSelfType::Kind:
-    case GenericClassType::Kind:
     case GenericInterfaceType::Kind:
     case GenericNamedConstraintType::Kind:
     case IntLiteralType::Kind:
     case NamespaceType::Kind:
-    case RequireSpecificDefinitionType::Kind:
-    case TypeType::Kind:
+    case ParameterizedClassType::Kind:
     case UnboundElementType::Kind:
     case VtableType::Kind:
     case WitnessType::Kind: {
@@ -261,12 +262,18 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
       //
       // If ImplWitnessAccess did not evaluate to some other value, it must
       // contain a non-final witness.
-      auto witness =
-          sem_ir_->insts().GetAs<LookupImplWitness>(access.witness_id);
-      // Recurse into symbolic ImplWitnessAccess, replacing it with the self
+      //
+      // We recurse into symbolic ImplWitnessAccess, replacing it with the self
       // value for the iteration. If there are nested accesses, this replaces
       // them all with the root self.
-      PushInstId(witness.query_self_inst_id);
+      if (auto self_witness = sem_ir_->insts().TryGetAs<SemIR::ImplSelfWitness>(
+              access.witness_id)) {
+        PushInstId(self_witness->period_self);
+      } else {
+        auto lookup_witness =
+            sem_ir_->insts().GetAs<LookupImplWitness>(access.witness_id);
+        PushInstId(lookup_witness.query_self_inst_id);
+      }
       return Step::TypeWrapper{.kind = Step::TypeWrapper::ImplWitnessAccess,
                                .inst_id = inst_id};
     }
@@ -305,7 +312,7 @@ auto TypeIterator::PushInstId(InstId inst_id) -> void {
   // non-canonical input through other Add() methods.
   inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
 
-  if (sem_ir_->types().IsFacetType(sem_ir_->insts().Get(inst_id).type_id())) {
+  if (sem_ir_->types().Is<FacetType>(sem_ir_->insts().Get(inst_id).type_id())) {
     Push(TypeValue{.inst_id = inst_id});
   } else if (sem_ir_->constant_values().Get(inst_id).is_symbolic()) {
     Push(SymbolicNonTypeValue{.inst_id = inst_id});

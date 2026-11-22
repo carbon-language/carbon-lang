@@ -17,6 +17,10 @@ This skill provides instructions for creating a comprehensive report summarizing
 changes to Carbon testdata files (`toolchain/*/testdata`) and associating them
 with related code changes.
 
+This skill is about _reporting_ a diff. For deciding whether the diff is correct
+in the first place, see the
+[Review testdata changes](../review_testdata_changes/SKILL.md) skill.
+
 ## Goals
 
 Produce a report that:
@@ -40,10 +44,11 @@ input changes.
 
 #### For Git Users:
 
--   **Summarize code changes**: `git diff --stat -- ':!toolchain/*/testdata'`
+-   **Summarize code changes**: `git diff --stat -- ':!toolchain/*/testdata/*'`
     -   To see content of non-testdata changes:
-        `git diff -- ':!toolchain/*/testdata'`
--   **Identify testdata changes**: `git diff --name-only 'toolchain/*/testdata'`
+        `git diff -- ':!toolchain/*/testdata/*'`
+-   **Identify testdata changes**:
+    `git diff --name-only 'toolchain/*/testdata/*'`
 
 #### For Jujutsu (jj) Users:
 
@@ -80,7 +85,7 @@ STDOUT changes. This script reads a unified diff from stdin.
 
 ```bash
 # For Git:
-git diff -- 'toolchain/*/testdata' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
+git diff -- 'toolchain/*/testdata/*' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
 
 # For Jujutsu (jj):
 jj diff --git 'toolchain/*/testdata' | python3 .agents/skills/summarize_testdata_changes/scripts/parse_diff.py
@@ -110,7 +115,8 @@ gh pr diff 1234 | python3 .agents/skills/summarize_testdata_changes/scripts/pars
         `// CHECK`), along with diagnostic output changes where relevant
     -   Diagnostic Changes: Changes to diagnostic output (lines prefixed with
         `// CHECK:STDERR`) with no corresponding changes to test inputs
-    -   [Output Type] Changes: Changes to STDOUT (lines prefixed with `// CHECK:STDOUT`)
+    -   [Output Type] Changes: Changes to STDOUT (lines prefixed with `//
+        CHECK:STDOUT`)
         -   Create one section for each relevant kind of test. For example,
             parser tests should typically be in a "Parse Tree Changes" section,
             check tests should typically be in a "SemIR Changes" section, and

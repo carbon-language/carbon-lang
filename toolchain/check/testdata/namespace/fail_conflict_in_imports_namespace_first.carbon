@@ -23,29 +23,34 @@ fn NS.Foo() {}
 
 package Example library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_conflict.carbon [InImport]
+// CHECK:STDERR:        ├─┤ fn.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn NS() {}
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `NS` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ namespace.carbon
+// CHECK:STDERR:        │ namespace NS;
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn NS() {}
 
 // --- fail_conflict.carbon
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:4:1: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS() {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR:
 import library "namespace";
 import library "fn";
 
 fn NS.Bar() {}
 
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon = $namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -74,9 +79,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fn.carbon
+// CHECK:STDOUT: --- fn.carbon = $fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -102,9 +108,10 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Bar.type: type = fn_type @Bar [concrete]
 // CHECK:STDOUT:   %Bar: %Bar.type = struct_value () [concrete]
 // CHECK:STDOUT: }

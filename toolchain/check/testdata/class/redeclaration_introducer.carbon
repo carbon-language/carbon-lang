@@ -20,9 +20,10 @@ class A {}
 base class B {}
 abstract class C {}
 
-// CHECK:STDOUT: --- redeclaration_introducer.carbon
+// CHECK:STDOUT: --- redeclaration_introducer.carbon = $redeclaration_introducer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]

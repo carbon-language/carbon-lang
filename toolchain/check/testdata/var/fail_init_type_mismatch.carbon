@@ -12,18 +12,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_init_type_mismatch.carbon
 
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
-// CHECK:STDERR: var x: {} = ();
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:1: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: {} = ();
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_init_type_mismatch.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ var x: {} = ();
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `()` to `{}`
+// CHECK:STDERR:        ·        ┃        [ConversionFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {} = ();
 
-// CHECK:STDOUT: --- fail_init_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_init_type_mismatch.carbon = $fail_init_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

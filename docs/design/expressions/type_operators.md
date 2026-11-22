@@ -12,6 +12,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   [Overview](#overview)
 -   [Details](#details)
+    -   [`typeof`](#typeof)
     -   [Precedence](#precedence)
 -   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
@@ -20,11 +21,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
-Carbon provides the following operators to transform types:
+Carbon provides the following operators to transform or produce types:
 
 -   `const` as a prefix unary operator produces a `const`-qualified type.
 -   `*` as a postfix unary operator produces a pointer _type_ to some other
     type.
+-   [`typeof(x)`](#typeof) produces the static type of the expression `x`.
 
 The pointer type operator is also covered as one of the
 [pointer operators](pointer_operators.md).
@@ -39,6 +41,36 @@ provided as part of the [values](/docs/design/values.md) design:
 
 The syntax of these operators tries to mimic the most common appearance of
 `const` types and pointer types in C++.
+
+### `typeof`
+
+We provisionally define `typeof(x)` to give the static type of the expression
+`x` without any runtime evaluation of `x`.
+
+`typeof(x)` has no runtime side effects, and produces a compile-time result.
+This may involve compile-time evaluation, but all runtime effects from that
+evaluation are discarded before code generation, as if the code is in an
+`if (false)` block. For example:
+
+```carbon
+musteval fn P(T: type) -> type {
+  return T*;
+}
+
+fn F[template T: type](ref x: T) -> P(T) {
+  x += 1;
+  return &x;
+}
+
+fn Call() {
+  var y: i32 = 0;
+  // Involves the compile-time evaluation of `P(i32)`,
+  // and forming a specific instance of `F`. However,
+  // `F(ref y)` is not called at runtime.
+  StaticAssert(typeof(F(ref y)) == i32*);
+  Assert(y == 0);
+}
+```
 
 ### Precedence
 
@@ -65,3 +97,4 @@ with non-type operators.
 ## References
 
 -   [Proposal #2006: Values, variables, and pointers](/proposals/p002006-values-variables-pointers-and-references.md)
+-   [Proposal #7697: Updates to member access](/proposals/p007697-updates-to-member-access.md)

@@ -27,9 +27,10 @@ import library "types";
 let f: Form = form(var ());
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon = $use_types
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type Core.Form [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

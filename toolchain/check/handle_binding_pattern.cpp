@@ -42,9 +42,11 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
     case Parse::NodeKind::CompileTimeBindingPattern:
       return SemIR::InstKind::SymbolicBindingPattern;
     case Parse::NodeKind::LetBindingPattern:
+    case Parse::NodeKind::StructPatternFieldLetBindingPattern:
       return is_ref ? SemIR::InstKind::RefBindingPattern
                     : SemIR::InstKind::ValueBindingPattern;
     case Parse::NodeKind::VarBindingPattern:
+    case Parse::NodeKind::StructPatternFieldVarBindingPattern:
       return SemIR::InstKind::RefBindingPattern;
     default:
       CARBON_FATAL("Unexpected node kind: {0}", node_kind);
@@ -96,16 +98,16 @@ static auto IsValidParamForIntroducer(Context& context, SemIR::LocId loc_id,
         return false;
       }
       if (!is_generic) {
-        CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
-                          "parameters of generic types must be constant");
-        auto builder =
-            context.emitter().Build(loc_id, GenericParamMustBeConstant);
         if (is_var) {
-          CARBON_DIAGNOSTIC(VarParamIsRuntime, Note,
-                            "`var` parameters are runtime");
-          builder.Note(loc_id, VarParamIsRuntime);
+          CARBON_DIAGNOSTIC(VarParamIsRuntime, Error,
+                            "`var` parameter of a generic type; parameters of "
+                            "generic types must be constant");
+          context.emitter().Emit(loc_id, VarParamIsRuntime);
+        } else {
+          CARBON_DIAGNOSTIC(GenericParamMustBeConstant, Error,
+                            "parameters of generic types must be constant");
+          context.emitter().Emit(loc_id, GenericParamMustBeConstant);
         }
-        builder.Emit();
         return false;
       }
       return true;
@@ -132,6 +134,10 @@ struct BindingPatternTypeInfo {
   // For a `:?` binding this is the type component of the form denoted by
   // `inst_id`. Otherwise this is the type denoted by `inst_id`.
   SemIR::TypeId type_component_id;
+  // The instruction describing `type_component_id` as it was written. For a
+  // `:?` binding this is a `TypeComponentOf` the form; otherwise it is
+  // `inst_id` itself.
+  SemIR::TypeInstId type_component_inst_id;
 };
 }  // namespace
 
@@ -211,7 +217,8 @@ static auto HandleAnyBindingPatternType(
     auto as_type = ExprAsType(context, binding_node_id, *self_type_inst_id);
     return {.node_id = binding_node_id,
             .inst_id = as_type.inst_id,
-            .type_component_id = as_type.type_id};
+            .type_component_id = as_type.type_id,
+            .type_component_inst_id = as_type.inst_id};
   }
 
   auto [node_id, original_inst_id] = context.node_stack().PopExprWithNodeId();
@@ -277,12 +284,14 @@ static auto HandleAnyBindingPatternType(
     auto as_form = FormExprAsForm(context, node_id, original_inst_id);
     return {.node_id = node_id,
             .inst_id = as_form.form_inst_id,
-            .type_component_id = as_form.type_component_id};
+            .type_component_id = as_form.type_component_id,
+            .type_component_inst_id = as_form.type_component_inst_id};
   } else {
     auto as_type = ExprAsType(context, node_id, original_inst_id);
     return {.node_id = node_id,
             .inst_id = as_type.inst_id,
-            .type_component_id = as_type.type_id};
+            .type_component_id = as_type.type_id,
+            .type_component_inst_id = as_type.inst_id};
   }
 }
 
@@ -339,8 +348,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         context, node_id, type_expr_region_id, type_expr.type_component_id,
         {.kind = kind,
          .type_id = GetPatternType(context, type_expr.type_component_id),
-         .entity_name_id = AddBindingEntityName(context, name_id, form_id,
-                                                /*is_unused=*/false, phase),
+         .entity_name_id = AddBindingEntityName(
+             context, name_id, type_expr.type_component_inst_id, form_id,
+             /*is_unused=*/false, phase),
          .subpattern_id = subpattern_id});
 
     // TODO: If `is_generic`, then `binding.bind_id is a SymbolicBinding. Subst
@@ -363,13 +373,12 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     return binding.pattern_id;
   };
 
-  auto abstract_diagnostic_context = [&](auto& builder) {
-    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Context,
-                      "binding pattern has abstract type {0} in `var` "
-                      "pattern",
+  auto abstract_diagnoser = [&] {
+    CARBON_DIAGNOSTIC(AbstractTypeInVarPattern, Error,
+                      "binding pattern has abstract type {0} in `var` pattern",
                       SemIR::TypeId);
-    builder.Context(type_expr.node_id, AbstractTypeInVarPattern,
-                    type_expr.type_component_id);
+    return context.emitter().Build(type_expr.node_id, AbstractTypeInVarPattern,
+                                   type_expr.type_component_id);
   };
 
   // A `self` binding must be the first parameter in the explicit parameter
@@ -413,7 +422,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case FullPatternStack::Kind::ExplicitParamList: {
       bool is_deduced = context.full_pattern_stack().CurrentKind() ==
                         FullPatternStack::Kind::ImplicitParamList;
-      bool is_var = node_kind == Parse::NodeKind::VarBindingPattern;
+      bool is_var =
+          node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern;
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
                                      is_generic, is_deduced, is_var)) {
         if (name_id != SemIR::NameId::Underscore) {
@@ -427,7 +438,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
       // Using `AsConcreteType` here causes `fn F[var self: Self]();`
       // to fail since `Self` is an incomplete type.
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+      if (is_var) {
         auto [unqualified_type_id, qualifiers] =
             context.types().GetUnqualifiedTypeAndQualifiers(
                 type_expr.type_component_id);
@@ -439,10 +450,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           auto& class_info = context.classes().Get(class_type.class_id);
           if (class_info.inheritance_kind ==
               SemIR::Class::InheritanceKind::Abstract) {
-            Diagnostics::ContextScope scope(&context.emitter(),
-                                            abstract_diagnostic_context);
             DiagnoseAbstractClass(context, class_type.class_id,
-                                  /*direct_use=*/true);
+                                  /*direct_use=*/true, abstract_diagnoser);
             type_expr.type_component_id = SemIR::ErrorInst::TypeId;
           }
         }
@@ -455,6 +464,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         // enclosing `var` pattern is), or it's a compile-time binding pattern
         // (because then it's not passed to the `Call` inst).
         case Parse::NodeKind::LetBindingPattern:
+        case Parse::NodeKind::StructPatternFieldLetBindingPattern:
         case Parse::NodeKind::FormBindingPattern: {
           auto param_pattern_id = SemIR::InstId::None;
           auto pattern_type_id =
@@ -489,6 +499,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
         }
         case Parse::NodeKind::VarBindingPattern:
+        case Parse::NodeKind::StructPatternFieldVarBindingPattern:
           result_inst_id = make_binding_pattern(SemIR::RefBindingPattern::Kind);
           break;
         case Parse::NodeKind::CompileTimeBindingPattern:
@@ -498,40 +509,56 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         default:
           CARBON_FATAL("Unexpected node kind {0}", node_kind);
       }
+
+      if (node_kind == Parse::NodeKind::StructPatternFieldLetBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
+        auto type_inst_id =
+            context.types().GetTypeInstId(type_expr.type_component_id);
+
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_inst_id = type_inst_id});
+
+        // Put the name node back on the stack for inspection when handling the
+        // struct pattern.
+        context.node_stack().Push(name_node, name_id);
+      }
+
       context.node_stack().Push(node_id, result_inst_id);
       break;
     }
 
-    case FullPatternStack::Kind::NameBindingDecl:
-    case FullPatternStack::Kind::ClassScopeVarDecl: {
+    case FullPatternStack::Kind::ClassScopeLetDecl:
+    case FullPatternStack::Kind::ClassScopeVarDecl:
+    case FullPatternStack::Kind::NameBindingDecl: {
       if (node_kind == Parse::NodeKind::FormBindingPattern) {
         return context.TODO(node_id, "support local form bindings");
       }
-      auto incomplete_diagnostic_context = [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Context,
+      auto incomplete_diagnoser = [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBindingDecl, Error,
                           "binding pattern has incomplete type {0} in name "
                           "binding declaration",
                           InstIdAsType);
-        builder.Context(type_expr.node_id, IncompleteTypeInBindingDecl,
-                        type_expr.inst_id);
+        return context.emitter().Build(
+            type_expr.node_id, IncompleteTypeInBindingDecl, type_expr.inst_id);
       };
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
-        if (!RequireConcreteType(
-                context, type_expr.type_component_id, type_expr.node_id,
-                incomplete_diagnostic_context, abstract_diagnostic_context)) {
+      if (node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
+        if (!RequireConcreteType(context, type_expr.type_component_id,
+                                 type_expr.node_id, incomplete_diagnoser,
+                                 abstract_diagnoser)) {
           type_expr.type_component_id = SemIR::ErrorInst::TypeId;
         }
       } else {
         if (!RequireCompleteType(context, type_expr.type_component_id,
-                                 type_expr.node_id,
-                                 incomplete_diagnostic_context)) {
+                                 type_expr.node_id, incomplete_diagnoser)) {
           type_expr.type_component_id = SemIR::ErrorInst::TypeId;
         }
       }
 
       auto binding_pattern_id = make_binding_pattern(
           GetLeafBindingPatternInstKind(node_kind, is_ref));
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+      if (node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
         CARBON_CHECK(!is_generic);
 
         if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
@@ -545,6 +572,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               context, introducer.modifier_node_id(ModifierOrder::Decl),
               type_expr.node_id, type_expr.type_component_id, bind_id, name_id);
         }
+      }
+      if (node_kind == Parse::NodeKind::StructPatternFieldLetBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
+        auto type_inst_id =
+            context.types().GetTypeInstId(type_expr.type_component_id);
+
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_inst_id = type_inst_id});
+
+        // Put the name node back on the stack for inspection when handling the
+        // struct pattern.
+        context.node_stack().Push(name_node, name_id);
       }
       context.node_stack().Push(node_id, binding_pattern_id);
       break;
@@ -568,6 +607,22 @@ auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
   return HandleAnyBindingPattern(context, node_id,
                                  Parse::NodeKind::LetBindingPattern,
                                  Parse::NodeKind::BindingPatternTypeStart);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldLetBindingPatternId node_id)
+    -> bool {
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::StructPatternFieldLetBindingPattern,
+      Parse::NodeKind::BindingPatternTypeStart);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldVarBindingPatternId node_id)
+    -> bool {
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::StructPatternFieldVarBindingPattern,
+      Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
@@ -605,7 +660,7 @@ auto HandleParseNode(Context& context,
   // compile time binding. This is popped when handling the
   // CompileTimeBindingPatternId.
   context.scope_stack().PushForSameRegion();
-  MakePeriodSelfFacetValue(context, node_id, GetEmptyFacetType(context));
+  MakePeriodSelfFacetValue(context, node_id, SemIR::TypeType::TypeId);
   context.node_stack().Push(
       node_id, SemIR::ElementIndex(context.binding_type_where_count()));
   return true;

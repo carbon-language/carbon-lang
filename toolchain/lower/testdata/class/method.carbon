@@ -31,29 +31,29 @@ fn F(p: C*) {
 // CHECK:STDOUT: declare void @_CSet.C.Main(ptr, i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main(ptr %p) #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CF.Main(ptr %p) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %C.Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !10
-// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %C.Get.call), !dbg !11
-// CHECK:STDOUT:   ret void, !dbg !12
+// CHECK:STDOUT:   %C.Get.call = call i32 @_CGet.C.Main(ptr %p), !dbg !33
+// CHECK:STDOUT:   call void @_CSet.C.Main(ptr %p, i32 %C.Get.call), !dbg !38
+// CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "method.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !1, line: 20, type: !5, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !8)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null, !7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !8 = !{!9}
-// CHECK:STDOUT: !9 = !DILocalVariable(arg: 1, scope: !4, type: !7)
-// CHECK:STDOUT: !10 = !DILocation(line: 21, column: 16, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 22, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 20, column: 1, scope: !4)
+// CHECK:STDOUT: !18 = !DIFile(filename: "method.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !26 = !{null, !21}
+// CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !18, line: 20, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !41)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !28, type: !21)
+// CHECK:STDOUT: !33 = !DILocation(line: 21, column: 16, scope: !28)
+// CHECK:STDOUT: !38 = !DILocation(line: 22, column: 3, scope: !28)
+// CHECK:STDOUT: !40 = !DILocation(line: 20, column: 1, scope: !28)
+// CHECK:STDOUT: !41 = !{!29}
 // CHECK:STDOUT:

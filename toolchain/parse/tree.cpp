@@ -28,7 +28,7 @@ auto Tree::node_token(NodeId n) const -> Lex::TokenIndex {
 }
 
 auto Tree::Print(llvm::raw_ostream& output) const -> void {
-  TreeAndSubtrees(*tokens_, *this).Print(output);
+  TreeAndSubtrees(*tokens_, *this).PrintYamlPostorder(output);
 }
 
 auto Tree::Verify() const -> ErrorOr<Success> {

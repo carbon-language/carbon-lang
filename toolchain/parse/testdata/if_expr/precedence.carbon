@@ -13,36 +13,35 @@ fn F(b: bool) -> bool {
 }
 
 // CHECK:STDOUT: - filename: precedence.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:               {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfExprIf', text: 'if', subtree_size: 5},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:               {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'IfExprThen', text: 'then', subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'ShortCircuitOperandOr', text: 'or', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:           {kind: 'ShortCircuitOperatorOr', text: 'or', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'IfExprElse', text: 'else', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 17},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 29},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │       ╭─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │     ╭─ShortCircuitOperandAnd 'and'
+// CHECK:STDOUT:   │ │ │     ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │   ╭─ShortCircuitOperatorAnd 'and'
+// CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │ │     ╭─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │   ╭─ShortCircuitOperandAnd 'and'
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─ShortCircuitOperatorAnd 'and'
+// CHECK:STDOUT:   │ │ │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ │ ╭─ShortCircuitOperandOr 'or'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ ├─ShortCircuitOperatorOr 'or'
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

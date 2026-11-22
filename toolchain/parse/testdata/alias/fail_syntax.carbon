@@ -8,125 +8,154 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/alias/fail_syntax.carbon
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: alias = b;
-// CHECK:STDERR:       ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ alias = b;
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ error: `alias` introducer should be followed by a name
+// CHECK:STDERR:        ·         ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias = b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
-// CHECK:STDERR: alias a b;
-// CHECK:STDERR:         ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias a b;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: `alias` requires a `=` for the source
+// CHECK:STDERR:        ·           ┃        [ExpectedAliasInitializer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a b;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:10: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: alias a =;
-// CHECK:STDERR:          ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+6]]:10
+// CHECK:STDERR: ->     │ alias a =;
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
-// CHECK:STDERR: alias a;
-// CHECK:STDERR:        ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias a;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: `alias` requires a `=` for the source
+// CHECK:STDERR:        ·           ┃        [ExpectedAliasInitializer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:7: error: `alias` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: alias =;
-// CHECK:STDERR:       ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ alias =;
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ error: `alias` introducer should be followed by a name
+// CHECK:STDERR:        ·         ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias =;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:9: error: `alias` requires a `=` for the source [ExpectedAliasInitializer]
-// CHECK:STDERR: alias a b c = d;
-// CHECK:STDERR:         ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias a b c = d;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: `alias` requires a `=` for the source
+// CHECK:STDERR:        ·           ┃        [ExpectedAliasInitializer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a b c = d;
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:13: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: alias a = b c d;
-// CHECK:STDERR:             ^
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ alias a = b c d;
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: `alias` declarations must end with a `;`
+// CHECK:STDERR:        ·               ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a = b c d;
 
 fn F() {
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:8: error: `alias` introducer should be followed by a name [ExpectedDeclName]
-  // CHECK:STDERR:   alias;
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:8
+  // CHECK:STDERR: ->     │   alias;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: `alias` introducer should be followed by a name
+  // CHECK:STDERR:        ·           ┃        [ExpectedDeclName]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias;
 
-  // CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:12: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   alias a =;
-  // CHECK:STDERR:            ^
+  // CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+6]]:12
+  // CHECK:STDERR: ->     │   alias a =;
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias a =;
 
+  // CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+6]]:12
+  // CHECK:STDERR: ->     │   alias a =
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   alias a =
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
-// CHECK:STDERR:
 }
 
+// CHECK:STDERR:        ╭─┤ fail_syntax.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ alias a = b
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: `alias` declarations must end with a `;`
+// CHECK:STDERR:        ·               ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 alias a = b
 
-// CHECK:STDERR: fail_syntax.carbon:[[@LINE+57]]:21: error: `alias` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: // CHECK:STDOUT:   ]
-// CHECK:STDERR:                     ^
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_syntax.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '=', has_error: yes},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:     {kind: 'Alias', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'Alias', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:         {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'Alias', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:         {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: '}', has_error: yes},
-// CHECK:STDOUT:       {kind: 'Alias', text: '=', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 19},
-// CHECK:STDOUT:       {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:       {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:     {kind: 'Alias', text: 'b', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─InvalidParse '=' has_error
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   ├─Alias ';' has_error
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─Alias ';' has_error
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─Alias ';' has_error
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ├─InvalidParse '}' has_error
+// CHECK:STDOUT:   │ ├─Alias '=' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   ├─Alias 'b' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

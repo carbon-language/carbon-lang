@@ -16,49 +16,48 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: let_ref.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'v'},
-// CHECK:STDOUT:         {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'UnderscoreName', text: '_'},
-// CHECK:STDOUT:         {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:       {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 's'},
-// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StringLiteral', text: '"hello"'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:             {kind: 'UnderscoreName', text: '_'},
-// CHECK:STDOUT:           {kind: 'RefBindingName', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'StringTypeLiteral', text: 'str'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StringLiteral', text: '"goodbye"'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 24},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'v'
+// CHECK:STDOUT:   │ │ ╭─RefBindingName 'ref'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '0'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │   ╭─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ ╭─RefBindingName 'ref'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ ├─IntLiteral '1'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 's'
+// CHECK:STDOUT:   │ │ │ ╭─RefBindingName 'ref'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─StringLiteral '"hello"'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │   ╭─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ │ ╭─RefBindingName 'ref'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─StringTypeLiteral 'str'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─StringLiteral '"goodbye"'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

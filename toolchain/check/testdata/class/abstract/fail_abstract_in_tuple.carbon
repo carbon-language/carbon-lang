@@ -18,12 +18,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract1 {}
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `(Abstract1,)` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var a: (Abstract1,);
-  // CHECK:STDERR:          ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract1 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_field.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        │ abstract class Abstract1 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var a: (Abstract1,);
+  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: binding pattern has abstract type `(Abstract1,)` in `var`
+  // CHECK:STDERR:        ·             ┃        pattern
+  // CHECK:STDERR:        ·             ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var a: (Abstract1,);
 }
@@ -34,12 +39,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract2 {}
 
 fn Var() {
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:17: error: binding pattern has abstract type `(Abstract2,)` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v: (Abstract2,);
-  // CHECK:STDERR:                 ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract2 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_var.carbon:[[@LINE+12]]:17
+  // CHECK:STDERR:        │ abstract class Abstract2 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused v: (Abstract2,);
+  // CHECK:STDERR:        ·                 ┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has abstract type `(Abstract2,)` in
+  // CHECK:STDERR:        ·                    ┃        `var` pattern
+  // CHECK:STDERR:        ·                    ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v: (Abstract2,);
 }
@@ -61,12 +71,17 @@ abstract class Abstract4 {}
 abstract class Abstract5 {}
 
 fn Var2() {
-  // CHECK:STDERR: fail_abstract_twice.carbon:[[@LINE+7]]:18: error: binding pattern has abstract type `(Abstract4, Abstract5)` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v2: (Abstract4, Abstract5);
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_twice.carbon:[[@LINE-7]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract4 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_twice.carbon:[[@LINE+12]]:18
+  // CHECK:STDERR:        │ abstract class Abstract4 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused v2: (Abstract4, Abstract5);
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: binding pattern has abstract type
+  // CHECK:STDERR:        ·                     ┃        `(Abstract4, Abstract5)` in `var` pattern
+  // CHECK:STDERR:        ·                     ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v2: (Abstract4, Abstract5);
 }
@@ -77,12 +92,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract6 {}
 
 fn Var3() {
-  // CHECK:STDERR: fail_abstract_first.carbon:[[@LINE+7]]:18: error: binding pattern has abstract type `(Abstract6, {})` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v3: (Abstract6, {});
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_first.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract6 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_first.carbon:[[@LINE+12]]:18
+  // CHECK:STDERR:        │ abstract class Abstract6 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused v3: (Abstract6, {});
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: binding pattern has abstract type `(Abstract6, {})`
+  // CHECK:STDERR:        ·                     ┃        in `var` pattern
+  // CHECK:STDERR:        ·                     ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v3: (Abstract6, {});
 }
@@ -93,12 +113,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract7 {}
 
 fn Var4() {
-  // CHECK:STDERR: fail_abstract_second.carbon:[[@LINE+7]]:18: error: binding pattern has abstract type `({}, Abstract7)` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v4: ({}, Abstract7);
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_second.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract7 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_second.carbon:[[@LINE+12]]:18
+  // CHECK:STDERR:        │ abstract class Abstract7 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused v4: ({}, Abstract7);
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: binding pattern has abstract type `({}, Abstract7)`
+  // CHECK:STDERR:        ·                     ┃        in `var` pattern
+  // CHECK:STDERR:        ·                     ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v4: ({}, Abstract7);
 }
@@ -114,24 +139,33 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn Var5() {
-  // CHECK:STDERR: fail_import.carbon:[[@LINE+8]]:18: error: binding pattern has abstract type `(Abstract,)` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var unused v5: (Abstract,);
-  // CHECK:STDERR:                  ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import.carbon:[[@LINE-6]]:1: in import [InImport]
-  // CHECK:STDERR: lib.carbon:3:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+13]]:18
+  // CHECK:STDERR: ->     │   var unused v5: (Abstract,);
+  // CHECK:STDERR:        ·                  ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: binding pattern has abstract type `(Abstract,)` in
+  // CHECK:STDERR:        ·                     ┃        `var` pattern
+  // CHECK:STDERR:        ·                     ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ lib.carbon
+  // CHECK:STDERR:        │ abstract class Abstract {}
+  // CHECK:STDERR:        · ────────────┬────────────
+  // CHECK:STDERR:        ·             ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v5: (Abstract,);
 }
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract1: type = class_type @Abstract1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%Abstract1) [concrete]
+// CHECK:STDOUT:   %tuple.type.b06: type = tuple_type (%Abstract1) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -161,37 +195,43 @@ fn Var5() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: <error> = field_decl a, element0, %.loc18_21.2 in [concrete] {
+// CHECK:STDOUT:     %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
+// CHECK:STDOUT:     %.loc18_21.1: %tuple.type.135 = tuple_literal (%Abstract1.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_21.2: type = converted %.loc18_21.1, constants.%tuple.type.b06 [concrete = constants.%tuple.type.b06]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract1 = <poisoned>
-// CHECK:STDOUT:   .a = %.loc13
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract2: type = class_type @Abstract2 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Var.type: type = fn_type @Var [concrete]
 // CHECK:STDOUT:   %Var: %Var.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%Abstract2) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%Abstract2) [concrete]
 // CHECK:STDOUT:   %tuple.type.ea9: type = tuple_type (%Abstract2) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -217,10 +257,10 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
-// CHECK:STDOUT:   %.loc13_28.1: type = splice_block %.loc13_28.3 [concrete = constants.%tuple.type.ea9] {
+// CHECK:STDOUT:   %.loc18_28.1: type = splice_block %.loc18_28.3 [concrete = constants.%tuple.type.ea9] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, file.%Abstract2.decl [concrete = constants.%Abstract2]
-// CHECK:STDOUT:     %.loc13_28.2: %tuple.type.85c = tuple_literal (%Abstract2.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc13_28.3: type = converted %.loc13_28.2, constants.%tuple.type.ea9 [concrete = constants.%tuple.type.ea9]
+// CHECK:STDOUT:     %.loc18_28.2: %tuple.type.135 = tuple_literal (%Abstract2.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_28.3: type = converted %.loc18_28.2, constants.%tuple.type.ea9 [concrete = constants.%tuple.type.ea9]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -230,19 +270,20 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.457: type = pattern_type %Abstract3 [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.457 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%Abstract3) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%Abstract3) [concrete]
 // CHECK:STDOUT:   %tuple.type.4cc: type = tuple_type (%Abstract3) [concrete]
 // CHECK:STDOUT:   %pattern_type.ac0: type = pattern_type %tuple.type.4cc [concrete]
 // CHECK:STDOUT:   %l.patt: %pattern_type.ac0 = value_binding_pattern l [concrete]
@@ -265,7 +306,7 @@ fn Var5() {
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.457 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -289,7 +330,7 @@ fn Var5() {
 // CHECK:STDOUT:   %.loc7_35.2: %tuple.type.4cc = converted %.loc7_35.1, %tuple
 // CHECK:STDOUT:   %.loc7_28.1: type = splice_block %.loc7_28.3 [concrete = constants.%tuple.type.4cc] {
 // CHECK:STDOUT:     %Abstract3.ref.loc7: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
-// CHECK:STDOUT:     %.loc7_28.2: %tuple.type.85c = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc7_28.2: %tuple.type.135 = tuple_literal (%Abstract3.ref.loc7) [concrete = constants.%tuple]
 // CHECK:STDOUT:     %.loc7_28.3: type = converted %.loc7_28.2, constants.%tuple.type.4cc [concrete = constants.%tuple.type.4cc]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %l: %tuple.type.4cc = wrapper_binding l, %.loc7_35.2
@@ -299,28 +340,30 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_twice.carbon
+// CHECK:STDOUT: --- fail_abstract_twice.carbon = $fail_abstract_twice
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract4: type = class_type @Abstract4 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Abstract5: type = class_type @Abstract5 [concrete]
 // CHECK:STDOUT:   %Var2.type: type = fn_type @Var2 [concrete]
 // CHECK:STDOUT:   %Var2: %Var2.type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%Abstract4, %Abstract5) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%Abstract4, %Abstract5) [concrete]
 // CHECK:STDOUT:   %tuple.type.417: type = tuple_type (%Abstract4, %Abstract5) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -356,11 +399,11 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v2.var: ref <error> = var_storage %v2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v2.var, <error>
-// CHECK:STDOUT:   %.loc14_39.1: type = splice_block %.loc14_39.3 [concrete = constants.%tuple.type.417] {
+// CHECK:STDOUT:   %.loc19_39.1: type = splice_block %.loc19_39.3 [concrete = constants.%tuple.type.417] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, file.%Abstract4.decl [concrete = constants.%Abstract4]
 // CHECK:STDOUT:     %Abstract5.ref: type = name_ref Abstract5, file.%Abstract5.decl [concrete = constants.%Abstract5]
-// CHECK:STDOUT:     %.loc14_39.2: %tuple.type.24b = tuple_literal (%Abstract4.ref, %Abstract5.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_39.3: type = converted %.loc14_39.2, constants.%tuple.type.417 [concrete = constants.%tuple.type.417]
+// CHECK:STDOUT:     %.loc19_39.2: %tuple.type.693 = tuple_literal (%Abstract4.ref, %Abstract5.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc19_39.3: type = converted %.loc19_39.2, constants.%tuple.type.417 [concrete = constants.%tuple.type.417]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: <error> = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -370,28 +413,30 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_first.carbon
+// CHECK:STDOUT: --- fail_abstract_first.carbon = $fail_abstract_first
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract6: type = class_type @Abstract6 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Var3.type: type = fn_type @Var3 [concrete]
 // CHECK:STDOUT:   %Var3: %Var3.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.159: type = tuple_type (type, %empty_struct_type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.159 = tuple_value (%Abstract6, %empty_struct) [concrete]
+// CHECK:STDOUT:   %tuple.type.4d1: type = tuple_type (type, %empty_struct_type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.4d1 = tuple_value (%Abstract6, %empty_struct) [concrete]
 // CHECK:STDOUT:   %tuple.type.427: type = tuple_type (%Abstract6, %empty_struct_type) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -417,12 +462,12 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v3.var: ref <error> = var_storage %v3.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v3.var, <error>
-// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.427] {
+// CHECK:STDOUT:   %.loc18_32.1: type = splice_block %.loc18_32.4 [concrete = constants.%tuple.type.427] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, file.%Abstract6.decl [concrete = constants.%Abstract6]
-// CHECK:STDOUT:     %.loc13_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc13_32.2: %tuple.type.159 = tuple_literal (%Abstract6.ref, %.loc13_31) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.427 [concrete = constants.%tuple.type.427]
+// CHECK:STDOUT:     %.loc18_31: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc18_32.2: %tuple.type.4d1 = tuple_literal (%Abstract6.ref, %.loc18_31) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc18_32.4: type = converted %.loc18_32.2, constants.%tuple.type.427 [concrete = constants.%tuple.type.427]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -432,28 +477,30 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_second.carbon
+// CHECK:STDOUT: --- fail_abstract_second.carbon = $fail_abstract_second
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract7: type = class_type @Abstract7 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Var4.type: type = fn_type @Var4 [concrete]
 // CHECK:STDOUT:   %Var4: %Var4.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %tuple.type.c8c: type = tuple_type (%empty_struct_type, type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.c8c = tuple_value (%empty_struct, %Abstract7) [concrete]
+// CHECK:STDOUT:   %tuple.type.12a: type = tuple_type (%empty_struct_type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.12a = tuple_value (%empty_struct, %Abstract7) [concrete]
 // CHECK:STDOUT:   %tuple.type.9db: type = tuple_type (%empty_struct_type, %Abstract7) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -479,12 +526,12 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v4.var: ref <error> = var_storage %v4.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v4.var, <error>
-// CHECK:STDOUT:   %.loc13_32.1: type = splice_block %.loc13_32.4 [concrete = constants.%tuple.type.9db] {
-// CHECK:STDOUT:     %.loc13_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_32.1: type = splice_block %.loc18_32.4 [concrete = constants.%tuple.type.9db] {
+// CHECK:STDOUT:     %.loc18_20: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %Abstract7.ref: type = name_ref Abstract7, file.%Abstract7.decl [concrete = constants.%Abstract7]
-// CHECK:STDOUT:     %.loc13_32.2: %tuple.type.c8c = tuple_literal (%.loc13_20, %Abstract7.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc13_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %.loc13_32.4: type = converted %.loc13_32.2, constants.%tuple.type.9db [concrete = constants.%tuple.type.9db]
+// CHECK:STDOUT:     %.loc18_32.2: %tuple.type.12a = tuple_literal (%.loc18_20, %Abstract7.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc18_32.3: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc18_32.4: type = converted %.loc18_32.2, constants.%tuple.type.9db [concrete = constants.%tuple.type.9db]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v4: <error> = wrapper_binding v4, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -494,9 +541,10 @@ fn Var5() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -526,30 +574,32 @@ fn Var5() {
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Var5.type: type = fn_type @Var5 [concrete]
 // CHECK:STDOUT:   %Var5: %Var5.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %tuple.type.85c: type = tuple_type (type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.85c = tuple_value (%Abstract) [concrete]
+// CHECK:STDOUT:   %tuple.type.135: type = tuple_type (type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.135 = tuple_value (%Abstract) [concrete]
 // CHECK:STDOUT:   %tuple.type.763: type = tuple_type (%Abstract) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.Abstract: type = import_ref Main//lib, Abstract, loaded [concrete = constants.%Abstract]
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.8f2: <witness> = import_ref Main//lib, loc3_26, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.fe1 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -574,10 +624,10 @@ fn Var5() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v5.var, <error>
-// CHECK:STDOUT:   %.loc14_28.1: type = splice_block %.loc14_28.3 [concrete = constants.%tuple.type.763] {
+// CHECK:STDOUT:   %.loc19_28.1: type = splice_block %.loc19_28.3 [concrete = constants.%tuple.type.763] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
-// CHECK:STDOUT:     %.loc14_28.2: %tuple.type.85c = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
-// CHECK:STDOUT:     %.loc14_28.3: type = converted %.loc14_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
+// CHECK:STDOUT:     %.loc19_28.2: %tuple.type.135 = tuple_literal (%Abstract.ref) [concrete = constants.%tuple]
+// CHECK:STDOUT:     %.loc19_28.3: type = converted %.loc19_28.2, constants.%tuple.type.763 [concrete = constants.%tuple.type.763]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v5: <error> = wrapper_binding v5, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

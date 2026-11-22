@@ -10,122 +10,136 @@
 
 // --- fail_redundant_generic_deduced.carbon
 
-// CHECK:STDERR: fail_redundant_generic_deduced.carbon:[[@LINE+4]]:6: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: fn F[generic T: type]();
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redundant_generic_deduced.carbon:[[@LINE+8]]:6
+// CHECK:STDERR: ->     │ fn F[generic T: type]();
+// CHECK:STDERR:        ·      ┳━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: `generic` is redundant here; this binding is a checked generic
+// CHECK:STDERR:        ·         ┃        by default
+// CHECK:STDERR:        ·         ┃        [RedundantGenericModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F[generic T: type]();
 
 // --- fail_redundant_generic_class_param.carbon
 
-// CHECK:STDERR: fail_redundant_generic_class_param.carbon:[[@LINE+4]]:9: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: class C(generic T: type) {}
-// CHECK:STDERR:         ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redundant_generic_class_param.carbon:[[@LINE+8]]:9
+// CHECK:STDERR: ->     │ class C(generic T: type) {}
+// CHECK:STDERR:        ·         ┳━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: `generic` is redundant here; this binding is a checked
+// CHECK:STDERR:        ·            ┃        generic by default
+// CHECK:STDERR:        ·            ┃        [RedundantGenericModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C(generic T: type) {}
 
 // --- fail_redundant_runtime_explicit.carbon
 
-// CHECK:STDERR: fail_redundant_runtime_explicit.carbon:[[@LINE+4]]:6: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
-// CHECK:STDERR: fn G(runtime x: i32);
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redundant_runtime_explicit.carbon:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ fn G(runtime x: i32);
+// CHECK:STDERR:        ·      ┳━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: `runtime` is redundant here; this binding is runtime by default
+// CHECK:STDERR:        ·         ┃        [RedundantRuntimeModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(runtime x: i32);
 
 // --- fail_redundant_generic_qualified.carbon
 
-// CHECK:STDERR: fail_redundant_generic_qualified.carbon:[[@LINE+4]]:8: error: `generic` is redundant here; this binding is a checked generic by default [RedundantGenericModifier]
-// CHECK:STDERR: fn C.F[generic T: type]();
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redundant_generic_qualified.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ fn C.F[generic T: type]();
+// CHECK:STDERR:        ·        ┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `generic` is redundant here; this binding is a checked
+// CHECK:STDERR:        ·           ┃        generic by default
+// CHECK:STDERR:        ·           ┃        [RedundantGenericModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C.F[generic T: type]();
 
 // --- fail_redundant_runtime_qualified.carbon
 
-// CHECK:STDERR: fail_redundant_runtime_qualified.carbon:[[@LINE+4]]:8: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
-// CHECK:STDERR: fn C.G(runtime x: i32);
-// CHECK:STDERR:        ^~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_redundant_runtime_qualified.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ fn C.G(runtime x: i32);
+// CHECK:STDERR:        ·        ┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `runtime` is redundant here; this binding is runtime by
+// CHECK:STDERR:        ·           ┃        default
+// CHECK:STDERR:        ·           ┃        [RedundantRuntimeModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C.G(runtime x: i32);
 
 // CHECK:STDOUT: - filename: fail_redundant_generic_deduced.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_redundant_generic_class_param.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'C'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'C'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_redundant_runtime_explicit.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'RuntimeBindingName', text: 'runtime', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─RuntimeBindingName 'runtime'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_redundant_generic_qualified.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_redundant_runtime_qualified.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:           {kind: 'RuntimeBindingName', text: 'runtime', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'BindingPatternTypeStart', text: ':'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─RuntimeBindingName 'runtime'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

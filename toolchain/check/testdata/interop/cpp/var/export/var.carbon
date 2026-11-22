@@ -28,18 +28,24 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_var_unsupported_type.carbon:[[@LINE+4]]:5: error: semantics TODO: `failed to map Carbon type to C++` [SemanticsTodo]
-// CHECK:STDERR: var x: () = ();
-// CHECK:STDERR:     ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_var_unsupported_type.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ var unsupported_x: () = ();
+// CHECK:STDERR:        ·     ━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: semantics TODO: `failed to map Carbon type to C++`
+// CHECK:STDERR:        ·                ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-var x: () = ();
+var unsupported_x: () = ();
 
 inline Cpp '''
 void F() {
-  // CHECK:STDERR: fail_var_unsupported_type.carbon:[[@LINE+4]]:11: error: no member named 'x' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::x;
-  // CHECK:STDERR:       |           ^
+  // CHECK:STDERR:        ╭─┤ fail_var_unsupported_type.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   Carbon::unsupported_x;
+  // CHECK:STDERR:        ·           ━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: no member named 'unsupported_x' in namespace 'Carbon'
+  // CHECK:STDERR:        ·                   ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  Carbon::x;
+  Carbon::unsupported_x;
 }
 ''';

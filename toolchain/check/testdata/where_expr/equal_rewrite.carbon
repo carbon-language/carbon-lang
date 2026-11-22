@@ -83,12 +83,19 @@ interface O {
 fn WithInteger(unused generic Q: O where .P = i32) {}
 
 fn WithBool(generic R: O where .P = bool) {
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   WithInteger(R);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:31: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn WithInteger(unused generic Q: O where .P = i32) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_rewrites_mismatch_right.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │ fn WithInteger(unused generic Q: O where .P = i32) {}
+  // CHECK:STDERR:        ·                               ┬──────────────────
+  // CHECK:STDERR:        ·                               ╰──┤ initializing generic parameter `Q` declared
+  // CHECK:STDERR:        ·                                  │ here
+  // CHECK:STDERR:        ·                                  │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   WithInteger(R);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `R` that implements `O where .(O.P) = bool`
+  // CHECK:STDERR:        ·      ┃        into type implementing `O where .(O.P) = i32`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   WithInteger(R);
 }
@@ -105,12 +112,18 @@ interface S {
 fn WithT(unused generic V: S where .T = ()) {}
 
 fn WithU(generic W: S where .U = ()) {
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   WithT(W);
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:25: note: initializing generic parameter `V` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn WithT(unused generic V: S where .T = ()) {}
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_rewrites_mismatch_left.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn WithT(unused generic V: S where .T = ()) {}
+  // CHECK:STDERR:        ·                         ───┬──────────────
+  // CHECK:STDERR:        ·                            ╰──┤ initializing generic parameter `V` declared here
+  // CHECK:STDERR:        ·                               │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   WithT(W);
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `W` that implements `S where .(S.U) = ()` into
+  // CHECK:STDERR:        ·      ┃        type implementing `S where .(S.T) = ()`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   WithT(W);
 }
@@ -123,23 +136,35 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Equal(bool);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: equal_constraint.carbon:9:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Equal(generic T: N where .P = {});
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_rewrites.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Equal(bool);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `bool` into type implementing
+  // CHECK:STDERR:        ·      ┃        `N where .(N.P) = {}`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ equal_constraint.carbon
+  // CHECK:STDERR:        │ fn Equal(generic T: N where .P = {});
+  // CHECK:STDERR:        ·                  ─────────┬────────
+  // CHECK:STDERR:        ·                           ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                              │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   NestedRewrite(i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: nested_rewrites.carbon:10:26: note: initializing generic parameter `D` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn NestedRewrite(generic D: (A where .B = bool) where .C = ());
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_import_rewrites.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   NestedRewrite(i32);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `i32` into type implementing
+  // CHECK:STDERR:        ·      ┃        `A where .(A.C) = () and .(A.B) = bool`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ nested_rewrites.carbon
+  // CHECK:STDERR:        │ fn NestedRewrite(generic D: (A where .B = bool) where .C = ());
+  // CHECK:STDERR:        ·                          ──┬─────────────────────────────────
+  // CHECK:STDERR:        ·                            ╰──┤ initializing generic parameter `D` declared here
+  // CHECK:STDERR:        ·                               │ [InitializingGenericParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   NestedRewrite(i32);
 }
@@ -153,12 +178,14 @@ interface I {
 }
 
 // `2` can't be converted to the type of `I.Member`
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:53: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fn RewriteTypeMismatch(generic X: I where .Member = 2);
-// CHECK:STDERR:                                                     ^
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:53: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn RewriteTypeMismatch(generic X: I where .Member = 2);
-// CHECK:STDERR:                                                     ^
+// CHECK:STDERR:        ╭─┤ fail_check_rewrite_constraints.carbon:[[@LINE+9]]:53
+// CHECK:STDERR: ->     │ fn RewriteTypeMismatch(generic X: I where .Member = 2);
+// CHECK:STDERR:        ·                                                     ┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot implicitly convert non-type value of type `Core.IntLiteral` to
+// CHECK:STDERR:        · ┃        `type`
+// CHECK:STDERR:        · ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);
 
@@ -171,9 +198,14 @@ class D {}
 impl D as A {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic E: type where .Self impls A = D;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_let.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic E: type where .Self impls A = D;
+  // CHECK:STDERR:        ·               ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic E: type where .Self impls A = D;
 }
@@ -186,9 +218,14 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: Compile-time binding are not yet supported at file scope.
-// CHECK:STDERR: fail_todo_let_compile_time.carbon:[[@LINE+4]]:13: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let generic B: type where .Self impls A = D;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_todo_let_compile_time.carbon:[[@LINE+9]]:13
+// CHECK:STDERR: ->     │ let generic B: type where .Self impls A = D;
+// CHECK:STDERR:        ·             ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        ``let` compile time binding outside function or interface`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let generic B: type where .Self impls A = D;
 
@@ -203,32 +240,47 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:42: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let H: (E where .F = bool and .G = ()) = f64;
-// CHECK:STDERR:                                          ^~~
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:42
+// CHECK:STDERR: ->     │ let H: (E where .F = bool and .G = ()) = f64;
+// CHECK:STDERR:        ·                                          ━┳━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `f64` into type implementing
+// CHECK:STDERR:        · ┃        `E where .(E.F) = bool and .(E.G) = ()`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:45: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
-// CHECK:STDERR:                                             ^~~~
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:45
+// CHECK:STDERR: ->     │ let J: ((E where .F = {}) where .G = i32) = bool;
+// CHECK:STDERR:        ·                                             ━━┳━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `bool` into type implementing
+// CHECK:STDERR:        · ┃        `E where .(E.F) = {} and .(E.G) = i32`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:33: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let K: (E where .F = .Self.G) = bool;
-// CHECK:STDERR:                                 ^~~~
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:33
+// CHECK:STDERR: ->     │ let K: (E where .F = .Self.G) = bool;
+// CHECK:STDERR:        ·                                 ┳━━━
+// CHECK:STDERR:        ·                                 ┗━━┫ error: cannot convert type `bool` into type
+// CHECK:STDERR:        ·                                    ┃        implementing
+// CHECK:STDERR:        ·                                    ┃        `E where .(E.F) = .(E.G)`
+// CHECK:STDERR:        ·                                    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 
-// CHECK:STDOUT: --- equal_constraint.carbon
+// CHECK:STDOUT: --- equal_constraint.carbon = $equal_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %N.type: type = facet_type <@N> [concrete]
 // CHECK:STDOUT:   %N.assoc_type: type = assoc_entity_type @N [concrete]
 // CHECK:STDOUT:   %assoc0: %N.assoc_type = assoc_entity element0, @N.WithSelf.%P [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.098: %N.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.098 [symbolic_self]
 // CHECK:STDOUT:   %N.lookup_impl_witness.e97: <witness> = lookup_impl_witness %.Self.frozen.098, @N [symbolic_self]
@@ -251,7 +303,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %T.patt.loc9_19.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_19.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_23.1: type = splice_block %.loc9_23.2 [concrete = constants.%N_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc9_19: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_19: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %N.ref: type = name_ref N, file.%N.decl [concrete = constants.%N.type]
 // CHECK:STDOUT:       %.Self.frozen.loc9_23: %N.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.098]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %N.ref [concrete]
@@ -286,15 +338,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %T.loc9_19.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_rewrites.carbon
+// CHECK:STDOUT: --- nested_rewrites.carbon = $nested_rewrites
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.WithSelf.%B [concrete]
 // CHECK:STDOUT:   %assoc1: %A.assoc_type = assoc_entity element1, @A.WithSelf.%C [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.d4e: %A.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.d4e [symbolic_self]
 // CHECK:STDOUT:   %A.lookup_impl_witness.5db: <witness> = lookup_impl_witness %.Self.frozen.d4e, @A [symbolic_self]
@@ -320,7 +372,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %D.patt.loc10_27.1: %pattern_type = symbolic_binding_pattern D, 0 [symbolic = %D.patt.loc10_27.2 (constants.%D.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_49.1: type = splice_block %.loc10_49.2 [concrete = constants.%A_where.type.0ba] {
-// CHECK:STDOUT:       %.Self.frozen.loc10_27: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc10_27: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:       %.Self.frozen.loc10_32: %A.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.d4e]
 // CHECK:STDOUT:       %base_facet_type.loc10_32 = requirement_base_facet_type %A.ref [concrete]
@@ -370,14 +422,14 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D.loc10_27.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeated_rewrite.carbon
+// CHECK:STDOUT: --- repeated_rewrite.carbon = $repeated_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %E.type: type = facet_type <@E> [concrete]
 // CHECK:STDOUT:   %E.assoc_type: type = assoc_entity_type @E [concrete]
 // CHECK:STDOUT:   %assoc0: %E.assoc_type = assoc_entity element0, @E.WithSelf.%F [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.64b: %E.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.64b [symbolic_self]
 // CHECK:STDOUT:   %E.lookup_impl_witness.b1b: <witness> = lookup_impl_witness %.Self.frozen.64b, @E [symbolic_self]
@@ -388,25 +440,25 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.lookup_impl_witness.8bd: <witness> = lookup_impl_witness %.Self, @E [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.554: type = impl_witness_access %E.lookup_impl_witness.8bd, element0 [symbolic_self]
 // CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0.554 = %i32> [concrete]
-// CHECK:STDOUT:   %pattern_type.b73: type = pattern_type %E_where.type [concrete]
-// CHECK:STDOUT:   %G.patt: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.b17: type = pattern_type %E_where.type [concrete]
+// CHECK:STDOUT:   %G.patt: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic]
 // CHECK:STDOUT:   %G: %E_where.type = symbolic_binding G, 0 [symbolic]
 // CHECK:STDOUT:   %OneRewrite.type: type = fn_type @OneRewrite [concrete]
 // CHECK:STDOUT:   %OneRewrite: %OneRewrite.type = struct_value () [concrete]
-// CHECK:STDOUT:   %H.patt: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic]
+// CHECK:STDOUT:   %H.patt: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic]
 // CHECK:STDOUT:   %H: %E_where.type = symbolic_binding H, 0 [symbolic]
 // CHECK:STDOUT:   %RepeatedRewrite.type: type = fn_type @RepeatedRewrite [concrete]
 // CHECK:STDOUT:   %RepeatedRewrite: %RepeatedRewrite.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I: %E_where.type = symbolic_binding I, 0 [symbolic]
-// CHECK:STDOUT:   %OneRewrite.specific_fn.ba0394.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
+// CHECK:STDOUT:   %OneRewrite.specific_fn.c00382.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %OneRewrite.decl: %OneRewrite.type = fn_decl @OneRewrite [concrete = constants.%OneRewrite] {
-// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_35.1: type = splice_block %.loc9_35.2 [concrete = constants.%E_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc9_31: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc9_31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.Self.frozen.loc9_35: %E.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.64b]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %E.ref [concrete]
@@ -427,10 +479,10 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %G.loc9_31.2: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [concrete = constants.%RepeatedRewrite] {
-// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_33.1: type = splice_block %.loc11_33.2 [concrete = constants.%E_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc11_29: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc11_29: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %E.ref: type = name_ref E, file.%E.decl [concrete = constants.%E.type]
 // CHECK:STDOUT:       %.Self.frozen.loc11_33: %E.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.64b]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %E.ref [concrete]
@@ -465,7 +517,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_31.2: %E_where.type) {
-// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   %G.loc9_31.1: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -477,7 +529,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_29.2: %E_where.type) {
-// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   %H.loc11_29.1: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_29.1 (constants.%H)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -511,7 +563,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %H.loc11_29.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.ba0394.2
+// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.c00382.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {
@@ -521,15 +573,15 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- rewrites_reordered.carbon
+// CHECK:STDOUT: --- rewrites_reordered.carbon = $rewrites_reordered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %J.type: type = facet_type <@J> [concrete]
 // CHECK:STDOUT:   %J.assoc_type: type = assoc_entity_type @J [concrete]
 // CHECK:STDOUT:   %assoc0: %J.assoc_type = assoc_entity element0, @J.WithSelf.%K [concrete]
 // CHECK:STDOUT:   %assoc1: %J.assoc_type = assoc_entity element1, @J.WithSelf.%L [concrete]
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.197: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.Self.frozen.e58: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.99c: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.99c [symbolic_self]
 // CHECK:STDOUT:   %J.lookup_impl_witness.cb1: <witness> = lookup_impl_witness %.Self.frozen.99c, @J [symbolic_self]
@@ -558,7 +610,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %M.patt.loc10_33.1: %pattern_type = symbolic_binding_pattern M, 0 [symbolic = %M.patt.loc10_33.2 (constants.%M.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10_37.1: type = splice_block %.loc10_37.2 [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc10_33: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc10_33: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self.frozen.loc10_37: %J.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.99c]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %J.ref [concrete]
@@ -593,7 +645,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %N.patt.loc12_22.1: %pattern_type = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc12_22.2 (constants.%N.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc12_26.1: type = splice_block %.loc12_26.2 [concrete = constants.%J_where.type] {
-// CHECK:STDOUT:       %.Self.frozen.loc12_22: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.197]
+// CHECK:STDOUT:       %.Self.frozen.loc12_22: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:       %.Self.frozen.loc12_26: %J.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.99c]
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %J.ref [concrete]

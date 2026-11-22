@@ -121,6 +121,9 @@ class Context {
   auto file_system() -> llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem>& {
     return file_system_;
   }
+  auto cpp_code_generator() -> clang::CodeGenerator* {
+    return cpp_code_generator_;
+  }
   auto opt_level() -> Lower::OptimizationLevel { return opt_level_; }
   auto di_builder() -> llvm::DIBuilder& { return di_builder_; }
   auto di_compile_unit() -> llvm::DICompileUnit* { return di_compile_unit_; }
@@ -153,7 +156,7 @@ class Context {
 
   // State for building the LLVM IR.
   llvm::LLVMContext* llvm_context_;
-  clang::CodeGenerator* clang_code_generator_;
+  clang::CodeGenerator* cpp_code_generator_;
   std::unique_ptr<llvm::Module> llvm_module_owner_;
   llvm::Module* llvm_module_;
 

@@ -29,12 +29,18 @@ class D(DD: type) {
     // T only implements D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
-    // CHECK:STDERR: fail_missing_interface.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     C(()).F(T);
-    // CHECK:STDERR:     ^~~~~~~~~~
-    // CHECK:STDERR: fail_missing_interface.carbon:[[@LINE-12]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR:   fn F(unused generic T: A) {}
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:        ╭─┤ fail_missing_interface.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR:        │   fn F(unused generic T: A) {}
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     C(()).F(T);
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `T` that implements `B` into type
+    // CHECK:STDERR:        ·        ┃        implementing `A`
+    // CHECK:STDERR:        ·        ┃        [ConversionFailureFacetToFacet]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     C(()).F(T);
   }
@@ -54,12 +60,18 @@ class D(DD: type) {
     // T implements C({}).A and D(DD).B, so should not convert to a facet value
     // implementing C(()).A.
     //
-    // CHECK:STDERR: fail_interface_wrong_generic_param.carbon:[[@LINE+7]]:5: error: cannot convert type `T` that implements `A & B` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     C(()).F(T);
-    // CHECK:STDERR:     ^~~~~~~~~~
-    // CHECK:STDERR: fail_interface_wrong_generic_param.carbon:[[@LINE-12]]:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR:   fn F(unused generic T: A) {}
-    // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR:        ╭─┤ fail_interface_wrong_generic_param.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR:        │   fn F(unused generic T: A) {}
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     C(()).F(T);
+    // CHECK:STDERR:        ·     ┳━━━━━━━━━
+    // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `T` that implements `A & B` into type
+    // CHECK:STDERR:        ·        ┃        implementing `A`
+    // CHECK:STDERR:        ·        ┃        [ConversionFailureFacetToFacet]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     C(()).F(T);
   }

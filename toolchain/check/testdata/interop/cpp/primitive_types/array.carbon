@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/array.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -63,22 +63,34 @@ library "[[@TEST_NAME]]";
 
 import Cpp;
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class C;
-// CHECK:STDERR: ^~~~~~~~
-// CHECK:STDERR:
 class C;
 
 fn F() -> array(C, 5)*;
 
 inline Cpp '''
 void G() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:33: error: subscript of pointer to incomplete type 'Carbon::C' [CppInteropParseError]
-  // CHECK:STDERR:    22 |   Carbon::C *p = &(*Carbon::F())[0];
-  // CHECK:STDERR:       |                   ~~~~~~~~~~~~~~^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-9]]:8: note: forward declaration of 'Carbon::C' [CppInteropParseNote]
-  // CHECK:STDERR:     9 | class C;
-  // CHECK:STDERR:       |        ^
+  // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+23]]:35
+  // CHECK:STDERR:        │ class C;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
+  // CHECK:STDERR:        ·                                   ┳
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: use of incomplete Carbon type `C`
+  // CHECK:STDERR:        ·                                      ┃        [IncompleteTypeInCppUse]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+12]]:33
+  // CHECK:STDERR:        │ class C;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ forward declaration of 'Carbon::Main::C' [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::C *p = &(*Carbon::F())[0];
+  // CHECK:STDERR:        ·                   ━━━━━━━━━━━━━╸╻
+  // CHECK:STDERR:        ·                                 ┗━━┫ error: subscript of pointer to incomplete
+  // CHECK:STDERR:        ·                                    ┃        type 'Carbon::Main::C'
+  // CHECK:STDERR:        ·                                    ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Carbon::C *p = &(*Carbon::F())[0];
 }

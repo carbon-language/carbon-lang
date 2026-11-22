@@ -44,8 +44,8 @@ static auto DiagnoseNotAllowed(
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
                                       decl_kind);
   if (context_loc_id.has_value()) {
-    CARBON_DIAGNOSTIC(ModifierNotInContext, Note, "containing definition here");
-    diag.Note(context_loc_id, ModifierNotInContext);
+    CARBON_DIAGNOSTIC_LABEL(ModifierNotInContext, "containing definition here");
+    diag.Attach(context_loc_id, ModifierNotInContext);
   }
   diag.Emit();
 }
@@ -225,18 +225,29 @@ auto RestrictExternModifierOnDecl(Context& context,
 
 auto RequireDefaultFinalOnlyInInterfaces(Context& context,
                                          DeclIntroducerState& introducer,
-                                         SemIR::NameScopeId parent_scope_id)
-    -> void {
-  if (context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
+                                         SemIR::NameScopeId parent_scope_id,
+                                         bool is_definition) -> void {
+  // Both `default` and `final` allowed in an interface definition.
+  if (!context.name_scopes().InstIs<SemIR::InterfaceWithSelfDecl>(
           parent_scope_id)) {
-    // Both `default` and `final` allowed in an interface definition.
+    CARBON_DIAGNOSTIC(ModifierRequiresInterface, Error,
+                      "`{0}` not allowed; requires interface scope",
+                      Lex::TokenKind);
+    ForbidModifiersOnDecl(context, ModifierRequiresInterface, introducer,
+                          KeywordModifierSet::Interface);
     return;
   }
-  CARBON_DIAGNOSTIC(ModifierRequiresInterface, Error,
-                    "`{0}` not allowed; requires interface scope",
-                    Lex::TokenKind);
-  ForbidModifiersOnDecl(context, ModifierRequiresInterface, introducer,
-                        KeywordModifierSet::Interface);
+
+  // TODO: remove and check that final/default declarations have a definition by
+  // the end of the file.
+  if (!is_definition) {
+    CARBON_DIAGNOSTIC(
+        ModifierFinalRequiresDefaultImpl, Error,
+        "TODO: `{0}` modifier currently requires an inline definition",
+        Lex::TokenKind);
+    ForbidModifiersOnDecl(context, ModifierFinalRequiresDefaultImpl, introducer,
+                          KeywordModifierSet::Interface);
+  }
 }
 
 }  // namespace Carbon::Check

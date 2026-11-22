@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 
+#include "clang/AST/TypeBase.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
@@ -20,29 +21,33 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto [imports, converted] = loc_converter_.ConvertWithImports(
-      loc_id.loc_id(), loc_id.is_token_only());
+  auto [imports, converted] =
+      loc_converter_.ConvertWithImports(loc_id.loc_id(), loc_id.extent());
   for (const auto& import : imports) {
-    CARBON_DIAGNOSTIC(InImport, LocationInfo, "in import");
-    CARBON_DIAGNOSTIC(InCppInclude, LocationInfo, "in file included here");
-    CARBON_DIAGNOSTIC(InCppModule, LocationInfo, "in module imported here");
-    CARBON_DIAGNOSTIC(InCppMacroExpansion, LocationInfo,
-                      "in expansion of macro defined here");
+    // These are rendered as `<text>: <location>`, hanging off the location
+    // they were reached from, so each reads as a step in a path.
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InImport, "imported from");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppInclude, "included from");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppModule, "imported from module at");
+    CARBON_DIAGNOSTIC_LOCATION_INFO(InCppMacroExpansion,
+                                    "expanded from macro defined at");
     switch (import.kind) {
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::Import:
-        // TODO: Include the library name in the note.
+        // TODO: Include the library name in the label.
         context_fn(import.loc, InImport);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppInclude:
-        // TODO: Include the file name in the note.
+        // TODO: Include the file name in the label.
         context_fn(import.loc, InCppInclude);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppModuleImport:
-        // TODO: Include the module name in the note.
+        // TODO: Include the module name in the label.
         context_fn(import.loc, InCppModule);
         break;
       case Carbon::SemIR::DiagnosticLocConverter::ImportLoc::CppMacroExpansion:
-        // TODO: Include the macro name in the note.
+        // TODO: Include the macro name in the label.
+        // TODO: Include the Clang-generated snippet here rather than with the
+        // main diagnostic.
         context_fn(import.loc, InCppMacroExpansion);
         break;
     }
@@ -90,14 +95,7 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     if (!type_of_expr->inst_id.has_value()) {
       return "<none>";
     }
-    // TODO: Where possible, produce a better description of the type based on
-    // the expression.
-    return "`" +
-           StringifyConstantInst(
-               *sem_ir_,
-               sem_ir_->types().GetTypeInstId(
-                   sem_ir_->insts().Get(type_of_expr->inst_id).type_id())) +
-           "`";
+    return "`" + StringifyTypeOfInst(*sem_ir_, type_of_expr->inst_id) + "`";
   }
   if (auto* expr = llvm::any_cast<InstIdAsConstant>(&arg)) {
     return "`" + StringifyConstantInst(*sem_ir_, expr->inst_id) + "`";
@@ -147,6 +145,9 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     auto specific_interface = sem_ir_->specific_interfaces().Get(
         specific_interface_raw->specific_interface_id);
     return StringifySpecificInterface(*sem_ir_, specific_interface);
+  }
+  if (auto* clang_type = llvm::any_cast<CppType>(&arg)) {
+    return clang_type->type.getAsString();
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
 }

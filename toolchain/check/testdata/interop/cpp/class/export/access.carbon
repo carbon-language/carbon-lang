@@ -1,0 +1,178 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/destroy.carbon
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/class/export/access.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/class/export/access.carbon
+
+// --- fail_access_exported_private_var.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class B {
+  fn Make() -> Self { return {}; }
+  private var a: A = {};
+}
+
+inline Cpp '''
+void F() {
+  auto b = Carbon::B::Make();
+  // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var.carbon:[[@LINE+17]]:5
+  // CHECK:STDERR:        │   private var a: A = {};
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   b.a;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: 'a' is a private member of 'Carbon::Main::B'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var.carbon:[[@LINE+6]]:5
+  // CHECK:STDERR: ->     │   b.a;
+  // CHECK:STDERR:        ·   ━ ┳
+  // CHECK:STDERR:        ·     ┗━━┫ warning: expression result unused [CppInteropParseWarning]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  b.a;
+}
+''';
+
+// --- fail_access_exported_private_method.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class B {
+  fn Make() -> Self { return {}; }
+  private fn F() {}
+}
+
+inline Cpp '''
+void G() {
+  auto b = Carbon::B::Make();
+  // CHECK:STDERR:        ╭─┤ fail_access_exported_private_method.carbon:[[@LINE+11]]:5
+  // CHECK:STDERR:        │   private fn F() {}
+  // CHECK:STDERR:        ·                  ┬
+  // CHECK:STDERR:        ·                  ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   b.F();
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: 'F' is a private member of 'Carbon::Main::B'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  b.F();
+}
+''';
+
+// --- fail_access_exported_private_var_in_generic.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class B(T: type) {
+  private var a: A = {};
+}
+
+fn MakeB() -> B(A) {
+  return {};
+}
+
+inline Cpp '''
+void F() {
+  auto b = Carbon::MakeB();
+  // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var_in_generic.carbon:[[@LINE+17]]:5
+  // CHECK:STDERR:        │   private var a: A = {};
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   b.a;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: 'a' is a private member of 'Carbon::Main::B<Carbon::Main::A>'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_access_exported_private_var_in_generic.carbon:[[@LINE+6]]:5
+  // CHECK:STDERR: ->     │   b.a;
+  // CHECK:STDERR:        ·   ━ ┳
+  // CHECK:STDERR:        ·     ┗━━┫ warning: expression result unused [CppInteropParseWarning]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  b.a;
+}
+''';
+
+// --- fail_todo_access_exported_private_method_in_generic.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class B(T: type) {
+  // TODO: exporting of methods in generics is not yet supported.
+  // CHECK:STDERR:        ╭─┤ fail_todo_access_exported_private_method_in_generic.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   private fn F(unused self) {}
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  private fn F(unused self) {}
+}
+
+fn MakeB() -> B(A) {
+  return {};
+}
+
+inline Cpp '''
+void F() {
+  auto b = Carbon::MakeB();
+  // TODO: this error should be that `F` is a private member of `B`.
+  // CHECK:STDERR:        ╭─┤ fail_todo_access_exported_private_method_in_generic.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   b.F();
+  // CHECK:STDERR:        ·   ━ ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'F' in 'Carbon::Main::B<Carbon::Main::A>'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  b.F();
+}
+''';
+
+// --- access_exported_private_member_of_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+inline Cpp '''
+class C;
+''';
+
+alias C = Cpp.C;
+
+class A {}
+
+class B {
+  friend C;
+  fn Make() -> Self { return {}; }
+  private fn F() {}
+}
+
+inline Cpp '''
+class C {
+  void G() {
+    auto b = Carbon::B::Make();
+    b.F();
+  }
+};
+''';

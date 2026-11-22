@@ -110,18 +110,20 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
 
 // Adds a return instruction, along with cleanups for all live variables or
 // temporaries in the current function. If no instruction is passed, it
-// defaults to `SemIR::Return{}`.
+// defaults to `SemIR::Return{}`. Returns the return instruction.
 auto AddReturnInstWithCleanups(Context& context,
-                               SemIR::LocIdAndInst loc_id_and_inst) -> void;
+                               SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId;
 
 template <typename LocT>
-auto AddReturnInstWithCleanups(Context& context, LocT loc) -> void {
-  AddReturnInstWithCleanups(context, SemIR::LocIdAndInst(loc, SemIR::Return{}));
+auto AddReturnInstWithCleanups(Context& context, LocT loc) -> SemIR::InstId {
+  return AddReturnInstWithCleanups(context,
+                                   SemIR::LocIdAndInst(loc, SemIR::Return{}));
 }
 template <typename LocT>
 auto AddReturnInstWithCleanups(Context& context, LocT loc,
-                               SemIR::ReturnExpr inst) -> void {
-  AddReturnInstWithCleanups(context, SemIR::LocIdAndInst(loc, inst));
+                               SemIR::ReturnExpr inst) -> SemIR::InstId {
+  return AddReturnInstWithCleanups(context, SemIR::LocIdAndInst(loc, inst));
 }
 
 }  // namespace Carbon::Check

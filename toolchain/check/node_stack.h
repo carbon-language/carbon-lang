@@ -404,7 +404,7 @@ class NodeStack {
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
-    set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
+    set_id_if_category_is(Parse::NodeCategory::ReturnSpecifier,
                           Id::KindFor<SemIR::InstId>());
     return result;
   }
@@ -422,6 +422,8 @@ class NodeStack {
       case Parse::NodeKind::ShortCircuitOperandAnd:
       case Parse::NodeKind::ShortCircuitOperandOr:
       case Parse::NodeKind::StructLiteralField:
+      case Parse::NodeKind::StructPatternDesignatedField:
+      case Parse::NodeKind::WhereAssignmentIntroducer:
         return Id::KindFor<SemIR::InstId>();
       case Parse::NodeKind::ExplicitParamList:
       case Parse::NodeKind::IfCondition:
@@ -430,7 +432,10 @@ class NodeStack {
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::FunctionTerseDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+      case Parse::NodeKind::LambdaDefinitionStart:
+      case Parse::NodeKind::LambdaTerseDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
       case Parse::NodeKind::ChoiceDefinitionStart:
         // TODO: Should we have a separate SemIR::ChoiceId?
@@ -438,8 +443,6 @@ class NodeStack {
         return Id::KindFor<SemIR::ClassId>();
       case Parse::NodeKind::InterfaceDefinitionStart:
         return Id::KindFor<SemIR::InterfaceId>();
-      case Parse::NodeKind::ImplDefinitionStart:
-        return Id::KindFor<SemIR::ImplId>();
       case Parse::NodeKind::NamedConstraintDefinitionStart:
         return Id::KindFor<SemIR::NamedConstraintId>();
       case Parse::NodeKind::SelfTypeName:
@@ -468,20 +471,22 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
+      case Parse::NodeKind::StructPatternStart:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
       case Parse::NodeKind::TemplateBindingName:
       case Parse::NodeKind::TupleLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
+      case Parse::NodeKind::PatternListUnderscoreField:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
       case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::InlineIntroducer:
-      case Parse::NodeKind::WhereOperand:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -497,6 +502,7 @@ class NodeStack {
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::CppPackageName:
+      case Parse::NodeKind::DefaultValueExprStart:
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
@@ -505,10 +511,12 @@ class NodeStack {
       case Parse::NodeKind::Forall:
       case Parse::NodeKind::FormLiteralKeyword:
       case Parse::NodeKind::FormLiteralOpenParen:
+      case Parse::NodeKind::FriendIntroducer:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
       case Parse::NodeKind::IfConditionStart:
+      case Parse::NodeKind::ImplDefinitionStart:
       case Parse::NodeKind::ImportIntroducer:
       case Parse::NodeKind::IndexExprStart:
       case Parse::NodeKind::InvalidParseStart:
@@ -541,8 +549,11 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
+      case Parse::NodeKind::TypeOfExprKeyword:
+      case Parse::NodeKind::TypeOfExprOpenParen:
+      case Parse::NodeKind::WhereAssignmentOperator:
+      case Parse::NodeKind::WhereOperand:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:

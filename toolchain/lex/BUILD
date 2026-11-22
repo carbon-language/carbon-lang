@@ -47,6 +47,7 @@ cc_library(
     srcs = ["helpers.cpp"],
     hdrs = ["helpers.h"],
     deps = [
+        ":source_loc",
         "//toolchain/diagnostics:emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -57,6 +58,7 @@ cc_library(
     testonly = 1,
     hdrs = ["test_helpers.h"],
     deps = [
+        ":source_loc",
         "//common:check",
         "//common:string_helpers",
         "//toolchain/diagnostics:emitter",
@@ -72,8 +74,11 @@ cc_library(
     deps = [
         ":character_set",
         ":helpers",
+        ":source_loc",
         "//common:check",
         "//toolchain/base:int",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
         "@llvm-project//llvm:Support",
@@ -86,8 +91,8 @@ cc_binary(
     srcs = ["numeric_literal_benchmark.cpp"],
     deps = [
         ":numeric_literal",
-        "//common:check",
         "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:null_diagnostics",
         "@google_benchmark//:benchmark",
     ],
@@ -100,10 +105,13 @@ cc_test(
     deps = [
         ":numeric_literal",
         ":test_helpers",
-        "//common:check",
         "//common:ostream",
         "//testing/base:gtest_main",
+        "//toolchain/base:int",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/base:value_ids",
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -115,8 +123,10 @@ cc_fuzz_test(
     srcs = ["numeric_literal_fuzzer.cpp"],
     corpus = glob(["fuzzer_corpus/numeric_literal/*"]),
     deps = [
+        ":character_set",
         ":numeric_literal",
         "//testing/fuzzing:libfuzzer_header",
+        "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:null_diagnostics",
         "@llvm-project//llvm:Support",
@@ -130,6 +140,7 @@ cc_library(
     deps = [
         ":character_set",
         ":helpers",
+        ":source_loc",
         ":token_info",
         "//common:check",
         "//toolchain/diagnostics:emitter",
@@ -160,6 +171,7 @@ cc_test(
         "//common:ostream",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
@@ -186,21 +198,110 @@ cc_library(
     hdrs = ["lex.h"],
     deps = [
         ":character_set",
-        ":dump",
         ":helpers",
+        ":mismatched_brackets",
         ":numeric_literal",
+        ":source_loc",
         ":string_literal",
         ":token_index",
         ":token_info",
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:preserve_none",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
+        "//toolchain/diagnostics:renderer",
         "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "mismatched_brackets",
+    srcs = ["mismatched_brackets.cpp"],
+    hdrs = ["mismatched_brackets.h"],
+    deps = [
+        ":token_index",
+        ":token_kind",
+        "//common:check",
+        "//common:hashing",
+        "//common:map",
+        "//toolchain/base:index_base",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "mismatched_brackets_benchmark",
+    testonly = 1,
+    srcs = ["mismatched_brackets_benchmark.cpp"],
+    deps = [
+        ":lex",
+        ":mismatched_brackets",
+        ":token_index",
+        ":tokenized_buffer",
+        "//common:check",
+        "//testing/base:benchmark_helpers",
+        "//testing/base:benchmark_main",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/benchmarking:source_gen_lib",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/source:source_buffer",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "mismatched_brackets_test",
+    size = "small",
+    srcs = ["mismatched_brackets_test.cpp"],
+    deps = [
+        ":mismatched_brackets",
+        ":token_index",
+        ":token_kind",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_binary(
+    name = "mismatched_brackets_eval",
+    testonly = 1,
+    srcs = ["mismatched_brackets_eval.cpp"],
+    deps = [
+        ":lex",
+        ":mismatched_brackets",
+        ":token_kind",
+        ":tokenized_buffer",
+        "//common:bazel_working_dir",
+        "//common:check",
+        "//common:command_line",
+        "//common:init_llvm",
+        "//common:ostream",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/source:source_buffer",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_fuzz_test(
+    name = "mismatched_brackets_fuzzer",
+    size = "small",
+    srcs = ["mismatched_brackets_fuzzer.cpp"],
+    corpus = glob(["fuzzer_corpus/mismatched_brackets/*"]),
+    deps = [
+        ":mismatched_brackets",
+        "//common:check",
+        "//testing/fuzzing:libfuzzer_header",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -210,12 +311,21 @@ cc_library(
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
+        ":token_index",
         ":tokenized_buffer",
-        "//common:ostream",
         "//common:raw_string_ostream",
     ],
     # Always link dump methods.
     alwayslink = 1,
+)
+
+cc_library(
+    name = "source_loc",
+    hdrs = ["source_loc.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
 )
 
 cc_library(
@@ -247,6 +357,7 @@ cc_library(
         ":character_set",
         ":helpers",
         ":numeric_literal",
+        ":source_loc",
         ":string_literal",
         ":token_index",
         ":token_info",
@@ -325,11 +436,13 @@ cc_binary(
         ":tokenized_buffer",
         "//common:check",
         "//common:raw_string_ostream",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//toolchain/base:shared_value_stores",
         "//toolchain/benchmarking:source_gen_lib",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:null_diagnostics",
+        "//toolchain/diagnostics:renderer",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",
         "@llvm-project//llvm:Support",

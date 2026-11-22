@@ -30,9 +30,10 @@ import Cpp library "class_template.h";
 var a: Cpp.A = Cpp.X(Cpp.A, Cpp.B).f({} as Cpp.B);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_class_template.carbon
+// CHECK:STDOUT: --- use_class_template.carbon = $use_class_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

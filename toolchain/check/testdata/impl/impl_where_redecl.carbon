@@ -18,23 +18,30 @@ library "[[@TEST_NAME]]";
 interface I { let T: type; }
 constraint N(U: type) {}
 
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl () as I where .T = {};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_match_with_associated_type.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as I where .T = {};
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as I where .T = {};
 impl () as I where .T = {} and .T impls N(.Self) {}
 
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl {} as I;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_match_with_associated_type.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl {} as I;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as I;
 impl {} as I where .T = {} and .T impls N(.Self) {}
 
-// CHECK:STDERR: fail_match_with_associated_type.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl ({},) as I where .T = {} and .T impls N(.Self);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_match_with_associated_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl ({},) as I where .T = {} and .T impls N(.Self);
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                           ┗━━┫ error: impl declared but not defined
+// CHECK:STDERR:        ·                              ┃        [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ({},) as I where .T = {} and .T impls N(.Self);
 impl ({},) as I where .T = {} {}
@@ -45,16 +52,21 @@ library "[[@TEST_NAME]]";
 interface J {}
 constraint N {}
 
-// CHECK:STDERR: fail_match_with_empty_interface.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl () as J;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_match_with_empty_interface.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as J;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as J;
 impl () as J where .Self impls type and .Self impls N {}
 
-// CHECK:STDERR: fail_match_with_empty_interface.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl {} as J where .Self impls type and .Self impls N;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_match_with_empty_interface.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl {} as J where .Self impls type and .Self impls N;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: impl declared but not defined
+// CHECK:STDERR:        ·                               ┃        [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as J where .Self impls type and .Self impls N;
 impl {} as J {}
@@ -64,9 +76,12 @@ library "[[@TEST_NAME]]";
 
 interface K {}
 
-// CHECK:STDERR: fail_parens_other_nesting.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl {} as (K where .Self impls type) where .Self impls type;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_parens_other_nesting.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl {} as (K where .Self impls type) where .Self impls type;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                               ┗━━┫ error: impl declared but not defined
+// CHECK:STDERR:        ·                                  ┃        [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as (K where .Self impls type) where .Self impls type;
 impl {} as (K where .Self impls type) {}
@@ -76,9 +91,12 @@ library "[[@TEST_NAME]]";
 
 interface L {}
 
-// CHECK:STDERR: fail_other_nesting.carbon:[[@LINE+4]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl () as (L where .Self impls type) where .Self impls type;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_other_nesting.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as (L where .Self impls type) where .Self impls type;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                               ┗━━┫ error: impl declared but not defined
+// CHECK:STDERR:        ·                                  ┃        [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as (L where .Self impls type) where .Self impls type;
 impl () as L {}

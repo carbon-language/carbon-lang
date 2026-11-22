@@ -117,7 +117,7 @@ using AnyObserveOperandId =
     NodeIdInCategory<NodeCategory::Expr | NodeCategory::ObserveOperator>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
-using AnyReturnDeclId = NodeIdInCategory<NodeCategory::ReturnDecl>;
+using AnyReturnSpecifierId = NodeIdInCategory<NodeCategory::ReturnSpecifier>;
 
 namespace Internal {
 template <typename T>
@@ -175,11 +175,18 @@ using AnyClassDeclId =
                 // class, so they are a form of class decls. This avoids
                 // duplicating all of SemIR::ClassDecl.
                 ChoiceDefinitionStartId>;
-using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
-                                      BuiltinFunctionDefinitionStartId>;
+using AnyFunctionDeclId =
+    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
+                FunctionTerseDefinitionStartId,
+                BuiltinFunctionDefinitionStartId, LambdaDefinitionStartId,
+                LambdaTerseDefinitionStartId>;
+using AnyFunctionDefinitionStartId =
+    NodeIdOneOf<FunctionDefinitionStartId, FunctionTerseDefinitionStartId>;
 using AnyFunctionDefinitionId =
     NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
                 BuiltinFunctionDefinitionId>;
+using AnyLambdaDefinitionStartId =
+    NodeIdOneOf<LambdaDefinitionStartId, LambdaTerseDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
@@ -196,6 +203,8 @@ using AnyRuntimeBindingPatternName =
                 UnderscoreNameId>;
 using AnyPrimitiveFormIdId =
     NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;
+using AnyTerseFunctionDefinitionId =
+    NodeIdOneOf<FunctionTerseDefinitionId, LambdaTerseDefinitionId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
@@ -207,6 +216,19 @@ struct NodeIdNot : public NodeId {
 
 // Note that the support for extracting these types using the `Tree::Extract*`
 // functions is defined in `extract.cpp`.
+
+// How much of a node's source a diagnostic location for it covers.
+enum class LocExtent : int8_t {
+  // Every token descending from the node.
+  Subtree,
+  // The node's own token alone.
+  Token,
+  // The last name among the node's direct children, which for a declaration
+  // is the name it declares: a qualifier's name is a child of the qualifier.
+  // A node with no name among its direct children, such as an `impl`, covers
+  // its subtree.
+  DeclaredName,
+};
 
 }  // namespace Carbon::Parse
 

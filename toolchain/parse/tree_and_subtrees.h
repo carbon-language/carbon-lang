@@ -98,7 +98,11 @@ class TreeAndSubtrees {
   // This can be parsed as YAML using tools like `python-yq` combined with `jq`
   // on the command line. The format is also reasonably amenable to other
   // line-oriented shell tools from `grep` to `awk`.
-  auto Print(llvm::raw_ostream& output) const -> void;
+  auto PrintYamlPostorder(llvm::raw_ostream& output) const -> void;
+
+  // Prints the parse tree in postorder, in a human-readable format that uses
+  // box-drawing characters to visualize the tree structure.
+  auto PrettyPrint(llvm::raw_ostream& output) const -> void;
 
   // Prints the parse tree in preorder. The format is YAML, and similar to
   // Print. However, nodes are marked as children with postorder (storage)
@@ -108,7 +112,7 @@ class TreeAndSubtrees {
   //     {node_index: 0, kind: 'bar', text: '...', has_error: yes},
   //     {node_index: 1, kind: 'baz', text: '...'}]}
   //   ```
-  auto PrintPreorder(llvm::raw_ostream& output) const -> void;
+  auto PrintYamlPreorder(llvm::raw_ostream& output) const -> void;
 
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
@@ -117,9 +121,8 @@ class TreeAndSubtrees {
   // Returns the range of tokens in the node's subtree.
   auto GetSubtreeTokenRange(NodeId node_id) const -> Lex::InclusiveTokenRange;
 
-  // Converts the node to a diagnostic location, covering either the full
-  // subtree or only the token.
-  auto NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
+  // Converts the node to a diagnostic location covering `extent` of it.
+  auto NodeToDiagnosticLoc(NodeId node_id, LocExtent extent) const
       -> Diagnostics::ConvertedLoc;
 
   // Returns an iterable range over the parse tree node and all of its
@@ -168,10 +171,19 @@ class TreeAndSubtrees {
   auto VerifyExtract(NodeId node_id, NodeKind kind, ErrorBuilder* trace) const
       -> bool;
 
-  // Prints a single node for Print(). Returns true when preorder and there are
-  // children.
-  auto PrintNode(llvm::raw_ostream& output, NodeId n, int depth,
-                 bool preorder) const -> bool;
+  // Prints the tree in postorder, in either YAML or human-readable format.
+  auto PrintPostorder(llvm::raw_ostream& output, bool yaml) const -> void;
+
+  // Prints a single node in YAML format. Returns true when preorder and there
+  // are children.
+  auto YamlPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
+                     bool preorder) const -> bool;
+
+  // Prints a single node in human-readable format. `pending_parents[i]`
+  // should be true if and only if there is a node at depth i that we haven't
+  // yet printed, but we have printed one of its children.
+  auto PrettyPrintNode(llvm::raw_ostream& output, NodeId n, int depth,
+                       llvm::BitVector& pending_parents) const -> void;
 
   // The associated tokens.
   const Lex::TokenizedBuffer* tokens_;
@@ -296,7 +308,7 @@ auto TreeAndSubtrees::Extract(IdT id) const
     return std::nullopt;
   }
 
-  using T = typename NodeForId<IdT>::TypedNode;
+  using T = NodeForId<IdT>::TypedNode;
   return ExtractNodeFromChildren<T>(id, children(id));
 }
 

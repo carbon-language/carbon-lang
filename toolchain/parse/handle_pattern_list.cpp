@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -13,16 +14,55 @@ static auto HandlePatternListElement(Context& context, StateKind pattern_state,
   auto state = context.PopState();
 
   context.PushStateForPattern(finish_state_kind, state.in_var_pattern,
-                              state.in_unused_pattern, state.binding_context,
-                              state.ambient_precedence);
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
+                              state.binding_context, state.ambient_precedence);
+
+  // For patterns inside of list elements we normally check for a default value.
+  // Parsing a struct designator is special case as that also is looking for a
+  // required `=` sign, so we handle looking for an optional default value in
+  // that state.
+  if (pattern_state != StateKind::StructPatternFieldAfterDesignator) {
+    context.PushStateForPattern(
+        StateKind::PatternListElementCheckForDefaultValue, state.in_var_pattern,
+        state.in_unused_pattern, state.in_field_shorthand_pattern,
+        state.binding_context, state.ambient_precedence);
+  }
+
   context.PushStateForPattern(pattern_state, state.in_var_pattern,
-                              state.in_unused_pattern, state.binding_context,
-                              state.ambient_precedence);
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
+                              state.binding_context, state.ambient_precedence);
 }
 
 auto HandlePatternListElementAsTuple(Context& context) -> void {
   HandlePatternListElement(context, StateKind::Pattern,
                            StateKind::PatternListElementFinishAsTuple);
+}
+
+auto HandlePatternListElementAsStruct(Context& context) -> void {
+  switch (context.PositionKind()) {
+    case Lex::TokenKind::Period:
+      HandlePatternListElement(context,
+                               StateKind::StructPatternFieldAfterDesignator,
+                               StateKind::PatternListElementFinishAsStruct);
+      context.PushState(StateKind::PeriodAsStruct);
+      break;
+    case Lex::TokenKind::Underscore:
+      // If this ends up as part of a binding pattern, it will look like a
+      // shorthand pattern such as `{_: i32}`.
+      // Set flag on state which will be popped in HandlePatternListElement.
+      context.state_stack().back().in_field_shorthand_pattern = true;
+      HandlePatternListElement(context, StateKind::StructPatternUnderscore,
+                               StateKind::PatternListElementFinishAsStruct);
+      break;
+    default:
+      // Set flag on state which will be popped in HandlePatternListElement.
+      context.state_stack().back().in_field_shorthand_pattern = true;
+      HandlePatternListElement(context, StateKind::Pattern,
+                               StateKind::PatternListElementFinishAsStruct);
+      break;
+  }
 }
 
 auto HandlePatternListElementAsExplicit(Context& context) -> void {
@@ -35,7 +75,156 @@ auto HandlePatternListElementAsImplicit(Context& context) -> void {
                            StateKind::PatternListElementFinishAsImplicit);
 }
 
-// Handles PatternListElementFinishAs(Tuple|Explicit|Implicit).
+auto HandleStructPatternDesignatedFieldFinish(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddNode(NodeKind::StructPatternDesignatedField, state.token,
+                  state.has_error);
+}
+
+auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
+  auto state = context.PopState();
+
+  auto skip_to_recovery_position = [&](bool add_invalid_parse) {
+    auto recovery_pos =
+        context.FindNextOf({Lex::TokenKind::Equal, Lex::TokenKind::Comma,
+                            Lex::TokenKind::CloseCurlyBrace});
+
+    if (add_invalid_parse) {
+      if (context.tokens().GetKind(*recovery_pos) != Lex::TokenKind::Equal) {
+        context.AddInvalidParse(*context.position());
+      }
+    }
+    context.SkipTo(*recovery_pos);
+  };
+
+  if (state.has_error) {
+    // recover from error returned when parsing designator
+    skip_to_recovery_position(/*add_invalid_parse=*/false);
+  }
+
+  if (!context.PositionIs(Lex::TokenKind::Equal)) {
+    if (!state.has_error) {
+      state.has_error = true;
+
+      CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
+                        "expected `= value` after `.field`");
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             ExpectedStructPatternDesignatedField);
+    }
+    skip_to_recovery_position(/*add_invalid_parse=*/true);
+
+    if (context.PositionIs(Lex::TokenKind::Comma) ||
+        context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+      context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
+      return;
+    }
+  }
+
+  state.token = context.ConsumeChecked(Lex::TokenKind::Equal);
+
+  context.PushState(state, StateKind::StructPatternDesignatedFieldFinish);
+  context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
+                              state.in_unused_pattern,
+                              state.in_field_shorthand_pattern,
+                              state.binding_context, state.ambient_precedence);
+}
+
+auto HandleStructPatternUnderscore(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (context.PositionKind(Lookahead::NextToken)
+          .is_binding_pattern_operator()) {
+    context.PushStateForPattern(
+        StateKind::BindingPattern, state.in_var_pattern,
+        state.in_unused_pattern, state.in_field_shorthand_pattern,
+        state.binding_context, state.ambient_precedence);
+
+    return;
+  }
+
+  auto underscore = context.ConsumeChecked(Lex::TokenKind::Underscore);
+
+  if (!context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
+    bool has_error = true;
+    bool has_comma = context.PositionIs(Lex::TokenKind::Comma);
+
+    auto token = context.position();
+    auto token_kind = context.PositionKind();
+
+    if (has_comma) {
+      if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace,
+                             Lookahead::NextToken)) {
+        // We have a trailing `,` followed by `}`, so there is no error
+        has_error = false;
+      } else {
+        token++;
+        token_kind = context.PositionKind(Lookahead::NextToken);
+      }
+    }
+
+    if (has_error) {
+      CARBON_DIAGNOSTIC(ExpectedCloseAfterUnderscore, Error,
+                        "unexpected token `{0}` after {1:`,`|`_`} in struct "
+                        "pattern{1: with `_` field|}, expected `}`",
+                        Lex::TokenKind, Diagnostics::BoolAsSelect);
+      context.emitter().Emit(*token, ExpectedCloseAfterUnderscore, token_kind,
+                             has_comma);
+      state.has_error = true;
+    }
+  }
+
+  context.AddNode(NodeKind::PatternListUnderscoreField, underscore,
+                  state.has_error);
+
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+}
+
+auto HandlePatternListElementCheckForDefaultValue(Context& context) -> void {
+  auto state = context.PopState();
+
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+
+  // Check for the optional `=` indicating a default value.
+  auto equals_token = context.ConsumeIf(Lex::TokenKind::Equal);
+  if (!equals_token) {
+    return;
+  }
+
+  // Add the first virtual node surrounding the value expr node, to facilitate
+  // handling in check.
+  context.AddLeafNode(NodeKind::DefaultValueExprStart, *equals_token);
+
+  state.token = *equals_token;
+  state.kind = StateKind::PatternListElementFinishDefaultValue;
+  context.PushState(state);
+
+  // Check for the underscore `_` indicating the default value is unspecified.
+  auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore);
+  if (underscore) {
+    context.AddLeafNode(NodeKind::DefaultValueUnspecified, *underscore);
+    return;
+  }
+
+  context.PushStateForExpr(state.ambient_precedence);
+}
+
+auto HandlePatternListElementFinishDefaultValue(Context& context) -> void {
+  auto state = context.PopState();
+
+  // Propagate any expr parsing errors upwards to initiate error recovery
+  // at the pattern list level.
+  if (state.has_error) {
+    context.ReturnErrorOnState();
+  }
+
+  context.AddNode(NodeKind::DefaultValuePattern, state.token, state.has_error);
+}
+
+// Handles PatternListElementFinishAs(Tuple|Struct|Explicit|Implicit).
 static auto HandlePatternListElementFinish(Context& context,
                                            Lex::TokenKind close_token,
                                            StateKind param_state_kind) -> void {
@@ -59,15 +248,21 @@ static auto HandlePatternListElementFinish(Context& context,
   }
 
   if (list_token_kind == Context::ListTokenKind::Comma) {
-    context.PushStateForPattern(param_state_kind, state.in_var_pattern,
-                                state.in_unused_pattern, state.binding_context,
-                                state.ambient_precedence);
+    context.PushStateForPattern(
+        param_state_kind, state.in_var_pattern, state.in_unused_pattern,
+        /*in_field_shorthand_pattern=*/false, state.binding_context,
+        state.ambient_precedence);
   }
 }
 
 auto HandlePatternListElementFinishAsTuple(Context& context) -> void {
   HandlePatternListElementFinish(context, Lex::TokenKind::CloseParen,
                                  StateKind::PatternListElementAsTuple);
+}
+
+auto HandlePatternListElementFinishAsStruct(Context& context) -> void {
+  HandlePatternListElementFinish(context, Lex::TokenKind::CloseCurlyBrace,
+                                 StateKind::PatternListElementAsStruct);
 }
 
 auto HandlePatternListElementFinishAsExplicit(Context& context) -> void {
@@ -80,7 +275,7 @@ auto HandlePatternListElementFinishAsImplicit(Context& context) -> void {
                                  StateKind::PatternListElementAsImplicit);
 }
 
-// Handles PatternListAs(Tuple|Explicit|Implicit).
+// Handles PatternListAs(Tuple|Struct|Explicit|Implicit).
 static auto HandlePatternList(Context& context, NodeKind node_kind,
                               Lex::TokenKind open_token_kind,
                               Lex::TokenKind close_token_kind,
@@ -88,18 +283,41 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
                               StateKind finish_state_empty,
                               StateKind finish_state_nonempty) -> void {
   auto state = context.PopState();
+
+  if (state.in_field_shorthand_pattern) {
+    if (node_kind == NodeKind::TuplePatternStart) {
+      CARBON_DIAGNOSTIC(NestedTuplePatternInStructPatternShortField, Error,
+                        "tuple pattern in shorthand struct pattern field; use "
+                        "`.field = (...)` instead");
+      context.emitter().Emit(*context.position(),
+                             NestedTuplePatternInStructPatternShortField);
+
+      context.ReturnErrorOnState();
+    } else if (node_kind == NodeKind::StructPatternStart) {
+      CARBON_DIAGNOSTIC(NestedStructPatternStructPatternShortField, Error,
+                        "struct pattern in shorthand struct pattern field; use "
+                        "`.field = {{...}` instead");
+      context.emitter().Emit(*context.position(),
+                             NestedStructPatternStructPatternShortField);
+
+      context.ReturnErrorOnState();
+    }
+  }
+
   auto open_token = context.ConsumeChecked(open_token_kind);
   bool empty = context.PositionIs(close_token_kind);
 
   context.PushStateForPattern(
       empty ? finish_state_empty : finish_state_nonempty, state.in_var_pattern,
-      state.in_unused_pattern, state.binding_context, state.ambient_precedence);
+      state.in_unused_pattern, state.in_field_shorthand_pattern,
+      state.binding_context, state.ambient_precedence);
   context.AddLeafNode(node_kind, open_token);
 
   if (!empty) {
-    context.PushStateForPattern(param_state, state.in_var_pattern,
-                                state.in_unused_pattern, state.binding_context,
-                                PrecedenceGroup::ForTopLevelExpr());
+    context.PushStateForPattern(
+        param_state, state.in_var_pattern, state.in_unused_pattern,
+        state.in_field_shorthand_pattern, state.binding_context,
+        PrecedenceGroup::ForTopLevelExpr());
   }
 }
 
@@ -110,6 +328,14 @@ auto HandlePatternListAsTuple(Context& context) -> void {
       context, NodeKind::TuplePatternStart, Lex::TokenKind::OpenParen,
       Lex::TokenKind::CloseParen, StateKind::PatternListElementAsTuple,
       StateKind::PatternListFinishAsTuple, StateKind::PatternListFinishAsParen);
+}
+
+auto HandlePatternListAsStruct(Context& context) -> void {
+  HandlePatternList(
+      context, NodeKind::StructPatternStart, Lex::TokenKind::OpenCurlyBrace,
+      Lex::TokenKind::CloseCurlyBrace, StateKind::PatternListElementAsStruct,
+      StateKind::PatternListFinishAsStruct,
+      StateKind::PatternListFinishAsStruct);
 }
 
 auto HandlePatternListAsExplicit(Context& context) -> void {
@@ -146,6 +372,11 @@ auto HandlePatternListFinishAsParen(Context& context) -> void {
 auto HandlePatternListFinishAsTuple(Context& context) -> void {
   HandlePatternListFinish(context, NodeKind::TuplePattern,
                           Lex::TokenKind::CloseParen);
+}
+
+auto HandlePatternListFinishAsStruct(Context& context) -> void {
+  HandlePatternListFinish(context, NodeKind::StructPattern,
+                          Lex::TokenKind::CloseCurlyBrace);
 }
 
 auto HandlePatternListFinishAsExplicit(Context& context) -> void {

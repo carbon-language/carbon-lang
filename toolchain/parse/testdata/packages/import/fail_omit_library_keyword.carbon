@@ -8,17 +8,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_omit_library_keyword.carbon
 
-// CHECK:STDERR: fail_omit_library_keyword.carbon:[[@LINE+4]]:17: error: missing `library` keyword [MissingLibraryKeyword]
-// CHECK:STDERR: import Geometry "Shapes";
-// CHECK:STDERR:                 ^~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_omit_library_keyword.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ import Geometry "Shapes";
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: missing `library` keyword [MissingLibraryKeyword]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Geometry "Shapes";
 
 // CHECK:STDOUT: - filename: fail_omit_library_keyword.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Geometry'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Geometry'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

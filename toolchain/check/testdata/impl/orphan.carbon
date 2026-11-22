@@ -58,9 +58,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_imported_class.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedC as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_imported_class.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedC as ImportedY {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedC as ImportedY {}
 
@@ -69,9 +73,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_imported_class_for_self_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedD(ImportedC) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_imported_class_for_self_specific.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedD(ImportedC) as ImportedY {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedD(ImportedC) as ImportedY {}
 
@@ -80,9 +88,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_imported_class_for_interface_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedC as ImportedZ(ImportedC) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_imported_class_for_interface_specific.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedC as ImportedZ(ImportedC) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedC as ImportedZ(ImportedC) {}
 
@@ -151,9 +163,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_generic_class_from_import.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedAnyParam(ImportedD) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_class_from_import.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedAnyParam(ImportedD) as ImportedY {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedAnyParam(ImportedD) as ImportedY {}
 
@@ -171,9 +187,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_generic_interface_from_import.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedAnyParam(ImportedZ) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_interface_from_import.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedAnyParam(ImportedZ) as ImportedY {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedAnyParam(ImportedZ) as ImportedY {}
 
@@ -191,9 +211,13 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-// CHECK:STDERR: fail_generic_named_constraint_from_import.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedAnyParam(ImportedN) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_generic_named_constraint_from_import.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl ImportedAnyParam(ImportedN) as ImportedY {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: orphan `impl` found; something in the self-type or constraint must
+// CHECK:STDERR:        ·    ┃        be defined in the same file
+// CHECK:STDERR:        ·    ┃        [ImplIsOrphan]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl ImportedAnyParam(ImportedN) as ImportedY {}
 
@@ -254,9 +278,11 @@ interface Z {}
 // Neither {} nor Z are defined within or by the scope of `F`.
 fn F(unused generic T: type) {
   // TODO: The error should be about being an orphan, not an unused binding.
-  // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
-  // CHECK:STDERR:   impl {} as Z {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   impl {} as Z {}
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: `impl` with unused generic binding [ImplUnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl {} as Z {}
 }
@@ -365,10 +391,18 @@ library "[[@TEST_NAME]]";
 
 import library "use_extern_class";
 
-// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE+4]]:1: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: extern class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE-5]]:1: in import [InImport]
+// CHECK:STDERR:        ╭─┤ fail_todo_extern_class.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern class C;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_use_extern_class.carbon
+// CHECK:STDERR:        │ extern library "extern_class" class C;
+// CHECK:STDERR:        ·                                     ┬
+// CHECK:STDERR:        ·                                     ╰──┤ previously declared here
+// CHECK:STDERR:        ·                                        │ [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern class C;
 
 // --- fail_use_extern_class.carbon
@@ -377,13 +411,11 @@ library "[[@TEST_NAME]]";
 import library "imports";
 
 // A non-owning decl of C.
-// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+8]]:1: note: previously declared here [RedeclPrevDecl]
-// CHECK:STDERR: extern library "extern_class" class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+4]]:1: error: semantics TODO: `extern library` [SemanticsTodo]
-// CHECK:STDERR: extern library "extern_class" class C;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_use_extern_class.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ extern library "extern_class" class C;
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: semantics TODO: `extern library` [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_class" class C;
 

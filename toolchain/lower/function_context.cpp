@@ -7,6 +7,7 @@
 #include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
@@ -26,7 +27,7 @@ FunctionContext::FunctionContext(
       specific_file_context_(&specific_file_context),
       specific_sem_ir_function_id_(specific_sem_ir_function_id),
       specific_id_(specific_id),
-      builder_(file_context.llvm_context(), llvm::ConstantFolder(),
+      builder_(file_context.llvm_module(), llvm::ConstantFolder(),
                Inserter(file_context.inst_namer())),
       di_subprogram_(di_subprogram),
       vlog_stream_(vlog_stream),
@@ -68,14 +69,14 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
     SemIR::DiagnosticLocConverter converter(
         &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
-                                       /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+                                       Parse::LocExtent::Subtree);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     // TODO: Format SemIR for the instruction we were lowering?
     output << "Lowering "
            << sem_ir().insts().Get(inst_id_for_stack_trace).kind().ir_name()
            << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
@@ -119,7 +120,7 @@ static auto LowerInstHelper(FunctionContext& context, SemIR::InstId inst_id,
 // in `requires`-style overloads.
 auto FunctionContext::LowerInst(SemIR::InstId inst_id) -> void {
   // Skip over constants. `FileContext::GetConstant` lowers them as needed.
-  if (sem_ir().constant_values().Get(inst_id).is_constant()) {
+  if (IsConstant(inst_id)) {
     return;
   }
 
@@ -168,9 +169,18 @@ auto FunctionContext::GetBlockArg(SemIR::InstBlockId block_id, TypeInFile type)
   return phi;
 }
 
-auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
-  // All builtins are types, with the same empty lowered value.
-  if (SemIR::IsSingletonInstId(inst_id)) {
+auto FunctionContext::IsConstant(SemIR::InstId inst_id) -> bool {
+  return GetConstantValueInSpecific(specific_sem_ir(), specific_id_, sem_ir(),
+                                    inst_id)
+      .second.is_constant();
+}
+
+auto FunctionContext::GetValue(SemIR::InstId inst_id, bool require_value)
+    -> llvm::Value* {
+  // Singletons are types, as is the builtin TypeType, with the same empty
+  // lowered value.
+  if (SemIR::IsSingletonInstId(inst_id) ||
+      inst_id == SemIR::TypeType::TypeInstId) {
     return GetTypeAsValue();
   }
 
@@ -185,9 +195,17 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
   auto [const_ir, const_id] = GetConstantValueInSpecific(
       specific_sem_ir(), specific_id_, sem_ir(), inst_id);
   CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
-  CARBON_CHECK(const_id.is_concrete(),
-               "Missing value: {0} {1} in {2} has non-concrete value {3}",
-               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+  if (require_value) {
+    CARBON_CHECK(const_id.is_concrete(),
+                 "Missing value: {0} {1} in {2} has non-concrete value {3}",
+                 inst_id, sem_ir().insts().Get(inst_id), specific_id_,
+                 const_id);
+  }
+
+  if (!const_id.is_concrete()) {
+    return nullptr;
+  }
+
   // We can only pass on the InstId if it refers to the file in which the
   // constant value was provided.
   auto* global = GetFileContext(const_ir).GetConstant(
@@ -275,7 +293,7 @@ auto FunctionContext::InitializeStorage(TypeInFile type, SemIR::InstId dest_id,
     case SemIR::InitRepr::None:
       break;
     case SemIR::InitRepr::InPlace:
-      if (sem_ir().constant_values().Get(source_id).is_constant()) {
+      if (IsConstant(source_id)) {
         // When initializing from a constant, emission of the source doesn't
         // initialize the destination. Copy the constant value instead.
         // TODO: If the type is small, emit a store rather than a memcpy.
@@ -392,16 +410,21 @@ auto FunctionContext::CopyValue(TypeInFile type, SemIR::InstId source_id,
   }
 }
 
-auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
-                                 SemIR::InstId dest_id) -> void {
+auto FunctionContext::CopyObject(TypeInFile type, llvm::Value* source,
+                                 llvm::Value* dest) -> void {
   const auto& layout = llvm_module().getDataLayout();
   auto* llvm_type = GetType(type);
   auto align = GetAlignment(type);
 
   // TODO: Attach !tbaa.struct metadata indicating which portions of the
   // type we actually need to copy and which are padding.
-  builder().CreateMemCpy(GetValue(dest_id), align, GetValue(source_id), align,
+  builder().CreateMemCpy(dest, align, source, align,
                          layout.getTypeAllocSize(llvm_type));
+}
+
+auto FunctionContext::CopyObject(TypeInFile type, SemIR::InstId source_id,
+                                 SemIR::InstId dest_id) -> void {
+  CopyObject(type, GetValue(source_id), GetValue(dest_id));
 }
 
 auto FunctionContext::Inserter::InsertHelper(
@@ -463,6 +486,21 @@ auto FunctionContext::AddTypeToCurrentFingerprint(llvm::Type* type) -> void {
   RawStringOstream os;
   type->print(os);
   os << "\n";
+  current_fingerprint_.common_fingerprint.update(os.TakeStr());
+}
+
+auto FunctionContext::AddInstToCurrentFingerprint(SemIR::InstId inst_id)
+    -> void {
+  if (!function_fingerprint_) {
+    return;
+  }
+
+  // TODO: Add some support for fingerprinting spliced instructions so that at
+  // least in easy cases we can deduplicate templates.
+
+  // TODO: Replace indexes with info that is translation unit independent.
+  RawStringOstream os;
+  os << "inst_id" << inst_id.index << "\n";
   current_fingerprint_.common_fingerprint.update(os.TakeStr());
 }
 

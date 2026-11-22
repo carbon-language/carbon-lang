@@ -18,12 +18,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract1 {}
 
 class Contains {
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE+7]]:10: error: binding pattern has abstract type `{.m1: Abstract1}` in `var` pattern [AbstractTypeInVarPattern]
-  // CHECK:STDERR:   var a: {.m1: Abstract1};
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_abstract_field.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-  // CHECK:STDERR: abstract class Abstract1 {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_abstract_field.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        │ abstract class Abstract1 {}
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var a: {.m1: Abstract1};
+  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: binding pattern has abstract type `{.m1: Abstract1}` in
+  // CHECK:STDERR:        ·             ┃        `var` pattern
+  // CHECK:STDERR:        ·             ┃        [AbstractTypeInVarPattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var a: {.m1: Abstract1};
 }
@@ -33,12 +38,17 @@ library "[[@TEST_NAME]]";
 
 abstract class Abstract2 {}
 
-// CHECK:STDERR: fail_abstract_var.carbon:[[@LINE+7]]:8: error: binding pattern has abstract type `{.m2: Abstract2}` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: var v: {.m2: Abstract2};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_var.carbon:[[@LINE-5]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract2 {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_abstract_var.carbon:[[@LINE+12]]:8
+// CHECK:STDERR:        │ abstract class Abstract2 {}
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var v: {.m2: Abstract2};
+// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has abstract type `{.m2: Abstract2}` in `var`
+// CHECK:STDERR:        ·           ┃        pattern
+// CHECK:STDERR:        ·           ┃        [AbstractTypeInVarPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v: {.m2: Abstract2};
 
@@ -58,12 +68,17 @@ library "[[@TEST_NAME]]";
 abstract class Abstract4 {}
 abstract class Abstract5 {}
 
-// CHECK:STDERR: fail_abstract_twice.carbon:[[@LINE+7]]:9: error: binding pattern has abstract type `{.m4: Abstract4, .m5: Abstract5}` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: var v2: {.m4: Abstract4, .m5: Abstract5};
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_twice.carbon:[[@LINE-6]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract4 {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_abstract_twice.carbon:[[@LINE+12]]:9
+// CHECK:STDERR:        │ abstract class Abstract4 {}
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var v2: {.m4: Abstract4, .m5: Abstract5};
+// CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: binding pattern has abstract type
+// CHECK:STDERR:        ·            ┃        `{.m4: Abstract4, .m5: Abstract5}` in `var` pattern
+// CHECK:STDERR:        ·            ┃        [AbstractTypeInVarPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v2: {.m4: Abstract4, .m5: Abstract5};
 
@@ -72,12 +87,17 @@ library "[[@TEST_NAME]]";
 
 abstract class Abstract6 {}
 
-// CHECK:STDERR: fail_abstract_first.carbon:[[@LINE+7]]:9: error: binding pattern has abstract type `{.m6: Abstract6, .c1: ()}` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: var v3: {.m6: Abstract6, .c1: ()};
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_first.carbon:[[@LINE-5]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract6 {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_abstract_first.carbon:[[@LINE+12]]:9
+// CHECK:STDERR:        │ abstract class Abstract6 {}
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var v3: {.m6: Abstract6, .c1: ()};
+// CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: binding pattern has abstract type
+// CHECK:STDERR:        ·            ┃        `{.m6: Abstract6, .c1: ()}` in `var` pattern
+// CHECK:STDERR:        ·            ┃        [AbstractTypeInVarPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v3: {.m6: Abstract6, .c1: ()};
 
@@ -86,12 +106,17 @@ library "[[@TEST_NAME]]";
 
 abstract class Abstract7 {}
 
-// CHECK:STDERR: fail_abstract_second.carbon:[[@LINE+7]]:9: error: binding pattern has abstract type `{.c2: (), .m7: Abstract7}` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: var v4: {.c2: (), .m7: Abstract7};
-// CHECK:STDERR:         ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_abstract_second.carbon:[[@LINE-5]]:1: note: uses class that was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract7 {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_abstract_second.carbon:[[@LINE+12]]:9
+// CHECK:STDERR:        │ abstract class Abstract7 {}
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var v4: {.c2: (), .m7: Abstract7};
+// CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: binding pattern has abstract type
+// CHECK:STDERR:        ·            ┃        `{.c2: (), .m7: Abstract7}` in `var` pattern
+// CHECK:STDERR:        ·            ┃        [AbstractTypeInVarPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v4: {.c2: (), .m7: Abstract7};
 
@@ -105,23 +130,30 @@ library "[[@TEST_NAME]]";
 
 import library "lib";
 
-// CHECK:STDERR: fail_import.carbon:[[@LINE+8]]:9: error: binding pattern has abstract type `{.m: Abstract}` in `var` pattern [AbstractTypeInVarPattern]
-// CHECK:STDERR: var v5: {.m: Abstract};
-// CHECK:STDERR:         ^~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: lib.carbon:3:1: note: uses class that was declared abstract here [ClassAbstractHere]
-// CHECK:STDERR: abstract class Abstract {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+13]]:9
+// CHECK:STDERR: ->     │ var v5: {.m: Abstract};
+// CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: binding pattern has abstract type `{.m: Abstract}` in `var`
+// CHECK:STDERR:        ·            ┃        pattern
+// CHECK:STDERR:        ·            ┃        [AbstractTypeInVarPattern]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ lib.carbon
+// CHECK:STDERR:        │ abstract class Abstract {}
+// CHECK:STDERR:        · ────────────┬────────────
+// CHECK:STDERR:        ·             ╰──┤ uses class that was declared abstract here [ClassAbstractHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v5: {.m: Abstract};
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract1: type = class_type @Abstract1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
+// CHECK:STDOUT:   %struct_type.m1.868: type = struct_type {.m1: %Abstract1} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -142,19 +174,23 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: <error> = field_decl a, element0, %struct_type.m1 in [concrete] {
+// CHECK:STDOUT:     %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
+// CHECK:STDOUT:     %struct_type.m1: type = struct_type {.m1: %Abstract1} [concrete = constants.%struct_type.m1.868]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract1 = <poisoned>
-// CHECK:STDOUT:   .a = %.loc13
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract2: type = class_type @Abstract2 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -168,7 +204,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract2.decl: type = class_decl @Abstract2 [concrete = constants.%Abstract2] {} {}
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12: type = splice_block %struct_type.m2 [concrete = constants.%struct_type.m2.bb3] {
+// CHECK:STDOUT:   %.loc17: type = splice_block %struct_type.m2 [concrete = constants.%struct_type.m2.bb3] {
 // CHECK:STDOUT:     %Abstract2.ref: type = name_ref Abstract2, %Abstract2.decl [concrete = constants.%Abstract2]
 // CHECK:STDOUT:     %struct_type.m2: type = struct_type {.m2: %Abstract2} [concrete = constants.%struct_type.m2.bb3]
 // CHECK:STDOUT:   }
@@ -193,15 +229,16 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.457: type = pattern_type %Abstract3 [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.457 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.m3.937: type = struct_type {.m3: %Abstract3} [concrete]
@@ -217,7 +254,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.457 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -250,9 +287,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_twice.carbon
+// CHECK:STDOUT: --- fail_abstract_twice.carbon = $fail_abstract_twice
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract4: type = class_type @Abstract4 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -269,7 +307,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract4.decl: type = class_decl @Abstract4 [concrete = constants.%Abstract4] {} {}
 // CHECK:STDOUT:   %Abstract5.decl: type = class_decl @Abstract5 [concrete = constants.%Abstract5] {} {}
 // CHECK:STDOUT:   %v2.var: ref <error> = var_storage %v2.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m4.m5 [concrete = constants.%struct_type.m4.m5.5e1] {
+// CHECK:STDOUT:   %.loc18: type = splice_block %struct_type.m4.m5 [concrete = constants.%struct_type.m4.m5.5e1] {
 // CHECK:STDOUT:     %Abstract4.ref: type = name_ref Abstract4, %Abstract4.decl [concrete = constants.%Abstract4]
 // CHECK:STDOUT:     %Abstract5.ref: type = name_ref Abstract5, %Abstract5.decl [concrete = constants.%Abstract5]
 // CHECK:STDOUT:     %struct_type.m4.m5: type = struct_type {.m4: %Abstract4, .m5: %Abstract5} [concrete = constants.%struct_type.m4.m5.5e1]
@@ -303,9 +341,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_first.carbon
+// CHECK:STDOUT: --- fail_abstract_first.carbon = $fail_abstract_first
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract6: type = class_type @Abstract6 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -321,10 +360,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract6.decl: type = class_decl @Abstract6 [concrete = constants.%Abstract6] {} {}
 // CHECK:STDOUT:   %v3.var: ref <error> = var_storage %v3.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.a63] {
+// CHECK:STDOUT:   %.loc17_33: type = splice_block %struct_type.m6.c1 [concrete = constants.%struct_type.m6.c1.a63] {
 // CHECK:STDOUT:     %Abstract6.ref: type = name_ref Abstract6, %Abstract6.decl [concrete = constants.%Abstract6]
-// CHECK:STDOUT:     %.loc12_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_32.2: type = converted %.loc12_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %.loc17_32.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc17_32.2: type = converted %.loc17_32.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %struct_type.m6.c1: type = struct_type {.m6: %Abstract6, .c1: %empty_tuple.type} [concrete = constants.%struct_type.m6.c1.a63]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v3: <error> = wrapper_binding v3, <error> [concrete = <error>]
@@ -348,9 +387,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_second.carbon
+// CHECK:STDOUT: --- fail_abstract_second.carbon = $fail_abstract_second
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract7: type = class_type @Abstract7 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -366,9 +406,9 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Abstract7.decl: type = class_decl @Abstract7 [concrete = constants.%Abstract7] {} {}
 // CHECK:STDOUT:   %v4.var: ref <error> = var_storage %v4.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc12_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.518] {
-// CHECK:STDOUT:     %.loc12_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc12_16.2: type = converted %.loc12_16.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc17_33: type = splice_block %struct_type.c2.m7 [concrete = constants.%struct_type.c2.m7.518] {
+// CHECK:STDOUT:     %.loc17_16.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc17_16.2: type = converted %.loc17_16.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %Abstract7.ref: type = name_ref Abstract7, %Abstract7.decl [concrete = constants.%Abstract7]
 // CHECK:STDOUT:     %struct_type.c2.m7: type = struct_type {.c2: %empty_tuple.type, .m7: %Abstract7} [concrete = constants.%struct_type.c2.m7.518]
 // CHECK:STDOUT:   }
@@ -393,9 +433,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -416,9 +457,10 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -438,7 +480,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc13: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.b92] {
+// CHECK:STDOUT:   %.loc18: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.b92] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %struct_type.m: type = struct_type {.m: %Abstract} [concrete = constants.%struct_type.m.b92]
 // CHECK:STDOUT:   }

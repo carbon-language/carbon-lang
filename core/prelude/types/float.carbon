@@ -49,22 +49,17 @@ final impl forall [From: IntLiteral, To: IntLiteral]
 private interface AnyFloat {
   let Width: IntLiteral;
   fn AsFloat(self) -> Float(Width);
-  fn Make(src: Float(Width)) -> Self;
 }
 
 impl forall [N: IntLiteral] Float(N) as AnyFloat where .Width = N {
   fn AsFloat(self) -> Self { return self; }
-  fn Make(src: Self) -> Self { return src; }
 }
 
-// Use `Float(?) as ImplicitAs(?)` to avoid a collision with the
-// `? as ImplicitAs(Float(?))` type structure used by int -> float conversion.
-// TODO: Use `match_first` to resolve this instead once it is available.
-impl forall [From: IntLiteral, To: AnyFloat where Float(From) impls FloatFitsIn(.Self)]
-    Float(From) as ImplicitAs(To) {
-  fn Convert(self) -> To {
-    fn Impl(src: Float(From)) -> Float(To.Width) = "float.convert";
-    return To.Make(Impl(self));
+impl forall [To: IntLiteral, From: AnyFloat & FloatFitsIn(Float(To))]
+    From as ImplicitAs(Float(To)) {
+  fn Convert(self) -> Float(To) {
+    fn Impl(src: Float(From.Width)) -> Float(To) = "float.convert";
+    return Impl(self.AsFloat());
   }
 }
 
@@ -109,9 +104,8 @@ impl forall [To: IntLiteral]
   fn Convert(self) -> Float(To) = "int.convert_float";
 }
 
-// AnyInt, AnyUInt, and IntImplicitAsFloat exist to work around the inability to
-// apply constraints to an impl that is only parameterized by integers, and the
-// lack of support for `match_first`.
+// AnyInt and AnyUInt exist to work around the inability to apply constraints
+// to an impl that is only parameterized by integers.
 // TODO: Remove these once possible.
 private interface AnyInt {
   let Width: IntLiteral;
@@ -131,12 +125,8 @@ impl forall [N: IntLiteral] UInt(N) as AnyUInt where .Width = N {
   fn AsUInt(self) -> Self { return self; }
 }
 
-private interface IntImplicitAsFloat(To: IntLiteral) {
-  fn Convert(self) -> Float(To);
-}
-
-final impl forall [To: IntLiteral, From: AnyInt & IntFitsIn(Float(To))]
-    From as IntImplicitAsFloat(To) {
+impl forall [To: IntLiteral, From: AnyInt & IntFitsIn(Float(To))]
+    From as ImplicitAs(Float(To)) {
   fn Convert(self) -> Float(To) {
     fn Impl(src: Int(From.Width)) -> Float(To) = "int.convert_float";
     return Impl(self.AsInt());
@@ -144,17 +134,10 @@ final impl forall [To: IntLiteral, From: AnyInt & IntFitsIn(Float(To))]
 }
 
 impl forall [To: IntLiteral, From: AnyUInt & IntFitsIn(Float(To))]
-    From as IntImplicitAsFloat(To) {
+    From as ImplicitAs(Float(To)) {
   fn Convert(self) -> Float(To) {
     fn Impl(src: UInt(From.Width)) -> Float(To) = "int.convert_float";
     return Impl(self.AsUInt());
-  }
-}
-
-impl forall [To: IntLiteral, From: IntImplicitAsFloat(To)]
-    From as ImplicitAs(Float(To)) {
-  fn Convert(self) -> Float(To) {
-    return self.Convert();
   }
 }
 
@@ -236,4 +219,16 @@ final impl forall [N: IntLiteral]
 final impl forall [N: IntLiteral]
     Float(N) as SubAssignWith(Self) {
   fn Op(ref self, other: Self) = "float.sub_assign";
+}
+
+// Ordering of conversions to float type. While these all appear to overlap
+// they really don't since the sets of things that match AnyFloat, AnyInt or
+// AnyUInt are all disjoint.
+match_first {
+impl forall [To: IntLiteral, From: AnyFloat & FloatFitsIn(Float(To))]
+    From as ImplicitAs(Float(To));
+impl forall [To: IntLiteral, From: AnyInt & IntFitsIn(Float(To))]
+    From as ImplicitAs(Float(To));
+impl forall [To: IntLiteral, From: AnyUInt & IntFitsIn(Float(To))]
+    From as ImplicitAs(Float(To));
 }

@@ -155,9 +155,7 @@ static auto AddCleanups(Context& context, ScopeStack::CleanupScopeDepth depth)
     // TODO: This does the `Destroy` lookup and call at every cleanup block.
     // Control flow can lead to the same variable being destroyed by multiple
     // cleanup blocks, so we'll want to avoid this in the future.
-    BuildUnaryOperator(context,
-                       context.insts().GetLocIdForDesugaring(destroy_id),
-                       {.interface_name = CoreIdentifier::Destroy}, destroy_id);
+    BuildSelfDestructCall(context, destroy_id);
   }
 }
 
@@ -206,9 +204,10 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
 }
 
 auto AddReturnInstWithCleanups(Context& context,
-                               SemIR::LocIdAndInst loc_id_and_inst) -> void {
+                               SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
   AddCleanups(context, context.scope_stack().function_cleanup_scope_depth());
-  AddInst(context, loc_id_and_inst);
+  return AddInst(context, loc_id_and_inst);
 }
 
 }  // namespace Carbon::Check

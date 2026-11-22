@@ -57,9 +57,12 @@ import Cpp library "abstract.h";
 
 class C {
   extend base: Cpp.A;
-  // CHECK:STDERR: fail_impl_mismatch_member.carbon:[[@LINE+4]]:3: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR:   override fn invalid(unused ref self) {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_impl_mismatch_member.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   override fn invalid(unused ref self) {}
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                       ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn invalid(unused ref self) {}
 }
@@ -78,9 +81,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "abstract_final.h";
 
 class C {
-  // CHECK:STDERR: fail_derive_from_abstract_final.carbon:[[@LINE+4]]:16: error: deriving from final type `AbstractFinal`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR:   extend base: Cpp.AbstractFinal;
-  // CHECK:STDERR:                ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_derive_from_abstract_final.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR: ->     │   extend base: Cpp.AbstractFinal;
+  // CHECK:STDERR:        ·                ┳━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: deriving from final type `AbstractFinal`; base type
+  // CHECK:STDERR:        ·                   ┃        must be an `abstract` or `base` class
+  // CHECK:STDERR:        ·                   ┃        [BaseIsFinal]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: Cpp.AbstractFinal;
 }
@@ -101,9 +108,10 @@ fn F() -> Cpp.AbstractFinal {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- use_abstract_final.carbon
+// CHECK:STDOUT: --- use_abstract_final.carbon = $use_abstract_final
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %AbstractFinal: type = class_type @AbstractFinal [concrete]
 // CHECK:STDOUT:   %.dbd: Core.Form = init_form %AbstractFinal [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %AbstractFinal [concrete]

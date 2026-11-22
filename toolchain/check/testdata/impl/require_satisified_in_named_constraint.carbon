@@ -25,9 +25,12 @@ constraint N {
 impl () as N;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `()` implements `Z` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_require_for_concrete_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as N {}
+// CHECK:STDERR:        · ━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·   ┗━━┫ error: constraint `N` being implemented requires that `()` implements `Z`
+// CHECK:STDERR:        ·      ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as N {}
 
@@ -46,9 +49,12 @@ constraint N {
 impl forall [T: type] T as N;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `T` implements `Z` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_missing_require_for_symbolic_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as N {}
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: constraint `N` being implemented requires that `T` implements `Z`
+// CHECK:STDERR:        ·       ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as N {}
 
@@ -134,3 +140,94 @@ impl () as Z(B);
 impl () as N(A) {}
 
 impl () as Z(B) {}
+
+// --- require_non_extended_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z { let Z1: type; }
+
+constraint N {
+  extend require impls Y;
+  require impls Z where .Z1 = ();
+}
+
+impl () as N;
+
+// Match the requirement.
+impl () as Z where .Z1 = ();
+
+impl () as N {}
+
+impl () as Z where .Z1 = () {}
+
+// --- fail_require_non_extended_rewrite_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z { let Z1: type; }
+
+constraint N {
+  extend require impls Y;
+  require impls Z where .Z1 = ();
+}
+
+impl () as N;
+
+// Wrong type for the requirement.
+impl () as Z where .Z1 = {};
+
+// CHECK:STDERR:        ╭─┤ fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ impl () as N {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `N` being implemented requires that `().(Z.Z1)` equals
+// CHECK:STDERR:        ·    ┃        `()`; found `{}` and `()`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotEquivalent]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╭─┤ fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE-10]]:1
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = {};
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as N {}
+
+impl () as Z where .Z1 = () {}
+
+// --- require_non_extended_rewrite_same_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+
+constraint N {
+  // Extend Z without a rewrite.
+  extend require impls Z;
+  // But require `.Z1` is () anyway.
+  require impls Z where .Z1 = ();
+}
+
+impl () as N where .Z1 = () {}
+
+// --- fail_require_non_extended_rewrite_same_interface_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+
+constraint N {
+  // Extend Z without a rewrite.
+  extend require impls Z;
+  // But require .Z1 is () anyway.
+  require impls Z where .Z1 = ();
+}
+
+// Wrong type for `.Z1`.
+// CHECK:STDERR:        ╭─┤ fail_require_non_extended_rewrite_same_interface_wrong_type.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl () as N where .Z1 = {} {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `N where .(Z.Z1) = {}` being implemented requires that
+// CHECK:STDERR:        ·    ┃        `().(Z.Z1)` equals `()`; found `{}` and `()`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotEquivalent]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as N where .Z1 = {} {}

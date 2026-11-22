@@ -65,7 +65,11 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
       continue;
     }
 
-    // TODO: Look through struct patterns.
+    if (auto struct_patt = inst.TryAs<StructPattern>()) {
+      auto block = sem_ir.inst_blocks().Get(struct_patt->elements_id);
+      work_list.append(block.rbegin(), block.rend());
+      continue;
+    }
 
     if (auto ref_pattern = inst.TryAs<RefParamPattern>()) {
       // TODO: This introduces a name, but we don't model it as a binding.

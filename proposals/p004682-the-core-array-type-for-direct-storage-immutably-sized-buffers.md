@@ -189,10 +189,11 @@ From this, we derive that we want:
     -   We should try to avoid special syntax.
 -   Everything else should be written as idiomatic types with descriptive names.
 
-[^1]:
-    "[chandlerc] Prioritize: slices first, then [resizable storage], then compile-time
-    sized storage, then everything else is vastly less common. Between those three,
-    the difference in frequency between the first two is the biggest." from [open discussion on 2024-12-05](https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0)
+[^1]: "[chandlerc] Prioritize: slices first, then [resizable storage], then
+    compile-time sized storage, then everything else is vastly less common.
+    Between those three, the difference in frequency between the first two is
+    the biggest." from
+    [open discussion on 2024-12-05](https://docs.google.com/document/d/1Iut5f2TQBrtBNIduF4vJYOKfw7MbS8xH_J01_Q4e6Rk/edit?resourcekey=0-mc_vh5UzrzXfU4kO-3tOjA&tab=t.0)
 
 [^2]:
     Slices are included with fundamental types for simplicity, since they will

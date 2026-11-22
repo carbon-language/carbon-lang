@@ -184,7 +184,9 @@ class DeclNameStack {
   // Pushes processing of a new declaration name, which will be used
   // contextually, and prepares to enter scopes for that name. To pop this
   // state, `FinishName` and `PopScope` must be called, in that order.
-  auto PushScopeAndStartName() -> void;
+  auto PushScopeAndStartName(ScopeStack::NonConstantAccess non_constant_access =
+                                 ScopeStack::NonConstantAccess::Disallowed)
+      -> void;
 
   // Creates and returns a name context corresponding to declaring an
   // unqualified name in the current context. This is suitable for adding to
@@ -278,6 +280,9 @@ class DeclNameStack {
   auto ResolveAsScope(const NameContext& name_context,
                       const NameComponent& name) const
       -> std::pair<SemIR::NameScopeId, SemIR::GenericId>;
+
+  // Update `Context.access_context` to the current NameContext's parent scope.
+  auto UpdateAccessContext() const -> void;
 
   // The linked context.
   Context* context_;

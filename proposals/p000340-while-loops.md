@@ -53,17 +53,17 @@ similar in many languages, even if details may change.
 
     ```python
     while x:
-      DoSomething()
+        DoSomething()
 
     while True:
-      DoSomethingElse()
-      if not y:
-        break
+        DoSomethingElse()
+        if not y:
+            break
 
     while z:
-      print("z is true")
+        print("z is true")
     else:
-      print("z was never true")
+        print("z was never true")
     ```
 
 -   Swift: Swift uses `repeat` instead of `do`.

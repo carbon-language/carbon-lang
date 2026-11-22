@@ -9,76 +9,87 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/class/fail_base.carbon
 
 class A {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:7: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   base;
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   base;
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base;
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:8: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   base calss X {}
-  // CHECK:STDERR:        ^~~~~
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   base calss X {}
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base calss X {}
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:9: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   base: ;
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   base: ;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   base: ;
 
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+7]]:12
+  // CHECK:STDERR: ->     │   base: { }
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: `base` declarations must end with a `;`
+  // CHECK:STDERR:        ·               ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:3: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   var n: i32;
-  // CHECK:STDERR:   ^~~
-  // CHECK:STDERR:
   var n: i32;
 }
 
 base class Foo {}
 
 class B {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+4]]:15: error: `class` or `:` expected after `base` [ExpectedAfterBase]
-  // CHECK:STDERR:   extend base Foo;
-  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR:        ╭─┤ fail_base.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   extend base Foo;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: `class` or `:` expected after `base`
+  // CHECK:STDERR:        ·                 ┃        [ExpectedAfterBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base Foo;
 }
 
 // CHECK:STDOUT: - filename: fail_base.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: '}', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
-// CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 17},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'BaseColon', text: 'Foo', has_error: yes},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ ├─BaseDecl '}' has_error
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ │ ├─BaseColon ':'
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ │ ├─BaseColon ':'
+// CHECK:STDOUT:   │ │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ ├─StructLiteral '}'
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─BaseModifier 'base'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─BaseColon 'Foo' has_error
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Foo'
+// CHECK:STDOUT:   │ ├─BaseDecl ';' has_error
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

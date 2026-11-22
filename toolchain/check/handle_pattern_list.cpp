@@ -4,11 +4,16 @@
 
 #include "toolchain/check/class.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/struct.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -33,6 +38,16 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
   // `HandlePatternListStart`.
   EndEmptyExprRegionForPattern(context);
   return HandlePatternListStart(context, node_id);
+}
+
+auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
+    -> bool {
+  EndEmptyExprRegionForPattern(context);
+  context.node_stack().Push(node_id);
+  context.struct_type_fields_stack().PushArray();
+  context.param_and_arg_refs_stack().Push();
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
@@ -101,19 +116,19 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::TuplePatternStart>();
 
+  if (InNonStaticFieldDecl(context)) {
+    CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
+                      "tuple pattern in field declaration");
+    context.emitter().Emit(node_id, FieldWithTuplePattern);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+    BeginExprRegionForPattern(context);
+    return true;
+  }
+
   const auto& inst_block = context.inst_blocks().Get(refs_id);
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    if (InNonStaticFieldDecl(context)) {
-      CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
-                        "found tuple pattern in class `var` decl");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             FieldWithTuplePattern);
-
-      return false;
-    }
-
     auto type_id = ExtractScrutineeType(context.sem_ir(),
                                         context.insts().Get(inst).type_id());
     type_inst_ids.push_back(context.types().GetTypeInstId(type_id));
@@ -129,10 +144,160 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
+  if (context.node_stack().PeekIs(Parse::NodeKind::StructPatternStart)) {
+    // End the pending region started by a trailing comma, or the opening
+    // delimiter of an empty list.
+    EndEmptyExprRegionForPattern(context);
+  } else {
+    // End the pending region for the last pattern in the list.
+    EndExprRegionForPattern(context, context.node_stack());
+  }
+
+  if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
+    // Remove the last parameter from the node stack before collecting names.
+    context.param_and_arg_refs_stack().EndNoPop(
+        Parse::NodeKind::StructPatternStart);
+  }
+
+  auto fields = context.struct_type_fields_stack().PeekArray();
+
+  llvm::SmallVector<Parse::NodeId> field_name_nodes =
+      PopStructFieldNameNodes(context, fields.size());
+
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::StructPatternStart);
+
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::StructPatternStart>();
+
+  if (InNonStaticFieldDecl(context)) {
+    CARBON_DIAGNOSTIC(FieldWithStructPattern, Error,
+                      "struct pattern in field declaration");
+    context.emitter().Emit(node_id, FieldWithStructPattern);
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  } else if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                                    StructKind::StructPattern)) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  } else {
+    auto type_id = GetPatternType(
+        context,
+        GetStructType(context,
+                      context.struct_type_fields().AddCanonical(fields)));
+
+    context.node_stack().Push(
+        node_id,
+        AddInst<SemIR::StructPattern>(
+            context, node_id, {.type_id = type_id, .elements_id = refs_id}));
+  }
+
+  context.struct_type_fields_stack().PopArray();
+  BeginExprRegionForPattern(context);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternDesignatedFieldId node_id) -> bool {
+  EndExprRegionForPattern(context, context.node_stack());
+
+  auto pattern_id = context.node_stack().PopPattern();
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+  auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
+
+  // NOTE: This check is required for the case when the struct pattern is found
+  // in a class field, so the node_stack contains FieldDecls instead of
+  // Patterns. See the TODO in the HandleParseNode function for the
+  // StructPatternId.
+  if (context.sem_ir().types().TryGetAs<SemIR::PatternType>(pattern_type_id)) {
+    auto type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id);
+
+    auto type_inst = context.types().GetTypeInstId(type_id);
+
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = type_inst});
+
+    context.node_stack().Push(node_id, pattern_id);
+  } else {
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = SemIR::ErrorInst::TypeInstId});
+    context.node_stack().Push(node_id, pattern_id);
+  }
+
+  // Start a new pending `ExprRegion`, to maintain the invariant that one is
+  // pending at the end of handling for a pattern.
+  BeginExprRegionForPattern(context);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::PatternListUnderscoreFieldId node_id) -> bool {
+  return context.TODO(node_id, "Struct pattern underscore field");
+}
+
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
     -> bool {
   EndExprRegionForPattern(context, context.node_stack());
   context.param_and_arg_refs_stack().ApplyComma();
+  BeginExprRegionForPattern(context);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::DefaultValueUnspecifiedId node_id)
+    -> bool {
+  return context.TODO(node_id, "unspecified default values");
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::DefaultValueExprStartId /*node_id*/) -> bool {
+  // We want to check the default value expression as a normal expression,
+  // and not convert it into a pattern.
+  EndEmptyExprRegionForPattern(context);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::DefaultValuePatternId node_id)
+    -> bool {
+  auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
+
+  // Ensure we are in an explicit parameter list, otherwise issue a diagnostic.
+  auto full_pattern_kind = context.full_pattern_stack().CurrentKind();
+  if (full_pattern_kind != FullPatternStack::Kind::ExplicitParamList) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotInParameterList, Error,
+                      "default values are only supported in parameter lists");
+    context.emitter().Emit(LocIdForDiagnostics(expr_node_id),
+                           PatternDefaultValueNotInParameterList);
+    expr_inst_id = SemIR::ErrorInst::InstId;
+  }
+
+  if (!context.constant_values().Get(expr_inst_id).is_constant()) {
+    CARBON_DIAGNOSTIC(PatternDefaultValueNotConstant, Error,
+                      "default value is not a constant");
+    context.emitter().Emit(
+        LocIdForDiagnostics(context.insts().GetCanonicalLocId(expr_inst_id)),
+        PatternDefaultValueNotConstant);
+    expr_inst_id = SemIR::ErrorInst::InstId;
+  }
+
+  // Next on the node stack should be the pattern for which this default was
+  // specified. We pop that so we can issue the DefaultValuePattern in its
+  // place.
+  auto pattern_inst_id = context.node_stack().PopPattern();
+  auto pattern_type_id = context.insts().Get(pattern_inst_id).type_id();
+  auto scrutinee_type_id =
+      SemIR::ExtractScrutineeType(context.sem_ir(), pattern_type_id);
+  auto converted_inst_id = ConvertToValueOfType(
+      context, SemIR::LocId(expr_inst_id), expr_inst_id, scrutinee_type_id);
+
+  // The default value pattern should have the same type as the subpattern.
+  auto default_value_inst_id =
+      AddInst<SemIR::DefaultValuePattern>(context, node_id,
+                                          {.type_id = pattern_type_id,
+                                           .subpattern_id = pattern_inst_id,
+                                           .value_id = converted_inst_id});
+  context.node_stack().Push(node_id, default_value_inst_id);
+
+  // We turned off expr region for pattern checking while parsing the default
+  // value expression, so turn it back on again for further pattern checking.
   BeginExprRegionForPattern(context);
   return true;
 }

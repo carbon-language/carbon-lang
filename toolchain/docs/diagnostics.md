@@ -15,9 +15,13 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Consumers](#consumers)
     -   [SortingConsumer](#sortingconsumer)
 -   [Producing diagnostics](#producing-diagnostics)
+-   [Attaching labels](#attaching-labels)
+    -   [Diagnosers](#diagnosers)
+    -   [Context scopes](#context-scopes)
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
--   [Diagnostic context](#diagnostic-context)
+-   [Choosing what a label marks](#choosing-what-a-label-marks)
+-   [Locating lexer and parser diagnostics](#locating-lexer-and-parser-diagnostics)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 -   [Alternatives considered](#alternatives-considered)
@@ -28,6 +32,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Overview
 
 The diagnostic code is used by the toolchain to produce output.
+
+This document covers how a diagnostic is produced and worded.
+[Diagnostics rendering](/toolchain/docs/diagnostics_rendering.md) covers what a
+diagnostic is made of and how one is drawn on a terminal.
 
 ## Emitters
 
@@ -42,8 +50,8 @@ When emitting, the resulting formatted message is passed to a `Consumer`.
 `Consumer`s handle output of diagnostic messages after they've been formatted by
 an Emitter. Important consumers are:
 
--   [ConsoleConsumer](/toolchain/diagnostics/consumer.cpp): prints diagnostics
-    to console.
+-   [ConsoleConsumer](/toolchain/diagnostics/stream_consumer.cpp): prints
+    diagnostics to console.
 
 -   [ErrorTrackingConsumer](/toolchain/diagnostics/consumer.h): counts the
     number of errors produced, particularly so that it can be determined whether
@@ -126,6 +134,101 @@ CARBON_DIAGNOSTIC_ON_SCOPE(InvalidInScope, Error, "error inside scope");
 emitter.Emit(location, InvalidInScope);
 ```
 
+## Attaching labels
+
+A label is a range of source attached to a diagnostic, with optional text saying
+what that range has to do with the problem. It is declared with
+`CARBON_DIAGNOSTIC_LABEL` and attached with `Attach`:
+
+```cpp
+CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
+                  "{0} argument{0:s} passed to function expecting "
+                  "{1} argument{1:s}",
+                  IntAsSelect, IntAsSelect);
+CARBON_DIAGNOSTIC_LABEL(ArgsPassedHere, "{0} argument{0:s} passed here",
+                        IntAsSelect);
+CARBON_DIAGNOSTIC_LABEL(InCallToFunction, "calling function declared here");
+context.emitter()
+    .Build(call_parse_node, CallArgCountMismatch,
+           arg_refs.size(), param_refs.size())
+    .Attach(args_parse_node, ArgsPassedHere, arg_refs.size())
+    .Attach(param_parse_node, InCallToFunction)
+    .Emit();
+```
+
+A label has a format and arguments of its own, validated the way a message's
+are, so it says only what it needs to about the place it marks. It has no level,
+because it belongs to the message it is attached to. A label explains the
+problem; code that is part of the problem is one of the message's ranges.
+
+In the framed form, the message's text is placed under the range at its
+location, or under one of its ranges that contains that location. Word it to
+read correctly there and by itself: the sentence under `Run0(1);` is the same
+one that follows `foo.carbon:4:3-9: error:` in a build log. A label on that
+range that restates the message adds nothing.
+
+The message's location is one range; `ExtraRange` adds another range the
+problem covers, with no text:
+
+```cpp
+emitter.Build(loc, InvalidCode).ExtraRange(operand_loc).Emit();
+```
+
+Text in a diagnostic that isn't read against the code it names is not a label:
+it is the message, or a step of the path the message's location was reached by,
+declared with `CARBON_DIAGNOSTIC_LOCATION_INFO`.
+
+Attach every label at a location that reaches source: one that converts to only
+a filename -- an invalid node, code the compiler generated -- leaves its words
+on a row of their own with nothing to point at. Some diagnostics still do that
+today; the goal is to restructure them until none do, and to give a diagnostic
+genuinely about a file as a whole a start-of-file or end-of-file location with
+a rendering of its own.
+
+### Diagnosers
+
+Some code detects a problem without being able to state it in the reader's
+terms. Type completion finds that a class is incomplete, but not whether the
+class was needed for a binding's type, a base class, or a call. The caller
+states the problem by passing a `Diagnoser`: a callback that builds the
+diagnostic with the caller's own `CARBON_DIAGNOSTIC`. The callee calls it,
+attaches its own labels, and emits the result:
+
+```cpp
+RequireCompleteType(context, base_type_id, node_id, [&] {
+  CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                    "base {0} is an incomplete type", InstIdAsType);
+  return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                 base_type_inst_id);
+});
+```
+
+The kind and the message are the caller's; `class was forward declared here` is
+a label the callee attaches. A callee that accepts a null diagnoser emits
+nothing without one, as `TryToCompleteType` does, or emits a generic diagnostic
+of its own, as `BuildBinaryOperator` does.
+
+### Context scopes
+
+A caller running an operation, such as checking a call or monomorphizing a
+specific, can label every diagnostic emitted while it runs. A `ContextScope`
+attaches that label to each one and leaves the message to the emitting code,
+which is the code that found the problem:
+
+```cpp
+Diagnostics::ContextScope diagnostic_context(
+    &context.emitter(), [&](auto& builder) {
+      CARBON_DIAGNOSTIC_LABEL(ResolvingSpecificHere,
+                              "in monomorphization of {0} here",
+                              SemIR::SpecificId);
+      builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
+    });
+```
+
+Scopes nest, and a diagnostic emitted inside several gets each one's label,
+innermost first. Word the label as one, read together with the code it is
+attached to, rather than as a sentence about the failure.
+
 ## Diagnostic registry
 
 There is a [registry](/toolchain/diagnostics/kind.def) which all diagnostics
@@ -139,6 +242,29 @@ This produces a central enumeration of all diagnostics. The eventual intent is
 to require tests for every diagnostic that can be produced, but that isn't
 currently implemented.
 
+Labels and location info are not registered. Each is declared where it is
+attached and nowhere else, so there is nothing for a registry to make unique
+and no code elsewhere that needs to refer to one. Each still has its own name,
+so `--include-diagnostic-kind` shows which one produced a line and a test can
+match on it as it does on a kind.
+
+What the registry does for a diagnostic is done for those by
+`check_diagnostics.py`, which reads the declarations and the testdata directly.
+In the list below, `label` means either:
+
+-   Every declared label is attached somewhere. The compiler warns about most of
+    these, but not about one declared in a header.
+-   Every label is exercised by a `file_test`, which is what `coverage_test`
+    does for kinds. `UNCOVERED_LABELS` is the exemption list, and an entry that
+    gains a test has to come back out of it.
+-   Every name a test matches on is a kind or a label that exists, so renaming
+    one doesn't leave a test matching nothing.
+
+Being attached does not imply being covered, which is why both are checked. A
+label attached only on a branch no test takes is referenced by the code and
+drawn by nothing, and the kind of the diagnostic it hangs off can be covered
+while the branch never runs.
+
 ## CARBON_DIAGNOSTIC placement
 
 Idiomatically, `CARBON_DIAGNOSTIC` will be adjacent to the `Emit` call. However,
@@ -148,45 +274,168 @@ that multiple `Emit` calls can reference them. When in a function,
 `CARBON_DIAGNOSTIC` should be placed as close as possible to the usage so that
 it's easier to see the associated output.
 
-## Diagnostic context
+## Choosing what a label marks
 
-Diagnostics can provide additional context for errors by attaching notes, which
-have their own location information. A diagnostic with a note looks like:
+A message's location is underlined across the range it covers, so a diagnostic
+with no label still shows the reader something. What it shows is whatever
+location the code emitting it happened to have, which is usually the whole
+construct the diagnostic was raised on -- and the part that is actually wrong is
+often narrower.
 
-```cpp
-CARBON_DIAGNOSTIC(CallArgCountMismatch, Error,
-                  "{0} argument{0:s} passed to function expecting "
-                  "{1} argument{1:s}",
-                  IntAsSelect, IntAsSelect);
-CARBON_DIAGNOSTIC(InCallToFunction, Note,
-                  "calling function declared here");
-context.emitter()
-    .Build(call_parse_node, CallArgCountMismatch,
-           arg_refs.size(), param_refs.size())
-    .Note(param_parse_node, InCallToFunction)
-    .Emit();
-```
+So the question for each diagnostic is not whether it marks anything but whether
+it marks the right thing:
 
-The error and the note are registered as two separate diagnostics, but a single
-overall diagnostic object is built and emitted, so that the error and the note
-can be treated as a single unit.
+-   Where the message's own location is what the reader should look at, leave it
+    alone. An extra range equal to it adds nothing.
 
-Diagnostic context information can also be registered in a scope, so that all
-diagnostics produced in that scope attach a specific note. For example:
+-   Where something narrower is what went wrong, add it as an extra range: the
+    operand rather than the operator, the one argument rather than the call.
 
-```cpp
-DiagnosticAnnotationScope annotate_diagnostics(
-    &context.emitter(), [&](auto& builder) {
-      CARBON_DIAGNOSTIC(
-          InCallToFunctionParam, Note,
-          "initializing parameter {0} of function declared here", int);
-      builder.Note(param_parse_node, InCallToFunctionParam,
-                   diag_param_index + 1);
-    });
-```
+-   Give the label words when they point at where a part of the message became
+    relevant, and leave it wordless otherwise. A message that says two things
+    about two different places should say each of them where it happened:
+    `CallArgCountMismatch` marks the call with `1 argument passed here` and the
+    declaration with the arity it was declared with. Repeating the message that
+    way is worth it, because the reader is being shown where each half of the
+    sentence came from.
 
-This is useful when delegating to another part of Check that may produce many
-different kinds of diagnostic.
+-   A label that only locates a declaration is attached to its name. `previously
+    declared here` on `class Shape {}` is attached to `Shape`; the rest of the
+    line is in view. `LocIdForDiagnostics::DeclaredName` names what a location
+    declares, in that declaration's own file, and falls back to the whole
+    location where nothing is declared: an `impl`, a pattern. A label whose text
+    is about some other part of the declaration is attached to that part: the
+    parameter list for `previously declared with parameter count of 2`, and
+    the modifiers for ``previously declared with `extern library` here``.
+
+-   Where the right range isn't reachable, attach the closest one that is and
+    leave a TODO saying which range it should be and what would make it
+    available. A diagnostic marking its whole call because nothing names its
+    argument list is better than one marking nothing, but the gap is worth
+    recording where the next person will find it.
+
+-   A message that names two types is the clearest case for two labels. An
+    operation whose operands don't match reports the interface it looked up not
+    being implemented, which names both types and points at neither, so each
+    operand is marked with the type it contributed. `BuildBinaryOperator` takes
+    a `MissingImplDiagnostic` for this, and installs it as a `ContextScope`,
+    because the diagnostic is emitted further down where only one operand is
+    still in hand.
+
+    The words belong to the syntax, not to the helper the syntax shares.
+    `a * b` has a left and a right operand, `a[i]` has an object and an index,
+    and `for (x in r)` has only a range, so each names its own labels rather
+    than everything that reaches `BuildBinaryOperator` saying "left" and
+    "right".
+
+    With the operands labeled, the message is located at what remains of the
+    expression. For an infix operator that is the operator itself, which
+    `LocIdForDiagnostics::TokenOnly` names since the parse node is the operator
+    token. For `a[i]` the parse node names the closing bracket, so the message
+    is located at the index, the operand the object failed to accept, and only
+    the object gets a label.
+
+-   Mark the syntax that required an `impl`, and name the interface in the same
+    breath. Which interface a piece of syntax needs is a language rule the
+    reader may not know, and the message reports only that one is missing, so
+    `AttachOperatorSyntax` marks the operator with `` `*` requires an impl of
+    `Core.MulWith` `` and lets the two be read together. That also gives the
+    message somewhere to point that is neither operand.
+
+    A message reporting the same missing `impl` twice for one construct is
+    worse than either half of it. A `for` loop looks up `Iterate` to make its
+    cursor and again to advance it, so the second is diagnosed only when the
+    first succeeded.
+
+-   Say what the developer wrote, not what it desugared to. Impl lookup for
+    `a * b` runs through member access, and reporting that a member of
+    `Core.MulWith` can't be accessed describes code nobody typed. Where a
+    caller passes the syntax down -- `desugared_loc_id` in
+    `PerformCompoundMemberAccess` -- the message drops to the part the syntax
+    can't say: which type failed to implement the interface.
+
+-   Don't narrate the code the label sits under. `` `var` nested within another
+    `var` `` marks the keyword, and a label reading ``the invalid `var`
+    keyword`` repeats both the source and the message while saying nothing
+    about where anything came from. Most parse diagnostics are like this: the
+    message already names the token, so the range marks it and says nothing.
+
+Some ranges cannot be attached at all, and the reason is worth knowing before
+trying. A diagnostic can only mark source that something in hand still names,
+and several layers discard that on the way:
+
+-   **Desugaring drops where each operand was written.** An operator becomes a
+    call whose arguments are conversion insts created at the operator's
+    location, so a diagnostic raised while evaluating that call -- division by
+    zero, integer overflow, a shift out of range -- can name the operation but
+    not the operand. `SemIR::Converted` keeps an `original_id` for tooling, but
+    the argument on this path is not a `Converted`, so following it does not
+    reach the operand. `Convert` works around the same gap for
+    `ConversionFailure` by holding the expression it was given. Closing it
+    properly means the desugaring recording where each operand was written.
+
+-   **Some scopes have no declaration.** `extend impl` and `impl as` outside a
+    class are only ever reached from a namespace -- the file or package -- or
+    from a scope with no instruction, so there is nothing to mark as the scope
+    they ended up in.
+
+Where that is the case, attach nothing and leave a TODO saying which range it
+should be and what would make it available. A label whose location names a file
+but no line draws no anchor and reads as pointing at nothing, which is worse
+than the message alone. `check-toolchain-diagnostics` fails a label no testdata
+reaches, which is how to find one whose location never resolves.
+
+The obvious source being a dead end is not the same as no source existing, and
+it is worth one more look before writing the TODO. Deduction's inputs are
+substituted insts with no source, but the argument each one descended from can
+be carried alongside it. `UsedBeforeInitialization` is handed an `InitTombstone`
+rather than the binding, but the binding is still on `FullPatternStack`. In both
+cases the range is somewhere else on a stack that has not been unwound yet.
+
+Until a diagnostic is migrated its message location supplies the range, which is
+usually the one column an editor would put a cursor on and rarely an extent
+worth looking at.
+
+## Locating lexer and parser diagnostics
+
+A lexer or parser diagnostic is about text the developer is about to edit, so
+its message is located where they would put the cursor to start fixing it:
+
+-   Something missing is located at the point where it would be inserted. A
+    point covers no text: it is a `Diagnostics::Loc` with a `length` of zero. A
+    missing token is inserted just past the token before it, so a missing `;`
+    at the end of a line is located at the end of that line rather than at the
+    first token of the next. An opening bracket is inserted against the token
+    after it when that token is on the same line, so `expected braced code
+    block` in `if (x) return;` is located just before `return`.
+
+-   Something present but wrong is located at the tokens it covers. A word
+    that can't be a name, such as a keyword, in a name's position and followed
+    by a token that can follow the name, is taken as the name: the message
+    covers it and suggests `r#`.
+
+-   Something missing at the start of a construct is located at the token
+    found in its place. The token before the point belongs to another
+    construct, possibly on another line, so an expression statement that starts
+    with `=` is reported at the `=` rather than at the end of the statement
+    before it.
+
+-   Inside a token, the lexer locates the message at the point to fix and adds
+    the range of what is malformed with `ExtraRange`, which the snippet
+    underlines instead. An unterminated string literal is located where its
+    terminator goes and underlines the literal; a `\x` escape without two digits
+    is located at the digit that is missing or wrong and underlines the escape.
+
+In the lexer, a location is a `Lex::SourceLoc`. A `const char*` into the source
+buffer converts to the one character it points at, `SourceLoc::Before` makes a
+point, and `SourceLoc::Range` makes any other range. A range is never made from
+a bare `const char*`, because converting one to `llvm::StringRef` scans for a
+null byte, and a source buffer isn't guaranteed to have one.
+
+In the parser, a location is a `Parse::DiagnosticLoc`. A token converts to one,
+`DiagnosticLoc::Tokens` covers a run of tokens, and `Before` and `After` make
+the points on either side of a token. `Context::PointAfterPreviousToken` and
+`Context::OpeningBracketInsertionPoint` locate most missing tokens.
 
 ## Diagnostic parameter types
 
@@ -279,16 +528,15 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     -   `"redeclaration of X"` describes the situation and implies that
         redeclarations are not permitted.
 
-    -   ``"`self` declared in invalid context; can only be declared in implicit parameter list"``
-        describes the language rule.
+    -   ``"`self` declared in invalid context; can only be declared in implicit
+        parameter list"`` describes the language rule.
 
     -   It's OK for a diagnostic to guess at the developer's intent and provide
         a hint after explaining the situation and the rule, but not as a
-        substitute for that. For example,
-        ``"add `as String` to convert `i32` to `String`"`` is not sufficient as
-        an error message, but
-        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
-        could be acceptable.
+        substitute for that. For example, ``"add `as String` to convert `i32` to
+        `String`"`` is not sufficient as an error message, but ``"cannot
+        implicitly convert `i32` to `String`; add `as String` for explicit
+        conversion"`` could be acceptable.
 
 -   Use "cannot" if needed, but try to use phrasing that doesn't require it.
     Avoid "allowed", "legal", "permitted", "valid", and related wording. For
@@ -312,8 +560,8 @@ Carbon's diagnostic style aims to balance these concerns. Our style is:
     tense ("previously declared here", "Y declared here", with no is/was).
 
 -   TODO: When do we put identifiers or expressions in diagnostics, versus
-    requiring notes pointing at relevant code? Is it only avoided for values, or
-    only allowed for types?
+    requiring labels pointing at relevant code? Is it only avoided for values,
+    or only allowed for types?
 
 -   TODO: Lots more things to decide, give examples.
 

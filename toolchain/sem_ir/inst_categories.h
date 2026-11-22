@@ -205,6 +205,24 @@ struct AnyBranch {
 };
 
 // clang-format off
+#define AnyCompoundLiteral_CARBON_INST_CATEGORY(X, Sep) \
+  X(::Carbon::SemIR::StructLiteral) Sep()               \
+  X(::Carbon::SemIR::TupleLiteral)
+// clang-format on
+
+#define AnyCompoundLiteral_CARBON_KIND_ANY_EXPAND \
+  CARBON_INST_CATEGORY_ANY_EXPAND(AnyCompoundLiteral)
+
+// Common representation for `StructLiteral` and `TupleLiteral`.
+struct AnyCompoundLiteral {
+  using CategoryInfo = CARBON_INST_CATEGORY_INFO(AnyCompoundLiteral);
+
+  InstKind kind;
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
+// clang-format off
 #define AnyFormParamAction_CARBON_INST_CATEGORY(X, Sep) \
   X(::Carbon::SemIR::FormParamPatternAction) Sep() \
   X(::Carbon::SemIR::OutFormParamPatternAction)

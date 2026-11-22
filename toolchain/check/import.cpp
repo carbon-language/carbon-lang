@@ -488,7 +488,7 @@ auto ImportLibrariesFromCurrentPackage(
     Context& context, SemIR::TypeId namespace_type_id,
     llvm::ArrayRef<SemIR::ImportIR> import_irs) -> void {
   for (auto import_ir : import_irs) {
-    auto ir_id = AddImportIR(context, import_ir);
+    auto ir_id = GetOrAddImportIR(context, import_ir);
 
     context
         .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
@@ -554,7 +554,7 @@ auto ImportLibrariesFromOtherPackage(Context& context,
   scope.set_is_closed_import(
       !result.is_duplicate_of_namespace_in_current_package);
   for (auto import_ir : import_irs) {
-    auto ir_id = AddImportIR(context, import_ir);
+    auto ir_id = GetOrAddImportIR(context, import_ir);
     scope.AddImportIRScope({ir_id, SemIR::NameScopeId::Package});
     context
         .import_ir_constant_values()[context.sem_ir().import_irs().GetRawIndex(
@@ -639,11 +639,11 @@ auto ImportNameFromOtherPackage(
   }
 
   // Annotate diagnostics as occurring during this name lookup.
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InNameLookup, Note, "in name lookup for `{0}`",
-                          SemIR::NameId);
-        builder.Note(loc_id, InNameLookup, name_id);
+        CARBON_DIAGNOSTIC_LABEL(InNameLookup, "in name lookup for `{0}`",
+                                SemIR::NameId);
+        builder.Attach(loc_id, InNameLookup, name_id);
       });
 
   // Although we track the result here and look in each IR, we pretty much use

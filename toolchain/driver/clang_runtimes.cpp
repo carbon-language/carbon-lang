@@ -44,6 +44,36 @@
 
 namespace Carbon {
 
+ClangRuntimesBuilderBase::ClangRuntimesBuilderBase(
+    ClangRunner* clang, llvm::ThreadPoolInterface* threads,
+    const Runtimes::Cache::Features& features)
+    : clang_(clang),
+      vlog_stream_(clang_->vlog_stream_),
+      tasks_(*threads),
+      target_triple_(features.target),
+      target_flag_(llvm::formatv("--target={0}", target_triple_.str())),
+      result_(Error("Did not finish building the runtime!")) {
+  if (!features.cpu.empty() || !features.tune_cpu.empty() ||
+      !features.target_features.empty()) {
+    target_args_.push_back("--start-no-unused-arguments");
+    if (!features.cpu.empty()) {
+      target_args_.append({"-Xclang", "-target-cpu", "-Xclang", features.cpu,
+                           "-Xclangas", "-target-cpu", "-Xclangas",
+                           features.cpu});
+    }
+    if (!features.tune_cpu.empty()) {
+      target_args_.append(
+          {"-Xclang", "-tune-cpu", "-Xclang", features.tune_cpu});
+    }
+    for (const std::string& feature : features.target_features) {
+      target_args_.append({"-Xclang", "-target-feature", "-Xclang", feature,
+                           "-Xclangas", "-target-feature", "-Xclangas",
+                           feature});
+    }
+    target_args_.push_back("--end-no-unused-arguments");
+  }
+}
+
 auto ClangRuntimesBuilderBase::ArchiveBuilder::Setup(Latch::Handle latch_handle)
     -> void {
   // `NewArchiveMember` isn't default constructable unfortunately, so we have to
@@ -189,9 +219,12 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   }
 
   // Collect the additional required flags and dynamic flags for this builder.
+  args.push_back("-c");
+  args.push_back(builder_->target_flag_);
+  for (const std::string& target_arg : builder_->target_args_) {
+    args.push_back(target_arg);
+  }
   args.append({
-      "-c",
-      builder_->target_flag_,
       "-o",
       obj_path.native(),
       src_path.native(),
@@ -233,9 +266,9 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
 template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
-    ClangRunner* clang, llvm::ThreadPoolInterface* threads,
-    llvm::Triple target_triple, Runtimes* runtimes)
-    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple)) {
+    ClangRunner* clang, llvm::ThreadPoolInterface* threads, Runtimes* runtimes,
+    const Runtimes::Cache::Features& features)
+    : ClangRuntimesBuilderBase(clang, threads, features) {
   // Ensure we're on a platform where we _can_ build a working runtime.
   if (target_triple_.isOSWindows()) {
     result_ =
@@ -391,9 +424,9 @@ auto ClangResourceDirBuilder::GetDarwinOsSuffix(llvm::Triple target_triple)
 }
 
 ClangResourceDirBuilder::ClangResourceDirBuilder(
-    ClangRunner* clang, llvm::ThreadPoolInterface* threads,
-    llvm::Triple target_triple, Runtimes* runtimes)
-    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple)),
+    ClangRunner* clang, llvm::ThreadPoolInterface* threads, Runtimes* runtimes,
+    const Runtimes::Cache::Features& features)
+    : ClangRuntimesBuilderBase(clang, threads, features),
       crt_begin_result_(Error("Never built CRT begin file!")),
       crt_end_result_(Error("Never built CRT end file!")) {
   // Ensure we're on a platform where we _can_ build a working runtime.
@@ -418,7 +451,7 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   runtimes_builder_ = std::get<Runtimes::Builder>(std::move(build_dir));
   lib_path_ = std::filesystem::path("lib");
   std::filesystem::path builtins_name = "libclang_rt.builtins.a";
-  if (target_triple.isOSDarwin()) {
+  if (target_triple_.isOSDarwin()) {
     // Darwin targets don't use the full triple, and don't include the
     // architecture in the resource directory naming structure.
     //
@@ -554,6 +587,9 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
       "-w",
       target_flag_,
   };
+  for (const std::string& target_arg : target_args_) {
+    copts.push_back(target_arg);
+  }
   llvm::append_range(copts, RuntimesBuildInfo::CrtCopts);
   copts.append({
       "-c",

@@ -11,28 +11,22 @@ namespace Carbon::Diagnostics {
 auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {
   *os << "Diagnostic{";
   PrintTo(diagnostic.level, os);
-  for (const auto& message : diagnostic.messages) {
-    *os << ", {" << message.loc.filename << ":" << message.loc.line_number
-        << ":" << message.loc.column_number << ", \"" << message.Format()
-        << "}";
+  const Loc& loc = diagnostic.message.loc;
+  *os << ", {" << loc.filename << ":" << loc.line_number << ":"
+      << loc.column_number << ", \"" << diagnostic.message.Format() << "\"}";
+  for (const auto& range : diagnostic.message.ranges) {
+    *os << ", {Range " << range.filename << ":" << range.line_number << ":"
+        << range.column_number << "+" << range.length << "}";
   }
-  *os << "\"}";
+  for (const auto& label : diagnostic.labels) {
+    *os << ", {Label " << label.loc.filename << ":" << label.loc.line_number
+        << ":" << label.loc.column_number << ", \"" << label.Format() << "\"}";
+  }
+  *os << "}";
 }
 
 auto PrintTo(Level level, std::ostream* os) -> void {
   switch (level) {
-    case Level::LocationInfo:
-      *os << "LocationInfo";
-      break;
-    case Level::Note:
-      *os << "Note";
-      break;
-    case Level::SoftContext:
-      *os << "SoftContext";
-      break;
-    case Level::Context:
-      *os << "Context";
-      break;
     case Level::Warning:
       *os << "Warning";
       break;

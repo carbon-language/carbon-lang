@@ -14,45 +14,63 @@
 
 interface Undefined;
 
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:4: error: cannot declare a member of undefined interface `Undefined` [QualifiedDeclInUndefinedInterfaceScope]
-// CHECK:STDERR: fn Undefined.F();
-// CHECK:STDERR:    ^~~~~~~~~
-// CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-5]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-// CHECK:STDERR: interface Undefined;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:4
+// CHECK:STDERR:        │ interface Undefined;
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ interface was forward declared here
+// CHECK:STDERR:        ·                  │ [InterfaceForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn Undefined.F();
+// CHECK:STDERR:        ·    ━━━━┳━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot declare a member of undefined interface `Undefined`
+// CHECK:STDERR:        ·           ┃        [QualifiedDeclInUndefinedInterfaceScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Undefined.F();
 
 fn Test() {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:3: error: member access into incomplete facet type `Undefined` [QualifiedExprInIncompleteFacetTypeScope]
-  // CHECK:STDERR:   Undefined.G();
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-15]]:1: note: interface was forward declared here [InterfaceForwardDeclaredHere]
-  // CHECK:STDERR: interface Undefined;
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ interface Undefined;
+  // CHECK:STDERR:        ·           ────┬────
+  // CHECK:STDERR:        ·               ╰──┤ interface was forward declared here
+  // CHECK:STDERR:        ·                  │ [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Undefined.G();
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: member access into incomplete facet type `Undefined`
+  // CHECK:STDERR:        ·           ┃        [QualifiedExprInIncompleteFacetTypeScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Undefined.G();
 }
 
 interface BeingDefined {
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+7]]:13: error: member access into incomplete facet type `BeingDefined` [QualifiedExprInIncompleteFacetTypeScope]
-  // CHECK:STDERR:   fn H() -> BeingDefined.T;
-  // CHECK:STDERR:             ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE-4]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface BeingDefined {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+12]]:13
+  // CHECK:STDERR:        │ interface BeingDefined {
+  // CHECK:STDERR:        · ────────────┬───────────
+  // CHECK:STDERR:        ·             ╰──┤ interface is incomplete within its definition
+  // CHECK:STDERR:        ·                │ [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn H() -> BeingDefined.T;
+  // CHECK:STDERR:        ·             ━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: member access into incomplete facet type `BeingDefined`
+  // CHECK:STDERR:        ·                 ┃        [QualifiedExprInIncompleteFacetTypeScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn H() -> BeingDefined.T;
-  // CHECK:STDERR: fail_lookup_undefined.carbon:[[@LINE+4]]:6: error: name `BeingDefined` not found [NameNotFound]
-  // CHECK:STDERR:   fn BeingDefined.I();
-  // CHECK:STDERR:      ^~~~~~~~~~~~
+  // CHECK:STDERR:        ╭─┤ fail_lookup_undefined.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   fn BeingDefined.I();
+  // CHECK:STDERR:        ·      ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: name `BeingDefined` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn BeingDefined.I();
 }
 
-// CHECK:STDOUT: --- fail_lookup_undefined.carbon
+// CHECK:STDOUT: --- fail_lookup_undefined.carbon = $fail_lookup_undefined
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Undefined.type: type = facet_type <@Undefined> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]

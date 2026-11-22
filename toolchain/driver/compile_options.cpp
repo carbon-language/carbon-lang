@@ -6,6 +6,8 @@
 
 #include <optional>
 
+#include "llvm/MC/TargetRegistry.h"
+#include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/clang_invocation.h"
 
 namespace Carbon {
@@ -237,20 +239,35 @@ Dump the parse tree to stdout when parsed.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_parse_tree); });
-  b.AddFlag(
+
+  b.AddOneOfOption(
       {
-          .name = "preorder-parse-tree",
+          .name = "parse-dump-format",
           .help = R"""(
-When dumping the parse tree, reorder it so that it is in preorder rather than
-postorder.
+The format to use for parse tree dumps. 'pretty' (the default) prints the
+tree in postorder, visualizing the tree structure with box-drawing
+characters. 'yaml-postorder' prints the tree in postorder as unstructured yaml
+(a flat list of nodes), indented to suggest the tree structure. 'yaml-preorder'
+prints the tree as structured yaml (with children nested under parents).
 )""",
       },
-      [&](auto& arg_b) { arg_b.Set(&preorder_parse_tree); });
+      [&](auto& arg_b) {
+        using DumpFormat = Parse::ParseOptions::DumpFormat;
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("pretty", DumpFormat::PrettyPostorder)
+                    .Default(true),
+                arg_b.OneOfValue("yaml-postorder", DumpFormat::YamlPostorder),
+                arg_b.OneOfValue("yaml-preorder", DumpFormat::YamlPreorder),
+            },
+            &parse_dump_format);
+      });
+
   b.AddFlag(
       {
           .name = "dump-raw-sem-ir",
           .help = R"""(
-Dump the raw JSON structure of SemIR to stdout when built.
+Dump the raw YAML structure of SemIR to stdout when built.
 )""",
       },
       [&](auto& arg_b) { arg_b.Set(&dump_raw_sem_ir); });
@@ -359,17 +376,6 @@ Excludes files with the given prefix from dumps.
 )""",
       },
       [&](auto& arg_b) { arg_b.Append(&exclude_dump_file_prefixes); });
-  b.AddFlag(
-      {
-          .name = "output-last-input-only",
-          .help = R"""(
-Only write output for the last input file, ignoring all others.
-
-TODO: This is a temporary workaround and should be removed once separate
-compilation is better implemented.
-)""",
-      },
-      [&](auto& arg_b) { arg_b.Set(&output_last_input_only); });
   b.AddStringOption(
       {
           .name = "sem-ir-crash-dump",
@@ -491,13 +497,19 @@ auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
     -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>> {
   // TODO: Move this into `BuildClangInvocation` when it can accept an
   // optimization level.
-  llvm::SmallVector<llvm::StringRef> all_clang_args = {
-      // Propagate our optimization level to Clang as a default. This can be
-      // overridden by Clang arguments, but doing so will only have an effect
-      // if those arguments affect Clang's IR, not its pass pipeline.
-      CompileOptions::GetClangOptimizationFlag(opt_level),
-  };
-  all_clang_args.append(clang_args);
+  llvm::SmallVector<std::string> codegen_clang_args =
+      codegen_options->GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> all_clang_args;
+  all_clang_args.reserve(1 + clang_args.size() + codegen_clang_args.size());
+  // Propagate our optimization level and codegen options to Clang as defaults.
+  // These can be overridden by Clang arguments, though optimization flags will
+  // only have an effect if those arguments affect Clang's IR, not its pass
+  // pipeline.
+  all_clang_args.push_back(CompileOptions::GetClangOptimizationFlag(opt_level));
+  for (llvm::StringRef arg : codegen_clang_args) {
+    all_clang_args.push_back(arg);
+  }
+  all_clang_args.append(clang_args.begin(), clang_args.end());
   auto clang_invocation = Carbon::BuildClangInvocation(
       *driver_env.consumer, driver_env.fs, *driver_env.installation,
       codegen_options->target, all_clang_args);

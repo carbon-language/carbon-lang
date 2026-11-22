@@ -8,26 +8,31 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/generics/named_constraint/fail_incomplete.carbon
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:12: error: `constraint` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: constraint "Foo"
-// CHECK:STDERR:            ^~~~~
+// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ constraint "Foo"
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: `constraint` introducer should be followed by a name
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 constraint "Foo"
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:1: error: `constraint` introducer should be followed by a name [ExpectedDeclName]
-// CHECK:STDERR: constraint
-// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ constraint
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: `constraint` introducer should be followed by a name
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 constraint
 
 // CHECK:STDOUT: - filename: fail_incomplete.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '"Foo"', has_error: yes},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: '"Foo"', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '', has_error: yes},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: 'constraint', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ ├─InvalidParse '"Foo"' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl '"Foo"' has_error
+// CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ ├─InvalidParse '' has_error
+// CHECK:STDOUT:   ├─NamedConstraintDecl 'constraint' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

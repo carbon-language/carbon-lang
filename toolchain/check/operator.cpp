@@ -6,8 +6,10 @@
 
 #include <optional>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
@@ -63,8 +65,7 @@ static auto HasCppClassType(Context& context, SemIR::InstId inst_id) -> bool {
 
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id, bool diagnose,
-                        DiagnosticContextFn missing_impl_diagnostic_context)
-    -> SemIR::InstId {
+                        Diagnoser missing_impl_diagnostic) -> SemIR::InstId {
   if (operand_id == SemIR::ErrorInst::InstId) {
     // Exit early for errors, which prevent forming an `Op` function.
     return SemIR::ErrorInst::InstId;
@@ -90,9 +91,8 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   auto op_fn_id = GetOperatorOpFunction(context, loc_id, op);
 
   // Form `operand.(Op)`.
-  auto bound_op_id =
-      PerformCompoundMemberAccess(context, loc_id, operand_id, op_fn_id,
-                                  diagnose, missing_impl_diagnostic_context);
+  auto bound_op_id = PerformCompoundMemberAccess(
+      context, loc_id, operand_id, op_fn_id, diagnose, missing_impl_diagnostic);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
@@ -102,10 +102,18 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                      /*is_desugared=*/true);
 }
 
+auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
+    -> SemIR::InstId {
+  auto loc_id = context.insts().GetLocIdForDesugaring(object_id);
+  return PerformCall(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, CoreIdentifier::SelfDestruct),
+      {object_id}, /*is_desugared=*/true);
+}
+
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
-                         bool diagnose,
-                         DiagnosticContextFn missing_impl_diagnostic_context)
+                         bool diagnose, Diagnoser missing_impl_diagnostic)
     -> SemIR::InstId {
   if (lhs_id == SemIR::ErrorInst::InstId) {
     // Exit early for errors, which prevent forming an `Op` function.
@@ -136,9 +144,8 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   auto op_fn_id = GetOperatorOpFunction(context, loc_id, op);
 
   // Form `lhs.(Op)`.
-  auto bound_op_id =
-      PerformCompoundMemberAccess(context, loc_id, lhs_id, op_fn_id, diagnose,
-                                  missing_impl_diagnostic_context);
+  auto bound_op_id = PerformCompoundMemberAccess(
+      context, loc_id, lhs_id, op_fn_id, diagnose, missing_impl_diagnostic);
   if (bound_op_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
