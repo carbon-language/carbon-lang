@@ -18,8 +18,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Proposal](#proposal)
 -   [Details](#details)
     -   [Explicitly destroying an object](#explicitly-destroying-an-object)
-        -   [Naming](#naming)
     -   [Trivial destruction](#trivial-destruction)
+    -   [Calling `SelfDestruct`](#calling-selfdestruct)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
     -   [Two public interface model (previous design)](#two-public-interface-model-previous-design)
@@ -81,16 +81,16 @@ formal definition in this proposal.
 
 ### Explicitly destroying an object
 
-We can expose explicit object destruction either by way of a function in the prelude,
-or as a method in `Core.Destroy`. How we call this operation will frame how we
-read and discuss code. We should take extra care in choosing the mechanism for
-explicit object destruction since it is both an unsafe and an exceptionally rare
-operation.
+We can expose explicit object destruction either by way of a function in the
+prelude, or as a method in `Core.Destroy`. How we call this operation will frame
+how we read and discuss code. We should take extra care in choosing the
+mechanism for explicit object destruction since it is both an unsafe and an
+exceptionally rare operation.
 
 -   Using a function frames the scope as the active participant (for example
     `Core.SelfDestruct(x)`). `x` is passive, and has destruction rendered unto
-    it by its environment. This communicates that the object exists at the behest
-    of something external.
+    it by its environment. This communicates that the object exists at the
+    behest of something external.
 -   Using a method frames the object as the active participant (for example
     `x.SelfDestruct()`). `x` appears to initiate its own destruction, and the
     environment just facilitates that. This communicates that the object is in
@@ -110,8 +110,8 @@ From the [existing destructor design]:
 >
 > Types satisfy the [`TrivialDestructor`] facet type if:
 >
-> -   the class declaration does not define a destructor or the class defines the
->     destructor with an empty body `{ }`,
+> -   the class declaration does not define a destructor or the class defines
+>     the destructor with an empty body `{ }`,
 > -   all data members implement `TrivialDestructor`, and
 > -   all base classes implement `TrivialDestructor`.
 >
@@ -121,8 +121,8 @@ From the [existing destructor design]:
 > `TrivialDestructor` implies that their destructor does nothing, which may be
 > used to generate optimized specializations.
 >
-> There is no provision for handling failure in a destructor. All operations that
-> could potentially fail must be performed before the destructor is called.
+> There is no provision for handling failure in a destructor. All operations
+> that could potentially fail must be performed before the destructor is called.
 > Unhandled failure during a destructor call will abort the program.
 
 This is resolved in the [Trivial destruction section of the new design].
@@ -133,10 +133,10 @@ This is resolved in the [Trivial destruction section of the new design].
 
 ### Calling `SelfDestruct`
 
-`SelfDestruct` is a recursive through `SubobjectDestroy.Op`. This recursion could
-cause trivially destroyable objects to end up doing "busy work". To avoid this
-problem, the toolchain does not call `SelfDestruct` for trivially destroyable
-objects at all.
+`SelfDestruct` is a recursive through `SubobjectDestroy.Op`. This recursion
+could cause trivially destroyable objects to end up doing "busy work". To avoid
+this problem, the toolchain does not call `SelfDestruct` for trivially
+destroyable objects at all.
 
 The check pass will not generate SemIR instructions for calling `SelfDestruct`
 when it knows that calling `Destroy.Op` and `SubobjectDestroy.Op` are trivial.
@@ -165,7 +165,8 @@ The destruction model advances these goals:
 
 ### Two public interface model (previous design)
 
-The previous design intended to replace the `destroy` method with four interfaces:
+The previous design intended to replace the `destroy` method with four
+interfaces:
 
 -   **`Destructor`**: a user-implementable interface to describe how a single
     object handles its subobjects at the end of its lifetime. Typically used to
@@ -175,9 +176,9 @@ The previous design intended to replace the `destroy` method with four interface
 -   **`TrivialDestroy`:** as described in the proposed design.
 -   **`DynamicDestroy`:** as described in the proposed design.
 
-This design was the product of the conversations surrounding Issues #6124, #6161, and #6464.
-We felt that the design still had too much special-casing, and iterated upon the
-design to reach the current proposal.
+This design was the product of the conversations surrounding
+Issues #6124, #6161, and #6464. We felt that the design still had too much
+special-casing, and iterated upon the design to reach the current proposal.
 
 ### Replace interface `Core.Destructor` with method `Core.Destroy.Destructor`
 
@@ -201,8 +202,8 @@ calling `Destroy.Op` for an abstract class. This includes
 ### Alternatives considered from [PR #1154]
 
 The following alternatives were removed from [docs/design/classes.md]. They have
-been copied here to ensure readers can easily find the alternatives without needing
-to do extensive archaeology.
+been copied here to ensure readers can easily find the alternatives without
+needing to do extensive archaeology.
 
 -   [Types implement destructor interface](/proposals/p001154-destructors.md#types-implement-destructor-interface)
 -   [Prevent virtual function calls in destructors](/proposals/p001154-destructors.md#prevent-virtual-function-calls-in-destructors)
@@ -236,9 +237,6 @@ to do extensive archaeology.
 
 [existing destructor design]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#destructors
 [object destruction]: /docs/design/values.md#object-destruction
-[`TrivialDestructor`]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/generics/details.md#destructor-constraints
-[struct type]: https://github.com/carbon-language/carbon-lang/blob/a2890716ba7b73bb2bd337addceb3ac534558ee1/docs/design/classes.md#struct-types
-[trivial destruction section of the new design]: /docs/design/values.md#trivial-destruction
 
 [Code that is easy to read, understand, and write]: /docs/project/goals.md#code-that-is-easy-to-read-understand-and-write
 [Software and language evolution]: /docs/project/goals.md#software-and-language-evolution

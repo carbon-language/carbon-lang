@@ -1605,7 +1605,8 @@ The partial class type for a base class type like `MyBaseType` is written
     `partial MyBaseClass` as a prefix if `MyDerivedClass` extends `MyBaseClass`.
     The type `partial MyBaseClass` specifically means "exactly this and no
     more." This means we don't need to look at the hidden vptr slot, and we can
-    instantiate it even if it doesn't have a [virtual destructor](/docs/design/values.md#dynamic-destruction).
+    instantiate it even if it doesn't have a
+    [virtual destructor](/docs/design/values.md#dynamic-destruction).
 -   The keyword `partial` is only valid for a `base` or `abstract` class. For
     final classes, there is no need for a second type.
 
