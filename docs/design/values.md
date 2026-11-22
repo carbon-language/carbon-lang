@@ -18,7 +18,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Temporary materialization](#temporary-materialization)
 -   [Object destruction](#object-destruction)
     -   [`Core.Destroy`](#coredestroy)
-        -   [`Core.Destroy.SelfDestruct`](#coredestroyselfdestruct)
+        -   [`Core.SelfDestruct`](#coreselfdestruct)
     -   [`Core.SubobjectDestroy`](#coresubobjectdestroy)
     -   [Trivial destruction](#trivial-destruction)
     -   [Dynamic destruction](#dynamic-destruction)
@@ -181,7 +181,7 @@ An object will eventually be destroyed provided its type implements
 for most types. Users may provide an alternative implementation if necessary.
 Similarly, the toolchain automatically destroys objects by default. Users
 may---under very rare circumstances---manually destroy objects by calling
-[`Core.Destroy.SelfDestruct`](#coredestroyselfdestruct).
+[`Core.SelfDestruct`](#coreselfdestruct).
 
 Carbon also provides [support for detecting whether destroying an object results
 contains computation](#trivial-destruction), and [support for dispatching to a
@@ -190,7 +190,7 @@ dynamic type's `Core.Destroy` implementation](#dynamic-destruction).
 The following subsections describe five core entities:
 
 1.  [`Core.Destroy`](#coredestroy)
-2.  [`Core.Destroy.SelfDestruct`](#coredestroyselfdestruct)
+2.  [`Core.SelfDestruct`](#coreselfdestruct)
 3.  [`Core.SubobjectDestroy`](#coresubobjectdestroy)
 4.  [`Core.TrivialDestroy`](#trivial-destruction)
 5.  [`Core.DynamicDestroy`](#dynamic-destruction)
@@ -246,12 +246,12 @@ class Vector(T) {
 }
 ```
 
-#### `Core.Destroy.SelfDestruct`
+#### `Core.SelfDestruct`
 
-`Destroy.SelfDestruct` destroys a complete object, including all subobjects, and
-ends their lifetimes. `x.SelfDestruct()` calls `self.Op`, then calls
-`self.(SubobjectDestroy.Op)`. `SelfDestruct` may omit calling `self.Op` if
-`Self` does not manually implement `Destroy`.
+`Core.SelfDestruct` destroys a complete object, including all subobjects, and
+ends their lifetimes. `Core.SelfDestruct(x)` calls `x.(Destroy.Op)`, then calls
+`x.(SubobjectDestroy.Op)`. `SelfDestruct` may omit calling `Destroy.Op` if `x`'s
+type does not manually implement `Destroy`.
 
 The behavior for `SelfDestruct` cannot be customized. Types requiring control
 over how their subobjects are destroyed must use a raw storage type for their
@@ -282,19 +282,19 @@ fn F() {
     exaggerated_length.SelfDestruct(); // The toolchain inserts this on behalf of the user.
   }
 
-  v.SelfDestruct(); // The toolchain inserts this on behalf of the user.
+  Core.SelfDestruct(v); // The toolchain inserts this on behalf of the user.
 }
 ```
 
-Users may manually call `SelfDestruct`. Users should only manually call
-`SelfDestruct` when explicit lifetime management is necessary. For example, a
-vector type manages its elements' lifetimes in addition to its storage. We
+Users may manually call `Core.SelfDestruct`. Users should only manually call
+`Core.SelfDestruct` when explicit lifetime management is necessary. For example,
+a vector type manages its elements' lifetimes in addition to its storage. We
 rewrite the above vector implementation to account for this:
 
 ```carbon
 // TODO: change to use a raw storage type, and perform correct explicit object
 // creation.
-class Vector(T: Destroy) {
+class Vector(T: Core.Destroy) {
   private var data: T*;
   private var size: i64;
   private var capacity: i64;
@@ -305,10 +305,10 @@ class Vector(T: Destroy) {
     return Vector(i32){data, n, n};
   }
 
-  impl Destroy {
-    private fn Op(ref self) {
+  impl as Core.Destroy {
+    fn Op(ref self) {
       for (i: i64 in Range(0, size)) {
-        self[i].SelfDestruct();
+        Core.SelfDestruct(self[i]);
       }
 
       Cpp.std.free(self.data);
@@ -318,7 +318,7 @@ class Vector(T: Destroy) {
 ```
 
 > [!WARNING]
-Manually calling `Destroy.SelfDestruct` is unsafe.
+Manually calling `Core.SelfDestruct` is unsafe.
 
 ### `Core.SubobjectDestroy`
 
