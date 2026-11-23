@@ -179,26 +179,25 @@ fn TestAsTemplateArgument() {
 library "[[@TEST_NAME]]";
 
 // TODO: This should work even when `f` is not constant.
+// CHECK:STDERR:        ╭─┤ fail_todo_as_non_constant_template_argument.carbon:[[@LINE+14]]:45
+// CHECK:STDERR: ->     │ fn PassToTemplate[template F: type](f: F) { f(42); }
+// CHECK:STDERR:        ·                                             ━━┳━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: value of type `<type of function expression>` is not callable
+// CHECK:STDERR:        · ┃        [CallToNonCallable]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   PassToTemplate(id_fn);
+// CHECK:STDERR:        ·   ┬─────────────
+// CHECK:STDERR:        ·   ╰──┤ in monomorphization of `PassToTemplate(<type of function expression>)`
+// CHECK:STDERR:        ·      │ here
+// CHECK:STDERR:        ·      │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn PassToTemplate[template F: type](f: F) { f(42); }
 
 alias id_fn = fn (x: i32) -> i32 { return x; };
 
 fn TestAsTemplateArgument() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_as_non_constant_template_argument.carbon:[[@LINE+15]]:3
-  // CHECK:STDERR:        │ fn PassToTemplate[template F: type](f: F) { f(42); }
-  // CHECK:STDERR:        ·                                             ┬────
-  // CHECK:STDERR:        ·                                             ╰──┤ value of type
-  // CHECK:STDERR:        ·                                                │ `<type of function expression>`
-  // CHECK:STDERR:        ·                                                │ is not callable
-  // CHECK:STDERR:        ·                                                │ [CallToNonCallable]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   PassToTemplate(id_fn);
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
-  // CHECK:STDERR:        ·      ┃        `PassToTemplate(<type of function expression>)`
-  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   PassToTemplate(id_fn);
 }
 
@@ -267,15 +266,12 @@ fn Outer() -> i32 {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> i32 {});
-  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+8]]:20
   // CHECK:STDERR: ->     │   (fn () -> bool { return 1; });
   // CHECK:STDERR:        ·                    ┳━━━━━━━━
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                    │  ┃        `Core.IntLiteral` to `bool`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        `Core.IntLiteral` to `bool`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> bool { return 1; });
@@ -321,7 +317,7 @@ fn F() {
   // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+11]]:23
   // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) -> i32 {
   // CHECK:STDERR:        ·                       ━━━┳━━
-  // CHECK:STDERR:        ·                          ┗━━┫ error: variable `y` marked `unused` but used
+  // CHECK:STDERR:        ·                          ┗━━┫ error: binding `y` marked `unused` but used
   // CHECK:STDERR:        ·                             ┃        [UnusedButUsed]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │     return y;
@@ -348,7 +344,7 @@ fn F() {
   // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+9]]:23
   // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) => y);
   // CHECK:STDERR:        ·                       ━━━┳━━     ┬
-  // CHECK:STDERR:        ·                          ┗━━━━━━━━━━┫ error: variable `y` marked `unused` but
+  // CHECK:STDERR:        ·                          ┗━━━━━━━━━━┫ error: binding `y` marked `unused` but
   // CHECK:STDERR:        ·                                  │  ┃        used
   // CHECK:STDERR:        ·                                  │  ┃        [UnusedButUsed]
   // CHECK:STDERR:        ·                                  ╰────┤ usage here [UnusedButUsedHere]
@@ -412,8 +408,8 @@ class Incomplete;
 fn F() {
   // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+12]]:15
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   (fn (unused x: Incomplete) {});
   // CHECK:STDERR:        ·               ┳━━━━━━━━━━━━
@@ -425,8 +421,8 @@ fn F() {
   (fn (unused x: Incomplete) {});
   // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+19]]:10
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   (fn () -> Incomplete {});
   // CHECK:STDERR:        ·          ━━━━━━┳━━━━━━
@@ -445,8 +441,8 @@ fn F() {
   (fn () -> Incomplete {});
   // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+12]]:27
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   (fn (p: Incomplete*) => *p);
   // CHECK:STDERR:        ·                           ┳━
@@ -462,15 +458,12 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_conversion.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR:        ╭─┤ fail_conversion.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: i32 = fn () {};
   // CHECK:STDERR:        ·                ┳━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                │  ┃        `<type of function expression>` to `i32`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `<type of function expression>` does not implement
-  // CHECK:STDERR:        ·                     │ interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   ┃        `<type of function expression>` to `i32`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = fn () {};

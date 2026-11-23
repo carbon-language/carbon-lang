@@ -28,13 +28,11 @@ library "[[@TEST_NAME]]";
 
 fn TestFailures() {
   var a: i64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_i64_to_i32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_i64_to_i32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused b: i32 = a;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `i64` to `i32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `i64` does not implement interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused b: i32 = a;
@@ -46,13 +44,11 @@ library "[[@TEST_NAME]]";
 
 fn TestFailures() {
   var w: u64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_u64_to_u32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_u64_to_u32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused x: u32 = w;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `u64` to `u32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `u64` does not implement interface `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: u32 = w;
@@ -88,7 +84,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var a: Core.CppCompat.Long32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+18]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+15]]:17
   // CHECK:STDERR: ->     │   var unused b: i33 = a;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -96,14 +92,11 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long32_to_i33.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused b: i33 = a;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Long32` to `i33`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.Long32` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i33)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type `Long32` to `i33`
+  // CHECK:STDERR:        ·          ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused b: i33 = a;
@@ -115,7 +108,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var c: Core.CppCompat.Long64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+18]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+15]]:17
   // CHECK:STDERR: ->     │   var unused d: i65 = c;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -123,14 +116,11 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_long64_to_i65.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused d: i65 = c;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Long64` to `i65`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.Long64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i65)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type `Long64` to `i65`
+  // CHECK:STDERR:        ·          ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused d: i65 = c;
@@ -142,7 +132,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var e: Core.CppCompat.LongLong64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+18]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+15]]:17
   // CHECK:STDERR: ->     │   var unused f: i65 = e;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -150,14 +140,11 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_longlong64_to_i65.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused f: i65 = e;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `LongLong64` to `i65`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.LongLong64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i65)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused f: i65 = e;
@@ -169,7 +156,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var g: Core.CppCompat.ULong32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+18]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+15]]:17
   // CHECK:STDERR: ->     │   var unused h: u33 = g;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -177,14 +164,11 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong32_to_u33.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused h: u33 = g;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `ULong32` to `u33`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.ULong32` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(u33)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert expression of type `ULong32` to `u33`
+  // CHECK:STDERR:        ·         ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused h: u33 = g;
@@ -196,7 +180,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var i: Core.CppCompat.ULong64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+18]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+15]]:17
   // CHECK:STDERR: ->     │   var unused j: u65 = i;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -204,14 +188,11 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulong64_to_u65.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused j: u65 = i;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `ULong64` to `u65`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.ULong64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(u65)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert expression of type `ULong64` to `u65`
+  // CHECK:STDERR:        ·         ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused j: u65 = i;
@@ -223,7 +204,7 @@ library "[[@TEST_NAME]]";
 
 fn TestCppCompat() {
   var k: Core.CppCompat.ULongLong64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+19]]:17
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+16]]:17
   // CHECK:STDERR: ->     │   var unused l: u65 = k;
   // CHECK:STDERR:        ·                 ┳━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: bit width of integer type literal must be a multiple
@@ -231,15 +212,12 @@ fn TestCppCompat() {
   // CHECK:STDERR:        ·                    ┃        [IntWidthNotMultipleOf8]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_cpp_compat_widen_ulonglong64_to_u65.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused l: u65 = k;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `ULongLong64` to
-  // CHECK:STDERR:        ·   │  ┃        `u65`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.ULongLong64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(u65)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `u65`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused l: u65 = k;
@@ -252,14 +230,11 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // Long32 is slightly wider than i32.
   var a: Core.CppCompat.Long32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_long32_to_i32.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_long32_to_i32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused b: i32 = a;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Long32` to `i32`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.Long32` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type `Long32` to `i32`
+  // CHECK:STDERR:        ·          ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused b: i32 = a;
@@ -272,15 +247,12 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // i64 is slightly wider than Long64.
   var c: i64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_i64_to_long64.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_i64_to_long64.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused d: Core.CppCompat.Long64 = c;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `i64` to
-  // CHECK:STDERR:        ·   │  ┃        `Core.CppCompat.Long64`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `i64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Core.CppCompat.Long64)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `Core.CppCompat.Long64`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused d: Core.CppCompat.Long64 = c;
@@ -293,14 +265,11 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // LongLong64 is slightly wider than i64.
   var e: Core.CppCompat.LongLong64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_longlong64_to_i64.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_longlong64_to_i64.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused f: i64 = e;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `LongLong64` to `i64`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.LongLong64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i64)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused f: i64 = e;
@@ -313,14 +282,11 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // ULong32 is slightly wider than u32.
   var g: Core.CppCompat.ULong32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_ulong32_to_u32.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_ulong32_to_u32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused h: u32 = g;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `ULong32` to `u32`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.ULong32` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert expression of type `ULong32` to `u32`
+  // CHECK:STDERR:        ·         ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused h: u32 = g;
@@ -333,15 +299,12 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // u64 is slightly wider than ULong64.
   var i: u64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_u64_to_ulong64.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_u64_to_ulong64.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused j: Core.CppCompat.ULong64 = i;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `u64` to
-  // CHECK:STDERR:        ·   │  ┃        `Core.CppCompat.ULong64`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `u64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Core.CppCompat.ULong64)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `Core.CppCompat.ULong64`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused j: Core.CppCompat.ULong64 = i;
@@ -354,15 +317,12 @@ library "[[@TEST_NAME]]";
 fn TestCppCompat() {
   // ULongLong64 is slightly wider than u64.
   var k: Core.CppCompat.ULongLong64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_ulonglong64_to_u64.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_cpp_compat_narrow_ulonglong64_to_u64.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused l: u64 = k;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `ULongLong64` to
-  // CHECK:STDERR:        ·   │  ┃        `u64`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.CppCompat.ULongLong64` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(u64)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `u64`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused l: u64 = k;
@@ -383,13 +343,11 @@ library "[[@TEST_NAME]]";
 
 fn TestMixedSign() {
   var a: i32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_i32_to_u32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_i32_to_u32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused b: u32 = a;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `i32` to `u32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused b: u32 = a;
@@ -401,13 +359,11 @@ library "[[@TEST_NAME]]";
 
 fn TestMixedSign() {
   var c: u32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_u32_to_i32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_u32_to_i32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused d: i32 = c;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `u32` to `i32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `u32` does not implement interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused d: i32 = c;
@@ -419,13 +375,11 @@ library "[[@TEST_NAME]]";
 
 fn TestMixedSign() {
   var g: i32 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_i32_to_u64.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_sign_change_i32_to_u64.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused h: u64 = g;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `i32` to `u64`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(u64)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused h: u64 = g;
@@ -451,13 +405,11 @@ library "[[@TEST_NAME]]";
 
 fn TestArbitraryWidth() {
   var a: Core.Int(33) = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_i33_to_i32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_i33_to_i32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused b: Core.Int(32) = a;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `i33` to `i32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `i33` does not implement interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused b: Core.Int(32) = a;
@@ -469,13 +421,11 @@ library "[[@TEST_NAME]]";
 
 fn TestArbitraryWidth() {
   var d: Core.UInt(33) = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_u33_to_u32.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_u33_to_u32.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused e: Core.UInt(32) = d;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `u33` to `u32`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `u33` does not implement interface `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused e: Core.UInt(32) = d;
@@ -487,13 +437,11 @@ library "[[@TEST_NAME]]";
 
 fn TestArbitraryWidth() {
   var a: Core.Int(33) = 1;
-  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_i33_to_u34.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_narrow_arbitrary_width_i33_to_u34.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   var unused g: Core.UInt(34) = a;
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `i33` to `u34`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `i33` does not implement interface `Core.ImplicitAs(u34)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused g: Core.UInt(34) = a;

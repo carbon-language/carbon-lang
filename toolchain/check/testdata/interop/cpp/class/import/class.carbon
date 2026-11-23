@@ -35,14 +35,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+14]]:19
+  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+13]]:19
   // CHECK:STDERR: ->     │   var unused bar: Cpp.DeclBar;
   // CHECK:STDERR:        ·                   ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                   ┗━━┫ error: binding pattern has incomplete type `DeclBar` in
   // CHECK:STDERR:        ·                      ┃        name binding declaration
   // CHECK:STDERR:        ·                      ┃        [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_use_declaration_as_definition.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./declaration.h
   // CHECK:STDERR:        │ class DeclBar;
   // CHECK:STDERR:        ·       ┬

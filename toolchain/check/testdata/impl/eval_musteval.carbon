@@ -170,13 +170,11 @@ import library "interface";
 class B { adapt {}; }
 
 impl B as Runtime {
-  // CHECK:STDERR:        ╭─┤ fail_impl_musteval.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_impl_musteval.carbon:[[@LINE+13]]:3
   // CHECK:STDERR: ->     │   musteval fn F(unused self) -> type { return B; }
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                     ┗━━┫ error: non-constant call to compile-time-only function
-  // CHECK:STDERR:        ·                     │  ┃        [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:        ·                     ╰────┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                          │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·                        ┃        [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ interface.carbon
   // CHECK:STDERR:        │   fn F(self) -> type;
@@ -189,13 +187,11 @@ impl B as Runtime {
 }
 
 impl B as Eval {
-  // CHECK:STDERR:        ╭─┤ fail_impl_musteval.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_impl_musteval.carbon:[[@LINE+13]]:3
   // CHECK:STDERR: ->     │   musteval fn F(unused self) -> type { return B; }
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                     ┗━━┫ error: non-constant call to compile-time-only function
-  // CHECK:STDERR:        ·                     │  ┃        [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:        ·                     ╰────┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                          │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·                        ┃        [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ interface.carbon
   // CHECK:STDERR:        │   eval fn F(self) -> type;
@@ -237,13 +233,11 @@ impl B as Core.ImplicitAs(BView) {
 }
 
 impl B as MustEval {
-  // CHECK:STDERR:        ╭─┤ fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+13]]:3
   // CHECK:STDERR: ->     │   musteval fn F(unused self: BView) -> type { return B; }
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: non-constant call to compile-time-only function
-  // CHECK:STDERR:        ·                      │  ┃        [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:        ·                      ╰────┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                           │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·                         ┃        [NonConstantCallToCompTimeOnlyFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ interface.carbon
   // CHECK:STDERR:        │   musteval fn F(self) -> type;

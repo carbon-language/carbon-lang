@@ -285,7 +285,10 @@ auto PerformAction(Context& context, SemIR::LocId loc_id,
       auto diag_loc_id = loc_id.kind() == SemIR::LocId::Kind::NodeId
                              ? LocIdForDiagnostics::TokenOnly(loc_id.node_id())
                              : LocIdForDiagnostics(loc_id);
-      context.emitter().Emit(diag_loc_id, AddrOfNonRef);
+      context.emitter()
+          .Build(diag_loc_id, AddrOfNonRef)
+          .ExtraRange(value_id)
+          .Emit();
       value_id = SemIR::ErrorInst::InstId;
       break;
   }
@@ -408,23 +411,20 @@ auto HandleParseNode(Context& context, Parse::PrefixOperatorStarId node_id)
       [&context, &node_id](SemIR::TypeId not_pointer_type_id) {
         // TODO: Pass in the expression we're trying to dereference to produce a
         // better diagnostic.
+        // TODO: Check for any facet here, rather than only a type.
+        if (not_pointer_type_id == SemIR::TypeType::TypeId) {
+          CARBON_DIAGNOSTIC(DerefOfType, Error,
+                            "cannot dereference a type; to form a pointer "
+                            "type, write the `*` after the pointee type");
+          context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
+                                 DerefOfType);
+          return;
+        }
         CARBON_DIAGNOSTIC(DerefOfNonPointer, Error,
                           "cannot dereference operand of non-pointer type {0}",
                           SemIR::TypeId);
-
-        auto builder =
-            context.emitter().Build(LocIdForDiagnostics::TokenOnly(node_id),
-                                    DerefOfNonPointer, not_pointer_type_id);
-
-        // TODO: Check for any facet here, rather than only a type.
-        if (not_pointer_type_id == SemIR::TypeType::TypeId) {
-          CARBON_DIAGNOSTIC_LABEL(
-              DerefOfType, Info,
-              "to form a pointer type, write the `*` after the pointee type");
-          builder.Attach(LocIdForDiagnostics::TokenOnly(node_id), DerefOfType);
-        }
-
-        builder.Emit();
+        context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
+                               DerefOfNonPointer, not_pointer_type_id);
       });
 
   context.node_stack().Push(node_id, deref_base_id);

@@ -94,8 +94,8 @@ var a: C = {};
 var b: C = {};
 // CHECK:STDERR:        ╭─┤ fail_name_conflict.carbon:[[@LINE+11]]:7
 // CHECK:STDERR:        │ var b: C = {};
-// CHECK:STDERR:        ·     ──┬─
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·     ┬
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ alias b = C;
 // CHECK:STDERR:        ·       ┳

@@ -219,7 +219,7 @@ it, under the exact range that is wrong:
        ╷ ╭── imported from: c.carbon:2:1        path row
        ├─┤ b.carbon:3:1                         location row
 ->   3 │ fn Shape() {}                          source row, `->` in the margin
-       · ━━━━━━┳━━━━━                           underline row: the heavy underline
+       · ━━━━━━┳━━━━━                           underline row: the message's underline
        ·       ┗━━┫ error: duplicate name ...   label row: label line, bar, text
        ┆                                        elision
        ├─┤ a.carbon:3:7                         location row for a second file
@@ -247,10 +247,10 @@ it, under the exact range that is wrong:
     the frame.
 
 -   An **underline row** holds the **underlines** under ranges, with `·` in
-    place of the frame so the row isn't mistaken for source. The underline the
-    message is placed under is heavy; every other underline is light, in the
-    level's colors for another of the message's ranges and the label color for a
-    label's. Every underline for one line goes on one row.
+    place of the frame so the row isn't mistaken for source. The message's
+    underlines are heavy, in the level's colors, and a label's are light, in the
+    label color, so that weight and color each show which ranges are part of the
+    problem. Every underline for one line goes on one row.
 
 -   A **label row** holds the text placed under an underline: a **label line**
     leaves the underline at a tee and meets the **bar** framing the text,
@@ -295,12 +295,12 @@ it, under the exact range that is wrong:
 ### Finding the message
 
 There is no headline. Everything that makes the message findable is on its own
-row: the level word, its weight and color, the heavy underline, and the `->` in
-the margin of its line. With color the red `error:` is the first thing seen;
-without it the `->` points to the heavy underline, whose label line runs down to
-the sentence. The reading order is the same either way: the sentence and its
-code, the other labels as needed, and the location rows as the coordinates for
-going there.
+row: the level word, its weight and color, the message's underline, and the `->`
+in the margin of its line. With color the red `error:` is the first thing seen;
+without it the `->` points to the line of the message's underline, whose label
+line runs down to the sentence. The reading order is the same either way: the
+sentence and its code, the other labels as needed, and the location rows as the
+coordinates for going there.
 
 The drawback is that the message is not at a fixed row of its frame, since a
 declaration above the problem is drawn first. The fixed positions to scan for
@@ -318,9 +318,9 @@ The message is placed under its location's range unless another of its ranges
 contains that location, in which case that range is used instead: the location
 is a point chosen for a cursor, and the range shows what the problem covers.
 Overlapping ranges are drawn widest first, so the narrowest underline on a
-column is the one left visible, except that the heavy underline is drawn last so
-nothing repaints it. A range inside it appears only as the tee where its label
-line leaves the heavy underline, or not at all if it has no text.
+column is the one left visible, except that the message's underline is drawn
+last so nothing repaints it. A range inside it appears only as the tee where its
+label line leaves the message's underline, or not at all if it has no text.
 
 ### Placing the text
 
@@ -360,9 +360,11 @@ path.
 
 An underline and the label line and bar of its label take the color of the
 message they belong to, following `rustc`; the label's text does not, since
-color belongs on what it points at. Only the message's underlines are heavy and
-bold: the heavy stroke weight supplies the emphasis where a terminal ignores
-bold on line art, and bold matches the underlines to the text where it doesn't.
+color belongs on what it points at. Only the message's underlines are heavy, on
+whichever line they are, so that what is part of the problem is never shown by
+color alone. The one the message's text is placed under is also bold. Where a
+terminal ignores bold on line art, the heavy stroke weight still makes that
+underline stand out; where it doesn't, the bold underline matches the bold text.
 
 Ranges that touch would run together, so an end that meets another range stops
 at the center of its cell, leaving a gap, but only where the range still has a
@@ -415,10 +417,10 @@ ranges, and fix-its each become the thing they correspond to. A location names a
 point and is underlined as the one column Clang's caret points to; a range
 containing that point is used instead, the `~~~` of `^~~~`, so the text is
 placed under the whole range. The diagnostic's other ranges are the message's,
-in the level's color; a note's are labels with no text, in the label color, as
-Clang would draw them. A fix-it becomes a label saying what to do, which is
-still shown in the compact form, where an inline rendering would not be;
-carrying the edit as data is [future work](#future-work).
+heavy in the level's color; a note's are labels with no text, light in the label
+color, as Clang would draw them. A fix-it becomes a label saying what to do,
+which is still shown in the compact form, where an inline rendering would not
+be; representing the edit as data is [future work](#future-work).
 
 `SemIR::ConvertClangRangeToLoc` turns a Clang range into the location the
 renderer needs, on both the path with a Carbon `Context` and the one without.
@@ -453,7 +455,7 @@ Styles are named for what they apply to, so changing a color is one edit.
 | Line numbers                 | bright blue           | Not bold, so the one number colored as the reported line stands out.                        |
 | Location in a location row   | plain                 | The bracket already delimits it.                                                            |
 | Location in the compact form | bold                  | Begins the line with nothing around it.                                                     |
-| The message's underlines     | the level color, bold | Makes the range and the sentence one unit.                                                  |
+| The message's underlines     | the level's colors, heavy | Heavy lines show what is part of the problem without color. The one under the message's text is bold and takes the center color, matching the sentence. |
 | A label's underlines and label lines | the label ramp | Connects an underline to its text. Not bold or heavy: that emphasis is the message's alone. |
 | Path                         | dim                   | How the reader got here, not what is wrong.                                                 |
 | Kind                         | dim                   | Only present under a flag.                                                                  |
@@ -495,10 +497,10 @@ rendered without dim would make the frame as prominent as the code.
 | Frame's start above a path row  | `╷`               | `\|`                     |
 | Underline and label rows' frame | `·`               | `:`                      |
 | Elision                         | `┆`               | `:`                      |
-| Light underlines                | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
+| A label's underlines            | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
 | The message's underlines        | `━ ┳ ┗ ┫ ┃ ╻ ╸ ╺` | `^ ^ ' \| \| ^ ^ ^`      |
 | Out-dented message's reach      | `┏ ┛`             | `. '`                    |
-| A label's tee on the heavy      | `┯`               | `.`                      |
+| A label's tee on a heavy line   | `┯`               | `.`                      |
 | The margin's pointer            | `->`              | `->`                     |
 
 The last two light underline glyphs and the last two heavy ones are ends that
@@ -506,7 +508,7 @@ stop at the center of their cell, the gap between touching ranges.
 
 Everything is drawn as lines through `Terminal::Buffer`, which picks the glyph
 for the character set and forms corners and tees where lines meet, so a label
-line joins an underline at a junction and a light label line on the heavy
+line joins an underline at a junction and a light label line on a heavy
 underline forms `┯`. Each glyph is one column in both character sets, so the
 frame occupies the same columns. No other label line joins the message's:
 sharing its column one leaves the shared stretch heavy, and crossing its rows
@@ -514,14 +516,14 @@ one gaps.
 
 ASCII has no weights, so weight degrades to one distinction. A cell with a heavy
 line leaving it that no line enters from above is `^`, the emphatic underline
-C++ compilers have long used: the heavy underline, the tee where the message's
-own label line leaves it, and a one-column underline that the label line
-replaces. Below that cell the label line is drawn as a light line, as a label's
-is. A light tee degrades to `.`, the corner for a line leaving downward, on a
-light underline or the heavy one: the dashes either side draw the underline, and
-the `.` is the only thing showing where the label line leaves it when the rest
-of the label line may be rows away with only gaps between. `+` is a crossing
-where lines connect, which a diagnostic never draws.
+C++ compilers have long used: each of the message's underlines, the tee where
+the message's own label line leaves its underline, and a one-column underline
+that the label line replaces. Below that cell the label line is drawn as a light
+line, as a label's is. A light tee degrades to `.`, the corner for a line
+leaving downward, on a light underline or a heavy one: the dashes either side
+draw the underline, and the `.` is the only thing showing where the label line
+leaves it when the rest of the label line may be rows away with only gaps
+between. `+` is a crossing where lines connect, which a diagnostic never draws.
 
 A run of `~` provides no junction for a label line to join, and Unicode has no
 one-column wavy character. A glyph also has to be one column in practice, not
@@ -663,9 +665,9 @@ completing a type, attached one to whatever was diagnosed inside it.
 
 ### Without color or Unicode
 
-The message's underline degrades to `^`, every other underline to `-` with a `.`
-where a label line leaves it, and the `->`, the `^` run, and the level word
-still say where to look first:
+The message's underlines degrade to `^` and a label's to `-`, with a `.` where
+a label line leaves one, and the `->`, the message's label line, and the level
+word still show where to look first:
 
 ```
        .-| foo.carbon:4:3

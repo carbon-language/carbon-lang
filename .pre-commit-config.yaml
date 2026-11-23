@@ -183,6 +183,15 @@ repos:
   # Run linters last, as formatters and other checks may fix issues.
   - repo: local
     hooks:
+      - id: actionlint
+        name: actionlint
+        entry: scripts/run_actionlint.py
+        args: ['-pyflakes=']
+        language: python
+        additional_dependencies:
+          - shellcheck-py==0.11.0.1
+        files: ^\.github/(workflows|actions)/.*\.(ya?ml)$
+        pass_filenames: false
       - id: forbid-llvm-googletest
         name: Checks for deps on LLVM's version of GoogleTest
         entry: scripts/forbid_llvm_googletest.py

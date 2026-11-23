@@ -266,6 +266,29 @@ static auto TryMapClassType(Context& context, SemIR::ClassType class_type)
   if (!tag_decl) {
     return clang::QualType();
   }
+
+  // If the decl is a `ClassTemplateSpecializationDecl` where some of the
+  // template args are dependent, it must be represented as a
+  // `TemplateSpecializationType` instead of a `TagType`.
+  if (auto* specialization_decl =
+          llvm::dyn_cast<clang::ClassTemplateSpecializationDecl>(tag_decl)) {
+    auto args = specialization_decl->getTemplateArgs().asArray();
+    auto is_dependent =
+        llvm::any_of(args, [](const auto& arg) { return arg.isDependent(); });
+
+    if (is_dependent) {
+      llvm::SmallVector<clang::TemplateArgument> canonical_args(
+          llvm::map_range(args, [&ast_context](auto& arg) {
+            return ast_context.getCanonicalTemplateArgument(arg);
+          }));
+
+      return ast_context.getTemplateSpecializationType(
+          clang::ElaboratedTypeKeyword::None,
+          clang::TemplateName(specialization_decl->getSpecializedTemplate()),
+          args, canonical_args);
+    }
+  }
+
   return ast_context.getCanonicalTagType(tag_decl);
 }
 

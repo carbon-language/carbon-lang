@@ -33,6 +33,7 @@ fn B() {
 // CHECK:STDOUT:   names:
 // CHECK:STDOUT:     name0:           A
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
@@ -158,11 +159,12 @@ fn B() {
 // CHECK:STDOUT:     name0:           B
 // CHECK:STDOUT:     name1:           A
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir70000002: {decl_id: inst7000000F, is_export: false}
+// CHECK:STDOUT:     import_ir70000003: {decl_id: inst7000000F, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000002, inst_id: inst5000000F}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000003, inst_id: inst5000000F}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:

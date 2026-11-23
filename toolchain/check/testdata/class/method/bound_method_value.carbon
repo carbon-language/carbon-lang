@@ -18,15 +18,12 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var _: i32 = c.Get;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `<bound method>` to
-  // CHECK:STDERR:        ·   │  ┃        `i32`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `<bound method>` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `i32`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: i32 = c.Get;
@@ -40,15 +37,12 @@ class C {
 }
 
 fn F(c: C) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_as.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        ╭─┤ fail_as.carbon:[[@LINE+8]]:10
   // CHECK:STDERR: ->     │   return c.Get as i32;
   // CHECK:STDERR:        ·          ┳━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot convert expression of type `<bound method>` to `i32`
-  // CHECK:STDERR:        ·          │  ┃        with `as`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `<bound method>` does not implement interface
-  // CHECK:STDERR:        ·               │ `Core.As(i32)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        with `as`
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c.Get as i32;
@@ -85,14 +79,11 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR:        ╭─┤ fail_copy.carbon:[[@LINE+10]]:26
+  // CHECK:STDERR:        ╭─┤ fail_copy.carbon:[[@LINE+7]]:26
   // CHECK:STDERR: ->     │   var _: typeof(c.Get) = c.Get;
-  // CHECK:STDERR:        ·                          ┳━━━━
-  // CHECK:STDERR:        ·                          ┗━━┫ error: cannot copy value of type `<bound method>`
-  // CHECK:STDERR:        ·                          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·                          ╰────┤ type `<bound method>` does not implement
-  // CHECK:STDERR:        ·                               │ interface `Core.Copy`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ━┳━━━
+  // CHECK:STDERR:        ·                           ┗━━┫ error: cannot copy value of type `<bound method>`
+  // CHECK:STDERR:        ·                              ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: typeof(c.Get) = c.Get;

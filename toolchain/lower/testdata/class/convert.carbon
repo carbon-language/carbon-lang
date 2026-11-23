@@ -47,7 +47,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_40.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   %.loc8_40.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !35
 // CHECK:STDOUT:   %.loc8_40.2 = load i32, ptr %.loc8_40.1.n, align 4, !dbg !35
 // CHECK:STDOUT:   ret i32 %.loc8_40.2, !dbg !36
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { i32 }, align 4, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !44
-// CHECK:STDOUT:   %.loc14_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %.loc14_31.3.n = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3.1, i64 4, i1 false), !dbg !44
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %w.var), !dbg !47
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !48
@@ -74,7 +74,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.4d465ab19434f81c:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !52
+// CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc14_3.1.n), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
@@ -82,7 +82,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.aecc0ff76a42614a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc14_3.1.n), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
@@ -168,7 +168,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_13.1.base = getelementptr inbounds nuw { {} }, ptr %d, i32 0, i32 0, !dbg !82
+// CHECK:STDOUT:   %.loc7_13.1.base = getelementptr inbounds nuw i8, ptr %d, i64 0, !dbg !82
 // CHECK:STDOUT:   ret ptr %.loc7_13.1.base, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -18,11 +18,10 @@ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
 fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
 
 fn G() {
-  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE+22]]:3
+  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE+21]]:3
   // CHECK:STDERR:        │ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
-  // CHECK:STDERR:        · ──────────────────────────────┬─────────────────────────────
-  // CHECK:STDERR:        ·                               ╰──┤ calling function declared here
-  // CHECK:STDERR:        ·                                  │ [InCallToEntity]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F({}, {}, {}, {});
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━
@@ -30,7 +29,7 @@ fn G() {
   // CHECK:STDERR:        ·              ┃        [CallArgCountMismatch]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE-15]]:24
+  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE-14]]:24
   // CHECK:STDERR: ->     │ fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
   // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━───────────
   // CHECK:STDERR:        ·                        ┗━━┫ error: tuple pattern expects 2 elements, but tuple
@@ -53,8 +52,8 @@ fn F(unused x: C, unused y: C = {}) {}
 fn G() {
   // CHECK:STDERR:        ╭─┤ fail_caller_too_few_arguments.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn F(unused x: C, unused y: C = {}) {}
-  // CHECK:STDERR:        · ──────────────────┬──────────────────
-  // CHECK:STDERR:        ·                   ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F();
   // CHECK:STDERR:        ·   ━┳━

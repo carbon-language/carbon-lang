@@ -84,11 +84,11 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %no_padding.var = alloca { i32, i32, i32 }, align 4, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %no_padding.var), !dbg !27
-// CHECK:STDOUT:   %.loc8.x = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc8.x = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 0, !dbg !29
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc8.x), !dbg !31
-// CHECK:STDOUT:   %.loc9.y = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 1, !dbg !32
+// CHECK:STDOUT:   %.loc9.y = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 4, !dbg !32
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9.y), !dbg !34
-// CHECK:STDOUT:   %.loc10.z = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 2, !dbg !35
+// CHECK:STDOUT:   %.loc10.z = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 8, !dbg !35
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.z), !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.45b2634a1e0e517e(ptr %no_padding.var), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !38
@@ -97,11 +97,11 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5dc248c5ee366a00:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_3.1.z = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 2, !dbg !41
+// CHECK:STDOUT:   %.loc7_3.1.z = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_3.1.z), !dbg !41
-// CHECK:STDOUT:   %.loc7_3.4.y = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 1, !dbg !41
+// CHECK:STDOUT:   %.loc7_3.4.y = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_3.4.y), !dbg !41
-// CHECK:STDOUT:   %.loc7_3.7.x = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc7_3.7.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_3.7.x), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
@@ -176,7 +176,7 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %avoid_tail_padding.var = alloca <{ ptr, i32 }>, align 8, !dbg !62
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %avoid_tail_padding.var), !dbg !62
-// CHECK:STDOUT:   %.loc8.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %avoid_tail_padding.var, i32 0, i32 1, !dbg !64
+// CHECK:STDOUT:   %.loc8.y = getelementptr inbounds nuw i8, ptr %avoid_tail_padding.var, i64 8, !dbg !64
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc8.y), !dbg !66
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.599d5fcb55f0df44(ptr %avoid_tail_padding.var), !dbg !62
 // CHECK:STDOUT:   ret void, !dbg !67
@@ -185,9 +185,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.774d7de7af68f6c1:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !68 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_3.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !70
+// CHECK:STDOUT:   %.loc7_3.1.y = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !70
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc7_3.1.y), !dbg !70
-// CHECK:STDOUT:   %.loc7_3.4.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !70
+// CHECK:STDOUT:   %.loc7_3.4.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !70
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5ae382a48d083172(ptr %.loc7_3.4.x), !dbg !70
 // CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
@@ -264,10 +264,10 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %use_tail_padding.var = alloca { <{ ptr, i32 }>, i32 }, align 8, !dbg !96
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %use_tail_padding.var), !dbg !96
-// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %use_tail_padding.var, i32 0, i32 0, !dbg !98
-// CHECK:STDOUT:   %.loc9_24.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc9_22.a, i32 0, i32 1, !dbg !98
+// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw i8, ptr %use_tail_padding.var, i64 0, !dbg !98
+// CHECK:STDOUT:   %.loc9_24.y = getelementptr inbounds nuw i8, ptr %.loc9_22.a, i64 8, !dbg !98
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.y), !dbg !100
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %use_tail_padding.var, i32 0, i32 1, !dbg !101
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %use_tail_padding.var, i64 12, !dbg !101
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !103
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.20a1f5eea11f2fca(ptr %use_tail_padding.var), !dbg !96
 // CHECK:STDOUT:   ret void, !dbg !104
@@ -276,9 +276,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.774d7de7af68f6c1:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !105 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_3.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !107
+// CHECK:STDOUT:   %.loc8_3.1.y = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !107
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc8_3.1.y), !dbg !107
-// CHECK:STDOUT:   %.loc8_3.4.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !107
+// CHECK:STDOUT:   %.loc8_3.4.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !107
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5ae382a48d083172(ptr %.loc8_3.4.x), !dbg !107
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
@@ -286,9 +286,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7f1c6b303f8f3e0f:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !109 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_3.1.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !111
+// CHECK:STDOUT:   %.loc8_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 12, !dbg !111
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc8_3.1.b), !dbg !111
-// CHECK:STDOUT:   %.loc8_3.4.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !111
+// CHECK:STDOUT:   %.loc8_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !111
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.599d5fcb55f0df44(ptr %.loc8_3.4.a), !dbg !111
 // CHECK:STDOUT:   ret void, !dbg !111
 // CHECK:STDOUT: }
@@ -385,10 +385,10 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %implicit_padding.var = alloca { <{ ptr, i32 }>, ptr }, align 8, !dbg !144
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %implicit_padding.var), !dbg !144
-// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %implicit_padding.var, i32 0, i32 0, !dbg !146
-// CHECK:STDOUT:   %.loc9_24.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc9_22.a, i32 0, i32 0, !dbg !146
+// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw i8, ptr %implicit_padding.var, i64 0, !dbg !146
+// CHECK:STDOUT:   %.loc9_24.x = getelementptr inbounds nuw i8, ptr %.loc9_22.a, i64 0, !dbg !146
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.x), !dbg !148
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %implicit_padding.var, i32 0, i32 1, !dbg !149
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %implicit_padding.var, i64 16, !dbg !149
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !151
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.a0711477393c4dd4(ptr %implicit_padding.var), !dbg !144
 // CHECK:STDOUT:   ret void, !dbg !152
@@ -397,9 +397,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.774d7de7af68f6c1:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !153 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_3.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !155
+// CHECK:STDOUT:   %.loc8_3.1.y = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !155
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc8_3.1.y), !dbg !155
-// CHECK:STDOUT:   %.loc8_3.4.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !155
+// CHECK:STDOUT:   %.loc8_3.4.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !155
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5ae382a48d083172(ptr %.loc8_3.4.x), !dbg !155
 // CHECK:STDOUT:   ret void, !dbg !155
 // CHECK:STDOUT: }
@@ -407,9 +407,9 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.c4d39b37cd54a4ef:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !157 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_3.1.b = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %self, i32 0, i32 1, !dbg !159
+// CHECK:STDOUT:   %.loc8_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 16, !dbg !159
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5ae382a48d083172(ptr %.loc8_3.1.b), !dbg !159
-// CHECK:STDOUT:   %.loc8_3.4.a = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %self, i32 0, i32 0, !dbg !159
+// CHECK:STDOUT:   %.loc8_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !159
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.599d5fcb55f0df44(ptr %.loc8_3.4.a), !dbg !159
 // CHECK:STDOUT:   ret void, !dbg !159
 // CHECK:STDOUT: }
@@ -506,7 +506,7 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %insert_padding.var = alloca <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, align 8, !dbg !192
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %insert_padding.var), !dbg !192
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, ptr %insert_padding.var, i32 0, i32 1, !dbg !194
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %insert_padding.var, i64 16, !dbg !194
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !196
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e01da6383196b847(ptr %insert_padding.var), !dbg !192
 // CHECK:STDOUT:   ret void, !dbg !197
@@ -515,11 +515,11 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5dc248c5ee366a00:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !198 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.z = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 2, !dbg !200
+// CHECK:STDOUT:   %.loc9_3.1.z = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !200
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_3.1.z), !dbg !200
-// CHECK:STDOUT:   %.loc9_3.4.y = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 1, !dbg !200
+// CHECK:STDOUT:   %.loc9_3.4.y = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !200
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_3.4.y), !dbg !200
-// CHECK:STDOUT:   %.loc9_3.7.x = getelementptr inbounds nuw { i32, i32, i32 }, ptr %self, i32 0, i32 0, !dbg !200
+// CHECK:STDOUT:   %.loc9_3.7.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !200
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_3.7.x), !dbg !200
 // CHECK:STDOUT:   ret void, !dbg !200
 // CHECK:STDOUT: }
@@ -527,11 +527,11 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.c8d3397a249d1a4e:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !202 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.c = getelementptr inbounds nuw <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, ptr %self, i32 0, i32 2, !dbg !204
+// CHECK:STDOUT:   %.loc9_3.1.c = getelementptr inbounds nuw i8, ptr %self, i64 24, !dbg !204
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc9_3.1.c), !dbg !204
-// CHECK:STDOUT:   %.loc9_3.4.b = getelementptr inbounds nuw <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !204
+// CHECK:STDOUT:   %.loc9_3.4.b = getelementptr inbounds nuw i8, ptr %self, i64 16, !dbg !204
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5ae382a48d083172(ptr %.loc9_3.4.b), !dbg !204
-// CHECK:STDOUT:   %.loc9_3.7.a = getelementptr inbounds nuw <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !204
+// CHECK:STDOUT:   %.loc9_3.7.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !204
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.45b2634a1e0e517e(ptr %.loc9_3.7.a), !dbg !204
 // CHECK:STDOUT:   ret void, !dbg !204
 // CHECK:STDOUT: }

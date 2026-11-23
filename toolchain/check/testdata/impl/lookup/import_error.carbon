@@ -36,15 +36,12 @@ import library "error_interface_z";
 fn F[unused U: type](generic T: Z) {
   // The value of `.X` is an error. It should not crash though.
   //
-  // CHECK:STDERR:        ╭─┤ fail_import_error.carbon:[[@LINE+11]]:23
+  // CHECK:STDERR:        ╭─┤ fail_import_error.carbon:[[@LINE+8]]:23
   // CHECK:STDERR: ->     │   let unused a: T.X = ();
   // CHECK:STDERR:        ·                       ┳━
   // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                       │  ┃        `()` to `T.(Z.X)`
-  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                       ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(T.(Z.X))`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          ┃        `()` to `T.(Z.X)`
+  // CHECK:STDERR:        ·                          ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: T.X = ();

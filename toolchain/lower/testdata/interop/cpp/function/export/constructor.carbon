@@ -39,10 +39,10 @@ void f() {
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::OneArg", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

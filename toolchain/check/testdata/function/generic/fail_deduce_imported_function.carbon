@@ -27,9 +27,9 @@ fn A[T: Lib.Z](unused x: {.a: T}) {}
 fn B() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_imported_function.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn A[T: Lib.Z](unused x: {.a: T}) {}
-  // CHECK:STDERR:        · ─────────────────┬─────────────────
-  // CHECK:STDERR:        ·                  ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                     │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   A({.b = {}});
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
@@ -47,9 +47,9 @@ fn B() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ lib.carbon
   // CHECK:STDERR:        │ fn A[T: Z](unused x: {.a: T}) {}
-  // CHECK:STDERR:        · ───────────────┬───────────────
-  // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Lib.A({.b = {}});

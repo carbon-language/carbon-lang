@@ -90,24 +90,23 @@ impl C as Core.Copy {
 class D(template T: type) {
   // Note thae missing `ref` qualifier on the `self` parameter, which makes
   // the expression `self.c` non-addressable.
+  // CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+12]]:29
+  // CHECK:STDERR: ->     │   fn F(self) -> C* { return &self.c; }
+  // CHECK:STDERR:        ·                             ┳━━━━━━
+  // CHECK:STDERR:        ·                             ┗━━┫ error: cannot take the address of non-reference
+  // CHECK:STDERR:        ·                                ┃        expression
+  // CHECK:STDERR:        ·                                ┃        [AddrOfNonRef]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ let e: C* = d.F();
+  // CHECK:STDERR:        ·             ─┬─
+  // CHECK:STDERR:        ·              ╰──┤ in monomorphization of `F(C)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   fn F(self) -> C* { return &self.c; }
   var c: C;
 }
 
 var d: D(C) = {.c = {} as C};
-// CHECK:STDERR:        ╭─┤ fail_addr_of_non_addressable_dependent_type.carbon:[[@LINE+13]]:13
-// CHECK:STDERR:        │   fn F(self) -> C* { return &self.c; }
-// CHECK:STDERR:        ·                             ┬──────
-// CHECK:STDERR:        ·                             ╰──┤ cannot take the address of non-reference
-// CHECK:STDERR:        ·                                │ expression
-// CHECK:STDERR:        ·                                │ [AddrOfNonRef]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ let e: C* = d.F();
-// CHECK:STDERR:        ·             ━┳━
-// CHECK:STDERR:        ·              ┗━━┫ error: unable to monomorphize specific `F(C)`
-// CHECK:STDERR:        ·                 ┃        [ResolvingSpecificHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 let e: C* = d.F();
 
 // --- fail_non_constant_type_argument.carbon

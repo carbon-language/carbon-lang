@@ -65,7 +65,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8fbe0c6a865381a4:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_15.1.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc22_15.1.field = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc22_15.1.field), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
@@ -73,7 +73,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.7d2f7eb7cbdbe84e:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_15.1.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc22_15.1.field = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc22_15.1.field), !dbg !41
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
@@ -87,7 +87,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMake.A.Main.a6a60dfee2d7d273(ptr sret({ {} }) %return, ptr %v) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.549.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.549.field = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @"_COp.B.Main:Copy.Core"(ptr %.549.field, ptr %v), !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }

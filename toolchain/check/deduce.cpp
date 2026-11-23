@@ -215,7 +215,7 @@ class DeductionContext {
     if (auto param = context().insts().TryGetAs<SemIR::SymbolicBindingPattern>(
             param_id)) {
       CARBON_DIAGNOSTIC_LABEL(
-          InitializingGenericParam, Info,
+          InitializingGenericParam,
           "initializing generic parameter `{0}` declared here", SemIR::NameId);
       builder.Attach(
           loc_id, InitializingGenericParam,
@@ -243,9 +243,11 @@ class DeductionContext {
 
 static auto NoteGenericHere(Context& context, SemIR::GenericId generic_id,
                             DiagnosticBuilder& diag) -> void {
-  CARBON_DIAGNOSTIC_LABEL(DeductionGenericHere, Info,
+  CARBON_DIAGNOSTIC_LABEL(DeductionGenericHere,
                           "while deducing parameters of generic declared here");
-  diag.Attach(context.generics().Get(generic_id).decl_id, DeductionGenericHere);
+  diag.Attach(LocIdForDiagnostics::DeclaredName(
+                  context.generics().Get(generic_id).decl_id),
+              DeductionGenericHere);
 }
 
 DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
@@ -334,7 +336,7 @@ auto DeductionContext::Deduce() -> bool {
       // compile-time value (e.g. TupleType) that we can decompose further.
       // So we do this conversion here, even though we will later try convert
       // again when we have deduced all of the bindings.
-      Diagnostics::AnnotationScope annotate_diagnostics(
+      Diagnostics::ContextScope diagnostic_context(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(param_id, param_loc_id, builder);
@@ -540,7 +542,7 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
     // that incorrectly.
     auto binding_type_id = context().insts().Get(binding_id).type_id();
     if (binding_type_id.is_symbolic()) {
-      Diagnostics::AnnotationScope annotate_diagnostics(
+      Diagnostics::ContextScope diagnostic_context(
           &context().emitter(), [&](auto& builder) {
             if (diagnose_) {
               NoteInitializingParam(binding_id, SemIR::LocId(binding_id),
@@ -549,14 +551,20 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
           });
 
       {
+        // A diagnostic from substituting the generic arguments known so far
+        // into this parameter's type gets a label on the call or impl lookup
+        // being deduced for, naming the parameter.
+        auto name_id = GetEntityNameForGenericBinding(context(), binding_id);
         Diagnostics::ContextScope diag_context(
             &context().emitter(), [&](auto& builder) {
-              CARBON_DIAGNOSTIC_CONTEXT(
+              if (!name_id.has_value()) {
+                return;
+              }
+              CARBON_DIAGNOSTIC_LABEL(
                   SubstitutingGenericParamType,
-                  "constructed invalid specific for {0} from argument",
-                  SemIR::TypeId);
-              builder.Attach(loc_id_, SubstitutingGenericParamType,
-                             binding_type_id);
+                  "while substituting generic arguments into the type of `{0}`",
+                  SemIR::NameId);
+              builder.Attach(loc_id_, SubstitutingGenericParamType, name_id);
             });
         auto param_type_const_id =
             SubstConstant(context(), SemIR::LocId(binding_id),

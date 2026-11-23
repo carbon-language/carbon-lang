@@ -60,8 +60,8 @@ class FailIncomplete;
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+19]]:17
 // CHECK:STDERR:        │ class FailIncomplete;
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ───────┬──────
+// CHECK:STDERR:        ·              ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Make(n: i32) -> FailIncomplete = "cpp.std.initializer_list.make";
 // CHECK:STDERR:        ·                 ━━━┳━━━━━━━━━━━━━

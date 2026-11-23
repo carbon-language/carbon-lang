@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 name: Setup build environment (Ubuntu)
+description: Frees disk space and installs Ubuntu build dependencies.
 runs:
   using: composite
   steps:

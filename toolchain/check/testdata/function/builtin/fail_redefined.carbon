@@ -15,8 +15,8 @@
 fn A(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:        ╭─┤ fail_redefined.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn A(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR:        · ──────────────┬──────────────
-// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn A(n: i32, unused m: i32) -> i32 { return n; }
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
@@ -28,8 +28,8 @@ fn A(n: i32, unused m: i32) -> i32 { return n; }
 fn B(n: i32, unused m: i32) -> i32 { return n; }
 // CHECK:STDERR:        ╭─┤ fail_redefined.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn B(n: i32, unused m: i32) -> i32 { return n; }
-// CHECK:STDERR:        · ──────────────────┬─────────────────
-// CHECK:STDERR:        ·                   ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn B(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
@@ -41,8 +41,8 @@ fn B(n: i32, m: i32) -> i32 = "int.sadd";
 fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:        ╭─┤ fail_redefined.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn C(n: i32, m: i32) -> i32 = "int.sadd";
-// CHECK:STDERR:        · ──────────────┬──────────────
-// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn C(n: i32, m: i32) -> i32 = "int.sadd";
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
