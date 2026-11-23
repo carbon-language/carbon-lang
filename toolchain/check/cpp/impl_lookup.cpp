@@ -555,6 +555,33 @@ static auto BuildCppRangeForIterateWitness(
       query_specific_interface);
 }
 
+// Builds a witness for `Core.Extendable` for a C++ class whose definition
+// hasn't been imported yet. `LookupCustomWitness` can't tell whether such a
+// class is final, so it doesn't provide a witness.
+static auto BuildCppExtendableWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+  auto class_type = context.constant_values().TryGetInstAs<SemIR::ClassType>(
+      query_self_const_id);
+  if (!class_type ||
+      context.classes().Get(class_type->class_id).has_definition_started()) {
+    return SemIR::InstId::None;
+  }
+
+  // Completing the class imports its definition.
+  if (!TryToCompleteType(context,
+                         SemIR::TypeId::ForTypeConstant(query_self_const_id),
+                         loc_id)) {
+    return SemIR::InstId::None;
+  }
+
+  return LookupCustomWitness(context, loc_id, SemIR::CoreInterface::Extendable,
+                             query_self_const_id, query_specific_interface,
+                             /*build_witness=*/true)
+      .value_or(SemIR::InstId::None);
+}
+
 auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
                    SemIR::CoreInterface core_interface,
                    SemIR::ConstantId query_self_const_id,
@@ -623,8 +650,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppRangeForIterateWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
 
-    // `Extendable` is handled by custom_witness.cpp for all types.
     case SemIR::CoreInterface::Extendable:
+      return BuildCppExtendableWitness(context, loc_id, query_self_const_id,
+                                       query_specific_interface);
+
     // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
     case SemIR::CoreInterface::FloatFitsIn:

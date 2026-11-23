@@ -898,15 +898,12 @@ static auto MakeExtendableWitness(
     return std::nullopt;
   }
 
-  // The inheritance kind comes from the class definition. A C++ class's
-  // definition is only imported when the class is completed.
-  if (!context.classes().Get(class_type->class_id).has_definition_started() &&
-      !TryToCompleteType(context, self_type_id, loc_id)) {
-    return std::nullopt;
-  }
-
-  if (context.classes().Get(class_type->class_id).inheritance_kind ==
-      SemIR::Class::InheritanceKind::Final) {
+  // A forward declaration doesn't say whether the class is final, so the class
+  // has to be defined. For a C++ class that hasn't been completed yet,
+  // `LookupCppImpl` imports the definition and then builds this witness.
+  const auto& class_info = context.classes().Get(class_type->class_id);
+  if (!class_info.has_definition_started() ||
+      class_info.inheritance_kind == SemIR::Class::InheritanceKind::Final) {
     return std::nullopt;
   }
 
