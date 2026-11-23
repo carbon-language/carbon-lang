@@ -894,9 +894,19 @@ static auto MakeExtendableWitness(
   auto self_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(query_self_const_id));
   auto class_type = context.types().TryGetAs<SemIR::ClassType>(self_type_id);
-  if (!class_type ||
-      context.classes().Get(class_type->class_id).inheritance_kind ==
-          SemIR::Class::InheritanceKind::Final) {
+  if (!class_type) {
+    return std::nullopt;
+  }
+
+  // The inheritance kind comes from the class definition. A C++ class's
+  // definition is only imported when the class is completed.
+  if (!context.classes().Get(class_type->class_id).has_definition_started() &&
+      !TryToCompleteType(context, self_type_id, loc_id)) {
+    return std::nullopt;
+  }
+
+  if (context.classes().Get(class_type->class_id).inheritance_kind ==
+      SemIR::Class::InheritanceKind::Final) {
     return std::nullopt;
   }
 

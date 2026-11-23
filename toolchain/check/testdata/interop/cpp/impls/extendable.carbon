@@ -18,9 +18,7 @@ class Class {};
 ''';
 
 fn Test() {
-  //@dump-sem-ir-begin
   Cpp.Class as Core.Extendable;
-  //@dump-sem-ir-end
 }
 
 // --- abstract_class.carbon
@@ -85,6 +83,14 @@ class Final final {};
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_final_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.Final as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Final` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.Final as Core.Extendable;
 }
 
@@ -110,6 +116,14 @@ class AbstractFinal final {
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_abstract_final_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.AbstractFinal as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `AbstractFinal` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.AbstractFinal as Core.Extendable;
 }
 
@@ -122,6 +136,14 @@ class VirtualBase : public virtual Class {};
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_virtual_base.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.VirtualBase as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `VirtualBase` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.VirtualBase as Core.Extendable;
 }
 
@@ -133,6 +155,14 @@ union Union {};
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_union.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.Union as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Union` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.Union as Core.Extendable;
 }
 
@@ -144,6 +174,14 @@ enum Enum { A };
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_enum.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.Enum as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Enum` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.Enum as Core.Extendable;
 }
 
@@ -155,6 +193,14 @@ enum class ScopedEnum { A };
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_scoped_enum.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.ScopedEnum as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `ScopedEnum` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.ScopedEnum as Core.Extendable;
 }
 
@@ -166,6 +212,14 @@ class Incomplete;
 ''';
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Cpp.Incomplete as Core.Extendable;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Incomplete` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.Extendable`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Cpp.Incomplete as Core.Extendable;
 }
 
@@ -250,38 +304,3 @@ fn G(ref c: Cpp.Final) {
   F(ref c);
 }
 
-// CHECK:STDOUT: --- class.carbon = $class
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %Class: type = class_type @Class [concrete]
-// CHECK:STDOUT:   %Extendable.type: type = facet_type <@Extendable> [concrete]
-// CHECK:STDOUT:   %custom_witness: <witness> = custom_witness (), @Extendable [concrete]
-// CHECK:STDOUT:   %Extendable.facet: %Extendable.type = facet_value %Class, (%custom_witness) [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Extendable = %Core.Extendable
-// CHECK:STDOUT:     import Core//prelude
-// CHECK:STDOUT:     import Core//prelude/...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
-// CHECK:STDOUT:     .Class = %Class.decl
-// CHECK:STDOUT:     import Cpp//...
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.decl: type = class_decl @Class [concrete = constants.%Class] {} {}
-// CHECK:STDOUT:   %Core.Extendable: type = import_ref Core//prelude/parts/destroy, Extendable, loaded [concrete = constants.%Extendable.type]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Test() {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %Class.ref: type = name_ref Class, imports.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %Extendable.ref: type = name_ref Extendable, imports.%Core.Extendable [concrete = constants.%Extendable.type]
-// CHECK:STDOUT:   %Extendable.facet: %Extendable.type = facet_value %Class.ref, (constants.%custom_witness) [concrete = constants.%Extendable.facet]
-// CHECK:STDOUT:   %.loc9: %Extendable.type = converted %Class.ref, %Extendable.facet [concrete = constants.%Extendable.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
