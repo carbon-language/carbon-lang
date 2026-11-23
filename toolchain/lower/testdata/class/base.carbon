@@ -41,9 +41,9 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ { i32 }, i32 }) %return) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_35.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 0, !dbg !29
-// CHECK:STDOUT:   %.loc24_26.3.b = getelementptr inbounds nuw { i32 }, ptr %.loc24_35.2.base, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   %.loc24_35.6.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %return, i32 0, i32 1, !dbg !29
+// CHECK:STDOUT:   %.loc24_35.2.base = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !29
+// CHECK:STDOUT:   %.loc24_26.3.b = getelementptr inbounds nuw i8, ptr %.loc24_35.2.base, i64 0, !dbg !30
+// CHECK:STDOUT:   %.loc24_35.6.d = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @Derived.val.loc24_36, i64 8, i1 false), !dbg !31
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
@@ -51,14 +51,14 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CAccess.Main(ptr sret({ i32, i32 }) %return, ptr %d) #0 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc28_12.1.d = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 1, !dbg !37
+// CHECK:STDOUT:   %.loc28_12.1.d = getelementptr inbounds nuw i8, ptr %d, i64 4, !dbg !37
 // CHECK:STDOUT:   %.loc28_12.2 = load i32, ptr %.loc28_12.1.d, align 4, !dbg !37
-// CHECK:STDOUT:   %.loc28_17.1.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %d, i32 0, i32 0, !dbg !38
-// CHECK:STDOUT:   %.loc28_22.1.b = getelementptr inbounds nuw { i32 }, ptr %.loc28_17.1.base, i32 0, i32 0, !dbg !38
+// CHECK:STDOUT:   %.loc28_17.1.base = getelementptr inbounds nuw i8, ptr %d, i64 0, !dbg !38
+// CHECK:STDOUT:   %.loc28_22.1.b = getelementptr inbounds nuw i8, ptr %.loc28_17.1.base, i64 0, !dbg !38
 // CHECK:STDOUT:   %.loc28_22.2 = load i32, ptr %.loc28_22.1.b, align 4, !dbg !38
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !39
 // CHECK:STDOUT:   store i32 %.loc28_12.2, ptr %tuple.elem0.tuple.elem, align 4, !dbg !39
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !39
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !39
 // CHECK:STDOUT:   store i32 %.loc28_22.2, ptr %tuple.elem1.tuple.elem, align 4, !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
@@ -66,7 +66,7 @@ fn Convert(p: Derived*) -> Base* {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvert.Main(ptr %p) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { { i32 }, i32 }, ptr %p, i32 0, i32 0, !dbg !48
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw i8, ptr %p, i64 0, !dbg !48
 // CHECK:STDOUT:   ret ptr %.loc32_11.2.base, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

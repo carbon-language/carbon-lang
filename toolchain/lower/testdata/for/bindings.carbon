@@ -63,8 +63,8 @@ fn For() {
 // CHECK:STDOUT: for.body:                                         ; preds = %for.next
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc29_33.8.temp), !dbg !20
 // CHECK:STDOUT:   call void @_CGet.Optional.Core.dc5ffaddab9fc53e(ptr %.loc29_33.8.temp, ptr %.loc29_33.1.temp), !dbg !20
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 0, !dbg !20
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc29_33.8.temp, i32 0, i32 1, !dbg !20
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc29_33.8.temp, i64 0, !dbg !20
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc29_33.8.temp, i64 4, !dbg !20
 // CHECK:STDOUT:   %.loc29_33.11 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !20
 // CHECK:STDOUT:   %.loc29_33.12 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !20
 // CHECK:STDOUT:   store i32 %.loc29_33.12, ptr %n.var, align 4, !dbg !17
@@ -85,9 +85,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.35f6012581c5aabb:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !35 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !37
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem1.tuple.elem), !dbg !37
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !37
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %tuple.elem0.tuple.elem), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
@@ -101,9 +101,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e13bb226a5f60f67:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc29_33.1.has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 1, !dbg !45
+// CHECK:STDOUT:   %.loc29_33.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.29e6aa423646b61a(ptr %.loc29_33.1.has_value), !dbg !45
-// CHECK:STDOUT:   %.loc29_33.4.value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %.loc29_33.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.22464d2e6bd3df35(ptr %.loc29_33.4.value), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
@@ -111,9 +111,9 @@ fn For() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.3a40968e4559dd32:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc29_33.1.has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 1, !dbg !49
+// CHECK:STDOUT:   %.loc29_33.1.has_value = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.29e6aa423646b61a(ptr %.loc29_33.1.has_value), !dbg !49
-// CHECK:STDOUT:   %.loc29_33.4.value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %self, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc29_33.4.value = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.22464d2e6bd3df35(ptr %.loc29_33.4.value), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
@@ -193,7 +193,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.c1cc3e41344c17ec:OptionalStorage.Core.3c6fb8ac8f4bd886"(ptr %value) #0 !dbg !144 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %value, i32 0, i32 1, !dbg !149
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %value, i64 8, !dbg !149
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !149
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !149
 // CHECK:STDOUT:   ret i1 %2, !dbg !150
@@ -201,26 +201,26 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CGet.c1cc3e41344c17ec:OptionalStorage.Core.3c6fb8ac8f4bd886"(ptr sret({ i32, i32 }) %return, ptr %value) #0 !dbg !152 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %value, i32 0, i32 0, !dbg !157
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw i8, ptr %value, i64 0, !dbg !157
 // CHECK:STDOUT:   call void @"_COp.4e4edddc7580c79b:Copy.Core.3eda18978e8f48e1"(ptr %return, ptr %value1), !dbg !157
 // CHECK:STDOUT:   ret void, !dbg !158
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CNone.c1cc3e41344c17ec:OptionalStorage.Core.3c6fb8ac8f4bd886"(ptr sret(<{ { i32, i32 }, i1 }>) %return) #0 !dbg !160 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ { i32, i32 }, i1 }>, ptr %return, i32 0, i32 1, !dbg !167
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !167
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !167
 // CHECK:STDOUT:   ret void, !dbg !168
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp.4e4edddc7580c79b:Copy.Core.3eda18978e8f48e1"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !170 {
-// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !175
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !175
 // CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !175
-// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !176
-// CHECK:STDOUT:   %tuple.elem2 = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !177
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !176
+// CHECK:STDOUT:   %tuple.elem2 = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !177
 // CHECK:STDOUT:   %tuple.elem.load3 = load i32, ptr %tuple.elem2, align 4, !dbg !177
-// CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !176
+// CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !176
 // CHECK:STDOUT:   store i32 %tuple.elem.load, ptr %tuple.elem1, align 4, !dbg !176
 // CHECK:STDOUT:   store i32 %tuple.elem.load3, ptr %tuple.elem4, align 4, !dbg !176
 // CHECK:STDOUT:   ret void, !dbg !178

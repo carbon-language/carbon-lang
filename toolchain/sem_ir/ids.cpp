@@ -69,7 +69,9 @@ auto GenericInstIndex::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto ImportIRId::Print(llvm::raw_ostream& out) const -> void {
-  if (*this == ApiForImpl) {
+  if (*this == Local) {
+    out << Label << "(Local)";
+  } else if (*this == ApiForImpl) {
     out << Label << "(ApiForImpl)";
   } else if (*this == Cpp) {
     out << Label << "(Cpp)";

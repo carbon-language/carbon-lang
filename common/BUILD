@@ -390,6 +390,7 @@ cc_binary(
 
 cc_library(
     name = "hashtable_key_context",
+    srcs = ["hashtable_key_context.cpp"],
     hdrs = ["hashtable_key_context.h"],
     deps = [
         ":hashing",
@@ -408,6 +409,29 @@ cc_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_binary(
+    name = "hashtable_key_context_benchmark",
+    testonly = 1,
+    srcs = ["hashtable_key_context_benchmark.cpp"],
+    deps = [
+        ":check",
+        ":hashtable_key_context",
+        "//testing/base:benchmark_helpers",
+        "//testing/base:benchmark_main",
+        "//toolchain/benchmarking:source_gen_lib",
+        "@abseil-cpp//absl/random",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "hashtable_key_context_benchmark_test",
+    size = "small",
+    srcs = [":hashtable_key_context_benchmark"],
+    args = ["--benchmark_dry_run"],
 )
 
 cc_library(

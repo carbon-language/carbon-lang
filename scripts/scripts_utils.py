@@ -11,9 +11,11 @@ import hashlib
 import os
 import platform
 import shutil
+import tarfile
 import tempfile
 import time
 import urllib.request
+import zipfile
 from enum import Enum
 from pathlib import Path
 from typing import NamedTuple, Optional
@@ -21,6 +23,7 @@ from typing import NamedTuple, Optional
 
 # The tools we track releases for.
 class Release(Enum):
+    ACTIONLINT = "actionlint"
     BAZELISK = "bazelisk"
     BUILDIFIER = "buildifier"
     BUILDOZER = "buildozer"
@@ -30,16 +33,24 @@ class Release(Enum):
 class ReleaseInfo(NamedTuple):
     # The base URL for downloads. Should include the version.
     url: str
-    # The separator in a binary's name, either `-` or `.`.
+    # The separator in a binary's name, `-`, `.`, or `_`.
     separator: str
+    # Optional version string embedded in archived release asset names.
+    version_in_name: Optional[str] = None
 
 
+_ACTIONLINT_VERSION = "1.7.12"
 _BAZEL_TOOLS_URL = (
     "https://github.com/bazelbuild/buildtools/releases/download/v8.5.1/"
 )
 
 # Structured information per release tool.
 _RELEASES = {
+    Release.ACTIONLINT: ReleaseInfo(
+        f"https://github.com/rhysd/actionlint/releases/download/v{_ACTIONLINT_VERSION}/",  # noqa: E501
+        "_",
+        version_in_name=_ACTIONLINT_VERSION,
+    ),
     Release.BAZELISK: ReleaseInfo(
         "https://github.com/bazelbuild/bazelisk/releases/download/v1.28.1/", "-"
     ),
@@ -58,6 +69,13 @@ _RELEASES = {
 # `calculate_release_shas.py`. This is maintained separate from _RELEASES just
 # to make copy-paste updates simpler.
 _RELEASE_SHAS = {
+    Release.ACTIONLINT: {
+        "darwin_amd64.tar.gz": "5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644",  # noqa: E501
+        "darwin_arm64.tar.gz": "aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f",  # noqa: E501
+        "linux_amd64.tar.gz": "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8",  # noqa: E501
+        "linux_arm64.tar.gz": "325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6",  # noqa: E501
+        "windows_amd64.zip": "6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9",  # noqa: E501
+    },
     Release.BAZELISK: {
         "darwin-amd64": "023225736cea5dc88f2b0807d5b1af4eb0f69a4ed45e3994b2c18c263bc80e48",  # noqa: E501
         "darwin-arm64": "dea3f3f5de2dbc5e269e0132cdd369d5efe738f7b973d5d4eb2b4f7055a97b39",  # noqa: E501
@@ -119,6 +137,39 @@ def _download(url: str, local_path: Path) -> Optional[int]:
     return None
 
 
+def _download_with_retries(url: str, dest: Path) -> None:
+    """Downloads `url` to `dest`, retrying transient HTTP errors."""
+    retries = 5
+    while True:
+        err = _download(url, dest)
+        if err is None:
+            return
+        retries -= 1
+        if retries == 0:
+            exit(f"Failed to download {url}: HTTP {err}.")
+        time.sleep(1)
+
+
+def _extract_binary_from_archive(
+    archive_path: Path, archive_url: str, binary_name: str, dest: Path
+) -> None:
+    """Extracts `binary_name` from a `.tar.gz` or `.zip` archive into `dest`."""
+    if archive_url.endswith(".tar.gz"):
+        with tarfile.open(archive_path, mode="r:gz") as tf:
+            member = tf.getmember(binary_name)
+            extracted = tf.extractfile(member)
+            if extracted is None:
+                exit(f"Entry {binary_name} in {archive_url} is not a file.")
+            with extracted, dest.open("wb") as out:
+                shutil.copyfileobj(extracted, out)
+    elif archive_url.endswith(".zip"):
+        with zipfile.ZipFile(archive_path) as zf:
+            with zf.open(binary_name) as extracted, dest.open("wb") as out:
+                shutil.copyfileobj(extracted, out)
+    else:
+        exit(f"Unsupported archive format: {archive_url}")
+
+
 def _get_cached_binary(name: str, url: str, want_hash: str) -> str:
     """Returns the path to the cached binary.
 
@@ -127,6 +178,7 @@ def _get_cached_binary(name: str, url: str, want_hash: str) -> str:
     """
     cache_dir = Path.home().joinpath(".cache", "carbon-lang-scripts")
     cache_dir.mkdir(parents=True, exist_ok=True)
+    is_archive = url.endswith((".tar.gz", ".zip"))
 
     # Hold a lock while checksumming and downloading the path. Otherwise,
     # parallel runs by prek may conflict with one another with
@@ -134,21 +186,49 @@ def _get_cached_binary(name: str, url: str, want_hash: str) -> str:
     with open(cache_dir.joinpath(f"{name}.lock"), "w") as lock_file:
         fcntl.lockf(lock_file.fileno(), fcntl.LOCK_EX)
 
-        # Check if there's a cached file that can be used.
         local_path = cache_dir.joinpath(name)
+        hash_sidecar = cache_dir.joinpath(f"{name}.sha256")
+        if is_archive:
+            if local_path.is_file() and hash_sidecar.is_file():
+                archive_sha, sep, bin_sha = (
+                    hash_sidecar.read_text(encoding="utf-8")
+                    .strip()
+                    .partition(":")
+                )
+                if (
+                    sep
+                    and archive_sha == want_hash
+                    and bin_sha == _get_hash(local_path)
+                ):
+                    return str(local_path)
+
+            with tempfile.TemporaryDirectory(dir=cache_dir) as tmp_dir:
+                archive_path = Path(tmp_dir) / "archive"
+                _download_with_retries(url, archive_path)
+                found_hash = _get_hash(archive_path)
+                if want_hash != found_hash:
+                    exit(
+                        f"Downloaded {url} but found sha256 "
+                        f"{found_hash} ({archive_path.stat().st_size} bytes), "
+                        f"wanted {want_hash}"
+                    )
+                extracted_tmp = Path(tmp_dir) / name
+                _extract_binary_from_archive(
+                    archive_path, url, name, extracted_tmp
+                )
+                extracted_tmp.chmod(0o755)
+                bin_hash = _get_hash(extracted_tmp)
+                extracted_tmp.replace(local_path)
+                hash_sidecar.write_text(
+                    f"{want_hash}:{bin_hash}\n", encoding="utf-8"
+                )
+            return str(local_path)
+
+        # Check if there's a cached file that can be used.
         if local_path.is_file() and want_hash == _get_hash(local_path):
             return str(local_path)
 
-        # Download the file.
-        retries = 5
-        while True:
-            err = _download(url, local_path)
-            if err is None:
-                break
-            retries -= 1
-            if retries == 0:
-                exit(f"Failed to download {url}: HTTP {err}.")
-            time.sleep(1)
+        _download_with_retries(url, local_path)
         local_path.chmod(0o755)
 
         # Verify the downloaded hash.
@@ -187,6 +267,18 @@ def _select_hash(hashes: dict[str, str], version: str) -> str:
     return hashes[version]
 
 
+def _release_asset_url(
+    release: Release, info: ReleaseInfo, platform_label: str
+) -> str:
+    base = info.url.rstrip("/")
+    if info.version_in_name is not None:
+        return (
+            f"{base}/{release.value}{info.separator}"
+            f"{info.version_in_name}{info.separator}{platform_label}"
+        )
+    return f"{base}/{release.value}{info.separator}{platform_label}"
+
+
 def get_release(release: Release) -> str:
     """Install a tool to carbon-lang's cache and return its path.
 
@@ -195,12 +287,17 @@ def get_release(release: Release) -> str:
     info = _RELEASES[release]
     shas = _RELEASE_SHAS[release]
 
-    # Translate platform information into Bazel's release form.
+    # Translate platform information into the release asset's naming scheme.
     ext = _get_platform_ext()
+    if info.version_in_name is not None:
+        asset_ext = ".zip" if platform.system() == "Windows" else ".tar.gz"
+    else:
+        asset_ext = ext
     platform_label = (
-        f"{platform.system().lower()}{info.separator}{_get_machine()}{ext}"
+        f"{platform.system().lower()}{info.separator}"
+        f"{_get_machine()}{asset_ext}"
     )
-    url = f"{info.url}/{release.value}{info.separator}{platform_label}"
+    url = _release_asset_url(release, info, platform_label)
     want_hash = _select_hash(shas, platform_label)
 
     return _get_cached_binary(f"{release.value}{ext}", url, want_hash)
@@ -214,7 +311,7 @@ def calculate_release_shas() -> None:
 
         print(f"  {release}: {{")
         for platform_label in shas.keys():
-            url = f"{info.url}/{release.value}{info.separator}{platform_label}"
+            url = _release_asset_url(release, info, platform_label)
             with tempfile.NamedTemporaryFile() as f:
                 path = Path(f.name)
                 _download(url, path)

@@ -199,7 +199,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !56
 // CHECK:STDOUT:   %.loc16_42.2 = load i32, ptr %.loc16_42.1.n, align 4, !dbg !56
 // CHECK:STDOUT:   ret i32 %.loc16_42.2, !dbg !57
 // CHECK:STDOUT: }
@@ -405,11 +405,11 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.92e03c783d6af646:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !150 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 2, !dbg !152
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !152
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %tuple.elem2.tuple.elem), !dbg !152
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 1, !dbg !152
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !152
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %tuple.elem1.tuple.elem), !dbg !152
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %self, i32 0, i32 0, !dbg !152
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !152
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %tuple.elem0.tuple.elem), !dbg !152
 // CHECK:STDOUT:   ret void, !dbg !152
 // CHECK:STDOUT: }
@@ -417,11 +417,11 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.2ee5d57da69a520f:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !154 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_3.1.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 2, !dbg !156
+// CHECK:STDOUT:   %.loc8_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !156
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc8_3.1.array.index), !dbg !156
-// CHECK:STDOUT:   %.loc8_3.4.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 1, !dbg !156
+// CHECK:STDOUT:   %.loc8_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !156
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc8_3.4.array.index), !dbg !156
-// CHECK:STDOUT:   %.loc8_3.7.array.index = getelementptr inbounds [3 x {}], ptr %self, i32 0, i64 0, !dbg !156
+// CHECK:STDOUT:   %.loc8_3.7.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !156
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc8_3.7.array.index), !dbg !156
 // CHECK:STDOUT:   ret void, !dbg !156
 // CHECK:STDOUT: }
@@ -434,11 +434,11 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { {}, {}, {} }, align 1, !dbg !159
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !159
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 0, !dbg !160
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem0.tuple.elem), !dbg !161
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 1, !dbg !160
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.tuple.elem), !dbg !162
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 2, !dbg !160
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem2.tuple.elem), !dbg !163
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.59df9a16f8c795fe(ptr %w.var), !dbg !159
 // CHECK:STDOUT:   ret void, !dbg !165
@@ -449,11 +449,11 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca [3 x {}], align 1, !dbg !167
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !167
-// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 0, !dbg !168
+// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !168
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.b44.array.index), !dbg !169
-// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 1, !dbg !168
+// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !168
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.5b6.array.index), !dbg !170
-// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 2, !dbg !168
+// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !168
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.97d.array.index), !dbg !171
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f85fac887b9592cc(ptr %w.var), !dbg !167
 // CHECK:STDOUT:   ret void, !dbg !173
@@ -475,11 +475,11 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !175
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !178
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.9aa), !dbg !179
-// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 0, !dbg !179
+// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 0, !dbg !179
 // CHECK:STDOUT:   store ptr %.7a56fd.1.temp, ptr %tuple.9aa1, align 8, !dbg !179
-// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 1, !dbg !179
+// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 8, !dbg !179
 // CHECK:STDOUT:   store ptr %.7a56fd.2.temp, ptr %tuple.9aa2, align 8, !dbg !179
-// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 2, !dbg !179
+// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 16, !dbg !179
 // CHECK:STDOUT:   store ptr %.7a56fd.3.temp, ptr %tuple.9aa3, align 8, !dbg !179
 // CHECK:STDOUT:   call void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr %w.var, ptr %tuple.9aa), !dbg !175
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %w.var), !dbg !175
@@ -610,9 +610,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.f38e1c3ccdfe019b:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !217 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !219
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !219
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc9_3.1.b), !dbg !219
-// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !219
+// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !219
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc9_3.4.a), !dbg !219
 // CHECK:STDOUT:   ret void, !dbg !219
 // CHECK:STDOUT: }
@@ -620,9 +620,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.4c2c335412ec52fa:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !221 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !223
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !223
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %tuple.elem1.tuple.elem), !dbg !223
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !223
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !223
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.4feb82675f0be8c5(ptr %tuple.elem0.tuple.elem), !dbg !223
 // CHECK:STDOUT:   ret void, !dbg !223
 // CHECK:STDOUT: }
@@ -630,9 +630,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.0950f8aecfaebf0b:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !225 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !227
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !227
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %.loc9_3.1.b), !dbg !227
-// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !227
+// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !227
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %.loc9_3.4.a), !dbg !227
 // CHECK:STDOUT:   ret void, !dbg !227
 // CHECK:STDOUT: }
@@ -640,9 +640,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.2f43e328c637647f:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !229 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !231
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !231
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %tuple.elem1.tuple.elem), !dbg !231
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !231
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !231
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.efd8b9ca9849b087(ptr %tuple.elem0.tuple.elem), !dbg !231
 // CHECK:STDOUT:   ret void, !dbg !231
 // CHECK:STDOUT: }
@@ -650,9 +650,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.2970be6ba4c2615c:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !233 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !235
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !235
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %.loc9_3.1.b), !dbg !235
-// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !235
+// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !235
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc9_3.4.a), !dbg !235
 // CHECK:STDOUT:   ret void, !dbg !235
 // CHECK:STDOUT: }
@@ -660,9 +660,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.680f7fa3ef86df7a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !237 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 1, !dbg !239
+// CHECK:STDOUT:   %.loc9_3.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !239
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %.loc9_3.1.b), !dbg !239
-// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw { {}, {} }, ptr %self, i32 0, i32 0, !dbg !239
+// CHECK:STDOUT:   %.loc9_3.4.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !239
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %.loc9_3.4.a), !dbg !239
 // CHECK:STDOUT:   ret void, !dbg !239
 // CHECK:STDOUT: }
@@ -670,9 +670,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.bb4067704e9a198c:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !241 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 1, !dbg !243
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !243
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %tuple.elem1.tuple.elem), !dbg !243
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %self, i32 0, i32 0, !dbg !243
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !243
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.ff24853a526ad6af(ptr %tuple.elem0.tuple.elem), !dbg !243
 // CHECK:STDOUT:   ret void, !dbg !243
 // CHECK:STDOUT: }
@@ -682,12 +682,12 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !246
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !246
-// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !248
-// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 0, !dbg !247
+// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !248
+// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !247
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.ae2.a), !dbg !249
-// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 1, !dbg !247
+// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !247
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.ffd.b), !dbg !250
-// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !248
+// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !248
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.b82.tuple.elem), !dbg !251
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e1b668d14ae6f638(ptr %w.var), !dbg !246
 // CHECK:STDOUT:   ret void, !dbg !253
@@ -707,12 +707,12 @@ fn Run() {
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !257
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !255
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !259
-// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !260
-// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 0, !dbg !258
+// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !260
+// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !258
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.ce4.a, ptr %.7a56fd.1.temp), !dbg !258
-// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 1, !dbg !258
+// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !258
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.0ae.b, ptr %.7a56fd.2.temp), !dbg !258
-// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !260
+// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !260
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.1e9.tuple.elem, ptr %.7a56fd.3.temp), !dbg !260
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.d998f017deb6d2c0(ptr %w.var), !dbg !255
 // CHECK:STDOUT:   ret void, !dbg !262
@@ -725,16 +725,16 @@ fn Run() {
 // CHECK:STDOUT:   %.7a56fd.4.temp = alloca {}, align 1, !dbg !264
 // CHECK:STDOUT:   %.7a56fd.5.temp = alloca {}, align 1, !dbg !264
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !264
-// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !266
-// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 0, !dbg !265
+// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !266
+// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !265
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.014.a), !dbg !267
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.4.temp), !dbg !264
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.4.temp), !dbg !268
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.5.temp), !dbg !264
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.5.temp), !dbg !269
-// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 1, !dbg !265
+// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !265
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.94f.b, ptr %.7a56fd.4.temp), !dbg !265
-// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !266
+// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !266
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.76f.tuple.elem, ptr %.7a56fd.5.temp), !dbg !266
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6458632b8fd80962(ptr %w.var), !dbg !264
 // CHECK:STDOUT:   ret void, !dbg !271
@@ -920,7 +920,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !339 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !344
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !344
 // CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !344
 // CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !345
 // CHECK:STDOUT: }
@@ -1003,7 +1003,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !381 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !386
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !386
 // CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !386
 // CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !387
 // CHECK:STDOUT: }
@@ -1096,7 +1096,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.8fbe0c6a865381a4:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !423 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_10.1.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !425
+// CHECK:STDOUT:   %.loc21_10.1.field = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !425
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc21_10.1.field), !dbg !425
 // CHECK:STDOUT:   ret void, !dbg !425
 // CHECK:STDOUT: }
@@ -1104,7 +1104,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.5a23cc09585c55d2:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !427 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_10.1.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !429
+// CHECK:STDOUT:   %.loc21_10.1.field = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !429
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc21_10.1.field), !dbg !429
 // CHECK:STDOUT:   ret void, !dbg !429
 // CHECK:STDOUT: }
@@ -1118,7 +1118,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMakeA.Main.a6a60dfee2d7d273(ptr sret({ {} }) %return) #0 !dbg !431 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !435
+// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !435
 // CHECK:STDOUT:   call void @_CMakeB.B.Main(ptr %.f4aa6f.1.field), !dbg !434
 // CHECK:STDOUT:   ret void, !dbg !436
 // CHECK:STDOUT: }

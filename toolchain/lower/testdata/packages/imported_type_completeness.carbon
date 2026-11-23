@@ -247,7 +247,7 @@ fn CallF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.95528a86e1127e2d:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_3.1.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !73
+// CHECK:STDOUT:   %.loc7_3.1.vptr = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !73
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.96c9f45941b9e5e6(ptr %.loc7_3.1.vptr), !dbg !73
 // CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
@@ -301,7 +301,7 @@ fn CallF() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.95528a86e1127e2d:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !88 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.1.vptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !90
+// CHECK:STDOUT:   %.1.vptr = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !90
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.65d3bc6845692cbc(ptr %.1.vptr), !dbg !90
 // CHECK:STDOUT:   ret void, !dbg !90
 // CHECK:STDOUT: }
@@ -319,7 +319,7 @@ fn CallF() {
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %t) #0 !dbg !96 {
 // CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !99
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !99
-// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %1, i32 0, i32 0, !dbg !100
+// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw i8, ptr %1, i64 0, !dbg !100
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.99f.anon, i64 8, i1 false), !dbg !99
 // CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !102
 // CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !102

@@ -77,10 +77,10 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: define dso_local void @_Z5CallFv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::Main::A", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   call void @_ZNK6Carbon4Main1A1FEv(ptr noundef nonnull align 1 %ref.tmp)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -198,10 +198,10 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: define dso_local noundef i32 @_Z9CallArgsFv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::Main::ArgsA", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon4Main5ArgsA1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5ArgsAD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

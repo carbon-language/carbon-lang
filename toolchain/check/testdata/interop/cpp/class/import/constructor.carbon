@@ -313,13 +313,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-   // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:4
+   // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+12]]:4
    // CHECK:STDERR: ->     │    Cpp.IncompleteC.IncompleteC();
    // CHECK:STDERR:        ·    ━━━━━━━━━━━━┳━━━━━━━━━━━━━━
    // CHECK:STDERR:        ·                ┗━━┫ error: member access into incomplete class `Cpp.IncompleteC`
    // CHECK:STDERR:        ·                   ┃        [QualifiedExprInIncompleteClassScope]
    // CHECK:STDERR:        ┆
-   // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
    // CHECK:STDERR:        ├─┤ ./incomplete.h
    // CHECK:STDERR:        │ class IncompleteC;
    // CHECK:STDERR:        ·       ┬

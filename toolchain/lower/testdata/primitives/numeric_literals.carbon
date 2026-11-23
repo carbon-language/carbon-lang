@@ -42,18 +42,18 @@ fn F() {
 // CHECK:STDOUT:   %_.var.loc16 = alloca [4 x i32], align 4, !dbg !43
 // CHECK:STDOUT:   %_.var.loc22 = alloca [6 x double], align 8, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !43
-// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 0, !dbg !44
-// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 1, !dbg !44
-// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 2, !dbg !44
-// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds [4 x i32], ptr %_.var.loc16, i32 0, i64 3, !dbg !44
+// CHECK:STDOUT:   %.loc21_3.3.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 0, !dbg !44
+// CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 4, !dbg !44
+// CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 8, !dbg !44
+// CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 12, !dbg !44
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc16, ptr align 4 @array.e93.loc16_3.1, i64 16, i1 false), !dbg !43
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !46
-// CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 0, !dbg !47
-// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 1, !dbg !47
-// CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 2, !dbg !47
-// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 3, !dbg !47
-// CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 4, !dbg !47
-// CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds [6 x double], ptr %_.var.loc22, i32 0, i64 5, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 0, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 8, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.9.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 16, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 24, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 32, !dbg !47
+// CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 40, !dbg !47
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc22, ptr align 8 @array.33a.loc22_3.1, i64 48, i1 false), !dbg !46
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.b5f30f9c486f7750(ptr %_.var.loc22), !dbg !46
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.8a58b7b15e68238e(ptr %_.var.loc16), !dbg !43
@@ -63,17 +63,17 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.b72c73ceef325bf3:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_3.1.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 5, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 40, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.1.array.index), !dbg !52
-// CHECK:STDOUT:   %.loc22_3.4.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 4, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 32, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.4.array.index), !dbg !52
-// CHECK:STDOUT:   %.loc22_3.7.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 3, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.7.array.index = getelementptr inbounds i8, ptr %self, i64 24, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.7.array.index), !dbg !52
-// CHECK:STDOUT:   %.loc22_3.10.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 2, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.10.array.index = getelementptr inbounds i8, ptr %self, i64 16, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.10.array.index), !dbg !52
-// CHECK:STDOUT:   %.loc22_3.13.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 1, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.13.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.13.array.index), !dbg !52
-// CHECK:STDOUT:   %.loc22_3.16.array.index = getelementptr inbounds [6 x double], ptr %self, i32 0, i64 0, !dbg !52
+// CHECK:STDOUT:   %.loc22_3.16.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !52
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2b38c2ca9f7f1a94(ptr %.loc22_3.16.array.index), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
@@ -81,13 +81,13 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.f09a8402c9d45995:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 3, !dbg !56
+// CHECK:STDOUT:   %.loc16_3.1.array.index = getelementptr inbounds i8, ptr %self, i64 12, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc16_3.1.array.index), !dbg !56
-// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 2, !dbg !56
+// CHECK:STDOUT:   %.loc16_3.4.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc16_3.4.array.index), !dbg !56
-// CHECK:STDOUT:   %.loc16_3.7.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 1, !dbg !56
+// CHECK:STDOUT:   %.loc16_3.7.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc16_3.7.array.index), !dbg !56
-// CHECK:STDOUT:   %.loc16_3.10.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 0, !dbg !56
+// CHECK:STDOUT:   %.loc16_3.10.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !56
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc16_3.10.array.index), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }

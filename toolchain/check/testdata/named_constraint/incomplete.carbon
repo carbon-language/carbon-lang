@@ -85,9 +85,9 @@ fn F() {
   // Converting to facet type `Z` requires `Z` to be identified.
   // CHECK:STDERR:        ╭─┤ fail_impl_lookup_target_not_identified.carbon:[[@LINE+17]]:3
   // CHECK:STDERR:        │ constraint Z;
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
-  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·               │ [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:        │
   // CHECK:STDERR:        │ fn AsZ(unused generic T: Z) {}
   // CHECK:STDERR:        ·                       ──┬─
@@ -129,7 +129,7 @@ constraint W {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ constraint W {
   // CHECK:STDERR:        · ───────┬──────
-  // CHECK:STDERR:        ·        ╰──┤ constraint is currently being defined
+  // CHECK:STDERR:        ·        ╰──┤ constraint is incomplete within its definition
   // CHECK:STDERR:        ·           │ [NamedConstraintIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls X where .XZ = ReturnFacet(Self);
@@ -140,9 +140,9 @@ constraint W {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_incomplete_self.carbon:[[@LINE+12]]:31
   // CHECK:STDERR:        │ eval fn ReturnFacet[T: type](generic U: T) -> T;
-  // CHECK:STDERR:        · ────────────────────────┬───────────────────────
-  // CHECK:STDERR:        ·                         ╰──┤ generic function declared here
-  // CHECK:STDERR:        ·                            │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ·         ─────┬─────
+  // CHECK:STDERR:        ·              ╰──┤ generic function declared here
+  // CHECK:STDERR:        ·                 │ [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls X where .XZ = ReturnFacet(Self);
   // CHECK:STDERR:        ·                               ━━━━━┳━━━━━

@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -82,9 +82,9 @@ jobs:
         env:
           REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
         run: |
-          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "$REMOTE_CACHE_KEY" | base64 -d > "$HOME/remote_cache_key.json"
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
-              >> $GITHUB_ENV
+              >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/build-setup-common
         with:
@@ -93,14 +93,14 @@ jobs:
 
       - name: Get nightly date
         run: |
-          echo "nightly_date=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
+          echo "nightly_date=$(date '+%Y.%m.%d')" >> "$GITHUB_ENV"
 
       - name: Build release
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c opt --stamp --remote_download_toplevel \
-            --pre_release=nightly --nightly_date=${nightly_date} \
+            --pre_release=nightly --nightly_date="${nightly_date}" \
             //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz \
             //toolchain/install:carbon_toolchain_tar_gz_test
@@ -114,15 +114,16 @@ jobs:
           VERSION=$( \
             ./bazel-bin/toolchain/carbon version \
             | cut -d' ' -f5 | cut -d'+' -f1)
-          echo "release_version=$VERSION" >> $GITHUB_ENV
+          echo "release_version=$VERSION" >> "$GITHUB_ENV"
 
       - name: Create the release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create \
+            --target "$GITHUB_SHA" \
             --title "Nightly build ${nightly_date}" \
             --generate-notes \
             --prerelease \
-            v${release_version} \
+            "v${release_version}" \
             "bazel-bin/toolchain/install/carbon_toolchain-${release_version}.tar.gz"

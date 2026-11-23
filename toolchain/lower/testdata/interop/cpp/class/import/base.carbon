@@ -67,7 +67,7 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CConvertPtr.Main(ptr %p) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.2.base = getelementptr inbounds nuw [8 x i8], ptr %p, i32 0, i32 0, !dbg !32
+// CHECK:STDOUT:   %.loc7_11.2.base = getelementptr inbounds nuw i8, ptr %p, i64 0, !dbg !32
 // CHECK:STDOUT:   ret ptr %.loc7_11.2.base, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -76,7 +76,7 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CConvertVal.Main(ptr %b) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_13.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !37
+// CHECK:STDOUT:   %.loc13_13.1.base = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !37
 // CHECK:STDOUT:   call void @_CAcceptVal.Main(ptr %.loc13_13.1.base), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -125,8 +125,8 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessVal.Main(ptr %b) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_11.1.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !59
-// CHECK:STDOUT:   %.loc7_11.3.a = getelementptr inbounds nuw [4 x i8], ptr %.loc7_11.1.base, i32 0, i32 0, !dbg !59
+// CHECK:STDOUT:   %.loc7_11.1.base = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !59
+// CHECK:STDOUT:   %.loc7_11.3.a = getelementptr inbounds nuw i8, ptr %.loc7_11.1.base, i64 0, !dbg !59
 // CHECK:STDOUT:   %.loc7_11.4 = load i32, ptr %.loc7_11.3.a, align 4, !dbg !59
 // CHECK:STDOUT:   ret i32 %.loc7_11.4, !dbg !60
 // CHECK:STDOUT: }
@@ -171,7 +171,7 @@ fn Call(b: Cpp.B*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CCall.Main(ptr %b) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [8 x i8], ptr %b, i32 0, i32 0, !dbg !67
+// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !67
 // CHECK:STDOUT:   call void @_ZN1A1fEv(ptr %.loc7_4.2.base), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }

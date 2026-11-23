@@ -17,7 +17,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_hex_escape_wrong_digit.carbon:[[@LINE+8]]:4
 // CHECK:STDERR: ->     │ "\xG1"
-// CHECK:STDERR:        ·  ─╴╻
+// CHECK:STDERR:        ·  ━╸╻
 // CHECK:STDERR:        ·    ┗━━┫ error: escape sequence `\x` must be followed by two uppercase
 // CHECK:STDERR:        ·       ┃        hexadecimal digits, for example `\x0F`
 // CHECK:STDERR:        ·       ┃        [HexadecimalEscapeMissingDigits]
@@ -32,7 +32,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_hex_escape_one_digit.carbon:[[@LINE+8]]:5
 // CHECK:STDERR: ->     │ "\x0g"
-// CHECK:STDERR:        ·  ──╴╻
+// CHECK:STDERR:        ·  ━━╸╻
 // CHECK:STDERR:        ·     ┗━━┫ error: escape sequence `\x` must be followed by two uppercase
 // CHECK:STDERR:        ·        ┃        hexadecimal digits, for example `\x0F`
 // CHECK:STDERR:        ·        ┃        [HexadecimalEscapeMissingDigits]
@@ -47,7 +47,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_unicode_escape_empty_braces.carbon:[[@LINE+8]]:5
 // CHECK:STDERR: ->     │ "\u{}"
-// CHECK:STDERR:        ·  ──╴╻
+// CHECK:STDERR:        ·  ━━╸╻
 // CHECK:STDERR:        ·     ┗━━┫ error: escape sequence `\u` must be followed by a braced sequence of
 // CHECK:STDERR:        ·        ┃        uppercase hexadecimal digits, for example `\u{70AD}}`
 // CHECK:STDERR:        ·        ┃        [UnicodeEscapeMissingBracedDigits]
@@ -62,7 +62,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_unicode_escape_unclosed.carbon:[[@LINE+8]]:7
 // CHECK:STDERR: ->     │ "\u{12"
-// CHECK:STDERR:        ·  ────╴╻
+// CHECK:STDERR:        ·  ━━━━╸╻
 // CHECK:STDERR:        ·       ┗━━┫ error: escape sequence `\u` must be followed by a braced sequence of
 // CHECK:STDERR:        ·          ┃        uppercase hexadecimal digits, for example `\u{70AD}}`
 // CHECK:STDERR:        ·          ┃        [UnicodeEscapeMissingBracedDigits]

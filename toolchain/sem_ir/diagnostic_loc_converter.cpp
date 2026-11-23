@@ -184,14 +184,14 @@ class ClangImportCollector : public clang::DiagnosticRenderer {
 }  // namespace
 
 auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
-                                                bool token_only) const
+                                                Parse::LocExtent extent) const
     -> LocAndImports {
   llvm::SmallVector<AbsoluteNodeRef> absolute_node_refs =
       GetAbsoluteNodeRef(sem_ir_, loc_id);
   auto final_node = absolute_node_refs.pop_back_val();
 
   // Convert the final location.
-  LocAndImports result = {.loc = ConvertImpl(final_node, token_only)};
+  LocAndImports result = {.loc = ConvertImpl(final_node, extent)};
 
   // Convert the import locations.
   for (const auto& absolute_node_ref : absolute_node_refs) {
@@ -201,7 +201,7 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
       continue;
     }
     result.imports.push_back(
-        {.loc = ConvertImpl(absolute_node_ref, false).loc});
+        {.loc = ConvertImpl(absolute_node_ref, Parse::LocExtent::Subtree).loc});
   }
 
   // Convert the C++ import locations.
@@ -225,15 +225,16 @@ auto DiagnosticLocConverter::ConvertWithImports(LocId loc_id,
   return result;
 }
 
-auto DiagnosticLocConverter::Convert(LocId loc_id, bool token_only) const
+auto DiagnosticLocConverter::Convert(LocId loc_id,
+                                     Parse::LocExtent extent) const
     -> Diagnostics::ConvertedLoc {
   llvm::SmallVector<AbsoluteNodeRef> absolute_node_refs =
       GetAbsoluteNodeRef(sem_ir_, loc_id);
-  return ConvertImpl(absolute_node_refs.back(), token_only);
+  return ConvertImpl(absolute_node_refs.back(), extent);
 }
 
 auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeRef absolute_node_ref,
-                                         bool token_only) const
+                                         Parse::LocExtent extent) const
     -> Diagnostics::ConvertedLoc {
   if (absolute_node_ref.is_cpp()) {
     return ConvertImpl(absolute_node_ref.file(),
@@ -241,16 +242,16 @@ auto DiagnosticLocConverter::ConvertImpl(AbsoluteNodeRef absolute_node_ref,
   }
 
   return ConvertImpl(absolute_node_ref.check_ir_id(),
-                     absolute_node_ref.node_id(), token_only);
+                     absolute_node_ref.node_id(), extent);
 }
 
 auto DiagnosticLocConverter::ConvertImpl(CheckIRId check_ir_id,
                                          Parse::NodeId node_id,
-                                         bool token_only) const
+                                         Parse::LocExtent extent) const
     -> Diagnostics::ConvertedLoc {
   const auto& tree_and_subtrees =
       tree_and_subtrees_getters_->Get(check_ir_id)();
-  return tree_and_subtrees.NodeToDiagnosticLoc(node_id, token_only);
+  return tree_and_subtrees.NodeToDiagnosticLoc(node_id, extent);
 }
 
 auto DiagnosticLocConverter::ConvertImpl(

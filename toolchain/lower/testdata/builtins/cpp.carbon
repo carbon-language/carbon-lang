@@ -61,26 +61,26 @@ fn Test() {
 // CHECK:STDOUT:   %.loc26_46.3.temp = alloca [4 x i32], align 4, !dbg !18
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_53.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_52.3.temp), !dbg !15
-// CHECK:STDOUT:   %.loc25_52.4.array.index = getelementptr inbounds [4 x i32], ptr %.loc25_52.3.temp, i32 0, i64 0, !dbg !15
-// CHECK:STDOUT:   %.loc25_52.7.array.index = getelementptr inbounds [4 x i32], ptr %.loc25_52.3.temp, i32 0, i64 1, !dbg !15
-// CHECK:STDOUT:   %.loc25_52.10.array.index = getelementptr inbounds [4 x i32], ptr %.loc25_52.3.temp, i32 0, i64 2, !dbg !15
-// CHECK:STDOUT:   %.loc25_52.13.array.index = getelementptr inbounds [4 x i32], ptr %.loc25_52.3.temp, i32 0, i64 3, !dbg !15
-// CHECK:STDOUT:   %MakePointerPointer.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc25_53.1.temp, i32 0, i32 0, !dbg !14
+// CHECK:STDOUT:   %.loc25_52.4.array.index = getelementptr inbounds i8, ptr %.loc25_52.3.temp, i64 0, !dbg !15
+// CHECK:STDOUT:   %.loc25_52.7.array.index = getelementptr inbounds i8, ptr %.loc25_52.3.temp, i64 4, !dbg !15
+// CHECK:STDOUT:   %.loc25_52.10.array.index = getelementptr inbounds i8, ptr %.loc25_52.3.temp, i64 8, !dbg !15
+// CHECK:STDOUT:   %.loc25_52.13.array.index = getelementptr inbounds i8, ptr %.loc25_52.3.temp, i64 12, !dbg !15
+// CHECK:STDOUT:   %MakePointerPointer.call.init_list.begin = getelementptr inbounds nuw i8, ptr %.loc25_53.1.temp, i64 0, !dbg !14
 // CHECK:STDOUT:   store ptr @array.loc25_52.18, ptr %MakePointerPointer.call.init_list.begin, align 8, !dbg !14
-// CHECK:STDOUT:   %MakePointerPointer.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc25_53.1.temp, i32 0, i32 8, !dbg !14
+// CHECK:STDOUT:   %MakePointerPointer.call.init_list.end = getelementptr inbounds nuw i8, ptr %.loc25_53.1.temp, i64 8, !dbg !14
 // CHECK:STDOUT:   store ptr getelementptr inbounds (i8, ptr @array.loc25_52.18, i64 16), ptr %MakePointerPointer.call.init_list.end, align 8, !dbg !14
 // CHECK:STDOUT:   call void @_CTakePointerPointer.Main(ptr %.loc25_53.1.temp), !dbg !16
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.39207dab71498c5c(ptr %.loc25_53.1.temp), !dbg !14
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.74a1f892059422e4(ptr @array), !dbg !15
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_47.1.temp), !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_46.3.temp), !dbg !18
-// CHECK:STDOUT:   %.loc26_46.4.array.index = getelementptr inbounds [4 x i32], ptr %.loc26_46.3.temp, i32 0, i64 0, !dbg !18
-// CHECK:STDOUT:   %.loc26_46.7.array.index = getelementptr inbounds [4 x i32], ptr %.loc26_46.3.temp, i32 0, i64 1, !dbg !18
-// CHECK:STDOUT:   %.loc26_46.10.array.index = getelementptr inbounds [4 x i32], ptr %.loc26_46.3.temp, i32 0, i64 2, !dbg !18
-// CHECK:STDOUT:   %.loc26_46.13.array.index = getelementptr inbounds [4 x i32], ptr %.loc26_46.3.temp, i32 0, i64 3, !dbg !18
-// CHECK:STDOUT:   %MakePointerSize.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc26_47.1.temp, i32 0, i32 0, !dbg !17
+// CHECK:STDOUT:   %.loc26_46.4.array.index = getelementptr inbounds i8, ptr %.loc26_46.3.temp, i64 0, !dbg !18
+// CHECK:STDOUT:   %.loc26_46.7.array.index = getelementptr inbounds i8, ptr %.loc26_46.3.temp, i64 4, !dbg !18
+// CHECK:STDOUT:   %.loc26_46.10.array.index = getelementptr inbounds i8, ptr %.loc26_46.3.temp, i64 8, !dbg !18
+// CHECK:STDOUT:   %.loc26_46.13.array.index = getelementptr inbounds i8, ptr %.loc26_46.3.temp, i64 12, !dbg !18
+// CHECK:STDOUT:   %MakePointerSize.call.init_list.begin = getelementptr inbounds nuw i8, ptr %.loc26_47.1.temp, i64 0, !dbg !17
 // CHECK:STDOUT:   store ptr @array.loc25_52.18, ptr %MakePointerSize.call.init_list.begin, align 8, !dbg !17
-// CHECK:STDOUT:   %MakePointerSize.call.init_list.size = getelementptr inbounds nuw [16 x i8], ptr %.loc26_47.1.temp, i32 0, i32 8, !dbg !17
+// CHECK:STDOUT:   %MakePointerSize.call.init_list.size = getelementptr inbounds nuw i8, ptr %.loc26_47.1.temp, i64 8, !dbg !17
 // CHECK:STDOUT:   store i64 4, ptr %MakePointerSize.call.init_list.size, align 8, !dbg !17
 // CHECK:STDOUT:   call void @_CTakePointerSize.Main(ptr %.loc26_47.1.temp), !dbg !19
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2a5ba50a7d699637(ptr %.loc26_47.1.temp), !dbg !17
@@ -91,13 +91,13 @@ fn Test() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.f09a8402c9d45995:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc25_52.1.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 3, !dbg !23
+// CHECK:STDOUT:   %.loc25_52.1.array.index = getelementptr inbounds i8, ptr %self, i64 12, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc25_52.1.array.index), !dbg !23
-// CHECK:STDOUT:   %.loc25_52.4.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 2, !dbg !23
+// CHECK:STDOUT:   %.loc25_52.4.array.index = getelementptr inbounds i8, ptr %self, i64 8, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc25_52.4.array.index), !dbg !23
-// CHECK:STDOUT:   %.loc25_52.7.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 1, !dbg !23
+// CHECK:STDOUT:   %.loc25_52.7.array.index = getelementptr inbounds i8, ptr %self, i64 4, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc25_52.7.array.index), !dbg !23
-// CHECK:STDOUT:   %.loc25_52.10.array.index = getelementptr inbounds [4 x i32], ptr %self, i32 0, i64 0, !dbg !23
+// CHECK:STDOUT:   %.loc25_52.10.array.index = getelementptr inbounds i8, ptr %self, i64 0, !dbg !23
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9a03059f269926ed(ptr %.loc25_52.10.array.index), !dbg !23
 // CHECK:STDOUT:   ret void, !dbg !23
 // CHECK:STDOUT: }

@@ -36,15 +36,12 @@ library "[[@TEST_NAME]]";
 import Common;
 
 fn F(ref pb: partial Common.B) {
-    // CHECK:STDERR:        ╭─┤ fail_invalid_partial_member_access.carbon:[[@LINE+11]]:27
+    // CHECK:STDERR:        ╭─┤ fail_invalid_partial_member_access.carbon:[[@LINE+8]]:27
     // CHECK:STDERR: ->     │     let ref _: Common.A = pb.base;
     // CHECK:STDERR:        ·                           ┳━━━━━━
     // CHECK:STDERR:        ·                           ┗━━┫ error: cannot implicitly convert expression of
-    // CHECK:STDERR:        ·                           │  ┃        type `partial Common.A` to `Common.A`
-    // CHECK:STDERR:        ·                           │  ┃        [ConversionFailure]
-    // CHECK:STDERR:        ·                           ╰────┤ type `partial Common.A` does not implement
-    // CHECK:STDERR:        ·                                │ interface `Core.ImplicitAs(Common.A)`
-    // CHECK:STDERR:        ·                                │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ·                              ┃        type `partial Common.A` to `Common.A`
+    // CHECK:STDERR:        ·                              ┃        [ConversionFailure]
     // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     let ref _: Common.A = pb.base;

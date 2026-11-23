@@ -14,14 +14,12 @@
 
 interface I {}
 
-// CHECK:STDERR:        ╭─┤ fail_impl_bad_type.carbon:[[@LINE+10]]:6
+// CHECK:STDERR:        ╭─┤ fail_impl_bad_type.carbon:[[@LINE+8]]:6
 // CHECK:STDERR: ->     │ impl true as I {}
 // CHECK:STDERR:        ·      ┳━━━
 // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert non-type value of type `bool` to
-// CHECK:STDERR:        ·      │  ┃        `type`
-// CHECK:STDERR:        ·      │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·      ╰────┤ type `bool` does not implement interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·         ┃        `type`
+// CHECK:STDERR:        ·         ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl true as I {}
@@ -55,10 +53,10 @@ impl true as I {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @<error>.as.I.impl [concrete] {} {
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %.loc27: type = converted %true, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc25: type = converted %true, <error> [concrete = <error>]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc27: <witness> = impl_self_witness <error>, @I [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: <witness> = impl_self_witness <error>, @I [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

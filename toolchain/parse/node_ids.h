@@ -217,6 +217,19 @@ struct NodeIdNot : public NodeId {
 // Note that the support for extracting these types using the `Tree::Extract*`
 // functions is defined in `extract.cpp`.
 
+// How much of a node's source a diagnostic location for it covers.
+enum class LocExtent : int8_t {
+  // Every token descending from the node.
+  Subtree,
+  // The node's own token alone.
+  Token,
+  // The last name among the node's direct children, which for a declaration
+  // is the name it declares: a qualifier's name is a child of the qualifier.
+  // A node with no name among its direct children, such as an `impl`, covers
+  // its subtree.
+  DeclaredName,
+};
+
 }  // namespace Carbon::Parse
 
 #endif  // CARBON_TOOLCHAIN_PARSE_NODE_IDS_H_

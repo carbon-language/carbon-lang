@@ -50,9 +50,9 @@ fn G() {
   //
   // CHECK:STDERR:        ╭─┤ fail_generic_interface_facet_value_wrong_specific_impl.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn F(generic U: type, unused generic T: I(U) where .X = ()) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F({}, C);
   // CHECK:STDERR:        ·   ┳━━━━━━━
@@ -321,7 +321,7 @@ class C;
 // CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as I where .X1 = () {}
-// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        ·      ┗━━┫ error: associated constant X2 not given a value in impl of interface I
 // CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────

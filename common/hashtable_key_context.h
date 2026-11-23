@@ -162,9 +162,44 @@ inline auto CarbonHashtableEq(const llvm::APFloat& lhs,
   return lhs.bitwiseIsEqual(rhs);
 }
 
+// The calling convention of `StringBytesNe`. Where it's available, a call
+// preserves more of the caller's registers than the default convention does:
+// every general register but the result's and one scratch register on x86-64,
+// and seven more of them on AArch64. Callers then don't have to save and
+// restore that much of their own state around each comparison.
+#if defined(__x86_64__) || defined(__aarch64__)
+#define CARBON_STRING_BYTES_NE_CC [[clang::preserve_most]]
+#else
+#define CARBON_STRING_BYTES_NE_CC
+#endif
+
+// Returns zero if the `size` bytes at `lhs` and `rhs` are equal, and a non-zero
+// value otherwise. Which non-zero value is unspecified, so callers may only
+// compare the result with zero. It's like `bcmp`, but faster for short and
+// medium sizes. It's out of line, which keeps callers small enough to inline,
+// and `pure`, which lets callers keep values loaded from memory in registers
+// across the call.
+[[gnu::pure]] CARBON_STRING_BYTES_NE_CC auto StringBytesNe(const std::byte* lhs,
+                                                           const std::byte* rhs,
+                                                           size_t size)
+    -> uint64_t;
+
+inline auto CarbonHashtableEq(llvm::StringRef lhs, llvm::StringRef rhs)
+    -> bool {
+  return lhs.size() == rhs.size() &&
+         StringBytesNe(reinterpret_cast<const std::byte*>(lhs.data()),
+                       reinterpret_cast<const std::byte*>(rhs.data()),
+                       lhs.size()) == 0;
+}
+
 inline auto CarbonHashtableEq(llvm::StringRef lhs, const std::string& rhs)
     -> bool {
-  return lhs == rhs;
+  return CarbonHashtableEq(lhs, llvm::StringRef(rhs));
+}
+
+inline auto CarbonHashtableEq(const std::string& lhs, const std::string& rhs)
+    -> bool {
+  return CarbonHashtableEq(llvm::StringRef(lhs), llvm::StringRef(rhs));
 }
 
 template <typename T>

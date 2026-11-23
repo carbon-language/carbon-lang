@@ -111,7 +111,7 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !66 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !68
+// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !68
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
@@ -119,7 +119,7 @@ fn DoThing() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.b25525d21a9bd472:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !72
+// CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !72
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
@@ -145,13 +145,13 @@ fn DoThing() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %d.var = alloca { [16 x i8] }, align 8, !dbg !83
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !83
-// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.1.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !84
 // CHECK:STDOUT:   call void @_ZN4BaseC1Ev.carbon_thunk.(ptr %.loc31_44.1.base), !dbg !85
-// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !84
-// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !84
-// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw i8, ptr %.loc31_44.7.base, i64 0, !dbg !84
+// CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw i8, ptr %.loc31_44.8.base, i64 0, !dbg !84
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !84
-// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !88
+// CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !88
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !89
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9ede905be876779b(ptr %d.var), !dbg !83
 // CHECK:STDOUT:   ret void, !dbg !90

@@ -29,9 +29,10 @@ auto HandleParseNode(Context& context,
         MatchFirstInWrongScope, Error,
         "found `match_first` in invalid scope; expected namespace or class");
     auto builder = context.emitter().Build(node_id, MatchFirstInWrongScope);
-    CARBON_DIAGNOSTIC_LABEL(MatchFirstInWrongScopeNote, Info,
+    CARBON_DIAGNOSTIC_LABEL(MatchFirstInWrongScopeNote,
                             "in enclosing scope here");
-    builder.Attach(enclosing_scope_inst_id, MatchFirstInWrongScopeNote);
+    builder.Attach(LocIdForDiagnostics::DeclaredName(enclosing_scope_inst_id),
+                   MatchFirstInWrongScopeNote);
     builder.Emit();
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
     return true;
