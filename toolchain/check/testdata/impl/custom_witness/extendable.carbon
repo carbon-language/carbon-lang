@@ -168,12 +168,17 @@ class C {}
 // CHECK:STDERR:
 impl C as Core.Extendable {}
 
+// --- fail_use_impl_final_class.carbon
+library "[[@TEST_NAME]]";
+
+import library "impl_final_class";
+
 fn F[T: Core.Extendable](ref t: T) -> partial T* {
   return &(t as partial T);
 }
 
 fn G(ref c: C) {
-  // CHECK:STDERR:        ╭─┤ fail_impl_final_class.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_use_impl_final_class.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn F[T: Core.Extendable](ref t: T) -> partial T* {
   // CHECK:STDERR:        ·    ┬
   // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
@@ -187,54 +192,3 @@ fn G(ref c: C) {
   // CHECK:STDERR:
   F(ref c);
 }
-
-// --- fail_impl_base_class.carbon
-library "[[@TEST_NAME]]";
-
-base class B {}
-
-// CHECK:STDERR:        ╭─┤ fail_impl_base_class.carbon:[[@LINE+8]]:1
-// CHECK:STDERR: ->     │ impl B as Core.Extendable {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: explicit impl of `Core.Extendable`; implemented automatically for
-// CHECK:STDERR:        ·    ┃        `base` and `abstract` classes
-// CHECK:STDERR:        ·    ┃        [ImplOfExtendable]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
-impl B as Core.Extendable {}
-
-// --- fail_impl_final_class.carbon
-library "[[@TEST_NAME]]";
-
-class C {}
-
-// CHECK:STDERR:        ╭─┤ fail_impl_final_class.carbon:[[@LINE+8]]:1
-// CHECK:STDERR: ->     │ impl C as Core.Extendable {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: explicit impl of `Core.Extendable`; implemented automatically for
-// CHECK:STDERR:        ·    ┃        `base` and `abstract` classes
-// CHECK:STDERR:        ·    ┃        [ImplOfExtendable]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
-impl C as Core.Extendable {}
-
-fn F[T: Core.Extendable](ref t: T) -> partial T* {
-  return &(t as partial T);
-}
-
-fn G(ref c: C) {
-  // CHECK:STDERR:        ╭─┤ fail_impl_final_class.carbon:[[@LINE+12]]:3
-  // CHECK:STDERR:        │ fn F[T: Core.Extendable](ref t: T) -> partial T* {
-  // CHECK:STDERR:        ·    ┬
-  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   F(ref c);
-  // CHECK:STDERR:        ·   ━━┳━━━━━
-  // CHECK:STDERR:        ·     ┗━━┫ error: cannot convert type `C` into type implementing `Core.Extendable`
-  // CHECK:STDERR:        ·        ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  F(ref c);
-}
-
