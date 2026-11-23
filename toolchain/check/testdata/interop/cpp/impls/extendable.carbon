@@ -303,4 +303,3 @@ fn G(ref c: Cpp.Final) {
   // CHECK:STDERR:
   F(ref c);
 }
-
