@@ -185,6 +185,23 @@ void CallUnsupportedF() {
 }
 ''';
 
+// --- generic_class_param.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class C(T: type) {}
+
+fn F[T: type](unused c: C(T)) {}
+
+inline Cpp '''
+void G() {
+  Carbon::C<Carbon::A> c;
+  Carbon::F(c);
+}
+''';
+
 // CHECK:STDOUT: --- generic_facet.carbon = $generic_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
