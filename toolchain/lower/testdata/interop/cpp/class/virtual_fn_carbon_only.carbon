@@ -87,7 +87,7 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.de73a19002e400c9:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !35
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc18_9.1.base), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
@@ -95,7 +95,7 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.680f7fa3ef86df7a:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !39
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc18_9.1.base), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -112,10 +112,10 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { [8 x i8] }, align 8, !dbg !46
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !46
-// CHECK:STDOUT:   %.loc24_32.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %_.var, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %.loc24_32.1.base = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !47
 // CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %.loc24_32.1.base), !dbg !48
-// CHECK:STDOUT:   %.loc24_32.7.base = getelementptr inbounds nuw { [8 x i8] }, ptr %_.var, i32 0, i32 0, !dbg !47
-// CHECK:STDOUT:   %.loc24_32.8.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc24_32.7.base, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %.loc24_32.7.base = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !47
+// CHECK:STDOUT:   %.loc24_32.8.vptr = getelementptr inbounds nuw i8, ptr %.loc24_32.7.base, i64 0, !dbg !47
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon4Main1ZE, i64 16), ptr %.loc24_32.8.vptr, align 8, !dbg !47
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.ff24853a526ad6af(ptr %_.var), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !50

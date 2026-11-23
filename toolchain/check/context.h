@@ -364,6 +364,18 @@ class Context {
     return *std::exchange(return_form_expr_, std::nullopt);
   }
 
+  struct ImplDefinitionStackEntry {
+    SemIR::ImplId impl_id;
+    SemIR::TypeInstId full_constraint_id;
+    IdentifiedFacetTypeId identified_id;
+  };
+  auto PushImplDefinitionStart(ImplDefinitionStackEntry entry) -> void {
+    impl_definition_stack_.push_back(entry);
+  }
+  auto PopImplDefinitionStart() -> ImplDefinitionStackEntry {
+    return impl_definition_stack_.pop_back_val();
+  }
+
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
   auto access_context() -> SemIR::NameScopeId& { return access_context_; }
@@ -665,6 +677,9 @@ class Context {
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;
+
+  // A stack of impl definitions that have been started but not finished yet.
+  llvm::SmallVector<ImplDefinitionStackEntry> impl_definition_stack_;
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;

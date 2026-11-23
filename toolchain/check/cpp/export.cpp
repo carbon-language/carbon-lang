@@ -1130,7 +1130,8 @@ static auto BuildCppFunctionDecl(
     clang::DeclarationName declaration_name,
     clang::ArrayRef<clang::QualType> param_types,
     std::optional<clang::ArrayRef<clang::Expr*>> default_value_exprs,
-    clang::QualType return_type, bool export_as_constructor) {
+    clang::QualType return_type, bool export_as_constructor)
+    -> clang::FunctionDecl* {
   CARBON_CHECK(!default_value_exprs.has_value() ||
                default_value_exprs->size() == param_types.size());
   auto clang_loc = GetCppLocation(context, loc_id);
@@ -2046,7 +2047,7 @@ auto ExportFunctionToCppPointerConversion(
           ExportedFunctionPtrTypeMismatch, Error,
           "can't convert exported {0:member |}function pointer to `{1}`",
           Diagnostics::BoolAsSelect, CppType);
-      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction, Info,
+      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction,
                               "function exported with pointer type `{0}`",
                               CppType);
       context.emitter()

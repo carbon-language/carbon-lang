@@ -24,6 +24,11 @@ constexpr Kind UntestedKinds[] = {
     Kind::TestDiagnostic,
     Kind::TestDiagnosticOnScope,
 
+    // This states the problem for a `.Self` facet type that can't be
+    // identified, on a path no test reaches.
+    // TODO: Write a test that reaches it.
+    Kind::PeriodSelfUnidentifiedFacetType,
+
     // Diagnosing erroneous install conditions, but test environments are
     // typically correct.
     Kind::BuildTempDirectoryCreationError,

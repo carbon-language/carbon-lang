@@ -57,8 +57,8 @@ class D;
 //@dump-sem-ir-begin
 // CHECK:STDERR:        ╭─┤ fail_todo_period_self_converted_in_specific_in_named_constraint.carbon:[[@LINE+11]]:1
 // CHECK:STDERR: ->     │ impl D as Z where .Z1 = C(.Self) and .Self impls N(.Self) {}
-// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: constraint
 // CHECK:STDERR:        · ┃        `Z where .Self impls N(.Self as Z & Y) and .(Z.Z1) = C(.Self as Z & Y)`
 // CHECK:STDERR:        · ┃        being implemented requires that `D.(Z.Z1)` equals `C(D as Z & Y)`;

@@ -25,8 +25,8 @@ library "[[@TEST_NAME]]";
 class C(self: type, x: self) {}
 // CHECK:STDERR:        ╭─┤ fail_self_param.carbon:[[@LINE+11]]:8
 // CHECK:STDERR:        │ class C(self: type, x: self) {}
-// CHECK:STDERR:        · ───────────────┬──────────────
-// CHECK:STDERR:        ·                ╰──┤ calling generic class declared here [InCallToEntity]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ calling generic class declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var v: C(());
 // CHECK:STDERR:        ·        ━━┳━━

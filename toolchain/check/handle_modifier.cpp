@@ -9,8 +9,8 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, Info,
-                        "`{0}` previously appeared here", Lex::TokenKind);
+CARBON_DIAGNOSTIC_LABEL(ModifierPrevious, "`{0}` previously appeared here",
+                        Lex::TokenKind);
 
 static auto DiagnoseRepeated(Context& context, Parse::NodeId first_node,
                              Parse::NodeId second_node) -> void {

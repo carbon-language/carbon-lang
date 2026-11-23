@@ -19,7 +19,7 @@ fn Run2(unused a: i32, unused b: i32) {}
 fn Main() {
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run0() {}
-  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·    ──┬─
   // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run0(1);
@@ -31,7 +31,7 @@ fn Main() {
   Run0(1);
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run0() {}
-  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·    ──┬─
   // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run0(0, 1);
@@ -44,8 +44,8 @@ fn Main() {
 
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run1(unused a: i32) {}
-  // CHECK:STDERR:        · ────────────┬───────────
-  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run1();
   // CHECK:STDERR:        ·   ━━━┳━━
@@ -56,8 +56,8 @@ fn Main() {
   Run1();
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run1(unused a: i32) {}
-  // CHECK:STDERR:        · ────────────┬───────────
-  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run1(0, 1);
   // CHECK:STDERR:        ·   ━━━━━┳━━━━
@@ -69,8 +69,8 @@ fn Main() {
 
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run2(unused a: i32, unused b: i32) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run2();
   // CHECK:STDERR:        ·   ━━━┳━━
@@ -81,8 +81,8 @@ fn Main() {
   Run2();
   // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Run2(unused a: i32, unused b: i32) {}
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ──┬─
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Run2(0);
   // CHECK:STDERR:        ·   ━━━┳━━━

@@ -40,9 +40,9 @@ int H() {
 // CHECK:STDOUT: define dso_local noundef i32 @_Z1Gv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %arr = alloca [5 x i32], align 16
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %arr) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %arr)
 // CHECK:STDOUT:   %call = call noundef i32 @_ZN6Carbon4MainL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %arr)
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %arr) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %arr)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,10 +68,10 @@ int H() {
 // CHECK:STDOUT: define dso_local noundef i32 @_Z1Hv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ref.tmp = alloca [5 x i32], align 4
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ref.tmp, ptr align 4 @constinit, i64 20, i1 false), !tbaa.struct !3
 // CHECK:STDOUT:   %call = call noundef i32 @_ZN6Carbon4MainL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %ref.tmp)
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #3
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -81,7 +81,7 @@ int H() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %a) #3 !dbg !32 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc5_43.2.array.index = getelementptr inbounds [5 x i32], ptr %a, i32 0, i32 2, !dbg !37
+// CHECK:STDOUT:   %.loc5_43.2.array.index = getelementptr inbounds i8, ptr %a, i64 8, !dbg !37
 // CHECK:STDOUT:   %.loc5_43.3 = load i32, ptr %.loc5_43.2.array.index, align 4, !dbg !37
 // CHECK:STDOUT:   ret i32 %.loc5_43.3, !dbg !38
 // CHECK:STDOUT: }

@@ -96,7 +96,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   %a.var = alloca [8 x i8], align 4, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !54
 // CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !55
-// CHECK:STDOUT:   %.loc6_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !57
+// CHECK:STDOUT:   %.loc6_11.1.b = getelementptr inbounds nuw i8, ptr %a.var, i64 4, !dbg !57
 // CHECK:STDOUT:   %.loc6_11.2 = load i32, ptr %.loc6_11.1.b, align 4, !dbg !57
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %a.var), !dbg !54
 // CHECK:STDOUT:   ret i32 %.loc6_11.2, !dbg !58
@@ -194,7 +194,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !77
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !77
 // CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !78
-// CHECK:STDOUT:   %.loc6_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !80
+// CHECK:STDOUT:   %.loc6_11.1.x = getelementptr inbounds nuw i8, ptr %b.var, i64 0, !dbg !80
 // CHECK:STDOUT:   %.loc6_11.2 = load i32, ptr %.loc6_11.1.x, align 4, !dbg !80
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.b993e18582fc56e0(ptr %b.var), !dbg !77
 // CHECK:STDOUT:   ret i32 %.loc6_11.2, !dbg !81
@@ -295,7 +295,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   %a.var = alloca [8 x i8], align 4, !dbg !99
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !99
 // CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !100
-// CHECK:STDOUT:   %.loc7_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !102
+// CHECK:STDOUT:   %.loc7_11.1.b = getelementptr inbounds nuw i8, ptr %a.var, i64 4, !dbg !102
 // CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.b, align 4, !dbg !102
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %a.var), !dbg !99
 // CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !103
@@ -318,7 +318,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !107
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !107
 // CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !108
-// CHECK:STDOUT:   %.loc12_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !110
+// CHECK:STDOUT:   %.loc12_11.1.x = getelementptr inbounds nuw i8, ptr %b.var, i64 0, !dbg !110
 // CHECK:STDOUT:   %.loc12_11.2 = load i32, ptr %.loc12_11.1.x, align 4, !dbg !110
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.b993e18582fc56e0(ptr %b.var), !dbg !107
 // CHECK:STDOUT:   ret i32 %.loc12_11.2, !dbg !111
@@ -516,7 +516,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   %1 = alloca [8 x i8], align 4, !dbg !142
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !142
 // CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %1), !dbg !143
-// CHECK:STDOUT:   %b = getelementptr inbounds nuw [8 x i8], ptr %1, i32 0, i32 4, !dbg !145
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw i8, ptr %1, i64 4, !dbg !145
 // CHECK:STDOUT:   %2 = load i32, ptr %b, align 4, !dbg !145
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %1), !dbg !142
 // CHECK:STDOUT:   ret i32 %2, !dbg !146

@@ -58,8 +58,8 @@ import library "fns";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn A() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {};
@@ -70,8 +70,8 @@ fn A() {};
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn B(b: i32) -> i32 { return b; }
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
@@ -90,8 +90,8 @@ import library "extern";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern.carbon
 // CHECK:STDERR:        │ extern fn A();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A();
@@ -104,8 +104,8 @@ fn A();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern.carbon
 // CHECK:STDERR:        │ extern fn A();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {}
@@ -124,7 +124,7 @@ import library "fns";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn D();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

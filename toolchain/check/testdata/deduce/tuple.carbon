@@ -49,9 +49,9 @@ fn F[T: type](pair: (T, T)) -> T;
 fn G(pair: (C, D)) -> D {
   // CHECK:STDERR:        ╭─┤ fail_inconsistent.carbon:[[@LINE+12]]:10
   // CHECK:STDERR:        │ fn F[T: type](pair: (T, T)) -> T;
-  // CHECK:STDERR:        · ────────────────┬────────────────
-  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(pair);
   // CHECK:STDERR:        ·          ━┳━━━━━

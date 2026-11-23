@@ -64,19 +64,41 @@ def _removeprefix_or_fail(s, prefix):
         fail("Unable to remove prefix '{0}' from '{1}'".format(prefix, s))
     return new_s
 
-def _get_pkg_relative_path(file):
+def _get_pkg_relative_path(file, package = None):
+    """Returns the path of `file` relative to a package.
+
+    Args:
+      file: The `File` to compute a path for. Any output root and external
+        workspace root are removed first.
+      package: The package path (without repository, for example `libc`)
+        that the result is relative to.
+        Must be the package that owns `file` or one of its parent packages.
+        Defaults to the package that owns `file`.
+
+    Returns:
+      The path of `file` below `package`, for example `shared/str_to_float.h`
+      for `libc/shared/str_to_float.h` with `package = "libc"`.
+    """
     path = file.path
     if file.root.path != "":
         path = _removeprefix_or_fail(path, file.root.path + "/")
     if file.owner.workspace_root != "":
         path = _removeprefix_or_fail(path, file.owner.workspace_root + "/")
-    return _removeprefix_or_fail(path, file.owner.package + "/")
+    if package == None:
+        package = file.owner.package
+    return _removeprefix_or_fail(path, package + "/")
 
 def _toolchain_files_impl(ctx):
     prefix = ctx.attr.prefix
+    base_package = None
+    if ctx.attr.base_package:
+        # Drop the repository part of the label-style package, leaving only
+        # the package path (for example, `@llvm-project//libc` -> `libc`).
+        # That is the form used by `File.owner.package`.
+        base_package = ctx.attr.base_package.partition("//")[2]
     outputs = []
     for src in ctx.files.srcs:
-        rel_path = _get_pkg_relative_path(src)
+        rel_path = _get_pkg_relative_path(src, base_package)
         rel_path = _removeprefix_or_fail(rel_path, ctx.attr.remove_prefix)
         if rel_path in ctx.attr.renames:
             rel_path = ctx.attr.renames[rel_path]
@@ -90,6 +112,10 @@ toolchain_files = rule(
     doc = "Arranges files into a directory structure by symlinking them with prefix removal and renames.",
     implementation = _toolchain_files_impl,
     attrs = {
+        # If set (for example `@llvm-project//libc`), file paths are relative
+        # to this package instead of each file's own package. This keeps the
+        # directory layout for `srcs` that span several subpackages.
+        "base_package": attr.string(default = ""),
         "prefix": attr.string(default = ""),
         "remove_prefix": attr.string(default = ""),
         "renames": attr.string_dict(default = {}),

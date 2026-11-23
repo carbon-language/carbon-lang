@@ -313,7 +313,7 @@ Compound member access `a.(m)` performs two steps:
     -   For an interface `I` and class `C`, both `C.(I.F)` and `I.(I.F)` will
         fail due to `typeof(a) == type` not implementing `I`.
 -   Instance binding is performed, using either the `BindToValue` or `BindToRef`
-    interfaces implemented by `typeof(a)`. As in
+    interfaces implemented by `typeof(m)`. As in
     [proposal #3720](https://github.com/carbon-language/carbon-lang/pull/3720),
     the compiler provides `final` builtin implementations to provide the
     previous instance binding behavior.

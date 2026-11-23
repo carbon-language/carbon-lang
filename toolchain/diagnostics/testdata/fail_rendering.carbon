@@ -45,8 +45,8 @@ fn G() {}
 fn H() {
   // CHECK:STDERR:        .-| fail_note_in_same_file.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:      4 | fn G() {}
-  // CHECK:STDERR:        : ----.---
-  // CHECK:STDERR:        :     '--| calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        :    .
+  // CHECK:STDERR:        :    '--| calling function declared here [InCallToEntity]
   // CHECK:STDERR:        :
   // CHECK:STDERR: ->  18 |   G(1);
   // CHECK:STDERR:        :   ^^^^
@@ -102,9 +102,9 @@ fn Use() {
   // CHECK:STDERR:        :        '--| error: 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:        :           |        [CallArgCountMismatch]
   // CHECK:STDERR:        :
-  // CHECK:STDERR:        |-| declared.carbon:4:1
+  // CHECK:STDERR:        |-| declared.carbon:4:4
   // CHECK:STDERR:      4 | fn Declared();
-  // CHECK:STDERR:        : -------.------
+  // CHECK:STDERR:        :    ----.---
   // CHECK:STDERR:        :        '--| calling function declared here [InCallToEntity]
   // CHECK:STDERR:        '----
   // CHECK:STDERR:
@@ -117,7 +117,7 @@ library "[[@TEST_NAME]]";
 
 // CHECK:STDERR:        .-| fail_two_spans_on_one_line.carbon:[[@LINE+9]]:27
 // CHECK:STDERR: ->  13 | fn Same() {} fn Twice() { Same(1); }
-// CHECK:STDERR:        : -----.-----               ^^^^^^^
+// CHECK:STDERR:        :    --.-                   ^^^^^^^
 // CHECK:STDERR:        :      |                    '--| error: 1 argument passed to function expecting 0
 // CHECK:STDERR:        :      |                       |        arguments
 // CHECK:STDERR:        :      |                       |        [CallArgCountMismatch]

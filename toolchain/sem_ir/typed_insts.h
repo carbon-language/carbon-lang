@@ -139,6 +139,18 @@ struct AddrOf {
   InstId lvalue_id;
 };
 
+// An action that performs the AddressOf operation on a reference expression.
+struct AddrOfAction {
+  static constexpr auto Kind = InstKind::AddrOfAction.Define<Parse::NodeId>(
+      {.ir_name = "addr_of_action",
+       .expr_category = ActionExprCategory(ExprCategory::Dependent),
+       .constant_kind = InstConstantKind::InstAction,
+       .is_lowered = false});
+
+  TypeId type_id;
+  MetaInstId lvalue_id;
+};
+
 // Binds a name as an alias. See AnyBinding for member documentation.
 struct AliasBinding {
   static constexpr auto Kind = InstKind::AliasBinding.Define<Parse::NodeId>(

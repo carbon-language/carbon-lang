@@ -36,23 +36,23 @@ eval fn F(generic B: bool) -> type {
 }
 
 fn G(generic B: bool) {
+  // CHECK:STDERR:        ╭─┤ fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+12]]:24
+  // CHECK:STDERR: ->     │   let unused n: F(B) = ({}, {});
+  // CHECK:STDERR:        ·                        ┳━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot initialize tuple of 0 elements from
+  // CHECK:STDERR:        ·                           ┃        tuple with 2 elements
+  // CHECK:STDERR:        ·                           ┃        [TupleInitElementCountMismatch]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   G(true);
+  // CHECK:STDERR:        ·   ┬
+  // CHECK:STDERR:        ·   ╰──┤ in monomorphization of `G(true)` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let unused n: F(B) = ({}, {});
 }
 
 // TODO: Provide a location for the "cannot initialize" error message.
 fn H() {
-  // CHECK:STDERR:        ╭─┤ fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+12]]:3
-  // CHECK:STDERR:        │   let unused n: F(B) = ({}, {});
-  // CHECK:STDERR:        ·                        ┬───────
-  // CHECK:STDERR:        ·                        ╰──┤ cannot initialize tuple of 0 elements from tuple
-  // CHECK:STDERR:        ·                           │ with 2 elements
-  // CHECK:STDERR:        ·                           │ [TupleInitElementCountMismatch]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   G(true);
-  // CHECK:STDERR:        ·   ┳
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   G(true);
 }
 

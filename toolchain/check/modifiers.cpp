@@ -44,8 +44,7 @@ static auto DiagnoseNotAllowed(
   auto diag = StartDiagnoseNotAllowed(context, diagnostic_base, modifier_node,
                                       decl_kind);
   if (context_loc_id.has_value()) {
-    CARBON_DIAGNOSTIC_LABEL(ModifierNotInContext, Info,
-                            "containing definition here");
+    CARBON_DIAGNOSTIC_LABEL(ModifierNotInContext, "containing definition here");
     diag.Attach(context_loc_id, ModifierNotInContext);
   }
   diag.Emit();

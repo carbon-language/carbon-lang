@@ -19,6 +19,67 @@
 
 namespace Carbon::SemIR {
 
+// A space in which unique names can be allocated, for use in textual SemIR
+// formatting.
+class TextualNamespace {
+ private:
+  // A result of a name lookup.
+  struct NameResult;
+
+ public:
+  // A name in a namespace, which might be redirected to refer to another name
+  // for disambiguation purposes.
+  class Name {
+   public:
+    explicit Name() : value_(nullptr) {}
+    explicit Name(llvm::StringMap<NameResult>::iterator it,
+                  size_t base_name_size)
+        : value_(&*it), base_name_size_(base_name_size) {}
+
+    explicit operator bool() const { return value_; }
+
+    // Returns the disambiguated name. Note that this is not stable until
+    // all names have been added to the `TextualNamespace`.
+    auto GetFullName() const -> llvm::StringRef;
+
+    // Returns the base name, without any disambiguators.
+    auto GetBaseName() const -> llvm::StringRef;
+
+    auto SetFallback(Name name) -> void { value_->second.fallback = name; }
+
+    auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
+
+   private:
+    llvm::StringMapEntry<NameResult>* value_;
+
+    // The base name length within `value_->first()`.
+    size_t base_name_size_;
+  };
+
+  // Allocates and returns a name, handling ambiguity.
+  auto AllocateName(std::string name) [[clang::lifetimebound]] -> Name {
+    auto size = std::ssize(name);
+    return AllocateNameWithSuffixes(std::move(name), {size});
+  }
+
+  // Allocates and returns a name, handling ambiguity. `full_name` is
+  // expected to be structured as a base name followed by a series of
+  // suffixes that add progressively more disambiguation. `name_sizes[N]`
+  // is the size of the base name plus the first N such suffixes
+  // (so `name_sizes.back()` should be `full_name.size()`).
+  auto AllocateNameWithSuffixes(std::string full_name,
+                                llvm::ArrayRef<ssize_t> name_sizes)
+      [[clang::lifetimebound]] -> Name;
+
+ private:
+  struct NameResult {
+    bool ambiguous = false;
+    Name fallback = Name();
+  };
+
+  llvm::StringMap<NameResult> allocated_;
+};
+
 // Assigns names to instructions, blocks, and scopes in the Semantics IR.
 //
 // If `<unexpected>` occurs in output of valid SemIR, it often means the
@@ -27,65 +88,6 @@ namespace Carbon::SemIR {
 // unable to correctly walk the SemIR.
 class InstNamer {
  public:
-  // A space in which unique names can be allocated.
-  class Namespace {
-   private:
-    // A result of a name lookup.
-    struct NameResult;
-
-   public:
-    // A name in a namespace, which might be redirected to refer to another name
-    // for disambiguation purposes.
-    class Name {
-     public:
-      explicit Name() : value_(nullptr) {}
-      explicit Name(llvm::StringMap<NameResult>::iterator it,
-                    size_t base_name_size)
-          : value_(&*it), base_name_size_(base_name_size) {}
-
-      explicit operator bool() const { return value_; }
-
-      // Returns the disambiguated name. Note that this is not stable until
-      // all names have been added to the `Namespace`.
-      auto GetFullName() const -> llvm::StringRef;
-
-      // Returns the base name, without any disambiguators.
-      auto GetBaseName() const -> llvm::StringRef;
-
-      auto SetFallback(Name name) -> void { value_->second.fallback = name; }
-
-      auto SetAmbiguous() -> void { value_->second.ambiguous = true; }
-
-     private:
-      llvm::StringMapEntry<NameResult>* value_;
-
-      // The base name length within `value_->first()`.
-      size_t base_name_size_;
-    };
-
-    // Allocates and returns a name, handling ambiguity.
-    auto AllocateName(std::string name) -> Name {
-      auto size = std::ssize(name);
-      return AllocateNameWithSuffixes(std::move(name), {size});
-    }
-
-    // Allocates and returns a name, handling ambiguity. `full_name` is
-    // expected to be structured as a base name followed by a series of
-    // suffixes that add progressively more disambiguation. `name_sizes[N]`
-    // is the size of the base name plus the first N such suffixes
-    // (so `name_sizes.back()` should be `full_name.size()`).
-    auto AllocateNameWithSuffixes(std::string full_name,
-                                  llvm::ArrayRef<ssize_t> name_sizes) -> Name;
-
-   private:
-    struct NameResult {
-      bool ambiguous = false;
-      Name fallback = Name();
-    };
-
-    llvm::StringMap<NameResult> allocated_;
-  };
-
   // int32_t matches the input value size.
   enum class ScopeId : int32_t {
     None = -1,
@@ -205,7 +207,7 @@ class InstNamer {
 
  private:
   // A namespace within a SemIR::File.
-  class FileNamespace : public Namespace {
+  class FileNamespace : public TextualNamespace {
    public:
     // Allocates and returns a name, handling ambiguity.
     auto AllocateName(const InstNamer& inst_namer,
@@ -215,7 +217,7 @@ class InstNamer {
 
   // A named scope that contains named entities.
   struct Scope {
-    Namespace::Name name;
+    TextualNamespace::Name name;
     FileNamespace insts;
     FileNamespace labels;
   };
@@ -299,10 +301,10 @@ class InstNamer {
   FileNamespace globals_;
   // The enclosing scope and name for each instruction, indexed by the InstId's
   // index.
-  std::vector<std::pair<ScopeId, Namespace::Name>> insts_;
+  std::vector<std::pair<ScopeId, TextualNamespace::Name>> insts_;
   // The enclosing scope and name for each block that might be a branch target,
   // indexed by the InstBlockId's index.
-  std::vector<std::pair<ScopeId, Namespace::Name>> labels_;
+  std::vector<std::pair<ScopeId, TextualNamespace::Name>> labels_;
   // The scopes corresponding to ScopeId values.
   std::vector<Scope> scopes_;
   // The scope IDs corresponding to generics. The vector indexes are the

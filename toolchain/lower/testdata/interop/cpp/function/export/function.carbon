@@ -173,7 +173,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL7BoolArgEb(i1 noundef zeroext %0) #1 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon5OtherL7BoolArgEb(i1 noundef %0) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca i8, align 1
 // CHECK:STDOUT:   %storedv = zext i1 %0 to i8

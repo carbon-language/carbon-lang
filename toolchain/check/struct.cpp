@@ -36,7 +36,7 @@ auto DiagnoseDuplicateNames(Context& context,
           "duplicated field name `{1}` in "
           "{0:=0:struct literal|=1:struct type literal|=2:struct pattern}",
           Diagnostics::IntAsSelect, SemIR::NameId);
-      CARBON_DIAGNOSTIC_LABEL(StructNamePrevious, Info,
+      CARBON_DIAGNOSTIC_LABEL(StructNamePrevious,
                               "field with the same name here");
       context.emitter()
           .Build(result.value(), StructNameDuplicate,

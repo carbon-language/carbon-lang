@@ -85,16 +85,13 @@ import Cpp;
 
 fn F() {
   let carbon_i64: i64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_i64_to_long.carbon:[[@LINE+12]]:35
+  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_i64_to_long.carbon:[[@LINE+9]]:35
   // CHECK:STDERR: ->     │   let unused cpp_long: Cpp.long = carbon_i64;
   // CHECK:STDERR:        ·                                   ┳━━━━━━━━━
   // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                                   │  ┃        expression of type `i64` to
-  // CHECK:STDERR:        ·                                   │  ┃        `Cpp.long`
-  // CHECK:STDERR:        ·                                   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                                   ╰────┤ type `i64` does not implement interface
-  // CHECK:STDERR:        ·                                        │ `Core.ImplicitAs(Cpp.long)`
-  // CHECK:STDERR:        ·                                        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                      ┃        expression of type `i64` to
+  // CHECK:STDERR:        ·                                      ┃        `Cpp.long`
+  // CHECK:STDERR:        ·                                      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused cpp_long: Cpp.long = carbon_i64;
@@ -636,16 +633,13 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `u64`
   // happens to fit in `unsigned long` on this target.
-  // CHECK:STDERR:        ╭─┤ fail_pass_u64_to_ulong.carbon:[[@LINE+12]]:53
+  // CHECK:STDERR:        ╭─┤ fail_pass_u64_to_ulong.carbon:[[@LINE+9]]:53
   // CHECK:STDERR: ->     │   let unused cpp_unsigned_long: Cpp.unsigned_long = carbon_u64;
   // CHECK:STDERR:        ·                                                     ━━━━━┳━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `u64` to
   // CHECK:STDERR:        · ┃        `Cpp.unsigned_long`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭────────────────────────────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `u64` does not implement interface `Core.ImplicitAs(Cpp.unsigned_long)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused cpp_unsigned_long: Cpp.unsigned_long = carbon_u64;

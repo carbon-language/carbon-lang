@@ -133,15 +133,12 @@ fn F(a: A) {
   // a copy to perform initialization. It's not clear whether that is the right
   // behavior.
 
-  // CHECK:STDERR:        ╭─┤ fail_init_tuple_variable.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_init_tuple_variable.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━   ┬────────────────────────────
-  // CHECK:STDERR:        ·             ┗━━━━━━━━━━━━━━━┫ error: cannot copy value of type `Noncopyable`
-  // CHECK:STDERR:        ·             │            │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·             ╰─────────────────┤ type `Noncopyable` does not implement interface
-  // CHECK:STDERR:        ·                          │    │ `Core.Copy`
-  // CHECK:STDERR:        ·                          │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                          ╰──────┤ in copy of `A` [InCopy]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━   ────┬────────────────────────
+  // CHECK:STDERR:        ·             ┗━━━━━━━━━━━━━━━━━━━┫ error: cannot copy value of type `Noncopyable`
+  // CHECK:STDERR:        ·                              │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·                              ╰────┤ in copy of `A` [InCopy]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused a_init: A = (a as ({}, Noncopyable)) as A;
@@ -162,14 +159,12 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR:        ╭─┤ fail_adapt_init_from_struct.carbon:[[@LINE+10]]:12
+// CHECK:STDERR:        ╭─┤ fail_adapt_init_from_struct.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ var b: B = {.x = ()} as B;
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━
 // CHECK:STDERR:        ·            ┗━━┫ error: cannot convert expression of type `{.x: ()}` to `B` with
-// CHECK:STDERR:        ·            │  ┃        `as`
-// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·            ╰────┤ type `{.x: ()}` does not implement interface `Core.As(B)`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·               ┃        `as`
+// CHECK:STDERR:        ·               ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
