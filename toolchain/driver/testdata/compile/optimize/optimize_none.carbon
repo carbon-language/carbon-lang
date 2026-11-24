@@ -69,7 +69,8 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %.loc16_10 = load i32, ptr %n.var, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc16_10, !dbg !29
+// CHECK:STDOUT:   %.loc16_11 = sext i32 %.loc16_10 to i64, !dbg !29
+// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds [4 x i8], ptr %a, i64 %.loc16_11, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = mul i32 %Int.as.MulAssignWith.impl.Op.call, 2, !dbg !29
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !29
@@ -158,9 +159,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !44 = !DILocation(line: 396, column: 3, scope: !38)
 // CHECK:STDOUT: !45 = !{!39}
 // CHECK:STDOUT: !46 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !46, line: 36, type: !33, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !53)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !46, line: 35, type: !33, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !53)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !2)
-// CHECK:STDOUT: !52 = !DILocation(line: 36, column: 1, scope: !47)
+// CHECK:STDOUT: !52 = !DILocation(line: 35, column: 1, scope: !47)
 // CHECK:STDOUT: !53 = !{!48}
 // CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !61)
 // CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !2)

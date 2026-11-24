@@ -45,7 +45,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.S.Main(ptr sret({ i32 }) %return) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc18_34.3.n = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %.loc18_34.3.n = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !45
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @S.val.loc18_35, i64 4, i1 false), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
@@ -67,7 +67,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.405.temp = alloca { i32 }, align 4, !dbg !58
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.405.temp), !dbg !58
 // CHECK:STDOUT:   call void @_CMake.S.Main(ptr %.405.temp), !dbg !58
-// CHECK:STDOUT:   %.134.n = getelementptr inbounds nuw { i32 }, ptr %.405.temp, i32 0, i32 0, !dbg !61
+// CHECK:STDOUT:   %.134.n = getelementptr inbounds nuw i8, ptr %.405.temp, i64 0, !dbg !61
 // CHECK:STDOUT:   %.1c7 = load i32, ptr %.134.n, align 4, !dbg !61
 // CHECK:STDOUT:   %Local.call = call i32 @"_CLocal:enclosed.d82ccacf0414a2bc"(i32 %.1c7), !dbg !62
 // CHECK:STDOUT:   ret i32 %Local.call, !dbg !63

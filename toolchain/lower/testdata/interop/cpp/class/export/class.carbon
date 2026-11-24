@@ -172,10 +172,10 @@ fn G() {
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::LayoutA", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
 // CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %a)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -208,10 +208,10 @@ fn G() {
 // CHECK:STDOUT: define dso_local void @_Z1gv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %b = alloca %"class.Carbon::Main::LayoutB", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutBEPNS0_7LayoutBE(ptr noundef %b)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -240,11 +240,11 @@ fn G() {
 // CHECK:STDOUT: define dso_local void @_Z1hv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c = alloca %"class.Carbon::Main::LayoutC", align 8
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c)
 // CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutCEPNS0_7LayoutCE(ptr noundef %c)
 // CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %c)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -446,8 +446,8 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, i32 }, align 4, !dbg !112
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !112
-// CHECK:STDOUT:   %.loc19_34.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !113
-// CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !113
+// CHECK:STDOUT:   %.loc19_34.3.a = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !113
+// CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw i8, ptr %c.var, i64 4, !dbg !113
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @FieldC.val.loc19_3.1, i64 8, i1 false), !dbg !112
 // CHECK:STDOUT:   call void @_Z1FRN6Carbon4Main6FieldCE(ptr %c.var), !dbg !117
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.0f9f2a833d58b7bf(ptr %c.var), !dbg !112

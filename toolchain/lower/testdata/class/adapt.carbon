@@ -66,8 +66,8 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.PairOfInts.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_27.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   %.loc9_27.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !31
+// CHECK:STDOUT:   %.loc9_27.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !31
+// CHECK:STDOUT:   %.loc9_27.6.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !31
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @PairOfInts.val.loc9_28, i64 8, i1 false), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
@@ -82,7 +82,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CGetB.PairAdapter.Main(ptr %self) #0 !dbg !38 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !46
+// CHECK:STDOUT:   %.loc22_14.1.b = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !46
 // CHECK:STDOUT:   %.loc22_14.2 = load i32, ptr %.loc22_14.1.b, align 4, !dbg !46
 // CHECK:STDOUT:   ret i32 %.loc22_14.2, !dbg !47
 // CHECK:STDOUT: }

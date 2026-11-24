@@ -75,9 +75,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF.Main(ptr %c) #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_13.1.b = getelementptr inbounds nuw { i32, ptr }, ptr %c, i32 0, i32 1, !dbg !31
+// CHECK:STDOUT:   %.loc10_13.1.b = getelementptr inbounds nuw i8, ptr %c, i64 8, !dbg !31
 // CHECK:STDOUT:   %.loc10_13.2 = load ptr, ptr %.loc10_13.1.b, align 8, !dbg !31
-// CHECK:STDOUT:   %.loc10_16.1.a = getelementptr inbounds nuw { i32, ptr }, ptr %.loc10_13.2, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc10_16.1.a = getelementptr inbounds nuw i8, ptr %.loc10_13.2, i64 0, !dbg !33
 // CHECK:STDOUT:   %.loc10_16.2 = load i32, ptr %.loc10_16.1.a, align 4, !dbg !33
 // CHECK:STDOUT:   ret i32 %.loc10_16.2, !dbg !34
 // CHECK:STDOUT: }
@@ -87,9 +87,9 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { i32, ptr }, align 8, !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !39
-// CHECK:STDOUT:   %.loc15_4.a = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 0, !dbg !41
+// CHECK:STDOUT:   %.loc15_4.a = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !41
 // CHECK:STDOUT:   store i32 1, ptr %.loc15_4.a, align 4, !dbg !41
-// CHECK:STDOUT:   %.loc16.b = getelementptr inbounds nuw { i32, ptr }, ptr %c.var, i32 0, i32 1, !dbg !42
+// CHECK:STDOUT:   %.loc16.b = getelementptr inbounds nuw i8, ptr %c.var, i64 8, !dbg !42
 // CHECK:STDOUT:   store ptr %c.var, ptr %.loc16.b, align 8, !dbg !42
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %c.var), !dbg !46
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %c.var), !dbg !39
@@ -153,9 +153,9 @@ fn Run() {
 // CHECK:STDOUT:   %_.var = alloca { ptr, {} }, align 8, !dbg !62
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !60
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !62
-// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw { ptr, {} }, ptr %_.var, i32 0, i32 0, !dbg !65
+// CHECK:STDOUT:   %.loc15_33.2.a = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !65
 // CHECK:STDOUT:   store ptr %o.var, ptr %.loc15_33.2.a, align 8, !dbg !65
-// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw { ptr, {} }, ptr %_.var, i32 0, i32 1, !dbg !65
+// CHECK:STDOUT:   %.loc15_33.4.b = getelementptr inbounds nuw i8, ptr %_.var, i64 8, !dbg !65
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %.loc15_33.4.b, ptr align 1 @Other.val.loc15_33.5, i64 0, i1 false), !dbg !65
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.bbd1117e7624c951(ptr %_.var), !dbg !62
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6804c0187df0ed58(ptr %o.var), !dbg !60
@@ -225,10 +225,10 @@ fn Run() {
 // CHECK:STDOUT:   %_.var = alloca <{ ptr, { i32 } }>, align 8, !dbg !87
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %o.var), !dbg !85
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !87
-// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw <{ ptr, { i32 } }>, ptr %_.var, i32 0, i32 0, !dbg !90
+// CHECK:STDOUT:   %.loc17_40.2.a = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !90
 // CHECK:STDOUT:   store ptr %o.var, ptr %.loc17_40.2.a, align 8, !dbg !90
-// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw <{ ptr, { i32 } }>, ptr %_.var, i32 0, i32 1, !dbg !90
-// CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw { i32 }, ptr %.loc17_40.4.b, i32 0, i32 0, !dbg !91
+// CHECK:STDOUT:   %.loc17_40.4.b = getelementptr inbounds nuw i8, ptr %_.var, i64 8, !dbg !90
+// CHECK:STDOUT:   %.loc17_39.3.v = getelementptr inbounds nuw i8, ptr %.loc17_40.4.b, i64 0, !dbg !91
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %.loc17_40.4.b, ptr align 4 @Other.val.loc17_40.5, i64 4, i1 false), !dbg !90
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.bbd1117e7624c951(ptr %_.var), !dbg !87
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6804c0187df0ed58(ptr %o.var), !dbg !85

@@ -10,6 +10,7 @@
 
 #include "clang/AST/DeclBase.h"
 #include "common/raw_string_ostream.h"
+#include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -455,6 +456,44 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
 
   Inst inst = file.insts().GetWithAttachedType(inst_id);
   DumpInstCommonDetails(file, inst, out);
+  if (auto cat = GetExprCategory(file, inst_id); cat != ExprCategory::NotExpr) {
+    const char* cat_str = "";
+    switch (cat) {
+      case ExprCategory::NotExpr:
+        break;
+      case ExprCategory::Error:
+        cat_str = "Error";
+        break;
+      case ExprCategory::Pattern:
+        cat_str = "Pattern";
+        break;
+      case ExprCategory::Value:
+        cat_str = "Value";
+        break;
+      case ExprCategory::ReprInitializing:
+        cat_str = "ReprInitializing";
+        break;
+      case ExprCategory::InPlaceInitializing:
+        cat_str = "InPlaceInitializing";
+        break;
+      case ExprCategory::EphemeralRef:
+        cat_str = "EphemeralRef";
+        break;
+      case ExprCategory::DurableRef:
+        cat_str = "DurableRef";
+        break;
+      case ExprCategory::Mixed:
+        cat_str = "Mixed";
+        break;
+      case ExprCategory::Dependent:
+        cat_str = "Dependent";
+        break;
+      case ExprCategory::RefTagged:
+        cat_str = "RefTagged";
+        break;
+    }
+    out << "\n  - expr category: " << cat_str;
+  }
   ConstantId const_id = file.constant_values().GetAttached(inst_id);
   if (const_id.has_value()) {
     InstId const_inst_id = file.constant_values().GetInstId(const_id);

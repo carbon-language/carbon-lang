@@ -32,6 +32,79 @@
 
 namespace Carbon::SemIR {
 
+auto TextualNamespace::Name::GetFullName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  llvm::StringMapEntry<NameResult>* value = value_;
+  while (value->second.ambiguous && value->second.fallback) {
+    value = value->second.fallback.value_;
+  }
+  return value->first();
+}
+
+auto TextualNamespace::Name::GetBaseName() const -> llvm::StringRef {
+  if (!value_) {
+    return "<null name>";
+  }
+  return value_->first().take_front(base_name_size_);
+}
+
+auto TextualNamespace::AllocateNameWithSuffixes(
+    std::string full_name, llvm::ArrayRef<ssize_t> name_sizes) -> Name {
+  // The best (shortest) name for this instruction so far, and the current
+  // name for it.
+  Name best;
+  Name current;
+
+  const size_t base_name_size = name_sizes[0];
+
+  // Add `name` as a name for this entity.
+  auto add_name = [&](llvm::StringRef name, bool mark_ambiguous = true) {
+    auto [it, added] = allocated_.insert({name, NameResult()});
+    Name new_name = Name(it, base_name_size);
+
+    if (!added) {
+      if (mark_ambiguous) {
+        // This name was allocated for a different instruction. Mark it as
+        // ambiguous and keep looking for a name for this instruction.
+        new_name.SetAmbiguous();
+      }
+    } else {
+      if (!best) {
+        best = new_name;
+      } else {
+        CARBON_CHECK(current);
+        current.SetFallback(new_name);
+      }
+      current = new_name;
+    }
+    return added;
+  };
+
+  int previous_size = -1;
+  for (auto name_size : name_sizes) {
+    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
+    previous_size = name_size;
+    if (name_size > 0) {
+      add_name(llvm::StringRef(full_name).take_front(name_size));
+    }
+  }
+  CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
+               "`name_sizes` doesn't end with the size of `full_name`");
+
+  // Append numbers until we find an available name.
+  full_name.push_back('.');
+  auto name_size_without_counter = full_name.size();
+  for (int counter = 1;; ++counter) {
+    full_name.resize(name_size_without_counter);
+    llvm::raw_string_ostream(full_name) << counter;
+    if (add_name(full_name, /*mark_ambiguous=*/false)) {
+      return best;
+    }
+  }
+}
+
 class InstNamer::NamingContext {
  public:
   explicit NamingContext(InstNamer* inst_namer, InstNamer::ScopeId scope_id,
@@ -107,7 +180,8 @@ InstNamer::InstNamer(const File* sem_ir, int total_ir_count)
     : sem_ir_(sem_ir), fingerprinter_(total_ir_count) {
   CARBON_CHECK(sem_ir_->is_complete(),
                "Can't create InstNamer for pending SemIR::File");
-  insts_.resize(sem_ir->insts().size(), {ScopeId::None, Namespace::Name()});
+  insts_.resize(sem_ir->insts().size(),
+                {ScopeId::None, TextualNamespace::Name()});
   labels_.resize(sem_ir->inst_blocks().size());
   scopes_.resize(GetScopeIdOffset(ScopeIdTypeEnum::None));
   generic_scopes_.resize(sem_ir->generics().size(), ScopeId::None);
@@ -324,79 +398,6 @@ auto InstNamer::GetLabelFor(ScopeId scope_id, InstBlockId block_id) const
     return ("!" + label_name.GetFullName()).str();
   }
   return (GetScopeName(label_scope) + ".!" + label_name.GetFullName()).str();
-}
-
-auto InstNamer::Namespace::Name::GetFullName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  llvm::StringMapEntry<NameResult>* value = value_;
-  while (value->second.ambiguous && value->second.fallback) {
-    value = value->second.fallback.value_;
-  }
-  return value->first();
-}
-
-auto InstNamer::Namespace::Name::GetBaseName() const -> llvm::StringRef {
-  if (!value_) {
-    return "<null name>";
-  }
-  return value_->first().take_front(base_name_size_);
-}
-
-auto InstNamer::Namespace::AllocateNameWithSuffixes(
-    std::string full_name, llvm::ArrayRef<ssize_t> name_sizes) -> Name {
-  // The best (shortest) name for this instruction so far, and the current
-  // name for it.
-  Name best;
-  Name current;
-
-  const size_t base_name_size = name_sizes[0];
-
-  // Add `name` as a name for this entity.
-  auto add_name = [&](llvm::StringRef name, bool mark_ambiguous = true) {
-    auto [it, added] = allocated_.insert({name, NameResult()});
-    Name new_name = Name(it, base_name_size);
-
-    if (!added) {
-      if (mark_ambiguous) {
-        // This name was allocated for a different instruction. Mark it as
-        // ambiguous and keep looking for a name for this instruction.
-        new_name.SetAmbiguous();
-      }
-    } else {
-      if (!best) {
-        best = new_name;
-      } else {
-        CARBON_CHECK(current);
-        current.SetFallback(new_name);
-      }
-      current = new_name;
-    }
-    return added;
-  };
-
-  int previous_size = -1;
-  for (auto name_size : name_sizes) {
-    CARBON_CHECK(name_size > previous_size, "`name_sizes` not sorted");
-    previous_size = name_size;
-    if (name_size > 0) {
-      add_name(llvm::StringRef(full_name).take_front(name_size));
-    }
-  }
-  CARBON_CHECK(static_cast<size_t>(previous_size) == full_name.size(),
-               "`name_sizes` doesn't end with the size of `full_name`");
-
-  // Append numbers until we find an available name.
-  full_name.push_back('.');
-  auto name_size_without_counter = full_name.size();
-  for (int counter = 1;; ++counter) {
-    full_name.resize(name_size_without_counter);
-    llvm::raw_string_ostream(full_name) << counter;
-    if (add_name(full_name, /*mark_ambiguous=*/false)) {
-      return best;
-    }
-  }
 }
 
 auto InstNamer::FileNamespace::AllocateName(

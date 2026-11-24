@@ -31,10 +31,10 @@ fn F() {
   // TODO: Decide on what behavior we want here. We don't reject the corresponding case outside of a function.
   // CHECK:STDERR:        ╭─┤ fail_param_shadows_class.carbon:[[@LINE+8]]:9
   // CHECK:STDERR: ->     │   class C(C: type) {
-  // CHECK:STDERR:        ·         ┳ ───┬───
-  // CHECK:STDERR:        ·         ┗━━━━━━━┫ error: duplicate name `C` being declared in the same scope
-  // CHECK:STDERR:        ·              │  ┃        [NameDeclDuplicate]
-  // CHECK:STDERR:        ·              ╰────┤ name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ·         ┳ ┬
+  // CHECK:STDERR:        ·         ┗━━━━┫ error: duplicate name `C` being declared in the same scope
+  // CHECK:STDERR:        ·           │  ┃        [NameDeclDuplicate]
+  // CHECK:STDERR:        ·           ╰────┤ name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   class C(C: type) {

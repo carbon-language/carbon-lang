@@ -105,9 +105,9 @@ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
 fn CallBigStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_bigger_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───────┬──────
+  // CHECK:STDERR:        ·           ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   BigStructParam({.c = 3, .d = 4});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━
@@ -127,9 +127,9 @@ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
 fn CallSmallStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_smaller_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────────┬───────
+  // CHECK:STDERR:        ·            ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·               │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   SmallStructParam({.f = 5, .g = 6, .h = 7});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
@@ -149,9 +149,9 @@ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
 fn CallWrongNameStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_struct_wrong_name.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongNameStructParam({.i = 8, .j = 9});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
@@ -171,9 +171,9 @@ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
 fn CallWrongOrderStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬──────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongOrderStructParam({.second = 11, .first = 10});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -195,9 +195,9 @@ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_incomplete.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━
@@ -217,9 +217,9 @@ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_inconsistent.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42, {.x = 12});
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━

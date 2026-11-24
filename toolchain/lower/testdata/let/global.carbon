@@ -353,9 +353,9 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT:   %var = alloca i32, align 4, !dbg !98
 // CHECK:STDOUT:   %.loc7_19.5.temp = alloca <{ i32, i1 }>, align 4, !dbg !98
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !91
-// CHECK:STDOUT:   %.loc4_34.3.array.index = getelementptr inbounds [3 x i32], ptr %a.var, i32 0, i64 0, !dbg !92
-// CHECK:STDOUT:   %.loc4_34.6.array.index = getelementptr inbounds [3 x i32], ptr %a.var, i32 0, i64 1, !dbg !92
-// CHECK:STDOUT:   %.loc4_34.9.array.index = getelementptr inbounds [3 x i32], ptr %a.var, i32 0, i64 2, !dbg !92
+// CHECK:STDOUT:   %.loc4_34.3.array.index = getelementptr inbounds i8, ptr %a.var, i64 0, !dbg !92
+// CHECK:STDOUT:   %.loc4_34.6.array.index = getelementptr inbounds i8, ptr %a.var, i64 4, !dbg !92
+// CHECK:STDOUT:   %.loc4_34.9.array.index = getelementptr inbounds i8, ptr %a.var, i64 8, !dbg !92
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %a.var, ptr align 4 @array.loc4_3.1, i64 12, i1 false), !dbg !91
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %j.var), !dbg !94
 // CHECK:STDOUT:   store i32 0, ptr %j.var, align 4, !dbg !94
@@ -402,18 +402,19 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: define linkonce_odr void @"_CNext.Array.ef119564f44a13e5.Core:Iterate.Core.979acf9988e393af"(ptr sret(<{ i32, i1 }>) %return, ptr %self, ptr %cursor) #0 !dbg !124 {
 // CHECK:STDOUT:   %1 = load i32, ptr %cursor, align 4, !dbg !131
 // CHECK:STDOUT:   %2 = icmp slt i32 %1, 3, !dbg !131
-// CHECK:STDOUT:   br i1 %2, label %3, label %7, !dbg !132
+// CHECK:STDOUT:   br i1 %2, label %3, label %8, !dbg !132
 // CHECK:STDOUT:
 // CHECK:STDOUT: 3:                                                ; preds = %0
 // CHECK:STDOUT:   call void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %cursor), !dbg !134
 // CHECK:STDOUT:   %4 = load i32, ptr %cursor, align 4, !dbg !136
 // CHECK:STDOUT:   %5 = sub i32 %4, 1, !dbg !136
-// CHECK:STDOUT:   %array.index = getelementptr inbounds [3 x i32], ptr %self, i32 0, i32 %5, !dbg !135
-// CHECK:STDOUT:   %6 = load i32, ptr %array.index, align 4, !dbg !135
-// CHECK:STDOUT:   call void @_CSome.Optional.Core.29b2425ca9ad75a4(ptr %return, i32 %6), !dbg !137
+// CHECK:STDOUT:   %6 = sext i32 %5 to i64, !dbg !135
+// CHECK:STDOUT:   %array.index = getelementptr inbounds [4 x i8], ptr %self, i64 %6, !dbg !135
+// CHECK:STDOUT:   %7 = load i32, ptr %array.index, align 4, !dbg !135
+// CHECK:STDOUT:   call void @_CSome.Optional.Core.29b2425ca9ad75a4(ptr %return, i32 %7), !dbg !137
 // CHECK:STDOUT:   ret void, !dbg !140
 // CHECK:STDOUT:
-// CHECK:STDOUT: 7:                                                ; preds = %0
+// CHECK:STDOUT: 8:                                                ; preds = %0
 // CHECK:STDOUT:   call void @_CNone.Optional.Core.29b2425ca9ad75a4(ptr %return), !dbg !141
 // CHECK:STDOUT:   ret void, !dbg !142
 // CHECK:STDOUT: }
@@ -473,7 +474,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !207 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 1, !dbg !212
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %value, i64 4, !dbg !212
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !212
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !212
 // CHECK:STDOUT:   ret i1 %2, !dbg !213
@@ -481,7 +482,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CGet.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !215 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 0, !dbg !220
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw i8, ptr %value, i64 0, !dbg !220
 // CHECK:STDOUT:   %1 = load i32, ptr %value1, align 4, !dbg !220
 // CHECK:STDOUT:   ret i32 %1, !dbg !221
 // CHECK:STDOUT: }
@@ -497,16 +498,16 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CSome.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !231 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !240
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !240
 // CHECK:STDOUT:   store i32 %self, ptr %value, align 4, !dbg !240
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !242
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !242
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !242
 // CHECK:STDOUT:   ret void, !dbg !243
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CNone.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !245 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !252
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !252
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !252
 // CHECK:STDOUT:   ret void, !dbg !253
 // CHECK:STDOUT: }
@@ -601,17 +602,17 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: !161 = !DILocation(line: 40, column: 5, scope: !154)
 // CHECK:STDOUT: !162 = !{!155}
 // CHECK:STDOUT: !163 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !164 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c6daab0befde28a8", scope: null, file: !163, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !170)
+// CHECK:STDOUT: !164 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c6daab0befde28a8", scope: null, file: !163, line: 35, type: !8, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !170)
 // CHECK:STDOUT: !165 = !DILocalVariable(arg: 1, scope: !164, type: !6)
-// CHECK:STDOUT: !169 = !DILocation(line: 36, column: 1, scope: !164)
+// CHECK:STDOUT: !169 = !DILocation(line: 35, column: 1, scope: !164)
 // CHECK:STDOUT: !170 = !{!165}
-// CHECK:STDOUT: !171 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9a03059f269926ed", scope: null, file: !163, line: 36, type: !109, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !177)
+// CHECK:STDOUT: !171 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9a03059f269926ed", scope: null, file: !163, line: 35, type: !109, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !177)
 // CHECK:STDOUT: !172 = !DILocalVariable(arg: 1, scope: !171, type: !20)
-// CHECK:STDOUT: !176 = !DILocation(line: 36, column: 1, scope: !171)
+// CHECK:STDOUT: !176 = !DILocation(line: 35, column: 1, scope: !171)
 // CHECK:STDOUT: !177 = !{!172}
-// CHECK:STDOUT: !178 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c1f9a57dcd9034c0", scope: null, file: !163, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !184)
+// CHECK:STDOUT: !178 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c1f9a57dcd9034c0", scope: null, file: !163, line: 35, type: !8, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !184)
 // CHECK:STDOUT: !179 = !DILocalVariable(arg: 1, scope: !178, type: !6)
-// CHECK:STDOUT: !183 = !DILocation(line: 36, column: 1, scope: !178)
+// CHECK:STDOUT: !183 = !DILocation(line: 35, column: 1, scope: !178)
 // CHECK:STDOUT: !184 = !{!179}
 // CHECK:STDOUT: !185 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !186 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !185, line: 396, type: !109, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !193)

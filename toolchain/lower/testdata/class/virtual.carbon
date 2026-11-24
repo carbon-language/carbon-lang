@@ -284,15 +284,15 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc7), !dbg !43
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %_.var.loc7, ptr align 1 @Base.val.loc7_3.1, i64 0, i1 false), !dbg !43
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc8), !dbg !45
-// CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 0, !dbg !46
-// CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %_.var.loc8, i32 0, i32 1, !dbg !46
+// CHECK:STDOUT:   %.loc8_44.2.vptr = getelementptr inbounds nuw i8, ptr %_.var.loc8, i64 0, !dbg !46
+// CHECK:STDOUT:   %.loc8_44.4.base = getelementptr inbounds nuw i8, ptr %_.var.loc8, i64 8, !dbg !46
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc8, ptr align 8 @Intermediate.val.54b.loc8_3.1, i64 8, i1 false), !dbg !45
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc9), !dbg !48
-// CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %_.var.loc9, i32 0, i32 0, !dbg !49
-// CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 0, !dbg !50
-// CHECK:STDOUT:   %.loc9_48.4.base = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.2.base, i32 0, i32 1, !dbg !50
-// CHECK:STDOUT:   %.loc9_49.6.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %_.var.loc9, i32 0, i32 0, !dbg !49
-// CHECK:STDOUT:   %.loc9_49.7.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc9_49.6.base, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc9_49.2.base = getelementptr inbounds nuw i8, ptr %_.var.loc9, i64 0, !dbg !49
+// CHECK:STDOUT:   %.loc9_48.2.vptr = getelementptr inbounds nuw i8, ptr %.loc9_49.2.base, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc9_48.4.base = getelementptr inbounds nuw i8, ptr %.loc9_49.2.base, i64 8, !dbg !50
+// CHECK:STDOUT:   %.loc9_49.6.base = getelementptr inbounds nuw i8, ptr %_.var.loc9, i64 0, !dbg !49
+// CHECK:STDOUT:   %.loc9_49.7.vptr = getelementptr inbounds nuw i8, ptr %.loc9_49.6.base, i64 0, !dbg !49
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc9, ptr align 8 @Derived.val.loc9_49.5, i64 8, i1 false), !dbg !49
 // CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc9_49.7.vptr, align 8, !dbg !49
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc12), !dbg !52
@@ -407,9 +407,9 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMakePartialIntermediate.Main(ptr sret({ ptr, {} }) %return) #0 !dbg !90 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc11_36.1.base = getelementptr inbounds nuw { ptr, {} }, ptr %return, i32 0, i32 1, !dbg !93
+// CHECK:STDOUT:   %.loc11_36.1.base = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !93
 // CHECK:STDOUT:   call void @_CMakePartialBase.Main(ptr %.loc11_36.1.base), !dbg !94
-// CHECK:STDOUT:   %.loc11_36.3.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %return, i32 0, i32 0, !dbg !93
+// CHECK:STDOUT:   %.loc11_36.3.vptr = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !93
 // CHECK:STDOUT:   store ptr poison, ptr %.loc11_36.3.vptr, align 8, !dbg !93
 // CHECK:STDOUT:   ret void, !dbg !95
 // CHECK:STDOUT: }
@@ -425,7 +425,7 @@ fn Use() {
 // CHECK:STDOUT: define void @_CMakeIntermediate.Main(ptr sret({ ptr, {} }) %return) #0 !dbg !101 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMakePartialIntermediate.Main(ptr %return), !dbg !104
-// CHECK:STDOUT:   %.loc19_34.1.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %return, i32 0, i32 0, !dbg !104
+// CHECK:STDOUT:   %.loc19_34.1.vptr = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !104
 // CHECK:STDOUT:   store ptr @"_CIntermediate.Classes.$vtable", ptr %.loc19_34.1.vptr, align 8, !dbg !104
 // CHECK:STDOUT:   ret void, !dbg !105
 // CHECK:STDOUT: }
@@ -435,10 +435,10 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMakeDerivedFromPartial.Main(ptr sret({ { ptr, {} } }) %return) #0 !dbg !106 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_44.1.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !109
+// CHECK:STDOUT:   %.loc23_44.1.base = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !109
 // CHECK:STDOUT:   call void @_CMakePartialIntermediate.Main(ptr %.loc23_44.1.base), !dbg !110
-// CHECK:STDOUT:   %.loc23_44.5.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !109
-// CHECK:STDOUT:   %.loc23_44.6.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc23_44.5.base, i32 0, i32 0, !dbg !109
+// CHECK:STDOUT:   %.loc23_44.5.base = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !109
+// CHECK:STDOUT:   %.loc23_44.6.vptr = getelementptr inbounds nuw i8, ptr %.loc23_44.5.base, i64 0, !dbg !109
 // CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc23_44.6.vptr, align 8, !dbg !109
 // CHECK:STDOUT:   ret void, !dbg !111
 // CHECK:STDOUT: }
@@ -448,10 +448,10 @@ fn Use() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMakeDerivedFromNonPartial.Main(ptr sret({ { ptr, {} } }) %return) #0 !dbg !112 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_37.1.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !115
+// CHECK:STDOUT:   %.loc27_37.1.base = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !115
 // CHECK:STDOUT:   call void @_CMakeIntermediate.Main(ptr %.loc27_37.1.base), !dbg !116
-// CHECK:STDOUT:   %.loc27_37.7.base = getelementptr inbounds nuw { { ptr, {} } }, ptr %return, i32 0, i32 0, !dbg !115
-// CHECK:STDOUT:   %.loc27_37.8.vptr = getelementptr inbounds nuw { ptr, {} }, ptr %.loc27_37.7.base, i32 0, i32 0, !dbg !115
+// CHECK:STDOUT:   %.loc27_37.7.base = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !115
+// CHECK:STDOUT:   %.loc27_37.8.vptr = getelementptr inbounds nuw i8, ptr %.loc27_37.7.base, i64 0, !dbg !115
 // CHECK:STDOUT:   store ptr @"_CDerived.Classes.$vtable", ptr %.loc27_37.8.vptr, align 8, !dbg !115
 // CHECK:STDOUT:   ret void, !dbg !117
 // CHECK:STDOUT: }
@@ -515,16 +515,16 @@ fn Use() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !127
 // CHECK:STDOUT:   store i32 3, ptr %i.var, align 4, !dbg !127
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !129
-// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 0, !dbg !131
+// CHECK:STDOUT:   %.loc11_24.2.vptr = getelementptr inbounds nuw i8, ptr %v.var, i64 0, !dbg !131
 // CHECK:STDOUT:   %.loc11_23 = load i32, ptr %i.var, align 4, !dbg !130
-// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 1, !dbg !131
+// CHECK:STDOUT:   %.loc11_24.4.m = getelementptr inbounds nuw i8, ptr %v.var, i64 8, !dbg !131
 // CHECK:STDOUT:   store i32 %.loc11_23, ptr %.loc11_24.4.m, align 4, !dbg !131
 // CHECK:STDOUT:   store ptr @"_CBase.MemberInit.$vtable", ptr %.loc11_24.2.vptr, align 8, !dbg !131
-// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %v.var, i32 0, i32 1, !dbg !133
+// CHECK:STDOUT:   %.loc12_4.m = getelementptr inbounds nuw i8, ptr %v.var, i64 8, !dbg !133
 // CHECK:STDOUT:   store i32 5, ptr %.loc12_4.m, align 4, !dbg !133
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !134
-// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 0, !dbg !135
-// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %_.var, i32 0, i32 1, !dbg !135
+// CHECK:STDOUT:   %.loc13_24.2.vptr = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !135
+// CHECK:STDOUT:   %.loc13_24.5.m = getelementptr inbounds nuw i8, ptr %_.var, i64 8, !dbg !135
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Base.val.loc13_3.1, i64 12, i1 false), !dbg !134
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e060f28027e68740(ptr %_.var), !dbg !134
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e060f28027e68740(ptr %v.var), !dbg !129
@@ -608,10 +608,10 @@ fn Use() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { { ptr } }, align 8, !dbg !157
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !157
-// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %_.var, i32 0, i32 0, !dbg !158
-// CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.2.base, i32 0, i32 0, !dbg !159
-// CHECK:STDOUT:   %.loc13_32.6.base = getelementptr inbounds nuw { { ptr } }, ptr %_.var, i32 0, i32 0, !dbg !158
-// CHECK:STDOUT:   %.loc13_32.7.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc13_32.6.base, i32 0, i32 0, !dbg !158
+// CHECK:STDOUT:   %.loc13_32.2.base = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !158
+// CHECK:STDOUT:   %.loc13_31.2.vptr = getelementptr inbounds nuw i8, ptr %.loc13_32.2.base, i64 0, !dbg !159
+// CHECK:STDOUT:   %.loc13_32.6.base = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !158
+// CHECK:STDOUT:   %.loc13_32.7.vptr = getelementptr inbounds nuw i8, ptr %.loc13_32.6.base, i64 0, !dbg !158
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var, ptr align 8 @Derived.val.loc13_32.5, i64 8, i1 false), !dbg !158
 // CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc13_32.7.vptr, align 8, !dbg !158
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.9ede905be876779b(ptr %_.var), !dbg !157
@@ -718,13 +718,13 @@ fn Use() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca { { ptr } }, align 8, !dbg !185
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !185
-// CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !186
-// CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.2.base, i32 0, i32 0, !dbg !187
-// CHECK:STDOUT:   %.loc14_32.6.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !186
-// CHECK:STDOUT:   %.loc14_32.7.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc14_32.6.base, i32 0, i32 0, !dbg !186
+// CHECK:STDOUT:   %.loc14_32.2.base = getelementptr inbounds nuw i8, ptr %v.var, i64 0, !dbg !186
+// CHECK:STDOUT:   %.loc14_31.2.vptr = getelementptr inbounds nuw i8, ptr %.loc14_32.2.base, i64 0, !dbg !187
+// CHECK:STDOUT:   %.loc14_32.6.base = getelementptr inbounds nuw i8, ptr %v.var, i64 0, !dbg !186
+// CHECK:STDOUT:   %.loc14_32.7.vptr = getelementptr inbounds nuw i8, ptr %.loc14_32.6.base, i64 0, !dbg !186
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %v.var, ptr align 8 @Derived.val.loc14_32.5, i64 8, i1 false), !dbg !186
 // CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc14_32.7.vptr, align 8, !dbg !186
-// CHECK:STDOUT:   %.loc15_3.1.base = getelementptr inbounds nuw { { ptr } }, ptr %v.var, i32 0, i32 0, !dbg !189
+// CHECK:STDOUT:   %.loc15_3.1.base = getelementptr inbounds nuw i8, ptr %v.var, i64 0, !dbg !189
 // CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %.loc15_3.1.base, align 8, !dbg !189
 // CHECK:STDOUT:   %Base.F.call = call ptr @llvm.load.relative.i32(ptr %Base.F.call.vtable, i32 0), !dbg !189
 // CHECK:STDOUT:   call void %Base.F.call(ptr %.loc15_3.1.base), !dbg !189
@@ -806,10 +806,10 @@ fn Use() {
 // CHECK:STDOUT:   %_.var.loc16 = alloca { ptr }, align 8, !dbg !203
 // CHECK:STDOUT:   %_.var.loc17 = alloca { ptr }, align 8, !dbg !206
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc16), !dbg !203
-// CHECK:STDOUT:   %.loc16_22.2.vptr = getelementptr inbounds nuw { ptr }, ptr %_.var.loc16, i32 0, i32 0, !dbg !204
+// CHECK:STDOUT:   %.loc16_22.2.vptr = getelementptr inbounds nuw i8, ptr %_.var.loc16, i64 0, !dbg !204
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc16, ptr align 8 @Base.val.65a.loc16_3.1, i64 8, i1 false), !dbg !203
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc17), !dbg !206
-// CHECK:STDOUT:   %.loc17_22.2.vptr = getelementptr inbounds nuw { ptr }, ptr %_.var.loc17, i32 0, i32 0, !dbg !207
+// CHECK:STDOUT:   %.loc17_22.2.vptr = getelementptr inbounds nuw i8, ptr %_.var.loc17, i64 0, !dbg !207
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc17, ptr align 8 @Base.val.b6e.loc17_3.1, i64 8, i1 false), !dbg !206
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.51b6e8888a2a2103(ptr %_.var.loc17), !dbg !206
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.053043cd456173f1(ptr %_.var.loc16), !dbg !203
@@ -1013,13 +1013,13 @@ fn Use() {
 // CHECK:STDOUT:   %.loc25_10.1.temp = alloca {}, align 1, !dbg !300
 // CHECK:STDOUT:   %.loc25_9.2.temp = alloca {}, align 1, !dbg !301
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %d.var), !dbg !292
-// CHECK:STDOUT:   %.loc23_31.2.base = getelementptr inbounds nuw { { ptr } }, ptr %d.var, i32 0, i32 0, !dbg !293
-// CHECK:STDOUT:   %.loc23_30.2.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc23_31.2.base, i32 0, i32 0, !dbg !294
-// CHECK:STDOUT:   %.loc23_31.6.base = getelementptr inbounds nuw { { ptr } }, ptr %d.var, i32 0, i32 0, !dbg !293
-// CHECK:STDOUT:   %.loc23_31.7.vptr = getelementptr inbounds nuw { ptr }, ptr %.loc23_31.6.base, i32 0, i32 0, !dbg !293
+// CHECK:STDOUT:   %.loc23_31.2.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !293
+// CHECK:STDOUT:   %.loc23_30.2.vptr = getelementptr inbounds nuw i8, ptr %.loc23_31.2.base, i64 0, !dbg !294
+// CHECK:STDOUT:   %.loc23_31.6.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !293
+// CHECK:STDOUT:   %.loc23_31.7.vptr = getelementptr inbounds nuw i8, ptr %.loc23_31.6.base, i64 0, !dbg !293
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %d.var, ptr align 8 @Derived.val.loc23_31.5, i64 8, i1 false), !dbg !293
 // CHECK:STDOUT:   store ptr @"_CDerived.Main.$vtable", ptr %.loc23_31.7.vptr, align 8, !dbg !293
-// CHECK:STDOUT:   %.loc24_18.2.base = getelementptr inbounds nuw { { ptr } }, ptr %d.var, i32 0, i32 0, !dbg !297
+// CHECK:STDOUT:   %.loc24_18.2.base = getelementptr inbounds nuw i8, ptr %d.var, i64 0, !dbg !297
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_10.1.temp), !dbg !300
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc25_9.2.temp), !dbg !301
 // CHECK:STDOUT:   %Base.F.call.vtable = load ptr, ptr %.loc25_10.1.temp, align 8, !dbg !300

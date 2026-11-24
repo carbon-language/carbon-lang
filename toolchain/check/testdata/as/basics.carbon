@@ -106,15 +106,12 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+11]]:13
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+8]]:13
 // CHECK:STDERR: ->     │ let a: {} = 1 as {};
 // CHECK:STDERR:        ·             ┳━━━━━━
 // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert expression of type `Core.IntLiteral` to
-// CHECK:STDERR:        ·             │  ┃        `{}` with `as`
-// CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·             ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·                  │ `Core.As({})`
-// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                ┃        `{}` with `as`
+// CHECK:STDERR:        ·                ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: {} = 1 as {};
@@ -123,15 +120,12 @@ let a: {} = 1 as {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:32
+// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+8]]:32
 // CHECK:STDERR: ->     │ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDERR:        ·                                ┳━━━━━━━━
 // CHECK:STDERR:        ·                                ┗━━┫ error: cannot implicitly convert non-type
-// CHECK:STDERR:        ·                                │  ┃        value of type `{.x: ()}` to `type`
-// CHECK:STDERR:        ·                                │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                ╰────┤ type `{.x: ()}` does not implement
-// CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                   ┃        value of type `{.x: ()}` to `type`
+// CHECK:STDERR:        ·                                   ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};

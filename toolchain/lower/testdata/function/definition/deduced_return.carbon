@@ -50,8 +50,8 @@ fn Use() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInPlace.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_25.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !46
-// CHECK:STDOUT:   %.loc23_25.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !46
+// CHECK:STDOUT:   %.loc23_25.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !46
+// CHECK:STDOUT:   %.loc23_25.6.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !46
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @C.val.32e.loc23_31, i64 8, i1 false), !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
@@ -59,8 +59,8 @@ fn Use() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CReturnedVar.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc27_38.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !50
-// CHECK:STDOUT:   %.loc27_38.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !50
+// CHECK:STDOUT:   %.loc27_38.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !50
+// CHECK:STDOUT:   %.loc27_38.6.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !50
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @C.val.7af.loc27_12, i64 8, i1 false), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }

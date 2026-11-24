@@ -210,8 +210,8 @@ class C {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
   // CHECK:STDERR:        │   fn Op(ref self);
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ associated function Op declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ·      ─┬
+  // CHECK:STDERR:        ·       ╰──┤ associated function Op declared here [AssociatedFunctionHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl as Core.DestroyImpl {}

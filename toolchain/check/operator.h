@@ -25,12 +25,14 @@ struct Operator {
 // `diagnose` is false. It is incorrect to specify `diagnose` as false if the
 // resulting ErrorInst may appear in the produced SemIR.
 //
-// If specified, `missing_impl_diagnostic_context` is used to provide context
-// for the diagnostic if the impl lookup for the operator fails.
+// If specified, `missing_impl_diagnostic` builds the diagnostic for a failed
+// impl lookup for the operator in place of the generic missing-impl
+// diagnostic, for a caller that can describe the failure in terms of its own
+// operation, such as a conversion.
 auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                         SemIR::InstId operand_id, bool diagnose = true,
-                        DiagnosticContextFn missing_impl_diagnostic_context =
-                            nullptr) -> SemIR::InstId;
+                        Diagnoser missing_impl_diagnostic = nullptr)
+    -> SemIR::InstId;
 
 // Checks and builds SemIR for a binary operator expression. For example,
 // `lhs_id * rhs_id`.
@@ -39,12 +41,14 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 // `diagnose` is false. It is incorrect to specify `diagnose` as false if the
 // resulting ErrorInst may appear in the produced SemIR.
 //
-// If specified, `missing_impl_diagnostic_context` is used to provide context
-// for the diagnostic if the impl lookup for the operator fails.
-auto BuildBinaryOperator(
-    Context& context, SemIR::LocId loc_id, Operator op, SemIR::InstId lhs_id,
-    SemIR::InstId rhs_id, bool diagnose = true,
-    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+// If specified, `missing_impl_diagnostic` builds the diagnostic for a failed
+// impl lookup for the operator in place of the generic missing-impl
+// diagnostic, for a caller that can describe the failure in terms of its own
+// operation, such as a conversion.
+auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
+                         SemIR::InstId lhs_id, SemIR::InstId rhs_id,
+                         bool diagnose = true,
+                         Diagnoser missing_impl_diagnostic = nullptr)
     -> SemIR::InstId;
 
 // Builds `<object>.(Destroy.SelfDestruct)()`, converting adapters to their

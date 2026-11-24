@@ -278,7 +278,7 @@ fn CallF() {
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %t) #0 !dbg !77 {
 // CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !80
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !80
-// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %1, i32 0, i32 0, !dbg !81
+// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw i8, ptr %1, i64 0, !dbg !81
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.99f.anon, i64 8, i1 false), !dbg !80
 // CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !83
 // CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !83

@@ -30,11 +30,11 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %y.var = alloca i32, align 4, !dbg !45
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !42
-// CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 0, !dbg !43
-// CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 1, !dbg !43
+// CHECK:STDOUT:   %.loc14_48.3.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !43
+// CHECK:STDOUT:   %.loc14_48.6.b = getelementptr inbounds nuw i8, ptr %x.var, i64 8, !dbg !43
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %x.var, ptr align 8 @struct.242.loc14_3.1, i64 12, i1 false), !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !45
-// CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw <{ double, i32 }>, ptr %x.var, i32 0, i32 1, !dbg !46
+// CHECK:STDOUT:   %.loc15_17.1.b = getelementptr inbounds nuw i8, ptr %x.var, i64 8, !dbg !46
 // CHECK:STDOUT:   %.loc15_17.2 = load i32, ptr %.loc15_17.1.b, align 4, !dbg !46
 // CHECK:STDOUT:   store i32 %.loc15_17.2, ptr %y.var, align 4, !dbg !45
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !48

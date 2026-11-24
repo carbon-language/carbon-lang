@@ -51,8 +51,8 @@ class A {
         fn Get(self: B) -> i32 {
             // CHECK:STDERR:        ╭─┤ fail_impl_in_other_class1.carbon:[[@LINE+11]]:20
             // CHECK:STDERR:        │     private var m: i32;
-            // CHECK:STDERR:        ·                 ───┬──
-            // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+            // CHECK:STDERR:        ·                 ┬
+            // CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
             // CHECK:STDERR:        ┆
             // CHECK:STDERR: ->     │             return self.m;
             // CHECK:STDERR:        ·                    ━━━┳━━
@@ -80,8 +80,8 @@ class A {
         fn Get(t: B) -> i32 {
             // CHECK:STDERR:        ╭─┤ fail_impl_in_other_class2.carbon:[[@LINE+11]]:20
             // CHECK:STDERR:        │     private var m: i32;
-            // CHECK:STDERR:        ·                 ───┬──
-            // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+            // CHECK:STDERR:        ·                 ┬
+            // CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
             // CHECK:STDERR:        ┆
             // CHECK:STDERR: ->     │             return t.m;
             // CHECK:STDERR:        ·                    ━┳━
@@ -106,8 +106,8 @@ impl A as J {
     fn Get(self: Self) -> i32 {
         // CHECK:STDERR:        ╭─┤ fail_impl_outside_class1.carbon:[[@LINE+11]]:16
         // CHECK:STDERR:        │     private var n: i32;
-        // CHECK:STDERR:        ·                 ───┬──
-        // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+        // CHECK:STDERR:        ·                 ┬
+        // CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
         // CHECK:STDERR:        ┆
         // CHECK:STDERR: ->     │         return self.n;
         // CHECK:STDERR:        ·                ━━━┳━━
@@ -131,8 +131,8 @@ impl B as J {
     fn Get(self: B) -> i32 {
         // CHECK:STDERR:        ╭─┤ fail_impl_outside_class2.carbon:[[@LINE+11]]:16
         // CHECK:STDERR:        │     private var m: i32;
-        // CHECK:STDERR:        ·                 ───┬──
-        // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+        // CHECK:STDERR:        ·                 ┬
+        // CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
         // CHECK:STDERR:        ┆
         // CHECK:STDERR: ->     │         return self.m;
         // CHECK:STDERR:        ·                ━━━┳━━

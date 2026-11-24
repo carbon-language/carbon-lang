@@ -493,7 +493,7 @@ fn H(d: D) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @"_CF.D.Main:I.Main"(ptr %self) #0 !dbg !128 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_39.1.p = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !133
+// CHECK:STDOUT:   %.loc16_39.1.p = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !133
 // CHECK:STDOUT:   %.loc16_39.2 = load ptr, ptr %.loc16_39.1.p, align 8, !dbg !133
 // CHECK:STDOUT:   ret ptr %.loc16_39.2, !dbg !135
 // CHECK:STDOUT: }

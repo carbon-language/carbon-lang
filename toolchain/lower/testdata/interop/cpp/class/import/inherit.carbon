@@ -78,18 +78,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.var = alloca { [16 x i8] }, align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !29
-// CHECK:STDOUT:   %.loc18_3.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %c.var, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   %.loc18_3.1.base = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !30
 // CHECK:STDOUT:   call void @_ZN4BaseC1Ev.carbon_thunk.(ptr %.loc18_3.1.base), !dbg !31
-// CHECK:STDOUT:   %.loc18_3.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %c.var, i32 0, i32 0, !dbg !30
-// CHECK:STDOUT:   %.loc18_3.8.vptr = getelementptr inbounds nuw [16 x i8], ptr %.loc18_3.7.base, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   %.loc18_3.7.base = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !30
+// CHECK:STDOUT:   %.loc18_3.8.vptr = getelementptr inbounds nuw i8, ptr %.loc18_3.7.base, i64 0, !dbg !30
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon4Main1CIiEE, i64 16), ptr %.loc18_3.8.vptr, align 8, !dbg !30
-// CHECK:STDOUT:   %.loc19_3.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %c.var, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc19_3.1.base = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !33
 // CHECK:STDOUT:   %Base.f.call.vtable = load ptr, ptr %.loc19_3.1.base, align 8, !dbg !33
-// CHECK:STDOUT:   %Base.f.call = getelementptr ptr, ptr %Base.f.call.vtable, i32 0, !dbg !33
+// CHECK:STDOUT:   %Base.f.call = getelementptr i8, ptr %Base.f.call.vtable, i64 0, !dbg !33
 // CHECK:STDOUT:   %Base.f.call.memptr.virtualfn = load ptr, ptr %Base.f.call, align 8, !dbg !33
 // CHECK:STDOUT:   call void %Base.f.call.memptr.virtualfn(ptr %.loc19_3.1.base), !dbg !33
-// CHECK:STDOUT:   %.loc20_11.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %c.var, i32 0, i32 0, !dbg !34
-// CHECK:STDOUT:   %.loc20_11.3.field = getelementptr inbounds nuw [16 x i8], ptr %.loc20_11.1.base, i32 0, i32 8, !dbg !34
+// CHECK:STDOUT:   %.loc20_11.1.base = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !34
+// CHECK:STDOUT:   %.loc20_11.3.field = getelementptr inbounds nuw i8, ptr %.loc20_11.1.base, i64 8, !dbg !34
 // CHECK:STDOUT:   %.loc20_11.4 = load i32, ptr %.loc20_11.3.field, align 4, !dbg !34
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.3dc4bd5f34a0e76b(ptr %c.var), !dbg !29
 // CHECK:STDOUT:   ret i32 %.loc20_11.4, !dbg !35

@@ -199,7 +199,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !56
 // CHECK:STDOUT:   %.loc16_42.2 = load i32, ptr %.loc16_42.1.n, align 4, !dbg !56
 // CHECK:STDOUT:   ret i32 %.loc16_42.2, !dbg !57
 // CHECK:STDOUT: }
@@ -410,11 +410,11 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { {}, {}, {} }, align 1, !dbg !149
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !149
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 0, !dbg !150
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem0.tuple.elem), !dbg !151
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 1, !dbg !150
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.tuple.elem), !dbg !152
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 2, !dbg !150
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem2.tuple.elem), !dbg !153
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.59df9a16f8c795fe(ptr %w.var), !dbg !149
 // CHECK:STDOUT:   ret void, !dbg !157
@@ -425,11 +425,11 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca [3 x {}], align 1, !dbg !159
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !159
-// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 0, !dbg !160
+// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.b44.array.index), !dbg !161
-// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 1, !dbg !160
+// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.5b6.array.index), !dbg !162
-// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 2, !dbg !160
+// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.97d.array.index), !dbg !163
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f85fac887b9592cc(ptr %w.var), !dbg !159
 // CHECK:STDOUT:   ret void, !dbg !165
@@ -451,11 +451,11 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !167
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !170
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.9aa), !dbg !171
-// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 0, !dbg !171
+// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 0, !dbg !171
 // CHECK:STDOUT:   store ptr %.7a56fd.1.temp, ptr %tuple.9aa1, align 8, !dbg !171
-// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 1, !dbg !171
+// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 8, !dbg !171
 // CHECK:STDOUT:   store ptr %.7a56fd.2.temp, ptr %tuple.9aa2, align 8, !dbg !171
-// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 2, !dbg !171
+// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 16, !dbg !171
 // CHECK:STDOUT:   store ptr %.7a56fd.3.temp, ptr %tuple.9aa3, align 8, !dbg !171
 // CHECK:STDOUT:   call void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr %w.var, ptr %tuple.9aa), !dbg !167
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %w.var), !dbg !167
@@ -566,12 +566,12 @@ fn Run() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !203
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !203
-// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !205
-// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 0, !dbg !204
+// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !205
+// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !204
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.ae2.a), !dbg !206
-// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 1, !dbg !204
+// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !204
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.ffd.b), !dbg !207
-// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !205
+// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !205
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.b82.tuple.elem), !dbg !208
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.e1b668d14ae6f638(ptr %w.var), !dbg !203
 // CHECK:STDOUT:   ret void, !dbg !210
@@ -591,12 +591,12 @@ fn Run() {
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !214
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !212
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !216
-// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !217
-// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 0, !dbg !215
+// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !217
+// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !215
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.ce4.a, ptr %.7a56fd.1.temp), !dbg !215
-// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 1, !dbg !215
+// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !215
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.0ae.b, ptr %.7a56fd.2.temp), !dbg !215
-// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !217
+// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !217
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.1e9.tuple.elem, ptr %.7a56fd.3.temp), !dbg !217
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.d998f017deb6d2c0(ptr %w.var), !dbg !212
 // CHECK:STDOUT:   ret void, !dbg !219
@@ -609,16 +609,16 @@ fn Run() {
 // CHECK:STDOUT:   %.7a56fd.4.temp = alloca {}, align 1, !dbg !221
 // CHECK:STDOUT:   %.7a56fd.5.temp = alloca {}, align 1, !dbg !221
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !221
-// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !223
-// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 0, !dbg !222
+// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !223
+// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !222
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.014.a), !dbg !224
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.4.temp), !dbg !221
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.4.temp), !dbg !225
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.5.temp), !dbg !221
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.5.temp), !dbg !226
-// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 1, !dbg !222
+// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !222
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.94f.b, ptr %.7a56fd.4.temp), !dbg !222
-// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !223
+// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !223
 // CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.76f.tuple.elem, ptr %.7a56fd.5.temp), !dbg !223
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.6458632b8fd80962(ptr %w.var), !dbg !221
 // CHECK:STDOUT:   ret void, !dbg !228
@@ -717,7 +717,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !261 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !266
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !266
 // CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !266
 // CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !267
 // CHECK:STDOUT: }
@@ -800,7 +800,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !303 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !308
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !308
 // CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !308
 // CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !309
 // CHECK:STDOUT: }
@@ -899,7 +899,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMakeA.Main.a6a60dfee2d7d273(ptr sret({ {} }) %return) #0 !dbg !345 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !349
+// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !349
 // CHECK:STDOUT:   call void @_CMakeB.B.Main(ptr %.f4aa6f.1.field), !dbg !348
 // CHECK:STDOUT:   ret void, !dbg !350
 // CHECK:STDOUT: }

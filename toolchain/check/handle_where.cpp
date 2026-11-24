@@ -499,7 +499,7 @@ static auto DiagnoseNestedWhere(Context& context, SemIR::LocId loc_id,
       NestedWhereInsideWhere, Error,
       "found `where` expression nested on the right-hand side of `where`");
   auto builder = context.emitter().Build(loc_id, NestedWhereInsideWhere);
-  CARBON_DIAGNOSTIC_LABEL(NestedWhereInsideWhereOuterNote, Info,
+  CARBON_DIAGNOSTIC_LABEL(NestedWhereInsideWhereOuterNote,
                           "on right-hand side of `where` here");
   builder.Attach(outer_loc_id, NestedWhereInsideWhereOuterNote);
   builder.Emit();
@@ -624,6 +624,41 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
       context, node_id,
       {.type_id = type_id, .requirements_id = requirements_id});
   return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::WhereAssignmentIntroducerId node_id) -> bool {
+  auto scope_inst_id = context.scope_stack().PeekInstId();
+  if (!context.insts().TryGetAsIfValid<SemIR::ImplDecl>(scope_inst_id)) {
+    CARBON_DIAGNOSTIC(WhereAssignmentInWrongScope, Error,
+                      "`where` assignment declaration found in invalid scope; "
+                      "must be in `impl` definition");
+    context.emitter().Emit(node_id, WhereAssignmentInWrongScope);
+    scope_inst_id = SemIR::ErrorInst::InstId;
+  }
+
+  context.node_stack().Push(node_id, scope_inst_id);
+  return true;
+}
+
+auto HandleParseNode(Context& /*context*/,
+                     Parse::WhereAssignmentOperatorId /*node_id*/) -> bool {
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::WhereAssignmentDeclId node_id)
+    -> bool {
+  [[maybe_unused]] auto rhs_inst_id = context.node_stack().PopExpr();
+  [[maybe_unused]] auto lhs_name_id =
+      context.node_stack()
+          .Pop<Parse::NodeKind::IdentifierNameNotBeforeSignature>();
+  auto scope_inst_id =
+      context.node_stack().Pop<Parse::NodeKind::WhereAssignmentIntroducer>();
+  if (scope_inst_id == SemIR::ErrorInst::InstId) {
+    return true;
+  }
+
+  return context.TODO(node_id, "where assignment decl");
 }
 
 }  // namespace Carbon::Check

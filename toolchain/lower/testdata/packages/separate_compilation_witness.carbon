@@ -120,12 +120,12 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr sret({ i32 }) %return, ptr %self, ptr %other) #0 !dbg !12 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_22.1.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !19
+// CHECK:STDOUT:   %.loc9_22.1.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !19
 // CHECK:STDOUT:   %.loc9_22.2 = load i32, ptr %.loc9_22.1.x, align 4, !dbg !19
-// CHECK:STDOUT:   %.loc9_32.1.x = getelementptr inbounds nuw { i32 }, ptr %other, i32 0, i32 0, !dbg !20
+// CHECK:STDOUT:   %.loc9_32.1.x = getelementptr inbounds nuw i8, ptr %other, i64 0, !dbg !20
 // CHECK:STDOUT:   %.loc9_32.2 = load i32, ptr %.loc9_32.1.x, align 4, !dbg !20
 // CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %.loc9_22.2, %.loc9_32.2, !dbg !19
-// CHECK:STDOUT:   %.loc9_34.2.x = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !21
+// CHECK:STDOUT:   %.loc9_34.2.x = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !21
 // CHECK:STDOUT:   store i32 %Int.as.AddWith.impl.Op.call, ptr %.loc9_34.2.x, align 4, !dbg !21
 // CHECK:STDOUT:   ret void, !dbg !22
 // CHECK:STDOUT: }
@@ -133,10 +133,10 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }) %return, ptr %self, i32 %n) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_22.1.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc15_22.1.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !31
 // CHECK:STDOUT:   %.loc15_22.2 = load i32, ptr %.loc15_22.1.x, align 4, !dbg !31
 // CHECK:STDOUT:   %Int.as.MulWith.impl.Op.call = mul i32 %.loc15_22.2, %n, !dbg !31
-// CHECK:STDOUT:   %.loc15_28.2.x = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc15_28.2.x = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !33
 // CHECK:STDOUT:   store i32 %Int.as.MulWith.impl.Op.call, ptr %.loc15_28.2.x, align 4, !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
@@ -222,9 +222,9 @@ fn CallGeneric() {
 // CHECK:STDOUT: !49 = !DILocation(line: 5, column: 3, scope: !38)
 // CHECK:STDOUT: !50 = !{!39, !40}
 // CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !58)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !58)
 // CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !7)
-// CHECK:STDOUT: !57 = !DILocation(line: 36, column: 1, scope: !52)
+// CHECK:STDOUT: !57 = !DILocation(line: 35, column: 1, scope: !52)
 // CHECK:STDOUT: !58 = !{!53}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -277,9 +277,9 @@ fn CallGeneric() {
 // CHECK:STDOUT: !69 = !DILocation(line: 7, column: 15, scope: !61)
 // CHECK:STDOUT: !70 = !DILocation(line: 7, column: 3, scope: !61)
 // CHECK:STDOUT: !71 = !{!62, !63}
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !60, retainedNodes: !78)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !60, retainedNodes: !78)
 // CHECK:STDOUT: !73 = !DILocalVariable(arg: 1, scope: !72, type: !7)
-// CHECK:STDOUT: !77 = !DILocation(line: 36, column: 1, scope: !72)
+// CHECK:STDOUT: !77 = !DILocation(line: 35, column: 1, scope: !72)
 // CHECK:STDOUT: !78 = !{!73}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -382,9 +382,9 @@ fn CallGeneric() {
 // CHECK:STDOUT: !100 = !DILocation(line: 6, column: 15, scope: !92)
 // CHECK:STDOUT: !101 = !DILocation(line: 6, column: 3, scope: !92)
 // CHECK:STDOUT: !102 = !{!93, !94}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !109)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !109)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !7)
-// CHECK:STDOUT: !108 = !DILocation(line: 36, column: 1, scope: !103)
+// CHECK:STDOUT: !108 = !DILocation(line: 35, column: 1, scope: !103)
 // CHECK:STDOUT: !109 = !{!104}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -437,9 +437,9 @@ fn CallGeneric() {
 // CHECK:STDOUT: !120 = !DILocation(line: 7, column: 15, scope: !112)
 // CHECK:STDOUT: !121 = !DILocation(line: 7, column: 3, scope: !112)
 // CHECK:STDOUT: !122 = !{!113, !114}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !129)
+// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !129)
 // CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !7)
-// CHECK:STDOUT: !128 = !DILocation(line: 36, column: 1, scope: !123)
+// CHECK:STDOUT: !128 = !DILocation(line: 35, column: 1, scope: !123)
 // CHECK:STDOUT: !129 = !{!124}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -524,9 +524,9 @@ fn CallGeneric() {
 // CHECK:STDOUT: !145 = !DILocation(line: 6, column: 15, scope: !137)
 // CHECK:STDOUT: !146 = !DILocation(line: 6, column: 3, scope: !137)
 // CHECK:STDOUT: !147 = !{!138, !139}
-// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !154)
+// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !154)
 // CHECK:STDOUT: !149 = !DILocalVariable(arg: 1, scope: !148, type: !7)
-// CHECK:STDOUT: !153 = !DILocation(line: 36, column: 1, scope: !148)
+// CHECK:STDOUT: !153 = !DILocation(line: 35, column: 1, scope: !148)
 // CHECK:STDOUT: !154 = !{!149}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -629,8 +629,8 @@ fn CallGeneric() {
 // CHECK:STDOUT: !172 = !DILocation(line: 6, column: 15, scope: !164)
 // CHECK:STDOUT: !173 = !DILocation(line: 6, column: 3, scope: !164)
 // CHECK:STDOUT: !174 = !{!165, !166}
-// CHECK:STDOUT: !175 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 36, type: !48, spFlags: DISPFlagDefinition, unit: !158, retainedNodes: !181)
+// CHECK:STDOUT: !175 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !158, retainedNodes: !181)
 // CHECK:STDOUT: !176 = !DILocalVariable(arg: 1, scope: !175, type: !7)
-// CHECK:STDOUT: !180 = !DILocation(line: 36, column: 1, scope: !175)
+// CHECK:STDOUT: !180 = !DILocation(line: 35, column: 1, scope: !175)
 // CHECK:STDOUT: !181 = !{!176}
 // CHECK:STDOUT:

@@ -273,9 +273,9 @@ interface S(T: type);
 // conversion fails.
 // CHECK:STDERR:        ╭─┤ fail_early_impls_with_period_self_replaced.carbon:[[@LINE+15]]:56
 // CHECK:STDERR:        │ class NeedZ(V: Z(.Self));
-// CHECK:STDERR:        · ────────────┬────────────
-// CHECK:STDERR:        ·             ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                │ [DeductionGenericHere]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·            │ [DeductionGenericHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ ...sed generic T: type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
 // CHECK:STDERR:        ·                                                   ┳━━━━━━━

@@ -76,14 +76,12 @@ import library "int_ops";
 
 fn F() {
   // Ensure our testing machinery works.
-  // CHECK:STDERR:        ╭─┤ fail_self_test.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_self_test.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Test(Int32ToInt32(0)) as Expect(1 as i32);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert expression of type `Expect(0)` to `Expect(1)` with
-  // CHECK:STDERR:        ·   │  ┃        `as`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Expect(0)` does not implement interface `Core.As(Expect(1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `as`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Test(Int32ToInt32(0)) as Expect(1 as i32);
@@ -257,9 +255,9 @@ let not_constant: Core.IntLiteral = 0;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ int_ops.carbon
 // CHECK:STDERR:        │ fn IntLiteralToInt16(a: Core.IntLiteral) -> i16 = "int.convert";
-// CHECK:STDERR:        · ────────────────────────┬────────────────────────
-// CHECK:STDERR:        ·                         ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                            │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ────────┬────────
+// CHECK:STDERR:        ·            ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·               │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);

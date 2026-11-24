@@ -127,8 +127,8 @@ library "[[@TEST_NAME]]";
 fn DeclaredI32() -> i32;
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn DeclaredI32() -> i32;
-// CHECK:STDERR:        · ────────────┬───────────
-// CHECK:STDERR:        ·             ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ─────┬─────
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn DeclaredI32() => 0 as i32;
 // CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
@@ -141,7 +141,7 @@ fn DeclaredI32() => 0 as i32;
 fn DeclaredUnit();
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn DeclaredUnit();
-// CHECK:STDERR:        · ─────────┬────────
+// CHECK:STDERR:        ·    ──────┬─────
 // CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn DeclaredUnit() => ();
@@ -155,8 +155,8 @@ fn DeclaredUnit() => ();
 fn TerseFirst() => 0 as i32;
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn TerseFirst() => 0 as i32;
-// CHECK:STDERR:        · ─────────┬────────
-// CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ─────┬────
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn TerseFirst() => 1 as i32;
 // CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
@@ -175,8 +175,8 @@ class Incomplete;
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+12]]:39
 // CHECK:STDERR:        │ class Incomplete;
-// CHECK:STDERR:        · ────────┬────────
-// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn DerefIncomplete(p: Incomplete*) => *p;
 // CHECK:STDERR:        ·                                       ┳━
@@ -187,49 +187,51 @@ class Incomplete;
 // CHECK:STDERR:
 fn DerefIncomplete(p: Incomplete*) => *p;
 
+// CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+39]]:55
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+// CHECK:STDERR:        ·                                                       ┳━
+// CHECK:STDERR:        ·                                                       ┗━━┫ error: `T` evaluates
+// CHECK:STDERR:        ·                                                          ┃        to incomplete
+// CHECK:STDERR:        ·                                                          ┃        type
+// CHECK:STDERR:        ·                                                          ┃        `Incomplete`
+// CHECK:STDERR:        ·                                                          ┃        [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   GenericDerefIncomplete(p);
+// CHECK:STDERR:        ·   ─────────┬───────────────
+// CHECK:STDERR:        ·            ╰──┤ in monomorphization of `GenericDerefIncomplete(Incomplete)` here
+// CHECK:STDERR:        ·               │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+20]]:55
+// CHECK:STDERR: ->     │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+// CHECK:STDERR:        ·                                                       ┳━
+// CHECK:STDERR:        ·                                                       ┗━━┫ error: cannot access
+// CHECK:STDERR:        ·                                                          ┃        member of
+// CHECK:STDERR:        ·                                                          ┃        interface
+// CHECK:STDERR:        ·                                                          ┃        `Core.Copy` in
+// CHECK:STDERR:        ·                                                          ┃        type
+// CHECK:STDERR:        ·                                                          ┃        `Incomplete`
+// CHECK:STDERR:        ·                                                          ┃        that does not
+// CHECK:STDERR:        ·                                                          ┃        implement that
+// CHECK:STDERR:        ·                                                          ┃        interface
+// CHECK:STDERR:        ·                                                          ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   GenericDerefIncomplete(p);
+// CHECK:STDERR:        ·   ─────────┬───────────────
+// CHECK:STDERR:        ·            ╰──┤ in monomorphization of `GenericDerefIncomplete(Incomplete)` here
+// CHECK:STDERR:        ·               │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn GenericDerefIncomplete[template T: type](p: T*) => *p;
 fn CallGenericDerefIncomplete(p: Incomplete*) {
-  // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+54]]:3
-  // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
-  // CHECK:STDERR:        ·                                                       ┬─
-  // CHECK:STDERR:        ·                                                       ╰──┤ `T` evaluates to
-  // CHECK:STDERR:        ·                                                          │ incomplete type
-  // CHECK:STDERR:        ·                                                          │ `Incomplete`
-  // CHECK:STDERR:        ·                                                          │ [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   GenericDerefIncomplete(p);
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
-  // CHECK:STDERR:        ·      ┃        `GenericDerefIncomplete(Incomplete)`
-  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+35]]:3
-  // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
-  // CHECK:STDERR:        ·                                                       ┬─
-  // CHECK:STDERR:        ·                                                       ╰──┤ cannot access member
-  // CHECK:STDERR:        ·                                                          │ of interface
-  // CHECK:STDERR:        ·                                                          │ `Core.Copy` in type
-  // CHECK:STDERR:        ·                                                          │ `Incomplete` that
-  // CHECK:STDERR:        ·                                                          │ does not implement
-  // CHECK:STDERR:        ·                                                          │ that interface
-  // CHECK:STDERR:        ·                                                          │ [MissingImplInMemberAccess]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   GenericDerefIncomplete(p);
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
-  // CHECK:STDERR:        ·      ┃        `GenericDerefIncomplete(Incomplete)`
-  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_incomplete_return.carbon:[[@LINE+17]]:3
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn GenericDerefIncomplete[template T: type](p: T*) => *p;
   // CHECK:STDERR:        ·                                                       ┬─
@@ -258,7 +260,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+9]]:30
 // CHECK:STDERR: ->     │ fn UnusedTest(x: i32, unused y: i32) => y;
 // CHECK:STDERR:        ·                              ━━━┳━━     ┬
-// CHECK:STDERR:        ·                                 ┗━━━━━━━━━━┫ error: variable `y` marked `unused`
+// CHECK:STDERR:        ·                                 ┗━━━━━━━━━━┫ error: binding `y` marked `unused`
 // CHECK:STDERR:        ·                                         │  ┃        but used
 // CHECK:STDERR:        ·                                         │  ┃        [UnusedButUsed]
 // CHECK:STDERR:        ·                                         ╰────┤ usage here [UnusedButUsedHere]

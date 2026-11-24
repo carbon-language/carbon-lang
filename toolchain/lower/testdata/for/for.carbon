@@ -73,7 +73,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CNewCursor.IntRange.9452f4c51951679b.Core:Iterate.Core.be1e879c1ad406d8"(ptr %self) #0 !dbg !34 {
-// CHECK:STDOUT:   %start = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %start = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !39
 // CHECK:STDOUT:   %1 = load i32, ptr %start, align 4, !dbg !39
 // CHECK:STDOUT:   ret i32 %1, !dbg !40
 // CHECK:STDOUT: }
@@ -84,7 +84,7 @@ fn For() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !49
 // CHECK:STDOUT:   %2 = load i32, ptr %cursor, align 4, !dbg !50
 // CHECK:STDOUT:   store i32 %2, ptr %1, align 4, !dbg !49
-// CHECK:STDOUT:   %end = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !53
+// CHECK:STDOUT:   %end = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !53
 // CHECK:STDOUT:   %3 = load i32, ptr %end, align 4, !dbg !53
 // CHECK:STDOUT:   %4 = load i32, ptr %1, align 4, !dbg !52
 // CHECK:STDOUT:   %5 = icmp slt i32 %4, %3, !dbg !52
@@ -152,7 +152,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i1 @"_CHas.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !128 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 1, !dbg !133
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %value, i64 4, !dbg !133
 // CHECK:STDOUT:   %1 = load i8, ptr %has_value, align 1, !dbg !133
 // CHECK:STDOUT:   %2 = trunc i8 %1 to i1, !dbg !133
 // CHECK:STDOUT:   ret i1 %2, !dbg !134
@@ -160,7 +160,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr i32 @"_CGet.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr %value) #0 !dbg !136 {
-// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw <{ i32, i1 }>, ptr %value, i32 0, i32 0, !dbg !141
+// CHECK:STDOUT:   %value1 = getelementptr inbounds nuw i8, ptr %value, i64 0, !dbg !141
 // CHECK:STDOUT:   %1 = load i32, ptr %value1, align 4, !dbg !141
 // CHECK:STDOUT:   ret i32 %1, !dbg !142
 // CHECK:STDOUT: }
@@ -176,16 +176,16 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CSome.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return, i32 %self) #0 !dbg !152 {
-// CHECK:STDOUT:   %value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 0, !dbg !161
+// CHECK:STDOUT:   %value = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !161
 // CHECK:STDOUT:   store i32 %self, ptr %value, align 4, !dbg !161
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !163
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !163
 // CHECK:STDOUT:   store i8 1, ptr %has_value, align 1, !dbg !163
 // CHECK:STDOUT:   ret void, !dbg !164
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CNone.c1cc3e41344c17ec:OptionalStorage.Core.b21e3f34d194eaf5"(ptr sret(<{ i32, i1 }>) %return) #0 !dbg !166 {
-// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw <{ i32, i1 }>, ptr %return, i32 0, i32 1, !dbg !173
+// CHECK:STDOUT:   %has_value = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !173
 // CHECK:STDOUT:   store i8 0, ptr %has_value, align 1, !dbg !173
 // CHECK:STDOUT:   ret void, !dbg !174
 // CHECK:STDOUT: }
@@ -276,17 +276,17 @@ fn For() {
 // CHECK:STDOUT: !82 = !DILocation(line: 40, column: 5, scope: !75)
 // CHECK:STDOUT: !83 = !{!76}
 // CHECK:STDOUT: !84 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c6daab0befde28a8", scope: null, file: !84, line: 36, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !91)
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c6daab0befde28a8", scope: null, file: !84, line: 35, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !91)
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !9)
-// CHECK:STDOUT: !90 = !DILocation(line: 36, column: 1, scope: !85)
+// CHECK:STDOUT: !90 = !DILocation(line: 35, column: 1, scope: !85)
 // CHECK:STDOUT: !91 = !{!86}
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9a03059f269926ed", scope: null, file: !84, line: 36, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !98)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9a03059f269926ed", scope: null, file: !84, line: 35, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !98)
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !6)
-// CHECK:STDOUT: !97 = !DILocation(line: 36, column: 1, scope: !92)
+// CHECK:STDOUT: !97 = !DILocation(line: 35, column: 1, scope: !92)
 // CHECK:STDOUT: !98 = !{!93}
-// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ab8fcbb9cd97e8e7", scope: null, file: !84, line: 36, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !105)
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ab8fcbb9cd97e8e7", scope: null, file: !84, line: 35, type: !25, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !105)
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !9)
-// CHECK:STDOUT: !104 = !DILocation(line: 36, column: 1, scope: !99)
+// CHECK:STDOUT: !104 = !DILocation(line: 35, column: 1, scope: !99)
 // CHECK:STDOUT: !105 = !{!100}
 // CHECK:STDOUT: !106 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
 // CHECK:STDOUT: !107 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !106, line: 396, type: !28, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !114)

@@ -33,8 +33,8 @@ fn Run() {
   let circle: Circle = Circle.Make();
   // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:28
   // CHECK:STDERR:        │   private var radius: i32;
-  // CHECK:STDERR:        ·               ─────┬─────
-  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·               ───┬──
+  // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused radius: i32 = circle.radius;
   // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━
@@ -46,8 +46,8 @@ fn Run() {
   let unused radius: i32 = circle.radius;
   // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private var radius: i32;
-  // CHECK:STDERR:        ·               ─────┬─────
-  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·               ───┬──
+  // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   circle.radius = 5;
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
@@ -58,8 +58,8 @@ fn Run() {
   circle.radius = 5;
   // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │   private let SOME_INTERNAL_CONSTANT: i32 = 5;
-  // CHECK:STDERR:        ·               ─────────────┬─────────────
-  // CHECK:STDERR:        ·                            ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·               ───────────┬──────────
+  // CHECK:STDERR:        ·                          ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   circle.SOME_INTERNAL_CONSTANT;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -72,7 +72,7 @@ fn Run() {
 
   // CHECK:STDERR:        ╭─┤ fail_private_field_access.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │   private fn SomeInternalFunction() -> i32 {
-  // CHECK:STDERR:        ·   ─────────────────────┬────────────────────
+  // CHECK:STDERR:        ·              ──────────┬─────────
   // CHECK:STDERR:        ·                        ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   circle.SomeInternalFunction();
@@ -97,8 +97,8 @@ fn Run() {
 //@dump-sem-ir-begin
   // CHECK:STDERR:        ╭─┤ fail_protected_field_access.carbon:[[@LINE+11]]:23
   // CHECK:STDERR:        │   protected var x: i32;
-  // CHECK:STDERR:        ·                 ───┬──
-  // CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused x: i32 = A.x;
   // CHECK:STDERR:        ·                       ┳━━
@@ -182,8 +182,8 @@ class A {
 //@dump-sem-ir-begin
 // CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
 // CHECK:STDERR:        │   protected let x: i32 = 5;
-// CHECK:STDERR:        ·                 ───┬──
-// CHECK:STDERR:        ·                    ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ·                 ┬
+// CHECK:STDERR:        ·                 ╰──┤ declared here [ClassMemberDeclaration]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let x: i32 = A.x;
 // CHECK:STDERR:        ·              ━┳━
@@ -194,8 +194,8 @@ class A {
 let x: i32 = A.x;
 // CHECK:STDERR:        ╭─┤ fail_global_access.carbon:[[@LINE+11]]:14
 // CHECK:STDERR:        │   private let y: i32 = 5;
-// CHECK:STDERR:        ·               ───┬──
-// CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+// CHECK:STDERR:        ·               ┬
+// CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ let y: i32 = A.y;
 // CHECK:STDERR:        ·              ━┳━

@@ -37,11 +37,11 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:Negate.Core"(ptr sret({ i1 }) %return, ptr %self) #0 !dbg !11 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !16
+// CHECK:STDOUT:   %.loc19_36.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !16
 // CHECK:STDOUT:   %.loc19_36.2 = load i8, ptr %.loc19_36.1.is_positive, align 1, !dbg !16
 // CHECK:STDOUT:   %.loc19_36.21 = trunc i8 %.loc19_36.2 to i1, !dbg !16
 // CHECK:STDOUT:   %.loc19_28 = xor i1 %.loc19_36.21, true, !dbg !17
-// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !18
+// CHECK:STDOUT:   %.loc19_48.2.is_positive = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !18
 // CHECK:STDOUT:   %.loc19_48.3 = zext i1 %.loc19_28 to i8, !dbg !18
 // CHECK:STDOUT:   store i8 %.loc19_48.3, ptr %.loc19_48.2.is_positive, align 1, !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !19
@@ -50,13 +50,13 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.Number.Main:MulWith.124acaad20680602.Core"(ptr sret({ i1 }) %return, ptr %self, ptr %other) #0 !dbg !21 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !28
+// CHECK:STDOUT:   %.loc24_33.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !28
 // CHECK:STDOUT:   %.loc24_33.2 = load i8, ptr %.loc24_33.1.is_positive, align 1, !dbg !28
 // CHECK:STDOUT:   %.loc24_33.21 = trunc i8 %.loc24_33.2 to i1, !dbg !28
 // CHECK:STDOUT:   br i1 %.loc24_33.21, label %and.rhs.loc24, label %and.result.loc24, !dbg !28
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc24:                                    ; preds = %entry
-// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc24_55.1.is_positive = getelementptr inbounds nuw i8, ptr %other, i64 0, !dbg !29
 // CHECK:STDOUT:   %.loc24_55.2 = load i8, ptr %.loc24_55.1.is_positive, align 1, !dbg !29
 // CHECK:STDOUT:   %.loc24_55.22 = trunc i8 %.loc24_55.2 to i1, !dbg !29
 // CHECK:STDOUT:   br label %and.result.loc24, !dbg !28
@@ -67,14 +67,14 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   br i1 %.loc24_69.1, label %or.rhs, label %or.result, !dbg !30
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.rhs:                                           ; preds = %and.result.loc24
-// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %self, i32 0, i32 0, !dbg !31
+// CHECK:STDOUT:   %.loc25_38.1.is_positive = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !31
 // CHECK:STDOUT:   %.loc25_38.2 = load i8, ptr %.loc25_38.1.is_positive, align 1, !dbg !31
 // CHECK:STDOUT:   %.loc25_38.23 = trunc i8 %.loc25_38.2 to i1, !dbg !31
 // CHECK:STDOUT:   %.loc25_30 = xor i1 %.loc25_38.23, true, !dbg !32
 // CHECK:STDOUT:   br i1 %.loc25_30, label %and.rhs.loc25, label %and.result.loc25, !dbg !32
 // CHECK:STDOUT:
 // CHECK:STDOUT: and.rhs.loc25:                                    ; preds = %or.rhs
-// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw { i1 }, ptr %other, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %.loc25_64.1.is_positive = getelementptr inbounds nuw i8, ptr %other, i64 0, !dbg !33
 // CHECK:STDOUT:   %.loc25_64.2 = load i8, ptr %.loc25_64.1.is_positive, align 1, !dbg !33
 // CHECK:STDOUT:   %.loc25_64.24 = trunc i8 %.loc25_64.2 to i1, !dbg !33
 // CHECK:STDOUT:   %.loc25_55 = xor i1 %.loc25_64.24, true, !dbg !34
@@ -86,7 +86,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:
 // CHECK:STDOUT: or.result:                                        ; preds = %and.result.loc25, %and.result.loc24
 // CHECK:STDOUT:   %2 = phi i1 [ true, %and.result.loc24 ], [ %1, %and.result.loc25 ]
-// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw { i1 }, ptr %return, i32 0, i32 0, !dbg !35
+// CHECK:STDOUT:   %.loc25_77.2.is_positive = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !35
 // CHECK:STDOUT:   %.loc25_77.3 = zext i1 %2 to i8, !dbg !35
 // CHECK:STDOUT:   store i8 %.loc25_77.3, ptr %.loc25_77.2.is_positive, align 1, !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
@@ -155,8 +155,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !50 = !DILocation(line: 30, column: 3, scope: !38)
 // CHECK:STDOUT: !51 = !{!39, !40}
 // CHECK:STDOUT: !52 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 36, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !6)
-// CHECK:STDOUT: !58 = !DILocation(line: 36, column: 1, scope: !53)
+// CHECK:STDOUT: !58 = !DILocation(line: 35, column: 1, scope: !53)
 // CHECK:STDOUT: !59 = !{!54}
 // CHECK:STDOUT:

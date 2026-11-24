@@ -13,7 +13,8 @@ diff --git a/utils/bazel/llvm-project-overlay/libc/BUILD.bazel b/utils/bazel/llv
 index 33fc35455fef..95a8d87beb4c 100644
 --- a/utils/bazel/llvm-project-overlay/libc/BUILD.bazel
 +++ b/utils/bazel/llvm-project-overlay/libc/BUILD.bazel
-@@ -153,7 +153,6 @@ py_binary(
+@@ -134,7 +134,6 @@ py_binary(
+     name = "hdrgen",
      srcs = glob(["utils/hdrgen/hdrgen/**/*.py"]),
      imports = ["utils/hdrgen"],
      main = "utils/hdrgen/hdrgen/main.py",
@@ -25,7 +26,7 @@ diff --git a/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl b/utils/
 index 4412ccc81dfe..4758af565fd4 100644
 --- a/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl
 +++ b/utils/bazel/llvm-project-overlay/libc/libc_build_rules.bzl
-@@ -48,7 +48,6 @@ def libc_common_deps():
+@@ -51,7 +51,6 @@ def libc_common_deps():
          "//conditions:default": [],
      }) + select({
          Label(":full_build_linux"): [

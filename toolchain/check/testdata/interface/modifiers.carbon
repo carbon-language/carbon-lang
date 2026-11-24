@@ -215,8 +215,8 @@ class C {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ final_interfaces.carbon
   // CHECK:STDERR:        │   final fn M(unused self) {}
-  // CHECK:STDERR:        ·   ────────────┬────────────
-  // CHECK:STDERR:        ·               ╰──┤ associated function M declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ associated function M declared here [AssociatedFunctionHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl as FinalMethod {
