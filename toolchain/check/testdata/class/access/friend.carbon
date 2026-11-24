@@ -20,8 +20,8 @@ class C {
 fn F(c: C) -> i32 {
   // CHECK:STDERR:        ╭─┤ fail_non_friend.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │   private var i: i32;
-  // CHECK:STDERR:        ·               ───┬──
-  // CHECK:STDERR:        ·                  ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·               ┬
+  // CHECK:STDERR:        ·               ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c.i;
   // CHECK:STDERR:        ·          ━┳━

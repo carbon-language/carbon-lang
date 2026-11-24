@@ -62,14 +62,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredUnion*) {
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+18]]:12
   // CHECK:STDERR: ->     │   Cpp.foo1(*p);
   // CHECK:STDERR:        ·            ┳━
   // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
   // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredUnion`
   // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
   // CHECK:STDERR:        │ union ForwardDeclaredUnion;
   // CHECK:STDERR:        ·       ┬
@@ -82,14 +81,13 @@ fn F(p: Cpp.ForwardDeclaredUnion*) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo1(*p);
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:12
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+18]]:12
   // CHECK:STDERR: ->     │   Cpp.foo2(*p);
   // CHECK:STDERR:        ·            ┳━
   // CHECK:STDERR:        ·            ┗━━┫ error: forming value of incomplete type
   // CHECK:STDERR:        ·               ┃        `Cpp.ForwardDeclaredUnion`
   // CHECK:STDERR:        ·               ┃        [IncompleteTypeInValueConversion]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
   // CHECK:STDERR:        │ union ForwardDeclaredUnion;
   // CHECK:STDERR:        ·       ┬
@@ -306,13 +304,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+12]]:3
   // CHECK:STDERR: ->     │   Cpp.IncompleteUnion.foo();
   // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━━━━━
   // CHECK:STDERR:        ·            ┗━━┫ error: member access into incomplete class `Cpp.IncompleteUnion`
   // CHECK:STDERR:        ·               ┃        [QualifiedExprInIncompleteClassScope]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ union IncompleteUnion;
   // CHECK:STDERR:        ·       ┬
@@ -402,13 +399,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+17]]:3
   // CHECK:STDERR: ->     │   Cpp.foo_decl_value_return();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: function returns incomplete type `Cpp.DeclValueReturnUnion`
   // CHECK:STDERR:        ·             ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_return_type.h
   // CHECK:STDERR:        │ union DeclValueReturnUnion;
   // CHECK:STDERR:        ·       ┬
@@ -489,7 +485,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_no_data_members_value_param_type.carbon = $import_definition_no_data_members_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -528,7 +524,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_single_data_member_value_param_type.carbon = $import_definition_single_data_member_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -567,7 +563,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_multiple_data_members_value_param_type.carbon = $import_definition_multiple_data_members_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -606,7 +602,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_in_namespace_value_param_type.carbon = $import_definition_in_namespace_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -703,7 +699,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon
+// CHECK:STDOUT: --- import_definition_in_relative_namespace_value_param_type.carbon = $import_definition_in_relative_namespace_value_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -751,7 +747,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_in_outer_definition.carbon
+// CHECK:STDOUT: --- import_definition_in_outer_definition.carbon = $import_definition_in_outer_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -844,7 +840,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon
+// CHECK:STDOUT: --- import_definition_and_static_method_call_before.carbon = $import_definition_and_static_method_call_before
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -893,7 +889,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon
+// CHECK:STDOUT: --- import_definition_and_static_method_call_after.carbon = $import_definition_and_static_method_call_after
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -942,7 +938,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_param_type.carbon = $import_decl_pointer_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -979,7 +975,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_pointer_param_type.carbon
+// CHECK:STDOUT: --- import_definition_pointer_param_type.carbon = $import_definition_pointer_param_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1016,7 +1012,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_value_return_type.carbon
+// CHECK:STDOUT: --- import_definition_value_return_type.carbon = $import_definition_value_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1073,7 +1069,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_decl_pointer_return_type.carbon = $import_decl_pointer_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1106,7 +1102,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition_pointer_return_type.carbon
+// CHECK:STDOUT: --- import_definition_pointer_return_type.carbon = $import_definition_pointer_return_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

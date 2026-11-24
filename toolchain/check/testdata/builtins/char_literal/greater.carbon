@@ -22,7 +22,7 @@ let a: bool = Greater('b', 'a');
 let b: bool = Greater('a', 'b');
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- greater.carbon
+// CHECK:STDOUT: --- greater.carbon = $greater
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

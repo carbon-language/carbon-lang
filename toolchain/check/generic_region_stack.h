@@ -7,6 +7,7 @@
 
 #include "common/array_stack.h"
 #include "common/map.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -33,8 +34,8 @@ class GenericRegionStack {
  public:
   explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
       : vlog_stream_(vlog_stream) {
-    // Reserve a large enough stack that we typically won't need to reallocate.
-    constants_in_generic_stack_.reserve(4);
+    // Trigger the allocation of the first capacity specified in the type.
+    constants_in_generic_stack_.Reserve(1);
   }
 
   struct PendingGeneric {
@@ -96,7 +97,7 @@ class GenericRegionStack {
   // instructions for the current generic.
   auto PeekConstantsInGenericMap() -> ConstantsInGenericMap& {
     CARBON_CHECK(!Empty());
-    return constants_in_generic_stack_.back();
+    return constants_in_generic_stack_.Peek();
   }
 
   // Returns the total number of instructions tracked by all pending generic
@@ -131,7 +132,9 @@ class GenericRegionStack {
   // Mapping from constant InstIds to the corresponding InstIds in the eval
   // blocks for each enclosing generic. We reserve this to a suitable size in
   // the constructor.
-  llvm::SmallVector<ConstantsInGenericMap, 0> constants_in_generic_stack_;
+  //
+  // We choose an initial capacity that typically won't need to allocate again.
+  StableStack<ConstantsInGenericMap, 8> constants_in_generic_stack_;
 };
 
 }  // namespace Carbon::Check

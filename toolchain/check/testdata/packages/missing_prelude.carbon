@@ -64,26 +64,20 @@ library "[[@TEST_NAME]]";
 import Core library "prelude_fake_int";
 
 // We don't really care whether this works, but it shouldn't crash or otherwise misbehave.
-// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+22]]:17
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+16]]:17
 // CHECK:STDERR: ->     │ let n: Core.X = i32;
 // CHECK:STDERR:        ·                 ┳━━
 // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
-// CHECK:STDERR:        ·                 │  ┃        `Core.X` to `type`
-// CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                 ╰────┤ type `Core.X` does not implement interface
-// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                    ┃        `Core.X` to `type`
+// CHECK:STDERR:        ·                    ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+11]]:17
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+8]]:17
 // CHECK:STDERR: ->     │ let n: Core.X = i32;
 // CHECK:STDERR:        ·                 ┳━━
 // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type `type`
-// CHECK:STDERR:        ·                 │  ┃        to `Core.X`
-// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                 ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.X)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                    ┃        to `Core.X`
+// CHECK:STDERR:        ·                    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: Core.X = i32;
@@ -166,7 +160,7 @@ class Core {
 let n: type = i32;
 
 
-// CHECK:STDOUT: --- fail_missing_prelude.carbon
+// CHECK:STDOUT: --- fail_missing_prelude.carbon = $fail_missing_prelude
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -191,13 +185,13 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_empty.carbon
+// CHECK:STDOUT: --- prelude_empty.carbon = $prelude_empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_prelude_member.carbon
+// CHECK:STDOUT: --- fail_missing_prelude_member.carbon = $fail_missing_prelude_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -231,7 +225,7 @@ let n: type = i32;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_fake_int.carbon
+// CHECK:STDOUT: --- prelude_fake_int.carbon = $prelude_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -426,7 +420,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.b39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_use_fake_int.carbon
+// CHECK:STDOUT: --- fail_use_fake_int.carbon = $fail_use_fake_int
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -506,7 +500,7 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc29: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc23: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
@@ -572,11 +566,11 @@ let n: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %.loc29_17.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Int.call: init %X to %.loc29_17.1 = call %Int.specific_fn()
-// CHECK:STDOUT:   %.loc29_17.2: type = converted %Int.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_17.3: type = type_literal <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_17.4: %X = converted %.loc29_17.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Int.call: init %X to %.loc23_17.1 = call %Int.specific_fn()
+// CHECK:STDOUT:   %.loc23_17.2: type = converted %Int.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc23_17.4: %X = converted %.loc23_17.3, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -659,7 +653,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.839
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- prelude_use_in_prelude.carbon
+// CHECK:STDOUT: --- prelude_use_in_prelude.carbon = $prelude_use_in_prelude
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -760,7 +754,7 @@ let n: type = i32;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon
+// CHECK:STDOUT: --- fail_prelude_as_namespace.carbon = $fail_prelude_as_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -851,7 +845,7 @@ let n: type = i32;
 // CHECK:STDOUT:   %N.loc28_31.1 => constants.%N
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_prelude_as_class.carbon
+// CHECK:STDOUT: --- fail_prelude_as_class.carbon = $fail_prelude_as_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

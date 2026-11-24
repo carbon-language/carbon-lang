@@ -30,13 +30,11 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-// CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+9]]:13
+// CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+7]]:13
 // CHECK:STDERR: ->     │ fn K(x: C = {} as D);
 // CHECK:STDERR:        ·             ━┳━━━━━
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `D` to `C`
-// CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·              ╰────┤ type `D` does not implement interface `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn K(x: C = {} as D);
@@ -137,13 +135,11 @@ impl C as Core.As(D) {
   fn Convert(unused self: C) -> D { return {} as D; }
 }
 
-// CHECK:STDERR:        ╭─┤ fail_explicit_conversion_not_supported.carbon:[[@LINE+9]]:13
+// CHECK:STDERR:        ╭─┤ fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:13
 // CHECK:STDERR: ->     │ fn F(a: D = {} as C);
 // CHECK:STDERR:        ·             ━┳━━━━━
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `C` to `D`
-// CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·              ╰────┤ type `C` does not implement interface `Core.ImplicitAs(D)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(a: D = {} as C);
@@ -179,7 +175,7 @@ class C {}
 fn F(x: C = {});
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon = $implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -232,7 +228,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %D);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -345,7 +341,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%a.param: %C, %b.param: %C, %c.param: %C, %d.param: %C, %e.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

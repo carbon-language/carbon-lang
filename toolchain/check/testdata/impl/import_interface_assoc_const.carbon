@@ -124,7 +124,7 @@ class C6 { }
 impl C6 as I where .T = {};
 // CHECK:STDERR:        ╭─┤ fail_missing_on_definition.carbon:[[@LINE+19]]:1
 // CHECK:STDERR: ->     │ impl C6 as I { }
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant T not given a value in impl of interface I
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ┆
@@ -247,7 +247,7 @@ impl CD as IF where .F = 0 {
   fn F() {}
 }
 
-// CHECK:STDOUT: --- interface.carbon
+// CHECK:STDOUT: --- interface.carbon = $interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -345,7 +345,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonType.WithSelf(constants.%Self.ab8) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +452,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- redecl.carbon
+// CHECK:STDOUT: --- redecl.carbon = $redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -580,7 +580,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_adds_rewrites.carbon
+// CHECK:STDOUT: --- fail_redecl_adds_rewrites.carbon = $fail_redecl_adds_rewrites
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -694,7 +694,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch.carbon
+// CHECK:STDOUT: --- fail_mismatch.carbon = $fail_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -827,7 +827,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatch_bad_value.carbon
+// CHECK:STDOUT: --- fail_mismatch_bad_value.carbon = $fail_mismatch_bad_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1007,7 +1007,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_missing_on_definition.carbon
+// CHECK:STDOUT: --- fail_missing_on_definition.carbon = $fail_missing_on_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1120,7 +1120,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_different.carbon
+// CHECK:STDOUT: --- fail_two_different.carbon = $fail_two_different
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1229,7 +1229,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_different_first_bad.carbon
+// CHECK:STDOUT: --- fail_two_different_first_bad.carbon = $fail_two_different_first_bad
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1337,7 +1337,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_different_second_bad.carbon
+// CHECK:STDOUT: --- fail_two_different_second_bad.carbon = $fail_two_different_second_bad
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1444,7 +1444,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_two_different_both_bad.carbon
+// CHECK:STDOUT: --- fail_two_different_both_bad.carbon = $fail_two_different_both_bad
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1550,7 +1550,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeated.carbon
+// CHECK:STDOUT: --- repeated.carbon = $repeated
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1670,7 +1670,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- non-type.carbon
+// CHECK:STDOUT: --- non-type.carbon = $non-type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1783,7 +1783,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- interface_with_function.carbon
+// CHECK:STDOUT: --- interface_with_function.carbon = $interface_with_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1826,7 +1826,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_where_rewrite_function.carbon
+// CHECK:STDOUT: --- fail_where_rewrite_function.carbon = $fail_where_rewrite_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

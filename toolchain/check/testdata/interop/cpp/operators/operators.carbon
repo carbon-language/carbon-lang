@@ -236,15 +236,12 @@ fn F() {
   var c: Cpp.BinaryC = {};
 
   // Simple assignment.
-  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   c = 42;
   // CHECK:STDERR:        ·   ┳━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.BinaryC`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.BinaryC)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `Cpp.BinaryC`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c = 42;
@@ -734,7 +731,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:53
   // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:        ·                                                     ┳
+  // CHECK:STDERR:        ·                                                     ╻╺━━━━━━━
   // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot take the
   // CHECK:STDERR:        ·                                                        ┃        address of
   // CHECK:STDERR:        ·                                                        ┃        non-reference
@@ -1012,7 +1009,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_unary.carbon:[[@LINE+15]]:34
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_unary.carbon:[[@LINE+14]]:34
   // CHECK:STDERR: ->     │   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
   // CHECK:STDERR:        ·                                  ┳━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                                  ┗━━┫ error: looking up a C++ operator with
@@ -1020,7 +1017,6 @@ fn F() {
   // CHECK:STDERR:        ·                                     ┃        `Cpp.Incomplete`
   // CHECK:STDERR:        ·                                     ┃        [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_unary.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬
@@ -1038,7 +1034,7 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_binary.carbon:[[@LINE+15]]:35
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_binary.carbon:[[@LINE+14]]:35
   // CHECK:STDERR: ->     │   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
   // CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                                   ┗━━┫ error: looking up a C++ operator with
@@ -1046,7 +1042,6 @@ fn F() {
   // CHECK:STDERR:        ·                                      ┃        `Cpp.Incomplete`
   // CHECK:STDERR:        ·                                      ┃        [IncompleteOperandTypeInCppOperatorLookup]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_binary.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬
@@ -1077,8 +1072,8 @@ fn F() {
   var complete: Cpp.CompleteCpp = Cpp.CompleteCpp.CompleteCpp();
   // CHECK:STDERR:        ╭─┤ fail_incomplete_operand_carbon_type.carbon:[[@LINE+12]]:28
   // CHECK:STDERR:        │ class Incomplete;
-  // CHECK:STDERR:        · ────────┬────────
-  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ─────┬────
+  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused result: i32 = *CreateIncomplete() + complete;
   // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1197,7 +1192,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_unary_operators.carbon
+// CHECK:STDOUT: --- import_unary_operators.carbon = $import_unary_operators
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1351,7 +1346,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_binary_operators.carbon
+// CHECK:STDOUT: --- import_binary_operators.carbon = $import_binary_operators
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2216,7 +2211,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc45(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- multiple_calls.carbon
+// CHECK:STDOUT: --- multiple_calls.carbon = $multiple_calls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2398,7 +2393,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon
+// CHECK:STDOUT: --- fail_todo_rewrite_spaceship.carbon = $fail_todo_rewrite_spaceship
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2588,7 +2583,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc46(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
+// CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon = $fail_todo_rewrite_equal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2737,7 +2732,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc16(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_single_namespace.carbon
+// CHECK:STDOUT: --- import_single_namespace.carbon = $import_single_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -2874,7 +2869,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple_namespaces.carbon
+// CHECK:STDOUT: --- import_multiple_namespaces.carbon = $import_multiple_namespaces
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3071,7 +3066,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon
+// CHECK:STDOUT: --- fail_todo_import_operands_in_namespace_operator_in_global.carbon = $fail_todo_import_operands_in_namespace_operator_in_global
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3185,7 +3180,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inner_class.carbon
+// CHECK:STDOUT: --- import_inner_class.carbon = $import_inner_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3320,7 +3315,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inner_class_in_namespace.carbon
+// CHECK:STDOUT: --- import_inner_class_in_namespace.carbon = $import_inner_class_in_namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3464,7 +3459,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_member_add_with.carbon
+// CHECK:STDOUT: --- import_member_add_with.carbon = $import_member_add_with
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3602,7 +3597,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_template_instantiation.carbon
+// CHECK:STDOUT: --- indirect_template_instantiation.carbon = $indirect_template_instantiation
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -3634,7 +3629,7 @@ fn F() {
 // CHECK:STDOUT:   return %operator_Plus__carbon_thunk.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_overloading.carbon
+// CHECK:STDOUT: --- import_overloading.carbon = $import_overloading
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

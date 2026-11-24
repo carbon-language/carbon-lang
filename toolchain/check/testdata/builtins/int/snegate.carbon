@@ -129,8 +129,8 @@ fn Negate(a: i32) -> i32 = "int.snegate";
 
 // CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
 // CHECK:STDERR:        │ fn Negate(a: i32) -> i32 = "int.snegate";
-// CHECK:STDERR:        · ─────────────┬────────────
-// CHECK:STDERR:        ·              ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ·    ───┬──
+// CHECK:STDERR:        ·       ╰──┤ calling function declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var bad_call: array(i32, Negate(1, 2));
 // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
@@ -161,7 +161,7 @@ let a: i32 = Negate(Negate(0x7FFF_FFFF));
 // CHECK:STDERR:
 let b: i32 = Negate(-0x8000_0000);
 
-// CHECK:STDOUT: --- int_negate.carbon
+// CHECK:STDOUT: --- int_negate.carbon = $int_negate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

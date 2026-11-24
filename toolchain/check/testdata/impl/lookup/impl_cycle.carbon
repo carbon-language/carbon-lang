@@ -179,9 +179,9 @@ fn F() {
   // CHECK:STDERR:        ·                         │ [ImplLookupCycleNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as C, {} as C);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -191,9 +191,9 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_impl_cycle_one_generic_param.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as C, {} as C);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -212,9 +212,9 @@ fn F() {
   // CHECK:STDERR:        ·                           │ [ImplLookupCycleNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as C, {} as D);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -224,9 +224,9 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_impl_cycle_one_generic_param.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as C, {} as D);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -245,9 +245,9 @@ fn F() {
   // CHECK:STDERR:        ·                           │ [ImplLookupCycleNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as D, {} as C);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━
@@ -257,9 +257,9 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_impl_cycle_one_generic_param.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Compare[T: type, U: ComparableWith(T)](unused t: T, unused u: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬───
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Compare({} as D, {} as C);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━

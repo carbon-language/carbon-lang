@@ -516,7 +516,7 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   // Otherwise, this is a normal instruction.
-  if (OperandDependence(eval_context.context(), inst_id) ==
+  if (OperandDependence(eval_context.sem_ir(), inst_id) ==
       SemIR::ConstantDependence::Template) {
     *phase = LatestPhase(*phase, Phase::TemplateSymbolic);
   }
@@ -2906,14 +2906,23 @@ static auto MakeConstantForCall(EvalContext& eval_context,
         evaluation_mode == SemIR::Function::EvaluationMode::MustEval) {
       CARBON_DIAGNOSTIC(NonConstantCallToCompTimeOnlyFunction, Error,
                         "non-constant call to compile-time-only function");
-      CARBON_DIAGNOSTIC_LABEL(CompTimeOnlyFunctionHere, Info,
+      CARBON_DIAGNOSTIC_LABEL(CompTimeOnlyFunctionHere,
                               "compile-time-only function declared here");
       const auto& function = eval_context.functions().Get(
           std::get<SemIR::CalleeFunction>(callee).function_id);
-      eval_context.emitter()
-          .Build(inst_id, NonConstantCallToCompTimeOnlyFunction)
-          .Attach(function.latest_decl_id(), CompTimeOnlyFunctionHere)
-          .Emit();
+      auto diag = eval_context.emitter().Build(
+          inst_id, NonConstantCallToCompTimeOnlyFunction);
+      // Only attach a label when the declaration has a location distinct from
+      // the call's.
+      auto decl_loc_id =
+          eval_context.insts().GetCanonicalLocId(function.latest_decl_id());
+      if (decl_loc_id.has_value() &&
+          decl_loc_id != eval_context.insts().GetCanonicalLocId(inst_id)) {
+        diag.Attach(
+            LocIdForDiagnostics::DeclaredName(function.latest_decl_id()),
+            CompTimeOnlyFunctionHere);
+      }
+      diag.Emit();
     }
     return SemIR::ConstantId::NotConstant;
   }
@@ -3493,6 +3502,11 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // specific, we are resolving existing instructions in the eval block for a
   // generic. The global state should not apply to anything done while resolving
   // a specific.
+  //
+  // TODO: Instead of moving the whole stack here, track an index on Context
+  // that is the start of the stack that we're going to consider (in practice we
+  // only consider a single value right now, but we'd only consider the latest
+  // value at least at that tracked index).
   CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
 
   // The `eval_impl_lookup_to_identified_witness` is also a global state that
@@ -3511,9 +3525,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
 
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_SOFT_CONTEXT(ResolvingSpecificHere,
-                                       "unable to monomorphize specific {0}",
-                                       SemIR::SpecificId);
+        CARBON_DIAGNOSTIC_LABEL(ResolvingSpecificHere,
+                                "in monomorphization of {0} here",
+                                SemIR::SpecificId);
         builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
       });
 
@@ -3906,9 +3920,9 @@ static auto TryEvalCall(EvalContext& outer_eval_context, SemIR::LocId loc_id,
   FunctionExecContext eval_context(&outer_eval_context.context(), loc_id,
                                    specific_id, &locals, args_id);
 
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &eval_context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_LABEL(InCallToEvalFn, Info, "in call to {0} here",
+        CARBON_DIAGNOSTIC_LABEL(InCallToEvalFn, "in call to {0} here",
                                 SemIR::NameId);
         builder.Attach(loc_id, InCallToEvalFn, function.name_id);
       });

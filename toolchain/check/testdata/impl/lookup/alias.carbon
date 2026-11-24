@@ -29,7 +29,7 @@ fn G(c: C) {
   c.G();
 }
 
-// CHECK:STDOUT: --- alias.carbon
+// CHECK:STDOUT: --- alias.carbon = $alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -15,8 +15,8 @@
 fn F() {}
 // CHECK:STDERR:        ╭─┤ fail_redef.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn F() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() {}
 // CHECK:STDERR:        · ━━━━┳━━━
@@ -25,7 +25,7 @@ fn F() {}
 // CHECK:STDERR:
 fn F() {}
 
-// CHECK:STDOUT: --- fail_redef.carbon
+// CHECK:STDOUT: --- fail_redef.carbon = $fail_redef
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -105,9 +105,9 @@ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
 fn CallBigStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_bigger_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───────┬──────
+  // CHECK:STDERR:        ·           ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   BigStructParam({.c = 3, .d = 4});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━
@@ -127,9 +127,9 @@ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
 fn CallSmallStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_smaller_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────────┬───────
+  // CHECK:STDERR:        ·            ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·               │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   SmallStructParam({.f = 5, .g = 6, .h = 7});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
@@ -149,9 +149,9 @@ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
 fn CallWrongNameStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_struct_wrong_name.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongNameStructParam({.i = 8, .j = 9});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
@@ -171,9 +171,9 @@ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
 fn CallWrongOrderStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬──────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongOrderStructParam({.second = 11, .first = 10});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -195,9 +195,9 @@ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_incomplete.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━
@@ -217,9 +217,9 @@ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_inconsistent.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42, {.x = 12});
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -248,7 +248,7 @@ fn F() {
   CC(DD(EE)) as Z;
 }
 
-// CHECK:STDOUT: --- deduce_explicit.carbon
+// CHECK:STDOUT: --- deduce_explicit.carbon = $deduce_explicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -462,7 +462,7 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitGenericParam.specific_fn.loc4_57.2 => constants.%ExplicitGenericParam.specific_fn.085
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon
+// CHECK:STDOUT: --- fail_deduce_explicit_non_constant.carbon = $fail_deduce_explicit_non_constant
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -604,7 +604,7 @@ fn F() {
 // CHECK:STDOUT:   %T.loc6_43.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- explicit_vs_deduced.carbon
+// CHECK:STDOUT: --- explicit_vs_deduced.carbon = $explicit_vs_deduced
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -646,6 +646,7 @@ fn F() {
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
@@ -663,12 +664,16 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -810,7 +815,7 @@ fn F() {
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.specific_fn.loc7_10.2 => constants.%ExplicitAndAlsoDeduced.specific_fn.fbd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_implicit.carbon
+// CHECK:STDOUT: --- deduce_implicit.carbon = $deduce_implicit
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -979,7 +984,7 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitGenericParam.specific_fn.loc4_55.2 => constants.%ImplicitGenericParam.specific_fn.056
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_tuple.carbon
+// CHECK:STDOUT: --- deduce_nested_tuple.carbon = $deduce_nested_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1136,7 +1141,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.469
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_struct.carbon
+// CHECK:STDOUT: --- deduce_nested_struct.carbon = $deduce_nested_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1286,7 +1291,7 @@ fn F() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.c76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon
+// CHECK:STDOUT: --- fail_deduce_bigger_struct.carbon = $fail_deduce_bigger_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1386,7 +1391,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_36.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_smaller_struct.carbon
+// CHECK:STDOUT: --- fail_deduce_smaller_struct.carbon = $fail_deduce_smaller_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1487,7 +1492,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_38.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_struct_wrong_name.carbon
+// CHECK:STDOUT: --- fail_deduce_struct_wrong_name.carbon = $fail_deduce_struct_wrong_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1586,7 +1591,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_42.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_deduce_struct_wrong_order.carbon
+// CHECK:STDOUT: --- fail_todo_deduce_struct_wrong_order.carbon = $fail_todo_deduce_struct_wrong_order
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1685,7 +1690,7 @@ fn F() {
 // CHECK:STDOUT:   %x.patt.loc4_43.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_incomplete.carbon
+// CHECK:STDOUT: --- fail_deduce_incomplete.carbon = $fail_deduce_incomplete
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1789,7 +1794,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc6_49.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduce_inconsistent.carbon
+// CHECK:STDOUT: --- fail_deduce_inconsistent.carbon = $fail_deduce_inconsistent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1894,7 +1899,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc4_46.2 => constants.%return.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- deduce_nested_generic_class.carbon
+// CHECK:STDOUT: --- deduce_nested_generic_class.carbon = $deduce_nested_generic_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

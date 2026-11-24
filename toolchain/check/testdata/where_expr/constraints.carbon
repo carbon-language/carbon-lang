@@ -84,17 +84,13 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_left_of_impls_non_type.carbon:[[@LINE+13]]:39
+// CHECK:STDERR:        ╭─┤ fail_left_of_impls_non_type.carbon:[[@LINE+9]]:39
 // CHECK:STDERR: ->     │ fn NonTypeImpls(generic U: type where 7 impls type);
 // CHECK:STDERR:        ·                                       ┳
 // CHECK:STDERR:        ·                                       ┗━━┫ error: cannot implicitly convert
-// CHECK:STDERR:        ·                                       │  ┃        non-type value of type
-// CHECK:STDERR:        ·                                       │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·                                       │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                       ╰────┤ type `Core.IntLiteral` does not
-// CHECK:STDERR:        ·                                            │ implement interface
-// CHECK:STDERR:        ·                                            │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                            │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                          ┃        non-type value of type
+// CHECK:STDERR:        ·                                          ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·                                          ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
@@ -103,20 +99,15 @@ fn NonTypeImpls(generic U: type where 7 impls type);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_right_of_impls_non_type.carbon:[[@LINE+16]]:51
+// CHECK:STDERR:        ╭─┤ fail_right_of_impls_non_type.carbon:[[@LINE+11]]:51
 // CHECK:STDERR: ->     │ fn ImplsNonType(generic U: type where .Self impls 7);
 // CHECK:STDERR:        ·                                                   ┳
 // CHECK:STDERR:        ·                                                   ┗━━┫ error: cannot implicitly
-// CHECK:STDERR:        ·                                                   │  ┃        convert non-type
-// CHECK:STDERR:        ·                                                   │  ┃        value of type
-// CHECK:STDERR:        ·                                                   │  ┃        `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                   │  ┃        to `type`
-// CHECK:STDERR:        ·                                                   │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                                   ╰────┤ type `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                        │ does not implement
-// CHECK:STDERR:        ·                                                        │ interface
-// CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                      ┃        convert non-type
+// CHECK:STDERR:        ·                                                      ┃        value of type
+// CHECK:STDERR:        ·                                                      ┃        `Core.IntLiteral`
+// CHECK:STDERR:        ·                                                      ┃        to `type`
+// CHECK:STDERR:        ·                                                      ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ImplsNonType(generic U: type where .Self impls 7);
@@ -242,7 +233,7 @@ fn F() {
 //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- self_impls_type.carbon
+// CHECK:STDOUT: --- self_impls_type.carbon = $self_impls_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -338,7 +329,7 @@ fn F() {
 // CHECK:STDOUT:   %T.loc13_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_impls_error.carbon
+// CHECK:STDOUT: --- fail_self_impls_error.carbon = $fail_self_impls_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -386,7 +377,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- state_constraints.carbon
+// CHECK:STDOUT: --- state_constraints.carbon = $state_constraints
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,7 +540,7 @@ fn F() {
 // CHECK:STDOUT:   %W.loc16_17.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_type_impls.carbon
+// CHECK:STDOUT: --- associated_type_impls.carbon = $associated_type_impls
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -619,7 +610,7 @@ fn F() {
 // CHECK:STDOUT:   %W.loc12_33.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_error_in_constraint.carbon
+// CHECK:STDOUT: --- fail_error_in_constraint.carbon = $fail_error_in_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -659,7 +650,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithError(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_error_in_constraint.carbon
+// CHECK:STDOUT: --- import_error_in_constraint.carbon = $import_error_in_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

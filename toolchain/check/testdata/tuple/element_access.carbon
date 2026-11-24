@@ -160,7 +160,7 @@ library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (2, 3);
 var b: i32 = 0;
-// CHECK:STDERR:        ╭─┤ fail_non_deterministic_type.carbon:[[@LINE+20]]:17
+// CHECK:STDERR:        ╭─┤ fail_non_deterministic_type.carbon:[[@LINE+19]]:17
 // CHECK:STDERR: ->     │ var c: i32 = a.(b);
 // CHECK:STDERR:        ·                 ┳
 // CHECK:STDERR:        ·                 ┗━━┫ error: non-constant call to compile-time-only function
@@ -168,9 +168,8 @@ var b: i32 = 0;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/int.carbon
 // CHECK:STDERR:        │   fn Convert(self) -> IntLiteral = "int.convert_checked";
-// CHECK:STDERR:        ·   ────────────────┬───────────────
-// CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·      ───┬───
+// CHECK:STDERR:        ·         ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_non_deterministic_type.carbon:[[@LINE+7]]:14
@@ -186,15 +185,12 @@ var c: i32 = a.(b);
 library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
-// CHECK:STDERR:        ╭─┤ fail_non_int_indexing.carbon:[[@LINE+11]]:17
+// CHECK:STDERR:        ╭─┤ fail_non_int_indexing.carbon:[[@LINE+8]]:17
 // CHECK:STDERR: ->     │ var b: i32 = a.(2.6);
 // CHECK:STDERR:        ·                 ┳━━
 // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type
-// CHECK:STDERR:        ·                 │  ┃        `Core.FloatLiteral` to `Core.IntLiteral`
-// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                 ╰────┤ type `Core.FloatLiteral` does not implement interface
-// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.IntLiteral)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                    ┃        `Core.FloatLiteral` to `Core.IntLiteral`
+// CHECK:STDERR:        ·                    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a.(2.6);
@@ -244,7 +240,7 @@ var a: (i32, i32) = (12, 34);
 // CHECK:STDERR:
 var b: i32 = a.({.index = 2}.index);
 
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon = $basics
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -300,7 +296,7 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- index_not_literal.carbon
+// CHECK:STDOUT: --- index_not_literal.carbon = $index_not_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -476,7 +472,7 @@ var b: i32 = a.({.index = 2}.index);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_value_access.carbon
+// CHECK:STDOUT: --- return_value_access.carbon = $return_value_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

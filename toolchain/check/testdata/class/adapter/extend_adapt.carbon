@@ -52,7 +52,7 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_method_access.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_method_access.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │   fn F(self);
   // CHECK:STDERR:        ·        ──┬─
   // CHECK:STDERR:        ·          ╰──┤ initializing function parameter [InCallToFunctionParam]
@@ -60,11 +60,8 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: ->     │   a.F();
   // CHECK:STDERR:        ·   ┳
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `SomeClassAdapter` to
-  // CHECK:STDERR:        ·   │  ┃        `SomeClass`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `SomeClassAdapter` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `SomeClass`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.F();
@@ -84,15 +81,12 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_todo_field_access.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        ╭─┤ fail_todo_field_access.carbon:[[@LINE+8]]:10
   // CHECK:STDERR: ->     │   return a.b;
   // CHECK:STDERR:        ·          ┳━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·          │  ┃        `SomeClassAdapter` to `SomeClass`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `SomeClassAdapter` does not implement interface
-  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        `SomeClassAdapter` to `SomeClass`
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.b;
@@ -161,7 +155,7 @@ fn F(a: IntAdapter) -> i32 {
   return a.foo;
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -292,7 +286,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_method_access.carbon
+// CHECK:STDOUT: --- fail_todo_method_access.carbon = $fail_todo_method_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -381,12 +375,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %SomeClass.F.type = name_ref F, @SomeClass.%SomeClass.F.decl [concrete = constants.%SomeClass.F]
 // CHECK:STDOUT:   %SomeClass.F.bound: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc28: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25: %SomeClass = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SomeClass.F.call: init %empty_tuple.type = call %SomeClass.F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_field_access.carbon
+// CHECK:STDOUT: --- fail_todo_field_access.carbon = $fail_todo_field_access
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -482,12 +476,12 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%field_decl.loc6 [concrete = @SomeClass.%field_decl.loc6]
-// CHECK:STDOUT:   %.loc25_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc25_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc22_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_adapt_struct.carbon
+// CHECK:STDOUT: --- fail_todo_adapt_struct.carbon = $fail_todo_adapt_struct
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -563,7 +557,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon
+// CHECK:STDOUT: --- fail_todo_adapt_tuple.carbon = $fail_todo_adapt_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -642,7 +636,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_adapt_builtin.carbon
+// CHECK:STDOUT: --- fail_adapt_builtin.carbon = $fail_adapt_builtin
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

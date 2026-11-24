@@ -32,7 +32,7 @@ import library "fn";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fn.carbon
 // CHECK:STDERR:        │ fn NS();
-// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·    ─┬
 // CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -53,7 +53,7 @@ namespace NS;
 // CHECK:STDERR:
 fn NS.Foo();
 
-// CHECK:STDOUT: --- fn.carbon
+// CHECK:STDOUT: --- fn.carbon = $fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -79,7 +79,7 @@ fn NS.Foo();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @NS();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -52,18 +52,17 @@ library "[[@TEST_NAME]]";
 
 import Other library "other_extern";
 
-// CHECK:STDERR:        ╭─┤ fail_extern.carbon:[[@LINE+50]]:8
+// CHECK:STDERR:        ╭─┤ fail_extern.carbon:[[@LINE+49]]:8
 // CHECK:STDERR: ->     │ var c: Other.C = {};
 // CHECK:STDERR:        ·        ┳━━━━━━
 // CHECK:STDERR:        ·        ┗━━┫ error: binding pattern has incomplete type `C` in name binding
 // CHECK:STDERR:        ·           ┃        declaration
 // CHECK:STDERR:        ·           ┃        [IncompleteTypeInBindingDecl]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_extern.carbon [InImport]
 // CHECK:STDERR:        ├─┤ other_extern.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_todo_merge_define_extern.carbon [InImport]
@@ -75,8 +74,8 @@ import Other library "other_extern";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ other_define.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_todo_merge_define_extern.carbon
 // CHECK:STDERR:        │ var c: Other.C = {};
@@ -93,8 +92,8 @@ import Other library "other_extern";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ other_define.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_conflict.carbon
 // CHECK:STDERR:        │ var c: Other.C = {};
@@ -122,7 +121,7 @@ import Other library "other_conflict";
 
 var c: Other.C = {};
 
-// CHECK:STDOUT: --- other_define.carbon
+// CHECK:STDOUT: --- other_define.carbon = $other_define
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -155,7 +154,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_extern.carbon
+// CHECK:STDOUT: --- other_extern.carbon = $other_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -180,7 +179,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- other_conflict.carbon
+// CHECK:STDOUT: --- other_conflict.carbon = $other_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -209,7 +208,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- define.carbon
+// CHECK:STDOUT: --- define.carbon = $define
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -273,7 +272,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern.carbon
+// CHECK:STDOUT: --- fail_extern.carbon = $fail_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -303,7 +302,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT:   %c.var: ref <error> = var_storage %c.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc56: type = splice_block %C.ref [concrete = constants.%C] {
+// CHECK:STDOUT:   %.loc55: type = splice_block %C.ref [concrete = constants.%C] {
 // CHECK:STDOUT:     %Other.ref: <namespace> = name_ref Other, imports.%Other [concrete = imports.%Other]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, imports.%Other.C [concrete = constants.%C]
 // CHECK:STDOUT:   }
@@ -318,12 +317,12 @@ var c: Other.C = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc56: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc55: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon
+// CHECK:STDOUT: --- fail_todo_merge_define_extern.carbon = $fail_todo_merge_define_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -388,7 +387,7 @@ var c: Other.C = {};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

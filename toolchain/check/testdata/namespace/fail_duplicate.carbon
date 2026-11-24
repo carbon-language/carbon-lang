@@ -19,8 +19,8 @@ fn Foo.Baz() {
 
 // CHECK:STDERR:        ╭─┤ fail_duplicate.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn Foo.Baz() {
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·        ─┬─
+// CHECK:STDERR:        ·         ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Foo.Baz() {
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━
@@ -30,7 +30,7 @@ fn Foo.Baz() {
 fn Foo.Baz() {
 }
 
-// CHECK:STDOUT: --- fail_duplicate.carbon
+// CHECK:STDOUT: --- fail_duplicate.carbon = $fail_duplicate
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

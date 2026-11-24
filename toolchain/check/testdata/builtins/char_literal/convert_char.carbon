@@ -59,7 +59,7 @@ library "[[@TEST_NAME]]";
 import library "builtin";
 
 let c: CharLiteral = 'a';
-// CHECK:STDERR:        ╭─┤ fail_runtime_call.carbon:[[@LINE+13]]:18
+// CHECK:STDERR:        ╭─┤ fail_runtime_call.carbon:[[@LINE+12]]:18
 // CHECK:STDERR: ->     │ let d: UInt(8) = ToChar(c);
 // CHECK:STDERR:        ·                  ━━━━┳━━━━
 // CHECK:STDERR:        ·                      ┗━━┫ error: non-constant call to compile-time-only function
@@ -67,9 +67,8 @@ let c: CharLiteral = 'a';
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ builtin.carbon
 // CHECK:STDERR:        │ fn ToChar(c: CharLiteral) -> UInt(8) = "char_literal.convert_char";
-// CHECK:STDERR:        · ───────────────────┬──────────────────
-// CHECK:STDERR:        ·                    ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                       │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ───┬──
+// CHECK:STDERR:        ·       ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);
@@ -115,7 +114,7 @@ import library "builtin";
 // CHECK:STDERR:
 let c: UInt(8) = ToChar('\u{1E15}');
 
-// CHECK:STDOUT: --- narrow.carbon
+// CHECK:STDOUT: --- narrow.carbon = $narrow
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

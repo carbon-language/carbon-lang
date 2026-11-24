@@ -56,18 +56,16 @@ package Same library "[[@TEST_NAME]]";
 
 import library "b";
 
-// CHECK:STDERR:        ╭─┤ fail_named_indirectly_same_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_same_package.carbon:[[@LINE+17]]:10
 // CHECK:STDERR: ->     │ fn G() { F(); }
 // CHECK:STDERR:        ·          ━┳━
 // CHECK:STDERR:        ·           ┗━━┫ error: function returns incomplete type `A.C`
 // CHECK:STDERR:        ·              ┃        [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_same_package.carbon [InImport]
-// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class A.C;
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·         ┬
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ b.carbon
 // CHECK:STDERR:        │ fn F() -> A.C;
@@ -83,18 +81,16 @@ package Other library "[[@TEST_NAME]]";
 
 import Same library "b";
 
-// CHECK:STDERR:        ╭─┤ fail_named_indirectly_different_package.carbon:[[@LINE+19]]:10
+// CHECK:STDERR:        ╭─┤ fail_named_indirectly_different_package.carbon:[[@LINE+17]]:10
 // CHECK:STDERR: ->     │ fn G() { Same.F(); }
 // CHECK:STDERR:        ·          ━━━━┳━━━
 // CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Same.A.C`
 // CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_named_indirectly_different_package.carbon [InImport]
-// CHECK:STDERR:        │ ├── imported from: b.carbon [InImport]
 // CHECK:STDERR:        ├─┤ a.carbon
 // CHECK:STDERR:        │ class A.C;
-// CHECK:STDERR:        · ─────┬────
-// CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·         ┬
+// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ b.carbon
 // CHECK:STDERR:        │ fn F() -> A.C;
@@ -104,7 +100,7 @@ import Same library "b";
 // CHECK:STDERR:
 fn G() { Same.F(); }
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon = $a
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -132,7 +128,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- b.carbon
+// CHECK:STDOUT: --- b.carbon = $b
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -183,7 +179,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- c.carbon
+// CHECK:STDOUT: --- c.carbon = $c
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Same.A: <namespace> = import_ref Same//b, A, loaded
@@ -212,7 +208,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- d.carbon
+// CHECK:STDOUT: --- d.carbon = $d
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -254,7 +250,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- e.carbon
+// CHECK:STDOUT: --- e.carbon = $e
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -320,7 +316,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon
+// CHECK:STDOUT: --- fail_named_indirectly_same_package.carbon = $fail_named_indirectly_same_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -367,7 +363,7 @@ fn G() { Same.F(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F [from "b.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon
+// CHECK:STDOUT: --- fail_named_indirectly_different_package.carbon = $fail_named_indirectly_different_package
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

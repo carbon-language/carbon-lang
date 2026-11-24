@@ -13,21 +13,18 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_type_mismatch.carbon
 
 fn ConstMismatch(p: const {}*) -> const ({}*) {
-  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   return p;
   // CHECK:STDERR:        ·   ┳━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `const {}*` to
-  // CHECK:STDERR:        ·   │  ┃        `const ({}*)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `const {}*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(const ({}*))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `const ({}*)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
-// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_type_mismatch.carbon = $fail_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -92,7 +89,7 @@ fn ConstMismatch(p: const {}*) -> const ({}*) {
 // CHECK:STDOUT: fn @ConstMismatch(%p.param: %ptr.bf9) -> out %return.param: %const.987 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.bf9 = name_ref p, %p
-// CHECK:STDOUT:   %.loc27: %const.987 = converted %p.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc24: %const.987 = converted %p.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

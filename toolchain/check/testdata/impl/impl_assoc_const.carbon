@@ -119,7 +119,7 @@ impl () as K where .V = {};
 // CHECK:STDERR:        ·                         │ [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl () as K {}
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·       ┗━━┫ error: associated constant V not given a value in impl of interface K
 // CHECK:STDERR:        ·          ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
@@ -521,7 +521,7 @@ fn G() {
   F(C);
 }
 
-// CHECK:STDOUT: --- fail_many_different.carbon
+// CHECK:STDOUT: --- fail_many_different.carbon = $fail_many_different
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -642,7 +642,7 @@ fn G() {
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_cycle.carbon
+// CHECK:STDOUT: --- fail_cycle.carbon = $fail_cycle
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

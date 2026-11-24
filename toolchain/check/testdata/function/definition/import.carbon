@@ -58,8 +58,8 @@ import library "fns";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn A() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {};
@@ -70,8 +70,8 @@ fn A() {};
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn B(b: i32) -> i32 { return b; }
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
@@ -90,8 +90,8 @@ import library "extern";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern.carbon
 // CHECK:STDERR:        │ extern fn A();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A();
@@ -104,8 +104,8 @@ fn A();
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern.carbon
 // CHECK:STDERR:        │ extern fn A();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn A() {}
@@ -124,7 +124,7 @@ import library "fns";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fns.carbon
 // CHECK:STDERR:        │ fn D();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -132,7 +132,7 @@ extern fn D();
 
 fn D() {}
 
-// CHECK:STDOUT: --- fns.carbon
+// CHECK:STDOUT: --- fns.carbon = $fns
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -272,7 +272,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern.carbon
+// CHECK:STDOUT: --- extern.carbon = $extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -298,7 +298,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon = $basics
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -445,7 +445,7 @@ fn D() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_ownership.carbon
+// CHECK:STDOUT: --- fail_def_ownership.carbon = $fail_def_ownership
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -505,7 +505,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_then_def.carbon
+// CHECK:STDOUT: --- fail_redecl_then_def.carbon = $fail_redecl_then_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -536,7 +536,7 @@ fn D() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mix_extern_decl.carbon
+// CHECK:STDOUT: --- fail_mix_extern_decl.carbon = $fail_mix_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -14,15 +14,15 @@
 
 // CHECK:STDERR:        ╭─┤ fail_param_redecl.carbon:[[@LINE+8]]:14
 // CHECK:STDERR: ->     │ fn F(n: i32, n: i32);
-// CHECK:STDERR:        ·      ───┬──  ┳
-// CHECK:STDERR:        ·         │    ┗━━┫ error: duplicate name `n` being declared in the same scope
-// CHECK:STDERR:        ·         │       ┃        [NameDeclDuplicate]
-// CHECK:STDERR:        ·         ╰─────────┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·      ┬       ┳
+// CHECK:STDERR:        ·      │       ┗━━┫ error: duplicate name `n` being declared in the same scope
+// CHECK:STDERR:        ·      │          ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ·      ╰────────────┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(n: i32, n: i32);
 
-// CHECK:STDOUT: --- fail_param_redecl.carbon
+// CHECK:STDOUT: --- fail_param_redecl.carbon = $fail_param_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

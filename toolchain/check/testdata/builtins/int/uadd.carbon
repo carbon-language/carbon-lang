@@ -111,8 +111,8 @@ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 
 // CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
 // CHECK:STDERR:        │ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
-// CHECK:STDERR:        · ───────────────┬───────────────
-// CHECK:STDERR:        ·                ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ·    ─┬─
+// CHECK:STDERR:        ·     ╰──┤ calling function declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var bad_call: array(i32, Add(1, 2, 3));
 // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
@@ -133,7 +133,7 @@ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 let a: i32 = Add(0x7FFFFFFF, 0);
 let b: i32 = Add(0x7FFFFFFF, 1);
 
-// CHECK:STDOUT: --- int_add.carbon
+// CHECK:STDOUT: --- int_add.carbon = $int_add
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

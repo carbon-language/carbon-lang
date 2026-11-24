@@ -20,8 +20,8 @@ interface Interface { }
 
 // CHECK:STDERR:        ╭─┤ fail_redefine_without_dependents.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ interface Interface { }
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Interface {
 // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━
@@ -40,8 +40,8 @@ interface Interface {}
 
 // CHECK:STDERR:        ╭─┤ fail_redefine_with_dependents.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ interface Interface {}
-// CHECK:STDERR:        · ──────────┬──────────
-// CHECK:STDERR:        ·           ╰──┤ previously defined here [RedeclPrevDef]
+// CHECK:STDERR:        ·           ────┬────
+// CHECK:STDERR:        ·               ╰──┤ previously defined here [RedeclPrevDef]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Interface {
 // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━
@@ -60,7 +60,7 @@ fn Function();
 
 // CHECK:STDERR:        ╭─┤ fail_name_conflict_with_fn.carbon:[[@LINE+11]]:11
 // CHECK:STDERR:        │ fn Function();
-// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·    ────┬───
 // CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Function;
@@ -77,8 +77,8 @@ class Class;
 
 // CHECK:STDERR:        ╭─┤ fail_name_conflict_with_class.carbon:[[@LINE+11]]:11
 // CHECK:STDERR:        │ class Class;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ──┬──
+// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ interface Class { }
 // CHECK:STDERR:        ·           ━━┳━━
@@ -89,7 +89,7 @@ class Class;
 interface Class { }
 
 
-// CHECK:STDOUT: --- fail_redefine_without_dependents.carbon
+// CHECK:STDOUT: --- fail_redefine_without_dependents.carbon = $fail_redefine_without_dependents
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -148,7 +148,7 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Interface.WithSelf.F(constants.%Self.3ce02d.2) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redefine_with_dependents.carbon
+// CHECK:STDOUT: --- fail_redefine_with_dependents.carbon = $fail_redefine_with_dependents
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -234,7 +234,7 @@ interface Class { }
 // CHECK:STDOUT:   %self.patt.loc17_8.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon
+// CHECK:STDOUT: --- fail_name_conflict_with_fn.carbon = $fail_name_conflict_with_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -255,7 +255,7 @@ interface Class { }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Function.loc4();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_conflict_with_class.carbon
+// CHECK:STDOUT: --- fail_name_conflict_with_class.carbon = $fail_name_conflict_with_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

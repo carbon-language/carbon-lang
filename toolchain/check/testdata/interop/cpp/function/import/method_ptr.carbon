@@ -75,7 +75,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "method_ptr.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+39]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+36]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: member name of type `<C++ type void (C::*)(void) const>` in
@@ -84,7 +84,7 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:        ·      ┃        [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+30]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+27]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
@@ -97,21 +97,18 @@ fn F(c: Cpp.C) {
   // CHECK:STDERR:        ·    ┃        function pointer
   // CHECK:STDERR:        ·    ┃        [CppInteropParseError]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon:[[@LINE+14]]:3
   // CHECK:STDERR:        │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ─────────────┬────────────
   // CHECK:STDERR:        ·                ╰──┤ in thunk for C++ function pointer type used here
   // CHECK:STDERR:        ·                   │ [InCppFunctionPointerThunk]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_method_ptr.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   c.(Cpp.GetMethodPtr())(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━┳━━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: 1 argument passed to function expecting 0 arguments
   // CHECK:STDERR:        ·                   ┃        [CallArgCountMismatch]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_todo_call_method_ptr.carbon
-  // CHECK:STDERR:        · ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.(Cpp.GetMethodPtr())(42);
@@ -204,7 +201,7 @@ fn G() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- relay_method_ptr.carbon
+// CHECK:STDOUT: --- relay_method_ptr.carbon = $relay_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -298,7 +295,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- convert_method_ptr.carbon
+// CHECK:STDOUT: --- convert_method_ptr.carbon = $convert_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -380,7 +377,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- pass_method_ptr.carbon
+// CHECK:STDOUT: --- pass_method_ptr.carbon = $pass_method_ptr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -460,7 +457,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_type_mismatch.carbon
+// CHECK:STDOUT: --- fail_type_mismatch.carbon = $fail_type_mismatch
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

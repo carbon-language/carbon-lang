@@ -11,6 +11,25 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/generic/resolve_used.carbon
+// CHECK:STDERR:        ╭─┤ min_prelude/parts/int.carbon:11:9
+// CHECK:STDERR: ->     │   adapt MakeInt(N);
+// CHECK:STDERR:        ·         ━━━━━┳━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: integer type width of 0 is not positive
+// CHECK:STDERR:        ·                 ┃        [IntWidthNotPositive]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_todo_call_monomorphization_error.carbon
+// CHECK:STDERR:        │   var unused v: Core.Int(N);
+// CHECK:STDERR:        ·                 ─────┬─────
+// CHECK:STDERR:        ·                      ╰──┤ in monomorphization of `i0` here
+// CHECK:STDERR:        ·                      │  │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ·                      ╰────┤ in completion of type `i0` here [InTypeCompletion]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   ErrorIfNIsZero(0);
+// CHECK:STDERR:        ·   ───────┬──────
+// CHECK:STDERR:        ·          ╰──┤ in monomorphization of `ErrorIfNIsZero(0)` here
+// CHECK:STDERR:        ·             │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 
 // --- fail_todo_call_monomorphization_error.carbon
 
@@ -25,28 +44,11 @@ fn ErrorIfNIsZero(generic N: Core.IntLiteral) {
 }
 
 fn CallNegative() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_monomorphization_error.carbon:[[@LINE+17]]:3
-  // CHECK:STDERR:        │   var unused v: Core.Int(N);
-  // CHECK:STDERR:        ·                 ─────┬─────
-  // CHECK:STDERR:        ·                      ╰──┤ `Core.Int(N)` evaluates to incomplete type `i0`
-  // CHECK:STDERR:        ·                         │ [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   ErrorIfNIsZero(0);
-  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `ErrorIfNIsZero(0)`
-  // CHECK:STDERR:        ·             ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ min_prelude/parts/int.carbon
-  // CHECK:STDERR:        │   adapt MakeInt(N);
-  // CHECK:STDERR:        ·         ─────┬────
-  // CHECK:STDERR:        ·              ╰──┤ integer type width of 0 is not positive [IntWidthNotPositive]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   ErrorIfNIsZero(0);
 }
 
 
-// CHECK:STDOUT: --- fail_todo_call_monomorphization_error.carbon
+// CHECK:STDOUT: --- fail_todo_call_monomorphization_error.carbon = $fail_todo_call_monomorphization_error
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -77,14 +79,12 @@ fn CallNegative() {
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.79f: <witness> = lookup_impl_witness %Int, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.f5e: <witness> = lookup_impl_witness %Int, @SubobjectDestroy [symbolic]
-// CHECK:STDOUT:   %Destroy.facet.bee: %Destroy.type = facet_value %Int, (%DestroyImpl.lookup_impl_witness.79f, %SubobjectDestroy.lookup_impl_witness.f5e) [symbolic]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.465: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.bee) [symbolic]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Int, (%DestroyImpl.lookup_impl_witness.79f, %SubobjectDestroy.lookup_impl_witness.f5e) [symbolic]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [symbolic]
 // CHECK:STDOUT:   %CallNegative.type: type = fn_type @CallNegative [concrete]
 // CHECK:STDOUT:   %CallNegative: %CallNegative.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
@@ -100,13 +100,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.260: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.353: %T.as.DefaultOrUnformed.impl.Op.type.260 = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.353, @T.as.DefaultOrUnformed.impl.Op(%i0) [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.26a: %SubobjectDestroy.type = facet_value %i0, (%custom_witness.b80) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.c8f: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.26a) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.a31: %Destroy.type = facet_value %i0, (%DestroyImpl.impl_witness.c8f, %custom_witness.b80) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.fbd: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.a31) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.ef3: <witness> = lookup_impl_witness %i0, @DestroyImpl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -115,6 +109,8 @@ fn CallNegative() {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .DefaultOrUnformed = %Core.DefaultOrUnformed
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -124,8 +120,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -166,8 +162,8 @@ fn CallNegative() {
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2: <specific function> = specific_impl_function %impl.elem0.loc9_28.2, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.loc9_28.2) [symbolic = %specific_impl_fn.loc9_28.2 (constants.%specific_impl_fn.4db)]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_27.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.79f)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_27.2, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.f5e)]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.3: %Destroy.type = facet_value %Int.loc9_27.2, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.bee)]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.2: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(%Destroy.facet.loc9_3.3) [symbolic = %SelfDestruct.specific_fn.2 (constants.%SelfDestruct.specific_fn.465)]
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.3: %Destroy.type = facet_value %Int.loc9_27.2, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet)]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn.2: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(%Destroy.facet.loc9_3.3) [symbolic = %SelfDestruct.specific_fn.2 (constants.%SelfDestruct.specific_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -191,11 +187,11 @@ fn CallNegative() {
 // CHECK:STDOUT:       %v.patt.loc9_15.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.fc3)]
 // CHECK:STDOUT:       %v.var_patt.loc9_3.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = var_pattern %v.patt.loc9_15.1 [symbolic = %v.var_patt.loc9_3.2 (constants.%v.var_patt.c99)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%DestroyImpl.lookup_impl_witness.79f, constants.%SubobjectDestroy.lookup_impl_witness.f5e) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.bee)]
-// CHECK:STDOUT:     %.loc9_3.1: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.1 [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.bee)]
-// CHECK:STDOUT:     %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Int, (constants.%DestroyImpl.lookup_impl_witness.79f, constants.%SubobjectDestroy.lookup_impl_witness.f5e) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.bee)]
-// CHECK:STDOUT:     %.loc9_3.2: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.2 [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.bee)]
-// CHECK:STDOUT:     %SelfDestruct.specific_fn.1: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet.bee) [symbolic = %SelfDestruct.specific_fn.2 (constants.%SelfDestruct.specific_fn.465)]
+// CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%DestroyImpl.lookup_impl_witness.79f, constants.%SubobjectDestroy.lookup_impl_witness.f5e) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet)]
+// CHECK:STDOUT:     %.loc9_3.1: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.1 [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet)]
+// CHECK:STDOUT:     %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Int, (constants.%DestroyImpl.lookup_impl_witness.79f, constants.%SubobjectDestroy.lookup_impl_witness.f5e) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet)]
+// CHECK:STDOUT:     %.loc9_3.2: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.2 [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet)]
+// CHECK:STDOUT:     %SelfDestruct.specific_fn.1: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [symbolic = %SelfDestruct.specific_fn.2 (constants.%SelfDestruct.specific_fn)]
 // CHECK:STDOUT:     %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%v.var)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -209,8 +205,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %ErrorIfNIsZero.call: init %empty_tuple.type = call %ErrorIfNIsZero.specific_fn()
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %i0) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ErrorIfNIsZero(constants.%N) {
 // CHECK:STDOUT:   %N.patt.loc4_28.2 => constants.%N.patt
@@ -233,9 +227,9 @@ fn CallNegative() {
 // CHECK:STDOUT:   %.loc9_28.3 => constants.%.3e6
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.353
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness => constants.%DestroyImpl.impl_witness.c8f
-// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => constants.%custom_witness.b80
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.3 => constants.%Destroy.facet.a31
-// CHECK:STDOUT:   %SelfDestruct.specific_fn.2 => constants.%SelfDestruct.specific_fn.fbd
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness => constants.%DestroyImpl.lookup_impl_witness.ef3
+// CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness => <error>
+// CHECK:STDOUT:   %Destroy.facet.loc9_3.3 => <error>
+// CHECK:STDOUT:   %SelfDestruct.specific_fn.2 => <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

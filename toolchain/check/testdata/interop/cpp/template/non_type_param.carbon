@@ -41,15 +41,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR:        ╭─┤ fail_int_param_mismatch.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_int_param_mismatch.carbon:[[@LINE+8]]:1
 // CHECK:STDERR: ->     │ var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 // CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Simple` to
-// CHECK:STDERR:        · │  ┃        `Cpp.Simple`
-// CHECK:STDERR:        · │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╰────┤ type `Cpp.Simple` does not implement interface
-// CHECK:STDERR:        ·      │ `Core.ImplicitAs(Cpp.Simple)`
-// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·    ┃        `Cpp.Simple`
+// CHECK:STDERR:        ·    ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
@@ -143,15 +140,12 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR:        ╭─┤ fail_type_argument.carbon:[[@LINE+11]]:26
+// CHECK:STDERR:        ╭─┤ fail_type_argument.carbon:[[@LINE+8]]:26
 // CHECK:STDERR: ->     │ var x: Cpp.TwoNonType(1, Cpp.A) = {};
 // CHECK:STDERR:        ·                          ┳━━━━
 // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-// CHECK:STDERR:        ·                          │  ┃        type `type` to `i32`
-// CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                          ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                               │ `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                             ┃        type `type` to `i32`
+// CHECK:STDERR:        ·                             ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, Cpp.A) = {};
@@ -164,15 +158,12 @@ import Cpp library "templates.h";
 
 var n: i32;
 
-// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+11]]:26
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+8]]:26
 // CHECK:STDERR: ->     │ var x: Cpp.TwoNonType(1, &n) = {};
 // CHECK:STDERR:        ·                          ┳━
 // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-// CHECK:STDERR:        ·                          │  ┃        type `i32*` to `i32`
-// CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                          ╰────┤ type `i32*` does not implement interface
-// CHECK:STDERR:        ·                               │ `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                             ┃        type `i32*` to `i32`
+// CHECK:STDERR:        ·                             ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, &n) = {};
@@ -191,7 +182,7 @@ fn G() -> i32 {
   return Cpp.X(i32, i32).n(1, 2);
 }
 
-// CHECK:STDOUT: --- valid.carbon
+// CHECK:STDOUT: --- valid.carbon = $valid
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -222,7 +213,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dependent.carbon
+// CHECK:STDOUT: --- dependent.carbon = $dependent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

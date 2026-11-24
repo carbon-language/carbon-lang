@@ -106,15 +106,12 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+11]]:13
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+8]]:13
 // CHECK:STDERR: ->     │ let a: {} = 1 as {};
 // CHECK:STDERR:        ·             ┳━━━━━━
 // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert expression of type `Core.IntLiteral` to
-// CHECK:STDERR:        ·             │  ┃        `{}` with `as`
-// CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·             ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·                  │ `Core.As({})`
-// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                ┃        `{}` with `as`
+// CHECK:STDERR:        ·                ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: {} = 1 as {};
@@ -123,20 +120,17 @@ let a: {} = 1 as {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:32
+// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+8]]:32
 // CHECK:STDERR: ->     │ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDERR:        ·                                ┳━━━━━━━━
 // CHECK:STDERR:        ·                                ┗━━┫ error: cannot implicitly convert non-type
-// CHECK:STDERR:        ·                                │  ┃        value of type `{.x: ()}` to `type`
-// CHECK:STDERR:        ·                                │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                ╰────┤ type `{.x: ()}` does not implement
-// CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                   ┃        value of type `{.x: ()}` to `type`
+// CHECK:STDERR:        ·                                   ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};
 
-// CHECK:STDOUT: --- simple_as.carbon
+// CHECK:STDOUT: --- simple_as.carbon = $simple_as
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -179,7 +173,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   return %.loc6_48 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as_type.carbon
+// CHECK:STDOUT: --- as_type.carbon = $as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -211,7 +205,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- as_tuple.carbon
+// CHECK:STDOUT: --- as_tuple.carbon = $as_tuple
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -240,8 +234,6 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.3ee = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc20 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.8c9: %SubobjectDestroy.type = facet_value %tuple.type.359, (%custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.543: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.8c9) [concrete]
@@ -338,28 +330,9 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20(%self.param: ref %tuple.type.359) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %tuple.elem1: ref %X = tuple_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.e12, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %.loc20_3.1: %Destroy.type = converted constants.%X, %Destroy.facet.loc20_3.1 [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.e12, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %.loc20_3.2: %Destroy.type = converted constants.%X, %Destroy.facet.loc20_3.2 [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc20_3.1: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%tuple.elem1)
-// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %tuple.elem0: ref %X = tuple_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.3: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.e12, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %.loc20_3.3: %Destroy.type = converted constants.%X, %Destroy.facet.loc20_3.3 [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %Destroy.facet.loc20_3.4: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.e12, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   %.loc20_3.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc20_3.4 [concrete = constants.%Destroy.facet.689]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc20_3.2: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%tuple.elem0)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20(%self.param: ref %tuple.type.359) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- identity.carbon
+// CHECK:STDOUT: --- identity.carbon = $identity
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -449,7 +422,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- overloaded.carbon
+// CHECK:STDOUT: --- overloaded.carbon = $overloaded
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

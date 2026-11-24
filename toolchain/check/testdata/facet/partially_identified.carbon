@@ -181,7 +181,7 @@ constraint W {
   // CHECK:STDERR:        ╭─┤ fail_impl_lookup_target_partially_identified.carbon:[[@LINE+13]]:32
   // CHECK:STDERR:        │ constraint W {
   // CHECK:STDERR:        · ───────┬──────
-  // CHECK:STDERR:        ·        ╰──┤ constraint is currently being defined
+  // CHECK:STDERR:        ·        ╰──┤ constraint is incomplete within its definition
   // CHECK:STDERR:        ·           │ [NamedConstraintIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls X where .XZ = (Self as (W & Z));

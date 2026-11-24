@@ -16,8 +16,8 @@ class Incomplete;
 
 // CHECK:STDERR:        ╭─┤ fail_nested_incomplete.carbon:[[@LINE+12]]:8
 // CHECK:STDERR:        │ class Incomplete;
-// CHECK:STDERR:        · ────────┬────────
-// CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ─────┬────
+// CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var s: {.a: Incomplete};
 // CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━━━
@@ -30,7 +30,7 @@ var s: {.a: Incomplete};
 
 var p: Incomplete* = &s.a;
 
-// CHECK:STDOUT: --- fail_nested_incomplete.carbon
+// CHECK:STDOUT: --- fail_nested_incomplete.carbon = $fail_nested_incomplete
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -47,7 +47,7 @@ fn LoadSubscript(s: Span, i: i32) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @"_CRef.Span.Main:IndirectIndexWith.55456748a8a2eb70.Core"(ptr %self, i32 %subscript) #0 !dbg !18 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_17.1.ptr = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !25
+// CHECK:STDOUT:   %.loc19_17.1.ptr = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !25
 // CHECK:STDOUT:   %.loc19_17.2 = load ptr, ptr %.loc19_17.1.ptr, align 8, !dbg !25
 // CHECK:STDOUT:   ret ptr %.loc19_17.2, !dbg !27
 // CHECK:STDOUT: }

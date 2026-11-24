@@ -178,18 +178,13 @@ interface I {
 }
 
 // `2` can't be converted to the type of `I.Member`
-// CHECK:STDERR:        ╭─┤ fail_check_rewrite_constraints.carbon:[[@LINE+14]]:53
+// CHECK:STDERR:        ╭─┤ fail_check_rewrite_constraints.carbon:[[@LINE+9]]:53
 // CHECK:STDERR: ->     │ fn RewriteTypeMismatch(generic X: I where .Member = 2);
 // CHECK:STDERR:        ·                                                     ┳
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert non-type value of type `Core.IntLiteral` to
 // CHECK:STDERR:        · ┃        `type`
 // CHECK:STDERR:        · ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·                                                     ╰──┤ type `Core.IntLiteral`
-// CHECK:STDERR:        ·                                                        │ does not implement
-// CHECK:STDERR:        ·                                                        │ interface
-// CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);
@@ -278,7 +273,7 @@ let J: ((E where .F = {}) where .G = i32) = bool;
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 
-// CHECK:STDOUT: --- equal_constraint.carbon
+// CHECK:STDOUT: --- equal_constraint.carbon = $equal_constraint
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -343,7 +338,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %T.loc9_19.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_rewrites.carbon
+// CHECK:STDOUT: --- nested_rewrites.carbon = $nested_rewrites
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -427,7 +422,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %D.loc10_27.1 => constants.%D
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- repeated_rewrite.carbon
+// CHECK:STDOUT: --- repeated_rewrite.carbon = $repeated_rewrite
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -578,7 +573,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- rewrites_reordered.carbon
+// CHECK:STDOUT: --- rewrites_reordered.carbon = $rewrites_reordered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

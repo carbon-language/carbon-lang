@@ -69,7 +69,7 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
     SemIR::DiagnosticLocConverter converter(
         &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
-                                       /*token_only=*/false);
+                                       Parse::LocExtent::Subtree);
     output << Diagnostics::FormatLocation(converted.loc) << ": ";
     // TODO: Format SemIR for the instruction we were lowering?
     output << "Lowering "

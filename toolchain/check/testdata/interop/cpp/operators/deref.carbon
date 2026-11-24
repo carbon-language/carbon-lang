@@ -126,7 +126,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
   not_ptr.(Core.CppUnsafeDeref.Op)();
 }
 
-// CHECK:STDOUT: --- const_deref.carbon
+// CHECK:STDOUT: --- const_deref.carbon = $const_deref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -196,7 +196,7 @@ fn TestDerefFail(not_ptr: Cpp.NotAPtr) {
 // CHECK:STDOUT:   return %operator_Star__carbon_thunk.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- mutable_deref.carbon
+// CHECK:STDOUT: --- mutable_deref.carbon = $mutable_deref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

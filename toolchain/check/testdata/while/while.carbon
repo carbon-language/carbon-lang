@@ -80,13 +80,11 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR:        ╭─┤ fail_bad_condition.carbon:[[@LINE+9]]:9
+  // CHECK:STDERR:        ╭─┤ fail_bad_condition.carbon:[[@LINE+7]]:9
   // CHECK:STDERR: ->     │   while ({}) {}
   // CHECK:STDERR:        ·         ━┳━━
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `{}` to `bool`
-  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·          ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   while ({}) {}
@@ -130,7 +128,7 @@ fn While() {
   break;
 }
 
-// CHECK:STDOUT: --- while.carbon
+// CHECK:STDOUT: --- while.carbon = $while
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -175,7 +173,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unreachable_end.carbon
+// CHECK:STDOUT: --- unreachable_end.carbon = $unreachable_end
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -220,7 +218,7 @@ fn While() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- break_continue.carbon
+// CHECK:STDOUT: --- break_continue.carbon = $break_continue
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

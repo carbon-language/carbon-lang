@@ -68,7 +68,7 @@ void FUnsupported() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_unsupported_specific_arg.carbon:[[@LINE+7]]:11
   // CHECK:STDERR: ->     │   Carbon::AliasEmptyTuple a;
-  // CHECK:STDERR:        ·   ───────╴╻
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
   // CHECK:STDERR:        ·           ┗━━┫ error: no type named 'AliasEmptyTuple' in namespace 'Carbon'
   // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -83,11 +83,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class ClassWithMethod(T: type) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   fn M(unused ref self) {}
-  // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━━
-  // CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
-  // CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `support exporting member functions of parameterized classes`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn M(unused ref self) {}
@@ -98,7 +99,7 @@ void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
   // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   c.M();
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'M' in 'Carbon::Main::ClassWithMethod<int>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────

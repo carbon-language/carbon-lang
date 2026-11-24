@@ -134,13 +134,11 @@ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+7]]:10
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `NonConstCopy`
-  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.NonConstCopy` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
@@ -148,14 +146,11 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+7]]:10
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AmbiguousCopy`
-  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.AmbiguousCopy` does not implement interface
-  // CHECK:STDERR:        ·               │ `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
@@ -221,7 +216,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- copy_copyable.carbon
+// CHECK:STDOUT: --- copy_copyable.carbon = $copy_copyable
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +313,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   return %.loc14_10.5 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- copy_generically.carbon
+// CHECK:STDOUT: --- copy_generically.carbon = $copy_generically
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

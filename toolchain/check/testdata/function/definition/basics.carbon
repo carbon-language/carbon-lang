@@ -19,8 +19,8 @@ class C;
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+11]]:13
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(unused n: C) {}
 // CHECK:STDERR:        ·             ┳━━━
@@ -30,7 +30,7 @@ class C;
 // CHECK:STDERR:
 fn F(unused n: C) {}
 
-// CHECK:STDOUT: --- fail_incomplete_type.carbon
+// CHECK:STDOUT: --- fail_incomplete_type.carbon = $fail_incomplete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

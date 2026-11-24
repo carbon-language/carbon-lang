@@ -28,6 +28,7 @@
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   names:           {}
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
@@ -100,7 +101,7 @@
 // CHECK:STDOUT:       identifiers:     {}
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- -
+// CHECK:STDOUT: --- - = $<stdin>
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

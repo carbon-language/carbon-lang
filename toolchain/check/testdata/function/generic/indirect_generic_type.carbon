@@ -21,7 +21,7 @@ fn F(generic T: type, p: T**) -> T* {
 }
 
 
-// CHECK:STDOUT: --- pointer_to_pointer.carbon
+// CHECK:STDOUT: --- pointer_to_pointer.carbon = $pointer_to_pointer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

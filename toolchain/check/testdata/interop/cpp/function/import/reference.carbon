@@ -461,15 +461,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "return_const_lvalue_ref.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+11]]:29
+  // CHECK:STDERR:        ╭─┤ fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+8]]:29
   // CHECK:STDERR: ->     │   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
   // CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                             ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                             │  ┃        type `const Cpp.S` to `Cpp.S`
-  // CHECK:STDERR:        ·                             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰────┤ type `const Cpp.S` does not implement
-  // CHECK:STDERR:        ·                                  │ interface `Core.ImplicitAs(Cpp.S)`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                ┃        type `const Cpp.S` to `Cpp.S`
+  // CHECK:STDERR:        ·                                ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
@@ -562,7 +559,7 @@ fn PassConstRef(ref x: const XByRef) {
 }
 
 
-// CHECK:STDOUT: --- call_param_lvalue_ref.carbon
+// CHECK:STDOUT: --- call_param_lvalue_ref.carbon = $call_param_lvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -638,7 +635,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_param_lvalue_ref.carbon
+// CHECK:STDOUT: --- fail_param_lvalue_ref.carbon = $fail_param_lvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -818,7 +815,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_param_rvalue_ref.carbon
+// CHECK:STDOUT: --- call_param_rvalue_ref.carbon = $call_param_rvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -865,7 +862,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_param_rvalue_ref.carbon
+// CHECK:STDOUT: --- fail_param_rvalue_ref.carbon = $fail_param_rvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1009,7 +1006,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_param_const_lvalue_ref_with_ref.carbon
+// CHECK:STDOUT: --- call_param_const_lvalue_ref_with_ref.carbon = $call_param_const_lvalue_ref_with_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1108,7 +1105,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_param_const_lvalue_ref_with_value.carbon
+// CHECK:STDOUT: --- call_param_const_lvalue_ref_with_value.carbon = $call_param_const_lvalue_ref_with_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1205,7 +1202,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- param_value_arg_for_const_rvalue_ref.carbon
+// CHECK:STDOUT: --- param_value_arg_for_const_rvalue_ref.carbon = $param_value_arg_for_const_rvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1258,7 +1255,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_param_lvalue_ref_arg_const_rvalue_ref.carbon
+// CHECK:STDOUT: --- fail_param_lvalue_ref_arg_const_rvalue_ref.carbon = $fail_param_lvalue_ref_arg_const_rvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1384,7 +1381,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_return_lvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_lvalue_ref.carbon = $call_return_lvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1424,7 +1421,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_return_rvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_rvalue_ref.carbon = $call_return_rvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1464,7 +1461,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_return_const_lvalue_ref.carbon
+// CHECK:STDOUT: --- call_return_const_lvalue_ref.carbon = $call_return_const_lvalue_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1506,7 +1503,7 @@ fn PassConstRef(ref x: const XByRef) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forwarding_reference.carbon
+// CHECK:STDOUT: --- forwarding_reference.carbon = $forwarding_reference
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

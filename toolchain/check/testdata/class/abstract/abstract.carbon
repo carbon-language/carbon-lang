@@ -95,15 +95,15 @@ abstract class Abstract {
 
 class Adapter {
   // TODO(#4387): This should probably be valid
-  // CHECK:STDERR:        ╭─┤ fail_abstract_adapter.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_abstract_adapter.carbon:[[@LINE+11]]:9
   // CHECK:STDERR:        │ abstract class Abstract {
   // CHECK:STDERR:        · ────────────┬────────────
   // CHECK:STDERR:        ·             ╰──┤ class was declared abstract here [ClassAbstractHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   adapt Abstract;
-  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: adapted type `Abstract` is an abstract type
-  // CHECK:STDERR:        ·             ┃        [AbstractTypeInAdaptDecl]
+  // CHECK:STDERR:        ·         ━━━━┳━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: adapted type `Abstract` is an abstract type
+  // CHECK:STDERR:        ·                ┃        [AbstractTypeInAdaptDecl]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt Abstract;
@@ -209,9 +209,9 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/destroy.carbon
   // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·             │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused l: Abstract = {};
@@ -239,9 +239,9 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/destroy.carbon
   // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·             │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused l: Abstract = {.base = {}} as Derived;
@@ -282,18 +282,16 @@ abstract class Abstract {
 }
 
 fn Assign(ref a: Abstract) {
-  // CHECK:STDERR:        ╭─┤ fail_assign_to_abstract_ref.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR:        ╭─┤ fail_assign_to_abstract_ref.carbon:[[@LINE+6]]:7
   // CHECK:STDERR: ->     │   a = a;
   // CHECK:STDERR:        ·       ┳
   // CHECK:STDERR:        ·       ┗━━┫ error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·       ╰────┤ type `Abstract` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = a;
 }
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -342,7 +340,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -396,7 +394,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var_function_param.carbon
+// CHECK:STDOUT: --- fail_abstract_var_function_param.carbon = $fail_abstract_var_function_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -445,7 +443,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -504,7 +502,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_adapter.carbon
+// CHECK:STDOUT: --- fail_abstract_adapter.carbon = $fail_abstract_adapter
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -551,7 +549,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   .Abstract = <poisoned>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- define_and_call_abstract_param.carbon
+// CHECK:STDOUT: --- define_and_call_abstract_param.carbon = $define_and_call_abstract_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -622,7 +620,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- return_nonabstract_derived.carbon
+// CHECK:STDOUT: --- return_nonabstract_derived.carbon = $return_nonabstract_derived
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -721,7 +719,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return %.loc13_31 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_return_abstract.carbon
+// CHECK:STDOUT: --- fail_return_abstract.carbon = $fail_return_abstract
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -809,7 +807,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_abstract_subobject.carbon
+// CHECK:STDOUT: --- access_abstract_subobject.carbon = $access_abstract_subobject
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -946,7 +944,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return %.loc18_13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon
+// CHECK:STDOUT: --- fail_abstract_let_temporary_struct_literal.carbon = $fail_abstract_let_temporary_struct_literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -962,15 +960,21 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.69a: ref %Abstract = temporary invalid, %Abstract.val [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1008,7 +1012,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon
+// CHECK:STDOUT: --- fail_todo_abstract_let_temporary.carbon = $fail_todo_abstract_let_temporary
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1034,15 +1038,21 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %.5d3: ref %Abstract = class_element_access %.521, element0 [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1103,7 +1113,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_call_abstract_return.carbon
+// CHECK:STDOUT: --- fail_call_abstract_return.carbon = $fail_call_abstract_return
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1165,7 +1175,7 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon
+// CHECK:STDOUT: --- fail_assign_to_abstract_ref.carbon = $fail_assign_to_abstract_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1217,10 +1227,10 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Assign(%a.param: ref %Abstract) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref.loc15_3: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %a.ref.loc15_7: ref %Abstract = name_ref a, %a
-// CHECK:STDOUT:   %.loc15: %Abstract = acquire_value %a.ref.loc15_7
-// CHECK:STDOUT:   assign %a.ref.loc15_3, <error>
+// CHECK:STDOUT:   %a.ref.loc13_3: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc13_7: ref %Abstract = name_ref a, %a
+// CHECK:STDOUT:   %.loc13: %Abstract = acquire_value %a.ref.loc13_7
+// CHECK:STDOUT:   assign %a.ref.loc13_3, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

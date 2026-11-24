@@ -36,8 +36,8 @@ namespace NS;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ namespace.carbon
 // CHECK:STDERR:        │ namespace NS;
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NS();
@@ -54,13 +54,13 @@ namespace NS;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ namespace.carbon
 // CHECK:STDERR:        │ namespace NS;
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NS();
 
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon = $namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -78,7 +78,7 @@ fn NS();
 // CHECK:STDOUT:   %NS: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

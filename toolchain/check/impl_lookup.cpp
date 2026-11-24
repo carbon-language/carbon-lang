@@ -73,7 +73,7 @@ static auto FindAssociatedImportIRs(
         import_ir_inst_id.has_value()) {
       result.push_back(
           sem_ir->import_ir_insts().Get(import_ir_inst_id).ir_id());
-    } else if (import_ir_inst.ir_id().has_value()) {
+    } else if (import_ir_inst.ir_id() != SemIR::ImportIRId::Local) {
       result.push_back(import_ir_inst.ir_id());
     }
   };
@@ -214,7 +214,7 @@ static auto FindAndDiagnoseImplLookupCycle(
         for (const auto& active_entry : llvm::drop_begin(stack, i)) {
           if (active_entry.impl_loc.has_value()) {
             CARBON_DIAGNOSTIC_LABEL(
-                ImplLookupCycleNote, Info,
+                ImplLookupCycleNote,
                 "determining if this impl clause matches", );
             builder.Attach(active_entry.impl_loc, ImplLookupCycleNote);
           }
@@ -455,7 +455,7 @@ static auto CollectFacetWitnessSources(
     // inner `where` expression is checked before the outer, so it needs to be
     // self-consistent and provide any `impls` constraints required by other
     // constraints.
-    const auto& impls = context.where_stack().back().impls;
+    const auto& impls = context.where_stack().Peek().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
       self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
@@ -895,6 +895,14 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         query_facet_type_const_id));
   }
 
+  auto query_facet_type_id =
+      context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id);
+  auto diagnoser = [&] {
+    CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Error,
+                      "facet type {0} can not be identified", SemIR::TypeId);
+    return context.emitter().Build(loc_id, ImplLookupInUnidentifiedFacetType,
+                                   query_facet_type_id);
+  };
   // This IdentifiedFacetType holds all the requirements that the impl lookup is
   // trying to satisfy. On success, each `X impls Y` requirement in here will
   // result in a witness being returned that provides the `impls` relationship.
@@ -902,17 +910,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // succeed. Since we're doing impl lookup and not defining an `impl` witness,
   // we treat all rewrite requirements as equivalent requirements.
   auto required_identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id,
-      context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(ImplLookupInUnidentifiedFacetType,
-                                  "facet type {0} can not be identified",
-                                  SemIR::TypeId);
-        builder.Attach(loc_id, ImplLookupInUnidentifiedFacetType,
-                       context.types().GetTypeIdForTypeConstantId(
-                           query_facet_type_const_id));
-      },
-      diagnose);
+      context, loc_id, query_self_const_id, query_facet_type_id,
+      diagnose ? Diagnoser(diagnoser) : nullptr);
   if (!required_identified_id.has_value()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
@@ -1165,7 +1164,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   // If the lookup comes from inside an impl decl and is for that impl, get a
   // witness for that impl even though it does not yet exist.
   if (!context.declaring_impl_decls().empty()) {
-    const auto& declaring = context.declaring_impl_decls().back();
+    const auto& declaring = context.declaring_impl_decls().Peek();
     if (query_self_const_id == declaring.self_id ||
         IsPeriodSelf(context, eval_query.query_self_inst_id)) {
       if (query_specific_interface == declaring.specific_interface) {
@@ -1330,13 +1329,18 @@ auto MakeWitnessesForPeriodSelfTypeWithoutLookup(Context& context,
   auto period_self_type_id =
       context.constant_values().GetInst(period_self).type_id();
 
+  // The facet type of `.Self` may refer to generic interfaces that use `.Self`
+  // in their arguments, and replacing `.Self` with `facet_value` can fail with
+  // a monomorphization error, which is diagnosed where it happens. The
+  // diagnoser is for a named constraint in the facet type that isn't complete.
   auto identified_period_self_type_id = RequireIdentifiedFacetType(
-      context, loc_id, facet_value, period_self_type_id,
-      // The facet type of `.Self` may refer to generic interfaces that use
-      // `.Self` in their arguments. And when `.Self` is replaced by
-      // `facet_value`, we may fail with a monomorphization error. We pass it
-      // along without adding additional context.
-      [&](auto& /*builder*/) {});
+      context, loc_id, facet_value, period_self_type_id, [&] {
+        CARBON_DIAGNOSTIC(PeriodSelfUnidentifiedFacetType, Error,
+                          "facet type {0} of `.Self` cannot be identified",
+                          SemIR::TypeId);
+        return context.emitter().Build(loc_id, PeriodSelfUnidentifiedFacetType,
+                                       period_self_type_id);
+      });
   if (!identified_period_self_type_id.has_value()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }

@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern fn F();
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━
@@ -48,8 +48,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_redecl_extern.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F();
 // CHECK:STDERR:        · ━━━┳━━━
@@ -95,13 +95,13 @@ import library "basic";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ basic.carbon
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "basic" fn F();
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon = $basic
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -118,7 +118,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- basic_use.carbon
+// CHECK:STDOUT: --- basic_use.carbon = $basic_use
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -163,7 +163,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl.carbon
+// CHECK:STDOUT: --- fail_redecl.carbon = $fail_redecl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -181,7 +181,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redecl_extern.carbon
+// CHECK:STDOUT: --- fail_redecl_extern.carbon = $fail_redecl_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -199,7 +199,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_member_extern.carbon
+// CHECK:STDOUT: --- fail_member_extern.carbon = $fail_member_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -245,7 +245,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.G(%self.param: %C);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_library_in_importer.carbon
+// CHECK:STDOUT: --- fail_extern_library_in_importer.carbon = $fail_extern_library_in_importer
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

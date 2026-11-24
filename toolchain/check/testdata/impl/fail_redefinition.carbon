@@ -28,7 +28,7 @@ impl i32 as I {}
 // CHECK:STDERR:
 impl i32 as I {}
 
-// CHECK:STDOUT: --- fail_redefinition.carbon
+// CHECK:STDOUT: --- fail_redefinition.carbon = $fail_redefinition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

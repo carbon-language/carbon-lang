@@ -30,9 +30,9 @@ class D(DD: type) {
     //@dump-sem-ir-begin
     // CHECK:STDERR:        ╭─┤ fail_dot_self_symbolic_type.carbon:[[@LINE+13]]:5
     // CHECK:STDERR:        │   fn F(unused generic T: A(CC) where .X = CC) {}
-    // CHECK:STDERR:        ·   ──────────────────────┬──────────────────────
-    // CHECK:STDERR:        ·                         ╰──┤ while deducing parameters of generic declared here
-    // CHECK:STDERR:        ·                            │ [DeductionGenericHere]
+    // CHECK:STDERR:        ·      ┬
+    // CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+    // CHECK:STDERR:        ·         │ [DeductionGenericHere]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     C(DD).F(T);
     // CHECK:STDERR:        ·     ┳━━━━━━━━━
@@ -80,7 +80,7 @@ fn H(generic T: type) {
   D({}).G(T);
 }
 
-// CHECK:STDOUT: --- fail_dot_self_symbolic_type.carbon
+// CHECK:STDOUT: --- fail_dot_self_symbolic_type.carbon = $fail_dot_self_symbolic_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -314,7 +314,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %C.F => constants.%C.F.0b5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- dot_self_symbolic_in_impl_lookup.carbon
+// CHECK:STDOUT: --- dot_self_symbolic_in_impl_lookup.carbon = $dot_self_symbolic_in_impl_lookup
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

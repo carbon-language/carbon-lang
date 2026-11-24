@@ -11,6 +11,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/context.h"
@@ -307,7 +308,7 @@ class Context {
     SemIR::LocId loc_id;
   };
 
-  auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
+  auto where_stack() -> StableStack<WhereStackEntry, 4>& {
     return where_stack_;
   }
 
@@ -320,7 +321,7 @@ class Context {
     SemIR::SpecificInterface specific_interface;
     auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
-  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
+  auto declaring_impl_decls() -> StableStack<DeclaringImplDecl, 1>& {
     return declaring_impl_decls_;
   }
 
@@ -361,6 +362,18 @@ class Context {
   auto PopReturnForm() -> FormExpr {
     CARBON_CHECK(return_form_expr_ != std::nullopt);
     return *std::exchange(return_form_expr_, std::nullopt);
+  }
+
+  struct ImplDefinitionStackEntry {
+    SemIR::ImplId impl_id;
+    SemIR::TypeInstId full_constraint_id;
+    IdentifiedFacetTypeId identified_id;
+  };
+  auto PushImplDefinitionStart(ImplDefinitionStackEntry entry) -> void {
+    impl_definition_stack_.push_back(entry);
+  }
+  auto PopImplDefinitionStart() -> ImplDefinitionStackEntry {
+    return impl_definition_stack_.pop_back_val();
   }
 
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
@@ -644,7 +657,7 @@ class Context {
 
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
-  llvm::SmallVector<WhereStackEntry> where_stack_;
+  StableStack<WhereStackEntry, 4> where_stack_;
 
   // Counts the number of `where` expressions in the type of the binding
   // currently being checked.
@@ -653,7 +666,7 @@ class Context {
   // Track impl declarations that are underway. If we're declaring an impl for
   // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
   // that impl being declared (even though it does not yet exist).
-  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
+  StableStack<DeclaringImplDecl, 1> declaring_impl_decls_;
 
   // Tracks if we are currently identifying a facet type, which causes
   // LookupImplWitness instructions to not resolve to final witnesses by
@@ -664,6 +677,9 @@ class Context {
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;
+
+  // A stack of impl definitions that have been started but not finished yet.
+  llvm::SmallVector<ImplDefinitionStackEntry> impl_definition_stack_;
 
   // See `CoreIdentifierCache` for details.
   CoreIdentifierCache core_identifiers_;

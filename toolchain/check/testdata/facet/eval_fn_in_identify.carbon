@@ -95,22 +95,24 @@ eval fn LookupWithType(template T: type) -> type {
   // But that happens in the identification of the facet type in the `impl as`
   // decl below. A `type` doesn't come with a witness, and we can't find the
   // impl below before it's declared, so this lookup fails.
+  // CHECK:STDERR:        ╭─┤ fail_template_type_in_identify_doesnt_find_self_impl.carbon:[[@LINE+15]]:10
+  // CHECK:STDERR: ->     │   return T.(I.X);
+  // CHECK:STDERR:        ·          ━━━┳━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert type `()` into type implementing `I`
+  // CHECK:STDERR:        ·                ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ impl () as I where .X = () and .Y = LookupWithType(.Self) {}
+  // CHECK:STDERR:        ·            ┬─────────────────────────────────────────────
+  // CHECK:STDERR:        ·            ╰──┤ in monomorphization of `LookupWithType(())` here
+  // CHECK:STDERR:        ·            │  │ [ResolvingSpecificHere]
+  // CHECK:STDERR:        ·            ╰────┤ in identification of facet type
+  // CHECK:STDERR:        ·                 │ `I where .(I.X) = () and .(I.Y) = LookupWithType(.Self)` here
+  // CHECK:STDERR:        ·                 │ [InFacetTypeIdentification]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   return T.(I.X);
 }
 
-// CHECK:STDERR:        ╭─┤ fail_template_type_in_identify_doesnt_find_self_impl.carbon:[[@LINE+13]]:1
-// CHECK:STDERR:        │   return T.(I.X);
-// CHECK:STDERR:        ·          ───┬───
-// CHECK:STDERR:        ·             ╰──┤ cannot convert type `()` into type implementing `I`
-// CHECK:STDERR:        ·                │ [ConversionFailureTypeToFacet]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as I where .X = () and .Y = LookupWithType(.Self) {}
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: facet type `I where .(I.X) = () and .(I.Y) = LookupWithType(.Self)`
-// CHECK:STDERR:        ·    ┃        cannot be identified in `impl as`
-// CHECK:STDERR:        ·    ┃        [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl () as I where .X = () and .Y = LookupWithType(.Self) {}
 
 // --- fail_template_type_in_identify_with_generic_impl.carbon
@@ -170,6 +172,18 @@ eval fn LookupWithType(generic T: I) -> type {
   // TODO: The constant id .X happens to be a lower id value than .Cond, so
   // we try to save its RHS into the witness table first. But it depends on
   // .Cond which is not set it.
+  // CHECK:STDERR:        ╭─┤ fail_todo_symbolic_facet_in_identify_with_branch.carbon:[[@LINE+12]]:7
+  // CHECK:STDERR: ->     │   if (T.(I.Cond)) {
+  // CHECK:STDERR:        ·       ━━━━━┳━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·               ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
+  // CHECK:STDERR:        · ──────────────────────┬──────────────────────────────────────────
+  // CHECK:STDERR:        ·                       ╰──┤ in monomorphization of `LookupWithType(() as I)` here
+  // CHECK:STDERR:        ·                          │ [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   if (T.(I.Cond)) {
     return ();
   } else {
@@ -177,18 +191,6 @@ eval fn LookupWithType(generic T: I) -> type {
   }
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_symbolic_facet_in_identify_with_branch.carbon:[[@LINE+12]]:1
-// CHECK:STDERR:        │   if (T.(I.Cond)) {
-// CHECK:STDERR:        ·       ─────┬────
-// CHECK:STDERR:        ·            ╰──┤ accessing member from impl before it has a defined value
-// CHECK:STDERR:        ·               │ [ImplAccessMemberBeforeSet]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
-// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `LookupWithType(() as I)`
-// CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
 
 // --- fail_todo_template_facet_in_identify_with_branch.carbon
@@ -206,6 +208,18 @@ eval fn LookupWithType(template T: I) -> type {
   // TODO: The constant id .X happens to be a lower id value than .Cond, so
   // we try to save its RHS into the witness table first. But it depends on
   // .Cond which is not set it.
+  // CHECK:STDERR:        ╭─┤ fail_todo_template_facet_in_identify_with_branch.carbon:[[@LINE+12]]:7
+  // CHECK:STDERR: ->     │   if (T.(I.Cond)) {
+  // CHECK:STDERR:        ·       ━━━━━┳━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·               ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
+  // CHECK:STDERR:        · ──────────────────────┬──────────────────────────────────────────
+  // CHECK:STDERR:        ·                       ╰──┤ in monomorphization of `LookupWithType(() as I)` here
+  // CHECK:STDERR:        ·                          │ [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   if (T.(I.Cond)) {
     return ();
   } else {
@@ -213,16 +227,4 @@ eval fn LookupWithType(template T: I) -> type {
   }
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_template_facet_in_identify_with_branch.carbon:[[@LINE+12]]:1
-// CHECK:STDERR:        │   if (T.(I.Cond)) {
-// CHECK:STDERR:        ·       ─────┬────
-// CHECK:STDERR:        ·            ╰──┤ accessing member from impl before it has a defined value
-// CHECK:STDERR:        ·               │ [ImplAccessMemberBeforeSet]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as I where .Cond = false and .X = LookupWithType(.Self) {}
-// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: unable to monomorphize specific `LookupWithType(() as I)`
-// CHECK:STDERR:        ·               ┃        [ResolvingSpecificHere]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
 impl () as I where .Cond = false and .X = LookupWithType(.Self) {}

@@ -20,7 +20,7 @@ class Class(T: type) {
 fn Class(T: type).F(unused self, unused n: T) {}
 
 
-// CHECK:STDOUT: --- generic_method.carbon
+// CHECK:STDOUT: --- generic_method.carbon = $generic_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

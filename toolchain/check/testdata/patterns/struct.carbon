@@ -217,10 +217,10 @@ library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 // CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+16]]:13
 // CHECK:STDERR: ->     │ let {a: (), a: ()} = {.a = ()};
-// CHECK:STDERR:        ·      ──┬──  ┳
-// CHECK:STDERR:        ·        │    ┗━━┫ error: duplicate name `a` being declared in the same scope
-// CHECK:STDERR:        ·        │       ┃        [NameDeclDuplicate]
-// CHECK:STDERR:        ·        ╰─────────┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·      ┬      ┳
+// CHECK:STDERR:        ·      │      ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·      │         ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ·      ╰───────────┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_duplicate_field_name_shorthand.carbon:[[@LINE+8]]:13
@@ -288,15 +288,12 @@ class C {
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+11]]:20
+// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+8]]:20
 // CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = {}};
 // CHECK:STDERR:        ·                    ┳━━━━━━━━
 // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `{}`
-// CHECK:STDERR:        ·                    │  ┃        to `()`
-// CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                    ╰────┤ type `{}` does not implement interface
-// CHECK:STDERR:        ·                         │ `Core.ImplicitAs(())`
-// CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                       ┃        to `()`
+// CHECK:STDERR:        ·                       ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = {}};
@@ -306,21 +303,18 @@ let {.a = x: ()} = {.a = {}};
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+11]]:5
+// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+8]]:5
 // CHECK:STDERR: ->     │ let {.a = x: ()} = ((), ());
 // CHECK:STDERR:        ·     ┳━━━━━━━━━━━
 // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `((), ())` to
-// CHECK:STDERR:        ·     │  ┃        `{.a: ()}`
-// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·     ╰────┤ type `((), ())` does not implement interface
-// CHECK:STDERR:        ·          │ `Core.ImplicitAs({.a: ()})`
-// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·        ┃        `{.a: ()}`
+// CHECK:STDERR:        ·        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = ((), ());
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon = $empty
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -344,7 +338,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal.carbon
+// CHECK:STDOUT: --- literal.carbon = $literal
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -382,7 +376,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_two_fields.carbon
+// CHECK:STDOUT: --- literal_two_fields.carbon = $literal_two_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +446,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_shorthand.carbon
+// CHECK:STDOUT: --- literal_shorthand.carbon = $literal_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -490,7 +484,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_shorthand_two_fields.carbon
+// CHECK:STDOUT: --- literal_shorthand_two_fields.carbon = $literal_shorthand_two_fields
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -560,7 +554,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- literal_mixed_syntax.carbon
+// CHECK:STDOUT: --- literal_mixed_syntax.carbon = $literal_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -609,7 +603,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon = $nested
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -721,7 +715,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_expr.carbon
+// CHECK:STDOUT: --- init_expr.carbon = $init_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -763,7 +757,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_expr_shorthand.carbon
+// CHECK:STDOUT: --- init_expr_shorthand.carbon = $init_expr_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -805,7 +799,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_expr.carbon
+// CHECK:STDOUT: --- ref_expr.carbon = $ref_expr
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -845,7 +839,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- ref_expr_shorthand.carbon
+// CHECK:STDOUT: --- ref_expr_shorthand.carbon = $ref_expr_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -885,7 +879,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered.carbon
+// CHECK:STDOUT: --- unordered.carbon = $unordered
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -955,7 +949,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered_shorthand.carbon
+// CHECK:STDOUT: --- unordered_shorthand.carbon = $unordered_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1025,7 +1019,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unordered_mixed_syntax.carbon
+// CHECK:STDOUT: --- unordered_mixed_syntax.carbon = $unordered_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1095,9 +1089,9 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_underscore.carbon
+// CHECK:STDOUT: --- fail_todo_underscore.carbon = $fail_todo_underscore
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_matching_field.carbon
+// CHECK:STDOUT: --- fail_no_matching_field.carbon = $fail_no_matching_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1126,7 +1120,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_matching_field_ref.carbon
+// CHECK:STDOUT: --- fail_no_matching_field_ref.carbon = $fail_no_matching_field_ref
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1153,7 +1147,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_unhandled_field.carbon
+// CHECK:STDOUT: --- fail_unhandled_field.carbon = $fail_unhandled_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1184,7 +1178,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name.carbon
+// CHECK:STDOUT: --- fail_duplicate_field_name.carbon = $fail_duplicate_field_name
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1211,7 +1205,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name_shorthand.carbon
+// CHECK:STDOUT: --- fail_duplicate_field_name_shorthand.carbon = $fail_duplicate_field_name_shorthand
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1237,7 +1231,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_duplicate_field_name_mixed_syntax.carbon
+// CHECK:STDOUT: --- fail_duplicate_field_name_mixed_syntax.carbon = $fail_duplicate_field_name_mixed_syntax
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1264,7 +1258,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_static_class_var.carbon
+// CHECK:STDOUT: --- in_static_class_var.carbon = $in_static_class_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1324,7 +1318,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- in_class_let.carbon
+// CHECK:STDOUT: --- in_class_let.carbon = $in_class_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1369,7 +1363,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incorrect_field_type.carbon
+// CHECK:STDOUT: --- fail_incorrect_field_type.carbon = $fail_incorrect_field_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1388,19 +1382,19 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_28.1: %struct_type.a.225 = struct_literal (%.loc15_27) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc15_28.2: %empty_tuple.type = converted %.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_28.1: %struct_type.a.225 = struct_literal (%.loc12_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc12_28.2: %empty_tuple.type = converted %.loc12_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_incorrect_scrutinee_type.carbon
+// CHECK:STDOUT: --- fail_incorrect_scrutinee_type.carbon = $fail_incorrect_scrutinee_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1418,16 +1412,16 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_27: %tuple.type = tuple_literal (%.loc15_22, %.loc15_26) [concrete = constants.%tuple]
-// CHECK:STDOUT:   %.loc15_16: %struct_type.a = converted %.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc12_27: %tuple.type = tuple_literal (%.loc12_22, %.loc12_26) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc12_16: %struct_type.a = converted %.loc12_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

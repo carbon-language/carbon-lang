@@ -60,39 +60,30 @@ var reference: partial X;
 let ptr: partial X* = &reference;
 
 fn Use() {
-  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+8]]:21
   // CHECK:STDERR: ->     │   let unused v: X = value as X;
   // CHECK:STDERR:        ·                     ┳━━━━━━━━━
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert expression of type `partial X` to
-  // CHECK:STDERR:        ·                     │  ┃        `X` with `as`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `partial X` does not implement interface
-  // CHECK:STDERR:        ·                          │ `Core.As(X)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `X` with `as`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: X = value as X;
-  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:24
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+8]]:24
   // CHECK:STDERR: ->     │   let unused a: X* = &(reference as X);
   // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert expression of type `partial X`
-  // CHECK:STDERR:        ·                        │  ┃        to `X` with `as`
-  // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                        ╰────┤ type `partial X` does not implement interface
-  // CHECK:STDERR:        ·                             │ `Core.As(X)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           ┃        to `X` with `as`
+  // CHECK:STDERR:        ·                           ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
-  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+11]]:22
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_partial.carbon:[[@LINE+8]]:22
   // CHECK:STDERR: ->     │   let unused b: X* = ptr as X*;
   // CHECK:STDERR:        ·                      ┳━━━━━━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot convert expression of type `partial X*`
-  // CHECK:STDERR:        ·                      │  ┃        to `X*` with `as`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `partial X*` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.As(X*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        to `X*` with `as`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;
@@ -118,7 +109,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add_partial.carbon
+// CHECK:STDOUT: --- add_partial.carbon = $add_partial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -240,7 +231,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- remove_partial_in_init.carbon
+// CHECK:STDOUT: --- remove_partial_in_init.carbon = $remove_partial_in_init
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -343,7 +334,7 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc12_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_remove_partial.carbon
+// CHECK:STDOUT: --- unsafe_remove_partial.carbon = $unsafe_remove_partial
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

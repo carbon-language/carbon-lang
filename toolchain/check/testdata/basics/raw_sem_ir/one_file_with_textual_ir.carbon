@@ -24,6 +24,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     name0:           Foo
 // CHECK:STDOUT:     name1:           n
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
@@ -269,7 +270,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:         identifier1:     n
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- one_file_with_textual_ir.carbon
+// CHECK:STDOUT: --- one_file_with_textual_ir.carbon = $one_file_with_textual_ir
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

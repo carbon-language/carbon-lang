@@ -25,7 +25,7 @@ fn G(U: Empty(i32) where .A = i32*) {
   H(i32, U, bool);
 }
 
-// CHECK:STDOUT: --- dot_self_index.carbon
+// CHECK:STDOUT: --- dot_self_index.carbon = $dot_self_index
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

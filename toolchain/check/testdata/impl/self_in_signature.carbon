@@ -41,7 +41,7 @@ impl D as SelfNested {
 }
 
 
-// CHECK:STDOUT: --- self_in_signature.carbon
+// CHECK:STDOUT: --- self_in_signature.carbon = $self_in_signature
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

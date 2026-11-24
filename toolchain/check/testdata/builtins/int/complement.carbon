@@ -52,11 +52,10 @@ library "[[@TEST_NAME]]";
 fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
 
 fn F(a: Core.IntLiteral) -> Core.IntLiteral {
-  // CHECK:STDERR:        ╭─┤ fail_literal_runtime.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        ╭─┤ fail_literal_runtime.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ fn Complement(a: Core.IntLiteral) -> Core.IntLiteral = "int.complement";
-  // CHECK:STDERR:        · ───────────────────────────┬──────────────────────────
-  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─────┬────
+  // CHECK:STDERR:        ·         ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return Complement(a);
   // CHECK:STDERR:        ·          ━━━━━━┳━━━━━━
@@ -67,7 +66,7 @@ fn F(a: Core.IntLiteral) -> Core.IntLiteral {
   return Complement(a);
 }
 
-// CHECK:STDOUT: --- int_complement.carbon
+// CHECK:STDOUT: --- int_complement.carbon = $int_complement
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

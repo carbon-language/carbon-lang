@@ -69,7 +69,8 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
 // CHECK:STDOUT:   %.loc16_10 = load i32, ptr %n.var, align 4, !dbg !28
-// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds [65536 x i32], ptr %a, i32 0, i32 %.loc16_10, !dbg !29
+// CHECK:STDOUT:   %.loc16_11 = sext i32 %.loc16_10 to i64, !dbg !29
+// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds [4 x i8], ptr %a, i64 %.loc16_11, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = mul i32 %Int.as.MulAssignWith.impl.Op.call, 2, !dbg !29
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !29

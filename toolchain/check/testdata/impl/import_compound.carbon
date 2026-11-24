@@ -46,15 +46,12 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn NonInstanceCallImportFail(n: {.i: ()}) {
-  // CHECK:STDERR:        ╭─┤ fail_import_non-instance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_non-instance.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   n.(NonInstance.F)();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.i: ()}` into
-  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        type implementing `NonInstance`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n.(NonInstance.F)();
@@ -66,15 +63,12 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn NonInstanceCallIndirectImport(p: {.i: ()}*) {
-  // CHECK:STDERR:        ╭─┤ fail_import_non-instance_indirect.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_non-instance_indirect.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   p->(NonInstance.F)();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `{.i: ()}` into
-  // CHECK:STDERR:        ·   │  ┃        type implementing `NonInstance`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        type implementing `NonInstance`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(NonInstance.F)();
@@ -111,7 +105,7 @@ fn InstanceCallImportFail() {
 }
 
 
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -329,7 +323,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %self.patt.loc12_8.2 => constants.%self.patt.713
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_non-instance_success.carbon
+// CHECK:STDOUT: --- import_non-instance_success.carbon = $import_non-instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +428,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.036
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance.carbon
+// CHECK:STDOUT: --- fail_import_non-instance.carbon = $fail_import_non-instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -509,7 +503,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %n.ref: %struct_type.i = name_ref n, %n
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.12d [concrete = constants.%assoc0.dae]
-// CHECK:STDOUT:   %.loc17: %NonInstance.type = converted %n.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14: %NonInstance.type = converted %n.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -526,7 +520,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon
+// CHECK:STDOUT: --- fail_import_non-instance_indirect.carbon = $fail_import_non-instance_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -603,8 +597,8 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %p.ref: %ptr = name_ref p, %p
 // CHECK:STDOUT:   %NonInstance.ref: type = name_ref NonInstance, imports.%Main.NonInstance [concrete = constants.%NonInstance.type]
 // CHECK:STDOUT:   %F.ref: %NonInstance.assoc_type = name_ref F, imports.%Main.import_ref.12d [concrete = constants.%assoc0.dae]
-// CHECK:STDOUT:   %.loc17_4.1: ref %struct_type.i = deref %p.ref
-// CHECK:STDOUT:   %.loc17_4.2: %NonInstance.type = converted %.loc17_4.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc14_4.1: ref %struct_type.i = deref %p.ref
+// CHECK:STDOUT:   %.loc14_4.2: %NonInstance.type = converted %.loc14_4.1, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -621,7 +615,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_instance_success.carbon
+// CHECK:STDOUT: --- import_instance_success.carbon = $import_instance_success
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -791,7 +785,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.88e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_instance.carbon
+// CHECK:STDOUT: --- fail_import_instance.carbon = $fail_import_instance
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

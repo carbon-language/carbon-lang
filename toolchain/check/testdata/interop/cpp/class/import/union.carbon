@@ -35,14 +35,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+14]]:19
+  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+13]]:19
   // CHECK:STDERR: ->     │   var unused bar: Cpp.DeclBar;
   // CHECK:STDERR:        ·                   ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                   ┗━━┫ error: binding pattern has incomplete type `DeclBar` in
   // CHECK:STDERR:        ·                      ┃        name binding declaration
   // CHECK:STDERR:        ·                      ┃        [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_use_declaration_as_definition.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./declaration.h
   // CHECK:STDERR:        │ union DeclBar;
   // CHECK:STDERR:        ·       ┬
@@ -179,7 +178,7 @@ import Cpp library "template.h";
 fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_declaration.carbon
+// CHECK:STDOUT: --- import_declaration.carbon = $import_declaration
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -217,7 +216,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_definition.carbon
+// CHECK:STDOUT: --- import_definition.carbon = $import_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -255,7 +254,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_declaration_and_definition.carbon
+// CHECK:STDOUT: --- import_declaration_and_definition.carbon = $import_declaration_and_definition
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -293,7 +292,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF(%bar.param: %ptr);
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_static_member_function.carbon
+// CHECK:STDOUT: --- import_static_member_function.carbon = $import_static_member_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -324,7 +323,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_static_data_member.carbon
+// CHECK:STDOUT: --- import_static_data_member.carbon = $import_static_data_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -365,7 +364,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_data_member.carbon
+// CHECK:STDOUT: --- import_data_member.carbon = $import_data_member
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -422,7 +421,7 @@ fn MyF(bar: Cpp.TemplateBar(Cpp.X)*);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_template.carbon
+// CHECK:STDOUT: --- import_template.carbon = $import_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

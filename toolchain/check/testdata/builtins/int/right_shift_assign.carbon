@@ -56,7 +56,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn NotRef(a: i32, b: i32) = "int.right_shift_assign";
 
-// CHECK:STDOUT: --- call.carbon
+// CHECK:STDOUT: --- call.carbon = $call
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

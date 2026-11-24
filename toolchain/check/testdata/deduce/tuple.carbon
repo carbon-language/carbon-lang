@@ -49,9 +49,9 @@ fn F[T: type](pair: (T, T)) -> T;
 fn G(pair: (C, D)) -> D {
   // CHECK:STDERR:        ╭─┤ fail_inconsistent.carbon:[[@LINE+12]]:10
   // CHECK:STDERR:        │ fn F[T: type](pair: (T, T)) -> T;
-  // CHECK:STDERR:        · ────────────────┬────────────────
-  // CHECK:STDERR:        ·                 ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                    │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(pair);
   // CHECK:STDERR:        ·          ━┳━━━━━
@@ -62,7 +62,7 @@ fn G(pair: (C, D)) -> D {
   return F(pair);
 }
 
-// CHECK:STDOUT: --- tuple_type.carbon
+// CHECK:STDOUT: --- tuple_type.carbon = $tuple_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -271,7 +271,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %F.specific_fn.loc7_52.2 => constants.%F.specific_fn.ed6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- tuple_value.carbon
+// CHECK:STDOUT: --- tuple_value.carbon = $tuple_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -565,7 +565,7 @@ fn G(pair: (C, D)) -> D {
 // CHECK:STDOUT:   %bound_method.loc6_65.3 => constants.%bound_method.3ba
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_inconsistent.carbon
+// CHECK:STDOUT: --- fail_inconsistent.carbon = $fail_inconsistent
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

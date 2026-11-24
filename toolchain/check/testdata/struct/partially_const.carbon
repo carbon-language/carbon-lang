@@ -16,7 +16,7 @@ fn Make(n: i32) -> {.a: i32, .b: i32, .c: i32} {
   return {.a = 0, .b = n, .c = 0};
 }
 
-// CHECK:STDOUT: --- partially_const.carbon
+// CHECK:STDOUT: --- partially_const.carbon = $partially_const
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

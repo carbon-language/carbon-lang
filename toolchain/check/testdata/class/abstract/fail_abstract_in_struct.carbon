@@ -130,14 +130,13 @@ library "[[@TEST_NAME]]";
 
 import library "lib";
 
-// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+14]]:9
+// CHECK:STDERR:        ╭─┤ fail_import.carbon:[[@LINE+13]]:9
 // CHECK:STDERR: ->     │ var v5: {.m: Abstract};
 // CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━
 // CHECK:STDERR:        ·         ┗━━┫ error: binding pattern has abstract type `{.m: Abstract}` in `var`
 // CHECK:STDERR:        ·            ┃        pattern
 // CHECK:STDERR:        ·            ┃        [AbstractTypeInVarPattern]
 // CHECK:STDERR:        ┆
-// CHECK:STDERR:        │ ╭── imported from: fail_import.carbon [InImport]
 // CHECK:STDERR:        ├─┤ lib.carbon
 // CHECK:STDERR:        │ abstract class Abstract {}
 // CHECK:STDERR:        · ────────────┬────────────
@@ -146,7 +145,7 @@ import library "lib";
 // CHECK:STDERR:
 var v5: {.m: Abstract};
 
-// CHECK:STDOUT: --- fail_abstract_field.carbon
+// CHECK:STDOUT: --- fail_abstract_field.carbon = $fail_abstract_field
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -188,7 +187,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_var.carbon
+// CHECK:STDOUT: --- fail_abstract_var.carbon = $fail_abstract_var
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -230,7 +229,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- abstract_let.carbon
+// CHECK:STDOUT: --- abstract_let.carbon = $abstract_let
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -288,7 +287,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_twice.carbon
+// CHECK:STDOUT: --- fail_abstract_twice.carbon = $fail_abstract_twice
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -342,7 +341,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_first.carbon
+// CHECK:STDOUT: --- fail_abstract_first.carbon = $fail_abstract_first
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -388,7 +387,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_abstract_second.carbon
+// CHECK:STDOUT: --- fail_abstract_second.carbon = $fail_abstract_second
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +433,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- lib.carbon
+// CHECK:STDOUT: --- lib.carbon = $lib
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -458,7 +457,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   .Self = constants.%Abstract
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import.carbon
+// CHECK:STDOUT: --- fail_import.carbon = $fail_import
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -481,7 +480,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %v5.var: ref <error> = var_storage %v5.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc19: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.b92] {
+// CHECK:STDOUT:   %.loc18: type = splice_block %struct_type.m [concrete = constants.%struct_type.m.b92] {
 // CHECK:STDOUT:     %Abstract.ref: type = name_ref Abstract, imports.%Main.Abstract [concrete = constants.%Abstract]
 // CHECK:STDOUT:     %struct_type.m: type = struct_type {.m: %Abstract} [concrete = constants.%struct_type.m.b92]
 // CHECK:STDOUT:   }

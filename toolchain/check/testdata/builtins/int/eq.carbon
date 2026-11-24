@@ -84,11 +84,10 @@ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 fn Test(n: Core.IntLiteral) {
   // OK
   Eq(1, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Eq(n, 1);
   // CHECK:STDERR:        ·   ━━━━┳━━━
@@ -97,11 +96,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Eq(n, 1);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Eq(1, n);
   // CHECK:STDERR:        ·   ━━━━┳━━━
@@ -110,11 +108,10 @@ fn Test(n: Core.IntLiteral) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Eq(1, n);
-  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_runtime_literal.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
-  // CHECK:STDERR:        · ───────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                            ╰──┤ compile-time-only function declared here
-  // CHECK:STDERR:        ·                               │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ·    ─┬
+  // CHECK:STDERR:        ·     ╰──┤ compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Eq(n, n);
   // CHECK:STDERR:        ·   ━━━━┳━━━
@@ -125,7 +122,7 @@ fn Test(n: Core.IntLiteral) {
   Eq(n, n);
 }
 
-// CHECK:STDOUT: --- int_eq.carbon
+// CHECK:STDOUT: --- int_eq.carbon = $int_eq
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

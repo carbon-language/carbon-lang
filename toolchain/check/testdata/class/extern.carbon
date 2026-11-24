@@ -51,8 +51,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_decl_fn_in_extern.carbon:[[@LINE+11]]:4
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn C.F();
 // CHECK:STDERR:        ·    ┳
@@ -75,8 +75,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_extern_decl_after_extern_decl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern class C;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
@@ -92,8 +92,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_decl_after_extern_decl.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ class C;
 // CHECK:STDERR:        · ━━━━┳━━━
@@ -124,8 +124,8 @@ library "[[@TEST_NAME]]";
 extern class C;
 // CHECK:STDERR:        ╭─┤ fail_def_after_extern_decl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ class C {}
 // CHECK:STDERR:        · ━━━━┳━━━━
@@ -142,8 +142,8 @@ library "[[@TEST_NAME]]";
 class C;
 // CHECK:STDERR:        ╭─┤ fail_extern_decl_after_decl.carbon:[[@LINE+88]]:1
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern class C;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
@@ -159,8 +159,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_decl_then_extern_decl.carbon [InImport]
@@ -172,8 +172,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl.carbon
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_extern_decl_then_def.carbon [InImport]
@@ -185,8 +185,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
@@ -198,8 +198,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_import_ownership_conflict.carbon [InImport]
@@ -211,8 +211,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╷ ╭── imported from: fail_todo_import_extern_decl_copy.carbon [InImport]
@@ -224,8 +224,8 @@ class C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -279,8 +279,8 @@ import library "extern_decl";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ extern_decl.carbon
 // CHECK:STDERR:        │ extern class C;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·              ┬
+// CHECK:STDERR:        ·              ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -299,8 +299,8 @@ import library "decl";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ decl.carbon
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -319,8 +319,8 @@ import library "def";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
@@ -339,13 +339,13 @@ import library "def";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ def.carbon
 // CHECK:STDERR:        │ class C {}
-// CHECK:STDERR:        · ────┬────
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;
 
-// CHECK:STDOUT: --- decl.carbon
+// CHECK:STDOUT: --- decl.carbon = $decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -361,7 +361,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_decl.carbon
+// CHECK:STDOUT: --- extern_decl.carbon = $extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -377,7 +377,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_decl_copy.carbon
+// CHECK:STDOUT: --- extern_decl_copy.carbon = $extern_decl_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -393,7 +393,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon = $def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -417,7 +417,7 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_fn_in_extern.carbon
+// CHECK:STDOUT: --- fail_decl_fn_in_extern.carbon = $fail_decl_fn_in_extern
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -438,7 +438,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extern_def.carbon
+// CHECK:STDOUT: --- extern_def.carbon = $extern_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -462,7 +462,7 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_extern_decl.carbon = $fail_extern_decl_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -479,7 +479,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_decl_after_extern_decl.carbon = $fail_decl_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -496,7 +496,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_member_class.carbon
+// CHECK:STDOUT: --- fail_extern_member_class.carbon = $fail_extern_member_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -525,7 +525,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_after_extern_decl.carbon
+// CHECK:STDOUT: --- fail_def_after_extern_decl.carbon = $fail_def_after_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -550,7 +550,7 @@ extern class C;
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_decl.carbon = $fail_extern_decl_after_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -567,7 +567,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon
+// CHECK:STDOUT: --- fail_import_extern_decl_then_decl.carbon = $fail_import_extern_decl_then_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -580,7 +580,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon
+// CHECK:STDOUT: --- fail_import_decl_then_extern_decl.carbon = $fail_import_decl_then_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//decl, C, unloaded
@@ -593,7 +593,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon
+// CHECK:STDOUT: --- fail_import_extern_decl_then_def.carbon = $fail_import_extern_decl_then_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -606,7 +606,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_ownership_conflict.carbon
+// CHECK:STDOUT: --- fail_import_ownership_conflict.carbon = $fail_import_ownership_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -619,7 +619,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon
+// CHECK:STDOUT: --- fail_todo_import_extern_decl_copy.carbon = $fail_todo_import_extern_decl_copy
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.C = import_ref Main//extern_decl, C, unloaded
@@ -632,7 +632,7 @@ extern class C;
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_import_extern_decl.carbon = $fail_extern_decl_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -649,7 +649,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "extern_decl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_decl_after_import_extern_decl.carbon = $fail_decl_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -666,7 +666,7 @@ extern class C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "decl.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_def_after_import_extern_decl.carbon
+// CHECK:STDOUT: --- fail_def_after_import_extern_decl.carbon = $fail_def_after_import_extern_decl
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -695,7 +695,7 @@ extern class C;
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_extern_decl_after_import_def.carbon
+// CHECK:STDOUT: --- fail_extern_decl_after_import_def.carbon = $fail_extern_decl_after_import_def
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

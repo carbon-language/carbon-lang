@@ -65,7 +65,7 @@ import library "var2";
 
 var c: () = a_alias_alias;
 
-// CHECK:STDOUT: --- class1.carbon
+// CHECK:STDOUT: --- class1.carbon = $class1
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -141,7 +141,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class2.carbon
+// CHECK:STDOUT: --- class2.carbon = $class2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -223,7 +223,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class3.carbon
+// CHECK:STDOUT: --- class3.carbon = $class3
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -300,7 +300,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var1.carbon
+// CHECK:STDOUT: --- var1.carbon = $var1
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -348,7 +348,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var2.carbon
+// CHECK:STDOUT: --- var2.carbon = $var2
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -404,7 +404,7 @@ var c: () = a_alias_alias;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var3.carbon
+// CHECK:STDOUT: --- var3.carbon = $var3
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

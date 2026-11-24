@@ -7,8 +7,10 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cstring>
 #include <limits>
 #include <optional>
+#include <string_view>
 #include <utility>
 
 #include "common/check.h"
@@ -17,6 +19,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Endian.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -39,6 +42,17 @@
 #define CARBON_USE_SIMD 1
 #else
 #define CARBON_USE_SIMD 0
+#endif
+
+// Whether `SourceBlock` classifies 64-byte blocks of source text with SIMD.
+// This is implemented with SSSE3 or AVX2 on x86, and with Neon on little-endian
+// Arm, as the Neon code relies on the bytes of a vector being the little-endian
+// bytes of its 64-bit lanes.
+#if CARBON_USE_SIMD && \
+    (__SSSE3__ || (__ARM_NEON && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)))
+#define CARBON_USE_BLOCK_SIMD 1
+#else
+#define CARBON_USE_BLOCK_SIMD 0
 #endif
 
 namespace Carbon::Lex {
@@ -95,20 +109,25 @@ class [[clang::internal_linkage]] Lexer {
         emitter_(&consumer_, &buffer_),
         token_emitter_(&consumer_, &buffer_) {}
 
-  // Find all line endings and create the line data structures.
+  // Find all line endings, create the line data structures, and populate the
+  // identifier-ending-byte bitmap.
   //
   // Explicitly kept out-of-line because this is a significant loop that is
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
-#if CARBON_USE_SIMD && __AVX2__
-  // Scans 64-byte blocks of `source_text` for `'\n'` with AVX2, appends the
-  // completed `LineInfo`s to `buffer_.line_infos_`, and advances `start` and
-  // `search_start` to the start of the in-progress line and the start of the
-  // remaining `< 64`-byte tail respectively.
-  auto MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
-                     ssize_t& search_start) -> void;
-#endif
+
+  // Returns the text of the identifier starting at `position`: the byte there,
+  // which must be in `IsIdStartByteTable`, and the run of bytes in
+  // `IsIdByteTable` that follows it. Uses `id_end_bitmap_`, so must be called
+  // after `MakeLines`.
+  //
+  // TODO: This doesn't implement Carbon's design for Unicode characters in
+  // identifiers, and instead treats all non-ASCII characters as
+  // non-identifier characters.
+  [[clang::always_inline]] auto ScanIdentifier(llvm::StringRef source_text,
+                                               ssize_t position) const
+      -> llvm::StringRef;
 
   auto current_line() -> LineIndex { return line_index_; }
 
@@ -181,7 +200,10 @@ class [[clang::internal_linkage]] Lexer {
   // intervening whitespace.
   auto CanFormRealLiteral() -> bool;
 
-  auto LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
+  // Always inlined into its dispatch function, so that the inline fast paths in
+  // `NumericLiteral` for single digits don't pay for a call.
+  [[clang::always_inline]] auto LexNumericLiteral(llvm::StringRef source_text,
+                                                  ssize_t& position)
       -> LexResult;
 
   auto LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -206,10 +228,13 @@ class [[clang::internal_linkage]] Lexer {
   auto LexWordAsDollarIntLiteralToken(llvm::StringRef word, int32_t byte_offset)
       -> LexResult;
 
-  auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
-      -> LexResult;
+  auto LexIdentifierToken(llvm::StringRef text, int32_t byte_offset) -> void;
 
-  auto LexHash(llvm::StringRef source_text, ssize_t& position) -> LexResult;
+  auto LexKeywordOrIdentifierToken(llvm::StringRef text, int32_t byte_offset)
+      -> void;
+
+  auto LexRawIdentifierToken(llvm::StringRef source_text, ssize_t& position)
+      -> void;
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult;
 
@@ -263,6 +288,24 @@ class [[clang::internal_linkage]] Lexer {
   TokenizedBuffer::SourceLocDiagnosticEmitter emitter_;
 
   TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
+
+  // A 1-bit-per-byte bitmap built during `MakeLines` tracking whether the
+  // corresponding byte would potentially end an identifier.
+  //
+  // Each bit `i` is `1` if `source_text[i]` is not in `IsIdByteTable`. This
+  // intentionally includes every non-ASCII byte, to keep scanning ASCII
+  // identifiers fast. Supporting Unicode identifiers will require treating a
+  // non-ASCII byte that stops a scan as a possible part of the identifier,
+  // rather than its end.
+  //
+  // The bitmap is then padded out with `1` bits through a complete sentinel
+  // `uint64_t`. This lets code scanning these bits always read a full 64 bits,
+  // even when starting at the bit for the last byte of the source text, and
+  // ensures any scan for a `1` bit stops by the end of the source text.
+  //
+  // Bit `i` is bit `i % 8` of byte `i / 8`, so 64 bits of the bitmap can be
+  // read as a little-endian `uint64_t` starting at any byte.
+  llvm::SmallVector<uint8_t, 2048> id_end_bitmap_;
 };
 
 #if CARBON_USE_SIMD
@@ -276,6 +319,7 @@ using SimdMaskT = __m128i;
 #endif
 using SimdMaskArrayT = std::array<SimdMaskT, sizeof(SimdMaskT) + 1>;
 }  // namespace
+
 // A table of masks to include 0-16 bytes of an SSE register.
 static constexpr SimdMaskArrayT PrefixMasks = []() constexpr {
   SimdMaskArrayT masks = {};
@@ -306,8 +350,8 @@ static constexpr std::array<bool, 256> IsIdStartByteTable = [] {
 }();
 
 // A table of booleans that we can use to classify bytes as being valid
-// identifier (or keyword) characters. This is used in the generic,
-// non-vectorized fallback code to scan for length of an identifier.
+// identifier (or keyword) characters. This is used in the portable,
+// non-vectorized `SourceBlock` code to find the bytes ending identifiers.
 static constexpr std::array<bool, 256> IsIdByteTable = [] {
   std::array<bool, 256> table = IsIdStartByteTable;
   for (char c = '0'; c <= '9'; ++c) {
@@ -343,27 +387,7 @@ static constexpr std::array<bool, 256> IsErrorEndByteTable = [] {
   return table;
 }();
 
-// Baseline scalar version, also available for scalar-fallback in SIMD code.
-// Uses `ssize_t` for performance when indexing in the loop.
-//
-// TODO: This assumes all Unicode characters are non-identifiers.
-static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
-    -> llvm::StringRef {
-  const ssize_t size = text.size();
-  if (i == 0 && !text.empty()) {
-    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
-      return {};
-    }
-    ++i;
-  }
-  while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
-    ++i;
-  }
-
-  return text.substr(0, i);
-}
-
-#if CARBON_USE_SIMD && __x86_64__
+#if CARBON_USE_BLOCK_SIMD
 // The SIMD code paths uses a scheme derived from the techniques in Geoff
 // Langdale and Daniel Lemire's work on parsing JSON[1]. Specifically, that
 // paper outlines a technique of using two 4-bit indexed in-register look-up
@@ -372,9 +396,10 @@ static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
 // [1]: https://arxiv.org/pdf/1902.08318.pdf
 //
 // The goal is to get a bit mask classifying different sets of bytes. For each
-// input byte, we first test for a high bit indicating a UTF-8 encoded Unicode
-// character. Otherwise, we want the mask bits to be set with the following
-// logic derived by inspecting the high nibble and low nibble of the input:
+// input byte, a high bit indicates a UTF-8 encoded Unicode character, and the
+// high nibble LUT sets no bits for these. Otherwise, we want the mask bits to
+// be set with the following logic derived by inspecting the high nibble and low
+// nibble of the input:
 // bit0 = 1 for `_`: high `0x5` and low `0xF`
 // bit1 = 1 for `0-9`: high `0x3` and low `0x0` - `0x9`
 // bit2 = 1 for `A-O` and `a-o`: high `0x4` or `0x6` and low `0x1` - `0xF`
@@ -384,7 +409,7 @@ static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
 // bit6 = unused
 // bit7 = unused
 //
-// No bits set means definitively non-ID ASCII character.
+// No bits set means definitively non-ID character.
 //
 // Bits 4-7 remain unused if we need to classify more characters.
 namespace {
@@ -392,27 +417,42 @@ namespace {
 //
 // Forced to 16-byte alignment to ensure we can load it easily in SIMD code.
 struct alignas(16) NibbleLUT {
-  auto Load() const -> __m128i {
+#if __AVX2__
+  // Loads the LUT into both 128-bit lanes, as `_mm256_shuffle_epi8` looks up
+  // the bytes in each lane separately.
+  [[clang::always_inline]] auto Load() const -> __m256i {
+    return _mm256_broadcastsi128_si256(
+        _mm_load_si128(reinterpret_cast<const __m128i*>(this)));
+  }
+#elif __SSSE3__
+  [[clang::always_inline]] auto Load() const -> __m128i {
     return _mm_load_si128(reinterpret_cast<const __m128i*>(this));
   }
+#elif __ARM_NEON
+  [[clang::always_inline]] auto Load() const -> uint8x16_t {
+    return vld1q_u8(reinterpret_cast<const uint8_t*>(this));
+  }
+#endif
 
-  uint8_t nibble_0;
-  uint8_t nibble_1;
-  uint8_t nibble_2;
-  uint8_t nibble_3;
-  uint8_t nibble_4;
-  uint8_t nibble_5;
-  uint8_t nibble_6;
-  uint8_t nibble_7;
-  uint8_t nibble_8;
-  uint8_t nibble_9;
-  uint8_t nibble_a;
-  uint8_t nibble_b;
-  uint8_t nibble_c;
-  uint8_t nibble_d;
-  uint8_t nibble_e;
-  uint8_t nibble_f;
+  uint8_t nibble_0 [[clang::require_explicit_initialization]];
+  uint8_t nibble_1 [[clang::require_explicit_initialization]];
+  uint8_t nibble_2 [[clang::require_explicit_initialization]];
+  uint8_t nibble_3 [[clang::require_explicit_initialization]];
+  uint8_t nibble_4 [[clang::require_explicit_initialization]];
+  uint8_t nibble_5 [[clang::require_explicit_initialization]];
+  uint8_t nibble_6 [[clang::require_explicit_initialization]];
+  uint8_t nibble_7 [[clang::require_explicit_initialization]];
+  uint8_t nibble_8 [[clang::require_explicit_initialization]];
+  uint8_t nibble_9 [[clang::require_explicit_initialization]];
+  uint8_t nibble_a [[clang::require_explicit_initialization]];
+  uint8_t nibble_b [[clang::require_explicit_initialization]];
+  uint8_t nibble_c [[clang::require_explicit_initialization]];
+  uint8_t nibble_d [[clang::require_explicit_initialization]];
+  uint8_t nibble_e [[clang::require_explicit_initialization]];
+  uint8_t nibble_f [[clang::require_explicit_initialization]];
 };
+// `Load` reads the LUT as a 128-bit vector.
+static_assert(sizeof(NibbleLUT) == 128 / 8);
 }  // namespace
 
 static constexpr NibbleLUT HighLUT = {
@@ -424,70 +464,179 @@ static constexpr NibbleLUT HighLUT = {
     .nibble_5 = 0b0000'1001,
     .nibble_6 = 0b0000'0100,
     .nibble_7 = 0b0000'1000,
-    .nibble_8 = 0b1000'0000,
-    .nibble_9 = 0b1000'0000,
-    .nibble_a = 0b1000'0000,
-    .nibble_b = 0b1000'0000,
-    .nibble_c = 0b1000'0000,
-    .nibble_d = 0b1000'0000,
-    .nibble_e = 0b1000'0000,
-    .nibble_f = 0b1000'0000,
+    .nibble_8 = 0b0000'0000,
+    .nibble_9 = 0b0000'0000,
+    .nibble_a = 0b0000'0000,
+    .nibble_b = 0b0000'0000,
+    .nibble_c = 0b0000'0000,
+    .nibble_d = 0b0000'0000,
+    .nibble_e = 0b0000'0000,
+    .nibble_f = 0b0000'0000,
 };
 static constexpr NibbleLUT LowLUT = {
-    .nibble_0 = 0b1000'1010,
-    .nibble_1 = 0b1000'1110,
-    .nibble_2 = 0b1000'1110,
-    .nibble_3 = 0b1000'1110,
-    .nibble_4 = 0b1000'1110,
-    .nibble_5 = 0b1000'1110,
-    .nibble_6 = 0b1000'1110,
-    .nibble_7 = 0b1000'1110,
-    .nibble_8 = 0b1000'1110,
-    .nibble_9 = 0b1000'1110,
-    .nibble_a = 0b1000'1100,
-    .nibble_b = 0b1000'0100,
-    .nibble_c = 0b1000'0100,
-    .nibble_d = 0b1000'0100,
-    .nibble_e = 0b1000'0100,
-    .nibble_f = 0b1000'0101,
+    .nibble_0 = 0b0000'1010,
+    .nibble_1 = 0b0000'1110,
+    .nibble_2 = 0b0000'1110,
+    .nibble_3 = 0b0000'1110,
+    .nibble_4 = 0b0000'1110,
+    .nibble_5 = 0b0000'1110,
+    .nibble_6 = 0b0000'1110,
+    .nibble_7 = 0b0000'1110,
+    .nibble_8 = 0b0000'1110,
+    .nibble_9 = 0b0000'1110,
+    .nibble_a = 0b0000'1100,
+    .nibble_b = 0b0000'0100,
+    .nibble_c = 0b0000'0100,
+    .nibble_d = 0b0000'0100,
+    .nibble_e = 0b0000'0100,
+    .nibble_f = 0b0000'0101,
 };
+#endif  // CARBON_USE_BLOCK_SIMD
 
-static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
-    -> llvm::StringRef {
-  const auto high_lut = HighLUT.Load();
-  const auto low_lut = LowLUT.Load();
+namespace {
 
-  // Use `ssize_t` for performance here as we index memory in a tight loop.
-  ssize_t i = 0;
-  if (!text.empty()) {
-    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
-      return {};
-    }
-    ++i;
-  }
+// A 64-byte source text block classified in parallel into 64-bit 1-bit-per-byte
+// masks. Like `RawHashtable::MetadataGroup`, a portable classification is
+// cross-checked against the platform-specific SIMD classification in debug
+// builds, and is used directly without block SIMD support.
+class SourceBlock {
+ public:
+  static constexpr ssize_t Size = 64;
 
-  const ssize_t size = text.size();
-  while ((i + 16) <= size) {
-    __m128i input =
-        _mm_loadu_si128(reinterpret_cast<const __m128i*>(text.data() + i));
-
-    // The high bits of each byte indicate a non-ASCII character encoded using
-    // UTF-8. Test those and fall back to the scalar code if present. These
-    // bytes will also cause spurious zeros in the LUT results, but we can
-    // ignore that because we track them independently here.
-#if __SSE4_1__
-    if (!_mm_test_all_zeros(_mm_set1_epi8(0x80), input)) {
-      break;
-    }
+#if CARBON_USE_BLOCK_SIMD
+  // Whether to cross-check the SIMD classification against the portable one.
+#if !defined(NDEBUG)
+  static constexpr bool DebugSimd = true;
 #else
-    if (_mm_movemask_epi8(input) != 0) {
-      break;
-    }
+  static constexpr bool DebugSimd = false;
+#endif
 #endif
 
+  // The classification of the bytes of a block. Bit `i` of each mask is for
+  // byte `i` of the block, so the lowest bit is for the first byte and the
+  // highest bit is for the last byte.
+  struct BlockMasks {
+    // Bits set for the newline bytes.
+    uint64_t newlines [[clang::require_explicit_initialization]];
+    // Bits set for the bytes that can't continue an identifier, and so end any
+    // identifier before them.
+    uint64_t id_ends [[clang::require_explicit_initialization]];
+    // The number of newlines, which is the number of bits set in `newlines`.
+    int newline_count [[clang::require_explicit_initialization]];
+
+    auto operator==(const BlockMasks&) const -> bool = default;
+  };
+
+  // Loads a block from the first `Size` bytes of `text`, which must have at
+  // least that many bytes.
+  [[clang::always_inline]] static auto Load(llvm::StringRef text)
+      -> SourceBlock {
+    CARBON_DCHECK(static_cast<ssize_t>(text.size()) >= Size);
+    SourceBlock block;
+    std::memcpy(block.bytes_, text.data(), Size);
+    return block;
+  }
+
+  // Classifies the bytes of the block.
+  [[clang::always_inline]] auto Classify() const -> BlockMasks {
+#if CARBON_USE_BLOCK_SIMD
+    BlockMasks simd_result = SimdClassify();
+    if constexpr (DebugSimd) {
+      CARBON_DCHECK(simd_result == PortableClassify());
+    }
+    return simd_result;
+#else
+    return PortableClassify();
+#endif
+  }
+
+ private:
+  // The bytes of the block, which the SIMD classification reads as vectors.
+  union {
+    uint8_t bytes_[Size] = {};
+#if CARBON_USE_BLOCK_SIMD
+#if __AVX2__
+    __m256i vec_[2];
+#elif __SSSE3__
+    __m128i vec_[4];
+#elif __ARM_NEON
+    uint8x16_t vec_[4];
+#endif
+    static_assert(sizeof(vec_) == Size);
+#endif
+  };
+
+  auto PortableClassify() const -> BlockMasks {
+    uint64_t newlines = 0;
+    uint64_t id_ends = 0;
+    for (ssize_t i = 0; i < Size; ++i) {
+      // Shift in each bit rather than branching, as identifier and
+      // non-identifier bytes are interleaved unpredictably.
+      newlines |= uint64_t{bytes_[i] == '\n'} << i;
+      id_ends |= uint64_t{!IsIdByteTable[bytes_[i]]} << i;
+    }
+    return {.newlines = newlines,
+            .id_ends = id_ends,
+            .newline_count = std::popcount(newlines)};
+  }
+
+#if CARBON_USE_BLOCK_SIMD
+#if __AVX2__
+  // Returns a mask of the newline bytes in `input`.
+  [[clang::always_inline]] static auto Avx2MatchNewlines(__m256i input)
+      -> uint32_t {
+    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
+    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
+    // into a 32-bit `int` mask.
+    return static_cast<uint32_t>(
+        _mm256_movemask_epi8(_mm256_cmpeq_epi8(input, _mm256_set1_epi8('\n'))));
+  }
+
+  // Returns a mask of the bytes in `input` that aren't identifier bytes.
+  [[clang::always_inline]] static auto Avx2MatchIdEnds(__m256i input)
+      -> uint32_t {
+    const __m256i high_lut = HighLUT.Load();
+    const __m256i low_lut = LowLUT.Load();
+
     // Do two LUT lookups and mask the results together to get the results for
-    // both low and high nibbles. Note that we don't need to mask out the high
-    // bit of input here because we track that above for UTF-8 handling.
+    // both low and high nibbles. `_mm256_shuffle_epi8` only uses the low nibble
+    // of each input byte as an index, so the low nibble lookup doesn't need to
+    // mask the input. It also produces a zero byte for any input byte with the
+    // high bit set, which classifies those bytes as non-ID bytes.
+    __m256i low_mask = _mm256_shuffle_epi8(low_lut, input);
+    // Note that the input needs to be masked to only include the high nibble or
+    // we could end up with bit7 set forcing the result to a zero byte.
+    __m256i input_high =
+        _mm256_and_si256(_mm256_srli_epi32(input, 4), _mm256_set1_epi8(0x0f));
+    __m256i high_mask = _mm256_shuffle_epi8(high_lut, input_high);
+    __m256i mask = _mm256_and_si256(low_mask, high_mask);
+
+    // Now compare to find the completely zero bytes.
+    __m256i id_end_mask_vec = _mm256_cmpeq_epi8(mask, _mm256_setzero_si256());
+    return static_cast<uint32_t>(_mm256_movemask_epi8(id_end_mask_vec));
+  }
+#elif __SSSE3__
+  // Returns a mask of the newline bytes in `input`.
+  [[clang::always_inline]] static auto SseMatchNewlines(__m128i input)
+      -> uint32_t {
+    // `_mm_cmpeq_epi8` compares 16 bytes in parallel (`0xFF` if equal, `0x00`
+    // otherwise), and `_mm_movemask_epi8` packs bit 7 of each byte into the low
+    // 16 bits of an `int` mask.
+    return static_cast<uint32_t>(
+        _mm_movemask_epi8(_mm_cmpeq_epi8(input, _mm_set1_epi8('\n'))));
+  }
+
+  // Returns a mask of the bytes in `input` that aren't identifier bytes.
+  [[clang::always_inline]] static auto SseMatchIdEnds(__m128i input)
+      -> uint32_t {
+    const __m128i high_lut = HighLUT.Load();
+    const __m128i low_lut = LowLUT.Load();
+
+    // Do two LUT lookups and mask the results together to get the results for
+    // both low and high nibbles. `_mm_shuffle_epi8` only uses the low nibble of
+    // each input byte as an index, so the low nibble lookup doesn't need to
+    // mask the input. It also produces a zero byte for any input byte with the
+    // high bit set, which classifies those bytes as non-ID bytes.
     __m128i low_mask = _mm_shuffle_epi8(low_lut, input);
     // Note that the input needs to be masked to only include the high nibble or
     // we could end up with bit7 set forcing the result to a zero byte.
@@ -497,67 +646,168 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
     __m128i mask = _mm_and_si128(low_mask, high_mask);
 
     // Now compare to find the completely zero bytes.
-    __m128i id_byte_mask_vec = _mm_cmpeq_epi8(mask, _mm_setzero_si128());
-    int tail_ascii_mask = _mm_movemask_epi8(id_byte_mask_vec);
-
-    // Check if there are bits in the tail mask, which means zero bytes and the
-    // end of the identifier. We could do this without materializing the scalar
-    // mask on more recent CPUs, but we generally expect the median length we
-    // encounter to be <16 characters and so we avoid the extra instruction in
-    // that case and predict this branch to succeed so it is laid out in a
-    // reasonable way.
-    if (LLVM_LIKELY(tail_ascii_mask != 0)) {
-      // Move past the definitively classified bytes that are part of the
-      // identifier, and return the complete identifier text.
-      i += __builtin_ctz(tail_ascii_mask);
-      return text.substr(0, i);
-    }
-    i += 16;
+    __m128i id_end_mask_vec = _mm_cmpeq_epi8(mask, _mm_setzero_si128());
+    return static_cast<uint32_t>(_mm_movemask_epi8(id_end_mask_vec));
+  }
+#elif __ARM_NEON
+  // Returns `1 << (i % 8)` in each byte `i`, the bit for that byte within the
+  // byte of a bit mask covering its group of 8 bytes.
+  [[clang::always_inline]] static auto NeonBitWeights() -> uint8x16_t {
+    return vreinterpretq_u8_u64(vdupq_n_u64(0x8040201008040201ULL));
   }
 
-  return ScanForIdentifierPrefixScalar(text, i);
-}
+  // Starts reducing the four 16-byte vectors of a 64-byte block, each byte of
+  // which is either all ones or all zeros, to a 64-bit mask of its all-ones
+  // bytes. Returns a vector whose 16 bytes each hold four bits of the mask, in
+  // order, so that a `vpaddq_u8` of its adjacent bytes produces the mask.
+  [[clang::always_inline]] static auto NeonReduceQuarter(uint8x16_t v0,
+                                                         uint8x16_t v1,
+                                                         uint8x16_t v2,
+                                                         uint8x16_t v3)
+      -> uint8x16_t {
+    // Neon has no equivalent of `_mm_movemask_epi8` to gather one bit from each
+    // byte into a mask. Instead, mask each byte down to its bit from
+    // `NeonBitWeights`, and then use two rounds of pairwise byte additions to
+    // sum each run of four adjacent bytes into one byte. The additions can't
+    // carry, as the bits being added are distinct.
+    const uint8x16_t weights = NeonBitWeights();
+    return vpaddq_u8(vpaddq_u8(vandq_u8(v0, weights), vandq_u8(v1, weights)),
+                     vpaddq_u8(vandq_u8(v2, weights), vandq_u8(v3, weights)));
+  }
 
-#endif  // CARBON_USE_SIMD && __x86_64__
+  // Returns a vector with all bits set in each byte of `input` that isn't an
+  // identifier byte.
+  [[clang::always_inline]] static auto NeonMatchIdEnds(uint8x16_t input)
+      -> uint8x16_t {
+    const uint8x16_t high_lut = HighLUT.Load();
+    const uint8x16_t low_lut = LowLUT.Load();
 
-// Scans the provided text and returns the prefix `StringRef` of contiguous
-// identifier characters.
-//
-// This is a performance sensitive function and where profitable uses vectorized
-// code sequences to optimize its scanning. When modifying, the identifier
-// lexing benchmarks should be checked for regressions.
-//
-// Identifier characters here are currently the ASCII characters `[0-9A-Za-z_]`.
-//
-// TODO: Currently, this code does not implement Carbon's design for Unicode
-// characters in identifiers. It does work on UTF-8 code unit sequences, but
-// currently considers non-ASCII characters to be non-identifier characters.
-// Some work has been done to ensure the hot loop, while optimized, retains
-// enough information to add Unicode handling without completely destroying the
-// relevant optimizations.
-static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
-  // Dispatch to an optimized architecture optimized routine.
-#if CARBON_USE_SIMD && __x86_64__
-  return ScanForIdentifierPrefixX86(text);
-#elif CARBON_USE_SIMD && __ARM_NEON
-  // Somewhat surprisingly, there is basically nothing worth doing in SIMD on
-  // Arm to optimize this scan. The Neon SIMD operations end up requiring you to
-  // move from the SIMD unit to the scalar unit in the critical path of finding
-  // the offset of the end of an identifier. Current ARM cores make the code
-  // sequences here (quite) unpleasant. For example, on Apple M1 and similar
-  // cores, the latency is as much as 10 cycles just to extract from the vector.
-  // SIMD might be more interesting on Neoverse cores, but it'd be nice to avoid
-  // core-specific tunings at this point.
-  //
-  // If this proves problematic and critical to optimize, the current leading
-  // theory is to have the newline searching code also create a bitmask for the
-  // entire source file of identifier and non-identifier bytes, and then use the
-  // bit-counting instructions here to do a fast scan of that bitmask. However,
-  // crossing that bridge will add substantial complexity to the newline
-  // scanner, and so currently we just use a boring scalar loop that pipelines
-  // well.
+    // Do two LUT lookups and mask the results together to get the results for
+    // both low and high nibbles. Unlike `_mm_shuffle_epi8` on x86, `vqtbl1q_u8`
+    // only produces a zero byte for indices past the end of the LUT, so the
+    // input needs to be masked to only include the low nibble.
+    uint8x16_t low_mask =
+        vqtbl1q_u8(low_lut, vandq_u8(input, vdupq_n_u8(0x0f)));
+    uint8x16_t high_mask = vqtbl1q_u8(high_lut, vshrq_n_u8(input, 4));
+    uint8x16_t mask = vandq_u8(low_mask, high_mask);
+
+    // Now compare to find the completely zero bytes.
+    return vceqzq_u8(mask);
+  }
 #endif
-  return ScanForIdentifierPrefixScalar(text, 0);
+
+  [[clang::always_inline]] auto SimdClassify() const -> BlockMasks {
+#if __AVX2__
+    // Each 32-byte vector provides 32 bits of each mask.
+    uint64_t newlines = Avx2MatchNewlines(vec_[0]) |
+                        (uint64_t{Avx2MatchNewlines(vec_[1])} << 32);
+    uint64_t id_ends =
+        Avx2MatchIdEnds(vec_[0]) | (uint64_t{Avx2MatchIdEnds(vec_[1])} << 32);
+    return {.newlines = newlines,
+            .id_ends = id_ends,
+            .newline_count = std::popcount(newlines)};
+#elif __SSSE3__
+    // Each 16-byte vector provides 16 bits of each mask.
+    uint64_t newlines = 0;
+    uint64_t id_ends = 0;
+    for (int i = 0; i < 4; ++i) {
+      newlines |= uint64_t{SseMatchNewlines(vec_[i])} << (16 * i);
+      id_ends |= uint64_t{SseMatchIdEnds(vec_[i])} << (16 * i);
+    }
+    return {.newlines = newlines,
+            .id_ends = id_ends,
+            .newline_count = std::popcount(newlines)};
+#elif __ARM_NEON
+    // Unlike x86, Neon has no instruction to build a mask from each vector, and
+    // moving data from the vector registers to the general-purpose registers is
+    // slow. Instead, this classifies each byte of the four 16-byte vectors as
+    // all ones or all zeros, and only reduces those to the two 64-bit masks at
+    // the end, which then leave the vector registers together. `vceqq_u8`
+    // compares 16 bytes in parallel (`0xFF` if equal, `0x00` otherwise).
+    const uint8x16_t newline = vdupq_n_u8('\n');
+    uint8x16_t nl0 = vceqq_u8(vec_[0], newline);
+    uint8x16_t nl1 = vceqq_u8(vec_[1], newline);
+    uint8x16_t nl2 = vceqq_u8(vec_[2], newline);
+    uint8x16_t nl3 = vceqq_u8(vec_[3], newline);
+    // Count the newlines in the vector registers, in parallel with building
+    // their mask, rather than with `std::popcount`, which on Arm would move the
+    // mask from a general-purpose register back to a vector register. Each
+    // matching byte is `0xFF` (`-1` as `int8_t`), so the sum of all bytes is
+    // the negated count.
+    uint8x16_t neg_sum = vaddq_u8(vaddq_u8(nl0, nl1), vaddq_u8(nl2, nl3));
+    int count = -vaddvq_s8(vreinterpretq_s8_u8(neg_sum));
+
+    // `NeonMatchIdEnds` classifies the bytes that aren't identifier bytes in
+    // the same way.
+    uint8x16_t end0 = NeonMatchIdEnds(vec_[0]);
+    uint8x16_t end1 = NeonMatchIdEnds(vec_[1]);
+    uint8x16_t end2 = NeonMatchIdEnds(vec_[2]);
+    uint8x16_t end3 = NeonMatchIdEnds(vec_[3]);
+
+    // Reduce both sets of four vectors to quarter-sums, and then share the
+    // final `vpaddq_u8` that produces both masks, so lane 0 holds `newlines`
+    // and lane 1 holds `id_ends`.
+    uint8x16_t q_nl = NeonReduceQuarter(nl0, nl1, nl2, nl3);
+    uint8x16_t q_end = NeonReduceQuarter(end0, end1, end2, end3);
+    uint64x2_t masks = vreinterpretq_u64_u8(vpaddq_u8(q_nl, q_end));
+    return {.newlines = vgetq_lane_u64(masks, 0),
+            .id_ends = vgetq_lane_u64(masks, 1),
+            .newline_count = count};
+#endif
+  }
+#endif  // CARBON_USE_BLOCK_SIMD
+};
+
+}  // namespace
+
+auto Lexer::ScanIdentifier(llvm::StringRef source_text, ssize_t position) const
+    -> llvm::StringRef {
+  // This is performance sensitive, so check the identifier lexing benchmarks
+  // for regressions when modifying it.
+  CARBON_DCHECK(position >= 0);
+  CARBON_DCHECK(position < static_cast<ssize_t>(source_text.size()));
+  CARBON_DCHECK(
+      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
+
+  // The identifier ends at the first byte after its start byte whose bit is set
+  // in `id_end_bitmap_`. The start byte is skipped rather than scanned because
+  // it may be `$`, which can start an identifier but not continue one, and so
+  // has its bit set.
+  const size_t scan_start = static_cast<size_t>(position) + 1;
+
+  // Load 8 bytes of the bitmap starting at the byte holding the bit for
+  // `scan_start`, and shift that bit down to bit 0. This leaves bits for at
+  // least the 57 bytes starting at `scan_start`, which is enough to find the
+  // end of all keywords and nearly all identifiers.
+  const uint8_t* bitmap = id_end_bitmap_.data();
+  size_t bitmap_offset = scan_start / 8;
+  CARBON_DCHECK(bitmap_offset + sizeof(uint64_t) <= id_end_bitmap_.size());
+  uint64_t bits = llvm::support::endian::read64le(bitmap + bitmap_offset) >>
+                  (scan_start % 8);
+  size_t length;
+  if (LLVM_LIKELY(bits != 0)) {
+    // The start byte, and the bytes before the first set bit.
+    length = 1 + std::countr_zero(bits);
+  } else {
+    // Otherwise, keep loading 8 bytes at a time, starting where the previous
+    // load ended. This always stops by the end of the source text, because the
+    // bits from there on are set.
+    length = 1;
+    do {
+      bitmap_offset += sizeof(uint64_t);
+      length += 64;
+      bits = llvm::support::endian::read64le(bitmap + bitmap_offset);
+    } while (bits == 0);
+    // It's tempting to refactor the subtraction here to come before the loop,
+    // or another refactoring. But we don't actually want the arithmetic here to
+    // look that much like what we use in the hot `if` above. LLVM will
+    // sometimes de-duplicate the code, which is a non-trivial regression for
+    // the hot path because of how cold this path ends up being in practice.
+    length += std::countr_zero(bits) - (scan_start % 8);
+  }
+
+  CARBON_DCHECK(static_cast<size_t>(position) + length <= source_text.size());
+  return llvm::StringRef(source_text.data() + position, length);
 }
 
 // We use a collection of static member functions for table-based dispatch to
@@ -597,20 +847,131 @@ CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
     /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
     [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-CARBON_PRESERVE_NONE static auto DispatchLexHash(Lexer& lexer,
-                                                 llvm::StringRef source_text,
-                                                 ssize_t position) -> void {
-  if (lexer.LexHash(source_text, position)) {
+// Returns whether `spelling` starts with a sized type literal prefix,
+// `[iuf][1-9]`.
+static constexpr auto StartsWithSizedTypeLiteralPrefix(
+    std::string_view spelling) -> bool {
+  return spelling.size() >= 2 &&
+         (spelling[0] == 'i' || spelling[0] == 'u' || spelling[0] == 'f') &&
+         spelling[1] >= '1' && spelling[1] <= '9';
+}
+
+// The type literal dispatchers below rely on no keyword starting with a sized
+// type literal prefix.
+#define CARBON_KEYWORD_TOKEN(Name, Spelling)                                  \
+  static_assert(!StartsWithSizedTypeLiteralPrefix(Spelling),                  \
+                "Keyword `" Spelling                                          \
+                "` starts with `[iuf][1-9]`, which "                          \
+                "`DispatchLexTypeLiteralOrKeywordOrIdentifier` assumes only " \
+                "type literals and identifiers do.");
+#include "toolchain/lex/token_kind.def"
+
+// Lexes a keyword or identifier starting with an identifier start byte that
+// doesn't have a more specific dispatch function below. The dispatch functions
+// for `r`, `i`, `u`, and `f` also fall back to this one when their special
+// case doesn't apply.
+CARBON_PRESERVE_NONE static auto DispatchLexKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(
+      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
+  int32_t byte_offset = position;
+  llvm::StringRef identifier_text = lexer.ScanIdentifier(source_text, position);
+  CARBON_DCHECK(!identifier_text.empty(), "Must have at least one character!");
+  position += identifier_text.size();
+  lexer.LexKeywordOrIdentifierToken(identifier_text, byte_offset);
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text, position);
+}
+
+// Lexes a word starting with `r`. When `r#` is followed by an identifier start
+// byte, this is a raw identifier like `r#for`. Otherwise, it's a keyword or
+// identifier like `return` or `r`.
+CARBON_PRESERVE_NONE static auto DispatchLexRawIdentifierOrKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == 'r');
+  if (LLVM_UNLIKELY(position + 2 < static_cast<ssize_t>(source_text.size()) &&
+                    source_text[position + 1] == '#' &&
+                    IsIdStartByteTable[static_cast<unsigned char>(
+                        source_text[position + 2])])) {
+    lexer.LexRawIdentifierToken(source_text, position);
     // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);
   }
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-  [[clang::musttail]] return DispatchLexStringLiteral(lexer, source_text,
-                                                      position);
+  [[clang::musttail]] return DispatchLexKeywordOrIdentifier(lexer, source_text,
+                                                            position);
+}
+
+// The out-of-line fallback for a word starting with `[iuf][1-9]` that
+// `DispatchLexTypeLiteralOrKeywordOrIdentifier` doesn't lex inline: a word near
+// the end of the source, a type literal with a width of more than three digits,
+// or an identifier like `i32x`. None of these can be a keyword.
+//
+// This is a separate function because its calls keep more values live, and so
+// need a prologue that saves registers to the stack. When merged into the
+// dispatcher, the compiler emits that prologue on entry, adding it to the
+// dispatcher's common path of keywords and identifiers like `if` and `fn`.
+CARBON_PRESERVE_NONE static auto DispatchLexFallbackTypeLiteralOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  llvm::StringRef word = lexer.ScanIdentifier(source_text, position);
+  if (!lexer.LexWordAsTypeLiteralToken(word, position)) {
+    lexer.LexIdentifierToken(word, position);
+  }
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                          position + word.size());
+}
+
+// Lexes a word starting with `i`, `u`, or `f`, where `Kind` is the kind of
+// sized type literal for that letter. When a digit `[1-9]` follows, this is a
+// type literal like `i32`, `u8`, or `f64`, lexed inline for widths of up to
+// three digits, or an identifier like `i32x`. Otherwise, it's a keyword or
+// identifier like `if` or `fn`.
+template <TokenKind::RawEnumType Kind>
+CARBON_PRESERVE_NONE static auto DispatchLexTypeLiteralOrKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  const ssize_t size = source_text.size();
+  const char* ptr = source_text.data() + position;
+  if (LLVM_LIKELY(position + 1 >= size || ptr[1] < '1' || ptr[1] > '9')) {
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+    [[clang::musttail]] return DispatchLexKeywordOrIdentifier(
+        lexer, source_text, position);
+  }
+
+  // Lex a width of up to three digits inline when the bytes it could span,
+  // through the byte after it at `ptr[4]`, are in bounds.
+  if (LLVM_LIKELY(position + 4 < size)) {
+    int32_t width = ptr[1] - '0';
+    ssize_t end = 2;
+    for (; end < 4 && IsDecimalDigit(ptr[end]); ++end) {
+      width = width * 10 + (ptr[end] - '0');
+    }
+    if (!IsIdByteTable[static_cast<unsigned char>(ptr[end])]) {
+      lexer.LexTokenWithPayload(TokenKind::Make(Kind),
+                                IntId::MakeRaw(width).AsTokenPayload(),
+                                position);
+      // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+      [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                              position + end);
+    }
+  }
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexFallbackTypeLiteralOrIdentifier(
+      lexer, source_text, position);
+}
+
+// Lexes a word starting with `$` as a positional parameter like `$0`, or as an
+// error token if it isn't a valid one.
+CARBON_PRESERVE_NONE static auto DispatchLexDollarIntLiteral(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  llvm::StringRef word = lexer.ScanIdentifier(source_text, position);
+  lexer.LexWordAsDollarIntLiteralToken(word, position);
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                          position + word.size());
 }
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
@@ -747,23 +1108,28 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // symbol.
   table['/'] = &DispatchLexCommentOrSlash;
 
-  table['_'] = &DispatchLexKeywordOrIdentifier;
-  table['$'] = &DispatchLexKeywordOrIdentifier;
-  // Note that we don't use `llvm::seq` because this needs to be `constexpr`
-  // evaluated.
-  for (unsigned char c = 'a'; c <= 'z'; ++c) {
-    table[c] = &DispatchLexKeywordOrIdentifier;
+  // Dispatch the bytes that can start an identifier to identifier lexing. A few
+  // of these can also start other tokens, and get more specific dispatch below.
+  //
+  // The bytes of non-ASCII UTF-8 characters are left dispatching to the error
+  // handler from the base case above, as identifiers don't yet support them.
+  //
+  // TODO: Once identifiers support Unicode characters, the bytes that can
+  // start the UTF-8 encoding of one will need to dispatch to identifier
+  // lexing.
+  for (int i = 0; i < 256; ++i) {
+    if (IsIdStartByteTable[i]) {
+      table[i] = &DispatchLexKeywordOrIdentifier;
+    }
   }
-  for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-    table[c] = &DispatchLexKeywordOrIdentifier;
-  }
-  // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
-  // as whitespace characters should already have been skipped and the
-  // only remaining valid Unicode characters would be part of an
-  // identifier. That code can either accept or reject.
-  for (int i = 0x80; i < 0x100; ++i) {
-    table[i] = &DispatchLexKeywordOrIdentifier;
-  }
+  table['r'] = &DispatchLexRawIdentifierOrKeywordOrIdentifier;
+  table['i'] =
+      &DispatchLexTypeLiteralOrKeywordOrIdentifier<TokenKind::IntTypeLiteral>;
+  table['u'] = &DispatchLexTypeLiteralOrKeywordOrIdentifier<
+      TokenKind::UnsignedIntTypeLiteral>;
+  table['f'] =
+      &DispatchLexTypeLiteralOrKeywordOrIdentifier<TokenKind::FloatTypeLiteral>;
+  table['$'] = &DispatchLexDollarIntLiteral;
 
   for (unsigned char c = '0'; c <= '9'; ++c) {
     table[c] = &DispatchLexNumericLiteral;
@@ -771,7 +1137,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
   table['\''] = &DispatchLexStringLiteral;
   table['"'] = &DispatchLexStringLiteral;
-  table['#'] = &DispatchLexHash;
+  table['#'] = &DispatchLexStringLiteral;
 
   table[' '] = &DispatchLexHorizontalWhitespace;
   table['\t'] = &DispatchLexHorizontalWhitespace;
@@ -891,17 +1257,43 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   return std::move(buffer_);
 }
 
-#if CARBON_USE_SIMD && __AVX2__
-auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
-                          ssize_t& search_start) -> void {
-  const char* const text = source_text.data();
-  const ssize_t size = source_text.size();
-  constexpr int BlockSize = 64;
+// Clears the lowest set bit of `mask`.
+[[clang::always_inline]] static auto ClearLowestSetBit(uint64_t& mask) -> void {
+  mask &= mask - 1;
+}
+
+auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
+  // We scan the source a 64-byte `SourceBlock` at a time, finding both the
+  // newlines and the bytes that end identifiers with SIMD where available. The
+  // scanning loop also uses carefully selected variables and the `ssize_t` type
+  // for performance and code size.
+  //
+  // Note that searching for `'\n'` here works equally well for LF and CR+LF
+  // line endings. Either way, it finds the end of the line and the start of the
+  // next line. The lexer below will find the CR byte and peek to see the
+  // following LF and jump to the next line correctly. However, this approach
+  // does *not* support plain CR or LF+CR line endings. Nor does it support
+  // vertical tab or other vertical whitespace.
+  //
+  // TODO: Eventually, we should extend this to have correct fallback support
+  // for handling CR, LF+CR, vertical tab, and other esoteric vertical
+  // whitespace as line endings. Notably, including *mixtures* of them. This
+  // will likely be somewhat tricky, although `SourceBlock` provides a natural
+  // place to detect their absence.
+  constexpr ssize_t BlockSize = SourceBlock::Size;
   constexpr int DecodedPerStep = 4;
+  const ssize_t size = source_text.size();
+  const ssize_t num_blocks = (size + BlockSize - 1) / BlockSize;
+
+  // Allocate 64 bits of `id_end_bitmap_` for each block, including any final
+  // partial block, and a 64-bit sentinel. `ScanIdentifier` loads 8 bytes of the
+  // bitmap starting at the byte holding the bit for any position up to `size`,
+  // and the sentinel keeps those loads in bounds.
+  id_end_bitmap_.resize_for_overwrite((num_blocks + 1) * sizeof(uint64_t));
 
   // Buffer the 32-bit byte offset following each `'\n'` (`int32_t` matches
   // `LineInfo::start` under Carbon's `< 2 GiB` source limit) in a contiguous
-  // array, then `Reserve` and `Add` `LineInfo`s in a second pass so the SIMD
+  // array, then `Reserve` and `Add` `LineInfo`s in a second pass so the block
   // loop only performs flat 32-bit stores rather than chunked `ValueStore::Add`
   // capacity checks.
   //
@@ -919,114 +1311,78 @@ auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
   line_starts.resize_for_overwrite(size / 16 + 2 * BlockSize);
   int32_t* line_starts_end = line_starts.data();
 
-  // Broadcast `'\n'` to all 32 byte lanes of a 256-bit register.
-  const __m256i newline = _mm256_set1_epi8('\n');
-  for (; search_start + BlockSize <= size; search_start += BlockSize) {
-    if (LLVM_UNLIKELY(line_starts_end + BlockSize >
-                      line_starts.data() + line_starts.size())) {
+  // Any final partial block is scanned from a copy padded with zero bytes.
+  // These are neither newlines nor identifier bytes, so they end any identifier
+  // at the end of the source text.
+  const ssize_t full_blocks_size = size - size % BlockSize;
+  char padded_final_block[BlockSize] = {};
+  if (full_blocks_size < size) {
+    auto padded_block_text = source_text.substr(full_blocks_size);
+    std::memcpy(padded_final_block, padded_block_text.data(),
+                padded_block_text.size());
+  }
+
+  uint8_t* id_end_out = id_end_bitmap_.data();
+  for (ssize_t block_start = 0; block_start < size; block_start += BlockSize) {
+    if (LLVM_UNLIKELY(line_starts_end >
+                      line_starts.data() + line_starts.size() - BlockSize)) {
       ssize_t count = line_starts_end - line_starts.data();
+      // Double the size to preserve geometric growth when using
+      // `resize_for_overwrite`.
       line_starts.resize_for_overwrite(line_starts.size() * 2);
       line_starts_end = line_starts.data() + count;
     }
 
-    // Load two unaligned 32-byte halves of the 64-byte block.
-    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
-    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
-    // into a 32-bit `int` mask. Cast to `uint32_t` before widening to
-    // `uint64_t` so bit 31 is zero-extended rather than sign-extended.
-    __m256i low_block = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(text + search_start));
-    __m256i high_block = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(text + search_start + 32));
-    uint64_t mask =
-        static_cast<uint32_t>(
-            _mm256_movemask_epi8(_mm256_cmpeq_epi8(low_block, newline))) |
-        (static_cast<uint64_t>(static_cast<uint32_t>(
-             _mm256_movemask_epi8(_mm256_cmpeq_epi8(high_block, newline))))
-         << 32);
+    SourceBlock::BlockMasks masks =
+        SourceBlock::Load(block_start < full_blocks_size
+                              ? source_text.substr(block_start)
+                              : llvm::StringRef(padded_final_block, BlockSize))
+            .Classify();
+    llvm::support::endian::write64le(id_end_out, masks.id_ends);
+    id_end_out += sizeof(uint64_t);
 
-    // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a `while (mask)`
-    // loop with `#pragma clang loop unroll_count(4)` would emit a
-    // data-dependent exit branch on every bit, suffering branch mispredictions
-    // as newline counts vary from block to block. Instead, advance
-    // `line_starts_end` by `std::popcount(mask)` up front and use
+    // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a
+    // `while (newlines)` loop with `#pragma clang loop unroll_count(4)` would
+    // emit a data-dependent exit branch on every bit, suffering branch
+    // mispredictions as newline counts vary from block to block. Instead,
+    // advance `line_starts_end` by `newline_count` up front and use
     // `#pragma clang loop unroll(full)` to unroll 4 unconditional steps of
-    // `std::countr_zero` (`tzcnt`, byte index of lowest set bit) +
-    // `mask &= mask - 1` (`blsr`, clear lowest set bit). Any extra writes when
-    // fewer than 4 bits are set land harmlessly in the `BlockSize` slack past
-    // `line_starts_end` and are overwritten by the next block; blocks with > 4
-    // newlines repeat the 4-wide body (at most `64 / 4 = 16` iterations).
-    int32_t base = search_start + 1;
+    // `std::countr_zero` (byte index of lowest set bit) and
+    // `ClearLowestSetBit`. Any extra writes when fewer than 4 bits are set land
+    // harmlessly in the `BlockSize` slack past `line_starts_end` and are
+    // overwritten by the next block; blocks with > 4 newlines repeat the
+    // unrolled loop (at most `64 / 4 = 16` times).
+    int32_t base = block_start + 1;
     int32_t* out = line_starts_end;
-    line_starts_end += std::popcount(mask);
+    line_starts_end += masks.newline_count;
+    uint64_t newlines = masks.newlines;
     do {
 #pragma clang loop unroll(full)
       for (int i = 0; i < DecodedPerStep; ++i) {
-        out[i] = base + std::countr_zero(mask);
-        mask &= mask - 1;
+        out[i] = base + std::countr_zero(newlines);
+        ClearLowestSetBit(newlines);
       }
       out += DecodedPerStep;
-    } while (LLVM_UNLIKELY(mask != 0));
+    } while (LLVM_UNLIKELY(newlines != 0));
   }
 
-  // Reserve room for all lines ended in the AVX2 scan plus the final line and
-  // potential trailing blank line added in `MakeLines`.
+  // Set all the bits of the sentinel, which follows the bits for the last
+  // block. Together with the bits for the zero padding bytes of any final
+  // partial block, this sets every bit at or past the end of the source text,
+  // so scanning for the end of an identifier stops at the end of the source
+  // text.
+  llvm::support::endian::write64le(id_end_out, ~uint64_t{0});
+
+  // The first line starts at the start of the file, and each newline starts
+  // another line.
   buffer_.line_infos_.Reserve((line_starts_end - line_starts.data()) + 2);
+  int32_t start = 0;
+  buffer_.line_infos_.Add(LineInfo(start));
   for (const int32_t* next_start = line_starts.data();
        next_start != line_starts_end; ++next_start) {
-    buffer_.line_infos_.Add(LineInfo(start));
     start = *next_start;
-  }
-}
-#endif
-
-auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
-  if (source_text.empty()) {
-    // Construct a single line for empty input.
-    buffer_.line_infos_.Add(LineInfo(0));
-    line_index_ = LineIndex(0);
-    return;
-  }
-
-  // We currently use `memchr` here which typically is well optimized to use
-  // SIMD or other significantly faster than byte-wise scanning. We also use
-  // carefully selected variables and the `ssize_t` type for performance and
-  // code size of this hot loop.
-  //
-  // Note that the `memchr` approach here works equally well for LF and CR+LF
-  // line endings. Either way, it finds the end of the line and the start of the
-  // next line. The lexer below will find the CR byte and peek to see the
-  // following LF and jump to the next line correctly. However, this approach
-  // does *not* support plain CR or LF+CR line endings. Nor does it support
-  // vertical tab or other vertical whitespace.
-  //
-  // TODO: Eventually, we should extend this to have correct fallback support
-  // for handling CR, LF+CR, vertical tab, and other esoteric vertical
-  // whitespace as line endings. Notably, including *mixtures* of them. This
-  // will likely be somewhat tricky as even detecting their absence without
-  // performance overhead and without a custom scanner here rather than memchr
-  // is likely to be difficult.
-  const char* const text = source_text.data();
-  const ssize_t size = source_text.size();
-  // `start` is the byte offset of the line currently being scanned, while
-  // `search_start` is where newline scanning resumes. Separating them lets
-  // `MakeLinesAVX2` advance `search_start` to the end of the last 64-byte block
-  // so the scalar `memchr` tail only scans the `< 64` remaining bytes even when
-  // a line straddles the boundary.
-  ssize_t start = 0;
-  ssize_t search_start = 0;
-#if CARBON_USE_SIMD && __AVX2__
-  MakeLinesAVX2(source_text, start, search_start);
-#endif
-  while (const char* nl = reinterpret_cast<const char*>(
-             memchr(&text[search_start], '\n', size - search_start))) {
-    ssize_t nl_index = nl - text;
     buffer_.line_infos_.Add(LineInfo(start));
-    start = nl_index + 1;
-    search_start = start;
   }
-  // The last line ends at the end of the file.
-  buffer_.line_infos_.Add(LineInfo(start));
 
   // If the last line wasn't empty, the file ends with an unterminated line.
   // Add an extra blank line so that we never need to handle the special case
@@ -1427,32 +1783,23 @@ auto Lexer::CanFormRealLiteral() -> bool {
 
 auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
-  std::optional<NumericLiteral> literal =
-      NumericLiteral::Lex(source_text.substr(position), CanFormRealLiteral());
-  if (!literal) {
-    return LexResult::NoMatch();
-  }
+  // This is only dispatched at a decimal digit, as `NumericLiteral::Lex`
+  // requires.
+  NumericLiteral literal = NumericLiteral::Lex(
+      source_text.substr(position), [this] { return CanFormRealLiteral(); });
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int token_size = literal->text().size();
+  int token_size = literal.text().size();
   position += token_size;
 
-  CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue&& value): {
-      return LexTokenWithPayload(TokenKind::IntLiteral,
-                                 buffer_.value_stores_->ints()
-                                     .AddUnsigned(std::move(value.value))
-                                     .AsTokenPayload(),
+  CARBON_KIND_SWITCH(literal.AddValue(*buffer_.value_stores_, emitter_)) {
+    case CARBON_KIND(IntId id): {
+      return LexTokenWithPayload(TokenKind::IntLiteral, id.AsTokenPayload(),
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::RealValue&& value): {
-      auto real_id = buffer_.value_stores_->reals().Add(
-          Real{.mantissa = value.mantissa,
-               .exponent = value.exponent,
-               .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-      return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
-                                 byte_offset);
+    case CARBON_KIND(RealId id): {
+      return LexTokenWithPayload(TokenKind::RealLiteral, id.index, byte_offset);
     }
     case CARBON_KIND(NumericLiteral::UnrecoverableError _): {
       return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
@@ -1470,7 +1817,7 @@ static auto DiagnoseUnterminatedString(Diagnostics::Emitter<SourceLoc>& emitter,
   emitter
       .Build(SourceLoc::Before(literal.text().end()), UnterminatedString,
              is_char)
-      .Attach(SourceLoc::Range(literal.text()))
+      .ExtraRange(SourceLoc::Range(literal.text()))
       .Emit();
 }
 
@@ -1512,7 +1859,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                       "type indicator may not contain `'`, `#`, or `\"`, and "
                       "the content must begin on a new line");
     emitter_.Build(literal->text().begin(), MultiLineStringInvalidIntroducer)
-        .Attach(SourceLoc::Range(literal->text()))
+        .ExtraRange(SourceLoc::Range(literal->text()))
         .Emit();
     return lex_as_error();
   }
@@ -1675,7 +2022,7 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     emitter_
         .Build(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
                DigitLimit)
-        .Attach(SourceLoc::Range(suffix))
+        .ExtraRange(SourceLoc::Range(suffix))
         .Emit();
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
@@ -1784,86 +2131,43 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
       byte_offset);
 }
 
-auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
-                                   ssize_t& position) -> LexResult {
-  if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
-    // TODO: Need to add support for Unicode lexing.
-    return LexResult::NoMatch();
-  }
-  CARBON_CHECK(
-      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
+auto Lexer::LexIdentifierToken(llvm::StringRef text, int32_t byte_offset)
+    -> void {
+  LexTokenWithPayload(TokenKind::Identifier,
+                      buffer_.value_stores_->identifiers().Add(text).index,
+                      byte_offset);
+}
 
-  // Capture the position before we step past the token.
-  int32_t byte_offset = position;
-
-  // Take the valid characters off the front of the source buffer.
-  llvm::StringRef identifier_text =
-      ScanForIdentifierPrefix(source_text.substr(position));
-  CARBON_CHECK(!identifier_text.empty(), "Must have at least one character!");
-  position += identifier_text.size();
-
-  // Check if the text is a type literal, and if so form such a literal.
-  if (LexResult result =
-          LexWordAsTypeLiteralToken(identifier_text, byte_offset)) {
-    return result;
-  }
-  if (LexResult result =
-          LexWordAsDollarIntLiteralToken(identifier_text, byte_offset)) {
-    return result;
-  }
-
+auto Lexer::LexKeywordOrIdentifierToken(llvm::StringRef text,
+                                        int32_t byte_offset) -> void {
   // Check if the text matches a keyword token, and if so use that.
-  TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
+  TokenKind kind = llvm::StringSwitch<TokenKind>(text)
 #define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, TokenKind::Name)
 #include "toolchain/lex/token_kind.def"
                        .Default(TokenKind::Error);
   if (kind != TokenKind::Error) {
-    return LexToken(kind, byte_offset);
+    LexToken(kind, byte_offset);
+    return;
   }
 
-  // Otherwise we have a generic identifier.
-  return LexTokenWithPayload(
-      TokenKind::Identifier,
-      buffer_.value_stores_->identifiers().Add(identifier_text).index,
-      byte_offset);
+  LexIdentifierToken(text, byte_offset);
 }
 
-auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
-    -> LexResult {
-  // For `r#`, we already lexed an `r` identifier token. Detect that case and
-  // replace that token with a raw identifier. We do this to keep identifier
-  // lexing as fast as possible.
-
-  // Look for the `r` token. Note that this is always in bounds because we
-  // create a start of file token.
-  auto& prev_token_info =
-      buffer_.token_infos_.Get(TokenIndex(buffer_.token_infos_.size() - 1));
-
-  // If the previous token isn't the identifier `r`, or the character after `#`
-  // isn't the start of an identifier, this is not a raw identifier.
-  if (prev_token_info.kind() != TokenKind::Identifier ||
-      source_text[position - 1] != 'r' ||
-      position + 1 == static_cast<ssize_t>(source_text.size()) ||
-      !IsIdStartByteTable[static_cast<unsigned char>(
-          source_text[position + 1])] ||
-      prev_token_info.byte_offset() != static_cast<int32_t>(position) - 1) {
-    return LexResult::NoMatch();
-  }
-  CARBON_DCHECK(buffer_.value_stores_->identifiers().Get(
-                    prev_token_info.ident_id()) == "r");
+auto Lexer::LexRawIdentifierToken(llvm::StringRef source_text,
+                                  ssize_t& position) -> void {
+  CARBON_DCHECK(source_text.substr(position).starts_with("r#"));
+  int32_t byte_offset = position;
 
   // Take the valid characters off the front of the source buffer.
-  llvm::StringRef identifier_text =
-      ScanForIdentifierPrefix(source_text.substr(position + 1));
-  CARBON_CHECK(!identifier_text.empty(), "Must have at least one character!");
-  position += 1 + identifier_text.size();
+  llvm::StringRef identifier_text = ScanIdentifier(source_text, position + 2);
+  CARBON_DCHECK(!identifier_text.empty(), "Must have at least one character!");
+  position += 2 + identifier_text.size();
 
-  // Replace the `r` identifier's value with the raw identifier.
+  // The raw identifier token covers the `r#` prefix, but its identifier is
+  // only the name following it.
   // TODO: This token doesn't carry any indicator that it's raw, so
   // diagnostics are unclear.
-  prev_token_info.set_ident_id(
-      buffer_.value_stores_->identifiers().Add(identifier_text));
-  return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
+  LexIdentifierToken(identifier_text, byte_offset);
 }
 
 auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
@@ -1883,7 +2187,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "encountered unrecognized characters while parsing");
   emitter_.Build(error_text.begin(), UnrecognizedCharacters)
-      .Attach(SourceLoc::Range(error_text))
+      .ExtraRange(SourceLoc::Range(error_text))
       .Emit();
 
   position += error_text.size();
@@ -2473,7 +2777,7 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
                       "opening symbol without a corresponding closing symbol");
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
                       "closing symbol without a corresponding opening symbol");
-    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere, Info,
+    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere,
                             "possibly missing `{0}` here", Lex::TokenKind);
 
     // The label names a position between two tokens, which only the source

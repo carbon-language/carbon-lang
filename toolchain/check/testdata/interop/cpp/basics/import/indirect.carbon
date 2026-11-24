@@ -89,14 +89,13 @@ namespace A {
 fn TryToUseNotLeaked() {
   // TODO: Clang's diagnostic for using a class whose definition is not
   // reachable is confusing.
-  // CHECK:STDERR:        ╭─┤ fail_not_leaked.carbon:[[@LINE+14]]:17
+  // CHECK:STDERR:        ╭─┤ fail_not_leaked.carbon:[[@LINE+13]]:17
   // CHECK:STDERR: ->     │   var unused x: Cpp.A.X = 0;
   // CHECK:STDERR:        ·                 ┳━━━━━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has incomplete type `X` in name
   // CHECK:STDERR:        ·                    ┃        binding declaration
   // CHECK:STDERR:        ·                    ┃        [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: direct_import.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./shared.h
   // CHECK:STDERR:        │   struct X {
   // CHECK:STDERR:        ·          ┬
@@ -149,7 +148,7 @@ fn UseZ() -> Cpp.A.Z {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- indirect_import_via_function.carbon
+// CHECK:STDOUT: --- indirect_import_via_function.carbon = $indirect_import_via_function
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -244,7 +243,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   return %X.g.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- indirect_import_via_alias.carbon
+// CHECK:STDOUT: --- indirect_import_via_alias.carbon = $indirect_import_via_alias
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -376,7 +375,7 @@ fn UseZ() -> Cpp.A.Z {
 // CHECK:STDOUT:   return %.loc10_24 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_template.carbon
+// CHECK:STDOUT: --- import_template.carbon = $import_template
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

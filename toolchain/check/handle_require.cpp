@@ -245,13 +245,14 @@ static auto ValidateRequire(Context& context, SemIR::LocId full_require_loc_id,
 
   auto identified_facet_type_id = RequireIdentifiedFacetType(
       context, constraint_loc_id, self_type_id.AsConstantId(),
-      constraint_type_id, [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(
-            RequireImplsUnidentifiedFacetType,
+      constraint_type_id, [&] {
+        CARBON_DIAGNOSTIC(
+            RequireImplsUnidentifiedFacetType, Error,
             "facet type {0} cannot be identified in `require` declaration",
             SemIR::TypeId);
-        builder.Attach(constraint_loc_id, RequireImplsUnidentifiedFacetType,
-                       constraint_type_id);
+        return context.emitter().Build(constraint_loc_id,
+                                       RequireImplsUnidentifiedFacetType,
+                                       constraint_type_id);
       });
   if (!identified_facet_type_id.has_value()) {
     // The constraint can't be used. A diagnostic was emitted by
@@ -350,14 +351,13 @@ auto HandleParseNode(Context& context, Parse::RequireDeclId node_id) -> bool {
     if (!RequireCompleteType(
             context,
             context.types().GetTypeIdForTypeInstId(constraint_type_inst_id),
-            constraint_node_id, [&](auto& builder) {
-              CARBON_DIAGNOSTIC_CONTEXT(
-                  RequireImplsIncompleteFacetType,
-                  "`extend require` of incomplete facet type {0}",
-                  InstIdAsType);
-              builder.Attach(constraint_node_id,
-                             RequireImplsIncompleteFacetType,
-                             constraint_type_inst_id);
+            constraint_node_id, [&] {
+              CARBON_DIAGNOSTIC(RequireImplsIncompleteFacetType, Error,
+                                "`extend require` of incomplete facet type {0}",
+                                InstIdAsType);
+              return context.emitter().Build(constraint_node_id,
+                                             RequireImplsIncompleteFacetType,
+                                             constraint_type_inst_id);
             })) {
       return true;
     }

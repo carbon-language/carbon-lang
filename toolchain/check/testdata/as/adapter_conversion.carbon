@@ -133,15 +133,12 @@ fn F(a: A) {
   // a copy to perform initialization. It's not clear whether that is the right
   // behavior.
 
-  // CHECK:STDERR:        ╭─┤ fail_init_tuple_variable.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_init_tuple_variable.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   var unused a_init: A = (a as ({}, Noncopyable)) as A;
-  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━   ┬────────────────────────────
-  // CHECK:STDERR:        ·             ┗━━━━━━━━━━━━━━━┫ error: cannot copy value of type `Noncopyable`
-  // CHECK:STDERR:        ·             │            │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·             ╰─────────────────┤ type `Noncopyable` does not implement interface
-  // CHECK:STDERR:        ·                          │    │ `Core.Copy`
-  // CHECK:STDERR:        ·                          │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                          ╰──────┤ in copy of `A` [InCopy]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━   ────┬────────────────────────
+  // CHECK:STDERR:        ·             ┗━━━━━━━━━━━━━━━━━━━┫ error: cannot copy value of type `Noncopyable`
+  // CHECK:STDERR:        ·                              │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·                              ╰────┤ in copy of `A` [InCopy]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused a_init: A = (a as ({}, Noncopyable)) as A;
@@ -162,19 +159,17 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR:        ╭─┤ fail_adapt_init_from_struct.carbon:[[@LINE+10]]:12
+// CHECK:STDERR:        ╭─┤ fail_adapt_init_from_struct.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ var b: B = {.x = ()} as B;
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━
 // CHECK:STDERR:        ·            ┗━━┫ error: cannot convert expression of type `{.x: ()}` to `B` with
-// CHECK:STDERR:        ·            │  ┃        `as`
-// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·            ╰────┤ type `{.x: ()}` does not implement interface `Core.As(B)`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·               ┃        `as`
+// CHECK:STDERR:        ·               ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
 
-// CHECK:STDOUT: --- adapt_class.carbon
+// CHECK:STDOUT: --- adapt_class.carbon = $adapt_class
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -240,7 +235,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- adapt_i32.carbon
+// CHECK:STDOUT: --- adapt_i32.carbon = $adapt_i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -309,7 +304,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- multi_level_adapt.carbon
+// CHECK:STDOUT: --- multi_level_adapt.carbon = $multi_level_adapt
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -339,7 +334,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_class_value.carbon
+// CHECK:STDOUT: --- init_class_value.carbon = $init_class_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -421,7 +416,7 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- init_tuple_value.carbon
+// CHECK:STDOUT: --- init_tuple_value.carbon = $init_tuple_value
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

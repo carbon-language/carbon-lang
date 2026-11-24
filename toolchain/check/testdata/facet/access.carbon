@@ -148,14 +148,12 @@ fn F(generic U: Core.Destroy & I where .X = .Self) {
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call_with_self_param.carbon` test for the former.
   //
-  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   u.(I.G)();
   // CHECK:STDERR:        ·   ┳━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `U` into type
-  // CHECK:STDERR:        ·   │  ┃        implementing `I`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        implementing `I`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   u.(I.G)();
@@ -163,14 +161,12 @@ fn F(generic U: Core.Destroy & I where .X = .Self) {
   // This is the same as the above, since G() returns a non-type value of type
   // `U`.
   //
-  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   U.(I.G)().(I.G)();
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `U` into type
-  // CHECK:STDERR:        ·   │  ┃        implementing `I`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        implementing `I`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.(I.G)().(I.G)();
@@ -406,15 +402,12 @@ fn F(generic V: Z(.Self)) {
   //
   // TODO: The identified facet type `NX` includes `X` and should provide a
   // same-type constraint `X.X1 == {}` which would allow this conversion.
-  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert expression of type `{}` to
-  // CHECK:STDERR:        ·   │  ┃        `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
@@ -481,19 +474,17 @@ constraint NY(PeriodSelf: type) {
 // `(C as Y(T)).Y1` but we currently only look in `C`. See the TODO in
 // `TryFindValueInRewriteConstraints()`.
 fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   return {};
   // CHECK:STDERR:        ·   ┳━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(C.(Y(T).Y1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return {};
 }
 
-// CHECK:STDOUT: --- access_assoc_fn.carbon
+// CHECK:STDOUT: --- access_assoc_fn.carbon = $access_assoc_fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -541,7 +532,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %T.loc8_17.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assoc_fn_using_self.carbon
+// CHECK:STDOUT: --- assoc_fn_using_self.carbon = $assoc_fn_using_self
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -598,7 +589,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %return.patt.loc8_22.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_assoc_method.carbon
+// CHECK:STDOUT: --- access_assoc_method.carbon = $access_assoc_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -702,7 +693,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_selfless_method.carbon
+// CHECK:STDOUT: --- access_selfless_method.carbon = $access_selfless_method
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -755,7 +746,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %x.patt.loc8_15.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_assoc_method_indirect.carbon
+// CHECK:STDOUT: --- access_assoc_method_indirect.carbon = $access_assoc_method_indirect
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

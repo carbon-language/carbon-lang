@@ -93,7 +93,7 @@ let x: i32 = c[0];
 
 
 
-// CHECK:STDOUT: --- overloaded_index.carbon
+// CHECK:STDOUT: --- overloaded_index.carbon = $overloaded_index
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -312,7 +312,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- overloaded_builtin.carbon
+// CHECK:STDOUT: --- overloaded_builtin.carbon = $overloaded_builtin
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -523,7 +523,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_invalid_subscript_type.carbon
+// CHECK:STDOUT: --- fail_invalid_subscript_type.carbon = $fail_invalid_subscript_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -719,7 +719,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_index_with_not_implemented.carbon
+// CHECK:STDOUT: --- fail_index_with_not_implemented.carbon = $fail_index_with_not_implemented
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

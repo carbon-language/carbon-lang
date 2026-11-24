@@ -16,15 +16,12 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_impl_as_false.carbon:[[@LINE+11]]:13
+// CHECK:STDERR:        ╭─┤ fail_impl_as_false.carbon:[[@LINE+8]]:13
 // CHECK:STDERR: ->     │ impl i32 as false {}
 // CHECK:STDERR:        ·             ┳━━━━
 // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert non-type value of type `bool`
-// CHECK:STDERR:        ·             │  ┃        to `type`
-// CHECK:STDERR:        ·             │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·             ╰────┤ type `bool` does not implement interface
-// CHECK:STDERR:        ·                  │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                ┃        to `type`
+// CHECK:STDERR:        ·                ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl i32 as false {}
@@ -69,7 +66,7 @@ interface I {}
 // CHECK:STDERR:
 impl {.a: bool} as type where .Self impls I {}
 
-// CHECK:STDOUT: --- fail_impl_as_false.carbon
+// CHECK:STDOUT: --- fail_impl_as_false.carbon = $fail_impl_as_false
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -98,7 +95,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc15: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: type = converted @i32.as.<error>.impl.%false, <error> [concrete = <error>]
 // CHECK:STDOUT:   impl_decl @i32.as.<error>.impl [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
@@ -111,7 +108,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type.carbon
+// CHECK:STDOUT: --- fail_impl_as_type.carbon = $fail_impl_as_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -143,7 +140,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where.carbon = $fail_impl_as_type_where
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -193,7 +190,7 @@ impl {.a: bool} as type where .Self impls I {}
 // CHECK:STDOUT:   witness = <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon
+// CHECK:STDOUT: --- fail_impl_as_type_where_impls_interface.carbon = $fail_impl_as_type_where_impls_interface
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

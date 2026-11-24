@@ -32,8 +32,8 @@ package Example library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ namespace.carbon
 // CHECK:STDERR:        │ namespace NS;
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NS() {}
@@ -47,7 +47,7 @@ import library "fn";
 
 fn NS.Bar() {}
 
-// CHECK:STDOUT: --- namespace.carbon
+// CHECK:STDOUT: --- namespace.carbon = $namespace
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -79,7 +79,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fn.carbon
+// CHECK:STDOUT: --- fn.carbon = $fn
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -108,7 +108,7 @@ fn NS.Bar() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon = $fail_conflict
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
