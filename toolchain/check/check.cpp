@@ -5,6 +5,7 @@
 #include "toolchain/check/check.h"
 
 #include <string>
+#include <system_error>
 #include <utility>
 
 #include "clang/AST/ASTContext.h"

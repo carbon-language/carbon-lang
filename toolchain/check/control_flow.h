@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CONTROL_FLOW_H_
 #define CARBON_TOOLCHAIN_CHECK_CONTROL_FLOW_H_
 
+#include <initializer_list>
+
 #include "toolchain/check/context.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/scope_stack.h"

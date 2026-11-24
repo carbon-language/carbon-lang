@@ -5,6 +5,8 @@
 #ifndef CARBON_COMMON_VLOG_H_
 #define CARBON_COMMON_VLOG_H_
 
+#include <utility>
+
 #include "common/ostream.h"
 #include "common/template_string.h"
 #include "llvm/Support/FormatVariadic.h"

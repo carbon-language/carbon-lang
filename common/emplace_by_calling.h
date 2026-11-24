@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_EMPLACE_BY_CALLING_H_
 #define CARBON_COMMON_EMPLACE_BY_CALLING_H_
 
+#include <concepts>
 #include <type_traits>
 #include <utility>
 

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_NODE_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_NODE_STACK_H_
 
+#include <array>
+
 #include "common/vlog.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/parse/node_ids.h"

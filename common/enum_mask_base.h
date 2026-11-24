@@ -6,6 +6,7 @@
 #define CARBON_COMMON_ENUM_MASK_BASE_H_
 
 #include <bit>
+#include <cstdint>
 
 #include "common/enum_base.h"
 #include "llvm/ADT/StringExtras.h"

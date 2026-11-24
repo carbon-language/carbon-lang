@@ -5,6 +5,11 @@
 #ifndef CARBON_COMMON_CHECK_INTERNAL_H_
 #define CARBON_COMMON_CHECK_INTERNAL_H_
 
+#include <cstdint>
+#include <cstdlib>
+#include <type_traits>
+#include <utility>
+
 #include "common/template_string.h"
 #include "llvm/Support/FormatVariadic.h"
 

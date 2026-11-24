@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
 
 #include <type_traits>
+#include <vector>
 
 #include "common/type_enum.h"
 #include "llvm/Support/raw_ostream.h"

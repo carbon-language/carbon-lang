@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "clang/Basic/Version.h"
 #include "common/check.h"

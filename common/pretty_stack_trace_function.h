@@ -6,6 +6,7 @@
 #define CARBON_COMMON_PRETTY_STACK_TRACE_FUNCTION_H_
 
 #include <functional>
+#include <utility>
 
 #include "llvm/Support/PrettyStackTrace.h"
 
