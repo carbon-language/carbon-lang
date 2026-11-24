@@ -87,7 +87,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_populated.carbon
+// --- fail_nontrivial_populated.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -95,6 +95,14 @@ import library "types";
 alias Array = array(HasNonTrivialDestruction, 1);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_populated.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Array as Core.TrivialDestroy;
 }
 
@@ -140,7 +148,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_of_array_populated.carbon
+// --- fail_nontrivial_array_of_array_populated.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -148,6 +156,14 @@ import library "types";
 alias Array = array(array(HasNonTrivialDestruction, 1), 1);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_of_array_populated.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Array as Core.TrivialDestroy;
 }
 
@@ -177,7 +193,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_adapter.carbon
+// --- fail_nontrivial_array_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -187,6 +203,14 @@ class Adapter {
 }
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Adapter as Core.TrivialDestroy;
 }
 
@@ -239,7 +263,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_const_array.carbon
+// --- fail_nontrivial_const_array.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -249,6 +273,14 @@ import library "types";
 alias Array = const array(HasNonTrivialDestruction, 1);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_array.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Array as Core.TrivialDestroy;
 }
 
@@ -275,7 +307,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_of_const.carbon
+// --- fail_nontrivial_array_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
@@ -286,6 +318,14 @@ import library "types";
 alias Array = array(const HasNonTrivialDestruction, 1);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_of_const.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Array as Core.TrivialDestroy;
 }
 
@@ -313,6 +353,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.fca: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c12) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.744, (%custom_witness.b80, %DestroyImpl.impl_witness.fca) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -334,7 +375,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -385,6 +426,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.cf7: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6c7) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.fbd, (%custom_witness.b80, %DestroyImpl.impl_witness.cf7) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -406,7 +448,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,6 +500,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.137: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.351) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.7b9, (%custom_witness.b80ef6.3, %DestroyImpl.impl_witness.137) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -479,7 +522,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -537,6 +580,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.d07: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ef9) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.a4f, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.d07) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -558,7 +602,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -617,6 +661,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.8d5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.cc3) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.95d, (%custom_witness.b80, %DestroyImpl.impl_witness.8d5) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -638,7 +683,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -691,6 +736,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.7cf: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.e00) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Adapter, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.7cf) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -712,7 +758,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -749,19 +795,20 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type %Destroy.type [concrete]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type %TrivialDestroy.type [concrete]
 // CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T.f45: %Destroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.190: type = facet_access_type %T.f45 [symbolic]
+// CHECK:STDOUT:   %T.f45530.1: %TrivialDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.190bb7.1: type = facet_access_type %T.f45530.1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %Array.type: type = parameterized_class_name_type @Array [concrete]
 // CHECK:STDOUT:   %Array.generic: %Array.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Array.cf1: type = class_type @Array, @Array(%T.as_type.190, %int_3) [symbolic]
+// CHECK:STDOUT:   %Array.cf1: type = class_type @Array, @Array(%T.as_type.190bb7.1, %int_3) [symbolic]
 // CHECK:STDOUT:   %pattern_type.ed8: type = pattern_type %Array.cf1 [symbolic]
 // CHECK:STDOUT:   %MakeArray.type: type = fn_type @MakeArray [concrete]
 // CHECK:STDOUT:   %MakeArray: %MakeArray.type = struct_value () [concrete]
@@ -772,7 +819,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.cf1, (%DestroyImpl.lookup_impl_witness.8a2, %SubobjectDestroy.lookup_impl_witness.518) [symbolic]
 // CHECK:STDOUT:   %x.patt: %pattern_type.ed8 = ref_binding_pattern x [symbolic]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type.ed8 = var_pattern %x.patt [symbolic]
-// CHECK:STDOUT:   %MakeArray.specific_fn: <specific function> = specific_function %MakeArray, @MakeArray(%T.f45) [symbolic]
+// CHECK:STDOUT:   %MakeArray.specific_fn: <specific function> = specific_function %MakeArray, @MakeArray(%T.f45530.1) [symbolic]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -789,7 +836,7 @@ fn Test() {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/parts/array, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
@@ -798,11 +845,11 @@ fn Test() {
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Test(%T.loc14_18.2: %Destroy.type) {
+// CHECK:STDOUT: generic fn @Test(%T.loc14_18.2: %TrivialDestroy.type) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc16_9.2: type = facet_access_type %T.loc14_18.1 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190)]
+// CHECK:STDOUT:   %T.as_type.loc16_9.2: type = facet_access_type %T.loc14_18.1 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190bb7.1)]
 // CHECK:STDOUT:   %Array.loc16_13.2: type = class_type @Array, @Array(%T.as_type.loc16_9.2, constants.%int_3) [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %Array.loc16_13.2, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.518)]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.loc16_15.2: %SubobjectDestroy.type = facet_value %Array.loc16_13.2, (%SubobjectDestroy.lookup_impl_witness) [symbolic = %SubobjectDestroy.facet.loc16_15.2 (constants.%SubobjectDestroy.facet.bdc)]
@@ -816,11 +863,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc16: %Destroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45)]
+// CHECK:STDOUT:     %T.ref.loc16: %TrivialDestroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45530.1)]
 // CHECK:STDOUT:     %int_3.loc16: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:     %T.as_type.loc16_9.1: type = facet_access_type %T.ref.loc16 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190)]
-// CHECK:STDOUT:     %.loc16_9: type = converted %T.ref.loc16, %T.as_type.loc16_9.1 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190)]
-// CHECK:STDOUT:     %Array.loc16_13.1: type = class_type @Array, @Array(constants.%T.as_type.190, constants.%int_3) [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)]
+// CHECK:STDOUT:     %T.as_type.loc16_9.1: type = facet_access_type %T.ref.loc16 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190bb7.1)]
+// CHECK:STDOUT:     %.loc16_9: type = converted %T.ref.loc16, %T.as_type.loc16_9.1 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190bb7.1)]
+// CHECK:STDOUT:     %Array.loc16_13.1: type = class_type @Array, @Array(constants.%T.as_type.190bb7.1, constants.%int_3) [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)]
 // CHECK:STDOUT:     %Core.ref.loc16: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %SubobjectDestroy.ref: type = name_ref SubobjectDestroy, imports.%Core.SubobjectDestroy [concrete = constants.%SubobjectDestroy.type]
 // CHECK:STDOUT:     %SubobjectDestroy.facet.loc16_15.1: %SubobjectDestroy.type = facet_value %Array.loc16_13.1, (constants.%SubobjectDestroy.lookup_impl_witness.518) [symbolic = %SubobjectDestroy.facet.loc16_15.2 (constants.%SubobjectDestroy.facet.bdc)]
@@ -828,17 +875,17 @@ fn Test() {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %x.var: ref @Test.%Array.loc16_13.2 (%Array.cf1) = var_storage %x.var_patt.loc23_3.1
 // CHECK:STDOUT:     %MakeArray.ref: %MakeArray.type = name_ref MakeArray, file.%MakeArray.decl [concrete = constants.%MakeArray]
-// CHECK:STDOUT:     %T.ref.loc23_41: %Destroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45)]
-// CHECK:STDOUT:     %MakeArray.specific_fn.loc23_31.1: <specific function> = specific_function %MakeArray.ref, @MakeArray(constants.%T.f45) [symbolic = %MakeArray.specific_fn.loc23_31.2 (constants.%MakeArray.specific_fn)]
+// CHECK:STDOUT:     %T.ref.loc23_41: %TrivialDestroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45530.1)]
+// CHECK:STDOUT:     %MakeArray.specific_fn.loc23_31.1: <specific function> = specific_function %MakeArray.ref, @MakeArray(constants.%T.f45530.1) [symbolic = %MakeArray.specific_fn.loc23_31.2 (constants.%MakeArray.specific_fn)]
 // CHECK:STDOUT:     %.loc23_3.1: ref @Test.%Array.loc16_13.2 (%Array.cf1) = splice_block %x.var {}
 // CHECK:STDOUT:     %MakeArray.call: init @Test.%Array.loc16_13.2 (%Array.cf1) to %.loc23_3.1 = call %MakeArray.specific_fn.loc23_31.1()
 // CHECK:STDOUT:     assign %x.var, %MakeArray.call
 // CHECK:STDOUT:     %.loc23_27: type = splice_block %Array.loc23 [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)] {
-// CHECK:STDOUT:       %T.ref.loc23_23: %Destroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45)]
+// CHECK:STDOUT:       %T.ref.loc23_23: %TrivialDestroy.type = name_ref T, %T.loc14_18.2 [symbolic = %T.loc14_18.1 (constants.%T.f45530.1)]
 // CHECK:STDOUT:       %int_3.loc23: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
-// CHECK:STDOUT:       %T.as_type.loc23: type = facet_access_type %T.ref.loc23_23 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190)]
-// CHECK:STDOUT:       %.loc23_23: type = converted %T.ref.loc23_23, %T.as_type.loc23 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190)]
-// CHECK:STDOUT:       %Array.loc23: type = class_type @Array, @Array(constants.%T.as_type.190, constants.%int_3) [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)]
+// CHECK:STDOUT:       %T.as_type.loc23: type = facet_access_type %T.ref.loc23_23 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190bb7.1)]
+// CHECK:STDOUT:       %.loc23_23: type = converted %T.ref.loc23_23, %T.as_type.loc23 [symbolic = %T.as_type.loc16_9.2 (constants.%T.as_type.190bb7.1)]
+// CHECK:STDOUT:       %Array.loc23: type = class_type @Array, @Array(constants.%T.as_type.190bb7.1, constants.%int_3) [symbolic = %Array.loc16_13.2 (constants.%Array.cf1)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: ref @Test.%Array.loc16_13.2 (%Array.cf1) = wrapper_binding x, %x.var
 // CHECK:STDOUT:     name_binding_decl {
@@ -855,9 +902,9 @@ fn Test() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Test(constants.%T.f45) {
+// CHECK:STDOUT: specific @Test(constants.%T.f45530.1) {
 // CHECK:STDOUT:   %T.patt.loc14_18.2 => constants.%T.patt.3a0592.1
-// CHECK:STDOUT:   %T.loc14_18.1 => constants.%T.f45
+// CHECK:STDOUT:   %T.loc14_18.1 => constants.%T.f45530.1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- trivial_const_populated.carbon = $trivial_const_populated
@@ -886,6 +933,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.ea4: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.27a) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %const, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.ea4) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -907,7 +955,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -966,6 +1014,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.c16: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c7b) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.aa4, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.c16) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -987,7 +1036,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
