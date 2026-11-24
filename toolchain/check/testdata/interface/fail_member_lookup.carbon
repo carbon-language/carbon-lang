@@ -31,15 +31,12 @@ fn F() {
   // CHECK:STDERR:
   Interface.F();
 
-  // CHECK:STDERR:        ╭─┤ fail_member_lookup.carbon:[[@LINE+11]]:17
+  // CHECK:STDERR:        ╭─┤ fail_member_lookup.carbon:[[@LINE+8]]:17
   // CHECK:STDERR: ->     │   var unused v: Interface.T;
   // CHECK:STDERR:        ·                 ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
-  // CHECK:STDERR:        ·                 │  ┃        `<associated entity in Interface>` to `type`
-  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·                 ╰────┤ type `<associated entity in Interface>` does not
-  // CHECK:STDERR:        ·                      │ implement interface `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                    ┃        `<associated entity in Interface>` to `type`
+  // CHECK:STDERR:        ·                    ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v: Interface.T;
@@ -110,18 +107,18 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %Different.decl: type = interface_decl @Different [concrete = constants.%Different.type] {} {}
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
-// CHECK:STDOUT:     %U.patt.loc44_15.1: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc44_15.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc41_15.1: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc41_15.2 (constants.%U.patt)]
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc44_15.2 [symbolic = %U.loc44_15.1 (constants.%U)]
+// CHECK:STDOUT:     %U.ref: %Different.type = name_ref U, %U.loc41_15.2 [symbolic = %U.loc41_15.1 (constants.%U)]
 // CHECK:STDOUT:     %Interface.ref: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %U.as_type.loc44_32.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc44_32.1 (constants.%U.as_type)]
-// CHECK:STDOUT:     %.loc44: type = splice_block %Different.ref [concrete = constants.%Different.type] {
+// CHECK:STDOUT:     %U.as_type.loc41_32.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc41_32.1 (constants.%U.as_type)]
+// CHECK:STDOUT:     %.loc41: type = splice_block %Different.ref [concrete = constants.%Different.type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Different.ref: type = name_ref Different, file.%Different.decl [concrete = constants.%Different.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc44_15.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc44_15.1 (constants.%U)]
+// CHECK:STDOUT:     %U.loc41_15.2: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc41_15.1 (constants.%U)]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -168,9 +165,9 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %Interface.ref.loc30: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
+// CHECK:STDOUT:     %Interface.ref.loc27: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
 // CHECK:STDOUT:     %T.ref: %Interface.assoc_type = name_ref T, @T.%assoc1 [concrete = constants.%assoc1]
-// CHECK:STDOUT:     %.loc30: type = converted %T.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc27: type = converted %T.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -180,10 +177,10 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @G(%U.loc44_15.2: %Different.type) {
-// CHECK:STDOUT:   %U.patt.loc44_15.2: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc44_15.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %U.loc44_15.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc44_15.1 (constants.%U)]
-// CHECK:STDOUT:   %U.as_type.loc44_32.1: type = facet_access_type %U.loc44_15.1 [symbolic = %U.as_type.loc44_32.1 (constants.%U.as_type)]
+// CHECK:STDOUT: generic fn @G(%U.loc41_15.2: %Different.type) {
+// CHECK:STDOUT:   %U.patt.loc41_15.2: %pattern_type.776 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc41_15.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.loc41_15.1: %Different.type = symbolic_binding U, 0 [symbolic = %U.loc41_15.1 (constants.%U)]
+// CHECK:STDOUT:   %U.as_type.loc41_32.1: type = facet_access_type %U.loc41_15.1 [symbolic = %U.as_type.loc41_32.1 (constants.%U.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> <error>;
 // CHECK:STDOUT: }
@@ -200,8 +197,8 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT: specific @Different.WithSelf(constants.%Self.8ba) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%U) {
-// CHECK:STDOUT:   %U.patt.loc44_15.2 => constants.%U.patt
-// CHECK:STDOUT:   %U.loc44_15.1 => constants.%U
-// CHECK:STDOUT:   %U.as_type.loc44_32.1 => constants.%U.as_type
+// CHECK:STDOUT:   %U.patt.loc41_15.2 => constants.%U.patt
+// CHECK:STDOUT:   %U.loc41_15.1 => constants.%U
+// CHECK:STDOUT:   %U.as_type.loc41_32.1 => constants.%U.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

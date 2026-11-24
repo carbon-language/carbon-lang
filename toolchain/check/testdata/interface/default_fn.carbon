@@ -64,7 +64,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.c83: %I.WithSelf.F.type.2e1 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.254: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %.c3e: <witness> = impl_self_witness %C, @I [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %C, (%I.impl_witness) [concrete]
@@ -117,7 +117,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc7_25.1 (%Self.as_type.0fa) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0.254]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -182,7 +182,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c.ref: ref %C = name_ref c, %c
 // CHECK:STDOUT:     %I.ref: type = name_ref I, @C.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0.254]
 // CHECK:STDOUT:     %impl.elem0: %.136 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%I.WithSelf.F.a34]
 // CHECK:STDOUT:     %bound_method.loc10_8: <bound method> = bound_method %c.ref, %impl.elem0
 // CHECK:STDOUT:     %I.facet.loc10_15.1: %I.type = facet_value constants.%C, (constants.%I.impl_witness) [concrete = constants.%I.facet]

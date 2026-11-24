@@ -62,14 +62,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredClass*) {
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:23
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+18]]:23
   // CHECK:STDERR: ->     │   Cpp.foo_decl_param1(*p);
   // CHECK:STDERR:        ·                       ┳━
   // CHECK:STDERR:        ·                       ┗━━┫ error: forming value of incomplete type
   // CHECK:STDERR:        ·                          ┃        `Cpp.ForwardDeclaredClass`
   // CHECK:STDERR:        ·                          ┃        [IncompleteTypeInValueConversion]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
   // CHECK:STDERR:        │ class ForwardDeclaredClass;
   // CHECK:STDERR:        ·       ┬
@@ -82,14 +81,13 @@ fn F(p: Cpp.ForwardDeclaredClass*) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+19]]:23
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_param_type.carbon:[[@LINE+18]]:23
   // CHECK:STDERR: ->     │   Cpp.foo_decl_param2(*p);
   // CHECK:STDERR:        ·                       ┳━
   // CHECK:STDERR:        ·                       ┗━━┫ error: forming value of incomplete type
   // CHECK:STDERR:        ·                          ┃        `Cpp.ForwardDeclaredClass`
   // CHECK:STDERR:        ·                          ┃        [IncompleteTypeInValueConversion]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_param_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_param_type.h
   // CHECK:STDERR:        │ class ForwardDeclaredClass;
   // CHECK:STDERR:        ·       ┬
@@ -479,13 +477,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete.carbon:[[@LINE+12]]:3
   // CHECK:STDERR: ->     │   Cpp.Incomplete.foo();
   // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━
   // CHECK:STDERR:        ·            ┗━━┫ error: member access into incomplete class `Cpp.Incomplete`
   // CHECK:STDERR:        ·               ┃        [QualifiedExprInIncompleteClassScope]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./incomplete.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬
@@ -575,13 +572,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR:        ╭─┤ fail_import_decl_value_return_type.carbon:[[@LINE+17]]:3
   // CHECK:STDERR: ->     │   Cpp.foo_decl_value_return();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: function returns incomplete type `Cpp.DeclValueReturnClass`
   // CHECK:STDERR:        ·             ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_import_decl_value_return_type.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./decl_value_return_type.h
   // CHECK:STDERR:        │ class DeclValueReturnClass;
   // CHECK:STDERR:        ·       ┬

@@ -14,10 +14,10 @@
 
 // CHECK:STDERR:        ╭─┤ fail_param_redecl.carbon:[[@LINE+8]]:14
 // CHECK:STDERR: ->     │ fn F(n: i32, n: i32);
-// CHECK:STDERR:        ·      ───┬──  ┳
-// CHECK:STDERR:        ·         │    ┗━━┫ error: duplicate name `n` being declared in the same scope
-// CHECK:STDERR:        ·         │       ┃        [NameDeclDuplicate]
-// CHECK:STDERR:        ·         ╰─────────┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·      ┬       ┳
+// CHECK:STDERR:        ·      │       ┗━━┫ error: duplicate name `n` being declared in the same scope
+// CHECK:STDERR:        ·      │          ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ·      ╰────────────┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(n: i32, n: i32);

@@ -34,9 +34,9 @@ class A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CInit.A.Main(ptr sret({ [2 x i32] }) %return) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_39.2.v = getelementptr inbounds nuw { [2 x i32] }, ptr %return, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   %.loc16_38.3.array.index = getelementptr inbounds [2 x i32], ptr %.loc16_39.2.v, i32 0, i64 0, !dbg !32
-// CHECK:STDOUT:   %.loc16_38.6.array.index = getelementptr inbounds [2 x i32], ptr %.loc16_39.2.v, i32 0, i64 1, !dbg !32
+// CHECK:STDOUT:   %.loc16_39.2.v = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !31
+// CHECK:STDOUT:   %.loc16_38.3.array.index = getelementptr inbounds i8, ptr %.loc16_39.2.v, i64 0, !dbg !32
+// CHECK:STDOUT:   %.loc16_38.6.array.index = getelementptr inbounds i8, ptr %.loc16_39.2.v, i64 4, !dbg !32
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @A.val.loc16_40, i64 8, i1 false), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
@@ -44,8 +44,8 @@ class A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccess.A.Main(ptr %self) #0 !dbg !34 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc19_16.1.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !39
-// CHECK:STDOUT:   %.loc19_20.2.array.index = getelementptr inbounds [2 x i32], ptr %.loc19_16.1.v, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %.loc19_16.1.v = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !39
+// CHECK:STDOUT:   %.loc19_20.2.array.index = getelementptr inbounds i8, ptr %.loc19_16.1.v, i64 0, !dbg !39
 // CHECK:STDOUT:   %.loc19_20.3 = load i32, ptr %.loc19_20.2.array.index, align 4, !dbg !39
 // CHECK:STDOUT:   ret i32 %.loc19_20.3, !dbg !40
 // CHECK:STDOUT: }
@@ -53,11 +53,11 @@ class A {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CUse.A.Main(ptr %self) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc23_9.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !47
-// CHECK:STDOUT:   %.loc23_13.array.index = getelementptr inbounds [2 x i32], ptr %.loc23_9.v, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %.loc23_9.v = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !47
+// CHECK:STDOUT:   %.loc23_13.array.index = getelementptr inbounds i8, ptr %.loc23_9.v, i64 0, !dbg !47
 // CHECK:STDOUT:   store i32 1, ptr %.loc23_13.array.index, align 4, !dbg !47
-// CHECK:STDOUT:   %.loc24_16.v = getelementptr inbounds nuw { [2 x i32] }, ptr %self, i32 0, i32 0, !dbg !48
-// CHECK:STDOUT:   %.loc24_20.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc24_16.v, i32 0, i32 1, !dbg !48
+// CHECK:STDOUT:   %.loc24_16.v = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !48
+// CHECK:STDOUT:   %.loc24_20.1.array.index = getelementptr inbounds i8, ptr %.loc24_16.v, i64 4, !dbg !48
 // CHECK:STDOUT:   %.loc24_20.2 = load i32, ptr %.loc24_20.1.array.index, align 4, !dbg !48
 // CHECK:STDOUT:   ret i32 %.loc24_20.2, !dbg !49
 // CHECK:STDOUT: }

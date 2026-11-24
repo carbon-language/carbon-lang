@@ -35,8 +35,8 @@ library "[[@TEST_NAME]]";
 fn F() -> auto;
 // CHECK:STDERR:        ╭─┤ fail_forward_decl_then_def.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn F() -> auto;
-// CHECK:STDERR:        · ───────┬───────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
@@ -52,8 +52,8 @@ library "[[@TEST_NAME]]";
 fn F() -> i32;
 // CHECK:STDERR:        ╭─┤ fail_decl_then_auto_def.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn F() -> i32;
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
@@ -69,8 +69,8 @@ library "[[@TEST_NAME]]";
 fn F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        ╭─┤ fail_auto_def_then_decl.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
-// CHECK:STDERR:        · ────────┬───────
-// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() -> i32;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━
@@ -86,8 +86,8 @@ library "[[@TEST_NAME]]";
 fn F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
-// CHECK:STDERR:        · ────────┬───────
-// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
@@ -113,8 +113,8 @@ class C {
 
 // CHECK:STDERR:        ╭─┤ fail_member_out_of_line.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │   fn F() -> auto;
-// CHECK:STDERR:        ·   ───────┬───────
-// CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·      ┬
+// CHECK:STDERR:        ·      ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn C.F() -> auto { return 0 as i32; }
 // CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
@@ -171,8 +171,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api_def.carbon
 // CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
-// CHECK:STDERR:        · ────────┬───────
-// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_api_def.impl.carbon:[[@LINE+7]]:1
@@ -200,8 +200,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ api_decl.carbon
 // CHECK:STDERR:        │ fn F() -> i32;
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }

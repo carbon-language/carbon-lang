@@ -348,6 +348,7 @@ cc_library(
     srcs = ["dump.cpp"],
     hdrs = ["dump.h"],
     deps = [
+        ":expr_info",
         ":file",
         ":stringify",
         ":typed_insts",

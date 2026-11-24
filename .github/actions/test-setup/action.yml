@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 name: Test setup
+description:
+  Filters changed paths, sets up the build, and computes impacted Bazel targets.
 
 inputs:
   matrix_runner:

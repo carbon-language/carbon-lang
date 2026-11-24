@@ -117,7 +117,8 @@ commits:
     request's commits, and leaves its status `pending` so it doesn't merge
     before its dependencies.
 -   Once those pull requests merge, the check removes the `dependent` label,
-    updates the comment, and marks the status `success`.
+    updates the comment (preserving the review link until the pull request is
+    rebased or merges `trunk`), and marks the status `success`.
 
 If the check becomes stale, editing the pull request description runs it again.
 Contributors with write access can also re-run the workflow job from the check's

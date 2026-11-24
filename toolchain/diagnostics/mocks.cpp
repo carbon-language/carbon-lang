@@ -14,16 +14,13 @@ auto PrintTo(const Diagnostic& diagnostic, std::ostream* os) -> void {
   const Loc& loc = diagnostic.message.loc;
   *os << ", {" << loc.filename << ":" << loc.line_number << ":"
       << loc.column_number << ", \"" << diagnostic.message.Format() << "\"}";
-  for (const auto& context : diagnostic.contexts) {
-    *os << ", {Context " << context.loc.filename << ":"
-        << context.loc.line_number << ":" << context.loc.column_number << ", \""
-        << context.Format() << "\"}";
+  for (const auto& range : diagnostic.message.ranges) {
+    *os << ", {Range " << range.filename << ":" << range.line_number << ":"
+        << range.column_number << "+" << range.length << "}";
   }
   for (const auto& label : diagnostic.labels) {
-    *os << ", {";
-    PrintTo(label.category, os);
-    *os << " " << label.loc.filename << ":" << label.loc.line_number << ":"
-        << label.loc.column_number << ", \"" << label.Format() << "\"}";
+    *os << ", {Label " << label.loc.filename << ":" << label.loc.line_number
+        << ":" << label.loc.column_number << ", \"" << label.Format() << "\"}";
   }
   *os << "}";
 }
@@ -35,17 +32,6 @@ auto PrintTo(Level level, std::ostream* os) -> void {
       break;
     case Level::Error:
       *os << "Error";
-      break;
-  }
-}
-
-auto PrintTo(LabelCategory category, std::ostream* os) -> void {
-  switch (category) {
-    case LabelCategory::Info:
-      *os << "Info";
-      break;
-    case LabelCategory::Primary:
-      *os << "Primary";
       break;
   }
 }

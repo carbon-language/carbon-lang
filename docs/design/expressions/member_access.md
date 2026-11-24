@@ -144,7 +144,7 @@ are performed depends on the form of the member access expression:
 
 ### Simple member access
 
-For a simple member access`a.b` where `b` is an integer literal, then `a` must
+For a simple member access `a.b` where `b` is an integer literal, then `a` must
 be a tuple, and `a.b` is resolved using [tuple indexing](#tuple-indexing).
 Otherwise, `a.b` depends on what kind of entity `a` is:
 
@@ -190,7 +190,7 @@ Compound member access `a.(m)` performs up to two steps:
 
 ### `impl` member access
 
-To get `impl` lookup without instance binding, for example to to get the method
+To get `impl` lookup without instance binding, for example to get the method
 `F` in the implementation of the interface `I` for the class `C`, write
 `C.impl(I.F)`. This always performs [`impl` lookup](#impl-lookup) with the
 `Self` type equal to `C` and nothing else. It is invalid unless `C` is known to
@@ -1031,8 +1031,9 @@ To get the `M` member of interface `I` for a type `T`, use `T.impl(I.M)` or
 
 Instance binding is performed using the implementation of either
 [the `BindToValue` or `BindToRef` member binding interface](#member-binding-interfaces)
-by `typeof(a)`. The compiler provides `final` builtin implementations for
-methods and fields to provide default instance binding behavior.
+by the type of the member being accessed. The compiler provides `final` builtin
+implementations for methods and fields to provide default instance binding
+behavior.
 
 For compiler-provided builtin implementations of instance binding, the result of
 instance binding depends on what instance member `M` was found:
@@ -1204,7 +1205,7 @@ final impl __TypeOf_C_F as BindToValue(C) {
 // it is an associated type in the `Bind(C)` interface
 // that both `BindToValue(C)` and `BindToRef(C)` extend.
 final impl __TypeOf_C_F as BindToRef(C) {
-  fn Op(unused self, p: ref C) -> ref __Binding_C_F {
+  fn Op(unused self, ref p: C) -> ref __Binding_C_F {
     return p as __Binding_C_F;
   }
 }
@@ -1588,8 +1589,8 @@ class C {
 var c: C = {.m = 5, .n = 6};
 Assert(GetField(c, C.m) == 5);
 Assert(GetField(c, C.n) == 6);
-SetField(&c, C.m, 42);
-SetField(&c, C.n, 12);
+SetField(ref c, C.m, 42);
+SetField(ref c, C.n, 12);
 Assert(GetField(c, C.m) == 42);
 Assert(GetField(c, C.n) == 12);
 ```
@@ -1641,11 +1642,11 @@ int main() {
   C c = {2};
   assert(c.*p == 2);
   assert(Carbon::GetField(c, p) == 2);
-  Carbon::SetField(&c, p, 4);
+  Carbon::SetField(c, p, 4);
   assert(c.m == 4);
   // pointer to method `F` of class C
   int (C::*q)() const = &C::F;
-  assert(Carbon::CallMethod(&c, q) == 5);
+  assert(Carbon::CallMethod(c, q) == 5);
 }
 ```
 

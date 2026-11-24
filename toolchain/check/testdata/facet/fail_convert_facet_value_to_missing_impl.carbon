@@ -19,9 +19,9 @@ fn Feed[T: Eats](unused e: T) {}
 
 // CHECK:STDERR:        ╭─┤ fail_convert_facet_value_to_missing_impl.carbon:[[@LINE+14]]:36
 // CHECK:STDERR:        │ fn Feed[T: Eats](unused e: T) {}
-// CHECK:STDERR:        · ───────────────┬───────────────
-// CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──┬─
+// CHECK:STDERR:        ·      ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·         │ [DeductionGenericHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDERR:        ·                                    ┳━━━━━━

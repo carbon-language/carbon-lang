@@ -14,8 +14,8 @@ namespace A;
 
 // CHECK:STDERR:        ╭─┤ fail_namespace_conflict.carbon:[[@LINE+11]]:5
 // CHECK:STDERR:        │ namespace A;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var A: ();
 // CHECK:STDERR:        ·     ┳
@@ -27,8 +27,8 @@ var A: ();
 
 // CHECK:STDERR:        ╭─┤ fail_namespace_conflict.carbon:[[@LINE+11]]:5
 // CHECK:STDERR:        │ namespace A;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var A: () = ();
 // CHECK:STDERR:        ·     ┳

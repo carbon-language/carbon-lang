@@ -22,12 +22,13 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:     name0:           F
 // CHECK:STDOUT:     name1:           Form
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir70000002: {decl_id: inst7000000F, is_export: false}
 // CHECK:STDOUT:     import_ir70000003: {decl_id: inst7000000F, is_export: false}
+// CHECK:STDOUT:     import_ir70000004: {decl_id: inst7000000F, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000003, inst_id: inst50000021}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir70000004, inst_id: inst50000021}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:

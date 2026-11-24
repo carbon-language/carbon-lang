@@ -167,8 +167,8 @@ fn Make() -> C*;
 fn F() -> auto {
   // CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ class C;
-  // CHECK:STDERR:        · ────┬───
-  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return *Make();
   // CHECK:STDERR:        ·          ━━━┳━━━

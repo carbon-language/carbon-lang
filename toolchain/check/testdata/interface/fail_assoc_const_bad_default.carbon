@@ -13,15 +13,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR:        ╭─┤ fail_assoc_const_bad_default.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_assoc_const_bad_default.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   let T: type = 42;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        to `type`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let T: type = 42;
@@ -66,7 +63,7 @@ interface I {
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%T [concrete = constants.%assoc0.2ce]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %.loc27: type = converted %int_42, <error> [concrete = <error>]
+// CHECK:STDOUT:     %.loc24: type = converted %int_42, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

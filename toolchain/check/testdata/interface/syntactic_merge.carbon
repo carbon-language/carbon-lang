@@ -98,8 +98,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ two_file.carbon
 // CHECK:STDERR:        │ interface Foo(a: C);
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: C) {}
@@ -111,8 +111,8 @@ interface Foo(a: C) {}
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ two_file.carbon
 // CHECK:STDERR:        │ interface Bar(a: D);
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Bar(a: D) {}
@@ -208,8 +208,8 @@ alias D = C;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ alias_two_file.carbon
 // CHECK:STDERR:        │ interface Foo(a: C);
-// CHECK:STDERR:        · ──────────┬─────────
-// CHECK:STDERR:        ·           ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ─┬─
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface Foo(a: D) {}

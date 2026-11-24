@@ -210,8 +210,8 @@ class C {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
   // CHECK:STDERR:        │   fn Op(ref self);
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ associated function Op declared here [AssociatedFunctionHere]
+  // CHECK:STDERR:        ·      ─┬
+  // CHECK:STDERR:        ·       ╰──┤ associated function Op declared here [AssociatedFunctionHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl as Core.DestroyImpl {}
@@ -253,5 +253,21 @@ interface DestroyImpl {
 class C {}
 
 fn F() {
+  // CHECK:STDERR:        ╭─┤ fail_todo_prelude_without_destroy_impl.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   (C,) as SubobjectDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `inst7A000052` declares a custom implementation for
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`, but doesn't define `Core.Destroy.Op`
+  // CHECK:STDERR:        ·      ┃        [MissingImplForCoreDestroyOp]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_todo_prelude_without_destroy_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   (C,) as SubobjectDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `inst7A000051` declares a custom implementation for
+  // CHECK:STDERR:        ·      ┃        `Core.Destroy`, but doesn't define `Core.Destroy.Op`
+  // CHECK:STDERR:        ·      ┃        [MissingImplForCoreDestroyOp]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   (C,) as SubobjectDestroy;
 }

@@ -163,9 +163,9 @@ let not_constant_64: f64 = 0.0;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ f64.carbon
 // CHECK:STDERR:        │ fn Float64ToFloat64(a: f64) -> f64 = "float.convert_checked";
-// CHECK:STDERR:        · ──────────────────┬─────────────────
-// CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
-// CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ·    ────────┬───────
+// CHECK:STDERR:        ·            ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·               │ [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);

@@ -75,8 +75,8 @@ interface Generic(T: type) {}
 
 // CHECK:STDERR:        ╭─┤ fail_args_count_mismatch.carbon:[[@LINE+12]]:24
 // CHECK:STDERR:        │ interface Generic(T: type) {}
-// CHECK:STDERR:        · ──────────────┬─────────────
-// CHECK:STDERR:        ·               ╰──┤ calling generic interface declared here [InCallToEntity]
+// CHECK:STDERR:        ·           ───┬───
+// CHECK:STDERR:        ·              ╰──┤ calling generic interface declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━━
