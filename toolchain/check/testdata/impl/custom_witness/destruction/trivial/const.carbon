@@ -38,11 +38,8 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_trivial_const_tuple.carbon
+// --- trivial_const_tuple.carbon
 library "[[@TEST_NAME]]";
-
-// TODO: const tuples are apparently not correctly indexed in
-// `MakeSubobjectDestroyOpBody`.
 
 class HasTrivialDestruction {}
 
