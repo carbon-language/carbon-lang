@@ -189,6 +189,26 @@ cc_test(
 )
 
 cc_library(
+    name = "env",
+    srcs = ["env.cpp"],
+    hdrs = ["env.h"],
+    deps = [
+        ":check",
+    ],
+)
+
+cc_test(
+    name = "env_test",
+    size = "small",
+    srcs = ["env_test.cpp"],
+    deps = [
+        ":env",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "error",
     hdrs = ["error.h"],
     deps = [
@@ -246,7 +266,10 @@ cc_test(
 
 cc_library(
     name = "filesystem",
-    srcs = ["filesystem.cpp"],
+    srcs = ["filesystem.cpp"] + select({
+        "@platforms//os:windows": ["filesystem_win.cpp"],
+        "//conditions:default": ["filesystem_unix.cpp"],
+    }),
     hdrs = ["filesystem.h"],
     deps = [
         ":build_data",

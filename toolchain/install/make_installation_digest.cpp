@@ -2,8 +2,6 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <unistd.h>
-
 #include <cstdlib>
 #include <string>
 
@@ -48,7 +46,16 @@ class DigestProgram {
       -> std::array<uint8_t, 32>;
 
   llvm::raw_ostream* vlog_stream_ = nullptr;
+#ifdef _WIN32
+  struct FileKey {
+    uint64_t device;
+    uint64_t file;
+    friend auto operator==(const FileKey&, const FileKey&) -> bool = default;
+  };
+  Map<FileKey, std::array<uint8_t, 32>> file_digests_;
+#else
   Map<uint64_t, std::array<uint8_t, 32>> file_digests_;
+#endif
 };
 
 auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
@@ -78,12 +85,13 @@ auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
 
   // Walk all the install data files in the manifest.
   for (llvm::StringRef manifest_line : manifest_lines) {
+    manifest_line = manifest_line.trim();
     if (manifest_line.empty()) {
       continue;
     }
     // Compute the full path and installed path for each file. The installed
     // path comes from the path components below the `prefix` component.
-    std::filesystem::path full_path = manifest_line.trim().str();
+    std::filesystem::path full_path = manifest_line.str();
     std::filesystem::path install_path;
     bool append = false;
     for (const auto& component : full_path) {
@@ -97,10 +105,11 @@ auto DigestProgram::Run(int argc, char** argv) -> ErrorOr<int> {
       }
     }
 
-    CARBON_VLOG("Digesting file: {0}\n", install_path);
+    std::string install_path_str = install_path.string();
+    CARBON_VLOG("Digesting file: {0}\n", install_path_str);
     // Add the install path itself to the digest to track the layout of the
     // installation data.
-    sha256.update(install_path.native());
+    sha256.update(install_path_str);
 
     // Open the file and compute its digest to add as well. We use a memoizing
     // helper here to avoid re-examining the same file even if there are
@@ -125,7 +134,13 @@ auto DigestProgram::ComputeFileDigest(Filesystem::ReadFileRef file)
   // Filesystem errors are unlikely here, and the library will check them just
   // in case.
   Filesystem::FileStatus stat = *file.Stat();
-  auto result = file_digests_.Insert(stat.unix_inode(), [file]() mutable {
+#ifdef _WIN32
+  auto uid = stat.win_unique_id();
+  FileKey key = {.device = uid.getDevice(), .file = uid.getFile()};
+#else
+  uint64_t key = stat.unix_inode();
+#endif
+  auto result = file_digests_.Insert(key, [file]() mutable {
     llvm::SHA256 sha256;
     // TODO: We could do this more efficiently by using a fixed buffer.
     sha256.update(*file.ReadFileToString());

@@ -12,7 +12,7 @@
 
 #include "common/hashing_llvm.h"
 
-#if __has_include(<sys/mman.h>)
+#if __has_include(<sys/mman.h>) && __has_include(<unistd.h>)
 #include <sys/mman.h>
 #include <unistd.h>
 #endif
@@ -124,7 +124,7 @@ TEST(HashtableKeyContextTest, HashtableEqStringsIgnoresFollowingBytes) {
   }
 }
 
-#if __has_include(<sys/mman.h>)
+#if __has_include(<sys/mman.h>) && __has_include(<unistd.h>)
 // Compares strings next to inaccessible pages, so that reading anything outside
 // the pages that hold their bytes faults.
 TEST(HashtableKeyContextTest, HashtableEqStringsNextToInaccessiblePages) {

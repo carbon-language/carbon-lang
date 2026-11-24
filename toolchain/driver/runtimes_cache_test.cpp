@@ -8,10 +8,12 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <limits>
 #include <mutex>
+#include <optional>
 #include <ratio>
 #include <string>
 #include <thread>
@@ -19,6 +21,7 @@
 #include <variant>
 
 #include "common/check.h"
+#include "common/env.h"
 #include "common/error_test_helpers.h"
 #include "common/filesystem.h"
 #include "common/ostream.h"
@@ -98,8 +101,62 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   bad_install_dir.WriteFileFromString("carbon_install.txt", "no digest")
       .Check();
   InstallPaths bad_install =
-      InstallPaths::Make((tmp_dir_.path() / "bad_install").native());
+      InstallPaths::Make((tmp_dir_.path() / "bad_install").string());
 
+#ifdef _WIN32
+  auto local_app_data_dir = *tmp_dir_.CreateDirectories("local_app_data");
+  std::filesystem::path local_app_data_path =
+      tmp_dir_.path() / "local_app_data";
+
+  constexpr const char* LocalAppDataEnv = "LOCALAPPDATA";
+  std::optional<std::string> orig_local_app_data;
+  if (const char* value = std::getenv(LocalAppDataEnv)) {
+    orig_local_app_data = value;
+  }
+  auto restore_env = llvm::scope_exit([&] {
+    if (orig_local_app_data) {
+      SetEnv(LocalAppDataEnv, orig_local_app_data->c_str());
+    } else {
+      UnsetEnv(LocalAppDataEnv);
+    }
+  });
+
+  SetEnv(LocalAppDataEnv, local_app_data_path.string().c_str());
+
+  // Without a digest, fall back to a temporary cache.
+  auto result = Runtimes::Cache::MakeSystem(bad_install);
+  ASSERT_THAT(result, IsSuccess(_));
+  EXPECT_THAT(result->path().string(),
+              Not(StartsWith(local_app_data_path.string())));
+
+  // With a digest, use `%LOCALAPPDATA%`.
+  result = Runtimes::Cache::MakeSystem(install_);
+  ASSERT_THAT(result, IsSuccess(_));
+  EXPECT_THAT(result->path().string(),
+              StartsWith(local_app_data_path.string()));
+  result = Error("nothing");
+  EXPECT_TRUE(*tmp_dir_.Access("local_app_data"));
+
+  // Missing directory falls back to a temporary cache.
+  tmp_dir_.Rmtree("local_app_data").Check();
+  EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
+
+  // Empty, relative, and unset values fall back to a temporary cache.
+  SetEnv(LocalAppDataEnv, "");
+  EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
+  SetEnv(LocalAppDataEnv, "relative\\cache");
+  EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
+  UnsetEnv(LocalAppDataEnv);
+  result = Runtimes::Cache::MakeSystem(install_);
+  ASSERT_THAT(result, IsSuccess(_));
+  EXPECT_THAT(result->path().string(),
+              Not(StartsWith(local_app_data_path.string())));
+  ASSERT_THAT(Filesystem::Cwd().WriteFileFromString(
+                  result->path() / "test_file", "test"),
+              IsSuccess(_));
+  ASSERT_THAT(Filesystem::Cwd().ReadFileToString(result->path() / "test_file"),
+              IsSuccess(StrEq("test")));
+#else
   // Create directories to use in various environment variables.
   auto xdg_dir = *tmp_dir_.CreateDirectories("xdg_cache_home");
   std::filesystem::path xdg_path = tmp_dir_.path() / "xdg_cache_home";
@@ -112,22 +169,31 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   // afterward to avoid test-to-test oddities.
   constexpr const char* XdgCacheEnv = "XDG_CACHE_HOME";
   constexpr const char* HomeEnv = "HOME";
-  const char* orig_xdg_cache = getenv(XdgCacheEnv);
-  const char* orig_home = getenv(HomeEnv);
+  std::optional<std::string> orig_xdg_cache;
+  if (const char* value = std::getenv(XdgCacheEnv)) {
+    orig_xdg_cache = value;
+  }
+  std::optional<std::string> orig_home;
+  if (const char* value = std::getenv(HomeEnv)) {
+    orig_home = value;
+  }
   auto restore_env = llvm::scope_exit([&] {
-    for (const auto [env, orig] : {std::pair{XdgCacheEnv, orig_xdg_cache},
-                                   std::pair{HomeEnv, orig_home}}) {
-      if (orig) {
-        setenv(env, orig, /*overwrite*/ true);
+    for (const auto& [env, orig] :
+         {std::pair<const char*, const std::optional<std::string>*>{
+              XdgCacheEnv, &orig_xdg_cache},
+          std::pair<const char*, const std::optional<std::string>*>{
+              HomeEnv, &orig_home}}) {
+      if (*orig) {
+        SetEnv(env, (*orig)->c_str());
       } else {
-        unsetenv(env);
+        UnsetEnv(env);
       }
     }
   });
 
   // Begin testing the basic logic of selecting different roots for the cache.
-  setenv(XdgCacheEnv, xdg_path.c_str(), /*overwrite*/ true);
-  setenv(HomeEnv, home_path.c_str(), /*overwrite*/ true);
+  SetEnv(XdgCacheEnv, xdg_path.string().c_str());
+  SetEnv(HomeEnv, home_path.string().c_str());
 
   // First check that even with all the environment set up, when we don't have a
   // digest file available, we bypass those options and use a temporary cache
@@ -135,13 +201,14 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   // track whether it is correct to reuse a persistently cached entry.
   auto result = Runtimes::Cache::MakeSystem(bad_install);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), Not(StartsWith(home_cache_path)));
-  EXPECT_THAT(result->path(), Not(StartsWith(xdg_path)));
+  EXPECT_THAT(result->path().string(),
+              Not(StartsWith(home_cache_path.string())));
+  EXPECT_THAT(result->path().string(), Not(StartsWith(xdg_path.string())));
 
   // Once we have a digest, the main XDG cache logic should work.
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), StartsWith(xdg_path));
+  EXPECT_THAT(result->path().string(), StartsWith(xdg_path.string()));
   // Destruction shouldn't remove system cache directories.
   result = Error("nothing");
   EXPECT_TRUE(*tmp_dir_.Access("xdg_cache_home"));
@@ -154,20 +221,20 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
 
   // Set the XDG environment to the empty string which should trigger using the
   // home directory.
-  setenv(XdgCacheEnv, "", /*overwrite*/ true);
+  SetEnv(XdgCacheEnv, "");
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), StartsWith(home_cache_path));
+  EXPECT_THAT(result->path().string(), StartsWith(home_cache_path.string()));
   // Destruction shouldn't remove system cache directories.
   result = Error("nothing");
   EXPECT_TRUE(*tmp_dir_.Access("test_home"));
   EXPECT_TRUE(*test_home.Access(".cache"));
 
   // Same as with an empty string, but with a relative path instead.
-  setenv(XdgCacheEnv, "relative/cache/home", /*overwrite*/ true);
+  SetEnv(XdgCacheEnv, "relative/cache/home");
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), StartsWith(home_cache_path));
+  EXPECT_THAT(result->path().string(), StartsWith(home_cache_path.string()));
   // Destruction shouldn't remove system cache directories.
   result = Error("nothing");
   EXPECT_TRUE(*tmp_dir_.Access("test_home"));
@@ -175,10 +242,10 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
 
   // Same as with an empty string, but this time with an unset environment
   // variable.
-  unsetenv(XdgCacheEnv);
+  UnsetEnv(XdgCacheEnv);
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), StartsWith(home_cache_path));
+  EXPECT_THAT(result->path().string(), StartsWith(home_cache_path.string()));
   // Destruction shouldn't remove system cache directories.
   result = Error("nothing");
   EXPECT_TRUE(*tmp_dir_.Access("test_home"));
@@ -187,16 +254,16 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   // Now check a bunch of different failure modes for the home directory
   // fallback. These should all end up creating temporary directories which
   // we'll test functionally at the end.
-  setenv(HomeEnv, "", /*overwrite*/ true);
+  SetEnv(HomeEnv, "");
   EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
-  setenv(HomeEnv, "relative/home", /*overwrite*/ true);
+  SetEnv(HomeEnv, "relative/home");
   EXPECT_THAT(Runtimes::Cache::MakeSystem(install_), IsSuccess(_));
 
   // Correct the path and make sure it works again.
-  setenv(HomeEnv, home_path.c_str(), /*overwrite*/ true);
+  SetEnv(HomeEnv, home_path.string().c_str());
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), StartsWith(home_cache_path));
+  EXPECT_THAT(result->path().string(), StartsWith(home_cache_path.string()));
 
   // Now try removing directories around home.
   test_home.Rmtree(".cache").Check();
@@ -208,13 +275,15 @@ TEST_F(RuntimesCacheTest, BuildSystemCache) {
   // directory.
   result = Runtimes::Cache::MakeSystem(install_);
   ASSERT_THAT(result, IsSuccess(_));
-  EXPECT_THAT(result->path(), Not(StartsWith(home_cache_path)));
-  EXPECT_THAT(result->path(), Not(StartsWith(xdg_path)));
+  EXPECT_THAT(result->path().string(),
+              Not(StartsWith(home_cache_path.string())));
+  EXPECT_THAT(result->path().string(), Not(StartsWith(xdg_path.string())));
   ASSERT_THAT(Filesystem::Cwd().WriteFileFromString(
                   result->path() / "test_file", "test"),
               IsSuccess(_));
   ASSERT_THAT(Filesystem::Cwd().ReadFileToString(result->path() / "test_file"),
               IsSuccess(StrEq("test")));
+#endif
 }
 
 TEST_F(RuntimesCacheTest, BasicBuild) {
@@ -276,7 +345,7 @@ TEST_F(RuntimesCacheTest, DifferentKeys) {
       .Check();
   custom_install_dir.WriteFileFromString("install_digest.txt", "abcd").Check();
   InstallPaths install2 =
-      InstallPaths::Make((tmp_dir_.path() / "custom_install").native());
+      InstallPaths::Make((tmp_dir_.path() / "custom_install").string());
   auto cache2 = *Runtimes::Cache::MakeCustom(install2, tmp_dir_.path());
   auto runtimes2 = *cache2.Lookup({.target = target});
 
@@ -406,6 +475,11 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
   std::filesystem::path build2_path;
   auto build2_lambda = [&build2_path, &runtimes2, target, &m, &cv,
                         &build_started] {
+    auto notify_main = llvm::scope_exit([&] {
+      std::unique_lock lock(m);
+      build_started = true;
+      cv.notify_one();
+    });
     auto build_result2 = runtimes2.Build(Runtimes::ClangResourceDir);
     ASSERT_THAT(build_result2, IsSuccess(VariantWith<Runtimes::Builder>(_)));
     auto builder2 = std::get<Runtimes::Builder>(*std::move(build_result2));
@@ -415,6 +489,7 @@ TEST_F(RuntimesCacheTest, ConcurrentBuildsWithFailedLocking) {
     // built runtime. The goal is to get as close as we can to having these
     // commits actually race so that a failure in that mode would emerge as a
     // flake of the test. None of this is providing correctness.
+    notify_main.release();
     {
       std::unique_lock lock(m);
       build_started = true;
@@ -543,8 +618,10 @@ TEST_F(RuntimesCacheTest, Lookup) {
   auto runtimes2 = *std::move(lookup_result);
   EXPECT_THAT(runtimes2.base_path(), Eq(runtimes.base_path()));
 
+#ifndef _WIN32
   EXPECT_THAT(runtimes.base_dir().Stat()->unix_inode(),
               Eq(runtimes.base_dir().Stat()->unix_inode()));
+#endif
 }
 
 TEST_F(RuntimesCacheTest, LookupTargetCpuFeatures) {
@@ -592,6 +669,7 @@ TEST_F(RuntimesCacheTest, LookupTargetCpuFeatures) {
   EXPECT_THAT(boundary1.base_path(), Ne(boundary2.base_path()));
 }
 
+#ifndef _WIN32
 TEST_F(RuntimesCacheTest, LookupFailsIfCannotCreateDir) {
   // Create a read-only directory with the cache in it to cause failures.
   std::filesystem::path ro_cache_path = tmp_dir_.path() / "ro_cache";
@@ -601,16 +679,19 @@ TEST_F(RuntimesCacheTest, LookupFailsIfCannotCreateDir) {
   auto lookup_result = ro_cache.Lookup({.target = "aarch64-unknown-unknown"});
   EXPECT_THAT(lookup_result, IsError(_));
 }
+#endif
 
 TEST_F(RuntimesCacheTest, LookupWithSmallNumberOfStaleRuntimes) {
   // Lookup two runtimes to populate the cache.
   auto runtimes1 = *cache_.Lookup({.target = "aarch64-unknown-unknown1"});
   auto runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown2"});
 
+#ifndef _WIN32
   // Get the Unix-like inode of the directories so we can check whether
   // subsequent lookups create a new directory.
   auto runtimes1_inode = runtimes1.base_dir().Stat()->unix_inode();
   auto runtimes2_inode = runtimes2.base_dir().Stat()->unix_inode();
+#endif
 
   // Now adjust their age backwards in time by two years to make them very, very
   // stale.
@@ -630,8 +711,10 @@ TEST_F(RuntimesCacheTest, LookupWithSmallNumberOfStaleRuntimes) {
   // we don't have enough runtimes to prune.
   runtimes1 = *cache_.Lookup({.target = "aarch64-unknown-unknown1"});
   runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown2"});
+#ifndef _WIN32
   EXPECT_THAT(runtimes1.base_dir().Stat()->unix_inode(), Eq(runtimes1_inode));
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
+#endif
 
   // The timestamp on the lock file should also be updated. We can't assume the
   // filesystem clock is monotonic, so it is possible an adjustment occurs while
@@ -651,6 +734,13 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   auto stale_runtimes = LookupNRuntimes(RuntimesTestPeer::CacheMinNumEntries());
   auto runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh2"});
 
+#ifdef _WIN32
+  // Write marker files into each directory so we can verify which directories
+  // were preserved vs. pruned and re-created.
+  runtimes1.base_dir().WriteFileFromString(".marker", "1").Check();
+  runtimes2.base_dir().WriteFileFromString(".marker", "2").Check();
+  stale_runtimes[0].base_dir().WriteFileFromString(".marker", "stale").Check();
+#else
   // Get the Unix-like inode of the directories so we can check whether
   // subsequent lookups create a new directory. For the stale directory, we
   // don't just get the inode, we also create an open directory to it. This
@@ -665,6 +755,7 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   // Confirm that our extra open directory points to the some entity as the
   // runtimes has open.
   ASSERT_THAT(stale_dir.Stat()->unix_inode(), Eq(stale_runtimes_0_inode));
+#endif
 
   // Now adjust their age backwards in time by two years to make them very, very
   // stale.
@@ -688,6 +779,13 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
       *cache_.Lookup({.target = "aarch64-unknown-unknown0"});
   runtimes2 = *cache_.Lookup({.target = "aarch64-unknown-unknown-fresh2"});
 
+#ifdef _WIN32
+  EXPECT_THAT(runtimes1.base_dir().Access(".marker"), IsSuccess(_));
+  EXPECT_THAT(runtimes2.base_dir().Access(".marker"), IsSuccess(_));
+  auto stale_marker = stale_runtimes_0.base_dir().Access(".marker");
+  ASSERT_FALSE(stale_marker.ok());
+  EXPECT_TRUE(stale_marker.error().no_entity());
+#else
   // The first and last should have been preserved as they were not stale.
   EXPECT_THAT(runtimes1.base_dir().Stat()->unix_inode(), Eq(runtimes1_inode));
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
@@ -698,6 +796,7 @@ TEST_F(RuntimesCacheTest, LookupWithManyStaleRuntimes) {
   // being freshly created, the directory would have the same inode.
   EXPECT_THAT(stale_runtimes_0.base_dir().Stat()->unix_inode(),
               Ne(stale_runtimes_0_inode));
+#endif
 }
 
 TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
@@ -718,6 +817,16 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   auto stale_runtimes_n_2_target =
       llvm::formatv("aarch64-unknown-unknown{0}", n - 2).str();
 
+  Runtimes& stale_runtimes_n_2_orig = *std::prev(stale_runtimes.end(), 2);
+#ifdef _WIN32
+  runtimes1.base_dir().WriteFileFromString(".marker", "1").Check();
+  runtimes2.base_dir().WriteFileFromString(".marker", "2").Check();
+  stale_runtimes[0].base_dir().WriteFileFromString(".marker", "0").Check();
+  stale_runtimes.back().base_dir().WriteFileFromString(".marker", "n1").Check();
+  stale_runtimes_n_2_orig.base_dir()
+      .WriteFileFromString(".marker", "n2")
+      .Check();
+#else
   // Get the Unix-like inode of the directories so we can check whether
   // subsequent lookups create a new directory.
   auto runtimes1_inode = runtimes1.base_dir().Stat()->unix_inode();
@@ -730,7 +839,6 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   // For the n-2 stale runtime, get the inode but also open the underlying
   // directory so that the inode can't be reused even after pruning the runtime
   // below.
-  Runtimes& stale_runtimes_n_2_orig = *std::prev(stale_runtimes.end(), 2);
   auto stale_runtimes_n_2_inode =
       stale_runtimes_n_2_orig.base_dir().Stat()->unix_inode();
   Filesystem::Dir stale_dir =
@@ -738,6 +846,7 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   // Confirm that our extra open directory points to the some entity as the
   // runtimes has open.
   ASSERT_THAT(stale_dir.Stat()->unix_inode(), Eq(stale_runtimes_n_2_inode));
+#endif
 
   // Now manually set all the timestamps. We do this manually to avoid any
   // reliance on the clock behavior or the amount of time passing between lookup
@@ -772,6 +881,15 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   auto stale_runtimes_n_2 =
       *cache_.Lookup({.target = stale_runtimes_n_2_target});
 
+#ifdef _WIN32
+  EXPECT_THAT(runtimes1.base_dir().Access(".marker"), IsSuccess(_));
+  EXPECT_THAT(runtimes2.base_dir().Access(".marker"), IsSuccess(_));
+  EXPECT_THAT(stale_runtimes_0.base_dir().Access(".marker"), IsSuccess(_));
+  EXPECT_THAT(stale_runtimes_n_1.base_dir().Access(".marker"), IsSuccess(_));
+  auto pruned_marker = stale_runtimes_n_2.base_dir().Access(".marker");
+  ASSERT_FALSE(pruned_marker.ok());
+  EXPECT_TRUE(pruned_marker.error().no_entity());
+#else
   // The fresh runtimes should be preserved.
   EXPECT_THAT(runtimes1.base_dir().Stat()->unix_inode(), Eq(runtimes1_inode));
   EXPECT_THAT(runtimes2.base_dir().Stat()->unix_inode(), Eq(runtimes2_inode));
@@ -785,6 +903,7 @@ TEST_F(RuntimesCacheTest, LookupWithTooManyRuntimes) {
   // The next to last should have been pruned and re-created though.
   EXPECT_THAT(stale_runtimes_n_2.base_dir().Stat()->unix_inode(),
               Ne(stale_runtimes_n_2_inode));
+#endif
 }
 
 }  // namespace

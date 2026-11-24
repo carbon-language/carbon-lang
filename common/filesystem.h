@@ -5,18 +5,28 @@
 #ifndef CARBON_COMMON_FILESYSTEM_H_
 #define CARBON_COMMON_FILESYSTEM_H_
 
+#ifndef _WIN32
 #include <dirent.h>
 #include <fcntl.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
 
+#include <cerrno>
 #include <chrono>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <iterator>
+#include <optional>
 #include <string>
+#ifdef _WIN32
+#include <system_error>
+#endif
+#include <utility>
 
 #include "common/check.h"
 #include "common/error.h"
@@ -26,28 +36,25 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
+#ifdef _WIN32
+#include "llvm/Support/FileSystem.h"
+#endif
 
 // Provides a filesystem library for use in the Carbon project.
 //
 // This library provides an API designed to support modern Unix / Linux / POSIX
 // style filesystem operations, often called "Unix-like"[1] here, efficiently
-// and securely, while also carefully staying to a set of abstractions and
-// operations that can be reasonably implemented even on Windows platforms.
-//
-// TODO: Currently, there is not a Windows implementation, but this is actively
-// desired when we have testing infrastructure in place for Windows development.
-// Lacking that testing infrastructure and a full Windows port, the operations
-// here are manually compared with LLVM's filesystem library to ensure a
-// reasonable Windows implementation is possible.
+// and securely, while also providing a native Windows backend built on
+// `llvm::sys::fs` and CRT file descriptors.
 //
 // The library uses C++'s `std::filesystem::path` as its abstraction for
 // paths. This library provides two core APIs: open directories and files.
 //
 // Open directories provide relative- and absolute-path based operations to open
-// other directories or files. This allows secure creation of directories even
-// in the face of adversarial operations for example in a shared `/tmp`
-// directory. There is a `constexpr` current working directory available as
-// `Cwd()` that models normal filesystem operations with paths.
+// other directories or files. On Unix-like systems, this allows secure creation
+// of directories even in the face of adversarial operations for example in a
+// shared `/tmp` directory. There is a `constexpr` current working directory
+// available as `Cwd()` that models normal filesystem operations with paths.
 //
 // Open files provide read, write, and other operations on the file. There are
 // separate types for read-only, write-only, and read-write files to model the
@@ -63,8 +70,6 @@
 // enumerations that model those flags. The enumeration values are in turn
 // chosen to simplify passing these to specific native APIs. This means the
 // enumeration *values* should not be expected to be portable across platforms.
-// Customizing the values is part of the larger TODO to port the implementation
-// to Windows.
 //
 // [1]: Note that we refer to platforms as "Unix-like" rather than POSIX as we
 //      want to group together all the OSes where the Unix-derived APIs are the
@@ -83,6 +88,24 @@ namespace Carbon::Filesystem {
 // Because these are by far the most common parameters and they have unambiguous
 // names, the enumerators are also available directly within the namespace.
 enum class CreationOptions {
+#ifdef _WIN32
+  // Requires an existing file or directory.
+  OpenExisting = 0,
+
+  // Opens an existing file or directory, and create one otherwise.
+  OpenAlways = 1,
+
+  // Opens and truncates an existing file or creates a new file. Provides
+  // consistent behavior of an empty file regardless of the starting state. This
+  // cannot be used for directories as they cannot be truncated on open. This is
+  // essentially a short-cut for using `OpenAlways` and passing the
+  // `OpenFlags::Truncate` below.
+  CreateAlways = 2,
+
+  // Requires no existing file or directory and will error if one is found. Only
+  // succeeds when it creates a new file or directory.
+  CreateNew = 3,
+#else
   // Requires an existing file or directory.
   OpenExisting = 0,
 
@@ -99,6 +122,7 @@ enum class CreationOptions {
   // Requires no existing file or directory and will error if one is found. Only
   // succeeds when it creates a new file or directory.
   CreateNew = O_CREAT | O_EXCL,
+#endif
 };
 using enum CreationOptions;
 
@@ -110,6 +134,18 @@ using enum CreationOptions;
 enum class OpenFlags : int {
   None = 0,
 
+#ifdef _WIN32
+  // Open the file for appending rather than with the position at the start.
+  //
+  // An error to combine with `Truncate` or to use with `CreateAlways`.
+  Append = 1 << 0,
+
+  // Open the file and truncate its contents to be empty.
+  Truncate = 1 << 1,
+
+  // Don't follow a symlink in the final path component being opened.
+  NoFollow = 1 << 2,
+#else
   // Open the file for appending rather than with the position at the start.
   //
   // An error to combine with `Truncate` or to use with `CreateAlways`.
@@ -120,6 +156,7 @@ enum class OpenFlags : int {
 
   // Don't follow a symlink in the final path component being opened.
   NoFollow = O_NOFOLLOW,
+#endif
 };
 inline auto operator|(OpenFlags lhs, OpenFlags rhs) -> OpenFlags {
   return static_cast<OpenFlags>(static_cast<int>(lhs) | static_cast<int>(rhs));
@@ -135,10 +172,17 @@ inline auto operator|=(OpenFlags& lhs, OpenFlags rhs) -> OpenFlags& {
 // `AccessCheckFlags::Read | AccessCheckFlags::Write` checks for both read and
 // write access.
 enum class AccessCheckFlags : int {
+#ifdef _WIN32
+  Exists = 0,
+  Read = 1 << 0,
+  Write = 1 << 1,
+  Execute = 1 << 2,
+#else
   Exists = F_OK,
   Read = R_OK,
   Write = W_OK,
   Execute = X_OK,
+#endif
 };
 inline auto operator|(AccessCheckFlags lhs, AccessCheckFlags rhs)
     -> AccessCheckFlags {
@@ -163,18 +207,27 @@ inline auto operator|=(AccessCheckFlags& lhs, AccessCheckFlags rhs)
 // - Group bit mask: 0070
 // - All bit mask:   0007
 //
-// For each, read is an octal value of `1`, write `2`, and execute `4`.
+// For each, read is an octal value of `4`, write `2`, and execute `1`.
 //
 // Windows gracefully degrades to the effective permissions modeled using
 // these values.
+#ifdef _WIN32
+using ModeType = uint32_t;
+#else
 using ModeType = mode_t;
+#endif
 
 // Enumeration of the different file types recognized.
 //
-// In addition to the specific type values being arranged for ease of use with
-// the POSIX APIs, the underlying type of the enum is arranged to use the common
-// mode type.
+// On Unix-like platforms, the specific type values and underlying type match
+// the POSIX `st_mode` file type bits for direct extraction.
 enum class FileType : ModeType {
+#ifdef _WIN32
+  Directory = 0040000,
+  RegularFile = 0100000,
+  SymbolicLink = 0120000,
+  Unknown = 0,
+#else
   // Portable file types that need to be supported across platform
   // implementations.
   Directory = S_IFDIR,
@@ -189,10 +242,17 @@ enum class FileType : ModeType {
 
   // Mask for the Unix-like types to allow easy extraction.
   UnixMask = S_IFMT,
+#endif
 };
 
-using Clock = std::chrono::file_clock;
-using Duration = std::chrono::duration<__int128, std::nano>;
+// Portable filesystem clock and duration types.
+//
+// `std::chrono::system_clock` has a standard Unix epoch (1970-01-01 UTC) across
+// Unix-like platforms and Windows, and `std::chrono::nanoseconds` (`int64_t`)
+// avoids `__int128` traits missing from Microsoft's STL while matching
+// `llvm::sys::TimePoint<>`.
+using Clock = std::chrono::system_clock;
+using Duration = std::chrono::nanoseconds;
 using TimePoint = std::chrono::time_point<Clock, Duration>;
 
 // Enumerates the different open access modes available.
@@ -200,9 +260,15 @@ using TimePoint = std::chrono::time_point<Clock, Duration>;
 // These are largely used to parameterize types in order to constrain which API
 // subset is available, and rarely needed directly.
 enum class OpenAccess {
+#ifdef _WIN32
+  ReadOnly = 1,
+  WriteOnly = 2,
+  ReadWrite = 3,
+#else
   ReadOnly = O_RDONLY,
   WriteOnly = O_WRONLY,
   ReadWrite = O_RDWR,
+#endif
 };
 
 // Forward declarations of various types that appear in APIs.
@@ -266,6 +332,29 @@ auto MakeTmpDirWithPrefix(std::filesystem::path prefix)
 // APIs to access non-portable implementation details when necessary.
 class FileStatus {
  public:
+#ifdef _WIN32
+  // The size of the file in bytes.
+  auto size() const -> int64_t {
+    return is_symlink_ ? symlink_size_
+                       : static_cast<int64_t>(status_.getSize());
+  }
+
+  auto type() const -> FileType {
+    if (is_symlink_) {
+      return FileType::SymbolicLink;
+    }
+    switch (status_.type()) {
+      case llvm::sys::fs::file_type::directory_file:
+        return FileType::Directory;
+      case llvm::sys::fs::file_type::regular_file:
+        return FileType::RegularFile;
+      case llvm::sys::fs::file_type::symlink_file:
+        return FileType::SymbolicLink;
+      default:
+        return FileType::Unknown;
+    }
+  }
+#else
   // The size of the file in bytes.
   auto size() const -> int64_t { return stat_buf_.st_size; }
 
@@ -273,12 +362,28 @@ class FileStatus {
     return static_cast<FileType>(stat_buf_.st_mode &
                                  static_cast<ModeType>(FileType::UnixMask));
   }
+#endif
 
   // Convenience predicates to test for specific values of `type()`.
   auto is_dir() const -> bool { return type() == FileType::Directory; }
   auto is_file() const -> bool { return type() == FileType::RegularFile; }
   auto is_symlink() const -> bool { return type() == FileType::SymbolicLink; }
 
+#ifdef _WIN32
+  // The read, write, and execute permissions for user, group, and others. See
+  // the `ModeType` documentation for how to interpret the result.
+  auto permissions() const -> ModeType {
+    return static_cast<ModeType>(status_.permissions()) & 0777;
+  }
+
+  auto mtime() const -> TimePoint { return status_.getLastModificationTime(); }
+
+  // Non-portable API only available on Windows. Returns LLVM's unique file
+  // identifier (volume serial + path/file hash).
+  auto win_unique_id() const -> llvm::sys::fs::UniqueID {
+    return status_.getUniqueID();
+  }
+#else
   // The read, write, and execute permissions for user, group, and others. See
   // the `ModeType` documentation for how to interpret the result.
   auto permissions() const -> ModeType { return stat_buf_.st_mode & 0777; }
@@ -300,6 +405,7 @@ class FileStatus {
   // meaning.
   auto unix_inode() const -> uint64_t { return stat_buf_.st_ino; }
   auto unix_uid() const -> uid_t { return stat_buf_.st_uid; }
+#endif
 
  private:
   friend DirRef;
@@ -307,7 +413,13 @@ class FileStatus {
 
   FileStatus() = default;
 
+#ifdef _WIN32
+  llvm::sys::fs::file_status status_;
+  bool is_symlink_ = false;
+  int64_t symlink_size_ = 0;
+#else
   struct stat stat_buf_ = {};
+#endif
 };
 
 // Models a held lock on a file or directory.
@@ -320,8 +432,13 @@ class FileStatus {
 class FileLock {
  public:
   enum class Kind {
+#ifdef _WIN32
+    Shared = 0,
+    Exclusive = 1,
+#else
     Shared = LOCK_SH,
     Exclusive = LOCK_EX,
+#endif
   };
   using enum Kind;
 
@@ -368,11 +485,18 @@ class Internal::FileRefBase {
   // Returns true if this refers to a valid open file, and false otherwise.
   constexpr auto is_valid() const -> bool { return fd_ != -1; }
 
+#ifdef _WIN32
+  // Non-portable API only available on Windows. Returns the underlying CRT file
+  // descriptor, for platform calls such as `_isatty` and `_get_osfhandle`. The
+  // descriptor remains owned by whatever owns this file.
+  constexpr auto win_crt_fd() const -> int { return fd_; }
+#else
   // Non-portable API only available on Unix-like systems. Returns the
   // underlying file descriptor, for the platform calls this type doesn't wrap,
   // such as `isatty` and `ioctl`. The descriptor remains owned by whatever owns
   // this file.
   constexpr auto unix_fd() const -> int { return fd_; }
+#endif
 
   // Reads the file status.
   //
@@ -475,7 +599,7 @@ class Internal::FileRefBase {
   // Any non-recoverable errors are returned to the caller.
   auto WriteFileFromString(llvm::StringRef str) -> ErrorOr<Success, FdError>;
 
-  // Attempt to acquire an advisory shared lock on this directory.
+  // Attempt to acquire an advisory shared or exclusive lock on this file.
   //
   // This is always done as a non-blocking operation, as blocking on advisory
   // locks without a deadline can easily result in build systems essentially
@@ -530,11 +654,9 @@ class Internal::FileRefBase {
 
   // State representing a potentially open file.
   //
-  // On POSIX systems, this will be a file descriptor. For moved-from and
-  // default-constructed file objects this may be an invalid negative value to
-  // signal that state.
-  //
-  // TODO: This should be customized on non-POSIX systems.
+  // On Unix-like systems this is a POSIX file descriptor; on Windows it is a
+  // CRT file descriptor (wrapping a Win32 handle via `_open_osfhandle`). For
+  // moved-from and default-constructed file objects this is `-1`.
   //
   // This member is made protected rather than private as the derived classes
   // need direct access to it in several contexts.
@@ -699,7 +821,11 @@ class DirRef {
   constexpr DirRef() = default;
 
   // Returns true if this refers to a valid open directory, and false otherwise.
+#ifdef _WIN32
+  auto is_valid() const -> bool { return is_cwd_ || dir_path_ != nullptr; }
+#else
   auto is_valid() const -> bool { return dfd_ != -1; }
+#endif
 
   // Begin reading the entries in a directory.
   //
@@ -969,12 +1095,41 @@ class DirRef {
   auto Rmtree(const std::filesystem::path& path) -> ErrorOr<Success, PathError>;
 
  protected:
+#ifdef _WIN32
+  constexpr explicit DirRef(std::filesystem::path* dir_path,
+                            bool is_cwd = false)
+      : dir_path_(dir_path), is_cwd_(is_cwd) {}
+
+  // Resolves `path` relative to this directory, rejecting empty paths and
+  // relative paths on invalid directory handles.
+  auto ResolvePath(const std::filesystem::path& path,
+                   llvm::StringLiteral format) const
+      -> ErrorOr<std::filesystem::path, PathError>;
+
+  // Returns the directory path to display in error messages (empty for CWD).
+  auto DirPathForError() const -> std::filesystem::path;
+
+  // Opens a file with the specified access and returns its CRT file descriptor.
+  auto OpenFileImpl(const std::filesystem::path& path, OpenAccess access,
+                    CreationOptions creation_options, ModeType creation_mode,
+                    OpenFlags flags) -> ErrorOr<int, PathError>;
+#else
   constexpr explicit DirRef(int dfd) : dfd_(dfd) {}
 
   // Slow-path fallback when unable to read the symlink target into a small
   // stack buffer.
   auto ReadlinkSlow(const std::filesystem::path& path)
       -> ErrorOr<std::string, PathError>;
+#endif
+
+  // Helpers to propagate errors from nested calls portably across platforms.
+  auto MakePathError(const FdError& err, llvm::StringLiteral format,
+                     const std::filesystem::path& path) const -> PathError;
+  auto MakeFdError(const PathError& err, llvm::StringLiteral format) const
+      -> FdError;
+  auto MakeInvalidArgPathError(llvm::StringLiteral format,
+                               const std::filesystem::path& path) const
+      -> PathError;
 
   // Generic implementation of the various `Open*` variants using the
   // `OpenAccess` enumerator.
@@ -983,17 +1138,28 @@ class DirRef {
                 CreationOptions creation_options, ModeType creation_mode,
                 OpenFlags flags) -> ErrorOr<File<A>, PathError>;
 
+#ifdef _WIN32
+  // State representing an open directory on Windows.
+  //
+  // `dir_path_` points to a heap-allocated absolute path owned by `Dir` or
+  // `DirRef::Reader`, keeping `DirRef` trivially copyable and stable across
+  // moves of the owning `Dir`. When `is_cwd_` is true, `dir_path_` is null and
+  // this represents the symbolic current working directory (`Cwd()`).
+  // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes):
+  std::filesystem::path* dir_path_ = nullptr;
+  // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes):
+  bool is_cwd_ = false;
+#else
   // State representing an open directory.
   //
   // On POSIX systems, this will be a file descriptor. For moved-from and
   // default-constructed file objects this may be an invalid negative value to
   // signal that state.
   //
-  // TODO: This should be customized on non-POSIX systems.
-  //
   // The directory's file descriptor is part of the protected API.
   // NOLINTNEXTLINE(misc-non-private-member-variables-in-classes):
   int dfd_ = -1;
+#endif
 };
 
 // An owning handle to an open directory.
@@ -1015,12 +1181,24 @@ class Dir : public DirRef {
   Dir() = default;
 
   // Dir objects are move-only as they model ownership.
+#ifdef _WIN32
+  Dir(Dir&& arg) noexcept
+      : DirRef(std::exchange(arg.dir_path_, nullptr),
+               std::exchange(arg.is_cwd_, false)) {}
+  auto operator=(Dir&& arg) noexcept -> Dir& {
+    Destroy();
+    dir_path_ = std::exchange(arg.dir_path_, nullptr);
+    is_cwd_ = std::exchange(arg.is_cwd_, false);
+    return *this;
+  }
+#else
   Dir(Dir&& arg) noexcept : DirRef(std::exchange(arg.dfd_, -1)) {}
   auto operator=(Dir&& arg) noexcept -> Dir& {
     Destroy();
     dfd_ = std::exchange(arg.dfd_, -1);
     return *this;
   }
+#endif
   Dir(const Dir&) = delete;
   auto operator=(const Dir&) -> Dir& = delete;
   constexpr ~Dir();
@@ -1043,7 +1221,12 @@ class Dir : public DirRef {
   friend DirRef;
   friend RemovingDir;
 
+#ifdef _WIN32
+  explicit constexpr Dir(std::filesystem::path* dir_path, bool is_cwd = false)
+      : DirRef(dir_path, is_cwd) {}
+#else
   explicit constexpr Dir(int dfd) : DirRef(dfd) {}
+#endif
 
   // Prevent implicit creation of a `Dir` object from a `RemovingDir` which will
   // end up as a subclass below and represent harmful implicit slicing. Instead,
@@ -1103,6 +1286,24 @@ class RemovingDir : public Dir {
 // directory. It can only be produced by iterating over a `DirRef::Reader`.
 class DirRef::Entry {
  public:
+#ifdef _WIN32
+  // The name of the entry.
+  auto name() const -> const char* { return name_.c_str(); }
+
+  auto is_unknown_type() const -> bool {
+    return !is_symlink_ && type_ == llvm::sys::fs::file_type::type_unknown;
+  }
+
+  auto is_known_dir() const -> bool {
+    return !is_symlink_ && type_ == llvm::sys::fs::file_type::directory_file;
+  }
+  auto is_known_regular_file() const -> bool {
+    return !is_symlink_ && type_ == llvm::sys::fs::file_type::regular_file;
+  }
+  auto is_known_symlink() const -> bool {
+    return is_symlink_ || type_ == llvm::sys::fs::file_type::symlink_file;
+  }
+#else
   // The name of the entry.
   //
   // This is exposed as a null-terminated C-string as that is the most common
@@ -1123,15 +1324,22 @@ class DirRef::Entry {
   auto is_known_dir() const -> bool { return dent_->d_type == DT_DIR; }
   auto is_known_regular_file() const -> bool { return dent_->d_type == DT_REG; }
   auto is_known_symlink() const -> bool { return dent_->d_type == DT_LNK; }
+#endif
 
  private:
   friend Dir::Reader;
   friend Dir::Iterator;
 
   Entry() = default;
+#ifdef _WIN32
+  std::string name_;
+  llvm::sys::fs::file_type type_ = llvm::sys::fs::file_type::type_unknown;
+  bool is_symlink_ = false;
+#else
   explicit Entry(dirent* dent) : dent_(dent) {}
 
   dirent* dent_ = nullptr;
+#endif
 };
 
 // An iterator into a `DirRef::Reader`, used for walking the entries in a
@@ -1148,9 +1356,13 @@ class DirRef::Iterator
   Iterator() = default;
 
   auto operator==(const Iterator& rhs) const -> bool {
+#ifdef _WIN32
+    return iter_ == rhs.iter_;
+#else
     CARBON_DCHECK(dirp_ == nullptr || rhs.dirp_ == nullptr ||
                   dirp_ == rhs.dirp_);
     return entry_.dent_ == rhs.entry_.dent_;
+#endif
   }
 
   auto operator*() const [[clang::lifetimebound]] -> const Entry& {
@@ -1161,6 +1373,13 @@ class DirRef::Iterator
  private:
   friend Dir::Reader;
 
+#ifdef _WIN32
+  explicit Iterator(const std::filesystem::path* dir_path, bool is_cwd);
+  auto PopulateEntry() -> void;
+
+  llvm::sys::fs::directory_iterator iter_;
+  Entry entry_;
+#else
   // Construct a begin iterator for a specific directory stream.
   explicit Iterator(DIR* dirp) : dirp_(dirp) {
     // Increment immediately to populate the initial entry.
@@ -1169,6 +1388,7 @@ class DirRef::Iterator
 
   DIR* dirp_ = nullptr;
   Entry entry_;
+#endif
 };
 
 // A reader for a directory.
@@ -1191,6 +1411,18 @@ class DirRef::Iterator
 class DirRef::Reader : public DirRef {
  public:
   Reader() = default;
+#ifdef _WIN32
+  Reader(Reader&& arg) noexcept
+      : DirRef(std::exchange(arg.dir_path_, nullptr),
+               std::exchange(arg.is_cwd_, false)) {}
+  Reader(const Reader&) = delete;
+  auto operator=(Reader&& arg) noexcept -> Reader& {
+    Destroy();
+    dir_path_ = std::exchange(arg.dir_path_, nullptr);
+    is_cwd_ = std::exchange(arg.is_cwd_, false);
+    return *this;
+  }
+#else
   Reader(Reader&& arg) noexcept
       // The directory file descriptor isn't owning, but clear it for clarity.
       : DirRef(std::exchange(arg.dfd_, -1)),
@@ -1203,6 +1435,7 @@ class DirRef::Reader : public DirRef {
     dirp_ = std::exchange(arg.dirp_, nullptr);
     return *this;
   }
+#endif
   ~Reader() { Destroy(); }
 
   // Compute the begin and end iterators for reading the entries of the
@@ -1214,20 +1447,58 @@ class DirRef::Reader : public DirRef {
   friend DirRef;
   friend Dir;
 
+#ifdef _WIN32
+  explicit Reader(std::filesystem::path* dir_path, bool is_cwd)
+      : DirRef(dir_path, is_cwd) {}
+  auto Destroy() -> void;
+#else
   explicit Reader(DIR* dirp) : DirRef(dirfd(dirp)), dirp_(dirp) {}
   auto Destroy() -> void;
 
   DIR* dirp_ = nullptr;
+#endif
 };
 
 namespace Internal {
-// Base class for `errno` errors.
+// Base class for platform filesystem errors.
 //
-// This is where we extract common APIs and logic for querying the specific
-// `errno`-based error.
+// This extracts common APIs and logic for querying the specific error kind.
 template <typename ErrorT>
 class ErrnoErrorBase : public ErrorBase<ErrorT> {
  public:
+#ifdef _WIN32
+  // Accessors to test for specific kinds of errors that are portably available.
+  auto already_exists() const -> bool { return ec_ == std::errc::file_exists; }
+  auto is_dir() const -> bool { return ec_ == std::errc::is_a_directory; }
+  auto no_entity() const -> bool {
+    return ec_ == std::errc::no_such_file_or_directory;
+  }
+  auto not_dir() const -> bool { return ec_ == std::errc::not_a_directory; }
+  auto access_denied() const -> bool {
+    return ec_ == std::errc::permission_denied;
+  }
+  auto would_block() const -> bool {
+    return ec_ == std::errc::operation_would_block ||
+           ec_ == std::errc::resource_unavailable_try_again ||
+           ec_ == std::errc::no_lock_available;
+  }
+
+  // Specific to `Rmdir` and `Rename` operations that remove a directory name,
+  // two different error values can be used.
+  auto not_empty() const -> bool {
+    return ec_ == std::errc::directory_not_empty ||
+           ec_ == std::errc::file_exists;
+  }
+
+  auto error_code() const -> std::error_code { return ec_; }
+
+ protected:
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility):
+  explicit ErrnoErrorBase(std::error_code ec) : ec_(ec) {}
+
+ private:
+  std::error_code ec_;
+#else
   // Accessors to test for specific kinds of errors that are portably available.
   auto already_exists() const -> bool { return errnum_ == EEXIST; }
   auto is_dir() const -> bool { return errnum_ == EISDIR; }
@@ -1244,7 +1515,6 @@ class ErrnoErrorBase : public ErrorBase<ErrorT> {
 
   // Accessor for the `errno` based error number. This is not a portable API,
   // code using it will need to be ported to use a different API on Windows.
-  // TODO: Add a Windows-specific API for its low-level error information.
   auto unix_errnum() const -> int { return errnum_; }
 
  protected:
@@ -1253,6 +1523,7 @@ class ErrnoErrorBase : public ErrorBase<ErrorT> {
 
  private:
   int errnum_;
+#endif
 };
 }  // namespace Internal
 
@@ -1266,7 +1537,7 @@ class ErrnoErrorBase : public ErrorBase<ErrorT> {
 // can be included in the custom format string. The format string should include
 // a placeholder for the file descriptor to be substituted into. The format
 // string should describe the _operation_ that failed, once rendered it will
-// have `failed: ` and a description of the `errno`-indicated failure appended.
+// have `failed: ` and a description of the failure appended.
 //
 // For example:
 //
@@ -1282,7 +1553,7 @@ class FdError : public Internal::ErrnoErrorBase<FdError> {
 
   // Prints this error to the provided string.
   //
-  // Works to render the `errno` in a friendly way and includes the file
+  // Works to render the error in a friendly way and includes the file
   // descriptor for context.
   auto Print(llvm::raw_ostream& out) const -> void;
 
@@ -1295,25 +1566,37 @@ class FdError : public Internal::ErrnoErrorBase<FdError> {
   friend DirRef;
   friend Dir;
 
+#ifdef _WIN32
+  explicit FdError(std::error_code ec, llvm::StringLiteral format, int fd)
+      : ErrnoErrorBase(ec), target_(std::to_string(fd)), format_(format) {}
+  explicit FdError(std::error_code ec, llvm::StringLiteral format,
+                   const std::filesystem::path& dir_path)
+      : ErrnoErrorBase(ec),
+        target_(dir_path.empty() ? std::string("CWD") : dir_path.string()),
+        format_(format) {}
+
+  std::string target_;
+  llvm::StringLiteral format_;
+#else
   explicit FdError(int errnum, llvm::StringLiteral format, int fd)
       : ErrnoErrorBase(errnum), fd_(fd), format_(format) {}
 
   int fd_;
   llvm::StringLiteral format_;
+#endif
 };
 
 // Error from a path-based operation.
 //
 // This is the implementation of the path-based error type. When operations on a
 // path fail, they use this object to convey the error plus both the path and
-// relevant directory FD leading to the failure.
+// relevant directory context leading to the failure.
 //
 // Specific context on the exact point or nature of the operation that failed
 // can be included in the custom format string. The format string should include
-// placeholders for the path and the directory file descriptor to be substituted
-// into. The format string should describe the _operation_ that failed, once
-// rendered it will have `failed: ` and a description of the `errno`-indicated
-// failure appended.
+// placeholders for the path and the directory context to be substituted into.
+// The format string should describe the _operation_ that failed, once rendered
+// it will have `failed: ` and a description of the failure appended.
 //
 // For example:
 //
@@ -1329,14 +1612,26 @@ class PathError : public Internal::ErrnoErrorBase<PathError> {
 
   // Prints this error to the provided string.
   //
-  // Works to render the `errno` in a friendly way and includes the path and
-  // directory file descriptor for context.
+  // Works to render the error in a friendly way and includes the path and
+  // directory context.
   auto Print(llvm::raw_ostream& out) const -> void;
 
  private:
   friend DirRef;
   friend Dir;
 
+#ifdef _WIN32
+  explicit PathError(std::error_code ec, llvm::StringLiteral format,
+                     std::filesystem::path path, std::filesystem::path dir_path)
+      : ErrnoErrorBase(ec),
+        dir_path_(std::move(dir_path)),
+        path_(std::move(path)),
+        format_(format) {}
+
+  std::filesystem::path dir_path_;
+  std::filesystem::path path_;
+  llvm::StringLiteral format_;
+#else
   explicit PathError(int errnum, llvm::StringLiteral format,
                      std::filesystem::path path, int dir_fd)
       : ErrnoErrorBase(errnum),
@@ -1347,10 +1642,12 @@ class PathError : public Internal::ErrnoErrorBase<PathError> {
   int dir_fd_;
   std::filesystem::path path_;
   llvm::StringLiteral format_;
+#endif
 };
 
 // Implementation details only below.
 
+#ifndef _WIN32
 namespace Internal {
 
 inline auto DurationToTimespec(Duration d) -> timespec {
@@ -1362,12 +1659,219 @@ inline auto DurationToTimespec(Duration d) -> timespec {
 }
 
 }  // namespace Internal
+#endif
 
+#ifdef _WIN32
+consteval auto Stdin() -> ReadFileRef { return ReadFileRef(0); }
+consteval auto Stdout() -> WriteFileRef { return WriteFileRef(1); }
+consteval auto Stderr() -> WriteFileRef { return WriteFileRef(2); }
+
+consteval auto Cwd() -> Dir {
+  return Dir(/*dir_path=*/nullptr, /*is_cwd=*/true);
+}
+#else
 consteval auto Stdin() -> ReadFileRef { return ReadFileRef(STDIN_FILENO); }
 consteval auto Stdout() -> WriteFileRef { return WriteFileRef(STDOUT_FILENO); }
 consteval auto Stderr() -> WriteFileRef { return WriteFileRef(STDERR_FILENO); }
 
 consteval auto Cwd() -> Dir { return Dir(AT_FDCWD); }
+#endif
+
+inline auto Internal::FileRefBase::WriteCompleteBuffer(
+    llvm::ArrayRef<std::byte> buffer) -> ErrorOr<Success, FdError> {
+  while (!buffer.empty()) {
+    CARBON_ASSIGN_OR_RETURN(buffer, WriteFromBuffer(buffer));
+  }
+  return Success();
+}
+
+inline auto Internal::FileRefBase::WriteStream() -> llvm::raw_fd_ostream {
+  return llvm::raw_fd_ostream(fd_, /*shouldClose=*/false);
+}
+
+inline auto Internal::FileRefBase::ReadOnlyDestroy() -> void {
+  if (fd_ >= 0) {
+    auto result = std::move(*this).Close();
+    // Intentionally drop errors, as there is no interesting error here. There
+    // is no risk of data loss, and the least bad thing we can do is to just
+    // leak the file descriptor.
+    static_cast<void>(result);
+  }
+}
+
+inline auto Internal::FileRefBase::WriteableDestroy() -> void {
+  CARBON_CHECK(
+      fd_ == -1,
+      "Cannot destroy an open writable file, they _must_ be destroyed by "
+      "calling `Close` and handling any errors to avoid data loss.");
+}
+
+template <OpenAccess A>
+auto FileRef<A>::Truncate(int64_t new_size) -> ErrorOr<Success, FdError>
+  requires Writeable
+{
+  return FileRefBase::Truncate(new_size);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::ReadToBuffer(llvm::MutableArrayRef<std::byte> buffer)
+    -> ErrorOr<llvm::MutableArrayRef<std::byte>, FdError>
+  requires Readable
+{
+  return FileRefBase::ReadToBuffer(buffer);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::ReadFileToString() -> ErrorOr<std::string, FdError>
+  requires Readable
+{
+  return FileRefBase::ReadFileToString();
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
+    -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>
+  requires Writeable
+{
+  return FileRefBase::WriteFromBuffer(buffer);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteCompleteBuffer(llvm::ArrayRef<std::byte> buffer)
+    -> ErrorOr<Success, FdError>
+  requires Writeable
+{
+  return FileRefBase::WriteCompleteBuffer(buffer);
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteStream() -> llvm::raw_fd_ostream
+  requires Writeable
+{
+  return FileRefBase::WriteStream();
+}
+
+template <OpenAccess A>
+auto FileRef<A>::WriteFileFromString(llvm::StringRef str)
+    -> ErrorOr<Success, FdError>
+  requires Writeable
+{
+  return FileRefBase::WriteFileFromString(str);
+}
+
+template <OpenAccess A>
+auto File<A>::Destroy() -> void {
+  if constexpr (Writeable) {
+    this->WriteableDestroy();
+  } else {
+    this->ReadOnlyDestroy();
+  }
+}
+
+inline auto DirRef::ReadEntries()
+    -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError> {
+  llvm::SmallVector<std::filesystem::path> entries;
+  CARBON_RETURN_IF_ERROR(AppendEntriesIf(entries));
+  return entries;
+}
+
+inline auto DirRef::OpenReadOnly(const std::filesystem::path& path,
+                                 CreationOptions creation_options,
+                                 ModeType creation_mode, OpenFlags flags)
+    -> ErrorOr<ReadFile, PathError> {
+  return OpenImpl<OpenAccess::ReadOnly>(path, creation_options, creation_mode,
+                                        flags);
+}
+
+inline auto DirRef::OpenWriteOnly(const std::filesystem::path& path,
+                                  CreationOptions creation_options,
+                                  ModeType creation_mode, OpenFlags flags)
+    -> ErrorOr<WriteFile, PathError> {
+  return OpenImpl<OpenAccess::WriteOnly>(path, creation_options, creation_mode,
+                                         flags);
+}
+
+inline auto DirRef::OpenReadWrite(const std::filesystem::path& path,
+                                  CreationOptions creation_options,
+                                  ModeType creation_mode, OpenFlags flags)
+    -> ErrorOr<ReadWriteFile, PathError> {
+  return OpenImpl<OpenAccess::ReadWrite>(path, creation_options, creation_mode,
+                                         flags);
+}
+
+constexpr Dir::~Dir() { Destroy(); }
+
+inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {
+  arg.path_.clear();
+}
+
+inline RemovingDir::~RemovingDir() {
+  if (is_valid()) {
+    auto result = std::move(*this).Remove();
+    CARBON_CHECK(result.ok(), "{0}", result.error());
+  }
+}
+
+inline auto RemovingDir::Remove() && -> ErrorOr<Success, PathError> {
+  CARBON_CHECK(is_valid(),
+               "Unexpected explicit remove on a `RemovingDir` with no owned "
+               "directory!");
+
+  // Close the directory base object prior to removing it.
+  static_cast<Dir&>(*this) = Dir();
+  return Cwd().Rmtree(path_);
+}
+
+#ifdef _WIN32
+
+inline auto DirRef::MakePathError(const FdError& err,
+                                  llvm::StringLiteral format,
+                                  const std::filesystem::path& path) const
+    -> PathError {
+  return PathError(err.error_code(), format, path, DirPathForError());
+}
+
+inline auto DirRef::MakeFdError(const PathError& err,
+                                llvm::StringLiteral format) const -> FdError {
+  return FdError(err.error_code(), format, DirPathForError());
+}
+
+inline auto DirRef::MakeInvalidArgPathError(
+    llvm::StringLiteral format, const std::filesystem::path& path) const
+    -> PathError {
+  return PathError(std::make_error_code(std::errc::invalid_argument), format,
+                   path, DirPathForError());
+}
+
+template <OpenAccess A>
+inline auto DirRef::OpenImpl(const std::filesystem::path& path,
+                             CreationOptions creation_options,
+                             ModeType creation_mode, OpenFlags flags)
+    -> ErrorOr<File<A>, PathError> {
+  CARBON_ASSIGN_OR_RETURN(
+      int fd, OpenFileImpl(path, A, creation_options, creation_mode, flags));
+  return File<A>(fd);
+}
+
+constexpr auto Dir::Destroy() -> void {
+  if (dir_path_ != nullptr) {
+    delete dir_path_;
+    dir_path_ = nullptr;
+  }
+  is_cwd_ = false;
+}
+
+inline auto Dir::Reader::end() -> Iterator { return Iterator(); }
+
+inline auto Dir::Reader::Destroy() -> void {
+  if (dir_path_ != nullptr) {
+    delete dir_path_;
+    dir_path_ = nullptr;
+  }
+  is_cwd_ = false;
+}
+
+#else
 
 inline auto FileLock::Destroy() -> void {
   if (fd_ == -1) {
@@ -1478,18 +1982,6 @@ inline auto Internal::FileRefBase::WriteFromBuffer(
   }
 }
 
-inline auto Internal::FileRefBase::WriteCompleteBuffer(
-    llvm::ArrayRef<std::byte> buffer) -> ErrorOr<Success, FdError> {
-  while (!buffer.empty()) {
-    CARBON_ASSIGN_OR_RETURN(buffer, WriteFromBuffer(buffer));
-  }
-  return Success();
-}
-
-inline auto Internal::FileRefBase::WriteStream() -> llvm::raw_fd_ostream {
-  return llvm::raw_fd_ostream(fd_, /*shouldClose=*/false);
-}
-
 inline auto Internal::FileRefBase::Close() && -> ErrorOr<Success, FdError> {
   // Put the file in a moved-from state immediately as it is invalid to
   // retry closing or use the file in any way even if the close fails.
@@ -1503,83 +1995,22 @@ inline auto Internal::FileRefBase::Close() && -> ErrorOr<Success, FdError> {
   return FdError(errno, "File::Close on '{0}'", fd);
 }
 
-inline auto Internal::FileRefBase::ReadOnlyDestroy() -> void {
-  if (fd_ >= 0) {
-    auto result = std::move(*this).Close();
-    // Intentionally drop errors, as there is no interesting error here. There
-    // is no risk of data loss, and the least bad thing we can do is to just
-    // leak the file descriptor.
-    static_cast<void>(result);
-  }
+inline auto DirRef::MakePathError(const FdError& err,
+                                  llvm::StringLiteral format,
+                                  const std::filesystem::path& path) const
+    -> PathError {
+  return PathError(err.unix_errnum(), format, path, dfd_);
 }
 
-inline auto Internal::FileRefBase::WriteableDestroy() -> void {
-  CARBON_CHECK(
-      fd_ == -1,
-      "Cannot destroy an open writable file, they _must_ be destroyed by "
-      "calling `Close` and handling any errors to avoid data loss.");
+inline auto DirRef::MakeFdError(const PathError& err,
+                                llvm::StringLiteral format) const -> FdError {
+  return FdError(err.unix_errnum(), format, dfd_);
 }
 
-template <OpenAccess A>
-auto FileRef<A>::Truncate(int64_t new_size) -> ErrorOr<Success, FdError>
-  requires Writeable
-{
-  return FileRefBase::Truncate(new_size);
-}
-
-template <OpenAccess A>
-auto FileRef<A>::ReadToBuffer(llvm::MutableArrayRef<std::byte> buffer)
-    -> ErrorOr<llvm::MutableArrayRef<std::byte>, FdError>
-  requires Readable
-{
-  return FileRefBase::ReadToBuffer(buffer);
-}
-
-template <OpenAccess A>
-auto FileRef<A>::ReadFileToString() -> ErrorOr<std::string, FdError>
-  requires Readable
-{
-  return FileRefBase::ReadFileToString();
-}
-
-template <OpenAccess A>
-auto FileRef<A>::WriteFromBuffer(llvm::ArrayRef<std::byte> buffer)
-    -> ErrorOr<llvm::ArrayRef<std::byte>, FdError>
-  requires Writeable
-{
-  return FileRefBase::WriteFromBuffer(buffer);
-}
-
-template <OpenAccess A>
-auto FileRef<A>::WriteCompleteBuffer(llvm::ArrayRef<std::byte> buffer)
-    -> ErrorOr<Success, FdError>
-  requires Writeable
-{
-  return FileRefBase::WriteCompleteBuffer(buffer);
-}
-
-template <OpenAccess A>
-auto FileRef<A>::WriteStream() -> llvm::raw_fd_ostream
-  requires Writeable
-{
-  return FileRefBase::WriteStream();
-}
-
-template <OpenAccess A>
-auto FileRef<A>::WriteFileFromString(llvm::StringRef str)
-    -> ErrorOr<Success, FdError>
-  requires Writeable
-{
-  return FileRefBase::WriteFileFromString(str);
-}
-
-template <OpenAccess A>
-auto File<A>::Destroy() -> void {
-  if constexpr (Writeable) {
-    this->WriteableDestroy();
-  } else {
-    this->ReadOnlyDestroy();
-  }
+inline auto DirRef::MakeInvalidArgPathError(
+    llvm::StringLiteral format, const std::filesystem::path& path) const
+    -> PathError {
+  return PathError(EINVAL, format, path, dfd_);
 }
 
 inline auto DirRef::Read() -> ErrorOr<Reader, FdError> {
@@ -1592,13 +2023,6 @@ inline auto DirRef::Read() -> ErrorOr<Reader, FdError> {
     return FdError(errno, "Dir::Read on '{0}'", dfd_);
   }
   return Dir(dup_dfd).TakeAndRead();
-}
-
-inline auto DirRef::ReadEntries()
-    -> ErrorOr<llvm::SmallVector<std::filesystem::path>, FdError> {
-  llvm::SmallVector<std::filesystem::path> entries;
-  CARBON_RETURN_IF_ERROR(AppendEntriesIf(entries));
-  return entries;
 }
 
 inline auto DirRef::Access(const std::filesystem::path& path,
@@ -1678,30 +2102,6 @@ inline auto DirRef::Readlink(const std::filesystem::path& path)
 
   // Otherwise, fallback to an out-of-line function to handle the slow path.
   return ReadlinkSlow(path);
-}
-
-inline auto DirRef::OpenReadOnly(const std::filesystem::path& path,
-                                 CreationOptions creation_options,
-                                 ModeType creation_mode, OpenFlags flags)
-    -> ErrorOr<ReadFile, PathError> {
-  return OpenImpl<OpenAccess::ReadOnly>(path, creation_options, creation_mode,
-                                        flags);
-}
-
-inline auto DirRef::OpenWriteOnly(const std::filesystem::path& path,
-                                  CreationOptions creation_options,
-                                  ModeType creation_mode, OpenFlags flags)
-    -> ErrorOr<WriteFile, PathError> {
-  return OpenImpl<OpenAccess::WriteOnly>(path, creation_options, creation_mode,
-                                         flags);
-}
-
-inline auto DirRef::OpenReadWrite(const std::filesystem::path& path,
-                                  CreationOptions creation_options,
-                                  ModeType creation_mode, OpenFlags flags)
-    -> ErrorOr<ReadWriteFile, PathError> {
-  return OpenImpl<OpenAccess::ReadWrite>(path, creation_options, creation_mode,
-                                         flags);
 }
 
 inline auto DirRef::Rename(const std::filesystem::path& path, DirRef target_dir,
@@ -1791,8 +2191,6 @@ inline auto DirRef::OpenImpl(const std::filesystem::path& path,
   }
 }
 
-constexpr Dir::~Dir() { Destroy(); }
-
 inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
   // Transition our file descriptor into a directory stream, clearing it in the
   // process.
@@ -1802,10 +2200,6 @@ inline auto Dir::TakeAndRead() && -> ErrorOr<Reader, FdError> {
     return FdError(errno, "Dir::Read on '{0}'", dfd);
   }
   return Dir::Reader(dirp);
-}
-
-inline Dir::Dir(RemovingDir&& arg) noexcept : Dir(static_cast<Dir&&>(arg)) {
-  arg.path_.clear();
 }
 
 constexpr auto Dir::Destroy() -> void {
@@ -1838,23 +2232,6 @@ constexpr auto Dir::Destroy() -> void {
                  FdError(errno, "Dir::Destroy on '{0}'", dfd_));
   }
   dfd_ = -1;
-}
-
-inline RemovingDir::~RemovingDir() {
-  if (dfd_ != -1) {
-    auto result = std::move(*this).Remove();
-    CARBON_CHECK(result.ok(), "{0}", result.error());
-  }
-}
-
-inline auto RemovingDir::Remove() && -> ErrorOr<Success, PathError> {
-  CARBON_CHECK(dfd_ != -1,
-               "Unexpected explicit remove on a `RemovingDir` with no owned "
-               "directory!");
-
-  // Close the directory base object prior to removing it.
-  static_cast<Dir&>(*this) = Dir();
-  return Cwd().Rmtree(path_);
 }
 
 inline auto Dir::Iterator::operator++() -> Iterator& {
@@ -1898,6 +2275,8 @@ inline auto Dir::Reader::Destroy() -> void {
     dfd_ = -1;
   }
 }
+
+#endif
 
 }  // namespace Carbon::Filesystem
 
