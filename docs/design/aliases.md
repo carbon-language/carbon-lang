@@ -18,6 +18,22 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## TODO
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#alias):
+>
+> -   `alias A = B;` is defined by converting compile-time expression `B` to
+>     value `V` and declaring `let fwd A: auto = V;` (preserving phase and
+>     value),
+> -   `alias ref A = R;` (`let ref A: auto = R;`) for reference expressions with
+>     compile-time-known addresses,
+> -   allowed scopes (file, function body, `class` for compile-time constants,
+>     `impl` for associated functions, and `interface`/`constraint` with
+>     `final`) and access modifiers,
+> -   [`using A.B.C;` and `using D;`](/proposals/p005389-generic-across-extended-types.md#using)
+>     shorthand for `alias`, and
+> -   namespaces are no longer aliased with `alias` (see
+>     [namespace aliases](code_and_name_organization/README.md#aliasing)).
+
 This is a skeletal design, added to support [the overview](README.md). It should
 not be treated as accepted by the core team; rather, it is a placeholder until
 we have more time to examine this detail. Please feel welcome to rewrite and

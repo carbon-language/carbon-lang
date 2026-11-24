@@ -34,6 +34,13 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+> **TODO:** Update this keyword list (and the syntax highlighters listed below)
+> to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md):
+> remove `like` and add `anchor`, `call`, `exact`, `exttype`, `exttypeof`,
+> `fwd`, `implicit_from`, `implicit_into`, and `using` (and verify whether
+> `match_first` should also be listed).
+
 <!--
 Keep in sync:
 - utils/highlightjs/highlightjs_carbon_lang.js

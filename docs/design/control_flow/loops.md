@@ -111,7 +111,7 @@ values:
 
 ```carbon
 {
-  let range:? auto = <range>;
+  let fwd range: auto = <range>;
   var cursor: auto = range.(Iterate.NewCursor)();
   while (true) {
     match (range.(Iterate.Next)(cursor)) {
@@ -122,10 +122,10 @@ values:
 }
 ```
 
-> **TODO:** The above uses the deduced extended type syntax `:? auto` from
-> in-progress proposal
-> [#5389](https://github.com/carbon-language/carbon-lang/pull/5389), and should
-> be updated to match the final state of that proposal.
+> **Note:** The above uses the deduced extended type syntax `fwd range: auto`
+> from
+> [proposal #5389](/proposals/p005389-generic-across-extended-types.md#auto-extended-type-bindings).
+> TODO: Update this link once design docs are updated to reflect that proposal.
 
 > **Note:** Any temporaries in `<range>` will remain live until the end of the
 > loop.

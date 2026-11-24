@@ -129,6 +129,14 @@ would, in the cases where they overlap.
 
 #### Name binding patterns
 
+> **TODO:** Update this section and [Anonymous bindings](#anonymous-bindings) to
+> reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#specifying-the-extended-type-of-a-binding):
+> `fwd` binding patterns (`fwd n: B`, `fwd _: B`), overriding contextual default
+> phases, allowed nesting (tuple, struct, pack expansions, `unused`), and
+> disallowed combinations with other keyword binding modifiers or pattern
+> operators. See [Extended types](extended_types.md).
+
 A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= `ref`? (_identifier_ `:` _expression_ | `self` (`:`
@@ -310,6 +318,14 @@ fn H2(p: X) { G(p); }
 
 The above is only an illustration; the behavior of type deduction is not yet
 specified.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#auto-extended-type):
+> `auto` extended type deduction (`let fwd x: auto = y;`),
+> [deducing `Core.ExtType` parameters](/proposals/p005389-generic-across-extended-types.md#deducing-an-extended-type-value)
+> (including `ref`/`fwd` call-site marker rules and category conversions for
+> `Core.No*ExtType`), and deducing types through `where .type = ...`. See
+> [Extended types](extended_types.md).
 
 #### Alternatives considered
 
@@ -867,8 +883,10 @@ Evaluation of the last line involves 6 function calls:
 5.  Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
 6.  Call `B.(Core.Copy).Op`.
 
-> **Note:** These `Core` interfaces haven't been specified yet, and their
-> details may change.
+> **Note:** `Core.ImplicitAsPrimitive` is defined in
+> [proposal #5389: Generic across extended types](/proposals/p005389-generic-across-extended-types.md#primitive-conversion-interfaces)
+> (**TODO:** update this example to reflect that proposal); `Core.Copy` has not
+> been specified yet, and its details may change.
 
 To define the evaluation order of these calls, we have to consider the
 dependencies between them, which we'll model as a DAG, with function calls as
