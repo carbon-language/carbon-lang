@@ -288,9 +288,9 @@ fn Test() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
   // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR:        · ───────────────────┬───────────────────
-  // CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·             │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MakeClass();
