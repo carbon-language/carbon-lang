@@ -27,6 +27,7 @@
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/pattern.h"
+#include "toolchain/sem_ir/stringify.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -58,14 +59,32 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ArrayInit inst)
       SemIR::TupleValue{.type_id = inst.type_id, .elements_id = inst.inits_id});
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::ArrayType inst) -> ConstantEvalResult {
-  auto orig_inst = context.insts().GetAs<SemIR::ArrayType>(inst_id);
-  auto error_loc =
-      context.insts().GetCanonicalLocId(orig_inst.bound_id).has_value()
-          ? orig_inst.bound_id
-          : inst_id;
-  return ValidateArrayType(context, SemIR::LocId(error_loc), inst)
+// Returns the `LocId` corresponding to `source_inst_id`, where `import_ir_id`
+// identifies the IR that `source_inst_id` belongs to.
+static auto LocIdFromSourceInst(Context& context,
+                                SemIR::ImportIRId import_ir_id,
+                                SemIR::InstId source_inst_id) -> SemIR::LocId {
+  if (import_ir_id != SemIR::ImportIRId::Local) {
+    return context.import_ir_insts().Add(
+        SemIR::ImportIRInst(import_ir_id, source_inst_id));
+  } else {
+    return SemIR::LocId(source_inst_id);
+  }
+}
+
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id, SemIR::ArrayType inst)
+    -> ConstantEvalResult {
+  const SemIR::File& source_ir = *context.import_irs().Get(import_ir_id).sem_ir;
+  auto source_inst = source_ir.insts().GetAs<SemIR::ArrayType>(source_inst_id);
+  auto source_error_inst_id =
+      source_ir.insts().GetCanonicalLocId(source_inst.bound_id).has_value()
+          ? source_inst.bound_id
+          : source_inst_id;
+  return ValidateArrayType(
+             context,
+             LocIdFromSourceInst(context, import_ir_id, source_error_inst_id),
+             inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -101,12 +120,14 @@ auto EvalConstantInst(Context& context, SemIR::WrapperBinding inst)
   return ConstantEvalResult::NotConstant;
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::AcquireValue inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id, SemIR::AcquireValue inst)
+    -> ConstantEvalResult {
   SemIR::ConstantId const_id = SemIR::ConstantId::NotConstant;
   if (const auto* var_decl = GetAsClangVarDecl(context, inst.value_id)) {
-    const_id =
-        EvalCppVarDecl(context, SemIR::LocId(inst_id), var_decl, inst.type_id);
+    const_id = EvalCppVarDecl(
+        context, LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+        var_decl, inst.type_id);
   } else if (auto temporary =
                  context.insts().TryGetAs<SemIR::Temporary>(inst.value_id)) {
     const_id = context.constant_values().Get(temporary->init_id);
@@ -234,9 +255,12 @@ auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::FloatType inst) -> ConstantEvalResult {
-  return ValidateFloatTypeAndSetKind(context, SemIR::LocId(inst_id), inst)
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id, SemIR::FloatType inst)
+    -> ConstantEvalResult {
+  return ValidateFloatTypeAndSetKind(
+             context,
+             LocIdFromSourceInst(context, import_ir_id, source_inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -259,7 +283,8 @@ auto EvalConstantInst(Context& context, SemIR::ImplSelfWitness inst)
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
   // Canonicalize the query self to reduce the number of unique witness
   // instructions and enable constant value comparisons.
@@ -269,9 +294,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
           context, context.constant_values().Get(inst.query_self_inst_id),
           &self_facet_value_inst_id));
 
-  auto witness_id = EvalLookupSingleFinalWitness(context, SemIR::LocId(inst_id),
-                                                 inst, self_facet_value_inst_id,
-                                                 EvalImplLookupMode::Normal);
+  auto witness_id = EvalLookupSingleFinalWitness(
+      context, LocIdFromSourceInst(context, import_ir_id, source_inst_id), inst,
+      self_facet_value_inst_id, EvalImplLookupMode::Normal);
   if (witness_id == SemIR::ErrorInst::ConstantId) {
     return ConstantEvalResult::Error;
   }
@@ -421,7 +446,8 @@ static auto TryFindValueInRewriteConstraints(
   return SemIR::ConstantId::None;
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::ImplWitnessAccess inst) -> ConstantEvalResult {
   CARBON_DIAGNOSTIC(ImplAccessMemberBeforeSet, Error,
                     "accessing member from impl before it has a defined value");
@@ -444,7 +470,7 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
           // specific definition, which we must ensure is resolved before
           // accessing them.
           if (witness.specific_id.has_value()) {
-            ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
+            ResolveSpecificDefinition(context, SemIR::LocId(source_inst_id),
                                       witness.specific_id);
           }
           return ConstantEvalResult::Existing(GetConstantValueInSpecific(
@@ -454,7 +480,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       // If we get here, this impl witness table entry has not been populated
       // yet, because the impl was referenced within its own definition.
       // TODO: Add note pointing to the impl declaration.
-      context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+      context.emitter().Emit(
+          LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+          ImplAccessMemberBeforeSet);
       return ConstantEvalResult::Error;
     }
     case CARBON_KIND(SemIR::CustomWitness custom_witness): {
@@ -469,7 +497,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       // If we get here, this synthesized witness table entry has not been
       // populated yet.
       // TODO: Is this reachable? We have no test coverage for this diagnostic.
-      context.emitter().Emit(inst_id, ImplAccessMemberBeforeSet);
+      context.emitter().Emit(
+          LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+          ImplAccessMemberBeforeSet);
       return ConstantEvalResult::Error;
     }
     case CARBON_KIND(SemIR::LookupImplWitness witness): {
@@ -484,8 +514,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       auto search_facet = witness.query_self_inst_id;
       while (true) {
         auto const_id = TryFindValueInRewriteConstraints(
-            context, SemIR::LocId(inst_id), access_qualifiers,
-            witness.query_specific_interface_id, inst.index, search_facet);
+            context, LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+            access_qualifiers, witness.query_specific_interface_id, inst.index,
+            search_facet);
         if (const_id.has_value()) {
           return ConstantEvalResult::Existing(const_id);
         }
@@ -535,9 +566,12 @@ auto EvalConstantInst(Context& context, SemIR::InPlaceInit inst)
       context.constant_values().Get(inst.src_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::IntType inst) -> ConstantEvalResult {
-  return ValidateIntType(context, SemIR::LocId(inst_id), inst)
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id, SemIR::IntType inst)
+    -> ConstantEvalResult {
+  return ValidateIntType(
+             context,
+             LocIdFromSourceInst(context, import_ir_id, source_inst_id), inst)
              ? ConstantEvalResult::NewSamePhase(inst)
              : ConstantEvalResult::Error;
 }
@@ -593,7 +627,8 @@ auto EvalConstantInst(Context& context, SemIR::NameRef inst)
       context.constant_values().Get(inst.value_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::RequireCompleteType inst) -> ConstantEvalResult {
   auto witness_type_id =
       GetSingletonType(context, SemIR::WitnessType::TypeInstId);
@@ -602,21 +637,24 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   auto complete_type_id =
       context.types().GetTypeIdForTypeInstId(inst.complete_type_inst_id);
   if (complete_type_id.is_concrete()) {
+    auto loc_id = LocIdFromSourceInst(context, import_ir_id, source_inst_id);
+    const auto& source_ir = *context.import_irs().Get(import_ir_id).sem_ir;
     // We use TryToCompleteType() instead of RequireCompleteType() because we
     // are currently evaluating a RequireCompleteType instruction, and calling
     // RequireCompleteType() would insert another copy of the same instruction.
-    if (!TryToCompleteType(
-            context, complete_type_id, SemIR::LocId(inst_id), [&] {
-              CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
-                                "{0} evaluates to incomplete type {1}",
-                                InstIdAsType, InstIdAsType);
-              return context.emitter().Build(
-                  inst_id, IncompleteTypeInMonomorphization,
-                  context.insts()
-                      .GetAs<SemIR::RequireCompleteType>(inst_id)
-                      .complete_type_inst_id,
-                  inst.complete_type_inst_id);
-            })) {
+    if (!TryToCompleteType(context, complete_type_id, loc_id, [&] {
+          CARBON_DIAGNOSTIC(IncompleteTypeInMonomorphization, Error,
+                            "`{0}` evaluates to incomplete type {1}",
+                            std::string, InstIdAsType);
+          return context.emitter().Build(
+              loc_id, IncompleteTypeInMonomorphization,
+              SemIR::StringifyConstantInst(
+                  source_ir,
+                  source_ir.insts()
+                      .GetAs<SemIR::RequireCompleteType>(source_inst_id)
+                      .complete_type_inst_id),
+              inst.complete_type_inst_id);
+        })) {
       return ConstantEvalResult::Error;
     }
     return ConstantEvalResult::NewAnyPhase(SemIR::CompleteTypeWitness{
@@ -630,7 +668,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::SpecificConstant inst) -> ConstantEvalResult {
   // The SpecificConstant can refer to a constant in the definition region of
   // the generic. This can happen during substitution. If it does, resolve the
@@ -654,8 +693,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
         context.constant_values().GetSymbolicConstant(const_id);
     if (symbolic_const.index.has_value() &&
         symbolic_const.index.region() == SemIR::GenericInstIndex::Definition) {
-      ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
-                                inst.specific_id);
+      ResolveSpecificDefinition(
+          context, LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+          inst.specific_id);
     }
   }
 
@@ -664,7 +704,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
       context.sem_ir(), inst.specific_id, inst.inst_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::SpecificImplFunction inst) -> ConstantEvalResult {
   auto callee_inst = context.insts().Get(inst.callee_id);
   // If the callee is not a function value, we're not ready to evaluate this
@@ -710,10 +751,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   CARBON_CHECK(static_cast<int>(interface_fn_args.size()) >= remaining_params);
   args.append(interface_fn_args.end() - remaining_params,
               interface_fn_args.end());
-  auto specific_id =
-      MakeSpecific(context, SemIR::LocId(inst_id), generic_id, args);
-  context.definitions_required_by_use().push_back(
-      {SemIR::LocId(inst_id), specific_id});
+  auto loc_id = LocIdFromSourceInst(context, import_ir_id, source_inst_id);
+  auto specific_id = MakeSpecific(context, loc_id, generic_id, args);
+  context.definitions_required_by_use().push_back({loc_id, specific_id});
 
   return ConstantEvalResult::NewSamePhase(
       SemIR::SpecificFunction{.type_id = inst.type_id,
@@ -728,7 +768,8 @@ auto EvalConstantInst(Context& context, SemIR::SpecificInst inst)
       context.sem_ir(), inst.specific_id, inst.inst_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
       SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
@@ -740,7 +781,8 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
     context.definitions_required_by_use().push_back(
-        {SemIR::LocId(inst_id), inst.specific_id});
+        {LocIdFromSourceInst(context, import_ir_id, source_inst_id),
+         inst.specific_id});
   }
   // Create new constant for a specific function.
   return ConstantEvalResult::NewSamePhase(inst);
@@ -872,8 +914,9 @@ auto EvalConstantInst(Context& context, SemIR::ValueOfInitializer inst)
       context.constant_values().Get(inst.init_id));
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::VarStorage inst) -> ConstantEvalResult {
+auto EvalConstantInst(Context& context, SemIR::ImportIRId import_ir_id,
+                      SemIR::InstId source_inst_id, SemIR::VarStorage inst)
+    -> ConstantEvalResult {
   if (!inst.pattern_id.has_value()) {
     // This variable was not created from a `var` pattern, so isn't a global
     // variable.
@@ -903,9 +946,19 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
     return ConstantEvalResult::NotConstant;
   }
 
-  // This is a constant reference expression denoting this global variable.
-  return ConstantEvalResult::Existing(
-      SemIR::ConstantId::ForConcreteConstant(inst_id));
+  // This is a constant reference expression denoting this global variable,
+  // so we treat it like an AlwaysUnique constant.
+  // TODO: This duplicates the code in the AlwaysUnique case in
+  // TryEvalTypedInst.
+  if (import_ir_id != SemIR::ImportIRId::Local) {
+    return ConstantEvalResult::Existing(
+        LoadImportIRInst(context,
+                         SemIR::ImportIRInst(import_ir_id, source_inst_id))
+            .constant_id);
+  } else {
+    return ConstantEvalResult::Existing(
+        SemIR::ConstantId::ForConcreteConstant(source_inst_id));
+  }
 }
 
 }  // namespace Carbon::Check

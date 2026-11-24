@@ -623,7 +623,7 @@ class ImportImplFilter {
     // Compare the interfaces themselves.
     // TODO: Should we check the scope of the interface before doing this?
     auto local_version_of_import_interface_id =
-        ImportInterface(*context_, import_ir_id_, import_interface_id);
+        ImportId(*context_, import_ir_id_, import_interface_id);
     return local_version_of_import_interface_id == local_interface_id;
   }
 
@@ -679,7 +679,7 @@ static auto CollectCandidateImplsForQuery(
       if (filter.IsRelevantImpl(import_impl_id)) {
         // TODO: Track the relevant impls and only consider those ones and any
         // local impls, rather than looping over all impls below.
-        ImportImpl(context, import_ir_id, import_impl_id);
+        ImportId(context, import_ir_id, import_impl_id);
       }
     }
   }
