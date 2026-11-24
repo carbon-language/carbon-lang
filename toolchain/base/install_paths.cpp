@@ -114,7 +114,7 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
   // The manifest should have one file per line.
   llvm::StringRef buffer = *read_result;
   while (true) {
-    auto [token, remainder] = llvm::getToken(buffer, "\n");
+    auto [token, remainder] = llvm::getToken(buffer, "\r\n");
     if (token.empty()) {
       break;
     }

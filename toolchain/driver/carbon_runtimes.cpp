@@ -77,9 +77,10 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
         // replace the `.carbon` extension with a `.o`, so we can re-parent
         // this file and any subdirectories into the output path.
         auto relative_output_path =
-            lib_path_ / std::filesystem::path(
-                            input_filename.substr(install_root_length).str())
-                            .replace_extension(".o");
+            lib_path_ /
+            std::filesystem::path(
+                input_filename.substr(install_root_length).ltrim("/\\").str())
+                .replace_extension(".o");
 
         // The output path may contain subdirectories that haven't yet been
         // created, so create if necessary.

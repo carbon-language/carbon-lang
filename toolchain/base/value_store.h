@@ -441,7 +441,7 @@ class ValueStore
     // The number of bits needed to index each element in a chunk allocation.
     static constexpr auto IndexBits() -> int32_t {
       static_assert(Capacity() > 0);
-      return std::bit_width(uint32_t{Capacity() - 1});
+      return std::bit_width(static_cast<uint32_t>(Capacity() - 1));
     }
 
     static constexpr auto CapacityBytes = Capacity() * sizeof(ValueType);

@@ -6,7 +6,6 @@
 #define CARBON_COMMON_RAW_HASHTABLE_BENCHMARK_HELPERS_H_
 
 #include <benchmark/benchmark.h>
-#include <sys/types.h>
 
 #include <array>
 #include <boost/unordered/unordered_flat_map.hpp>

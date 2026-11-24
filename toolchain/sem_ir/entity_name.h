@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 #define CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 
+#include <cstdint>
+#include <type_traits>
+
 #include "common/hashing.h"
 #include "common/set.h"
 #include "toolchain/base/value_store.h"
@@ -67,15 +70,18 @@ struct EntityName : public Printable<EntityName> {
   // them for other kinds of `EntityName`.
 
   // The bind_index() value, unwrapped so it can be stored in a bit-field.
+  // The flag bit-fields below use `uint32_t` (matching this 32-bit storage
+  // unit) so MSVC ABI packs all four fields into one 32-bit word with no
+  // padding bits.
   int32_t bind_index_value : 29 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
-  bool is_template : 1 = false;
+  uint32_t is_template : 1 = false;
   // Whether this binding is marked unused.
-  bool is_unused : 1 = false;
+  uint32_t is_unused : 1 = false;
   // Whether this binding is a `.Self` symbolic binding, within the scope of the
   // `.Self` name during facet type under construction. Such bindings cannot be
   // replaced during identify.
-  bool is_frozen_period_self : 1 = false;
+  uint32_t is_frozen_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for
   // `:?` bindings, and may be set for other binding kinds as well.
@@ -92,6 +98,10 @@ struct EntityName : public Printable<EntityName> {
   // the binding was synthesized or imported.
   TypeInstId type_inst_id = TypeInstId::None;
 };
+
+static_assert(sizeof(EntityName) == 20, "Unexpected EntityName size");
+static_assert(std::has_unique_object_representations_v<EntityName>,
+              "EntityName must not have padding bits");
 
 // Value store for EntityName. In addition to the regular ValueStore
 // functionality, this can provide optional canonical IDs for EntityNames.
