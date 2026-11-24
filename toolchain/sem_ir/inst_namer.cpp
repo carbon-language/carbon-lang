@@ -568,7 +568,9 @@ auto InstNamer::PushGeneric(ScopeId scope_id, GenericId generic_id) -> void {
   const auto& generic = sem_ir_->generics().Get(generic_id);
 
   // Push blocks in reverse order.
-  PushBlockId(scope_id, generic.definition_block_id);
+  if (generic.definition_ir_id == SemIR::ImportIRId::Local) {
+    PushBlockId(scope_id, generic.definition_block_id);
+  }
   PushBlockId(scope_id, generic.decl_block_id);
 }
 

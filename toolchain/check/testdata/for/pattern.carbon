@@ -179,8 +179,6 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_36.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -213,29 +211,31 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.facet.d45: %Destroy.type = facet_value %EmptyRange.c31, (%DestroyImpl.impl_witness.eea, %custom_witness.b80ef6.6) [concrete]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op.type: type = fn_type @C.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op: %C.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.5e8: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
+// CHECK:STDOUT:   %Main.import_ref.5e8: $empty_range@EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = $empty_range@EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
 // CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.b4f = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.5b1: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
-// CHECK:STDOUT:   %Core.import_ref.93e: @Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.c2b)]
-// CHECK:STDOUT:   %Core.import_ref.5d0: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
-// CHECK:STDOUT:   %Core.import_ref.2f6: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
+// CHECK:STDOUT:   %Core.import_ref.5b1: $optional@Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
+// CHECK:STDOUT:   %Core.import_ref.93e: $optional@Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.Get (constants.%Optional.Get.c2b)]
+// CHECK:STDOUT:   %Core.import_ref.5d0: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
+// CHECK:STDOUT:   %Core.import_ref.2f6: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.9b4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
-// CHECK:STDOUT:   %Main.import_ref.405: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
+// CHECK:STDOUT:   %Main.import_ref.9b4: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
+// CHECK:STDOUT:   %Main.import_ref.405: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.9b4, %Main.import_ref.405), @EmptyRange.as.Iterate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.127 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.b75: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
+// CHECK:STDOUT:   %field_decl.b75: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.897: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %field_decl.897: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -447,8 +447,6 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_40.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -481,29 +479,31 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.facet.d45: %Destroy.type = facet_value %EmptyRange.c31, (%DestroyImpl.impl_witness.eea, %custom_witness.b80ef6.6) [concrete]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op.type: type = fn_type @C.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op: %C.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.5e8: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
+// CHECK:STDOUT:   %Main.import_ref.5e8: $empty_range@EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = $empty_range@EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
 // CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.b4f = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.5b1: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
-// CHECK:STDOUT:   %Core.import_ref.93e: @Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.c2b)]
-// CHECK:STDOUT:   %Core.import_ref.5d0: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
-// CHECK:STDOUT:   %Core.import_ref.2f6: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
+// CHECK:STDOUT:   %Core.import_ref.5b1: $optional@Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
+// CHECK:STDOUT:   %Core.import_ref.93e: $optional@Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.Get (constants.%Optional.Get.c2b)]
+// CHECK:STDOUT:   %Core.import_ref.5d0: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
+// CHECK:STDOUT:   %Core.import_ref.2f6: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.9b4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
-// CHECK:STDOUT:   %Main.import_ref.405: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
+// CHECK:STDOUT:   %Main.import_ref.9b4: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
+// CHECK:STDOUT:   %Main.import_ref.405: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.9b4, %Main.import_ref.405), @EmptyRange.as.Iterate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.127 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.b75: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
+// CHECK:STDOUT:   %field_decl.b75: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.897: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %field_decl.897: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -731,8 +731,6 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_61.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -765,32 +763,34 @@ fn Run() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.41c: %SubobjectDestroy.type = facet_value %EmptyRange.7d6, (%custom_witness.b80ef6.6) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.0c1: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.41c) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.89f: %Destroy.type = facet_value %EmptyRange.7d6, (%DestroyImpl.impl_witness.0c1, %custom_witness.b80ef6.6) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
-// CHECK:STDOUT:   %Main.import_ref.5e8: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
-// CHECK:STDOUT:   %Core.import_ref.08a: @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.74a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.4af)]
+// CHECK:STDOUT:   %Main.import_ref.5e8: $empty_range@EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = $empty_range@EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
+// CHECK:STDOUT:   %Core.import_ref.08a: $copy@tuple.type.as.Copy.impl.15d.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.74a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = $copy@tuple.type.as.Copy.impl.15d.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.4af)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e5a = impl_witness_table (%Core.import_ref.08a), @tuple.type.as.Copy.impl.9bd [concrete]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %bool.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%bool.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.bda = impl_witness_table (%Core.import_ref.9c3), @bool.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.5b1: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
-// CHECK:STDOUT:   %Core.import_ref.93e: @Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.c2b)]
-// CHECK:STDOUT:   %Core.import_ref.5d0: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
-// CHECK:STDOUT:   %Core.import_ref.2f6: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
+// CHECK:STDOUT:   %Core.import_ref.5b1: $optional@Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
+// CHECK:STDOUT:   %Core.import_ref.93e: $optional@Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.Get (constants.%Optional.Get.c2b)]
+// CHECK:STDOUT:   %Core.import_ref.5d0: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
+// CHECK:STDOUT:   %Core.import_ref.2f6: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.9b4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
-// CHECK:STDOUT:   %Main.import_ref.405: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
+// CHECK:STDOUT:   %Main.import_ref.9b4: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
+// CHECK:STDOUT:   %Main.import_ref.405: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.9b4, %Main.import_ref.405), @EmptyRange.as.Iterate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.127 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.b75: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
+// CHECK:STDOUT:   %field_decl.b75: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.897: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %field_decl.897: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {
@@ -1040,8 +1040,6 @@ fn Run() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_49.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -1080,6 +1078,8 @@ fn Run() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.bf2: %SubobjectDestroy.type = facet_value %EmptyRange.ad6, (%custom_witness.b80ef6.7) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.314: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.bf2) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.65a: %Destroy.type = facet_value %EmptyRange.ad6, (%DestroyImpl.impl_witness.314, %custom_witness.b80ef6.7) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op.type: type = fn_type @C.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Copy.impl.Op: %C.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1087,26 +1087,26 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.EmptyRange: %EmptyRange.type = import_ref Main//empty_range, EmptyRange, loaded [concrete = constants.%EmptyRange.generic]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//empty_range, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Main.import_ref.5e8: @EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = @EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
-// CHECK:STDOUT:   %Core.import_ref.08a: @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.74a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @tuple.type.as.Copy.impl.9bd.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.4af)]
+// CHECK:STDOUT:   %Main.import_ref.5e8: $empty_range@EmptyRange.%EmptyRange.Make.type (%EmptyRange.Make.type.b43) = import_ref Main//empty_range, loc5_21, loaded [symbolic = $empty_range@EmptyRange.%EmptyRange.Make (constants.%EmptyRange.Make.35c)]
+// CHECK:STDOUT:   %Core.import_ref.08a: $copy@tuple.type.as.Copy.impl.15d.%tuple.type.as.Copy.impl.Op.type (%tuple.type.as.Copy.impl.Op.type.74a) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = $copy@tuple.type.as.Copy.impl.15d.%tuple.type.as.Copy.impl.Op (constants.%tuple.type.as.Copy.impl.Op.4af)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.e5a = impl_witness_table (%Core.import_ref.08a), @tuple.type.as.Copy.impl.9bd [concrete]
 // CHECK:STDOUT:   %Main.import_ref.341: %C.as.Copy.impl.Op.type = import_ref Main//empty_range, loc19_32, loaded [concrete = constants.%C.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.b4f = impl_witness_table (%Main.import_ref.341), @C.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.5b1: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
-// CHECK:STDOUT:   %Core.import_ref.93e: @Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.c2b)]
-// CHECK:STDOUT:   %Core.import_ref.5d0: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
-// CHECK:STDOUT:   %Core.import_ref.2f6: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
+// CHECK:STDOUT:   %Core.import_ref.5b1: $optional@Optional.%Optional.HasValue.type (%Optional.HasValue.type.23a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.HasValue (constants.%Optional.HasValue.f8f)]
+// CHECK:STDOUT:   %Core.import_ref.93e: $optional@Optional.%Optional.Get.type (%Optional.Get.type.f7a) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $optional@Optional.%Optional.Get (constants.%Optional.Get.c2b)]
+// CHECK:STDOUT:   %Core.import_ref.5d0: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.897]
+// CHECK:STDOUT:   %Core.import_ref.2f6: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.b75]
 // CHECK:STDOUT:   %Main.import_ref.71a = import_ref Main//empty_range, loc7_68, unloaded
 // CHECK:STDOUT:   %Main.import_ref.999 = import_ref Main//empty_range, loc7_68, unloaded
-// CHECK:STDOUT:   %Main.import_ref.9b4: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
-// CHECK:STDOUT:   %Main.import_ref.405: @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = @EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
+// CHECK:STDOUT:   %Main.import_ref.9b4: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor.type (%EmptyRange.as.Iterate.impl.NewCursor.type.c99) = import_ref Main//empty_range, loc8_37, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.NewCursor (constants.%EmptyRange.as.Iterate.impl.NewCursor.f76)]
+// CHECK:STDOUT:   %Main.import_ref.405: $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next.type (%EmptyRange.as.Iterate.impl.Next.type.e76) = import_ref Main//empty_range, loc11_69, loaded [symbolic = $empty_range@EmptyRange.as.Iterate.impl.%EmptyRange.as.Iterate.impl.Next (constants.%EmptyRange.as.Iterate.impl.Next.706)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table = impl_witness_table (%Main.import_ref.71a, %Main.import_ref.999, %Main.import_ref.9b4, %Main.import_ref.405), @EmptyRange.as.Iterate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.127 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.b75: @Optional.%Optional.elem.2 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
+// CHECK:STDOUT:   %field_decl.b75: $optional@Optional.%Optional.elem.loc24 (%Optional.elem.a1f) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.b0d = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %field_decl.897: @Optional.%Optional.elem.1 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
+// CHECK:STDOUT:   %field_decl.897: $optional@Optional.%Optional.elem.loc23 (%Optional.elem.fbd) = field_decl has_value, element0, %Core.import_ref.b0d in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Run() {

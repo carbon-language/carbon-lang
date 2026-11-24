@@ -125,7 +125,8 @@ class DominanceTestFile {
     auto generic_id =
         file_.generics().Add(Generic{.decl_id = decl_id,
                                      .bindings_id = InstBlockId::Empty,
-                                     .self_specific_id = SpecificId::None});
+                                     .self_specific_id = SpecificId::None,
+                                     .definition_ir_id = ImportIRId::Local});
     auto specific_id =
         file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty, false);
     file_.specifics()

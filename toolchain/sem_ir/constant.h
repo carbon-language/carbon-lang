@@ -312,13 +312,15 @@ class ConstantValueStore {
   const InstStore* insts_;
 };
 
-// Given a constant ID, returns an instruction that has that constant value.
-// For an unattached constant, the returned instruction is the instruction that
-// defines the constant; for an attached constant, this is the instruction in
-// the eval block that computes the constant value in each specific.
+// Given a constant ID, returns the ID of an instruction that has that constant
+// value, and the File containing the instruction. For an unattached constant,
+// the returned instruction is the instruction that defines the constant; for an
+// attached constant, this is the instruction in the eval block that computes
+// the constant value in each specific.
 //
 // Returns InstId::None if the ConstantId is None or NotConstant.
-auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId;
+auto GetInstWithConstantValue(const File& file, ConstantId const_id)
+    -> std::pair<const File*, InstId>;
 
 // Provides storage for instructions representing deduplicated global constants.
 class ConstantStore {

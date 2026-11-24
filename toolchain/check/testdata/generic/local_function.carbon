@@ -248,21 +248,21 @@ fn CallEnclosingTemplate() -> i32 {
 // CHECK:STDOUT:     %.d0c: init %i32 = splice_block %.bd1 {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.9: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.724: init %i32 = splice_block %Int.as.Copy.impl.Op.call {
 // CHECK:STDOUT:       %.7d2: %i32 = specific_inst @Local.%y.ref, @Local(%S)
-// CHECK:STDOUT:       %impl.elem0.5a8: %.2b9 = impl_witness_access %Copy.impl_witness.8af, element0 [concrete = %Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:       %bound_method.99b: <bound method> = bound_method %.7d2, %impl.elem0.5a8
-// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.5a8, @Int.as.Copy.impl.Op(%int_32) [concrete = %Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:       %impl.elem0: %.2b9 = impl_witness_access %Copy.impl_witness.8af, element0 [concrete = %Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:       %bound_method.99b: <bound method> = bound_method %.7d2, %impl.elem0
+// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(%int_32) [concrete = %Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:       %bound_method.cbe: <bound method> = bound_method %.7d2, %specific_fn
 // CHECK:STDOUT:       %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.cbe(%.7d2)
 // CHECK:STDOUT:     }
@@ -271,7 +271,7 @@ fn CallEnclosingTemplate() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Core.import_ref.72f: $int.2@Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = $int.2@Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

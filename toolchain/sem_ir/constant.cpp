@@ -43,15 +43,16 @@ auto ConstantStore::Get(Inst inst) const -> ConstantId {
   return result.value();
 }
 
-auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
+auto GetInstWithConstantValue(const File& file, ConstantId const_id)
+    -> std::pair<const File*, InstId> {
   if (!const_id.has_value() || !const_id.is_constant()) {
-    return InstId::None;
+    return {&file, InstId::None};
   }
 
   // For concrete constants, the corresponding instruction has the desired
   // constant value.
   if (!const_id.is_symbolic()) {
-    return file.constant_values().GetInstId(const_id);
+    return {&file, file.constant_values().GetInstId(const_id)};
   }
 
   // For unattached symbolic constants, the corresponding instruction has the
@@ -59,14 +60,19 @@ auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
   const auto& symbolic_const =
       file.constant_values().GetSymbolicConstant(const_id);
   if (!symbolic_const.generic_id.has_value()) {
-    return file.constant_values().GetInstId(const_id);
+    return {&file, file.constant_values().GetInstId(const_id)};
   }
 
   // For attached symbolic constants, pick the corresponding instruction out of
   // the eval block for the generic.
   const auto& generic = file.generics().Get(symbolic_const.generic_id);
-  auto block = generic.GetEvalBlock(symbolic_const.index.region());
-  return file.inst_blocks().Get(block)[symbolic_const.index.index()];
+  auto [ir_id, block_id] = generic.GetEvalBlock(symbolic_const.index.region());
+  const File* block_ir = &file;
+  if (ir_id.has_value()) {
+    block_ir = file.import_irs().Get(ir_id).sem_ir;
+  }
+  return {block_ir,
+          block_ir->inst_blocks().Get(block_id)[symbolic_const.index.index()]};
 }
 
 auto ConstantValueStore::OutputYaml(bool include_singletons) const

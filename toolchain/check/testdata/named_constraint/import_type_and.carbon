@@ -156,7 +156,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
 // CHECK:STDOUT:   %Self.95b: %Y.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@Z & @Y> [concrete]
-// CHECK:STDOUT:   %Self.as_type.190: type = facet_access_type %Self.f45 [symbolic]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.f45 [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a587c.2: type = pattern_type %N.type [concrete]
 // CHECK:STDOUT:   %_.patt: %pattern_type.9a587c.2 = symbolic_binding_pattern _, 0 [symbolic]
 // CHECK:STDOUT:   %_: %N.type = symbolic_binding _, 0 [symbolic]
@@ -174,7 +174,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.e73 = import_ref Main//import, loc5_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.28a = import_ref Main//import, loc4_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//import, loc9_11, loaded [symbolic = @N.WithSelf.Self.as_type.impls.facet_type.require.%Self.as_type (constants.%Self.as_type.190)]
+// CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//import, loc9_11, loaded [symbolic = @N.WithSelf.Self.as_type.impls.facet_type.require.%Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.ff1: init type = import_ref Main//import, loc9_19, loaded [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %Main.import_ref.423e3a.2: %N.type = import_ref Main//import, loc7_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.364 = import_ref Main//import, loc7_14, unloaded
@@ -230,7 +230,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @N.WithSelf.Self.as_type.impls.facet_type.require(imports.%Main.import_ref.423e3a.2: %N.type) [from "import.carbon"] {
 // CHECK:STDOUT:   %Self: %N.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.f45)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.190)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%_.loc5_15.2: %N.type) {
@@ -253,7 +253,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.facet_type.require(constants.%Self.f45) {
 // CHECK:STDOUT:   %Self => constants.%Self.f45
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.190
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%_) {

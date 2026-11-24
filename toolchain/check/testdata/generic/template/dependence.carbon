@@ -56,11 +56,11 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.fbe: <witness> = require_complete_type %ptr.125 [template]
-// CHECK:STDOUT:   %require_complete.ef162c.1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
+// CHECK:STDOUT:   %require_complete.ef1: <witness> = require_complete_type %ptr.e8f8f9.1 [template]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Self: %Copy.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.3f89b0.1: %Copy.WithSelf.Op.type.d2f9c3.1 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.3f8: %Copy.WithSelf.Op.type.d2f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.assoc_type: type = assoc_entity_type @Copy [concrete]
 // CHECK:STDOUT:   %assoc0: %Copy.assoc_type = assoc_entity element0, imports.%Core.import_ref.ea5 [concrete]
 // CHECK:STDOUT:   %.8cb: type = type_of_inst @F.%.loc6_10.7 [template]
@@ -84,25 +84,25 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %complete_type.2f1: <witness> = complete_type_witness %ptr.74f [concrete]
 // CHECK:STDOUT:   %complete_type.2ab: <witness> = complete_type_witness %ptr.843 [concrete]
 // CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67db0b.2) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.e1a: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.843, (%Copy.impl_witness.e1a) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.5ad: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.f8c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.5ad, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67db0b.2) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.56e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.284: %ptr.as.Copy.impl.Op.type.56e = struct_value () [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.334: <bound method> = splice_block %bound_method.7f0 {
 // CHECK:STDOUT:       %.422: %ptr.843 = specific_inst @F.%.loc6_10.2, @F(%empty_tuple.type)
-// CHECK:STDOUT:       %impl.elem0.2c9: %.f8c = impl_witness_access %Copy.impl_witness.e1a, element0 [concrete = %ptr.as.Copy.impl.Op.284]
-// CHECK:STDOUT:       %bound_method.7f0: <bound method> = bound_method %.422, %impl.elem0.2c9
+// CHECK:STDOUT:       %impl.elem0: %.f8c = impl_witness_access %Copy.impl_witness.e1a, element0 [concrete = %ptr.as.Copy.impl.Op.284]
+// CHECK:STDOUT:       %bound_method.7f0: <bound method> = bound_method %.422, %impl.elem0
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.284, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.713: init %ptr.843 = splice_block %ptr.as.Copy.impl.Op.call {
-// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0.2c9, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete = %ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:       %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(%empty_tuple.type) [concrete = %ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:       %bound_method.5af: <bound method> = bound_method %.422, %specific_fn
 // CHECK:STDOUT:       %ptr.as.Copy.impl.Op.call: init %ptr.843 = call %bound_method.5af(%.422)
 // CHECK:STDOUT:     }
@@ -113,8 +113,8 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.ea5: @Copy.WithSelf.%Copy.WithSelf.Op.type (%Copy.WithSelf.Op.type.d2f9c3.1) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @Copy.WithSelf.%Copy.WithSelf.Op (constants.%Copy.WithSelf.Op.3f89b0.1)]
-// CHECK:STDOUT:   %Core.import_ref.06a: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
+// CHECK:STDOUT:   %Core.import_ref.ea5: $copy@Copy.WithSelf.%Copy.WithSelf.Op.type (%Copy.WithSelf.Op.type.d2f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = $copy@Copy.WithSelf.%Copy.WithSelf.Op (constants.%Copy.WithSelf.Op.3f8)]
+// CHECK:STDOUT:   %Core.import_ref.06a: $copy@ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = $copy@ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.06a), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,7 +182,7 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc5_25: <witness> = require_complete_type %ptr.loc5_29.1 [template = %require_complete.loc5_25 (constants.%require_complete.fbe)]
-// CHECK:STDOUT:   %require_complete.loc5_32: <witness> = require_complete_type %ptr.loc5_28.1 [template = %require_complete.loc5_32 (constants.%require_complete.ef162c.1)]
+// CHECK:STDOUT:   %require_complete.loc5_32: <witness> = require_complete_type %ptr.loc5_28.1 [template = %require_complete.loc5_32 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %.loc6_10.7: <instruction> = compound_member_access_action %.loc6_10.2, constants.%assoc0 [template]
 // CHECK:STDOUT:   %.loc6_10.8: type = type_of_inst %.loc6_10.7 [template = %.loc6_10.8 (constants.%.8cb)]
 // CHECK:STDOUT:   %.loc6_10.9: @F.%.loc6_10.8 (%.8cb) = splice_inst %.loc6_10.7 [template = %.loc6_10.9 (constants.%.c23)]

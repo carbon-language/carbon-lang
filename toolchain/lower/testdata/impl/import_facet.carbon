@@ -92,7 +92,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: ; ModuleID = 'd.carbon'
 // CHECK:STDOUT: source_filename = "d.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @C.val.1e1.anon = internal constant {} zeroinitializer
+// CHECK:STDOUT: @C.val.anon = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !15 {
@@ -110,7 +110,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_CGetI.D.eb057aa32837c84e.Main:I.Main.55456748a8a2eb70"(ptr sret({}) %return, ptr %self) #0 !dbg !25 {
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.1e1.anon, i64 0, i1 false), !dbg !30
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @C.val.anon, i64 0, i1 false), !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,7 +120,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !37
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !37
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5da679f5f4cb5255(ptr %1), !dbg !37
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f29d15a20894e9b(ptr %1), !dbg !37
 // CHECK:STDOUT:   ret ptr %2, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,7 +133,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5da679f5f4cb5255(ptr %t) #0 !dbg !50 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4f29d15a20894e9b(ptr %t) #0 !dbg !50 {
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,7 +174,7 @@ fn F(d: D(i32)) -> i32* {
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !12)
 // CHECK:STDOUT: !48 = !DILocation(line: 36, column: 1, scope: !43)
 // CHECK:STDOUT: !49 = !{!44}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5da679f5f4cb5255", scope: null, file: !42, line: 36, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !56)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f29d15a20894e9b", scope: null, file: !42, line: 36, type: !22, spFlags: DISPFlagDefinition, unit: !11, retainedNodes: !56)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !12)
 // CHECK:STDOUT: !55 = !DILocation(line: 36, column: 1, scope: !50)
 // CHECK:STDOUT: !56 = !{!51}

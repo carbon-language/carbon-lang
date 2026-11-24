@@ -42,7 +42,7 @@ fn F() {
 // CHECK:STDOUT:   %FeedAnimal.type: type = fn_type @FeedAnimal [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %FeedAnimal: %FeedAnimal.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.db4: <witness> = require_complete_type %T.as_type.01d [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.01d [symbolic]
 // CHECK:STDOUT:   %a.patt.febc60.2: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt.84e [symbolic]
 // CHECK:STDOUT:   %HandleAnimal.type: type = fn_type @HandleAnimal [concrete]
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
@@ -67,8 +67,6 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc25_19.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
@@ -78,6 +76,8 @@ fn F() {
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT:   %a.patt.fd6628.2: %pattern_type.283 = wrapper_binding_pattern a, %a.param_patt.8f5 [concrete]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.ea8: <specific function> = specific_function %FeedAnimal, @FeedAnimal(%Animal.facet) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -87,7 +87,7 @@ fn F() {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -184,7 +184,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc17_34.2: @FeedAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc17_34.2 [symbolic = %a.patt.loc17_34.2 (constants.%a.patt.febc60.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete.db4)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @FeedAnimal.%T.as_type.loc17_36.1 (%T.as_type.01d)) {
 // CHECK:STDOUT:   !entry:
@@ -201,7 +201,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc19_29.2: @HandleAnimal.%pattern_type (%pattern_type.e90) = wrapper_binding_pattern a, %a.param_patt.loc19_29.2 [symbolic = %a.patt.loc19_29.2 (constants.%a.patt.febc60.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc19_31.1 [symbolic = %require_complete (constants.%require_complete.db4)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc19_31.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:   %FeedAnimal.specific_fn.loc19_36.2: <specific function> = specific_function constants.%FeedAnimal, @FeedAnimal(%T.loc19_18.1) [symbolic = %FeedAnimal.specific_fn.loc19_36.2 (constants.%FeedAnimal.specific_fn.1b3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @HandleAnimal.%T.as_type.loc19_31.1 (%T.as_type.01d)) {
@@ -258,7 +258,7 @@ fn F() {
 // CHECK:STDOUT:   %a.patt.loc17_34.2 => constants.%a.patt.febc60.1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.db4
+// CHECK:STDOUT:   %require_complete => constants.%require_complete
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HandleAnimal(constants.%T.443) {

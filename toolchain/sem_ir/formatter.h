@@ -24,7 +24,7 @@ class Formatter {
   // sem_ir and include_ir_in_dumps must be non-null.
   explicit Formatter(
       const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
-      const SemIR::GetInstNamersStore& inst_namers,
+      const SemIR::GetInstNamersStore* inst_namers,
       Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
       const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
       bool use_dump_sem_ir_ranges);
@@ -328,6 +328,8 @@ class Formatter {
   auto FormatName(SpecificId id) -> void;
   auto FormatName(SpecificInterfaceId id) -> void;
 
+  auto FormatNameFromIR(const SemIR::File& import_ir, InstId inst_id) -> void;
+
   auto FormatLabel(InstBlockId id) -> void;
 
   auto FormatConstant(ConstantId id) -> void;
@@ -347,6 +349,7 @@ class Formatter {
 
   const File* sem_ir_;
   const SemIR::ShortFileNameStore* short_file_names_;
+  const SemIR::GetInstNamersStore* inst_namers_;
   InstNamer& inst_namer_;
   Parse::GetTreeAndSubtreesFn get_tree_and_subtrees_;
 

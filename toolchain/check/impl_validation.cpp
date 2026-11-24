@@ -542,7 +542,7 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   llvm::unique(impls_to_import);
 
   for (auto [ir_id, import_impl_id] : impls_to_import) {
-    ImportImpl(context, ir_id, import_impl_id);
+    ImportId(context, ir_id, import_impl_id);
   }
 }
 

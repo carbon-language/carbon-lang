@@ -156,7 +156,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %IndirectIndexWith.assoc_type.688: type = assoc_entity_type @IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f) [concrete]
 // CHECK:STDOUT:   %assoc0.08b: %IndirectIndexWith.assoc_type.688 = assoc_entity element0, imports.%Core.import_ref.abc [concrete]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
-// CHECK:STDOUT:   %assoc0.b3973b.2: %IndirectIndexWith.assoc_type.ea2 = assoc_entity element0, imports.%Core.import_ref.55c4ab.2 [symbolic]
+// CHECK:STDOUT:   %assoc0.b3973b.2: %IndirectIndexWith.assoc_type.ea2 = assoc_entity element0, imports.%Core.import_ref.55c4ab.3 [symbolic]
 // CHECK:STDOUT:   %.a0b: <witness> = impl_self_witness %.Self.frozen, @IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f) [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.e55: type = impl_witness_access %.a0b, element0 [symbolic_self]
 // CHECK:STDOUT:   %.Self: %IndirectIndexWith.type.c10 = symbolic_binding .Self [symbolic_self]
@@ -187,9 +187,9 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
 // CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.6e3: @IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%assoc0 (constants.%assoc0.b3973b.2)]
+// CHECK:STDOUT:   %Core.import_ref.6e3: $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndirectIndexWith.WithSelf.%assoc0 (constants.%assoc0.b3973b.2)]
 // CHECK:STDOUT:   %Core.import_ref.abc: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
-// CHECK:STDOUT:   %Core.import_ref.55c4ab.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.55c4ab.3 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -306,8 +306,8 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.25c: @IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%assoc1 (constants.%assoc1.f633d8.2)]
-// CHECK:STDOUT:   %Core.import_ref.17a: @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
+// CHECK:STDOUT:   %Core.import_ref.25c: $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndirectIndexWith.WithSelf.%assoc1.loc16_60.2 (constants.%assoc1.f633d8.2)]
+// CHECK:STDOUT:   %Core.import_ref.17a: $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
 // CHECK:STDOUT:   %Core.import_ref.c78b2f.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
@@ -385,8 +385,8 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.25c: @IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%assoc1 (constants.%assoc1.f633d8.2)]
-// CHECK:STDOUT:   %Core.import_ref.17a: @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
+// CHECK:STDOUT:   %Core.import_ref.25c: $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndirectIndexWith.WithSelf.%assoc1.loc16_60.2 (constants.%assoc1.f633d8.2)]
+// CHECK:STDOUT:   %Core.import_ref.17a: $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
 // CHECK:STDOUT:   %Core.import_ref.c78b2f.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_38, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %CNonCopy.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc30_68, loaded [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
@@ -432,8 +432,8 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %.Self.16c: %IndirectIndexWith.type.57f = symbolic_binding .Self [symbolic]
 // CHECK:STDOUT:   %IndirectIndexWith.lookup_impl_witness.e21: <witness> = lookup_impl_witness %.Self.16c, @IndirectIndexWith, @IndirectIndexWith(%SubscriptType.67d) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.a07: type = impl_witness_access %IndirectIndexWith.lookup_impl_witness.e21, element0 [symbolic]
-// CHECK:STDOUT:   %IndirectIndexWith_where.type.57fb59.1: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.67d) where %impl.elem0.a07 impls @Copy> [symbolic]
-// CHECK:STDOUT:   %T.2fa: %IndirectIndexWith_where.type.57fb59.1 = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %IndirectIndexWith_where.type.57f: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.67d) where %impl.elem0.a07 impls @Copy> [symbolic]
+// CHECK:STDOUT:   %T.2fa: %IndirectIndexWith_where.type.57f = symbolic_binding T, 1 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.152: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%SubscriptType.67d, %T.2fa) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.68d: %T.as_type.as.IndexWith.impl.At.type.152 = struct_value () [symbolic]
 // CHECK:STDOUT:   %IndirectIndexWith.type.c10: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f)> [concrete]
@@ -465,11 +465,11 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.df6 = import_ref Core//prelude/operators/index, IndexWith, loaded [concrete = constants.%IndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.211: @IndexWith.WithSelf.%IndexWith.assoc_type (%IndexWith.assoc_type.783) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.WithSelf.%assoc1 (constants.%assoc1.487a81.2)]
-// CHECK:STDOUT:   %Core.import_ref.bab: @IndexWith.WithSelf.%IndexWith.WithSelf.At.type (%IndexWith.WithSelf.At.type.62b) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.WithSelf.%IndexWith.WithSelf.At (constants.%IndexWith.WithSelf.At.fa4)]
+// CHECK:STDOUT:   %Core.import_ref.211: $index@IndexWith.WithSelf.%IndexWith.assoc_type (%IndexWith.assoc_type.783) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndexWith.WithSelf.%assoc1.loc11_55.2 (constants.%assoc1.487a81.2)]
+// CHECK:STDOUT:   %Core.import_ref.bab: $index@IndexWith.WithSelf.%IndexWith.WithSelf.At.type (%IndexWith.WithSelf.At.type.62b) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@IndexWith.WithSelf.%IndexWith.WithSelf.At (constants.%IndexWith.WithSelf.At.fa4)]
 // CHECK:STDOUT:   %Core.import_ref.2101b9.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.44f = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At.type (%T.as_type.as.IndexWith.impl.At.type.152) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At (constants.%T.as_type.as.IndexWith.impl.At.68d)]
+// CHECK:STDOUT:   %Core.import_ref.630: $index@T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At.type (%T.as_type.as.IndexWith.impl.At.type.152) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = $index@T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At (constants.%T.as_type.as.IndexWith.impl.At.68d)]
 // CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.44f, %Core.import_ref.630), @T.as_type.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.967: type = import_ref Main//types, loc17_79, loaded [concrete = constants.%Copyable]
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]

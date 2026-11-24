@@ -41,7 +41,8 @@ static auto GetOrCreatePendingGeneric(Context& context)
     pending_generic.generic_id = context.generics().Add(
         SemIR::Generic{.decl_id = SemIR::InstId::None,
                        .bindings_id = SemIR::InstBlockId::None,
-                       .self_specific_id = SemIR::SpecificId::None});
+                       .self_specific_id = SemIR::SpecificId::None,
+                       .definition_ir_id = SemIR::ImportIRId::None});
     context.generic_region_stack().SetPendingGenericId(
         pending_generic.generic_id);
   }
@@ -505,7 +506,8 @@ auto BuildGeneric(Context& context, SemIR::InstId decl_id) -> SemIR::GenericId {
 
   SemIR::Generic generic = {.decl_id = decl_id,
                             .bindings_id = bindings_id,
-                            .self_specific_id = SemIR::SpecificId::None};
+                            .self_specific_id = SemIR::SpecificId::None,
+                            .definition_ir_id = SemIR::ImportIRId::None};
 
   // Get the generic ID, or allocate one now if we don't have one yet. That
   // could happen if the eval block is empty.
@@ -626,12 +628,10 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
     DiscardGenericDecl(context);
     return;
   }
-
+  auto& generic = context.generics().Get(generic_id);
   // Find the old and new eval blocks.
-  auto old_eval_block_id =
-      context.generics()
-          .Get(generic_id)
-          .GetEvalBlock(SemIR::GenericInstIndex::Declaration);
+  auto [_, old_eval_block_id] =
+      generic.GetEvalBlock(SemIR::GenericInstIndex::Declaration);
   CARBON_CHECK(old_eval_block_id.has_value(),
                "Old generic is not fully declared");
 
@@ -701,7 +701,9 @@ auto FinishGenericDefinition(Context& context, SemIR::GenericId generic_id)
 
   auto definition_block_id = MakeGenericEvalBlock(context);
   context.generic_region_stack().Pop();
-  context.generics().Get(generic_id).definition_block_id = definition_block_id;
+  auto& generic = context.generics().Get(generic_id);
+  generic.definition_block_id = definition_block_id;
+  generic.definition_ir_id = SemIR::ImportIRId::Local;
 }
 
 auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,

@@ -262,7 +262,7 @@ fn B() {
 // CHECK:STDOUT:   %x.patt: @A.1.%pattern_type (%pattern_type.662) = wrapper_binding_pattern x, %x.param_patt [symbolic = %x.patt (constants.%x.patt.e7f6fb.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %struct_type.a [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   $lib@A.%require_complete
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }

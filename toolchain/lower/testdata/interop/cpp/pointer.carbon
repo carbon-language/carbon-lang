@@ -321,12 +321,12 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !124
 // CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !128
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !126
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9abdc217755355a3(ptr %1), !dbg !124
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.22c4a1df38091206(ptr %1), !dbg !124
 // CHECK:STDOUT:   ret ptr %2, !dbg !130
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9abdc217755355a3(ptr %t) #0 !dbg !132 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.22c4a1df38091206(ptr %t) #0 !dbg !132 {
 // CHECK:STDOUT:   ret void, !dbg !137
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -423,7 +423,7 @@ fn Convert() {
 // CHECK:STDOUT: !128 = !DILocation(line: 169, column: 5, scope: !119)
 // CHECK:STDOUT: !130 = !DILocation(line: 170, column: 5, scope: !119)
 // CHECK:STDOUT: !131 = !{!120}
-// CHECK:STDOUT: !132 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9abdc217755355a3", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !48, retainedNodes: !138)
+// CHECK:STDOUT: !132 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.22c4a1df38091206", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !48, retainedNodes: !138)
 // CHECK:STDOUT: !133 = !DILocalVariable(arg: 1, scope: !132, type: !6)
 // CHECK:STDOUT: !137 = !DILocation(line: 36, column: 1, scope: !132)
 // CHECK:STDOUT: !138 = !{!133}
@@ -494,8 +494,8 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr %4, ptr %temp1, align 8, !dbg !178
 // CHECK:STDOUT:   %5 = load ptr, ptr %temp1, align 8, !dbg !178
 // CHECK:STDOUT:   %6 = call ptr @_CSome.Optional.Core.1c39bd137e62c6ea(ptr %5), !dbg !179
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c9c637f86feae476(ptr %temp1), !dbg !178
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.afe76cd75c1d6f19(ptr %temp), !dbg !178
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e1f110603edce58e(ptr %temp1), !dbg !178
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.36474644453e4734(ptr %temp), !dbg !178
 // CHECK:STDOUT:   ret ptr %6, !dbg !180
 // CHECK:STDOUT:
 // CHECK:STDOUT: 7:                                                ; preds = %0
@@ -522,12 +522,12 @@ fn Convert() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.c9c637f86feae476(ptr %t) #0 !dbg !210 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e1f110603edce58e(ptr %t) #0 !dbg !210 {
 // CHECK:STDOUT:   ret void, !dbg !215
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.afe76cd75c1d6f19(ptr %t) #0 !dbg !217 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.36474644453e4734(ptr %t) #0 !dbg !217 {
 // CHECK:STDOUT:   ret void, !dbg !222
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -555,12 +555,12 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !252
 // CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !256
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !254
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d5bd971f411a76b(ptr %1), !dbg !252
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f89f24693e630ef4(ptr %1), !dbg !252
 // CHECK:STDOUT:   ret ptr %2, !dbg !258
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4d5bd971f411a76b(ptr %t) #0 !dbg !260 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f89f24693e630ef4(ptr %t) #0 !dbg !260 {
 // CHECK:STDOUT:   ret void, !dbg !265
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -641,11 +641,11 @@ fn Convert() {
 // CHECK:STDOUT: !207 = !DILocation(line: 34, column: 12, scope: !202)
 // CHECK:STDOUT: !208 = !DILocation(line: 34, column: 5, scope: !202)
 // CHECK:STDOUT: !209 = !{!203}
-// CHECK:STDOUT: !210 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c9c637f86feae476", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !216)
+// CHECK:STDOUT: !210 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e1f110603edce58e", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !216)
 // CHECK:STDOUT: !211 = !DILocalVariable(arg: 1, scope: !210, type: !6)
 // CHECK:STDOUT: !215 = !DILocation(line: 36, column: 1, scope: !210)
 // CHECK:STDOUT: !216 = !{!211}
-// CHECK:STDOUT: !217 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.afe76cd75c1d6f19", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !223)
+// CHECK:STDOUT: !217 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.36474644453e4734", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !223)
 // CHECK:STDOUT: !218 = !DILocalVariable(arg: 1, scope: !217, type: !6)
 // CHECK:STDOUT: !222 = !DILocation(line: 36, column: 1, scope: !217)
 // CHECK:STDOUT: !223 = !{!218}
@@ -668,7 +668,7 @@ fn Convert() {
 // CHECK:STDOUT: !256 = !DILocation(line: 169, column: 5, scope: !247)
 // CHECK:STDOUT: !258 = !DILocation(line: 170, column: 5, scope: !247)
 // CHECK:STDOUT: !259 = !{!248}
-// CHECK:STDOUT: !260 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d5bd971f411a76b", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !266)
+// CHECK:STDOUT: !260 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f89f24693e630ef4", scope: null, file: !94, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !142, retainedNodes: !266)
 // CHECK:STDOUT: !261 = !DILocalVariable(arg: 1, scope: !260, type: !6)
 // CHECK:STDOUT: !265 = !DILocation(line: 36, column: 1, scope: !260)
 // CHECK:STDOUT: !266 = !{!261}

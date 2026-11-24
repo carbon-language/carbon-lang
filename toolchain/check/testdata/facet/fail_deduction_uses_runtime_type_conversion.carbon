@@ -92,7 +92,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %x.patt.efd: %pattern_type.831 = wrapper_binding_pattern x, %x.param_patt.c68 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.1ff: <witness> = require_complete_type %HoldsType.7c6 [symbolic]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.7c6 [symbolic]
 // CHECK:STDOUT:   %tuple.eb2: %tuple.type = tuple_value (%RuntimeConvertTo) [concrete]
 // CHECK:STDOUT:   %HoldsType.30a: type = class_type @HoldsType, @HoldsType(%tuple.eb2) [concrete]
 // CHECK:STDOUT:   %pattern_type.aaa: type = pattern_type %HoldsType.30a [concrete]
@@ -113,8 +113,6 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc45_19.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
@@ -122,6 +120,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.18d: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.790) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %RuntimeConvertTo, (%DestroyImpl.impl_witness.18d, %custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,7 +133,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -296,7 +296,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %x.patt.loc27_50.2: @F.%pattern_type.loc27_50 (%pattern_type.831) = wrapper_binding_pattern x, %x.param_patt.loc27_50.2 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.efd)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc27_63.1 [symbolic = %require_complete (constants.%require_complete.1ff)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %HoldsType.loc27_63.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%HoldsType.loc27_63.1 (%HoldsType.7c6)) {
 // CHECK:STDOUT:   !entry:

@@ -20,20 +20,27 @@ struct Generic : public Printable<Generic> {
     out << "{decl: " << decl_id << ", bindings: " << bindings_id
         << ", self_specific_id: " << self_specific_id
         << ", decl_block_id: " << decl_block_id
+        << ", definition_ir_id: " << definition_ir_id
         << ", definition_block_id: " << definition_block_id << "}";
   }
 
-  // Returns the eval block for the specified region of the generic. This is a
-  // block of instructions that should be evaluated to compute the values and
-  // instructions needed by that region of the generic.
-  auto GetEvalBlock(GenericInstIndex::Region region) const -> InstBlockId {
-    return region == GenericInstIndex::Region::Declaration
-               ? decl_block_id
-               : definition_block_id;
+  // Returns eval block ID for the specified region of the generic, together
+  // with the `ImportIRId` of the file containing the eval block.
+  // **WARNING:** The block ID will be in the ID space of the `File`
+  // corresponding to that `ImportIRId`, which will be a different ID space from
+  // the rest of this `Generic` unless the `ImportIRId` is `Local`.
+  auto GetEvalBlock(GenericInstIndex::Region region) const
+      -> std::pair<ImportIRId, InstBlockId> {
+    if (region == GenericInstIndex::Region::Declaration) {
+      return {ImportIRId::Local, decl_block_id};
+    } else {
+      return {definition_ir_id, definition_block_id};
+    }
   }
 
-  // The following members always have values, and do not change throughout the
-  // lifetime of the generic.
+  // The following members always have values, do not change throughout the
+  // lifetime of the generic, and are in the same ID space as the Generic's
+  // ID.
 
   // The first declaration of the generic entity.
   InstId decl_id;
@@ -50,8 +57,16 @@ struct Generic : public Printable<Generic> {
   // generic.
 
   // The eval block for the declaration region of the generic.
+  //
+  // TODO: Can/should this stay in the ID space it was imported from, like
+  // `definition_block_id`?
   InstBlockId decl_block_id = InstBlockId::None;
+
+  // The file containing the generic definition.
+  ImportIRId definition_ir_id;
   // The eval block for the definition region of the generic.
+  // **WARNING:** This is in the ID space of the file identified by
+  // `definition_ir_id`.
   InstBlockId definition_block_id = InstBlockId::None;
 };
 

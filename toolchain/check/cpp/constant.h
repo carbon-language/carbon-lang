@@ -38,11 +38,24 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
                  const SemIR::ClangDecl& clang_decl, SemIR::InstBlockId args_id)
     -> SemIR::ConstantId;
 
-// If the callee is a C++ thunk, modify `call` to directly call the
-// callee of the C++ thunk. Otherwise, does nothing and leaves `call`
-// unmodified.
-auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
-    -> void;
+// The return value of `MaybeModifyCalleeForConstEval`.
+struct ModifiedCalleeArgs {
+  // The backing storage for `args`, if a suitable array doesn't already exist.
+  // Do not use this directly; it exists only to keep `args` from dangling.
+  llvm::SmallVector<SemIR::InstId> arg_storage;
+
+  // The updated argument list. This may be invalidated when `arg_storage` is
+  // destroyed.
+  llvm::ArrayRef<SemIR::InstId> args;
+};
+
+// If the callee is a C++ thunk, modify `call->callee_id` to point directly to
+// the callee of the C++ thunk. Otherwise, does nothing and leaves `call`
+// unmodified. This does not update `call->args_id`, because we may not be
+// able to add new block IDs to `sem_ir`. Instead, this returns the updated
+// argument list as an array.
+auto MaybeModifyCalleeForConstEval(const SemIR::File& sem_ir, SemIR::Call* call)
+    -> ModifiedCalleeArgs;
 
 }  // namespace Carbon::Check
 

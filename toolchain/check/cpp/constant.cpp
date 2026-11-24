@@ -293,55 +293,55 @@ auto EvalCppCall(Context& context, SemIR::LocId loc_id,
                                           function_decl->getCallResultType());
 }
 
-auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
-    -> void {
+auto MaybeModifyCalleeForConstEval(const SemIR::File& sem_ir, SemIR::Call* call)
+    -> ModifiedCalleeArgs {
+  ModifiedCalleeArgs result = {.args = sem_ir.inst_blocks().Get(call->args_id)};
   clang::FunctionDecl* function_decl = nullptr;
   SemIR::InstId thunk_callee_inst_id = SemIR::InstId::None;
 
   // Check if the callee is a C++ thunk for a constexpr function. If so,
   // fill in `function_decl` and `thunk_callee_inst_id`.
-  auto callee = SemIR::GetCallee(context.sem_ir(), call->callee_id);
+  auto callee = SemIR::GetCallee(sem_ir, call->callee_id);
   if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
-    auto function = context.functions().Get(callee_function->function_id);
+    auto function = sem_ir.functions().Get(callee_function->function_id);
 
     thunk_callee_inst_id = function.cpp_thunk_callee();
     if (!thunk_callee_inst_id.has_value()) {
-      return;
+      return result;
     }
-    auto thunk_callee_function = context.functions().Get(
-        context.insts()
+    auto thunk_callee_function = sem_ir.functions().Get(
+        sem_ir.insts()
             .GetAs<SemIR::FunctionDecl>(thunk_callee_inst_id)
             .function_id);
 
     const auto* clang_decl_info =
-        context.clang_decls().Lookup(thunk_callee_function.first_decl_id());
+        sem_ir.clang_decls().Lookup(thunk_callee_function.first_decl_id());
     if (clang_decl_info == nullptr) {
       // The `__invoke` thunk for a function pointer doesn't have a declared
       // C++ callee.
-      return;
+      return result;
     }
     function_decl = cast<clang::FunctionDecl>(
-        context.clang_decls()
+        sem_ir.clang_decls()
             .Lookup(thunk_callee_function.first_decl_id())
             ->decl());
 
     if (!(function_decl->isConstexpr() || function_decl->isConsteval())) {
-      return;
+      return result;
     }
 
     if (function_decl->isDefaulted()) {
-      return;
+      return result;
     }
   } else {
-    return;
+    return result;
   }
 
-  auto thunk_args = context.inst_blocks().Get(call->args_id);
+  auto thunk_args = result.args;
 
   // Get the new call arguments. This drops the return slot arg, if
   // present. It also remaps arguments that are a pointer in the thunk,
   // but a non-pointer in the callee.
-  llvm::SmallVector<SemIR::InstId> new_args;
   for (auto [arg_inst_id, parm_var_decl] :
        llvm::zip(thunk_args, function_decl->parameters())) {
     auto parm_type = parm_var_decl->getType();
@@ -350,16 +350,17 @@ auto MaybeModifyCppThunkCallForConstEval(Context& context, SemIR::Call* call)
     // TODO: reuse the logic in `check/cpp/thunk.cpp` to determine
     // whether to dereference the argument.
     if (!parm_type->isPointerType()) {
-      if (auto addr_of = context.insts().TryGetAs<SemIR::AddrOf>(arg_inst_id)) {
+      if (auto addr_of = sem_ir.insts().TryGetAs<SemIR::AddrOf>(arg_inst_id)) {
         new_arg_inst_id = addr_of->lvalue_id;
       }
     }
 
-    new_args.push_back(new_arg_inst_id);
+    result.arg_storage.push_back(new_arg_inst_id);
   }
 
   call->callee_id = thunk_callee_inst_id;
-  call->args_id = context.inst_blocks().AddCanonical(new_args);
+  result.args = result.arg_storage;
+  return result;
 }
 
 }  // namespace Carbon::Check

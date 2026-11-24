@@ -44,6 +44,17 @@ auto VerifySameCanonicalImportIRInst(Context& context, SemIR::NameId name_id,
                                      const SemIR::File* new_import_ir,
                                      SemIR::InstId new_inst_id) -> void;
 
+// Result type of `LoadImportIRInst`.
+struct LoadImportIRInstResult {
+  SemIR::TypeId type_id;
+  SemIR::ConstantId constant_id;
+};
+
+// Loads the given `ImportIRInst`, returning its type and constant value in
+// the local file.
+auto LoadImportIRInst(Context& context, SemIR::ImportIRInst import_ir_inst)
+    -> LoadImportIRInstResult;
+
 // If the passed in instruction ID is an ImportRefUnloaded, turns it into an
 // ImportRefLoaded for use.
 auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;
@@ -51,13 +62,76 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;
 // Load all impls declared in the api file corresponding to this impl file.
 auto ImportImplsFromApiFile(Context& context) -> void;
 
-// Load an impl that is declared in an imported IR.
-auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                SemIR::ImplId impl_id) -> void;
+// Imports `id` into the local file. `id` must have a value and be in the ID
+// space of `import_ir_id`, and `import_ir_id` cannot be `Local`. Repeated calls
+// with the same `id` will return the same local ID.
+//
+// Not all ID kinds are supported; only ones that can be meaningfully mapped
+// from one file to another without additional context.
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::AbsoluteInstBlockId id) -> SemIR::AbsoluteInstBlockId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::AbsoluteInstId id) -> SemIR::AbsoluteInstId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::AssociatedConstantId id) -> SemIR::AssociatedConstantId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ClangDeclId id) -> SemIR::ClangDeclId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ClangFunctionPointerTypeId id)
+    -> SemIR::ClangFunctionPointerTypeId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ClassId id) -> SemIR::ClassId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ConstantId id) -> SemIR::ConstantId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::CppOverloadSetId id) -> SemIR::CppOverloadSetId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::CustomLayoutId id) -> SemIR::CustomLayoutId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id, FloatId id)
+    -> FloatId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::FunctionId id) -> SemIR::FunctionId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::GenericId id) -> SemIR::GenericId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ImplId id) -> SemIR::ImplId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ImportIRInstId id) -> SemIR::ImportIRInstId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::LibraryNameId id) -> SemIR::LibraryNameId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::MetaInstId id) -> SemIR::MetaInstId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::NamedConstraintId id) -> SemIR::NamedConstraintId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::NameScopeId id) -> SemIR::NameScopeId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::NameId id) -> SemIR::NameId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::ObserveId id) -> SemIR::ObserveId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::InterfaceId id) -> SemIR::InterfaceId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id, RealId id)
+    -> RealId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::RequireImplsId id) -> SemIR::RequireImplsId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::SpecificId id) -> SemIR::SpecificId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              StringLiteralValueId id) -> StringLiteralValueId;
+auto ImportId(Context& context, SemIR::ImportIRId import_ir_id,
+              SemIR::VtableId id) -> SemIR::VtableId;
 
-// Load an interface that is declared in an imported IR.
-auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
-                     SemIR::InterfaceId interface_id) -> SemIR::InterfaceId;
+// These IDs are always canonical, and have the same meaning in every IR.
+template <typename IdT>
+  requires SameAsOneOf<IdT, SemIR::BoolValue, SemIR::CharId,
+                       SemIR::CallParamIndex, SemIR::CompileTimeBindIndex,
+                       SemIR::ElementIndex, SemIR::FloatKind, IntId,
+                       SemIR::IntKind>
+auto ImportId(Context& /*context*/, SemIR::ImportIRId /*import_ir_id*/, IdT id)
+    -> IdT {
+  return id;
+}
 
 }  // namespace Carbon::Check
 
