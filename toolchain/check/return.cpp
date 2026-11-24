@@ -58,7 +58,7 @@ static auto GetCurrentReturnedVar(Context& context) -> SemIR::InstId {
 // Produces a note that the given function has no explicit return type.
 static auto NoteNoReturnTypeProvided(DiagnosticBuilder& diag,
                                      const SemIR::Function& function) {
-  CARBON_DIAGNOSTIC_LABEL(ReturnTypeOmittedNote, Info,
+  CARBON_DIAGNOSTIC_LABEL(ReturnTypeOmittedNote,
                           "there was no return type provided");
   diag.Attach(function.latest_decl_id(), ReturnTypeOmittedNote);
 }
@@ -67,8 +67,8 @@ static auto NoteNoReturnTypeProvided(DiagnosticBuilder& diag,
 // must be a function whose definition is currently being checked.
 static auto NoteReturnType(DiagnosticBuilder& diag,
                            const SemIR::Function& function) {
-  CARBON_DIAGNOSTIC_LABEL(ReturnTypeHereNote, Info,
-                          "return type of function is {0}", InstIdAsType);
+  CARBON_DIAGNOSTIC_LABEL(ReturnTypeHereNote, "return type of function is {0}",
+                          InstIdAsType);
   diag.Attach(function.return_type_inst_id, ReturnTypeHereNote,
               function.return_type_inst_id);
 }
@@ -77,7 +77,7 @@ static auto NoteReturnType(DiagnosticBuilder& diag,
 // function whose return type has not been deduced yet.
 static auto NoteReturnTypeIsDeduced(DiagnosticBuilder& diag,
                                     const SemIR::Function& function) {
-  CARBON_DIAGNOSTIC_LABEL(ReturnTypeIsDeducedNote, Info,
+  CARBON_DIAGNOSTIC_LABEL(ReturnTypeIsDeducedNote,
                           "return type of function is deduced");
   diag.Attach(function.latest_decl_id(), ReturnTypeIsDeducedNote);
 }
@@ -85,8 +85,7 @@ static auto NoteReturnTypeIsDeduced(DiagnosticBuilder& diag,
 // Produces a note pointing at the currently in scope `returned var`.
 static auto NoteReturnedVar(DiagnosticBuilder& diag,
                             SemIR::InstId returned_var_id) {
-  CARBON_DIAGNOSTIC_LABEL(ReturnedVarHere, Info,
-                          "`returned var` was declared here");
+  CARBON_DIAGNOSTIC_LABEL(ReturnedVarHere, "`returned var` was declared here");
   diag.Attach(returned_var_id, ReturnedVarHere);
 }
 
@@ -216,11 +215,11 @@ static auto CompletePendingReturns(Context& context,
 
   // Any problems converting to the return type are probably due to the choice
   // of return type, so point out where it came from.
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
         // TODO: Track the instruction the return type was deduced for and use
         // TypeOfInstId to preserve sugar.
-        CARBON_DIAGNOSTIC_LABEL(ReturnTypeDeducedAs, Info,
+        CARBON_DIAGNOSTIC_LABEL(ReturnTypeDeducedAs,
                                 "return type deduced as {0}", InstIdAsType);
         builder.Attach(function.return_type_inst_id, ReturnTypeDeducedAs,
                        function.return_type_inst_id);
@@ -302,10 +301,10 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                       "`returned var` declaration in function with "
                       "non-initializing return form");
     auto diag = context.emitter().Build(returned_node, ReturnedVarNotInit);
-    CARBON_DIAGNOSTIC_LABEL(ReturnFormHereNote, Info,
-                            "return form declared here");
+    CARBON_DIAGNOSTIC_LABEL(ReturnFormHereNote, "return form declared here");
     // A deduced return form is located where its type was deduced from, which
-    // is this `returned var`, so point at the function declaration instead.
+    // is this `returned var`, so attach the label to the function declaration
+    // instead.
     diag.Attach(function.has_deduced_return_type()
                     ? function.latest_decl_id()
                     : function.return_form_inst_id,
@@ -453,7 +452,7 @@ auto DeduceReturnTypeAtEndOfBody(Context& context,
           DeducedReturnTypeMismatch, Error,
           "deduced return type {0} does not match return type deduced earlier",
           TypeOfInstId);
-      CARBON_DIAGNOSTIC_LABEL(DeducedReturnTypeMismatchPrevious, Info,
+      CARBON_DIAGNOSTIC_LABEL(DeducedReturnTypeMismatchPrevious,
                               "return type previously deduced as {0} here",
                               TypeOfInstId);
       context.emitter()

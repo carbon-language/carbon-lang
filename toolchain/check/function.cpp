@@ -304,13 +304,13 @@ auto CheckFunctionReturnTypeMatches(Context& context,
             : context.emitter().Build(new_function.latest_decl_id(),
                                       FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.has_value()) {
-      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePrevious, Info,
+      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePrevious,
                               "previously declared with return type {0}",
                               SemIR::TypeId);
       diag.Attach(prev_function.latest_decl_id(),
                   FunctionRedeclReturnTypePrevious, prev_return_type_id);
     } else {
-      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePreviousNoReturn, Info,
+      CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePreviousNoReturn,
                               "previously declared with no return type");
       diag.Attach(prev_function.latest_decl_id(),
                   FunctionRedeclReturnTypePreviousNoReturn);
@@ -352,7 +352,7 @@ static auto CheckFunctionEvaluationModeMatches(
       "{0:=-1:not `eval`|=-2:not `musteval`|=1:`eval`|=2:`musteval`}",
       Diagnostics::IntAsSelect);
   CARBON_DIAGNOSTIC_LABEL(
-      FunctionRedeclEvaluationModePrevious, Info,
+      FunctionRedeclEvaluationModePrevious,
       "previously {0:<0:not |:}declared as "
       "{0:=-1:`eval`|=-2:`musteval`|=1:`eval`|=2:`musteval`}",
       Diagnostics::IntAsSelect);
@@ -400,19 +400,19 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
     // definition or call to this function.
     if (!RequireConcreteType(
             context, arg_type_id, SemIR::LocId(return_pattern_id),
-            [&](auto& builder) {
-              CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInFunctionReturnType,
-                                        "function returns incomplete type {0}",
-                                        SemIR::TypeId);
-              builder.Attach(loc_id, IncompleteTypeInFunctionReturnType,
-                             arg_type_id);
+            [&] {
+              CARBON_DIAGNOSTIC(IncompleteTypeInFunctionReturnType, Error,
+                                "function returns incomplete type {0}",
+                                SemIR::TypeId);
+              return context.emitter().Build(
+                  loc_id, IncompleteTypeInFunctionReturnType, arg_type_id);
             },
-            [&](auto& builder) {
-              CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInFunctionReturnType,
-                                        "function returns abstract type {0}",
-                                        SemIR::TypeId);
-              builder.Attach(loc_id, AbstractTypeInFunctionReturnType,
-                             arg_type_id);
+            [&] {
+              CARBON_DIAGNOSTIC(AbstractTypeInFunctionReturnType, Error,
+                                "function returns abstract type {0}",
+                                SemIR::TypeId);
+              return context.emitter().Build(
+                  loc_id, AbstractTypeInFunctionReturnType, arg_type_id);
             })) {
       return SemIR::ErrorInst::TypeId;
     }
@@ -463,13 +463,13 @@ auto CheckFunctionDefinitionSignature(Context& context,
     // The parameter types need to be complete.
     RequireCompleteType(
         context, context.insts().Get(param_ref_id).type_id(),
-        SemIR::LocId(param_ref_id), [&](auto& builder) {
-          CARBON_DIAGNOSTIC_CONTEXT(
-              IncompleteTypeInFunctionParam,
+        SemIR::LocId(param_ref_id), [&] {
+          CARBON_DIAGNOSTIC(
+              IncompleteTypeInFunctionParam, Error,
               "parameter has incomplete type {0} in function definition",
               TypeOfInstId);
-          builder.Attach(param_ref_id, IncompleteTypeInFunctionParam,
-                         param_ref_id);
+          return context.emitter().Build(
+              param_ref_id, IncompleteTypeInFunctionParam, param_ref_id);
         });
   }
 
@@ -793,12 +793,12 @@ static auto CheckDefaults(Context& context, SemIR::Function& function)
     if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
                         "this pattern is missing a required default value");
-      CARBON_DIAGNOSTIC_LABEL(RequiredPatternDefaultValueFirstDefault, Info,
+      CARBON_DIAGNOSTIC_LABEL(RequiredPatternDefaultValueFirstDefault,
                               "all patterns to the right of this first pattern "
                               "with a default value must also specify a "
                               "default value");
       CARBON_DIAGNOSTIC_LABEL(
-          RequiredPatternDefaultValueMissingAdditional, Primary,
+          RequiredPatternDefaultValueMissingAdditional,
           "this pattern is also missing a required default value");
       auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
       auto builder = context.emitter().Build(

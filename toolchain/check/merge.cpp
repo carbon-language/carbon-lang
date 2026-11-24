@@ -14,7 +14,7 @@
 
 namespace Carbon::Check {
 
-CARBON_DIAGNOSTIC_LABEL(RedeclPrevDecl, Info, "previously declared here");
+CARBON_DIAGNOSTIC_LABEL(RedeclPrevDecl, "previously declared here");
 
 // Diagnoses a redeclaration which is redundant.
 static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
@@ -25,7 +25,7 @@ static auto DiagnoseRedundant(Context& context, Lex::TokenKind decl_kind,
                     SemIR::NameId);
   context.emitter()
       .Build(new_loc_id, RedeclRedundant, decl_kind, name_id)
-      .Attach(prev_loc_id, RedeclPrevDecl)
+      .Attach(LocIdForDiagnostics::DeclaredName(prev_loc_id), RedeclPrevDecl)
       .Emit();
 }
 
@@ -35,10 +35,10 @@ static auto DiagnoseRedef(Context& context, Lex::TokenKind decl_kind,
                           SemIR::LocId prev_loc_id) -> void {
   CARBON_DIAGNOSTIC(RedeclRedef, Error, "redefinition of `{0} {1}`",
                     Lex::TokenKind, SemIR::NameId);
-  CARBON_DIAGNOSTIC_LABEL(RedeclPrevDef, Info, "previously defined here");
+  CARBON_DIAGNOSTIC_LABEL(RedeclPrevDef, "previously defined here");
   context.emitter()
       .Build(new_loc_id, RedeclRedef, decl_kind, name_id)
-      .Attach(prev_loc_id, RedeclPrevDef)
+      .Attach(LocIdForDiagnostics::DeclaredName(prev_loc_id), RedeclPrevDef)
       .Emit();
 }
 
@@ -52,7 +52,7 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
       .Build(new_loc_id, RedeclExternMismatch, decl_kind, name_id)
-      .Attach(prev_loc_id, RedeclPrevDecl)
+      .Attach(LocIdForDiagnostics::DeclaredName(prev_loc_id), RedeclPrevDecl)
       .Emit();
 }
 
@@ -67,7 +67,7 @@ static auto DiagnoseExternLibraryInImporter(Context& context,
                     Lex::TokenKind, SemIR::NameId);
   context.emitter()
       .Build(new_loc_id, ExternLibraryInImporter, decl_kind, name_id)
-      .Attach(prev_loc_id, RedeclPrevDecl)
+      .Attach(LocIdForDiagnostics::DeclaredName(prev_loc_id), RedeclPrevDecl)
       .Emit();
 }
 
@@ -79,7 +79,7 @@ static auto DiagnoseExternLibraryIncorrect(Context& context,
       ExternLibraryIncorrect, Error,
       "declaration in {0} doesn't match `extern library` declaration",
       SemIR::LibraryNameId);
-  CARBON_DIAGNOSTIC_LABEL(ExternLibraryExpected, Info,
+  CARBON_DIAGNOSTIC_LABEL(ExternLibraryExpected,
                           "previously declared with `extern library` here");
   context.emitter()
       .Build(new_loc_id, ExternLibraryIncorrect, context.sem_ir().library_id())
@@ -214,7 +214,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
                              SemIR::SpecificId prev_specific_id, bool diagnose,
                              bool check_syntax) -> bool {
   CARBON_DIAGNOSTIC_LABEL(
-      RedeclParamPrevious, Info,
+      RedeclParamPrevious,
       "previous declaration's corresponding {0:implicit |}parameter here",
       Diagnostics::BoolAsSelect);
   auto emit_general_diagnostic = [&]() {
@@ -390,7 +390,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
                       "redeclaration differs because of "
                       "{1:|missing }{0:implicit |}parameter list",
                       Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
-    CARBON_DIAGNOSTIC_LABEL(RedeclParamListPrevious, Info,
+    CARBON_DIAGNOSTIC_LABEL(RedeclParamListPrevious,
                             "previously declared "
                             "{1:with|without} {0:implicit |}parameter list",
                             Diagnostics::BoolAsSelect,
@@ -419,7 +419,7 @@ static auto CheckRedeclParams(Context& context, SemIR::LocId new_decl_loc_id,
         "redeclaration differs because of {0:implicit |}parameter count of {1}",
         Diagnostics::BoolAsSelect, int32_t);
     CARBON_DIAGNOSTIC_LABEL(
-        RedeclParamCountPrevious, Info,
+        RedeclParamCountPrevious,
         "previously declared with {0:implicit |}parameter count of {1}",
         Diagnostics::BoolAsSelect, int32_t);
     context.emitter()
@@ -537,7 +537,7 @@ static auto CheckRedeclParamSyntax(Context& context,
       }
       CARBON_DIAGNOSTIC(RedeclParamSyntaxDiffers, Error,
                         "redeclaration syntax differs here");
-      CARBON_DIAGNOSTIC_LABEL(RedeclParamSyntaxPrevious, Info,
+      CARBON_DIAGNOSTIC_LABEL(RedeclParamSyntaxPrevious,
                               "comparing with previous declaration here");
       context.emitter()
           .Build(new_node_id, RedeclParamSyntaxDiffers)
@@ -840,7 +840,9 @@ auto TryMergeRedecl(Context& context,
       context.emitter()
           .Build(entity_info.new_entity.latest_decl_id(),
                  DeducedReturnTypeRedecl)
-          .Attach(prev_entity.latest_decl_id(), RedeclPrevDecl)
+          .Attach(
+              LocIdForDiagnostics::DeclaredName(prev_entity.latest_decl_id()),
+              RedeclPrevDecl)
           .Emit();
       return false;
     }

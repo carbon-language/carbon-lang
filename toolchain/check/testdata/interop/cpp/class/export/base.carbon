@@ -97,9 +97,9 @@ struct VirtualDestructor {
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
 // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-// CHECK:STDERR:        · ───────────────────┬───────────────────
-// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──────┬─────
+// CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·             │ [DeductionGenericHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithVdtor {
@@ -151,9 +151,9 @@ import Cpp;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
 // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-// CHECK:STDERR:        · ───────────────────┬───────────────────
-// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──────┬─────
+// CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·             │ [DeductionGenericHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractNonvirtualDtor {}
@@ -179,9 +179,9 @@ import Cpp;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
 // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-// CHECK:STDERR:        · ───────────────────┬───────────────────
-// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──────┬─────
+// CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·             │ [DeductionGenericHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithMethodNoVptr {
@@ -210,9 +210,9 @@ import Cpp;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
 // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-// CHECK:STDERR:        · ───────────────────┬───────────────────
-// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──────┬─────
+// CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·             │ [DeductionGenericHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithMethod {
@@ -256,9 +256,9 @@ import Cpp;
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
 // CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
-// CHECK:STDERR:        · ───────────────────┬───────────────────
-// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
-// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ·    ──────┬─────
+// CHECK:STDERR:        ·          ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·             │ [DeductionGenericHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractToOverride {

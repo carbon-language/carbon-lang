@@ -32,15 +32,12 @@ fn AccessMemberWithInvalidBaseError(p: DeriveFromError*) -> i32 { return (*p).n;
 library "[[@TEST_NAME]]";
 
 class DeriveFromNonType {
-  // CHECK:STDERR:        ╭─┤ fail_derive_from_non_type.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR:        ╭─┤ fail_derive_from_non_type.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   extend base: 32;
   // CHECK:STDERR:        ·                ┳━
   // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert non-type value of type
-  // CHECK:STDERR:        ·                │  ┃        `Core.IntLiteral` to `type`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·                ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·                   ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: 32;
@@ -66,20 +63,17 @@ class DeriveFromi32 {
 
 // It's not really important whether this conversion produces an error or not,
 // but it shouldn't crash.
-// CHECK:STDERR:        ╭─┤ fail_derive_from_i32.carbon:[[@LINE+16]]:53
+// CHECK:STDERR:        ╭─┤ fail_derive_from_i32.carbon:[[@LINE+13]]:53
 // CHECK:STDERR: ->     │ fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
 // CHECK:STDERR:        ·                                                     ┳━━━━━━━━
 // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot
-// CHECK:STDERR:        ·                                                     │  ┃        implicitly
-// CHECK:STDERR:        ·                                                     │  ┃        convert
-// CHECK:STDERR:        ·                                                     │  ┃        expression of
-// CHECK:STDERR:        ·                                                     │  ┃        type
-// CHECK:STDERR:        ·                                                     │  ┃        `DeriveFromi32*`
-// CHECK:STDERR:        ·                                                     │  ┃        to `i32*`
-// CHECK:STDERR:        ·                                                     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭───────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `DeriveFromi32*` does not implement interface `Core.ImplicitAs(i32*)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                        ┃        implicitly
+// CHECK:STDERR:        ·                                                        ┃        convert
+// CHECK:STDERR:        ·                                                        ┃        expression of
+// CHECK:STDERR:        ·                                                        ┃        type
+// CHECK:STDERR:        ·                                                        ┃        `DeriveFromi32*`
+// CHECK:STDERR:        ·                                                        ┃        to `i32*`
+// CHECK:STDERR:        ·                                                        ┃        [ConversionFailure]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertToBadBasei32(p: DeriveFromi32*) -> i32* { return p; }
@@ -112,17 +106,13 @@ class DeriveFromTuple {
   extend base: (Base,);
 }
 
-// CHECK:STDERR:        ╭─┤ fail_derive_from_tuple.carbon:[[@LINE+13]]:61
+// CHECK:STDERR:        ╭─┤ fail_derive_from_tuple.carbon:[[@LINE+9]]:61
 // CHECK:STDERR: ->     │ fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
 // CHECK:STDERR:        ·                                                             ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `DeriveFromTuple*` to
 // CHECK:STDERR:        · ┃        `(Base,)*`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭───────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `DeriveFromTuple*` does not implement interface
-// CHECK:STDERR:        · │ `Core.ImplicitAs((Base,)*)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertToBadBaseTuple(p: DeriveFromTuple*) -> (Base,)* { return p; }
@@ -147,17 +137,13 @@ class DeriveFromStruct {
   extend base: {.a: i32, .b: i32};
 }
 
-// CHECK:STDERR:        ╭─┤ fail_derive_from_struct.carbon:[[@LINE+13]]:74
+// CHECK:STDERR:        ╭─┤ fail_derive_from_struct.carbon:[[@LINE+9]]:74
 // CHECK:STDERR: ->     │ ...ToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
 // CHECK:STDERR:        ·                                                                   ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `DeriveFromStruct*` to
 // CHECK:STDERR:        · ┃        `{.a: i32, .b: i32}*`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `DeriveFromStruct*` does not implement interface
-// CHECK:STDERR:        · │ `Core.ImplicitAs({.a: i32, .b: i32}*)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertToBadBaseStruct(p: DeriveFromStruct*) -> {.a: i32, .b: i32}* { return p; }
@@ -181,8 +167,8 @@ base class Incomplete;
 class DeriveFromIncomplete {
   // CHECK:STDERR:        ╭─┤ fail_derive_from_incomplete.carbon:[[@LINE+11]]:16
   // CHECK:STDERR:        │ base class Incomplete;
-  // CHECK:STDERR:        · ───────────┬──────────
-  // CHECK:STDERR:        ·            ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ·            ─────┬────
+  // CHECK:STDERR:        ·                 ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   extend base: Incomplete;
   // CHECK:STDERR:        ·                ━━━━━┳━━━━
@@ -193,17 +179,13 @@ class DeriveFromIncomplete {
   extend base: Incomplete;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_derive_from_incomplete.carbon:[[@LINE+13]]:74
+// CHECK:STDERR:        ╭─┤ fail_derive_from_incomplete.carbon:[[@LINE+9]]:74
 // CHECK:STDERR: ->     │ ...ToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }
 // CHECK:STDERR:        ·                                                                   ━━━━┳━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `DeriveFromIncomplete*` to
 // CHECK:STDERR:        · ┃        `Incomplete*`
 // CHECK:STDERR:        · ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────────╯
-// CHECK:STDERR:        · │ type `DeriveFromIncomplete*` does not implement interface
-// CHECK:STDERR:        · │ `Core.ImplicitAs(Incomplete*)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertToBadBaseIncomplete(p: DeriveFromIncomplete*) -> Incomplete* { return p; }

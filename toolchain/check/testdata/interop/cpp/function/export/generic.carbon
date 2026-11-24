@@ -142,7 +142,7 @@ void CallEnclosingF() {
   Carbon::EnclosingB b;
   // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   b.MemberF(1, 2);
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'MemberF' in 'Carbon::Main::EnclosingA<int>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -182,6 +182,23 @@ void CallUnsupportedF() {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Carbon::UnsupportedF(x);
+}
+''';
+
+// --- generic_class_param.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class C(T: type) {}
+
+fn F[T: type](unused c: C(T)) {}
+
+inline Cpp '''
+void G() {
+  Carbon::C<Carbon::A> c;
+  Carbon::F(c);
 }
 ''';
 

@@ -41,9 +41,9 @@ fn Undefined[T: type](x: T);
 fn CallUndefined() {
   // CHECK:STDERR:        ╭─┤ fail_call_undefined.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn Undefined[T: type](x: T);
-  // CHECK:STDERR:        · ──────────────┬─────────────
-  // CHECK:STDERR:        ·               ╰──┤ generic function declared here
-  // CHECK:STDERR:        ·                  │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ·    ────┬────
+  // CHECK:STDERR:        ·        ╰──┤ generic function declared here
+  // CHECK:STDERR:        ·           │ [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Undefined(0 as i32);
   // CHECK:STDERR:        ·   ━━━━┳━━━━

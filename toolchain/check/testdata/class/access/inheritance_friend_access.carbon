@@ -26,8 +26,8 @@ class Derived {
   fn G() {
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     Self.F();
     // CHECK:STDERR:        ·     ━━━┳━━
@@ -55,8 +55,8 @@ class Derived {
   fn G() {
     // CHECK:STDERR:        ╭─┤ fail_todo_unqualified_in_friend_of_base.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     F();
     // CHECK:STDERR:        ·     ┳
@@ -86,8 +86,8 @@ class Friend {
   fn G(d: Derived) {
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_via_other_class.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     d.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -119,8 +119,8 @@ class Derived {
     fn ViaDerived(d: Derived) {
       // CHECK:STDERR:        ╭─┤ fail_todo_nested_in_friend_of_base.carbon:[[@LINE+11]]:7
       // CHECK:STDERR:        │   private fn F() {}
-      // CHECK:STDERR:        ·   ────────┬───────
-      // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+      // CHECK:STDERR:        ·              ┬
+      // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
       // CHECK:STDERR:        ┆
       // CHECK:STDERR: ->     │       d.F();
       // CHECK:STDERR:        ·       ━┳━
@@ -145,6 +145,21 @@ base class Base {
 
 class A(template T: type) {
   fn G() {
+    // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_via_template.carbon:[[@LINE+15]]:5
+    // CHECK:STDERR:        │   private fn F() {}
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     T.F();
+    // CHECK:STDERR:        ·     ━┳━
+    // CHECK:STDERR:        ·      ┗━━┫ error: cannot access private member `F` of type `Base`
+    // CHECK:STDERR:        ·         ┃        [ClassInvalidMemberAccess]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR:        │   A(Derived).G();
+    // CHECK:STDERR:        ·   ──────┬─────
+    // CHECK:STDERR:        ·         ╰──┤ in monomorphization of `G()` here [ResolvingSpecificHere]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     T.F();
   }
 }
@@ -154,22 +169,6 @@ class Derived {
 }
 
 fn H() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_via_template.carbon:[[@LINE+16]]:3
-  // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │     T.F();
-  // CHECK:STDERR:        ·     ─┬─
-  // CHECK:STDERR:        ·      ╰──┤ cannot access private member `F` of type `Base`
-  // CHECK:STDERR:        ·         │ [ClassInvalidMemberAccess]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   A(Derived).G();
-  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
-  // CHECK:STDERR:        ·         ┗━━┫ error: unable to monomorphize specific `G()`
-  // CHECK:STDERR:        ·            ┃        [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   A(Derived).G();
 }
 
@@ -190,8 +189,8 @@ class Derived {
 fn Base.G(d: Derived) {
   // CHECK:STDERR:        ╭─┤ fail_todo_base_member_via_derived.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   d.F();
   // CHECK:STDERR:        ·   ━┳━
@@ -219,8 +218,8 @@ class Derived {
 fn Base(T: type).G(d: Derived) {
   // CHECK:STDERR:        ╭─┤ fail_todo_generic_base_member_via_derived.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   d.F();
   // CHECK:STDERR:        ·   ━┳━
@@ -252,8 +251,8 @@ class Derived {
 fn Base(T: type).Nested.G(d: Derived) {
   // CHECK:STDERR:        ╭─┤ fail_todo_generic_base_member_via_derived_in_nested_class.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private fn F() {}
-  // CHECK:STDERR:        ·   ────────┬───────
-  // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   d.F();
   // CHECK:STDERR:        ·   ━┳━
@@ -287,8 +286,8 @@ class Friend {
   fn G(b: Bottom) {
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_indirect_base.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     b.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -318,8 +317,8 @@ interface I {
   default fn G(d: Derived) {
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_interface_of_base.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     d.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -347,8 +346,8 @@ class Adapter {
   fn G() {
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_adapted_class.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     Self.F();
     // CHECK:STDERR:        ·     ━━━┳━━
@@ -465,8 +464,8 @@ class Friend {
     m.F();
     // CHECK:STDERR:        ╭─┤ fail_todo_friend_of_base_protected_member_of_indirect_base.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   protected fn F() {}
-    // CHECK:STDERR:        ·   ─────────┬────────
-    // CHECK:STDERR:        ·            ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·                ┬
+    // CHECK:STDERR:        ·                ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     b.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -495,8 +494,8 @@ class Derived {
 fn G(d: Derived) {
   // CHECK:STDERR:        ╭─┤ fail_not_friend_of_base.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │   private fn F();
-  // CHECK:STDERR:        ·   ───────┬───────
-  // CHECK:STDERR:        ·          ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   d.F();
   // CHECK:STDERR:        ·   ━┳━
@@ -527,8 +526,8 @@ class Friend {
     d.G();
     // CHECK:STDERR:        ╭─┤ fail_friend_of_derived_only.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F();
-    // CHECK:STDERR:        ·   ───────┬───────
-    // CHECK:STDERR:        ·          ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     d.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -553,8 +552,8 @@ class Derived {
   fn Qualified() {
     // CHECK:STDERR:        ╭─┤ fail_derived_without_friendship_qualified.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     Self.F();
     // CHECK:STDERR:        ·     ━━━┳━━
@@ -579,8 +578,8 @@ class Derived {
   fn Unqualified() {
     // CHECK:STDERR:        ╭─┤ fail_derived_without_friendship_unqualified.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     F();
     // CHECK:STDERR:        ·     ┳
@@ -614,8 +613,8 @@ class Friend {
   fn G(b: Bottom) {
     // CHECK:STDERR:        ╭─┤ fail_friend_of_middle_only.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F();
-    // CHECK:STDERR:        ·   ───────┬───────
-    // CHECK:STDERR:        ·          ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     b.F();
     // CHECK:STDERR:        ·     ━┳━
@@ -640,8 +639,8 @@ class Adapter {
   fn G() {
     // CHECK:STDERR:        ╭─┤ fail_not_friend_of_adapted_class.carbon:[[@LINE+11]]:5
     // CHECK:STDERR:        │   private fn F() {}
-    // CHECK:STDERR:        ·   ────────┬───────
-    // CHECK:STDERR:        ·           ╰──┤ declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:        ·              ┬
+    // CHECK:STDERR:        ·              ╰──┤ declared here [ClassMemberDeclaration]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     Self.F();
     // CHECK:STDERR:        ·     ━━━┳━━

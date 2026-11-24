@@ -10,8 +10,8 @@
 Validates that each diagnostic declared with CARBON_DIAGNOSTIC_KIND is
 referenced by one (and only one) CARBON_DIAGNOSTIC.
 
-Labels, contexts, and location info have no kind to register, so this also
-stands in for the registry. `label` below stands for any of the three:
+Labels and location info have no kind to register, so this also does for them
+what the registry does for kinds. `label` below stands for either:
 
 - Each label is attached somewhere. The compiler warns about most of these,
   but not about one declared in a header.
@@ -47,27 +47,20 @@ from typing import Dict, List, NamedTuple, Set, override
 IGNORED = set(["TestDiagnostic"])
 
 # The declarations that name something other than a diagnostic kind. A label
-# marks a range of source; a context states a problem in terms of the operation
-# it happened inside; location info is a step in the path a location was reached
-# by. None of them is registered, and each carries a name that output and
-# testdata can match on, so all three are checked here.
-LABEL_DECL_RE = (
-    r"CARBON_DIAGNOSTIC_(?:LABEL|SOFT_CONTEXT|CONTEXT|LOCATION_INFO)"
-    r"\(\s*(\w+),"
-)
+# is attached to a range of source; location info is a step in the path a
+# location was reached by. Neither is registered, and each has a name that
+# output and testdata can match on, so both are checked here.
+LABEL_DECL_RE = r"CARBON_DIAGNOSTIC_(?:LABEL|LOCATION_INFO)\(\s*(\w+),"
 
 # Labels that no file_test exercises. This is `coverage_test`'s UntestedKinds
 # for labels, and entries are checked for being genuinely uncovered so that one
 # that gains a test has to be removed from here.
 UNCOVERED_LABELS = {
     # These exist only for unit tests, which write no testdata.
-    "TestContext",
-    "TestContext2",
     "TestInfo",
     "TestLabel",
-    "TestSoftContext",
-    "TestSoftContext2",
-    "TestSortContext",
+    # A label with no text, so no row of output names it.
+    "CppInteropNoteRange",
     # TODO: This is currently hard to test because it requires building and
     # importing a module, which attempts to create additional files with
     # unpredictable names in the module cache, which bazel doesn't permit.
@@ -135,8 +128,8 @@ def load_diagnostic_uses_in(
     line_offset = 0
 
     found: Dict[str, List[Loc]] = collections.defaultdict(lambda: [])
-    # `CARBON_DIAGNOSTIC_ON_SCOPE` declares a diagnostic too; the label,
-    # context, and location-info macros do not, and have no kind to register.
+    # `CARBON_DIAGNOSTIC_ON_SCOPE` declares a diagnostic too; the label and
+    # location-info macros do not, and have no kind to register.
     for m in re.finditer(
         r"CARBON_DIAGNOSTIC(?:_ON_SCOPE)?\(\s*(\w+),", content
     ):
@@ -150,10 +143,10 @@ def load_diagnostic_uses_in(
 
 
 def load_labels_in(path: Path) -> Dict[str, List[Loc]]:
-    """Returns the path's label, context, and location-info declarations.
+    """Returns the path's label and location-info declarations.
 
-    All three carry a name the same way a kind does, so all three are checked
-    the same way, and `label` stands for any of them throughout this script.
+    Both carry a name the same way a kind does, so both are checked the same
+    way, and `label` stands for either throughout this script.
     """
     content = strip_noise(path.read_text())
 

@@ -198,13 +198,14 @@ jobs:
           path: ${{ runner.temp }}/bmf-continuous/bmf-${{ matrix.runner }}.json
 
   attach-releases:
-    name: Attach backfilled BMF archives to Nightly Releases
+    name: Replace Nightly Release BMF archives with BMF v1
+    needs: [replay]
     if: github.ref_name == 'action-test'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       actions: read # To download saved BMF artifacts.
-      contents: write # To upload missing archives to historical Nightly Releases.
+      contents: write # To replace archives on historical Nightly Releases.
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
@@ -231,11 +232,12 @@ jobs:
           git fetch --no-recurse-submodules --filter=blob:none --tags origin \
             +refs/heads/trunk:refs/remotes/origin/trunk
 
-      - name: Attach missing nightly BMF archives
+      - name: Replace nightly BMF archives with BMF v1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          python3 ./toolchain/benchmarking/backfill_bencher.py attach-releases
+          python3 ./toolchain/benchmarking/backfill_bencher.py attach-releases \
+            --replace
 
   replay:
     name: Replay BMF artifacts to Bencher
@@ -274,7 +276,7 @@ jobs:
             +refs/heads/trunk:refs/remotes/origin/trunk
 
       - name: Install Bencher CLI
-        uses: bencherdev/bencher@7de3c69a85380826613050826b4bce062be2f07d # v0.6.16
+        uses: bencherdev/bencher@b2484bc6734c8e6da4fad141bd13527a11da3988 # v0.6.17
 
       - name: Replay BMF artifacts to Bencher
         env:

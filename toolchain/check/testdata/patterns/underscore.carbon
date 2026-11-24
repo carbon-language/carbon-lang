@@ -56,11 +56,10 @@ library "[[@TEST_NAME]]";
 fn F(generic _: type);
 
 fn G() {
-  // CHECK:STDERR:        ╭─┤ fail_function_generic_undefined.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_function_generic_undefined.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:        │ fn F(generic _: type);
-  // CHECK:STDERR:        · ───────────┬──────────
-  // CHECK:STDERR:        ·            ╰──┤ generic function declared here
-  // CHECK:STDERR:        ·               │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ generic function declared here [MissingGenericFunctionDefinitionHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F({});
   // CHECK:STDERR:        ·   ┳
@@ -448,8 +447,8 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc19_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_7: type = converted %.loc19_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc18_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_7: type = converted %.loc18_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return

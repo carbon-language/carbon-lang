@@ -74,15 +74,12 @@ fn F() {
   // CHECK:STDERR:
   Cpp.TakesFunction(&n[0]);
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_call_params_2.carbon:[[@LINE+17]]:21
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_params_2.carbon:[[@LINE+14]]:21
   // CHECK:STDERR: ->     │   Cpp.TakesFunction(Cpp.nullptr);
   // CHECK:STDERR:        ·                     ┳━━━━━━━━━━
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                     │  ┃        `Cpp.nullptr_t` to `<C++ type int (*)(int)>`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `Cpp.nullptr_t` does not implement interface
-  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(<C++ type int (*)(int)>)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `Cpp.nullptr_t` to `<C++ type int (*)(int)>`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./params.h
   // CHECK:STDERR:        │ void TakesFunction(int f(int));
@@ -917,12 +914,12 @@ fn F() {
 // CHECK:STDOUT:   %.loc36_24.2: %i32 = converted %int_0, %.loc36_24.1 [concrete = constants.%int_0.753]
 // CHECK:STDOUT:   %.loc36_25: ref %i32 = array_index %n.ref, %.loc36_24.2
 // CHECK:STDOUT:   %addr: %ptr.a17 = addr_of %.loc36_25
-// CHECK:STDOUT:   %Cpp.ref.loc55_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %TakesFunction.ref.loc55: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc55_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc52_3: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %TakesFunction.ref.loc52: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc52_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %nullptr.ref: %Cpp.nullptr_t = name_ref nullptr, %uninit [concrete = constants.%uninit]
-// CHECK:STDOUT:   %.loc55: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc52: %.659 = converted %nullptr.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %TakesFunction.call: init %empty_tuple.type = call imports.%TakesFunction.decl(<error>)
 // CHECK:STDOUT:   %Destroy.facet.loc20_3.1: %Destroy.type = facet_value constants.%Array.3b5, (constants.%DestroyImpl.impl_witness.be3, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.843]
 // CHECK:STDOUT:   %.loc20_3.2: %Destroy.type = converted constants.%Array.3b5, %Destroy.facet.loc20_3.1 [concrete = constants.%Destroy.facet.843]

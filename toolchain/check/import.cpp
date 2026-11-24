@@ -639,9 +639,9 @@ auto ImportNameFromOtherPackage(
   }
 
   // Annotate diagnostics as occurring during this name lookup.
-  Diagnostics::AnnotationScope annotate_diagnostics(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC_LABEL(InNameLookup, Info, "in name lookup for `{0}`",
+        CARBON_DIAGNOSTIC_LABEL(InNameLookup, "in name lookup for `{0}`",
                                 SemIR::NameId);
         builder.Attach(loc_id, InNameLookup, name_id);
       });

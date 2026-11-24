@@ -70,7 +70,7 @@ void G() {
   // This is not found because it looks for the identifier `Cpp`, not the keyword `Cpp`.
   // CHECK:STDERR:        ╭─┤ fail_carbon_cpp.carbon:[[@LINE+7]]:11
   // CHECK:STDERR: ->     │   Carbon::Cpp::F();
-  // CHECK:STDERR:        ·   ───────╴╻
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
   // CHECK:STDERR:        ·           ┗━━┫ error: no member named 'Cpp' in namespace 'Carbon'
   // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -99,7 +99,7 @@ void GRaw() {
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_carbon_raw_cpp.carbon:[[@LINE+7]]:11
   // CHECK:STDERR: ->     │   Carbon::Cpp::FRaw();
-  // CHECK:STDERR:        ·   ───────╴╻
+  // CHECK:STDERR:        ·   ━━━━━━━╸╻
   // CHECK:STDERR:        ·           ┗━━┫ error: no member named 'Cpp' in namespace 'Carbon'
   // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
