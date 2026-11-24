@@ -28,9 +28,11 @@ from toolchain.benchmarking.bencher_suites import (  # noqa: E402
 )
 from toolchain.benchmarking.run_bencher import (  # noqa: E402
     BmfValidationError,
+    add_carbon_vs_cpp_ratios,
     convert_suite_bmf_to_v1,
     format_threshold_args,
     merge_bmf_payloads,
+    strip_metric_bounds,
     sync_measure_units,
     validate_bmf,
 )
@@ -163,8 +165,9 @@ def _normalize_to_bmf_v1(data: Any) -> dict[str, list[dict[str, Any]]]:
         raise BmfValidationError("BMF payload must be a non-empty JSON object.")
 
     if all(isinstance(v, list) for v in data.values()):
-        validate_bmf(data)
-        return data
+        enriched = add_carbon_vs_cpp_ratios(strip_metric_bounds(data))
+        validate_bmf(enriched)
+        return enriched
 
     if not all(isinstance(v, dict) for v in data.values()):
         raise BmfValidationError("Mixed or invalid BMF payload structure.")

@@ -200,7 +200,7 @@ jobs:
   attach-releases:
     name: Replace Nightly Release BMF archives with BMF v1
     needs: [replay]
-    if: github.ref_name == 'action-test'
+    if: github.ref_name == 'disabled'
     timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:

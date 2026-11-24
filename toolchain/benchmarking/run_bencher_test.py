@@ -17,7 +17,9 @@ from unittest import mock
 from toolchain.benchmarking import bencher_suites, run_bencher
 from toolchain.benchmarking.bencher_suites import (
     BYTES_UNITS,
+    CARBON_VS_CPP_MEASURE,
     MEASURE_UNITS,
+    PERCENTAGE_UNITS,
     PRELUDE_MEM_METRICS,
     SUITES,
     SuiteSpec,
@@ -49,8 +51,10 @@ class BencherSuitesTest(unittest.TestCase):
 
         compile_suite = by_name["compile_benchmark"]
         self.assertIsNone(compile_suite.extra_metrics_regex())
+        self.assertEqual(MEASURE_UNITS[CARBON_VS_CPP_MEASURE], PERCENTAGE_UNITS)
         self.assertEqual(
-            compile_suite.allowed_measures(), frozenset({"latency"})
+            compile_suite.allowed_measures(),
+            frozenset({"latency", CARBON_VS_CPP_MEASURE}),
         )
 
         with self.assertRaises(ValueError):
@@ -67,6 +71,14 @@ class BencherSuitesTest(unittest.TestCase):
                 nightly_filter=".*",
                 runs=6,
                 extra_metrics=("UnregisteredCounter",),
+            )
+        with self.assertRaises(ValueError):
+            SuiteSpec(
+                label="//pkg:bench",
+                continuous_filter=".*",
+                nightly_filter=".*",
+                runs=6,
+                derived_measures=("UnregisteredDerived",),
             )
 
     def test_compile_benchmark_filters_include_cpp_and_exclude_exec(
@@ -195,22 +207,103 @@ class RunBencherTest(unittest.TestCase):
             with self.assertRaises(BmfValidationError, msg=bad_name):
                 run_bencher.parse_benchmark_identity(target, bad_name)
 
+    def test_add_carbon_vs_cpp_ratios(self) -> None:
+        raw = {
+            "BM_CompileImplFile<Lang::Carbon, Phase::Check>/16384": {
+                "latency": {
+                    "value": 120.0,
+                    "lower_value": 100.0,
+                    "upper_value": 150.0,
+                }
+            },
+            "BM_CompileImplFile<Lang::Cpp, Phase::Check>/16384": {
+                "latency": {
+                    "value": 100.0,
+                    "lower_value": 80.0,
+                    "upper_value": 125.0,
+                }
+            },
+            # Unpaired `parse` benchmark (Carbon-only) produces no ratio.
+            "BM_CompileImplFile<Lang::Carbon, Phase::Parse>/16384": {
+                "latency": {"value": 40.0}
+            },
+        }
+        v1 = run_bencher.convert_suite_bmf_to_v1("compile_benchmark", raw)
+        self.assertEqual(len(v1["parse/16k"]), 1)
+        self.assertEqual(len(v1["check/16k"]), 3)
+        # Bounds (`lower_value`/`upper_value`) are stripped from all measures.
+        self.assertEqual(
+            v1["check/16k"][0]["measures"], {"latency": {"value": 120.0}}
+        )
+        self.assertEqual(
+            v1["check/16k"][1]["measures"], {"latency": {"value": 100.0}}
+        )
+        ratio_variant = v1["check/16k"][2]
+        self.assertEqual(ratio_variant["parameters"], {"file": "impl"})
+        self.assertEqual(
+            ratio_variant["measures"],
+            {CARBON_VS_CPP_MEASURE: {"value": 120.0}},
+        )
+        # Idempotent when applied again to already-enriched BMF v1.
+        self.assertEqual(run_bencher.add_carbon_vs_cpp_ratios(v1), v1)
+        self.assertEqual(run_bencher.validate_bmf(v1), 4)
+
+        # `strip_metric_bounds` drops `lower_value`/`upper_value` from existing
+        # BMF v1 payloads while keeping other keys intact for validation.
+        stripped = run_bencher.strip_metric_bounds(
+            {
+                "prelude": [
+                    {
+                        "parameters": {"import": "nothing"},
+                        "measures": {
+                            "latency": {
+                                "value": 50.0,
+                                "lower_value": 45.0,
+                                "upper_value": 55.0,
+                            }
+                        },
+                    }
+                ]
+            }
+        )
+        self.assertEqual(
+            stripped["prelude"][0]["measures"], {"latency": {"value": 50.0}}
+        )
+        self.assertEqual(run_bencher.validate_bmf(stripped), 1)
+
+        # Reject zero C++ latency and disallowed `CarbonVsCpp` on `prelude`.
+        with self.assertRaises(BmfValidationError):
+            run_bencher.convert_suite_bmf_to_v1(
+                "compile_benchmark",
+                {
+                    "BM_CompileImplFile<Lang::Carbon, Phase::Lex>/1024": {
+                        "latency": {"value": 10.0}
+                    },
+                    "BM_CompileImplFile<Lang::Cpp, Phase::Lex>/1024": {
+                        "latency": {"value": 0.0}
+                    },
+                },
+            )
+        with self.assertRaises(BmfValidationError):
+            run_bencher.validate_bmf(
+                {
+                    "prelude": [
+                        {
+                            "parameters": {"import": "nothing"},
+                            "measures": {CARBON_VS_CPP_MEASURE: {"value": 1.0}},
+                        }
+                    ]
+                }
+            )
+
     def test_validate_and_merge_bmf(self) -> None:
         prelude_bmf = {
             "prelude": [
                 {
                     "parameters": {"import": "nothing"},
                     "measures": {
-                        "latency": {
-                            "value": 50000000.0,
-                            "lower_value": 49000000.0,
-                            "upper_value": 51000000.0,
-                        },
-                        "MemSemIR": {
-                            "value": 8604581.0,
-                            "lower_value": 8604581.0,
-                            "upper_value": 8604581.0,
-                        },
+                        "latency": {"value": 50000000.0},
+                        "MemSemIR": {"value": 8604581.0},
                     },
                 }
             ]
@@ -261,7 +354,8 @@ class RunBencherTest(unittest.TestCase):
                 )
 
         # Reject bad variant shape, bad parameters, unallowlisted measures,
-        # unexpected keys, bool/NaN/overflow, negative values, and bad bounds.
+        # unexpected keys (including `lower_value`/`upper_value`),
+        # bool/NaN/overflow, and negative values.
         def check_1k_variant(
             measures: object, parameters: object = None
         ) -> dict[str, object]:
@@ -289,28 +383,12 @@ class RunBencherTest(unittest.TestCase):
             ),
             check_1k_variant({"Bytes": {"value": 100.0}}),
             check_1k_variant({"latency": {"value": 10.0, "extra": 1.0}}),
+            check_1k_variant({"latency": {"value": 10.0, "lower_value": 9.0}}),
+            check_1k_variant({"latency": {"value": 10.0, "upper_value": 11.0}}),
             check_1k_variant({"latency": {"value": True}}),
             check_1k_variant({"latency": {"value": float("nan")}}),
             check_1k_variant({"latency": {"value": 10**400}}),
             check_1k_variant({"latency": {"value": -1.0}}),
-            check_1k_variant(
-                {
-                    "latency": {
-                        "value": 10.0,
-                        "lower_value": 12.0,
-                        "upper_value": 15.0,
-                    }
-                }
-            ),
-            check_1k_variant(
-                {
-                    "latency": {
-                        "value": 10.0,
-                        "lower_value": 8.0,
-                        "upper_value": 9.0,
-                    }
-                }
-            ),
         ):
             with self.assertRaises(BmfValidationError):
                 run_bencher.validate_bmf(bad_payload)
@@ -380,6 +458,14 @@ class RunBencherTest(unittest.TestCase):
                             "parameters": {"file": "impl", "lang": "cpp"},
                             "measures": {"latency": {"value": 3}},
                         },
+                        {
+                            "parameters": {"file": "impl"},
+                            "measures": {
+                                CARBON_VS_CPP_MEASURE: {
+                                    "value": 100.0 * 2 / 3,
+                                }
+                            },
+                        },
                     ],
                 },
             )
@@ -412,12 +498,18 @@ class RunBencherTest(unittest.TestCase):
                 "t_test",
             ],
         )
+        self.assertIn(CARBON_VS_CPP_MEASURE, trunk_args)
         for mem_metric in PRELUDE_MEM_METRICS:
             self.assertIn(mem_metric, trunk_args)
 
     def test_sync_measure_units(self) -> None:
         all_synced = [
             {"uuid": "u-lat", "name": "Latency", "units": "nanoseconds (ns)"},
+            {
+                "uuid": "u-ratio",
+                "name": CARBON_VS_CPP_MEASURE,
+                "units": PERCENTAGE_UNITS,
+            },
             *[
                 {"uuid": f"u-{m}", "name": m, "units": BYTES_UNITS}
                 for m in PRELUDE_MEM_METRICS
