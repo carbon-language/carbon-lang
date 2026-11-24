@@ -31,7 +31,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_maybe_unformed.carbon
+// --- fail_nontrivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -43,7 +43,7 @@ class HasNonTrivialDestruction {
 alias MaybeUnformed = Core.MaybeUnformed(HasNonTrivialDestruction);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_maybe_unformed.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
@@ -54,7 +54,7 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_maybe_unformed_member.carbon
+// --- fail_nontrivial_maybe_unformed_member.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -70,7 +70,7 @@ class HasNonTrivialMember {
 alias MaybeUnformed = Core.MaybeUnformed(HasNonTrivialMember);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_maybe_unformed_member.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed_member.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
@@ -81,7 +81,7 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_maybe_unformed_of_const.carbon
+// --- fail_nontrivial_maybe_unformed_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -99,7 +99,7 @@ class HasNonTrivialMember {
 alias MaybeUnformed = Core.MaybeUnformed(const HasNonTrivialMember);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_maybe_unformed_of_const.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed_of_const.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
@@ -110,7 +110,7 @@ fn Test() {
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_const_maybe_unformed.carbon
+// --- fail_nontrivial_const_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -128,7 +128,7 @@ class HasNonTrivialMember {
 alias Const = const Core.MaybeUnformed(HasNonTrivialMember);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_maybe_unformed.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_maybe_unformed.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Const as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Const` into type implementing

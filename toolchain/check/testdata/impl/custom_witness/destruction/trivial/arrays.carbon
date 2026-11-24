@@ -87,7 +87,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_populated.carbon
+// --- fail_nontrivial_populated.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -95,7 +95,7 @@ import library "types";
 alias Array = array(HasNonTrivialDestruction, 1);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_populated.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_populated.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
@@ -148,7 +148,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_of_array_populated.carbon
+// --- fail_nontrivial_array_of_array_populated.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -156,7 +156,7 @@ import library "types";
 alias Array = array(array(HasNonTrivialDestruction, 1), 1);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_array_of_array_populated.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_of_array_populated.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
@@ -193,7 +193,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_adapter.carbon
+// --- fail_nontrivial_array_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -203,7 +203,7 @@ class Adapter {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_array_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_adapter.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing
@@ -263,7 +263,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_const_array.carbon
+// --- fail_nontrivial_const_array.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than arrays.
@@ -273,7 +273,7 @@ import library "types";
 alias Array = const array(HasNonTrivialDestruction, 1);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_array.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_array.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing
@@ -307,7 +307,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_array_of_const.carbon
+// --- fail_nontrivial_array_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that would expand our min_prelude from `destroy.carbon` to
@@ -318,7 +318,7 @@ import library "types";
 alias Array = array(const HasNonTrivialDestruction, 1);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_array_of_const.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_array_of_const.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Array as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Array` into type implementing

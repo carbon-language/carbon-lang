@@ -45,7 +45,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_class_adapter.carbon
+// --- fail_nontrivial_class_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -55,7 +55,7 @@ class Adapter {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_class_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_class_adapter.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing
@@ -66,7 +66,7 @@ fn Test() {
   Adapter as Core.TrivialDestroy;
 }
 
-// --- todo_fail_trivial_destroy_adapter_with_destroy_impl.carbon
+// --- fail_trivial_destroy_adapter_with_destroy_impl.carbon
 library "[[@TEST_NAME]]";
 
 class HasTrivialDestruction {}
@@ -80,7 +80,7 @@ class Adapter {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_trivial_destroy_adapter_with_destroy_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_trivial_destroy_adapter_with_destroy_impl.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing
@@ -115,7 +115,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_struct_adapter.carbon
+// --- fail_nontrivial_struct_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -125,7 +125,7 @@ class Adapter {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_struct_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_adapter.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing
@@ -160,7 +160,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_tuple_adapter.carbon
+// --- fail_nontrivial_tuple_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -170,7 +170,7 @@ class Adapter {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_tuple_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_tuple_adapter.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Adapter as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Adapter` into type implementing

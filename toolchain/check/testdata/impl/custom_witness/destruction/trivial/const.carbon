@@ -107,7 +107,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_tuple_with_const_element.carbon
+// --- fail_nontrivial_tuple_with_const_element.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -115,7 +115,7 @@ import library "types";
 alias Tuple = (const HasNonTrivialDestruction,);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_tuple_with_const_element.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_tuple_with_const_element.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Tuple as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `(const HasNonTrivialDestruction,)` into type
@@ -126,7 +126,7 @@ fn Test() {
   Tuple as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_const_adapter.carbon
+// --- fail_nontrivial_const_adapter.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -138,7 +138,7 @@ class Adapter {
 alias Const = const Adapter;
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_adapter.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_adapter.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Const as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Const` into type implementing
@@ -170,7 +170,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_const_class.carbon
+// --- fail_nontrivial_const_class.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -183,7 +183,7 @@ alias Const = const HasNonTrivialDestruction;
 fn MakeConst() -> Const;
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_class.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Const as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Const` into type implementing
@@ -214,7 +214,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_const_partial.carbon
+// --- fail_nontrivial_const_partial.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -226,7 +226,7 @@ base class Base {
 alias Const = const (partial Base);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_partial.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_partial.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Const as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Const` into type implementing
@@ -250,7 +250,7 @@ fn Test() {
   Class as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_const_dynamic_class.carbon
+// --- fail_nontrivial_const_dynamic_class.carbon
 library "[[@TEST_NAME]]";
 
 base class NonTrivialDynamic {
@@ -264,7 +264,7 @@ base class NonTrivialDynamic {
 alias Class = const NonTrivialDynamic;
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_const_dynamic_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_dynamic_class.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Class as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Class` into type implementing

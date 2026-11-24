@@ -66,7 +66,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_member.carbon
+// --- fail_nontrivial_member.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -76,7 +76,7 @@ base class Base {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_member.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_member.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   partial Base as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `partial Base` into type implementing
@@ -120,7 +120,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_abstract.carbon
+// --- fail_nontrivial_abstract.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -130,7 +130,7 @@ abstract class Abstract {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_abstract.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_abstract.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   partial Abstract as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `partial Abstract` into type implementing
@@ -141,7 +141,7 @@ fn Test() {
   partial Abstract as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_derived.carbon
+// --- fail_nontrivial_derived.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -155,7 +155,7 @@ base class Derived {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_derived.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_derived.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   partial Derived as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `partial Derived` into type implementing

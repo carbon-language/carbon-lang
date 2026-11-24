@@ -55,13 +55,13 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_empty_class_impls_destroy.carbon
+// --- fail_nontrivial_empty_class_impls_destroy.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_empty_class_impls_destroy.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_empty_class_impls_destroy.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   HasNonTrivialDestruction as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `HasNonTrivialDestruction` into type
@@ -98,7 +98,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_field_first.carbon
+// --- fail_nontrivial_field_first.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -109,7 +109,7 @@ class NonTrivialFieldFirst {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_field_first.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_field_first.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   NonTrivialFieldFirst as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NonTrivialFieldFirst` into type implementing
@@ -120,7 +120,7 @@ fn Test() {
   NonTrivialFieldFirst as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_field_second.carbon
+// --- fail_nontrivial_field_second.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -131,7 +131,7 @@ class NonTrivialFieldSecond {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_field_second.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_field_second.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   NonTrivialFieldSecond as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NonTrivialFieldSecond` into type implementing
@@ -172,7 +172,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_nested_nontrivial_member.carbon
+// --- fail_nontrivial_nested_nontrivial_member.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -186,7 +186,7 @@ class NestedNonTrivialMember {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_nested_nontrivial_member.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_nested_nontrivial_member.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   NestedNonTrivialMember as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NestedNonTrivialMember` into type
@@ -222,7 +222,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_derived_from_nontrivial_base.carbon
+// --- fail_nontrivial_derived_from_nontrivial_base.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -239,7 +239,7 @@ base class DerivedFromNonTrivialBase {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_derived_from_nontrivial_base.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_derived_from_nontrivial_base.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   DerivedFromNonTrivialBase as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `DerivedFromNonTrivialBase` into type
@@ -250,7 +250,7 @@ fn Test() {
   DerivedFromNonTrivialBase as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_grandparent.carbon
+// --- fail_nontrivial_grandparent.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -271,7 +271,7 @@ class NonTrivialGrandparent {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_grandparent.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_grandparent.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   NonTrivialGrandparent as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NonTrivialGrandparent` into type implementing
@@ -282,7 +282,7 @@ fn Test() {
   NonTrivialGrandparent as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon
+// --- fail_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -296,7 +296,7 @@ class Derived {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_derived_has_trivial_base_and_impls_destroy.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Derived as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Derived` into type implementing
@@ -331,7 +331,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_generic_class.carbon
+// --- fail_nontrivial_generic_class.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -341,7 +341,7 @@ class GenericClass(T: Core.Destroy) {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_generic_class.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_generic_class.carbon:[[@LINE+9]]:3
   // CHECK:STDERR: ->     │   GenericClass(HasNonTrivialDestruction) as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type
@@ -353,7 +353,7 @@ fn Test() {
   GenericClass(HasNonTrivialDestruction) as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_base_and_trivial_field.carbon
+// --- fail_nontrivial_base_and_trivial_field.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -374,7 +374,7 @@ class Derived {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_base_and_trivial_field.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_base_and_trivial_field.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Derived as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Derived` into type implementing
@@ -385,7 +385,7 @@ fn Test() {
   Derived as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_field_and_trivial_base.carbon
+// --- fail_nontrivial_field_and_trivial_base.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -396,7 +396,7 @@ class Derived {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_field_and_trivial_base.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_field_and_trivial_base.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Derived as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Derived` into type implementing
@@ -451,13 +451,13 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_dynamic_class.carbon
+// --- fail_nontrivial_dynamic_class.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_dynamic_class.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_dynamic_class.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   NonTrivialDynamicClass as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `NonTrivialDynamicClass` into type
@@ -468,7 +468,7 @@ fn Test() {
   NonTrivialDynamicClass as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_dynamic_base.carbon
+// --- fail_nontrivial_dynamic_base.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -478,7 +478,7 @@ class Derived {
 }
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_dynamic_base.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_dynamic_base.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Derived as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Derived` into type implementing

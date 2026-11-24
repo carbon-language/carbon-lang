@@ -65,7 +65,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_element_first.carbon
+// --- fail_nontrivial_element_first.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -73,7 +73,7 @@ import library "types";
 alias Tuple = (HasNonTrivialDestruction, HasTrivialDestruction);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_element_first.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_element_first.carbon:[[@LINE+9]]:3
   // CHECK:STDERR: ->     │   Tuple as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type
@@ -85,7 +85,7 @@ fn Test() {
   Tuple as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_element_second.carbon
+// --- fail_nontrivial_element_second.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -93,7 +93,7 @@ import library "types";
 alias Tuple = (HasTrivialDestruction, HasNonTrivialDestruction);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_element_second.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_element_second.carbon:[[@LINE+9]]:3
   // CHECK:STDERR: ->     │   Tuple as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type
@@ -126,7 +126,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_nested.carbon
+// --- fail_nontrivial_nested.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -134,7 +134,7 @@ import library "types";
 alias Tuple = ((HasNonTrivialDestruction,),);
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_nested.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_nested.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Tuple as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `((HasNonTrivialDestruction,),)` into type

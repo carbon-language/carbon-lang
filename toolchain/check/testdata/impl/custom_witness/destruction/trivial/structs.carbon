@@ -89,7 +89,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_first.carbon
+// --- fail_nontrivial_struct_nontrivial_field_first.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -97,7 +97,7 @@ import library "types";
 alias Struct = {.a: HasNonTrivialDestruction, .b: HasTrivialDestruction};
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_struct_nontrivial_field_first.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_first.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
@@ -108,7 +108,7 @@ fn Test() {
   Struct as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_second.carbon
+// --- fail_nontrivial_struct_nontrivial_field_second.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -116,7 +116,7 @@ import library "types";
 alias Struct = {.a: HasTrivialDestruction, .b: HasNonTrivialDestruction};
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_struct_nontrivial_field_second.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_second.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
@@ -127,7 +127,7 @@ fn Test() {
   Struct as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_nested.carbon
+// --- fail_nontrivial_struct_nontrivial_field_nested.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -135,7 +135,7 @@ import library "types";
 alias Struct = {.a: {.b: HasNonTrivialDestruction}};
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ todo_fail_nontrivial_struct_nontrivial_field_nested.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_nested.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
