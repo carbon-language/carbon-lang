@@ -144,7 +144,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !38
+// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw i8, ptr %d, i64 28, !dbg !38
 // CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !38
 // CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !39
 // CHECK:STDOUT: }

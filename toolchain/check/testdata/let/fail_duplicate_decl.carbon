@@ -16,8 +16,8 @@ fn F() {
   let unused a: i32 = 1;
   // CHECK:STDERR:        ╭─┤ fail_duplicate_decl.carbon:[[@LINE+11]]:14
   // CHECK:STDERR:        │   let unused a: i32 = 1;
-  // CHECK:STDERR:        ·              ───┬──
-  // CHECK:STDERR:        ·                 ╰──┤ name is previously declared here [NameDeclPrevious]
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ name is previously declared here [NameDeclPrevious]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused a: i32 = 2;
   // CHECK:STDERR:        ·              ┳

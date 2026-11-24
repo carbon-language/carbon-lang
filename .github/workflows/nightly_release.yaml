@@ -82,9 +82,9 @@ jobs:
         env:
           REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
         run: |
-          echo "$REMOTE_CACHE_KEY" | base64 -d > $HOME/remote_cache_key.json
+          echo "$REMOTE_CACHE_KEY" | base64 -d > "$HOME/remote_cache_key.json"
           echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
-              >> $GITHUB_ENV
+              >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/build-setup-common
         with:
@@ -93,14 +93,14 @@ jobs:
 
       - name: Get nightly date
         run: |
-          echo "nightly_date=$(date '+%Y.%m.%d')" >> $GITHUB_ENV
+          echo "nightly_date=$(date '+%Y.%m.%d')" >> "$GITHUB_ENV"
 
       - name: Build release
         run: |
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c opt --stamp --remote_download_toplevel \
-            --pre_release=nightly --nightly_date=${nightly_date} \
+            --pre_release=nightly --nightly_date="${nightly_date}" \
             //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz \
             //toolchain/install:carbon_toolchain_tar_gz_test
@@ -114,7 +114,7 @@ jobs:
           VERSION=$( \
             ./bazel-bin/toolchain/carbon version \
             | cut -d' ' -f5 | cut -d'+' -f1)
-          echo "release_version=$VERSION" >> $GITHUB_ENV
+          echo "release_version=$VERSION" >> "$GITHUB_ENV"
 
       - name: Create the release
         env:

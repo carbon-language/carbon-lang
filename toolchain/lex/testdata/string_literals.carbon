@@ -29,7 +29,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_unterminated.carbon:[[@LINE+6]]:3
 // CHECK:STDERR: ->     │ "s
-// CHECK:STDERR:        · ─╴╻
+// CHECK:STDERR:        · ━╸╻
 // CHECK:STDERR:        ·   ┗━━┫ error: string literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
@@ -69,7 +69,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_unicode_escape_missing_braced_digits.carbon:[[@LINE+8]]:4
 // CHECK:STDERR: ->     │ "\u"
-// CHECK:STDERR:        ·  ─╴╻
+// CHECK:STDERR:        ·  ━╸╻
 // CHECK:STDERR:        ·    ┗━━┫ error: escape sequence `\u` must be followed by a braced sequence of
 // CHECK:STDERR:        ·       ┃        uppercase hexadecimal digits, for example `\u{70AD}}`
 // CHECK:STDERR:        ·       ┃        [UnicodeEscapeMissingBracedDigits]
@@ -84,7 +84,7 @@
 
 // CHECK:STDERR:        ╭─┤ fail_hex_escape_missing_digits.carbon:[[@LINE+8]]:4
 // CHECK:STDERR: ->     │ "\x"
-// CHECK:STDERR:        ·  ─╴╻
+// CHECK:STDERR:        ·  ━╸╻
 // CHECK:STDERR:        ·    ┗━━┫ error: escape sequence `\x` must be followed by two uppercase
 // CHECK:STDERR:        ·       ┃        hexadecimal digits, for example `\x0F`
 // CHECK:STDERR:        ·       ┃        [HexadecimalEscapeMissingDigits]

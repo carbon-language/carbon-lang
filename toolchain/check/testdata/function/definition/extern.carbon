@@ -44,8 +44,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_def_extern_mismatch.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() {}
 // CHECK:STDERR:        · ━━━━┳━━━
@@ -62,7 +62,7 @@ library "[[@TEST_NAME]]";
 fn F();
 // CHECK:STDERR:        ╭─┤ fail_def_extern_mismatch_reverse.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ fn F();
-// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ┬
 // CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern fn F() {}
@@ -80,8 +80,8 @@ library "[[@TEST_NAME]]";
 extern fn F();
 // CHECK:STDERR:        ╭─┤ fail_extern_diag_suppressed.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F();
 // CHECK:STDERR:        · ━━━┳━━━
@@ -91,8 +91,8 @@ extern fn F();
 fn F();
 // CHECK:STDERR:        ╭─┤ fail_extern_diag_suppressed.carbon:[[@LINE+11]]:1
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() {}
 // CHECK:STDERR:        · ━━━━┳━━━
@@ -109,8 +109,8 @@ library "[[@TEST_NAME]]";
 fn F() {}
 // CHECK:STDERR:        ╭─┤ fail_extern_decl_after_def.carbon:[[@LINE+10]]:1
 // CHECK:STDERR:        │ fn F() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ extern fn F();
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━

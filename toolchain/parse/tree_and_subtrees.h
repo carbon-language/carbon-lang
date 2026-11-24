@@ -121,9 +121,8 @@ class TreeAndSubtrees {
   // Returns the range of tokens in the node's subtree.
   auto GetSubtreeTokenRange(NodeId node_id) const -> Lex::InclusiveTokenRange;
 
-  // Converts the node to a diagnostic location, covering either the full
-  // subtree or only the token.
-  auto NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
+  // Converts the node to a diagnostic location covering `extent` of it.
+  auto NodeToDiagnosticLoc(NodeId node_id, LocExtent extent) const
       -> Diagnostics::ConvertedLoc;
 
   // Returns an iterable range over the parse tree node and all of its

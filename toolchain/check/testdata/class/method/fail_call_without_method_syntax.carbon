@@ -26,8 +26,8 @@ class Other {}
 fn TooFew() -> i32 {
   // CHECK:STDERR:        ╭─┤ fail_call_without_method_syntax.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │   fn Get(self) -> i32 { return self.x; }
-  // CHECK:STDERR:        ·   ──────────┬──────────
-  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·      ─┬─
+  // CHECK:STDERR:        ·       ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return Point.Get();
   // CHECK:STDERR:        ·          ━━━━━┳━━━━━
@@ -41,8 +41,8 @@ fn TooFew() -> i32 {
 fn TooMany(p: Point) -> i32 {
   // CHECK:STDERR:        ╭─┤ fail_call_without_method_syntax.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │   fn Get(self) -> i32 { return self.x; }
-  // CHECK:STDERR:        ·   ──────────┬──────────
-  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·      ─┬─
+  // CHECK:STDERR:        ·       ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return Point.Get(p, p);
   // CHECK:STDERR:        ·          ━━━━━━━┳━━━━━━━
@@ -54,7 +54,7 @@ fn TooMany(p: Point) -> i32 {
 }
 
 fn WrongSelfType(o: Other) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_call_without_method_syntax.carbon:[[@LINE+15]]:20
+  // CHECK:STDERR:        ╭─┤ fail_call_without_method_syntax.carbon:[[@LINE+12]]:20
   // CHECK:STDERR:        │   fn Get(self) -> i32 { return self.x; }
   // CHECK:STDERR:        ·          ──┬─
   // CHECK:STDERR:        ·            ╰──┤ initializing function parameter [InCallToFunctionParam]
@@ -62,11 +62,8 @@ fn WrongSelfType(o: Other) -> i32 {
   // CHECK:STDERR: ->     │   return Point.Get(o);
   // CHECK:STDERR:        ·                    ┳
   // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                    │  ┃        `Other` to `Point`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `Other` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Point)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       ┃        `Other` to `Point`
+  // CHECK:STDERR:        ·                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return Point.Get(o);

@@ -84,17 +84,24 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
                       Diagnostics::IntAsSelect);
     CARBON_DIAGNOSTIC_LABEL(
-        InCallToEntity, Info,
+        InCallToEntity,
         "calling {0:=0:function|=1:generic class|=2:generic "
         "interface|=3:generic constraint}"
         " declared here",
         Diagnostics::IntAsSelect);
-    context.emitter()
-        .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
-               static_cast<int>(entity_kind_for_diagnostic), expected_args_size)
-        .Attach(entity.latest_decl_id(), InCallToEntity,
-                static_cast<int>(entity_kind_for_diagnostic))
-        .Emit();
+    auto diag = context.emitter().Build(
+        loc_id, CallArgCountMismatch, arg_ids.size(),
+        static_cast<int>(entity_kind_for_diagnostic), expected_args_size);
+    // Only attach a label when the declaration has a location distinct from
+    // the call's.
+    auto decl_loc_id =
+        context.insts().GetCanonicalLocId(entity.latest_decl_id());
+    if (decl_loc_id.has_value() &&
+        decl_loc_id != context.insts().GetCanonicalLocId(loc_id)) {
+      diag.Attach(LocIdForDiagnostics::DeclaredName(entity.latest_decl_id()),
+                  InCallToEntity, static_cast<int>(entity_kind_for_diagnostic));
+    }
+    diag.Emit();
     return std::nullopt;
   }
 
@@ -262,7 +269,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
                       "call to `{0}` before its return type is known",
                       SemIR::NameId);
     CARBON_DIAGNOSTIC_LABEL(
-        ReturnTypeDeducedFromDefinition, Info,
+        ReturnTypeDeducedFromDefinition,
         "return type of `{0}` is deduced from its definition", SemIR::NameId);
     context.emitter()
         .Build(loc_id, CallBeforeReturnTypeDeduced, callee.name_id)
@@ -280,9 +287,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
   auto return_arg_id = SemIR::InstId::None;
   if (callee.return_pattern_id.has_value()) {
-    Diagnostics::AnnotationScope annotate_diagnostics(
+    Diagnostics::ContextScope diagnostic_context(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC_LABEL(IncompleteReturnTypeHere, Info,
+          CARBON_DIAGNOSTIC_LABEL(IncompleteReturnTypeHere,
                                   "return type declared here");
           builder.Attach(callee.return_pattern_id, IncompleteReturnTypeHere);
         });

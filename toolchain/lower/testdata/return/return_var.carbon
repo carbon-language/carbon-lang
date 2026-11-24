@@ -28,8 +28,8 @@ fn Make() -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CMake.Main(ptr sret({ i32, ptr }) %return) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_30.3.data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !33
-// CHECK:STDOUT:   %.loc20_30.5.next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !33
+// CHECK:STDOUT:   %.loc20_30.3.data = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !33
+// CHECK:STDOUT:   %.loc20_30.5.next = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !33
 // CHECK:STDOUT:   store ptr %return, ptr %.loc20_30.5.next, align 8, !dbg !33
 // CHECK:STDOUT:   store i32 42, ptr %.loc20_30.3.data, align 4, !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !34

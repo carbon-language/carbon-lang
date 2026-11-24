@@ -30,9 +30,9 @@ fn G() {
   //
   // CHECK:STDERR:        ╭─┤ fail_todo_where.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn F[U: type](unused generic T: Z where .Z1 = C(U)) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(() as type);
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━

@@ -51,11 +51,6 @@ class SuiteSpec:
         return self.label.split(":", 1)[1]
 
     @property
-    def benchmark_prefix(self) -> str:
-        """Returns the `<target_name>::` prefix prepended in BMF output."""
-        return f"{self.target_name}::"
-
-    @property
     def bazel_bin_relpath(self) -> Path:
         """Returns the relative path under `bazel-bin` for the built binary."""
         return Path("bazel-bin", *self.label[2:].split(":", 1))

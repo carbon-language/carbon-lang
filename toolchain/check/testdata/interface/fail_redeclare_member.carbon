@@ -16,7 +16,7 @@ interface Interface {
   fn F();
   // CHECK:STDERR:        ╭─┤ fail_redeclare_member.carbon:[[@LINE+10]]:3
   // CHECK:STDERR:        │   fn F();
-  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ┬
   // CHECK:STDERR:        ·      ╰──┤ previously declared here [RedeclPrevDecl]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn F();

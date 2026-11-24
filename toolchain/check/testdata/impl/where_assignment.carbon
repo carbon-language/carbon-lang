@@ -68,13 +68,11 @@ interface Z {
 
 //@dump-sem-ir-begin
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_convert_failed.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_convert_failed.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   where Z1 = ({} as C);
   // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━━
   // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type `C` to `B`
-  // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·             ╰────┤ type `C` does not implement interface `Core.ImplicitAs(B)`
-  // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   where Z1 = ({} as C);
@@ -104,21 +102,21 @@ interface Z {
   // the type of Z1 without also resolving the type of Z2 which accesses
   // Z1 before its set. Each assoc constant needs its own generic to
   // allow each one to be resolved independently.
+  // CHECK:STDERR:        ╭─┤ fail_todo_assoc_const_refers_to_previous.carbon:[[@LINE+11]]:13
+  // CHECK:STDERR: ->     │   let Z2: C(Z1);
+  // CHECK:STDERR:        ·             ┳━
+  // CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   where Z1 = ();
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ in monomorphization of `Z` here [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let Z2: C(Z1);
 }
 
 impl () as Z {
-  // CHECK:STDERR:        ╭─┤ fail_todo_assoc_const_refers_to_previous.carbon:[[@LINE+11]]:3
-  // CHECK:STDERR:        │   let Z2: C(Z1);
-  // CHECK:STDERR:        ·             ─┬
-  // CHECK:STDERR:        ·              ╰──┤ accessing member from impl before it has a defined value
-  // CHECK:STDERR:        ·                 │ [ImplAccessMemberBeforeSet]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   where Z1 = ();
-  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `Z` [ResolvingSpecificHere]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
   where Z1 = ();
   where Z2 = ({} as C(()));
 }
@@ -286,10 +284,11 @@ library "[[@TEST_NAME]]";
 
 interface Z;
 
-// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_incomplete.carbon:[[@LINE+12]]:1
 // CHECK:STDERR:        │ interface Z;
-// CHECK:STDERR:        · ──────┬─────
-// CHECK:STDERR:        ·       ╰──┤ interface was forward declared here [InterfaceForwardDeclaredHere]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ interface was forward declared here
+// CHECK:STDERR:        ·              │ [InterfaceForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl () as Z {
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━
@@ -521,12 +520,12 @@ impl C as Z {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @empty_tuple.type.as.Z.impl: %.loc12_7.2 as %Z.ref {
-// CHECK:STDOUT:   %.loc22_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc20_16.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %.loc22_16.2: ref %C = temporary_storage
-// CHECK:STDOUT:   %.loc22_16.3: init %C to %.loc22_16.2 = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_18: init %C = converted %.loc22_16.1, %.loc22_16.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc22_23: %B = converted %.loc22_18, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc20_16.2: ref %C = temporary_storage
+// CHECK:STDOUT:   %.loc20_16.3: init %C to %.loc20_16.2 = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc20_18: init %C = converted %.loc20_16.1, %.loc20_16.3 [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc20_23: %B = converted %.loc20_18, <error> [concrete = <error>]
 // CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (<error>), @empty_tuple.type.as.Z.impl [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
 // CHECK:STDOUT:

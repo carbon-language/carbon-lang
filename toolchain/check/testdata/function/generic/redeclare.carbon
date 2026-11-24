@@ -43,8 +43,8 @@ fn F(generic T: type, generic U: type) -> T*;
 fn F(generic T: type, generic U: type) -> U* {
   // CHECK:STDERR:        ╭─┤ fail_different_return_type.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ fn F(generic T: type, generic U: type) -> T*;
-  // CHECK:STDERR:        · ──────────────────────┬──────────────────────
-  // CHECK:STDERR:        ·                       ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(T);
   // CHECK:STDERR:        ·          ━━┳━
@@ -76,8 +76,8 @@ fn F(generic T: type, generic U: type) -> T*;
 fn F(unused generic U: type, generic T: type) -> T* {
   // CHECK:STDERR:        ╭─┤ fail_reorder.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ fn F(generic T: type, generic U: type) -> T*;
-  // CHECK:STDERR:        · ──────────────────────┬──────────────────────
-  // CHECK:STDERR:        ·                       ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(T);
   // CHECK:STDERR:        ·          ━━┳━
@@ -109,8 +109,8 @@ fn F(generic T: type, generic U: type) -> T*;
 fn F(generic U: type, generic T: type) -> U* {
   // CHECK:STDERR:        ╭─┤ fail_rename.carbon:[[@LINE+11]]:10
   // CHECK:STDERR:        │ fn F(generic T: type, generic U: type) -> T*;
-  // CHECK:STDERR:        · ──────────────────────┬──────────────────────
-  // CHECK:STDERR:        ·                       ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ calling function declared here [InCallToEntity]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(T);
   // CHECK:STDERR:        ·          ━━┳━
