@@ -34,7 +34,6 @@ class BencherSuitesTest(unittest.TestCase):
         )
 
         prelude = by_name["prelude_benchmark"]
-        self.assertEqual(prelude.benchmark_prefix, "prelude_benchmark::")
         self.assertEqual(
             prelude.bazel_bin_relpath,
             Path("bazel-bin/toolchain/benchmarking/prelude_benchmark"),
@@ -49,7 +48,6 @@ class BencherSuitesTest(unittest.TestCase):
         self.assertNotRegex("MemSemIRAllocator", prelude_re)
 
         compile_suite = by_name["compile_benchmark"]
-        self.assertEqual(compile_suite.benchmark_prefix, "compile_benchmark::")
         self.assertIsNone(compile_suite.extra_metrics_regex())
         self.assertEqual(
             compile_suite.allowed_measures(), frozenset({"latency"})
@@ -136,85 +134,183 @@ class RunBencherTest(unittest.TestCase):
             any(a.startswith("--extra_metrics_filter=") for a in compile_cmd)
         )
 
+    def test_parse_benchmark_identity_maps_all_suites_to_bmf_v1(self) -> None:
+        cases = (
+            (
+                "prelude_benchmark",
+                "BM_PreludeCompile/Nothing",
+                "prelude",
+                {"import": "nothing"},
+            ),
+            (
+                "prelude_benchmark",
+                "BM_PreludeCompile/SingleType",
+                "prelude",
+                {"import": "single-type"},
+            ),
+            (
+                "prelude_benchmark",
+                "BM_PreludeCompile/ManyTypesManyImpls",
+                "prelude",
+                {"import": "many-impls"},
+            ),
+            (
+                "prelude_benchmark",
+                "BM_PreludeCompile/NonTrivialAmount",
+                "prelude",
+                {"import": "non-trivial"},
+            ),
+            (
+                "compile_benchmark",
+                "BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Lex>/256",
+                "lex/256",
+                {"file": "api-dense", "lang": "carbon"},
+            ),
+            (
+                "compile_benchmark",
+                "BM_CompileApiFileRealisticHeader<Lang::Cpp, Phase::Check>"
+                "/16384",
+                "check/16k",
+                {"file": "api-header", "lang": "cpp"},
+            ),
+            (
+                "compile_benchmark",
+                "BM_CompileImplFile<Lang::Carbon, Phase::Parse>/262144",
+                "parse/256k",
+                {"file": "impl", "lang": "carbon"},
+            ),
+        )
+        for target, raw, expected_name, expected_params in cases:
+            self.assertEqual(
+                run_bencher.parse_benchmark_identity(target, raw),
+                (expected_name, expected_params),
+                raw,
+            )
+
+        for target, bad_name in (
+            ("unknown_suite", "BM_PreludeCompile/Nothing"),
+            ("prelude_benchmark", "BM_PreludeCompile/UnknownVariant"),
+            ("compile_benchmark", "BM_CompileImplFile/1024"),
+        ):
+            with self.assertRaises(BmfValidationError, msg=bad_name):
+                run_bencher.parse_benchmark_identity(target, bad_name)
+
     def test_validate_and_merge_bmf(self) -> None:
         prelude_bmf = {
-            "prelude_benchmark::BM_PreludeCompile/Nothing": {
-                "latency": {
-                    "value": 50000000.0,
-                    "lower_value": 49000000.0,
-                    "upper_value": 51000000.0,
-                },
-                "MemSemIR": {
-                    "value": 8604581.0,
-                    "lower_value": 8604581.0,
-                    "upper_value": 8604581.0,
-                },
-            }
+            "prelude": [
+                {
+                    "parameters": {"import": "nothing"},
+                    "measures": {
+                        "latency": {
+                            "value": 50000000.0,
+                            "lower_value": 49000000.0,
+                            "upper_value": 51000000.0,
+                        },
+                        "MemSemIR": {
+                            "value": 8604581.0,
+                            "lower_value": 8604581.0,
+                            "upper_value": 8604581.0,
+                        },
+                    },
+                }
+            ]
         }
-        compile_key = (
-            "compile_benchmark::"
-            "BM_CompileImplFile<Lang::Carbon, Phase::Check>/1024"
-        )
-        compile_bmf = {compile_key: {"latency": {"value": 76655825.0}}}
+        compile_bmf = {
+            "check/1k": [
+                {
+                    "parameters": {"file": "impl", "lang": "carbon"},
+                    "measures": {"latency": {"value": 76655825.0}},
+                },
+                {
+                    "parameters": {"file": "impl", "lang": "cpp"},
+                    "measures": {"latency": {"value": 61200000.0}},
+                },
+            ]
+        }
 
         merged, count = run_bencher.merge_bmf_payloads(
             [prelude_bmf, compile_bmf]
         )
         self.assertEqual(len(merged), 2)
-        self.assertEqual(count, 3)
+        self.assertEqual(count, 4)
 
-        # Reject empty per-suite payload and duplicate benchmark keys.
+        # Reject empty per-suite payload and duplicate (benchmark, parameters).
         with self.assertRaises(BmfValidationError):
             run_bencher.merge_bmf_payloads([prelude_bmf, {}])
         with self.assertRaises(BmfValidationError):
             run_bencher.merge_bmf_payloads([compile_bmf, compile_bmf])
 
-        # Reject unknown suite prefix, HTML/Markdown/newline injection, and
-        # `_bencher_ignore` suffixes.
+        # Reject unknown benchmark names, injection attempts, and ignore suffix.
         for bad_name in (
-            "unknown_suite::BM_Foo",
-            "compile_benchmark::NotBMPrefix",
-            "compile_benchmark::BM_Foo\n## [link](https://evil.example)",
-            "compile_benchmark::BM_Foo</a><table>",
-            "compile_benchmark::BM_Foo<table>",
-            "compile_benchmark::BM_Foo_bencher_ignore",
+            "unknown/1k",
+            "compile_benchmark::BM_Foo",
+            "check/1k\n## [link](https://evil.example)",
+            "check/1k<table>",
+            "prelude_bencher_ignore",
         ):
             with self.assertRaises(BmfValidationError, msg=bad_name):
                 run_bencher.validate_bmf(
-                    {bad_name: {"latency": {"value": 1.0}}}
+                    {
+                        bad_name: [
+                            {
+                                "parameters": {},
+                                "measures": {"latency": {"value": 1.0}},
+                            }
+                        ]
+                    }
                 )
 
-        # Reject unallowlisted measure, unexpected keys, bool/NaN/overflow,
-        # negative values, inverted bounds, and metric count overflow.
+        # Reject bad variant shape, bad parameters, unallowlisted measures,
+        # unexpected keys, bool/NaN/overflow, negative values, and bad bounds.
+        def check_1k_variant(
+            measures: object, parameters: object = None
+        ) -> dict[str, object]:
+            return {
+                "check/1k": [
+                    {
+                        "parameters": (
+                            {"file": "impl", "lang": "carbon"}
+                            if parameters is None
+                            else parameters
+                        ),
+                        "measures": measures,
+                    }
+                ]
+            }
+
         for bad_payload in (
-            {"compile_benchmark::BM_Foo": {"Bytes": {"value": 100.0}}},
-            {
-                "compile_benchmark::BM_Foo": {
-                    "latency": {"value": 10.0, "extra": 1.0}
-                }
-            },
-            {"compile_benchmark::BM_Foo": {"latency": {"value": True}}},
-            {"compile_benchmark::BM_Foo": {"latency": {"value": float("nan")}}},
-            {"compile_benchmark::BM_Foo": {"latency": {"value": 10**400}}},
-            {"compile_benchmark::BM_Foo": {"latency": {"value": -1.0}}},
-            {
-                "compile_benchmark::BM_Foo": {
+            {"check/1k": {"latency": {"value": 1.0}}},
+            {"check/1k": [{"measures": {"latency": {"value": 1.0}}}]},
+            check_1k_variant({"latency": {"value": 1.0}}, {"bad key": "x"}),
+            check_1k_variant({"latency": {"value": 1.0}}, {"lang": "c++\n"}),
+            check_1k_variant(
+                {"latency": {"value": 1.0}},
+                {f"k{i}": i for i in range(9)},
+            ),
+            check_1k_variant({"Bytes": {"value": 100.0}}),
+            check_1k_variant({"latency": {"value": 10.0, "extra": 1.0}}),
+            check_1k_variant({"latency": {"value": True}}),
+            check_1k_variant({"latency": {"value": float("nan")}}),
+            check_1k_variant({"latency": {"value": 10**400}}),
+            check_1k_variant({"latency": {"value": -1.0}}),
+            check_1k_variant(
+                {
                     "latency": {
                         "value": 10.0,
                         "lower_value": 12.0,
                         "upper_value": 15.0,
                     }
                 }
-            },
-            {
-                "compile_benchmark::BM_Foo": {
+            ),
+            check_1k_variant(
+                {
                     "latency": {
                         "value": 10.0,
                         "lower_value": 8.0,
                         "upper_value": 9.0,
                     }
                 }
-            },
+            ),
         ):
             with self.assertRaises(BmfValidationError):
                 run_bencher.validate_bmf(bad_payload)
@@ -222,7 +318,7 @@ class RunBencherTest(unittest.TestCase):
         with self.assertRaises(BmfValidationError):
             run_bencher.validate_bmf(prelude_bmf, max_metrics=1)
 
-    def test_run_subcommand_builds_prefixes_and_writes_output(self) -> None:
+    def test_run_subcommand_builds_maps_to_v1_and_writes_output(self) -> None:
         with (
             tempfile.TemporaryDirectory() as tmp,
             mock.patch("subprocess.run") as mock_run,
@@ -245,7 +341,12 @@ class RunBencherTest(unittest.TestCase):
                     args=[],
                     returncode=0,
                     stdout=json.dumps(
-                        {"BM_CompileImplFile/1024": {"latency": {"value": 2}}}
+                        {
+                            "BM_CompileImplFile<Lang::Carbon, Phase::Check>"
+                            "/1024": {"latency": {"value": 2}},
+                            "BM_CompileImplFile<Lang::Cpp, Phase::Check>"
+                            "/1024": {"latency": {"value": 3}},
+                        }
                     ),
                 ),
             ]
@@ -262,10 +363,24 @@ class RunBencherTest(unittest.TestCase):
             self.assertEqual(rc, 0)
             written = json.loads(out_path.read_text(encoding="utf-8"))
             self.assertEqual(
-                set(written.keys()),
+                written,
                 {
-                    "prelude_benchmark::BM_PreludeCompile/Nothing",
-                    "compile_benchmark::BM_CompileImplFile/1024",
+                    "prelude": [
+                        {
+                            "parameters": {"import": "nothing"},
+                            "measures": {"latency": {"value": 1}},
+                        }
+                    ],
+                    "check/1k": [
+                        {
+                            "parameters": {"file": "impl", "lang": "carbon"},
+                            "measures": {"latency": {"value": 2}},
+                        },
+                        {
+                            "parameters": {"file": "impl", "lang": "cpp"},
+                            "measures": {"latency": {"value": 3}},
+                        },
+                    ],
                 },
             )
             self.assertEqual(

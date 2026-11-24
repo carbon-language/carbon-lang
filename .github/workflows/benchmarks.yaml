@@ -50,14 +50,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-26']
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm']
         tier:
           - ${{ (github.event_name == 'workflow_run' && 'nightly') ||
             (github.event_name == 'workflow_dispatch' && inputs.tier) ||
             'continuous' }}
-        exclude:
-          - runner: 'macos-26'
-            tier: 'continuous'
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Harden Runner
@@ -170,7 +167,7 @@ jobs:
 
       - name: Install Bencher CLI
         if: steps.run-bencher.outputs.has_benchmarks == 'true'
-        uses: bencherdev/bencher@7de3c69a85380826613050826b4bce062be2f07d # v0.6.16
+        uses: bencherdev/bencher@b2484bc6734c8e6da4fad141bd13527a11da3988 # v0.6.17
 
       - name: Upload results to Bencher
         if: steps.run-bencher.outputs.has_benchmarks == 'true'
