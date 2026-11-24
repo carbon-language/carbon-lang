@@ -203,6 +203,41 @@ fn F() {
   G(C) as Z(G(C));
 }
 
+
+// --- impl_lookups_in_definition_find_own_impl_with_compound_member_access.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Z1: type;
+  let Z2: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+impl forall [T: type] {} as Y(G(T)) {}
+
+// This is a blanket impl that overlaps with (but is less specific than)
+// `G(C) as Z(G(C))`, which is the next impl below.
+impl forall [T: type, U: type] G(T) as Z(U) where .Z1 = {} and .Z2 = {} {}
+
+// The query `G(C) as Z(G(C))` is concrete so any lookups will result in a final
+// witness. The constraint facet type contains `.Result` which causes a lookup
+// for `G(C) as Z(G(C))`. But this lookup occurs before the impl declaration is
+// even completed, so the impl does not yet exist according to check.
+//
+// This is like `impl_lookups_in_definition_find_own_impl.carbon` above, but
+// the access of `.Z2` into the impl is done through compound member access
+// which tests different semir construction paths. It should resolve to
+// `()`.
+impl G(C) as Z(G(C)) where .Z1 = .Self.(Z(G(C)).Z2) and .Z2 = () {}
+
+fn F() {
+  G(C) as (Z(G(C)) where .Z1 = () and .Z2 = ());
+}
+
 // --- impl_lookups_in_definition_find_own_impl_with_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
