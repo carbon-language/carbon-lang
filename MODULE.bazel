@@ -61,6 +61,9 @@ git_override(
     remote = "https://github.com/erenon/bazel_clang_tidy.git",
 )
 
+cc_configure = use_extension("@rules_cc//cc:extensions.bzl", "cc_configure_extension")
+use_repo(cc_configure, "local_config_cc")
+
 bazel_cc_toolchain = use_extension(
     "//bazel/cc_toolchains:clang_configuration.bzl",
     "clang_toolchain_extension",
@@ -93,10 +96,12 @@ git_override(
     # HEAD as of 2026-11-17.
     commit = "c03c4571b1b00894a559a265baefe1924db73a27",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
+    patch_cmds_win = ["Set-Content -Path MODULE.bazel -Value 'module(name=''llvm-raw'')' -Encoding ascii"],
     patch_strip = 1,
     patches = [
         "//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
         "//bazel/llvm_project:0012_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
+        "//bazel/llvm_project:0013_Define_CLANG_BUILD_STATIC_on_Windows.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )

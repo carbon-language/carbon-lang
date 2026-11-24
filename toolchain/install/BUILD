@@ -22,6 +22,7 @@
 # packaged installation includes custom Bazel files to handle a pre-built and
 # installed toolchain in the same way as these handle the just-built toolchain.
 
+load("@bazel_skylib//rules:expand_template.bzl", "expand_template")
 load(
     "@llvm-project//:vars.bzl",
     "LLVM_VERSION_MAJOR",
@@ -115,6 +116,17 @@ cc_test(
 cc_binary(
     name = "carbon-busybox",
     srcs = ["busybox_main.cpp"],
+    additional_linker_inputs = select({
+        "@platforms//os:windows": ["carbon_busybox.manifest.xml"],
+        "//conditions:default": [],
+    }),
+    linkopts = select({
+        "@platforms//os:windows": [
+            "/MANIFEST:EMBED",
+            "/MANIFESTINPUT:$(execpath carbon_busybox.manifest.xml)",
+        ],
+        "//conditions:default": [],
+    }),
     deps = [
         ":busybox_info",
         "//common:all_llvm_targets",
@@ -303,11 +315,13 @@ filegroup(
 #
 # TODO: Maybe we should move the `carbon_runtimes.bzl` to the same directory as
 # the other starlark so we can use relative load lines and avoid this?
-genrule(
+expand_template(
     name = "carbon_cc_toolchain_config_for_install",
-    srcs = ["//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl"],
-    outs = ["carbon_cc_toolchain_config.bzl"],
-    cmd = "sed 's|//toolchain/runtimes:carbon_runtimes.bzl|//bazel:carbon_runtimes.bzl|' $< > $@",
+    out = "carbon_cc_toolchain_config.bzl",
+    substitutions = {
+        "//toolchain/runtimes:carbon_runtimes.bzl": "//bazel:carbon_runtimes.bzl",
+    },
+    template = "//bazel/cc_toolchains:carbon_cc_toolchain_config.bzl",
 )
 
 toolchain_files(
