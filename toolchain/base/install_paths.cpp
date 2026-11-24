@@ -106,7 +106,7 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
       Filesystem::Cwd().ReadFileToString(manifest_path / manifest_file);
   if (!read_result.ok()) {
     result = ErrorBuilder()
-             << "Loading manifest `" << (manifest_path / manifest_file)
+             << "Loading manifest `" << (manifest_path / manifest_file).string()
              << "`: " << read_result.error();
     return result;
   }
@@ -118,13 +118,14 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
     if (token.empty()) {
       break;
     }
-    result->push_back((manifest_path / std::string_view(token)).native());
+    result->push_back((manifest_path / std::string_view(token)).string());
     buffer = remainder;
   }
 
   if (result->empty()) {
     result = ErrorBuilder()
-             << "Manifest `" << (manifest_path / manifest_file) << "` is empty";
+             << "Manifest `" << (manifest_path / manifest_file).string()
+             << "` is empty";
   }
   return result;
 }
@@ -166,7 +167,7 @@ auto InstallPaths::CheckMarkerFile() -> void {
   }
   if (!*access_result) {
     SetError(llvm::Twine("No install marker at path: ") +
-             (root_ / std::string_view(MarkerPath)).native());
+             (root_ / std::string_view(MarkerPath)).string());
     return;
   }
 

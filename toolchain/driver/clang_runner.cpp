@@ -5,7 +5,6 @@
 #include "toolchain/driver/clang_runner.h"
 
 #include <stdlib.h>
-#include <unistd.h>
 
 #include <filesystem>
 #include <iterator>
@@ -196,7 +195,7 @@ auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                           prebuilt_runtimes.Get(Runtimes::LibUnwind));
   CARBON_ASSIGN_OR_RETURN(std::filesystem::path libcxx_path,
                           prebuilt_runtimes.Get(Runtimes::Libcxx));
-  return RunInternal(args, target, prebuilt_resource_dir_path.native(),
+  return RunInternal(args, target, std::move(prebuilt_resource_dir_path),
                      std::move(libunwind_path), std::move(libcxx_path),
                      /*link_runtime_libs=*/true, enable_leaking);
 }
@@ -251,7 +250,7 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // to indicate whether `clang` itself succeeded, not whether the runner was
   // able to run it. As a consequence, even a `false` here is a non-`Error`
   // return.
-  return RunInternal(args, target, resource_dir_path.native(),
+  return RunInternal(args, target, std::move(resource_dir_path),
                      std::move(libunwind_path), std::move(libcxx_path),
                      /*link_runtime_libs=*/true, enable_leaking);
 }
@@ -293,17 +292,18 @@ auto ClangRunner::RunClangCC1(llvm::SmallVectorImpl<const char*>& cstr_args,
 
 auto ClangRunner::RunInternal(
     llvm::ArrayRef<llvm::StringRef> args, llvm::StringRef target,
-    std::optional<llvm::StringRef> target_resource_dir_path,
+    std::optional<std::filesystem::path> target_resource_dir_path,
     std::optional<std::filesystem::path> libunwind_path,
     std::optional<std::filesystem::path> libcxx_path, bool link_runtime_libs,
     bool enable_leaking) -> ErrorOr<bool> {
   llvm::BumpPtrAllocator alloc;
+  std::string clang_path = clang_path_.string();
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
   // we don't synthesize any default arguments there.
   if (!args.empty() && args[0].starts_with("-cc1")) {
     llvm::SmallVector<const char*, 64> cstr_args =
-        BuildCStrArgs(clang_path_.native(), args, alloc);
+        BuildCStrArgs(clang_path, args, alloc);
     // TODO: Should this be forwarding the full exit code?
     return RunClangCC1(cstr_args, enable_leaking) == 0;
   }
@@ -325,11 +325,11 @@ auto ClangRunner::RunInternal(
     // to use command line flags to force static runtime linking to occur.
     if (libunwind_path) {
       prefix_args.push_back(
-          llvm::formatv("-L{0}/lib", *std::move(libunwind_path)).str());
+          llvm::formatv("-L{0}", (*libunwind_path / "lib").string()).str());
     }
     if (libcxx_path) {
       prefix_args.push_back(
-          llvm::formatv("-L{0}/lib", std::move(libcxx_path)).str());
+          llvm::formatv("-L{0}", (*libcxx_path / "lib").string()).str());
     }
   } else {
     // If we are suppressing the linking of default libs, ensure we didn't get a
@@ -354,11 +354,11 @@ auto ClangRunner::RunInternal(
 
   // Rebuild the args as C-string args.
   llvm::SmallVector<const char*, 64> cstr_args =
-      BuildCStrArgs(clang_path_.native(), prefix_args, args, alloc);
+      BuildCStrArgs(clang_path, prefix_args, args, alloc);
 
   // Expand any response files in the arguments.
   bool is_clang_cl_mode = clang::driver::IsClangCL(
-      clang::driver::getDriverMode(clang_path_.native(), cstr_args));
+      clang::driver::getDriverMode(clang_path, cstr_args));
   if (llvm::Error error = clang::driver::expandResponseFiles(
           cstr_args, is_clang_cl_mode, alloc, fs_.get())) {
     return Error(llvm::toString(std::move(error)));
@@ -393,9 +393,8 @@ auto ClangRunner::RunInternal(
 
   // Note that we configure the driver's *default* target here, not the
   // expected target as that will be parsed out of the command line below.
-  clang::driver::Driver driver(clang_path_.native(),
-                               llvm::sys::getDefaultTargetTriple(), diagnostics,
-                               "clang LLVM compiler", fs_);
+  clang::driver::Driver driver(clang_path, llvm::sys::getDefaultTargetTriple(),
+                               diagnostics, "clang LLVM compiler", fs_);
 
   llvm::Triple target_triple(target);
 
@@ -415,15 +414,15 @@ auto ClangRunner::RunInternal(
   // If we have a target-specific resource directory, set it as the default
   // here, otherwise use the installation's resource directory.
   driver.ResourceDir = target_resource_dir_path
-                           ? target_resource_dir_path->str()
-                           : installation_->clang_resource_path().native();
+                           ? target_resource_dir_path->string()
+                           : installation_->clang_resource_path().string();
 
   // Configure the install directory to find other tools and data files.
   //
   // We directly override the detected directory as we use a synthetic path
   // above. This makes it appear that our binary was in the installed binaries
   // directory, and allows finding tools relative to it.
-  driver.Dir = installation_->llvm_install_bin();
+  driver.Dir = installation_->llvm_install_bin().string();
   CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
 
   // When there's only one command being run, this will run it in-process.

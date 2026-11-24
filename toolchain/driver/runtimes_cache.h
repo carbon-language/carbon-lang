@@ -420,7 +420,7 @@ class Runtimes::Builder : public Printable<Builder> {
   auto Commit() && -> ErrorOr<std::filesystem::path>;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "Runtimes::Builder{.path = '" << path() << "'}";
+    out << "Runtimes::Builder{.path = '" << path().string() << "'}";
   }
 
  private:

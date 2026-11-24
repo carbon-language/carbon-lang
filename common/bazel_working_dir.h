@@ -35,7 +35,7 @@ inline auto SetWorkingDirForBazelRun(std::filesystem::path exe_path = {})
     std::error_code err;
     exe_path = std::filesystem::absolute(exe_path, err);
     CARBON_CHECK(!err, "Unable to make an absolute path for `{0}`: {1}",
-                 exe_path, err.message());
+                 exe_path.string(), err.message());
   }
 
   auto chdir_result = Filesystem::Cwd().Chdir(build_working_dir);

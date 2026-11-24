@@ -250,7 +250,7 @@ class MultiUnitCache {
         if (unit->has_source()) {
           std::filesystem::path file_path(
               std::string_view(unit->source().filename()));
-          short_name = file_path.stem();
+          short_name = file_path.stem().string();
         }
         namespace_names.push_back(
             compilation_namespace.AllocateName(std::move(short_name)));

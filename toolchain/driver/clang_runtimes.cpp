@@ -4,8 +4,6 @@
 
 #include "toolchain/driver/clang_runtimes.h"
 
-#include <unistd.h>
-
 #include <algorithm>
 #include <filesystem>
 #include <functional>
@@ -129,7 +127,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::Finish() -> ErrorOr<Success> {
     // effect, just log that we couldn't clean up a directory.
     if (!rmdir_result.ok()) {
       CARBON_VLOG("Unable to remove object directory `{0}` in the runtime: {1}",
-                  obj_dir.native(), rmdir_result.error());
+                  obj_dir.string(), rmdir_result.error());
     }
   }
 
@@ -173,7 +171,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CreateObjDir(
   if (!create_result.ok()) {
     return Error(llvm::formatv(
         "Unable to create object directory mirroring source file `{0}`: {1}",
-        src_path, create_result.error()));
+        src_path.string(), create_result.error()));
   }
 
   it = obj_dirs_.insert(it, obj_dir_path);
@@ -200,7 +198,9 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   std::filesystem::path obj_path =
       builder_->runtimes_builder_->path() / std::string_view(src_file);
   obj_path += ".o";
-  CARBON_VLOG("Building `{0}' from `{1}`...\n", obj_path, src_file);
+  std::string src_path_str = src_path.string();
+  std::string obj_path_str = obj_path.string();
+  CARBON_VLOG("Building `{0}' from `{1}`...\n", obj_path_str, src_file);
 
   llvm::SmallVector<llvm::StringRef> args(cflags_);
 
@@ -226,8 +226,8 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   }
   args.append({
       "-o",
-      obj_path.native(),
-      src_path.native(),
+      obj_path_str,
+      src_path_str,
   });
   CARBON_ASSIGN_OR_RETURN(bool success,
                           builder_->clang_->RunWithNoRuntimes(args));
@@ -236,7 +236,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
         llvm::formatv("Failed to compile runtime source file '{0}'", src_file));
   }
 
-  auto obj_result = llvm::NewArchiveMember::getFile(obj_path.native(),
+  auto obj_result = llvm::NewArchiveMember::getFile(obj_path_str,
                                                     /*Deterministic=*/true);
   if (!obj_result) {
     return Error(llvm::formatv("Unable to read `{0}` object file: {1}",
@@ -256,7 +256,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   // However, we log and ignore any errors here as they aren't fatal.
   auto unlink_result = builder_->runtimes_builder_->dir().Unlink(obj_path);
   if (!unlink_result.ok()) {
-    CARBON_VLOG("Unable to unlink object file `{0}`: {1}\n", obj_path,
+    CARBON_VLOG("Unable to unlink object file `{0}`: {1}\n", obj_path_str,
                 unlink_result.error());
   }
 
@@ -297,18 +297,18 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
 
   if constexpr (Component == Runtimes::LibUnwind) {
     archive_path_ = std::filesystem::path("lib") / "libunwind.a";
-    include_paths_ = {installation().libunwind_path() / "include"};
+    include_paths_ = {(installation().libunwind_path() / "include").string()};
   } else if constexpr (Component == Runtimes::Libcxx) {
     archive_path_ = std::filesystem::path("lib") / "libc++.a";
     include_paths_ = {
-        installation().libcxx_path() / "include",
+        (installation().libcxx_path() / "include").string(),
         // Some private headers of libc++ are nested in the source directory.
-        installation().libcxx_path() / "src",
-        installation().libcxxabi_path() / "include",
+        (installation().libcxx_path() / "src").string(),
+        (installation().libcxxabi_path() / "include").string(),
         // Libc++ also uses llvm-libc header-only libraries for parts of its
         // implementation. All the `#include`s are relative to the root of the
         // internal libc source tree rather than an `include` directory.
-        installation().libc_path() / "internal",
+        (installation().libc_path() / "internal").string(),
     };
   } else {
     static_assert(false,
@@ -375,8 +375,8 @@ auto ClangArchiveRuntimesBuilder<Component>::CollectCflags()
                   "Invalid runtimes component for an archive runtime builder.");
   }
 
-  for (const auto& include_path : include_paths_) {
-    cflags.append({"-I", include_path.native()});
+  for (const std::string& include_path : include_paths_) {
+    cflags.append({"-I", include_path});
   }
   return cflags;
 }
@@ -395,7 +395,7 @@ auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
 template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
-  CARBON_VLOG("Finished building {0}...\n", archive_path_);
+  CARBON_VLOG("Finished building {0}...\n", archive_path_.string());
   if (!archive_->result().ok()) {
     result_ = std::move(archive_->result()).error();
     return;
@@ -472,15 +472,16 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   // the `builtins` directory. However, we're anticipating needing more, for
   // example to support SipHash. If that need doesn't materialize, we should
   // simplify this to a single path instead of a vector.
-  include_paths_.push_back(installation().runtimes_root() / "builtins");
+  include_paths_.push_back(
+      (installation().runtimes_root() / "builtins").string());
 
   llvm::SmallVector<llvm::StringRef> copts = {
       "-no-canonical-prefixes",
       "-w",
   };
   llvm::append_range(copts, RuntimesBuildInfo::BuiltinsCopts);
-  for (const auto& include_path : include_paths_) {
-    copts.append({"-I", include_path.native()});
+  for (const std::string& include_path : include_paths_) {
+    copts.append({"-I", include_path});
   }
   archive_.emplace(this, lib_path_ / builtins_name, installation().root(),
                    CollectBuiltinsSrcFiles(), copts);
@@ -521,7 +522,7 @@ auto ClangResourceDirBuilder::Setup() -> void {
   std::filesystem::path install_resource_path =
       installation().clang_resource_path();
   if (auto result = runtimes_builder_->dir().Symlink(
-          "include", install_resource_path / "include");
+          "include", (install_resource_path / "include").string());
       !result.ok()) {
     result_ = std::move(result).error();
     return;
@@ -580,7 +581,9 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
                                                : "clang_rt.crtend.o");
   std::filesystem::path src_path =
       installation().root() / std::string_view(src_file);
-  CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path, src_path);
+  std::string out_path_str = out_path.string();
+  std::string src_path_str = src_path.string();
+  CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path_str, src_path_str);
 
   llvm::SmallVector<llvm::StringRef> copts = {
       "-no-canonical-prefixes",
@@ -594,8 +597,8 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
   copts.append({
       "-c",
       "-o",
-      out_path.native(),
-      src_path.native(),
+      out_path_str,
+      src_path_str,
   });
 
   CARBON_ASSIGN_OR_RETURN(bool success, clang_->RunWithNoRuntimes(copts));

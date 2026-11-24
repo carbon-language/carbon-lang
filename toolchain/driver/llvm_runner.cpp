@@ -21,7 +21,7 @@ namespace Carbon {
 
 auto LLVMRunner::Run(LLVMTool tool, llvm::ArrayRef<llvm::StringRef> args)
     -> bool {
-  std::string path = installation_->llvm_tool_path(tool);
+  std::string path = installation_->llvm_tool_path(tool).string();
 
   // Allocate one chunk of storage for the actual C-strings and a vector of
   // pointers into the storage.

@@ -108,7 +108,7 @@ class ToolchainFileTest : public FileTestBase {
   auto GetArgReplacement(llvm::StringRef key) const
       -> std::optional<std::string> override {
     if (key == "core") {
-      return data_->installation.core_package().native();
+      return data_->installation.core_package().string();
     }
     return std::nullopt;
   }
@@ -308,7 +308,7 @@ auto ToolchainFileTest::GetDefaultArgs() const
                                                 : component_.str()),
                               // Use the install path to exclude prelude files.
                               "--exclude-dump-file-prefix=" +
-                                  data_->installation.core_package().native(),
+                                  data_->installation.core_package().string(),
                           });
 
   if (component_ == "lex") {
@@ -390,7 +390,7 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
   // TODO: Consider adding a content keyword to name the core package, and
   // replace with that instead. Alternatively, consider adding the core
   // package to the VFS with a fixed name.
-  absl::StrReplaceAll({{data_->installation.core_package().native(), "{{.*}}"}},
+  absl::StrReplaceAll({{data_->installation.core_package().string(), "{{.*}}"}},
                       &check_line);
 
   if (component_ == "driver") {

@@ -75,7 +75,7 @@ TEST_F(ClangRunnerTest, Version) {
                                  .str()));
   // Clang's install should be our private LLVM install bin directory.
   EXPECT_THAT(out, HasSubstr(std::string("InstalledDir: ") +
-                             install_paths_.llvm_install_bin().native()));
+                             install_paths_.llvm_install_bin().string()));
 }
 
 TEST_F(ClangRunnerTest, DashC) {
@@ -218,7 +218,7 @@ TEST_F(ClangRunnerTest, ParamsFile) {
   overlay_fs->pushOverlay(in_memory_fs);
 
   std::filesystem::path params_path = "/params";
-  in_memory_fs->addFile(params_path.native(), 0,
+  in_memory_fs->addFile(params_path.string(), 0,
                         llvm::MemoryBuffer::getMemBuffer(R"(
 --version
 )"));
@@ -232,7 +232,7 @@ TEST_F(ClangRunnerTest, ParamsFile) {
       Testing::CallWithCapturedOutput(out, err,
                                       [&] {
                                         return runner.RunWithNoRuntimes(
-                                            {"@" + params_path.native()});
+                                            {"@" + params_path.string()});
                                       }),
       IsSuccess(true))
       << "Verbose output:\n"

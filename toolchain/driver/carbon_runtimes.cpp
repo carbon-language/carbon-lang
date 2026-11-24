@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/carbon_runtimes.h"
 
+#include <iterator>
+
 #include "toolchain/base/install_paths.h"
 #include "toolchain/base/runtimes_build_info.h"
 
@@ -62,13 +64,16 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
   // This serves as a backing store for the `llvm::StringRef` inputs required to
   // the `CompileDriver` via `compile_options_`.
   llvm::SmallVector<std::string> prelude_source_files;
-  llvm::for_each(RuntimesBuildInfo::CarbonCorePreludeSrcs,
-                 [&](llvm::StringRef src) -> void {
-                   prelude_source_files.emplace_back(
-                       (install_root_ / std::filesystem::path(src.str())));
-                   compile_options_.input_filenames.emplace_back(
-                       llvm::StringRef(prelude_source_files.back()));
-                 });
+  prelude_source_files.reserve(
+      std::size(RuntimesBuildInfo::CarbonCorePreludeSrcs));
+  llvm::for_each(
+      RuntimesBuildInfo::CarbonCorePreludeSrcs,
+      [&](llvm::StringRef src) -> void {
+        prelude_source_files.emplace_back(
+            (install_root_ / std::filesystem::path(src.str())).string());
+        compile_options_.input_filenames.emplace_back(
+            llvm::StringRef(prelude_source_files.back()));
+      });
 
   auto install_root_length = install_root_.string().length();
   auto init_result = compile_driver_.Initialize(
@@ -99,7 +104,7 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
             mkdir_result.ok(),
             "Failed to make output subdirectory {0} while building Carbon "
             "prelude.",
-            absolute_output_path.parent_path());
+            absolute_output_path.parent_path().string());
         return absolute_output_path.string();
       });
   if (!init_result) {

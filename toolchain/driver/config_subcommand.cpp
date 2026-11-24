@@ -194,24 +194,24 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Start with basic data available from the driver or global constants.
   llvm::SmallVector<ConfigDataEntry> data = {
       {.key = "CLANG_RESOURCE_DIR",
-       .value = driver_env.installation->clang_resource_path()},
-      {.key = "INSTALL_ROOT", .value = driver_env.installation->root()},
+       .value = driver_env.installation->clang_resource_path().string()},
+      {.key = "INSTALL_ROOT",
+       .value = driver_env.installation->root().string()},
       {.key = "LLVM_BINDIR",
-       .value = driver_env.installation->llvm_install_bin()},
+       .value = driver_env.installation->llvm_install_bin().string()},
       {.key = "VERSION", .value = Version::String.str()},
   };
 
   // Try to read the installation digest and include that. This goes through the
   // driver's filesystem so that tests get consistent results regardless of
   // whether the digest happens to exist on the real filesystem.
-  auto read_result = driver_env.fs->getBufferForFile(
-      driver_env.installation->digest_path().native());
+  std::string digest_path = driver_env.installation->digest_path().string();
+  auto read_result = driver_env.fs->getBufferForFile(digest_path);
   if (!read_result) {
     CARBON_DIAGNOSTIC(ConfigFailedToReadDigest, Error,
                       "unable to read the installation's digest file: {0}: {1}",
                       std::string, std::string);
-    driver_env.emitter.Emit(ConfigFailedToReadDigest,
-                            driver_env.installation->digest_path().native(),
+    driver_env.emitter.Emit(ConfigFailedToReadDigest, digest_path,
                             read_result.getError().message());
 
     // Remember that we encountered an error but continue to give a minimally

@@ -105,7 +105,7 @@ auto RunClangCC1Main(const InstallPaths& installation,
   if (clang_instance->getHeaderSearchOpts().UseBuiltinIncludes &&
       clang_instance->getHeaderSearchOpts().ResourceDir.empty()) {
     clang_instance->getHeaderSearchOpts().ResourceDir =
-        installation.clang_resource_path();
+        installation.clang_resource_path().string();
   }
 
   // Create the filesystem.

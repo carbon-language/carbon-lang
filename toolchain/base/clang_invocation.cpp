@@ -120,7 +120,7 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
   // the arguments.
   llvm::BumpPtrAllocator alloc;
   llvm::SmallVector<const char*> cstr_args = BuildCStrArgs(
-      install_paths.clang_path().native(), args, extra_args, alloc);
+      install_paths.clang_path().string(), args, extra_args, alloc);
 
   // Build a diagnostics engine. Note that we don't have any diagnostic options
   // yet; they're produced by running the driver.
@@ -217,8 +217,9 @@ auto AppendDefaultClangArgs(const InstallPaths& install_paths,
   for (const std::filesystem::path& runtime_path :
        {install_paths.libunwind_path(), install_paths.libcxx_path(),
         install_paths.libcxxabi_path()}) {
-    args.push_back(
-        llvm::formatv("-stdlib++-isystem{0}", runtime_path / "include").str());
+    args.push_back(llvm::formatv("-stdlib++-isystem{0}",
+                                 (runtime_path / "include").string())
+                       .str());
   }
 }
 

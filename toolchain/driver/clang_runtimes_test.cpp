@@ -101,7 +101,7 @@ class ClangRuntimesTest : public ::testing::Test {
     bool result = Testing::CallWithCapturedOutput(out, err, [&] {
       return llvm_runner.Run(
           LLVMTool::Nm, {"--format=just-symbols", "--defined-only", "--quiet",
-                         archive.native()});
+                         archive.string()});
     });
     CARBON_CHECK(result, "Unable to run `llvm-nm`:\n{0}", err);
 
@@ -124,10 +124,10 @@ class ClangRuntimesTest : public ::testing::Test {
       -> llvm::SmallVector<std::string> {
     llvm::SmallVector<std::string> result;
 
-    auto archive_buffer_result =
-        llvm::MemoryBuffer::getFile(archive_path.native());
+    std::string archive_path_str = archive_path.string();
+    auto archive_buffer_result = llvm::MemoryBuffer::getFile(archive_path_str);
     CARBON_CHECK(!archive_buffer_result.getError(), "Unable to open {0}: {1}",
-                 archive_path, archive_buffer_result.getError().message());
+                 archive_path_str, archive_buffer_result.getError().message());
     auto archive = llvm::cantFail(llvm::object::Archive::create(
         archive_buffer_result.get()->getMemBufferRef()));
 
@@ -136,7 +136,7 @@ class ClangRuntimesTest : public ::testing::Test {
       result.push_back(child.getName()->str());
     }
     CARBON_CHECK(!error, "Error reading members of archive {0}: {1}",
-                 archive_path, error);
+                 archive_path_str, error);
 
     return result;
   }
@@ -148,7 +148,7 @@ class ClangRuntimesTest : public ::testing::Test {
           resource_dir_path / "lib" / target_ / "clang_rt.crtbegin.o";
       ASSERT_TRUE(std::filesystem::is_regular_file(crt_begin_path));
       auto begin_result =
-          llvm::object::ObjectFile::createObjectFile(crt_begin_path.native());
+          llvm::object::ObjectFile::createObjectFile(crt_begin_path.string());
       llvm::object::ObjectFile& crtbegin = *begin_result->getBinary();
       EXPECT_TRUE(crtbegin.isELF());
       EXPECT_TRUE(crtbegin.isObject());
@@ -167,7 +167,7 @@ class ClangRuntimesTest : public ::testing::Test {
           resource_dir_path / "lib" / target_ / "clang_rt.crtend.o";
       ASSERT_TRUE(std::filesystem::is_regular_file(crt_end_path));
       auto end_result =
-          llvm::object::ObjectFile::createObjectFile(crt_end_path.native());
+          llvm::object::ObjectFile::createObjectFile(crt_end_path.string());
       llvm::object::ObjectFile& crtend = *end_result->getBinary();
       EXPECT_TRUE(crtend.isELF());
       EXPECT_TRUE(crtend.isObject());

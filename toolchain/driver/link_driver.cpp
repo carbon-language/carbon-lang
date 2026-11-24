@@ -172,12 +172,13 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     auto relative_path = core_path.lexically_relative(runtimes_path);
     auto core_dir_or_error = runtimes_dir.OpenDir(relative_path);
     CARBON_CHECK(core_dir_or_error.ok(),
-                 "Failed to open prelude binaries directory at {}, error: {}",
-                 runtimes_path / relative_path, core_dir_or_error.error());
+                 "Failed to open prelude binaries directory at {0}, error: {1}",
+                 (runtimes_path / relative_path).string(),
+                 core_dir_or_error.error());
     auto core_dir = std::move(*core_dir_or_error);
     object_search(core_dir, core_path, prelude_paths);
-    CARBON_CHECK(!prelude_paths.empty(), "Found no prelude files at {}",
-                 runtimes_path / relative_path);
+    CARBON_CHECK(!prelude_paths.empty(), "Found no prelude files at {0}",
+                 (runtimes_path / relative_path).string());
     llvm::append_range(
         clang_args, llvm::map_range(prelude_paths, [](const std::string& path) {
           return llvm::StringRef(path);
