@@ -164,7 +164,7 @@ impl () as J(()) {}
 // required, we still need to see that we need `() impls J(())`.
 impl forall [T: type] T as I where .X impls J(.X) and .X = () {}
 
-// --- impl_lookups_in_definition_find_own_impl.carbon
+// --- impl_lookups_in_declaration_find_own_impl.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -203,8 +203,7 @@ fn F() {
   G(C) as Z(G(C));
 }
 
-
-// --- impl_lookups_in_definition_find_own_impl_with_compound_member_access.carbon
+// --- impl_lookups_in_declaration_find_own_impl_with_compound_member_access.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -228,7 +227,7 @@ impl forall [T: type, U: type] G(T) as Z(U) where .Z1 = {} and .Z2 = {} {}
 // for `G(C) as Z(G(C))`. But this lookup occurs before the impl declaration is
 // even completed, so the impl does not yet exist according to check.
 //
-// This is like `impl_lookups_in_definition_find_own_impl.carbon` above, but
+// This is like `impl_lookups_in_declaration_find_own_impl.carbon` above, but
 // the access of `.Z2` into the impl is done through compound member access
 // which tests different semir construction paths. It should resolve to
 // `()`.
@@ -237,6 +236,47 @@ impl G(C) as Z(G(C)) where .Z1 = .Self.(Z(G(C)).Z2) and .Z2 = () {}
 fn F() {
   G(C) as (Z(G(C)) where .Z1 = () and .Z2 = ());
 }
+
+// --- fail_impl_lookups_in_declaration_with_concrete_self_find_other_impl.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Z1: type;
+  let Z2: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+impl forall [T: type] {} as Y(G(T)) {}
+
+// This is a blanket impl that overlaps with (but is less specific than)
+// `G(C) as Z(G(C))`, which is the next impl below.
+impl forall [T: type, U: type] G(T) as Z(U) where .Z1 = {} and .Z2 = {} {}
+
+// The query `G(C) as Z(G(C))` is concrete so any lookups will result in a
+//  final witness. Since the query is not done through `.Self` we find the
+// impl above, which poisons this impl.
+// CHECK:STDERR:        ╭─┤ fail_impl_lookups_in_declaration_with_concrete_self_find_other_impl.carbon:[[@LINE+17]]:34
+// CHECK:STDERR:        │ impl forall [T: type, U: type] G(T) as Z(U) where .Z1 = {} and .Z2 = {} {}
+// CHECK:STDERR:        · ────────────────────────────────────┬────────────────────────────────────
+// CHECK:STDERR:        ·                                     ╰──┤ the use had selected the `impl` here
+// CHECK:STDERR:        ·                                        │ [PoisonedImplLookupConcreteResultNotePreviousImpl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl G(C) as Z(G(C)) where .Z1 = G(C).(Z(G(C)).Z2) and .Z2 = () {}
+// CHECK:STDERR:        · ────────────────────────────────┬┳━━━━━━━━━━━━━━━━───────────────
+// CHECK:STDERR:        ·                                 │┗━━┫ error: found `impl` that would change the
+// CHECK:STDERR:        ·                                 │   ┃        result of an earlier use of
+// CHECK:STDERR:        ·                                 │   ┃        `G(C) as Z(G(C))`
+// CHECK:STDERR:        ·                                 │   ┃        [PoisonedImplLookupConcreteResult]
+// CHECK:STDERR:        ·                                 ╰─────┤ the use would select the `impl` here but
+// CHECK:STDERR:        ·                                       │ it was not found yet
+// CHECK:STDERR:        ·                                       │ [PoisonedImplLookupConcreteResultNoteBadImpl]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl G(C) as Z(G(C)) where .Z1 = G(C).(Z(G(C)).Z2) and .Z2 = () {}
 
 // --- impl_lookups_in_definition_find_own_impl_with_named_constraint.carbon
 library "[[@TEST_NAME]]";

@@ -803,14 +803,15 @@ static auto FindFinalWitnessInsideImplDecl(
     return SemIR::InstId::None;
   }
 
-  const auto& declaring = context.declaring_impl_decls().Peek();
-  if (declaring.specific_interface != req_interface) {
+  const auto& declaring_specific_interface =
+      context.declaring_impl_decls().Peek();
+  if (declaring_specific_interface != req_interface) {
     return SemIR::InstId::None;
   }
 
   auto self_facet_inst_id = context.constant_values().GetInstId(req_self_facet);
-  // Using the impl's self concrete type does a full lookup. Only a symbolic
-  // lookup through `.Self` will find the impl decl being constructed.
+  // Using the impl's self concrete type does a full lookup. A symbolic lookup
+  // through `.Self` will find the impl decl being constructed.
   if (!IsPeriodSelf(context, self_facet_inst_id)) {
     return SemIR::InstId::None;
   }
