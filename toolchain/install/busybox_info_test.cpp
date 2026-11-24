@@ -14,6 +14,7 @@
 #include <system_error>
 
 #include "common/check.h"
+#include "common/env.h"
 #include "common/filesystem.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Support/FileSystem.h"
@@ -33,6 +34,18 @@ class BusyboxInfoTest : public ::testing::Test {
                                                        &static_for_main_addr);
   }
 
+#ifdef _WIN32
+  auto SetUp() -> void override {
+    auto probe = dir_.Symlink(".symlink_probe", "target");
+    if (probe.ok()) {
+      dir_.Unlink(".symlink_probe").Check();
+    } else if (probe.error().access_denied()) {
+      GTEST_SKIP() << "Symlink creation requires Windows Developer Mode or "
+                      "elevated privileges.";
+    }
+  }
+#endif
+
   // Creates a synthetic install tree to test a batch of interactions.
   // Optionally accepts a symlink target for the busybox in the install tree.
   // Returns the input prefix for easy use.
@@ -42,7 +55,7 @@ class BusyboxInfoTest : public ::testing::Test {
     Filesystem::Dir prefix_dir = *dir_.CreateDirectories(prefix);
     Filesystem::Dir lib_carbon = *prefix_dir.CreateDirectories("lib/carbon");
     if (busybox_target) {
-      lib_carbon.Symlink("carbon-busybox", busybox_target->native()).Check();
+      lib_carbon.Symlink("carbon-busybox", busybox_target->string()).Check();
     } else {
       lib_carbon.Symlink("carbon-busybox", running_binary_).Check();
     }
@@ -72,7 +85,7 @@ class BusyboxInfoTest : public ::testing::Test {
 TEST_F(BusyboxInfoTest, Direct) {
   dir_.Symlink("carbon-busybox", running_binary_).Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon-busybox").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon-busybox").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -82,7 +95,7 @@ TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectory) {
   dir_.Symlink("carbon-busybox", running_binary_).Check();
   dir_.Symlink("carbon", "carbon-busybox").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -92,7 +105,7 @@ TEST_F(BusyboxInfoTest, SymlinkInCurrentDirectoryWithDot) {
   dir_.Symlink("carbon-busybox", running_binary_).Check();
   dir_.Symlink("carbon", "./carbon-busybox").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "./carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -103,7 +116,7 @@ TEST_F(BusyboxInfoTest, ExtraSymlink) {
   dir_.Symlink("c", "carbon-busybox").Check();
   dir_.Symlink("carbon", "c").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -115,12 +128,12 @@ TEST_F(BusyboxInfoTest, OriginalSymlinkNameFormsMode) {
   dir_.Symlink("clang", "carbon").Check();
   dir_.Symlink("clang++", "clang").Check();
 
-  auto info = GetBusyboxInfo((path_ / "clang").c_str());
+  auto info = GetBusyboxInfo((path_ / "clang").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
-  info = GetBusyboxInfo((path_ / "clang++").c_str());
+  info = GetBusyboxInfo((path_ / "clang++").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang++"));
@@ -129,7 +142,7 @@ TEST_F(BusyboxInfoTest, OriginalSymlinkNameFormsMode) {
 TEST_F(BusyboxInfoTest, BusyboxIsSymlinkToNowhere) {
   dir_.Symlink("carbon-busybox", "nonexistent").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon-busybox").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon-busybox").string().c_str());
   ASSERT_FALSE(info.ok());
   EXPECT_THAT(info.error().message(),
               Eq(llvm::formatv("expected carbon-busybox symlink at `{0}`",
@@ -142,7 +155,7 @@ TEST_F(BusyboxInfoTest, BusyboxIsWrongFile) {
   // and so is ignored.
   dir_.WriteFileFromString("carbon-busybox", "stub").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon-busybox").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon-busybox").string().c_str());
   ASSERT_FALSE(info.ok());
   EXPECT_THAT(info.error().message(),
               Eq(llvm::formatv("expected carbon-busybox symlink at `{0}`",
@@ -156,7 +169,7 @@ TEST_F(BusyboxInfoTest, RelativeSymlink) {
   Filesystem::Dir d2 = *dir_.OpenDir("dir2", Filesystem::CreateNew);
   d2.Symlink("carbon", "../dir1/carbon-busybox").Check();
 
-  auto info = GetBusyboxInfo((path_ / "dir2/carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "dir2/carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "dir2/../dir1/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -167,9 +180,9 @@ TEST_F(BusyboxInfoTest, AbsoluteSymlink) {
   d1.Symlink("carbon-busybox", running_binary_).Check();
   Filesystem::Dir d2 = *dir_.OpenDir("dir2", Filesystem::CreateNew);
   ASSERT_TRUE(path_.is_absolute());
-  d2.Symlink("carbon", (path_ / "dir1/carbon-busybox")).Check();
+  d2.Symlink("carbon", (path_ / "dir1/carbon-busybox").string()).Check();
 
-  auto info = GetBusyboxInfo((path_ / "dir2/carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "dir2/carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "dir1/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
@@ -178,7 +191,7 @@ TEST_F(BusyboxInfoTest, AbsoluteSymlink) {
 TEST_F(BusyboxInfoTest, NotBusyboxFile) {
   dir_.WriteFileFromString("file", "stub").Check();
 
-  auto info = GetBusyboxInfo((path_ / "file").c_str());
+  auto info = GetBusyboxInfo((path_ / "file").string().c_str());
   EXPECT_FALSE(info.ok());
 }
 
@@ -186,7 +199,7 @@ TEST_F(BusyboxInfoTest, NotBusyboxSymlink) {
   dir_.WriteFileFromString("file", "stub").Check();
   dir_.Symlink("carbon", "file").Check();
 
-  auto info = GetBusyboxInfo((path_ / "carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "carbon").string().c_str());
   EXPECT_FALSE(info.ok());
 }
 
@@ -198,17 +211,19 @@ TEST_F(BusyboxInfoTest, LayerSymlinksInstallTree) {
   // `clang`.
   auto prefix = MakeInstallTree("test_prefix", (path_ / "actual-busybox"));
 
-  auto info = GetBusyboxInfo((prefix / "bin/carbon").c_str());
+  auto info = GetBusyboxInfo((prefix / "bin/carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
-  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").c_str());
+  info =
+      GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang"));
 
-  info = GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").c_str());
+  info =
+      GetBusyboxInfo((prefix / "lib/carbon/llvm/bin/clang++").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(prefix / "lib/carbon/carbon-busybox"));
   EXPECT_THAT(info->mode, Eq("clang++"));
@@ -281,16 +296,17 @@ TEST_F(BusyboxInfoTest, StopSearchAtFirstSymlinkWithRelativeBusybox) {
     Filesystem::Dir bin = *dir_.OpenDir("bin", Filesystem::CreateNew);
     bin.Symlink("carbon", "../opt/bin/carbon").Check();
     Filesystem::Dir llvm_bin = *lib_carbon.CreateDirectories("llvm/bin");
-    llvm_bin.Symlink("clang", (opt_prefix / "lib/carbon/llvm/bin/clang"))
+    llvm_bin
+        .Symlink("clang", (opt_prefix / "lib/carbon/llvm/bin/clang").string())
         .Check();
   }
 
   // Starting from the second install uses the relative busybox rather than
   // traversing the symlink further.
-  auto info = GetBusyboxInfo((path_ / "bin/carbon").c_str());
+  auto info = GetBusyboxInfo((path_ / "bin/carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
-  info = GetBusyboxInfo((path_ / "lib/carbon/llvm/bin/clang").c_str());
+  info = GetBusyboxInfo((path_ / "lib/carbon/llvm/bin/clang").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(path_ / "lib/carbon/carbon-busybox"));
 }
@@ -312,7 +328,7 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 
   // Check that the busybox doesn't use the relative busybox in this case, and
   // walks the symlink to find the correct installation.
-  auto info = GetBusyboxInfo((usr_local / "carbon").c_str());
+  auto info = GetBusyboxInfo((usr_local / "carbon").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 
@@ -321,22 +337,22 @@ TEST_F(BusyboxInfoTest, RejectSymlinkInUnrelatedInstall) {
 
   // Check that the busybox doesn't use the relative busybox in this case, and
   // walks the symlink to find the correct installation.
-  info = GetBusyboxInfo((usr_local / "carbon2").c_str());
+  info = GetBusyboxInfo((usr_local / "carbon2").string().c_str());
   ASSERT_TRUE(info.ok()) << info.error();
   EXPECT_THAT(info->bin_path, Eq(usr_local / "lib/carbon/carbon-busybox"));
 }
 
 TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   // The test should not have this environment variable set.
-  ASSERT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
+  ASSERT_THAT(std::getenv(Argv0OverrideEnv), Eq(nullptr));
 
   // Set the environment to our actual busybox.
   dir_.Symlink("carbon-busybox", running_binary_).Check();
 
-  setenv(Argv0OverrideEnv, (path_ / "carbon-busybox").c_str(), /*overwrite=*/1);
+  SetEnv(Argv0OverrideEnv, (path_ / "carbon-busybox").string().c_str());
   auto info = GetBusyboxInfo("/some/nonexistent/path");
-  if (getenv(Argv0OverrideEnv)) {
-    unsetenv(Argv0OverrideEnv);
+  if (std::getenv(Argv0OverrideEnv)) {
+    UnsetEnv(Argv0OverrideEnv);
     ADD_FAILURE() << "GetBusyboxInfo should unset Argv0OverrideEnv";
   }
 
@@ -345,7 +361,7 @@ TEST_F(BusyboxInfoTest, EnvBinaryPathOverride) {
   EXPECT_THAT(info->mode, Eq(std::nullopt));
 
   // Make sure that we cleaned up the environment afterward.
-  EXPECT_THAT(getenv(Argv0OverrideEnv), Eq(nullptr));
+  EXPECT_THAT(std::getenv(Argv0OverrideEnv), Eq(nullptr));
 }
 
 }  // namespace

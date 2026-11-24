@@ -610,6 +610,7 @@ cc_test(
     deps = [
         ":runtimes_cache",
         "//common:check",
+        "//common:env",
         "//common:error_test_helpers",
         "//common:filesystem",
         "//common:ostream",

@@ -4,8 +4,19 @@
 
 #include "common/terminal/capabilities.h"
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <io.h>
+#include <windows.h>
+#else
 #include <sys/ioctl.h>
 #include <unistd.h>
+#endif
 
 #include <cstdlib>
 
@@ -202,7 +213,29 @@ static auto GetLocale() -> llvm::StringRef {
       return value;
     }
   }
+#ifdef _WIN32
+  if (::GetConsoleOutputCP() == CP_UTF8 || ::GetACP() == CP_UTF8) {
+    return "UTF-8";
+  }
+#endif
   return "";
+}
+
+// Returns whether `fd` is connected to an interactive terminal.
+static auto IsTerminal(int fd) -> bool {
+#ifdef _WIN32
+  if (fd < 0 || _isatty(fd) == 0) {
+    return false;
+  }
+  HANDLE handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+  if (handle == INVALID_HANDLE_VALUE) {
+    return false;
+  }
+  DWORD mode = 0;
+  return ::GetConsoleMode(handle, &mode) != 0;
+#else
+  return isatty(fd) != 0;
+#endif
 }
 
 // Returns the terminal's width in columns, or nullopt when there is nothing to
@@ -216,19 +249,41 @@ static auto GetColumns(int fd) -> std::optional<int> {
     return columns;
   }
 
+#ifdef _WIN32
+  if (fd < 0) {
+    return std::nullopt;
+  }
+  HANDLE handle = reinterpret_cast<HANDLE>(_get_osfhandle(fd));
+  if (handle == INVALID_HANDLE_VALUE) {
+    return std::nullopt;
+  }
+  CONSOLE_SCREEN_BUFFER_INFO info = {};
+  if (::GetConsoleScreenBufferInfo(handle, &info)) {
+    int width = info.srWindow.Right - info.srWindow.Left + 1;
+    if (width > 0) {
+      return width;
+    }
+  }
+  return std::nullopt;
+#else
   struct winsize size = {};
   if (ioctl(fd, TIOCGWINSZ, &size) == 0 && size.ws_col > 0) {
     return size.ws_col;
   }
   return std::nullopt;
+#endif
 }
 
 auto Capabilities::Detect(Filesystem::WriteFileRef file,
                           Preferences preferences) -> Capabilities {
+#ifdef _WIN32
+  int fd = file.win_crt_fd();
+#else
   int fd = file.unix_fd();
+#endif
 
   Capabilities capabilities;
-  capabilities.is_terminal = isatty(fd) != 0;
+  capabilities.is_terminal = IsTerminal(fd);
   capabilities.color_mode =
       ChooseColorMode(preferences.color, ColorEnvironment::FromProcess(),
                       capabilities.is_terminal);

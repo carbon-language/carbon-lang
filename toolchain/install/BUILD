@@ -89,6 +89,7 @@ cc_library(
     srcs = ["busybox_info.cpp"],
     hdrs = ["busybox_info.h"],
     deps = [
+        "//common:env",
         "//common:error",
         "//common:exe_path",
         "//common:filesystem",
@@ -103,6 +104,7 @@ cc_test(
     deps = [
         ":busybox_info",
         "//common:check",
+        "//common:env",
         "//common:filesystem",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
@@ -119,6 +121,7 @@ cc_binary(
         ":busybox_info",
         "//common:all_llvm_targets",
         "//common:bazel_working_dir",
+        "//common:env",
         "//common:error",
         "//common:exe_path",
         "//common:filesystem",

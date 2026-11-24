@@ -7,7 +7,14 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#ifdef _WIN32
+#include <fcntl.h>
+#include <io.h>
+#endif
+
+#include <array>
 #include <concepts>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <utility>
@@ -51,7 +58,9 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(unlink_result, IsError(HasSubstr("ENOENT")));
 #endif
+#ifndef _WIN32
   EXPECT_THAT(unlink_result, IsError(HasSubstr("No such file")));
+#endif
 
   auto f = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
   ASSERT_THAT(f, IsSuccess(_));
@@ -65,7 +74,9 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(f, IsError(HasSubstr("EEXIST")));
 #endif
+#ifndef _WIN32
   EXPECT_THAT(f, IsError(HasSubstr("File exists")));
+#endif
 
   f = dir_.OpenWriteOnly("test");
   ASSERT_THAT(f, IsSuccess(_));
@@ -87,7 +98,9 @@ TEST_F(FilesystemTest, CreateOpenCloseAndUnlink) {
     (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ >= 32))
   EXPECT_THAT(f, IsError(HasSubstr("ENOENT")));
 #endif
+#ifndef _WIN32
   EXPECT_THAT(f, IsError(HasSubstr("No such file")));
+#endif
 
   f = dir_.OpenWriteOnly("test", CreationOptions::OpenAlways);
   ASSERT_THAT(f, IsSuccess(_));
@@ -279,7 +292,9 @@ TEST_F(FilesystemTest, StatAndAccess) {
   EXPECT_FALSE(stat_result->is_dir());
   EXPECT_FALSE(stat_result->is_symlink());
   EXPECT_THAT(stat_result->size(), Eq(content_str.size()));
+#ifndef _WIN32
   EXPECT_THAT(stat_result->permissions(), Eq(permissions));
+#endif
 
   // Directory instead of file.
   access_result =
@@ -302,7 +317,9 @@ TEST_F(FilesystemTest, StatAndAccess) {
   EXPECT_FALSE(file_stat_result->is_dir());
   EXPECT_FALSE(file_stat_result->is_symlink());
   EXPECT_THAT(file_stat_result->size(), Eq(content_str.size()));
+#ifndef _WIN32
   EXPECT_THAT(file_stat_result->permissions(), Eq(permissions));
+#endif
   (*std::move(f)).Close().Check();
 }
 
@@ -316,6 +333,12 @@ TEST_F(FilesystemTest, Symlinks) {
   EXPECT_TRUE(lstat_result.error().no_entity());
 
   auto symlink_result = dir_.Symlink("test", "abc");
+#ifdef _WIN32
+  if (!symlink_result.ok() && symlink_result.error().access_denied()) {
+    GTEST_SKIP() << "Symlink creation requires Windows Developer Mode or "
+                    "elevated privileges.";
+  }
+#endif
   EXPECT_THAT(symlink_result, IsSuccess(_));
 
   readlink_result = dir_.Readlink("test");
@@ -352,6 +375,12 @@ TEST_F(FilesystemTest, Chdir) {
   ASSERT_THAT(current_result, IsSuccess(_));
 
   auto symlink_result = dir_.Symlink("test", "abc");
+#ifdef _WIN32
+  if (!symlink_result.ok() && symlink_result.error().access_denied()) {
+    GTEST_SKIP() << "Symlink creation requires Windows Developer Mode or "
+                    "elevated privileges.";
+  }
+#endif
   EXPECT_THAT(symlink_result, IsSuccess(_));
 
   auto chdir_result = dir_.Chdir();
@@ -434,24 +463,49 @@ TEST_F(FilesystemTest, WriteCompleteBuffer) {
 TEST_F(FilesystemTest, StandardStreams) {
   // The standard streams name descriptors the process already has, so these
   // are constants and never open or close anything.
+#ifdef _WIN32
+  static_assert(Stdin().win_crt_fd() == 0);
+  static_assert(Stdout().win_crt_fd() == 1);
+  static_assert(Stderr().win_crt_fd() == 2);
+#else
   static_assert(Stdin().unix_fd() == STDIN_FILENO);
   static_assert(Stdout().unix_fd() == STDOUT_FILENO);
   static_assert(Stderr().unix_fd() == STDERR_FILENO);
+#endif
   EXPECT_TRUE(Stderr().is_valid());
 
   // Writing through one reaches the descriptor. Tests run with stdout captured,
   // so this uses a pipe put in its place for the duration.
   int fds[2];
-  ASSERT_EQ(pipe(fds), 0);
-  int saved = dup(STDOUT_FILENO);
+#ifdef _WIN32
+  constexpr int StdoutFd = 1;
+  ASSERT_EQ(_pipe(fds, 256, _O_BINARY), 0);
+  int saved = _dup(StdoutFd);
   ASSERT_GE(saved, 0);
-  ASSERT_GE(dup2(fds[1], STDOUT_FILENO), 0);
+  ASSERT_GE(_dup2(fds[1], StdoutFd), 0);
+#else
+  constexpr int StdoutFd = STDOUT_FILENO;
+  ASSERT_EQ(pipe(fds), 0);
+  int saved = dup(StdoutFd);
+  ASSERT_GE(saved, 0);
+  ASSERT_GE(dup2(fds[1], StdoutFd), 0);
+#endif
 
   llvm::StringRef message = "through stdout";
   auto result = Stdout().WriteCompleteBuffer(llvm::ArrayRef<std::byte>(
       reinterpret_cast<const std::byte*>(message.data()), message.size()));
 
-  ASSERT_GE(dup2(saved, STDOUT_FILENO), 0);
+#ifdef _WIN32
+  ASSERT_GE(_dup2(saved, StdoutFd), 0);
+  ASSERT_EQ(_close(saved), 0);
+  ASSERT_EQ(_close(fds[1]), 0);
+  EXPECT_THAT(result, IsSuccess(_));
+
+  char buffer[64];
+  int n = _read(fds[0], buffer, sizeof(buffer));
+  ASSERT_EQ(_close(fds[0]), 0);
+#else
+  ASSERT_GE(dup2(saved, StdoutFd), 0);
   ASSERT_EQ(close(saved), 0);
   ASSERT_EQ(close(fds[1]), 0);
   EXPECT_THAT(result, IsSuccess(_));
@@ -459,6 +513,7 @@ TEST_F(FilesystemTest, StandardStreams) {
   char buffer[64];
   ssize_t n = read(fds[0], buffer, sizeof(buffer));
   ASSERT_EQ(close(fds[0]), 0);
+#endif
   ASSERT_GT(n, 0);
   EXPECT_EQ(llvm::StringRef(buffer, n), message);
 }
@@ -491,8 +546,14 @@ TEST_F(FilesystemTest, Rename) {
   EXPECT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir1") / "file1"),
               IsSuccess(Eq("content1")));
 
-  // The open directory `d2` should survive the rename and point at the same
-  // directory.
+#ifdef _WIN32
+  // On Windows, `Dir` tracks paths rather than open directory descriptors, so
+  // re-open the renamed directory.
+  d2 = *dir_.OpenDir("subdir1");
+#endif
+
+  // On Unix-like platforms, the open directory `d2` survives the rename and
+  // points at the same directory.
   EXPECT_THAT(d2.ReadFileToString("file1"), IsSuccess(Eq("content1")));
   EXPECT_THAT(d2.WriteFileFromString("file2", "content2"), IsSuccess(_));
   EXPECT_THAT(dir_.ReadFileToString(std::filesystem::path("subdir1") / "file2"),
@@ -511,7 +572,11 @@ TEST_F(FilesystemTest, Rename) {
   // Note that `d2` was renamed `subdir1` above, which is why this creates
   // infinite subdirectories.
   result = dir_.Rename("subdir1", d2, "infinite_subdirs");
+#ifdef _WIN32
+  EXPECT_FALSE(result.ok());
+#else
   EXPECT_THAT(result.error().unix_errnum(), EINVAL) << result.error();
+#endif
 }
 
 TEST_F(FilesystemTest, TryLock) {

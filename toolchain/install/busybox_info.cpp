@@ -4,18 +4,35 @@
 
 #include "toolchain/install/busybox_info.h"
 
+#include <cstdlib>
 #include <iterator>
+#include <string>
+#include <string_view>
 
+#include "common/env.h"
 #include "common/exe_path.h"
 #include "common/filesystem.h"
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {
 
+// Returns the filename component of `path`, stripping a trailing `.exe`
+// case-insensitively on Windows.
+static auto GetExeBaseName(const std::filesystem::path& path) -> std::string {
+  std::string filename = path.filename().string();
+#ifdef _WIN32
+  llvm::StringRef ref(filename);
+  if (ref.consume_back_insensitive(".exe")) {
+    filename.resize(ref.size());
+  }
+#endif
+  return filename;
+}
+
 // The mode is set to the initial filename used for `argv[0]`.
 static auto GetMode(const std::filesystem::path& argv0)
     -> std::optional<std::string> {
-  std::string filename = argv0.filename();
+  std::string filename = GetExeBaseName(argv0);
   if (filename != "carbon" && filename != "carbon-busybox") {
     return filename;
   }
@@ -39,22 +56,24 @@ static auto WalkUp(std::filesystem::path p) -> std::filesystem::path {
 }
 
 auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
-  // Need storage due to `unsetenv` affecting `getenv` lifetime; using `path`
+  // Need storage due to `UnsetEnv` affecting `getenv` lifetime; using `path`
   // for `GetMode`.
   std::filesystem::path argv0_path = argv0;
 
   // Check for an override of `argv[0]` from the environment and apply it.
-  if (const char* argv0_override = getenv(Argv0OverrideEnv)) {
+  if (const char* argv0_override = std::getenv(Argv0OverrideEnv)) {
     argv0_path = argv0_override;
-    unsetenv(Argv0OverrideEnv);
+    UnsetEnv(Argv0OverrideEnv);
   }
 
-  BusyboxInfo info = {.bin_path = FindExecutablePath(argv0_path.c_str()),
-                      .mode = GetMode(argv0_path)};
+  BusyboxInfo info = {
+      .bin_path = FindExecutablePath(argv0_path.string().c_str()),
+      .mode = GetMode(argv0_path)};
 
   // Now search through any symlinks to locate the installed busybox binary.
   while (true) {
-    if (info.bin_path.filename() == "carbon-busybox") {
+    std::string bin_name = GetExeBaseName(info.bin_path);
+    if (bin_name == "carbon-busybox") {
       return info;
     }
 
@@ -82,23 +101,35 @@ auto GetBusyboxInfo(const char* argv0) -> ErrorOr<BusyboxInfo> {
       // keep paths shorter and avoids redundant work. We also don't expect to
       // need to respect _internally_ strange symlinking structures that would
       // need to use appended `../` components.
-      auto lib_path = info.bin_path.filename() == "carbon"
+      auto lib_path = bin_name == "carbon"
                           ? WalkUp(std::move(parent_path)) / "lib" / "carbon"
                           : WalkUp(WalkUp(std::move(parent_path)));
+#ifdef _WIN32
+      for (std::string_view busybox_filename :
+           {"carbon-busybox.exe", "carbon-busybox"}) {
+        auto busybox_path = lib_path / busybox_filename;
+        if (auto access = Filesystem::Cwd().Access(busybox_path);
+            access.ok() && *access) {
+          info.bin_path = busybox_path;
+          return info;
+        }
+      }
+#else
       auto busybox_path = lib_path / "carbon-busybox";
       if (auto access = Filesystem::Cwd().Access(busybox_path);
           access.ok() && *access) {
         info.bin_path = busybox_path;
         return info;
       }
+#endif
     }
 
     // Try to walk through another layer of symlinks and see if we can find the
     // installation there or are linked directly to the busybox.
     auto readlink = Filesystem::Cwd().Readlink(info.bin_path);
     if (!readlink.ok()) {
-      return ErrorBuilder()
-             << "expected carbon-busybox symlink at `" << info.bin_path << "`";
+      return ErrorBuilder() << "expected carbon-busybox symlink at `"
+                            << info.bin_path.string() << "`";
     }
 
     // Do a path join, to handle relative symlinks.

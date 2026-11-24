@@ -2,13 +2,12 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include <unistd.h>
-
 #include <cstdlib>
 #include <string>
 
 #include "clang/Driver/Driver.h"
 #include "common/bazel_working_dir.h"
+#include "common/env.h"
 #include "common/error.h"
 #include "common/filesystem.h"
 #include "common/init_llvm.h"
@@ -35,7 +34,7 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   std::filesystem::path exe_path = busybox_info.bin_path.string();
   exe_path = SetWorkingDirForBazelRun(exe_path);
 
-  const auto install_paths = InstallPaths::MakeExeRelative(exe_path.native());
+  const auto install_paths = InstallPaths::MakeExeRelative(exe_path.string());
   if (install_paths.error()) {
     return Error(*install_paths.error());
   }
@@ -43,10 +42,10 @@ static auto Main(int argc, char** argv) -> ErrorOr<int> {
   // If `LLVM_SYMBOLIZER_PATH` is unset, sets it. Signals.cpp would do some more
   // path resolution which this overrides in favor of using the busybox itself
   // for symbolization.
-  setenv(
+  SetEnv(
       "LLVM_SYMBOLIZER_PATH",
-      (install_paths.llvm_install_bin() / "llvm-symbolizer").native().c_str(),
-      /*overwrite=*/0);
+      (install_paths.llvm_install_bin() / "llvm-symbolizer").string().c_str(),
+      /*overwrite=*/false);
 
   auto fs = llvm::vfs::getRealFileSystem();
 

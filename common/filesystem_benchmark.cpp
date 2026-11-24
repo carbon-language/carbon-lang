@@ -232,7 +232,8 @@ auto BM_StatMissing(benchmark::State& state) -> void {
         std::error_code ec;
         auto status = std::filesystem::status(
             context.tmpdir.path() / context.missing_paths[i], ec);
-        CARBON_CHECK(ec.value() == ENOENT, "{0}", ec.message());
+        CARBON_CHECK(ec == std::errc::no_such_file_or_directory, "{0}",
+                     ec.message());
       } else {
         static_assert(false, "Invalid benchmark comparable");
       }
