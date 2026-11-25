@@ -394,6 +394,7 @@ class RunBencherTest(unittest.TestCase):
         expected_count = len(bencher_suites.TRUNK_THRESHOLDS)
         for flag in (
             "--threshold-measure",
+            "--threshold-metric",
             "--threshold-test",
             "--threshold-min-sample-size",
             "--threshold-max-sample-size",
@@ -401,8 +402,15 @@ class RunBencherTest(unittest.TestCase):
         ):
             self.assertEqual(trunk_args.count(flag), expected_count)
         self.assertEqual(
-            trunk_args[:4],
-            ["--threshold-measure", "latency", "--threshold-test", "t_test"],
+            trunk_args[:6],
+            [
+                "--threshold-measure",
+                "latency",
+                "--threshold-metric",
+                "value",
+                "--threshold-test",
+                "t_test",
+            ],
         )
         for mem_metric in PRELUDE_MEM_METRICS:
             self.assertIn(mem_metric, trunk_args)
