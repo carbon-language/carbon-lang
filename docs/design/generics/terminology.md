@@ -394,6 +394,13 @@ See more [here](overview.md#deduced-parameters).
 
 ## Interface
 
+> **TODO:** Update this section and [Named constraints](#named-constraints) to
+> reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> `match_first` in named constraints and variant interface parameters and
+> associated constants (`implicit_into` and `implicit_from`; see
+> [Interface variance](variance.md)).
+
 An interface is an API constraint used in a function signature to provide
 encapsulation. Encapsulation here means that callers of the function only need
 to know about the interface requirements to call the function, not anything

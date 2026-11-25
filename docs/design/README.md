@@ -3315,6 +3315,11 @@ declaration may be used to
 
 ### Operator overloading
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> `like` is replaced by `implicit_into`/`implicit_from`
+> [interface variance](generics/variance.md) with `anchor`/`exact` modifiers.
+
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type
 `U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So

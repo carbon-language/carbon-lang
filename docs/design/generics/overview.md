@@ -465,6 +465,11 @@ fn BothDraws[T: Renderable & EndOfGame](game_state: T*) {
 
 #### Named constraints
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#match_first-in-named-constraints):
+> `match_first` blocks in named constraints and
+> [interaction between `anchor`, `exact`, and named constraints](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#interaction-between-anchor-exact-and-named-constraints).
+
 You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can
 express requirements that multiple interfaces be implemented, and give you
@@ -672,6 +677,11 @@ multiple implementations with the same type structure, they must be listed in
 priority order in a prioritization block.
 
 ### Operator overloading
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> `like` is replaced by `implicit_into`/`implicit_from`
+> [interface variance](variance.md) with `anchor`/`exact` modifiers.
 
 To overload an operator, implement the corresponding interface from the standard
 library. For example, to define how the unary `-` operator behaves for a type,
