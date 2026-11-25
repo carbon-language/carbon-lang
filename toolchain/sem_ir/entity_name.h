@@ -5,7 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 #define CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_
 
-#include <cstdint>
 #include <type_traits>
 
 #include "common/hashing.h"
@@ -70,18 +69,18 @@ struct EntityName : public Printable<EntityName> {
   // them for other kinds of `EntityName`.
 
   // The bind_index() value, unwrapped so it can be stored in a bit-field.
-  // The flag bit-fields below use `uint32_t` (matching this 32-bit storage
+  // The flag bit-fields below use `unsigned` (matching this 32-bit storage
   // unit) so MSVC ABI packs all four fields into one 32-bit word with no
   // padding bits.
   int32_t bind_index_value : 29 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
-  uint32_t is_template : 1 = false;
+  unsigned is_template : 1 = false;
   // Whether this binding is marked unused.
-  uint32_t is_unused : 1 = false;
+  unsigned is_unused : 1 = false;
   // Whether this binding is a `.Self` symbolic binding, within the scope of the
   // `.Self` name during facet type under construction. Such bindings cannot be
   // replaced during identify.
-  uint32_t is_frozen_period_self : 1 = false;
+  unsigned is_frozen_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for
   // `:?` bindings, and may be set for other binding kinds as well.
