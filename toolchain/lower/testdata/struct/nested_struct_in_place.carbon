@@ -27,11 +27,12 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { { i32, i32, i32 }, { i32, i32, i32 } }, align 4, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !27
-// CHECK:STDOUT:   %.loc16_74.1.a = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 0, !dbg !28
+// CHECK:STDOUT:   %.loc16_74.1.a = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !28
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.1.a), !dbg !29
-// CHECK:STDOUT:   %.loc16_74.2.b = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 1, !dbg !28
+// CHECK:STDOUT:   %.loc16_74.2.b = getelementptr inbounds nuw i8, ptr %_.var, i64 12, !dbg !28
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.2.b), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !32
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4cb6cde41f3c3d24(ptr %_.var), !dbg !27
+// CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

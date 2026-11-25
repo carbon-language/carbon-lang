@@ -332,9 +332,9 @@ static auto StartThunkFunctionDefinition(Context& context,
                                          SemIR::InstId callee_id) {
   // The check below produces diagnostics referring to the signature, so also
   // note the callee.
-  Diagnostics::AnnotationScope annot_scope(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        CARBON_DIAGNOSTIC_LABEL(ThunkCallee, Info,
+        CARBON_DIAGNOSTIC_LABEL(ThunkCallee,
                                 "while building thunk calling this function");
         builder.Attach(callee_id, ThunkCallee);
       });
@@ -354,10 +354,10 @@ static auto BuildThunkDefinition(Context& context,
 
   // The checks below produce diagnostics pointing at the callee, so also note
   // the signature.
-  Diagnostics::AnnotationScope annot_scope(
+  Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
         CARBON_DIAGNOSTIC_LABEL(
-            ThunkSignature, Info,
+            ThunkSignature,
             "while building thunk to match the signature of this function");
         builder.Attach(
             context.functions().Get(signature_id).first_owning_decl_id,

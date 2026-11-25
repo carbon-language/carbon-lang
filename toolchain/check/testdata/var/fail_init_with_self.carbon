@@ -25,7 +25,7 @@ fn Main() {
   // CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+8]]:14
   // CHECK:STDERR: ->     │   var unused x: () = x;
   // CHECK:STDERR:        ·              ━━┳━━   ┬
-  // CHECK:STDERR:        ·                ┗━━━━━━━━┫ error: variable `x` marked `unused` but used
+  // CHECK:STDERR:        ·                ┗━━━━━━━━┫ error: binding `x` marked `unused` but used
   // CHECK:STDERR:        ·                      │  ┃        [UnusedButUsed]
   // CHECK:STDERR:        ·                      ╰────┤ usage here [UnusedButUsedHere]
   // CHECK:STDERR:        ╰────

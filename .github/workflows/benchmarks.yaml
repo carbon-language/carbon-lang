@@ -1,0 +1,284 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Benchmarks
+
+on:
+  push:
+    branches: [trunk]
+  # Chain nightly benchmarks directly after `Nightly Release` finishes so there
+  # is only a single nightly cron schedule, no runner contention with the
+  # release build, and benchmarks run on the exact release tag commit.
+  # zizmor: ignore[dangerous-triggers] - {Nightly Release only runs on trunk}
+  workflow_run:
+    workflows: ['Nightly Release']
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Benchmark suite tier to execute'
+        required: false
+        default: 'nightly'
+        type: choice
+        options:
+          - continuous
+          - nightly
+
+permissions: {}
+
+jobs:
+  benchmark:
+    name: Benchmark (${{ matrix.tier }}, ${{ matrix.runner }})
+    if: |
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
+       github.event.workflow_run.head_branch == 'trunk' &&
+       github.event.workflow_run.event != 'pull_request')
+    # Coalesce rapid pushes on `trunk` per runner without canceling an
+    # in-progress benchmark measurement.
+    concurrency:
+      group:
+        ${{ github.workflow }}-${{ github.event_name }}-${{ matrix.runner }}-${{
+        github.ref }}
+      cancel-in-progress: false
+    timeout-minutes: 90
+    permissions:
+      contents: read # For actions/checkout.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm']
+        tier:
+          - ${{ (github.event_name == 'workflow_run' && 'nightly') ||
+            (github.event_name == 'workflow_dispatch' && inputs.tier) ||
+            'continuous' }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.bencher.dev:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            download.gnome.org:443
+            downloads.sourceforge.net:443
+            files.pythonhosted.org:443
+            formulae.brew.sh:443
+            github.com:443
+            go.dev:443
+            index.crates.io:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
+            releases.bazel.build:443
+            results-receiver.actions.githubusercontent.com:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            storage.googleapis.com:443
+            uploads.github.com:443
+            www.googleapis.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref:
+            ${{ github.event_name == 'workflow_run' &&
+            github.event.workflow_run.head_sha || '' }}
+          persist-credentials: false
+
+      - id: filter
+        if: github.event_name == 'push'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            has_code:
+              - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
+
+      - name: Set up remote cache access
+        id: cache-setup
+        if: steps.filter.outputs.has_code != 'false'
+        env:
+          REMOTE_CACHE_KEY: ${{ secrets.CARBON_BUILDS_GITHUB }}
+        run: |
+          if [[ -n "$REMOTE_CACHE_KEY" ]]; then
+            echo "$REMOTE_CACHE_KEY" | base64 -d > "$HOME/remote_cache_key.json"
+            echo "remote_cache_upload=--google_credentials=$HOME/remote_cache_key.json" \
+                >> "$GITHUB_OUTPUT"
+          else
+            echo "remote_cache_upload=--remote_upload_local_results=false" \
+                >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./.github/actions/build-setup-common
+        if: steps.filter.outputs.has_code != 'false'
+        with:
+          matrix_runner: ${{ matrix.runner }}
+          remote_cache_upload:
+            ${{ steps.cache-setup.outputs.remote_cache_upload }}
+
+      - name: Run benchmarks
+        id: run-bencher
+        if: steps.filter.outputs.has_code != 'false'
+        env:
+          # 'libtool_check_unique failed to generate' workaround.
+          # https://github.com/bazelbuild/bazel/issues/14113#issuecomment-999794586
+          BAZEL_USE_CPP_ONLY_TOOLCHAIN: 1
+          BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+        run: |
+          echo "target_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          ./toolchain/benchmarking/run_bencher.py run \
+            --ci \
+            --tier="$BENCH_TIER" \
+            --output="$BMF_FILE" \
+            --github-output="$GITHUB_OUTPUT"
+
+      # Archive the Bencher Metric Format (BMF) JSON output as an artifact so
+      # measurements can be inspected or re-uploaded later without re-running
+      # benchmarks.
+      - name: Upload BMF artifact
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          if-no-files-found: error
+          name:
+            bencher-bmf-${{ matrix.tier }}-${{ matrix.runner }}-${{
+            steps.run-bencher.outputs.target_sha }}
+          path: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+
+      - name: Install Bencher CLI
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        uses: bencherdev/bencher@b2484bc6734c8e6da4fad141bd13527a11da3988 # v0.6.17
+
+      - name: Upload results to Bencher
+        if: steps.run-bencher.outputs.has_benchmarks == 'true'
+        env:
+          BENCHER_API_KEY: ${{ secrets.BENCHER_API_KEY }}
+          BENCH_TIER: ${{ matrix.tier }}
+          BMF_FILE: ${{ runner.temp }}/bmf-${{ matrix.runner }}.json
+          RUNNER: ${{ matrix.runner }}
+          TARGET_SHA: ${{ steps.run-bencher.outputs.target_sha }}
+        run: |
+          if [[ "$GITHUB_REF_NAME" == "trunk" && "$BENCH_TIER" == "nightly" ]]; then
+            bencher_branch="nightly"
+          else
+            bencher_branch="$GITHUB_REF_NAME"
+          fi
+
+          threshold_output="$(./toolchain/benchmarking/run_bencher.py threshold-args)"
+          extra_args=("--thresholds-reset")
+          if [[ "$bencher_branch" == "action-test" ]]; then
+            extra_args+=("--start-point-reset")
+          else
+            while IFS= read -r arg; do
+              [[ -n "$arg" ]] && extra_args+=("$arg")
+            done <<<"$threshold_output"
+          fi
+
+          commit_epoch="$(git show -s --format=%ct HEAD)"
+          bencher run \
+            --project carbon-lang \
+            --branch "$bencher_branch" \
+            --hash "$TARGET_SHA" \
+            --testbed "$RUNNER" \
+            --backdate "$commit_epoch" \
+            --adapter json \
+            --file "$BMF_FILE" \
+            "${extra_args[@]}"
+
+          if [[ "$RUNNER" == "ubuntu-22.04" ]]; then
+            ./toolchain/benchmarking/run_bencher.py sync-measures
+          fi
+
+  # Permanently attach nightly Bencher Metric Format (BMF) JSON outputs to the
+  # corresponding Nightly Release as a compressed archive (GitHub Actions
+  # artifacts expire after at most 90 days on public repositories).
+  attach-nightly-release:
+    name: Attach benchmark JSON to Nightly Release
+    needs: [benchmark]
+    if: |
+      always() && !cancelled() &&
+      github.event_name == 'workflow_run' &&
+      (needs.benchmark.result == 'success' ||
+       needs.benchmark.result == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read # For actions/download-artifact.
+      contents: write # For uploading release assets via `gh release upload`.
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            api.github.com:443
+            results-receiver.actions.githubusercontent.com:443
+            uploads.github.com:443
+
+      - name: Download nightly BMF artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: bencher-bmf-nightly-*
+          merge-multiple: true
+          path: bmf
+
+      - name: Attach compressed BMF archive to Nightly Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          # `download-artifact` with `pattern` succeeds when 0 artifacts match;
+          # fail explicitly so missing nightly archives don't go unnoticed.
+          if [[ ! -d bmf ]] || [[ -z "$(ls -A bmf)" ]]; then
+            echo "::error::No nightly benchmark JSON artifacts found to attach."
+            exit 1
+          fi
+
+          # Find the newest nightly release pointing at the triggering commit.
+          # GitHub lists releases newest-first, so `first(...)` picks today's
+          # tag even when consecutive weekend nightlies share a commit SHA.
+          tag="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases?per_page=10" \
+              | jq -r --arg sha "$TARGET_SHA" '
+                  first(
+                    .[]
+                    | select(.prerelease)
+                    | select(.tag_name | startswith("v0.0.0-0.nightly."))
+                    | select(.target_commitish == $sha)
+                    | .tag_name
+                  ) // empty
+                '
+          )"
+          if [[ -z "$tag" ]]; then
+            echo "::error::No nightly release found for commit $TARGET_SHA."
+            exit 1
+          fi
+
+          # Bundle the per-runner JSON files into one archive matching the
+          # release tarball naming (`carbon_toolchain-<version>.tar.gz`).
+          archive="${RUNNER_TEMP}/benchmarks-bmf-${tag#v}.tar.gz"
+          (cd bmf && tar -czf "$archive" -- *.json)
+          gh release upload "$tag" "$archive" --clobber --repo "$GITHUB_REPOSITORY"

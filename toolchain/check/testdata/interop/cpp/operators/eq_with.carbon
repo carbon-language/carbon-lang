@@ -93,18 +93,16 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''c++
 struct NeqBoolish {
   auto operator==(NeqBoolish) const -> bool;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+18]]:8
   // CHECK:STDERR: ->     │   auto operator!=(NeqBoolish) const -> int;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `i32` to `bool`
-  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·        ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
@@ -117,20 +115,17 @@ struct NeqBoolish {
 };
 
 struct EqBoolish {
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+19]]:8
   // CHECK:STDERR: ->     │   auto operator==(EqBoolish) const -> int*;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·        │  ┃        `Core.Optional(i32* as Core.OptionalStorage)` to `bool`
-  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·        ╰────┤ type `Core.Optional(i32* as Core.OptionalStorage)` does not
-  // CHECK:STDERR:        ·             │ implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           ┃        `Core.Optional(i32* as Core.OptionalStorage)` to `bool`
+  // CHECK:STDERR:        ·           ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
@@ -148,20 +143,17 @@ struct BothBoolish {
     False,
     True,
   };
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+19]]:8
   // CHECK:STDERR: ->     │   auto operator==(BothBoolish) const -> Result;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
-  // CHECK:STDERR:        ·        │  ┃        `bool`
-  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
-  // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           ┃        `bool`
+  // CHECK:STDERR:        ·           ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
@@ -171,20 +163,17 @@ struct BothBoolish {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator==(BothBoolish) const -> Result;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+19]]:8
   // CHECK:STDERR: ->     │   auto operator!=(BothBoolish) const -> Result;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
-  // CHECK:STDERR:        ·        │  ┃        `bool`
-  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
-  // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           ┃        `bool`
+  // CHECK:STDERR:        ·           ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
@@ -246,9 +235,9 @@ fn Test(default_eq_only: Cpp.DefaultEqOnly,
         only_eq_declared: Cpp.OnlyEqDeclared) {
   // CHECK:STDERR:        ╭─┤ fail_todo_comparison_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(default_eq_only, default_eq_only);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -263,9 +252,9 @@ fn Test(default_eq_only: Cpp.DefaultEqOnly,
 
   // CHECK:STDERR:        ╭─┤ fail_todo_comparison_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(only_eq_declared, only_eq_declared);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -329,9 +318,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
         a2: Cpp.A2, b2: Cpp.B2) {
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(only_neq, only_neq);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -362,9 +351,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(no_relevant_members, no_relevant_members);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -377,9 +366,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(eq_returns_void, eq_returns_void);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -392,9 +381,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(neq_returns_void, neq_returns_void);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -414,9 +403,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
   // CHECK:STDERR:        ·        ╰──┤ candidate function has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(deleted_neq, deleted_neq);
   // CHECK:STDERR:        ·                                  ┳
@@ -429,9 +418,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(non_const_eq, non_const_eq);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -444,9 +433,9 @@ fn Test(only_neq: Cpp.OnlyNeq,
 
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(a2, b2);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━

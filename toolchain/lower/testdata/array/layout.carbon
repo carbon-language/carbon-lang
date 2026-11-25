@@ -41,14 +41,14 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %v.var = alloca [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %v.var), !dbg !29
-// CHECK:STDOUT:   %.loc10_13.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %v.var, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   %.loc10_14.b = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc10_13.array.index, i32 0, i32 1, !dbg !31
+// CHECK:STDOUT:   %.loc10_13.array.index = getelementptr inbounds i8, ptr %v.var, i64 0, !dbg !31
+// CHECK:STDOUT:   %.loc10_14.b = getelementptr inbounds nuw i8, ptr %.loc10_13.array.index, i64 8, !dbg !31
 // CHECK:STDOUT:   call void @_CCheck.Main(ptr %.loc10_14.b), !dbg !33
-// CHECK:STDOUT:   %.loc11_13.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %v.var, i32 0, i32 1, !dbg !34
-// CHECK:STDOUT:   %.loc11_14.b = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc11_13.array.index, i32 0, i32 1, !dbg !34
+// CHECK:STDOUT:   %.loc11_13.array.index = getelementptr inbounds i8, ptr %v.var, i64 16, !dbg !34
+// CHECK:STDOUT:   %.loc11_14.b = getelementptr inbounds nuw i8, ptr %.loc11_13.array.index, i64 8, !dbg !34
 // CHECK:STDOUT:   call void @_CCheck.Main(ptr %.loc11_14.b), !dbg !36
-// CHECK:STDOUT:   %.loc12_13.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %v.var, i32 0, i32 2, !dbg !37
-// CHECK:STDOUT:   %.loc12_14.b = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc12_13.array.index, i32 0, i32 1, !dbg !37
+// CHECK:STDOUT:   %.loc12_13.array.index = getelementptr inbounds i8, ptr %v.var, i64 32, !dbg !37
+// CHECK:STDOUT:   %.loc12_14.b = getelementptr inbounds nuw i8, ptr %.loc12_13.array.index, i64 8, !dbg !37
 // CHECK:STDOUT:   call void @_CCheck.Main(ptr %.loc12_14.b), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }

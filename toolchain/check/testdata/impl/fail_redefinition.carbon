@@ -38,7 +38,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [concrete]
+// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.3f9847.1.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
@@ -63,12 +63,12 @@ impl i32 as I {}
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @i32.as.I.impl.3f9847.1.%i32, @I [concrete = constants.%.c43]
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @i32.as.I.impl.3f9847.1.%i32, @I [symbolic_self = constants.%.c43]
 // CHECK:STDOUT:   impl_decl @i32.as.I.impl.3f9847.2 [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness @i32.as.I.impl.3f9847.2.%i32, @I [concrete = constants.%.c43]
+// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness @i32.as.I.impl.3f9847.2.%i32, @I [symbolic_self = constants.%.c43]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {

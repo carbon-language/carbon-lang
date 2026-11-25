@@ -391,15 +391,16 @@ library "[[@TEST_NAME]]";
 
 import library "use_extern_class";
 
-// CHECK:STDERR:        ╭─┤ fail_todo_extern_class.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_todo_extern_class.carbon:[[@LINE+12]]:1
 // CHECK:STDERR: ->     │ extern class C;
 // CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
 // CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_use_extern_class.carbon
 // CHECK:STDERR:        │ extern library "extern_class" class C;
-// CHECK:STDERR:        · ───────────────────┬──────────────────
-// CHECK:STDERR:        ·                    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·                                     ┬
+// CHECK:STDERR:        ·                                     ╰──┤ previously declared here
+// CHECK:STDERR:        ·                                        │ [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern class C;

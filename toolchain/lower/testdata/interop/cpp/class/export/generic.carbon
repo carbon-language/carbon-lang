@@ -52,14 +52,14 @@ fn Run() {
 // CHECK:STDOUT:   %ref.tmp = alloca %class.A, align 1
 // CHECK:STDOUT:   %c2 = alloca %"class.Carbon::Main::C.0", align 1
 // CHECK:STDOUT:   %ref.tmp1 = alloca %class.B, align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp1) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c2) #2
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c1) #2
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c2)
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp1)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp1)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c2)
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

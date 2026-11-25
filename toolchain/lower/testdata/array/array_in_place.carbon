@@ -27,11 +27,12 @@ fn G() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca [2 x { i32, i32, i32 }], align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
-// CHECK:STDOUT:   %.loc16_47.6.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 0, !dbg !30
+// CHECK:STDOUT:   %.loc16_47.6.array.index = getelementptr inbounds i8, ptr %_.var, i64 0, !dbg !30
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.6.array.index), !dbg !31
-// CHECK:STDOUT:   %.loc16_47.5.array.index = getelementptr inbounds [2 x { i32, i32, i32 }], ptr %_.var, i32 0, i64 1, !dbg !30
+// CHECK:STDOUT:   %.loc16_47.5.array.index = getelementptr inbounds i8, ptr %_.var, i64 12, !dbg !30
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_47.5.array.index), !dbg !32
-// CHECK:STDOUT:   ret void, !dbg !34
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.cb1358a8dfcca74f(ptr %_.var), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

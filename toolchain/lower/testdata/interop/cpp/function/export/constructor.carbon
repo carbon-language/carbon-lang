@@ -39,10 +39,10 @@ void f() {
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::OneArg", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #6
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -121,17 +121,22 @@ void f() {
 // CHECK:STDOUT: !21 = !DILocalVariable(arg: 2, scope: !19, type: !7)
 // CHECK:STDOUT: !22 = !DILocation(line: 6, column: 3, scope: !19)
 // CHECK:STDOUT: !23 = !{!20, !21}
-// CHECK:STDOUT: !24 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !25 = !{!"omnipotent char", !24, i64 0}
-// CHECK:STDOUT: !26 = !{!"any pointer", !25, i64 0}
-// CHECK:STDOUT: !27 = !{!"p1 _ZTSN6Carbon4Main6OneArgE", !26, i64 0}
-// CHECK:STDOUT: !28 = !{!27, !27, i64 0}
-// CHECK:STDOUT: !29 = !{!"int", !25, i64 0}
-// CHECK:STDOUT: !30 = !{!29, !29, i64 0}
-// CHECK:STDOUT: !31 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !32 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !33 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !34 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !35 = !{!"__libc_errno", !29, i64 0}
-// CHECK:STDOUT: !36 = !{!35, !29, i64 0}
+// CHECK:STDOUT: !24 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f5db22251d2a7ef4", scope: null, file: !24, line: 35, type: !12, spFlags: DISPFlagDefinition, unit: !6, retainedNodes: !31)
+// CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !8)
+// CHECK:STDOUT: !30 = !DILocation(line: 35, column: 1, scope: !25)
+// CHECK:STDOUT: !31 = !{!26}
+// CHECK:STDOUT: !32 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !33 = !{!"omnipotent char", !32, i64 0}
+// CHECK:STDOUT: !34 = !{!"any pointer", !33, i64 0}
+// CHECK:STDOUT: !35 = !{!"p1 _ZTSN6Carbon4Main6OneArgE", !34, i64 0}
+// CHECK:STDOUT: !36 = !{!35, !35, i64 0}
+// CHECK:STDOUT: !37 = !{!"int", !33, i64 0}
+// CHECK:STDOUT: !38 = !{!37, !37, i64 0}
+// CHECK:STDOUT: !39 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !40 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !41 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !42 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !43 = !{!"__libc_errno", !37, i64 0}
+// CHECK:STDOUT: !44 = !{!43, !37, i64 0}
 // CHECK:STDOUT:

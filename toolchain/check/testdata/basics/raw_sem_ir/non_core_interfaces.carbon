@@ -43,6 +43,7 @@ fn HasRewrites[T: Copy where .Self impls NonCore.SubobjectDestroy and .T1 = ()](
 // CHECK:STDOUT:     name2:           T1
 // CHECK:STDOUT:     name3:           T2
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}
@@ -198,17 +199,18 @@ fn HasRewrites[T: Copy where .Self impls NonCore.SubobjectDestroy and .T1 = ()](
 // CHECK:STDOUT:     name7:           UseLocalCopy
 // CHECK:STDOUT:     name8:           HasRewrites
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
-// CHECK:STDOUT:     import_ir50000002: {decl_id: inst5000000F, is_export: false}
+// CHECK:STDOUT:     import_ir50000003: {decl_id: inst5000000F, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
-// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir50000002, inst_id: inst6000000F}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir50000002, inst_id: inst60000014}
-// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir50000002, inst_id: inst60000018}
-// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir50000002, inst_id: inst6000001C}
-// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir50000002, inst_id: inst60000016}
-// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir50000002, inst_id: inst6000001B}
-// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir50000002, inst_id: inst60000011}
+// CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir50000003, inst_id: inst6000000F}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir50000003, inst_id: inst60000014}
+// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir50000003, inst_id: inst60000018}
+// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir50000003, inst_id: inst6000001C}
+// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir50000003, inst_id: inst60000016}
+// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir50000003, inst_id: inst6000001B}
+// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir50000003, inst_id: inst60000011}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:

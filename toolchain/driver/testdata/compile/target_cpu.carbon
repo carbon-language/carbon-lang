@@ -126,16 +126,15 @@ fn VectorizedWithAvx2(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder i64 %index, { 3, 0, 1, 2, 4 }
-// CHECK:STDOUT:   uselistorder ptr %0, { 3, 4, 0, 1, 2 }
-// CHECK:STDOUT:   uselistorder ptr %1, { 1, 0 }
-// CHECK:STDOUT:   uselistorder ptr %2, { 1, 0 }
-// CHECK:STDOUT:   uselistorder ptr %3, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %9, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %10, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %11, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %12, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %18, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %19, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %20, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %21, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %27, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %28, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %29, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %30, { 1, 0 }

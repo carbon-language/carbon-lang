@@ -108,30 +108,24 @@ import Cpp library "overload.h";
 class OverloadX {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+32]]:3
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+26]]:3
   // CHECK:STDERR: ->     │   override fn f(self, x: Cpp.X);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
   // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.Y` to `Cpp.X`
-  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
-  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                       │  ┃        `Cpp.Y` to `Cpp.X`
+  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+16]]:3
   // CHECK:STDERR: ->     │   override fn f(self, x: Cpp.X);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
   // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.Y` to `Cpp.X`
-  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
-  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                       │  ┃        `Cpp.Y` to `Cpp.X`
+  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./overload.h
   // CHECK:STDERR:        │   virtual void f(Y y);
@@ -146,30 +140,24 @@ class OverloadX {
 class OverloadY {
   extend base: Cpp.OverloadedBase;
   //
-  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+32]]:3
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+26]]:3
   // CHECK:STDERR: ->     │   override fn f(self, y: Cpp.Y);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
   // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.X` to `Cpp.Y`
-  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
-  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                       │  ┃        `Cpp.X` to `Cpp.Y`
+  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR:        ╭─┤ fail_overload_type.carbon:[[@LINE+16]]:3
   // CHECK:STDERR: ->     │   override fn f(self, y: Cpp.Y);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━┳━━━━┯━━━━━━━━━
   // CHECK:STDERR:        ·                  ┗━━━━━━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                  │    │  ┃        `Cpp.X` to `Cpp.Y`
-  // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
-  // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
-  // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ·                       │  ┃        `Cpp.X` to `Cpp.Y`
+  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./overload.h
   // CHECK:STDERR:        │   virtual void f(X x);

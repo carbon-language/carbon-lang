@@ -83,9 +83,10 @@ def _get_name(target):
     return target.split(":")[1]
 
 def _format_one_per_line(list):
+    unique_list = set(list)
     return "\n" + "\n".join([
         '    "{0}",'.format(item)
-        for item in list
+        for item in unique_list
     ]) + "\n"
 
 def _builtins_path(file):

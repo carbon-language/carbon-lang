@@ -299,6 +299,17 @@ static auto HandleBindingPatternFinish(Context& context, StateKind finish_kind)
       state.has_error = true;
     }
   } else {
+    if (state.in_field_shorthand_pattern &&
+        finish_kind != StateKind::BindingPatternFinishAsRegular) {
+      CARBON_DIAGNOSTIC(
+          NonRegularBindingInStructPatternShorthand, Error,
+          "found {0:generic|`:?`} binding as shorthand struct pattern element",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(
+          *context.position(), NonRegularBindingInStructPatternShorthand,
+          finish_kind == StateKind::BindingPatternFinishAsGeneric);
+      state.has_error = true;
+    }
     switch (finish_kind) {
       case StateKind::BindingPatternFinishAsGeneric:
         node_kind = NodeKind::CompileTimeBindingPattern;

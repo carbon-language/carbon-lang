@@ -30,8 +30,8 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CA.Main(ptr sret({ i32, i32 }) %return) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !31
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !31
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !31
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !31
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @tuple.380.loc12_37, i64 8, i1 false), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
@@ -39,8 +39,8 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CB.Main(ptr sret([2 x i32]) %return) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc14_39.3.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 0, !dbg !36
-// CHECK:STDOUT:   %.loc14_39.6.array.index = getelementptr inbounds [2 x i32], ptr %return, i32 0, i64 1, !dbg !36
+// CHECK:STDOUT:   %.loc14_39.3.array.index = getelementptr inbounds i8, ptr %return, i64 0, !dbg !36
+// CHECK:STDOUT:   %.loc14_39.6.array.index = getelementptr inbounds i8, ptr %return, i64 4, !dbg !36
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %return, ptr align 4 @array.loc14_40, i64 8, i1 false), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
 // CHECK:STDOUT: }
@@ -57,28 +57,35 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !39
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_28.1.temp), !dbg !40
 // CHECK:STDOUT:   call void @_CA.Main(ptr %.loc17_28.1.temp), !dbg !40
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc17_28.1.temp, i32 0, i32 0, !dbg !40
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc17_28.1.temp, i64 0, !dbg !40
 // CHECK:STDOUT:   %.loc17_28.3 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !40
-// CHECK:STDOUT:   %.loc17_28.4.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 0, !dbg !40
+// CHECK:STDOUT:   %.loc17_28.4.array.index = getelementptr inbounds i8, ptr %a.var, i64 0, !dbg !40
 // CHECK:STDOUT:   store i32 %.loc17_28.3, ptr %.loc17_28.4.array.index, align 4, !dbg !40
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %.loc17_28.1.temp, i32 0, i32 1, !dbg !40
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc17_28.1.temp, i64 4, !dbg !40
 // CHECK:STDOUT:   %.loc17_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !40
-// CHECK:STDOUT:   %.loc17_28.7.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i64 1, !dbg !40
+// CHECK:STDOUT:   %.loc17_28.7.array.index = getelementptr inbounds i8, ptr %a.var, i64 4, !dbg !40
 // CHECK:STDOUT:   store i32 %.loc17_28.6, ptr %.loc17_28.7.array.index, align 4, !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !42
 // CHECK:STDOUT:   store i32 1, ptr %b.var, align 4, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc19), !dbg !44
 // CHECK:STDOUT:   %.loc19_18 = load i32, ptr %b.var, align 4, !dbg !46
-// CHECK:STDOUT:   %.loc19_19.1.array.index = getelementptr inbounds [2 x i32], ptr %a.var, i32 0, i32 %.loc19_18, !dbg !45
+// CHECK:STDOUT:   %.loc19_19.1 = sext i32 %.loc19_18 to i64, !dbg !45
+// CHECK:STDOUT:   %.loc19_19.1.array.index = getelementptr inbounds [4 x i8], ptr %a.var, i64 %.loc19_19.1, !dbg !45
 // CHECK:STDOUT:   %.loc19_19.2 = load i32, ptr %.loc19_19.1.array.index, align 4, !dbg !45
 // CHECK:STDOUT:   store i32 %.loc19_19.2, ptr %_.var.loc19, align 4, !dbg !44
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc20), !dbg !48
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.1.temp), !dbg !49
 // CHECK:STDOUT:   call void @_CB.Main(ptr %.loc20_18.1.temp), !dbg !49
-// CHECK:STDOUT:   %.loc20_21.1.array.index = getelementptr inbounds [2 x i32], ptr %.loc20_18.1.temp, i32 0, i32 1, !dbg !49
+// CHECK:STDOUT:   %.loc20_21.1.array.index = getelementptr inbounds i8, ptr %.loc20_18.1.temp, i64 4, !dbg !49
 // CHECK:STDOUT:   %.loc20_21.2 = load i32, ptr %.loc20_21.1.array.index, align 4, !dbg !49
 // CHECK:STDOUT:   store i32 %.loc20_21.2, ptr %_.var.loc20, align 4, !dbg !48
-// CHECK:STDOUT:   ret i32 0, !dbg !51
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %.loc20_18.1.temp), !dbg !49
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var.loc20), !dbg !48
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var.loc19), !dbg !44
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %b.var), !dbg !42
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %.loc17_28.1.temp), !dbg !40
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %a.var), !dbg !39
+// CHECK:STDOUT:   ret i32 0, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

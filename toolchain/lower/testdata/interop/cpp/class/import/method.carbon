@@ -271,13 +271,13 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CUseVal.Main(ptr %a) #0 !dbg !63 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw [16 x i8], ptr %a, i32 0, i32 0, !dbg !66
+// CHECK:STDOUT:   %.loc7_4.2.base = getelementptr inbounds nuw i8, ptr %a, i64 0, !dbg !66
 // CHECK:STDOUT:   %Base.virt0.call.vtable = load ptr, ptr %.loc7_4.2.base, align 8, !dbg !66
-// CHECK:STDOUT:   %Base.virt0.call = getelementptr ptr, ptr %Base.virt0.call.vtable, i32 0, !dbg !66
+// CHECK:STDOUT:   %Base.virt0.call = getelementptr i8, ptr %Base.virt0.call.vtable, i64 0, !dbg !66
 // CHECK:STDOUT:   %Base.virt0.call.memptr.virtualfn = load ptr, ptr %Base.virt0.call, align 8, !dbg !66
 // CHECK:STDOUT:   call void %Base.virt0.call.memptr.virtualfn(ptr %.loc7_4.2.base), !dbg !66
 // CHECK:STDOUT:   %A.virt1.call.vtable = load ptr, ptr %a, align 8, !dbg !67
-// CHECK:STDOUT:   %A.virt1.call = getelementptr ptr, ptr %A.virt1.call.vtable, i32 1, !dbg !67
+// CHECK:STDOUT:   %A.virt1.call = getelementptr i8, ptr %A.virt1.call.vtable, i64 8, !dbg !67
 // CHECK:STDOUT:   %A.virt1.call.memptr.virtualfn = load ptr, ptr %A.virt1.call, align 8, !dbg !67
 // CHECK:STDOUT:   call void %A.virt1.call.memptr.virtualfn(ptr %a), !dbg !67
 // CHECK:STDOUT:   ret void, !dbg !68
@@ -374,9 +374,11 @@ fn F(ref r: Cpp.RefSelfA) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
+// CHECK:STDOUT: declare void @_ZNK9NeedThunk8ImplicitEa(ptr noundef nonnull align 1 dereferenceable(1), i8 noundef) #3
+// CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_ZNK9NeedThunk8ImplicitEa(ptr noundef nonnull align 1 dereferenceable(1), i8 noundef signext) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef signext) #3
+// CHECK:STDOUT: declare void @_ZNH9NeedThunk8ExplicitES_a(i8 noundef) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }

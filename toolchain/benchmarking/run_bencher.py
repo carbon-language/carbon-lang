@@ -6,7 +6,7 @@
 # Keep this module stdlib-only: Bazel `py_test` and CI workflows without `uv`
 # invoke it directly under `python3`.
 
-"""Builds, runs, and validates Bencher Metric Format (BMF) benchmark suites."""
+"""Builds, runs, and validates Bencher Metric Format (BMF) v1 suites."""
 
 __copyright__ = """
 Part of the Carbon Language project, under the Apache License v2.0 with LLVM
@@ -38,23 +38,36 @@ from toolchain.benchmarking.bencher_suites import (  # noqa: E402
 
 # Safety bound per report to stay well below Bencher Cloud's 65,535/day limit.
 MAX_METRICS_PER_REPORT = 500
-MAX_BENCHMARK_NAME_LEN = 256
+# Bencher slug and parameter key/value length caps.
+MAX_BENCHMARK_NAME_LEN = 64
+MAX_PARAMETER_KEYS = 8
+MAX_PARAMETER_LEN = 64
 # Maximum page size accepted by `bencher measure list --per-page`.
 _MEASURE_PAGE_SIZE = 255
 
-# Restrict unprefixed Google Benchmark names to `BM_...` identifiers, optional
-# `<Enum::Value, N>` template arguments, and `/arg` segments.
-_BENCH_SUFFIX_RE = re.compile(
-    r"BM_[A-Za-z0-9_]+"
-    r"(?:<(?:[A-Za-z_][A-Za-z0-9_]*::[A-Za-z0-9_:]+|[0-9]+)"
-    r"(?:, (?:[A-Za-z_][A-Za-z0-9_]*::[A-Za-z0-9_:]+|[0-9]+))*>)"
-    r"?(?:/[A-Za-z0-9_]+)*"
-)
 _BENCHER_IGNORE_SUFFIXES = (
     "_bencher_ignore",
     "BencherIgnore",
     "-bencher-ignore",
 )
+_PRELUDE_BENCH_RE = re.compile(r"^BM_PreludeCompile/([A-Za-z0-9_]+)$")
+_PRELUDE_IMPORTS: dict[str, str] = {
+    "Nothing": "nothing",
+    "SingleType": "single-type",
+    "ManyTypesManyImpls": "many-impls",
+    "NonTrivialAmount": "non-trivial",
+}
+_COMPILE_BENCH_RE = re.compile(
+    r"^BM_Compile(ApiFileDenseDecls|ApiFileRealisticHeader|ImplFile)"
+    r"<Lang::(Carbon|Cpp), Phase::(Lex|Parse|Check)>/([0-9]+)$"
+)
+_COMPILE_FILES: dict[str, str] = {
+    "ApiFileDenseDecls": "api-dense",
+    "ApiFileRealisticHeader": "api-header",
+    "ImplFile": "impl",
+}
+_BMF_V1_COMPILE_NAME_RE = re.compile(r"^(lex|parse|check)/([0-9]+k?)$")
+_PARAM_TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 class BmfValidationError(ValueError):
@@ -81,6 +94,66 @@ def build_bench_runner_cmd(
     return cmd
 
 
+def _format_line_size(lines: int) -> str:
+    """Formats a power-of-two line count compactly (e.g. `16384` -> `'16k'`)."""
+    if lines >= 1024 and lines % 1024 == 0:
+        return f"{lines // 1024}k"
+    return str(lines)
+
+
+def parse_benchmark_identity(
+    target_name: str, raw_name: str
+) -> tuple[str, dict[str, str]]:
+    """Maps a Google Benchmark name to a BMF v1 `(benchmark, parameters)` pair.
+
+    Groups variants that share the same Y-axis scale under one compact benchmark
+    name so Bencher plots compare them cleanly without truncating names:
+    - `prelude_benchmark` -> benchmark `prelude`, parameter `import`
+    - `compile_benchmark` -> benchmark `<phase>/<size>`, parameters `file`,
+      `lang`
+    """
+    if target_name == "prelude_benchmark":
+        m = _PRELUDE_BENCH_RE.fullmatch(raw_name)
+        if m is None or m.group(1) not in _PRELUDE_IMPORTS:
+            raise BmfValidationError(
+                f"Unrecognized prelude benchmark name: {raw_name!r}"
+            )
+        return "prelude", {"import": _PRELUDE_IMPORTS[m.group(1)]}
+
+    if target_name == "compile_benchmark":
+        m = _COMPILE_BENCH_RE.fullmatch(raw_name)
+        if m is None:
+            raise BmfValidationError(
+                f"Unrecognized compile benchmark name: {raw_name!r}"
+            )
+        file_kind, lang, phase, lines_str = m.groups()
+        bench_name = f"{phase.lower()}/{_format_line_size(int(lines_str))}"
+        return bench_name, {
+            "file": _COMPILE_FILES[file_kind],
+            "lang": lang.lower(),
+        }
+
+    raise BmfValidationError(f"Unknown benchmark suite: {target_name!r}")
+
+
+def convert_suite_bmf_to_v1(
+    target_name: str, raw_bmf: dict[str, Any]
+) -> dict[str, list[dict[str, Any]]]:
+    """Converts one suite's flat BMF dict from `bench_runner.py` to BMF v1."""
+    if not isinstance(raw_bmf, dict) or not raw_bmf:
+        raise BmfValidationError("Suite produced an empty BMF payload.")
+
+    v1: dict[str, list[dict[str, Any]]] = {}
+    for raw_name, measures in raw_bmf.items():
+        if not isinstance(raw_name, str):
+            raise BmfValidationError(f"Invalid benchmark name: {raw_name!r}")
+        bench_name, parameters = parse_benchmark_identity(target_name, raw_name)
+        v1.setdefault(bench_name, []).append(
+            {"parameters": parameters, "measures": measures}
+        )
+    return v1
+
+
 def _is_finite_number(val: Any) -> bool:
     """Returns true if `val` is a finite `int` or `float` (excluding `bool`)."""
     if isinstance(val, bool) or not isinstance(val, (int, float)):
@@ -94,15 +167,56 @@ def _is_finite_number(val: Any) -> bool:
         return False
 
 
+def _suite_for_v1_benchmark(bench_name: str) -> Optional[str]:
+    """Returns the owning `SuiteSpec.target_name` for a BMF v1 benchmark."""
+    if bench_name == "prelude":
+        return "prelude_benchmark"
+    if _BMF_V1_COMPILE_NAME_RE.fullmatch(bench_name):
+        return "compile_benchmark"
+    return None
+
+
+def _validate_parameters(bench_name: str, parameters: Any) -> str:
+    """Validates a BMF v1 `parameters` map and returns its canonical key."""
+    if not isinstance(parameters, dict):
+        raise BmfValidationError(
+            f"Parameters for {bench_name!r} must be a JSON object."
+        )
+    if len(parameters) > MAX_PARAMETER_KEYS:
+        raise BmfValidationError(
+            f"Too many parameters for {bench_name!r} "
+            f"(max {MAX_PARAMETER_KEYS})."
+        )
+    for k, v in parameters.items():
+        if (
+            not isinstance(k, str)
+            or len(k) > MAX_PARAMETER_LEN
+            or not _PARAM_TOKEN_RE.fullmatch(k)
+        ):
+            raise BmfValidationError(
+                f"Invalid parameter key {k!r} for {bench_name!r}."
+            )
+        if isinstance(v, str):
+            if len(v) > MAX_PARAMETER_LEN or not _PARAM_TOKEN_RE.fullmatch(v):
+                raise BmfValidationError(
+                    f"Invalid parameter value {v!r} for {bench_name!r}/{k}."
+                )
+        elif not isinstance(v, bool) and not _is_finite_number(v):
+            raise BmfValidationError(
+                f"Invalid parameter value {v!r} for {bench_name!r}/{k}."
+            )
+    return json.dumps(parameters, sort_keys=True, separators=(",", ":"))
+
+
 def validate_bmf(
     data: Any,
     suites: Iterable[SuiteSpec] = SUITES,
     max_metrics: int = MAX_METRICS_PER_REPORT,
 ) -> int:
-    """Validates a BMF v0 dictionary and returns its total metric count.
+    """Validates a BMF v1 dictionary and returns its total metric count.
 
-    See https://bencher.dev/docs/reference/bencher-metric-format/ for the BMF
-    schema (`https://bencher.dev/bmf.json`).
+    BMF v1 maps each benchmark name to a non-empty list of variant entries:
+    `{"parameters": {...}, "measures": {<measure>: {"value": ...}}}`.
     """
     if not isinstance(data, dict) or not data:
         raise BmfValidationError("BMF payload must be a non-empty JSON object.")
@@ -110,7 +224,7 @@ def validate_bmf(
     allowed_by_target = {s.target_name: s.allowed_measures() for s in suites}
     metric_count = 0
 
-    for bench_name, measures in data.items():
+    for bench_name, variants in data.items():
         if (
             not isinstance(bench_name, str)
             or len(bench_name) > MAX_BENCHMARK_NAME_LEN
@@ -118,81 +232,108 @@ def validate_bmf(
         ):
             raise BmfValidationError(f"Invalid benchmark name: {bench_name!r}")
 
-        target, sep, suffix = bench_name.partition("::")
-        allowed = allowed_by_target.get(target) if sep else None
+        target = _suite_for_v1_benchmark(bench_name)
+        allowed = allowed_by_target.get(target) if target else None
         if allowed is None:
             raise BmfValidationError(
                 f"Benchmark {bench_name!r} does not match any configured suite."
             )
-        if not _BENCH_SUFFIX_RE.fullmatch(suffix):
-            raise BmfValidationError(f"Invalid benchmark name: {bench_name!r}")
 
-        if not isinstance(measures, dict) or not measures:
+        if not isinstance(variants, list) or not variants:
             raise BmfValidationError(
-                f"Measures for {bench_name!r} must be a non-empty object."
+                f"Variants for {bench_name!r} must be a non-empty list."
             )
 
-        for measure_name, metric_obj in measures.items():
-            if measure_name not in allowed:
+        seen_variants: set[str] = set()
+        for variant in variants:
+            if not isinstance(variant, dict) or set(variant.keys()) != {
+                "parameters",
+                "measures",
+            }:
                 raise BmfValidationError(
-                    f"Measure {measure_name!r} is not allowlisted for "
-                    f"{bench_name!r}."
+                    f"Variant for {bench_name!r} must have `parameters` and "
+                    "`measures`."
                 )
-            if not isinstance(metric_obj, dict) or "value" not in metric_obj:
+
+            param_key = _validate_parameters(bench_name, variant["parameters"])
+            if param_key in seen_variants:
                 raise BmfValidationError(
-                    f"Metric {bench_name!r}/{measure_name!r} missing `value`."
+                    f"Duplicate variant {param_key} for {bench_name!r}."
                 )
-            extra_keys = metric_obj.keys() - {
-                "value",
-                "lower_value",
-                "upper_value",
-            }
-            if extra_keys:
+            seen_variants.add(param_key)
+
+            measures = variant["measures"]
+            if not isinstance(measures, dict) or not measures:
                 raise BmfValidationError(
-                    f"Unexpected keys {sorted(extra_keys)} in "
-                    f"{bench_name!r}/{measure_name!r}."
+                    f"Measures for {bench_name!r} {param_key} must be a "
+                    "non-empty object."
                 )
-            for k, v in metric_obj.items():
-                if not _is_finite_number(v):
+
+            for measure_name, metric_obj in measures.items():
+                if measure_name not in allowed:
                     raise BmfValidationError(
-                        f"Non-finite value for {bench_name!r}/{measure_name!r}"
-                        f".{k}: {v!r}"
+                        f"Measure {measure_name!r} is not allowlisted for "
+                        f"{bench_name!r}."
+                    )
+                if (
+                    not isinstance(metric_obj, dict)
+                    or "value" not in metric_obj
+                ):
+                    raise BmfValidationError(
+                        f"Metric {bench_name!r}/{measure_name!r} missing "
+                        "`value`."
+                    )
+                extra_keys = metric_obj.keys() - {
+                    "value",
+                    "lower_value",
+                    "upper_value",
+                }
+                if extra_keys:
+                    raise BmfValidationError(
+                        f"Unexpected keys {sorted(extra_keys)} in "
+                        f"{bench_name!r}/{measure_name!r}."
+                    )
+                for k, v in metric_obj.items():
+                    if not _is_finite_number(v):
+                        raise BmfValidationError(
+                            f"Non-finite value for "
+                            f"{bench_name!r}/{measure_name!r}.{k}: {v!r}"
+                        )
+
+                val = float(metric_obj["value"])
+                low = float(metric_obj.get("lower_value", val))
+                high = float(metric_obj.get("upper_value", val))
+                if not (0.0 <= low <= val <= high):
+                    raise BmfValidationError(
+                        f"Invalid bounds [{low}, {high}] for `value` ({val}) "
+                        f"in {bench_name!r}/{measure_name!r}."
                     )
 
-            val = float(metric_obj["value"])
-            low = float(metric_obj.get("lower_value", val))
-            high = float(metric_obj.get("upper_value", val))
-            if not (0.0 <= low <= val <= high):
-                raise BmfValidationError(
-                    f"Invalid bounds [{low}, {high}] for `value` ({val}) in "
-                    f"{bench_name!r}/{measure_name!r}."
-                )
-
-            metric_count += 1
-            if metric_count > max_metrics:
-                raise BmfValidationError(
-                    f"BMF metric count exceeds limit of {max_metrics}."
-                )
+                metric_count += 1
+                if metric_count > max_metrics:
+                    raise BmfValidationError(
+                        f"BMF metric count exceeds limit of {max_metrics}."
+                    )
 
     return metric_count
 
 
 def merge_bmf_payloads(
-    payloads: Iterable[dict[str, Any]],
+    payloads: Iterable[dict[str, list[dict[str, Any]]]],
     suites: Iterable[SuiteSpec] = SUITES,
     max_metrics: int = MAX_METRICS_PER_REPORT,
-) -> tuple[dict[str, Any], int]:
-    """Merges per-suite BMF dictionaries and validates the combined payload."""
-    merged: dict[str, Any] = {}
+) -> tuple[dict[str, list[dict[str, Any]]], int]:
+    """Merges per-suite BMF v1 dictionaries and validates the combined data."""
+    merged: dict[str, list[dict[str, Any]]] = {}
     for payload in payloads:
         if not isinstance(payload, dict) or not payload:
             raise BmfValidationError("Suite produced an empty BMF payload.")
-        for bench_name, measures in payload.items():
-            if bench_name in merged:
+        for bench_name, variants in payload.items():
+            if not isinstance(variants, list) or not variants:
                 raise BmfValidationError(
-                    f"Duplicate benchmark key across suites: {bench_name!r}"
+                    f"Variants for {bench_name!r} must be a non-empty list."
                 )
-            merged[bench_name] = measures
+            merged.setdefault(bench_name, []).extend(variants)
     return merged, validate_bmf(merged, suites=suites, max_metrics=max_metrics)
 
 
@@ -212,7 +353,7 @@ def _write_github_output(
 
 
 def _run_suites(parsed_args: argparse.Namespace) -> int:
-    """Builds and runs configured suites and writes merged BMF JSON."""
+    """Builds and runs configured suites and writes merged BMF v1 JSON."""
     tier = Tier(parsed_args.tier)
     labels = [s.label for s in SUITES]
     build_cmd = [str(_REPO_ROOT / "scripts" / "run_bazel.py")]
@@ -224,7 +365,7 @@ def _run_suites(parsed_args: argparse.Namespace) -> int:
     print(f"Building benchmark targets: {' '.join(labels)}", file=sys.stderr)
     subprocess.run(build_cmd, cwd=_REPO_ROOT, check=True)
 
-    payloads: list[dict[str, Any]] = []
+    payloads: list[dict[str, list[dict[str, Any]]]] = []
     for suite in SUITES:
         cmd = build_bench_runner_cmd(_REPO_ROOT, suite, tier)
         proc = subprocess.run(
@@ -235,9 +376,7 @@ def _run_suites(parsed_args: argparse.Namespace) -> int:
             check=True,
         )
         raw_bmf = json.loads(proc.stdout)
-        payloads.append(
-            {f"{suite.benchmark_prefix}{k}": v for k, v in raw_bmf.items()}
-        )
+        payloads.append(convert_suite_bmf_to_v1(suite.target_name, raw_bmf))
 
     merged, metric_count = merge_bmf_payloads(payloads, suites=SUITES)
     parsed_args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -245,9 +384,10 @@ def _run_suites(parsed_args: argparse.Namespace) -> int:
         json.dumps(merged, indent=2, allow_nan=False) + "\n",
         encoding="utf-8",
     )
+    variant_count = sum(len(v) for v in merged.values())
     print(
-        f"Wrote {len(merged)} benchmarks ({metric_count} metrics) to "
-        f"{parsed_args.output}.",
+        f"Wrote {len(merged)} benchmarks ({variant_count} variants, "
+        f"{metric_count} metrics) to {parsed_args.output}.",
         file=sys.stderr,
     )
     _write_github_output(parsed_args.github_output, has_benchmarks=True)
@@ -336,7 +476,7 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
         "--output",
         required=True,
         type=Path,
-        help="Output path for merged BMF JSON.",
+        help="Output path for merged BMF v1 JSON.",
     )
     run_p.add_argument(
         "--ci",

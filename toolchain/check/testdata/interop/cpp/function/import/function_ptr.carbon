@@ -165,13 +165,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "forward_decl.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_use_forward_decl.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        ╭─┤ fail_use_forward_decl.carbon:[[@LINE+15]]:3
   // CHECK:STDERR: ->     │   Cpp.ReturnCallback()();
   // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━
   // CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Cpp.Incomplete`
   // CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: fail_use_forward_decl.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./forward_decl.h
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        ·       ┬

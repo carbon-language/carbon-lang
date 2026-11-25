@@ -86,7 +86,7 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CGet.C.Main(ptr %self) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc13_29.1.x = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !45
+// CHECK:STDOUT:   %.loc13_29.1.x = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !45
 // CHECK:STDOUT:   %.loc13_29.2 = load i32, ptr %.loc13_29.1.x, align 4, !dbg !45
 // CHECK:STDOUT:   ret i32 %.loc13_29.2, !dbg !45
 // CHECK:STDOUT: }
@@ -104,31 +104,32 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT:   %LocalGenericId.call = call i32 @_CLocalGenericId.Main.2fad9574e050607e(i32 %LocalId.call), !dbg !57
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_82.5.temp), !dbg !58
 // CHECK:STDOUT:   call void @_CMakePair.Main.3eda18978e8f48e1(ptr %.loc20_82.5.temp, i32 %ImportedGenericId.call, i32 %LocalGenericId.call), !dbg !58
-// CHECK:STDOUT:   %.loc20_82.7.a = getelementptr inbounds nuw { i32, i32 }, ptr %.loc20_82.5.temp, i32 0, i32 0, !dbg !58
+// CHECK:STDOUT:   %.loc20_82.7.a = getelementptr inbounds nuw i8, ptr %.loc20_82.5.temp, i64 0, !dbg !58
 // CHECK:STDOUT:   %.loc20_82.8 = load i32, ptr %.loc20_82.7.a, align 4, !dbg !58
-// CHECK:STDOUT:   %.loc20_82.9.b = getelementptr inbounds nuw { i32, i32 }, ptr %.loc20_82.5.temp, i32 0, i32 1, !dbg !58
+// CHECK:STDOUT:   %.loc20_82.9.b = getelementptr inbounds nuw i8, ptr %.loc20_82.5.temp, i64 4, !dbg !58
 // CHECK:STDOUT:   %.loc20_82.10 = load i32, ptr %.loc20_82.9.b, align 4, !dbg !58
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %struct), !dbg !58
-// CHECK:STDOUT:   %struct1 = getelementptr inbounds nuw { i32, i32 }, ptr %struct, i32 0, i32 0, !dbg !58
+// CHECK:STDOUT:   %struct1 = getelementptr inbounds nuw i8, ptr %struct, i64 0, !dbg !58
 // CHECK:STDOUT:   store i32 %.loc20_82.8, ptr %struct1, align 4, !dbg !58
-// CHECK:STDOUT:   %struct2 = getelementptr inbounds nuw { i32, i32 }, ptr %struct, i32 0, i32 1, !dbg !58
+// CHECK:STDOUT:   %struct2 = getelementptr inbounds nuw i8, ptr %struct, i64 4, !dbg !58
 // CHECK:STDOUT:   store i32 %.loc20_82.10, ptr %struct2, align 4, !dbg !58
-// CHECK:STDOUT:   %.loc21.a = getelementptr inbounds nuw { i32, i32 }, ptr %struct, i32 0, i32 0, !dbg !63
+// CHECK:STDOUT:   %.loc21.a = getelementptr inbounds nuw i8, ptr %struct, i64 0, !dbg !63
 // CHECK:STDOUT:   %.loc21.a.load = load i32, ptr %.loc21.a, align 4, !dbg !63
-// CHECK:STDOUT:   ret i32 %.loc21.a.load, !dbg !64
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %.loc20_82.5.temp), !dbg !58
+// CHECK:STDOUT:   ret i32 %.loc21.a.load, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CImportedId.Main(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CImportedGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !66 {
-// CHECK:STDOUT:   ret i32 %x, !dbg !69
+// CHECK:STDOUT: define linkonce_odr i32 @_CImportedGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !68 {
+// CHECK:STDOUT:   ret i32 %x, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLocalGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !71 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CLocalGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !74
+// CHECK:STDOUT:   ret i32 %x, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -137,11 +138,16 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMakePair.Main.3eda18978e8f48e1(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_71.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !81
-// CHECK:STDOUT:   store i32 %x, ptr %.loc10_71.3.a, align 4, !dbg !81
-// CHECK:STDOUT:   %.loc10_71.5.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !81
-// CHECK:STDOUT:   store i32 %y, ptr %.loc10_71.5.b, align 4, !dbg !81
-// CHECK:STDOUT:   ret void, !dbg !81
+// CHECK:STDOUT:   %.loc10_71.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !83
+// CHECK:STDOUT:   store i32 %x, ptr %.loc10_71.3.a, align 4, !dbg !83
+// CHECK:STDOUT:   %.loc10_71.5.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !83
+// CHECK:STDOUT:   store i32 %y, ptr %.loc10_71.5.b, align 4, !dbg !83
+// CHECK:STDOUT:   ret void, !dbg !83
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %t) #0 !dbg !87 {
+// CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

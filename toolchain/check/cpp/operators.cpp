@@ -642,15 +642,10 @@ static auto TryBuildBuiltinOperator(
       break;
   }
 
-  auto core_interface_id =
-      GetCoreInterfaceId(context, loc_id, info.interface_name);
-  if (!core_interface_id.has_value()) {
-    return SemIR::ErrorInst::InstId;
-  }
-
-  return MakeBuiltinOperatorFunction(context, loc_id, arg_type_ids,
-                                     return_type_id, info.op_name,
-                                     info.builtin_kind, core_interface_id);
+  return MakeBuiltinOperatorFunction(
+      context, loc_id, arg_type_ids, return_type_id, info.op_name,
+      info.builtin_kind,
+      GetCoreInterfaceId(context, loc_id, info.interface_name));
 }
 
 namespace {
@@ -659,13 +654,13 @@ struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
   SemIR::TypeId arg_type_id;
   SemIR::LocId loc_id;
 
-  void operator()(auto& builder) const {
-    CARBON_DIAGNOSTIC_CONTEXT(
-        IncompleteOperandTypeInCppOperatorLookup,
+  auto operator()() const -> DiagnosticBuilder {
+    CARBON_DIAGNOSTIC(
+        IncompleteOperandTypeInCppOperatorLookup, Error,
         "looking up a C++ operator with incomplete operand type {0}",
         SemIR::TypeId);
-    builder.Attach(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                   arg_type_id);
+    return context.emitter().Build(
+        loc_id, IncompleteOperandTypeInCppOperatorLookup, arg_type_id);
   }
 };
 }  // namespace
@@ -678,11 +673,11 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::TypeId> arg_type_ids)
     -> SemIR::InstId {
-  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // Register a context scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   if (op.interface_name == CoreIdentifier::ImplicitAs ||
       op.interface_name == CoreIdentifier::As) {
@@ -738,11 +733,11 @@ auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto LookupCppOperator(Context& context, SemIR::LocId loc_id, Operator op,
                        llvm::ArrayRef<SemIR::InstId> arg_ids) -> SemIR::InstId {
-  // Register an annotation scope to flush any Clang diagnostics when we return.
+  // Register a context scope to flush any Clang diagnostics when we return.
   // This is important to ensure that Clang diagnostics are properly interleaved
   // with Carbon diagnostics.
-  Diagnostics::AnnotationScope annotate_diagnostics(&context.emitter(),
-                                                    [](auto& /*builder*/) {});
+  Diagnostics::ContextScope diagnostic_context(&context.emitter(),
+                                               [](auto& /*builder*/) {});
 
   // We can only handle concrete types in LookupCppOperator.
   for (auto arg_id : arg_ids) {

@@ -150,6 +150,8 @@ static constexpr auto DeclIntroducers = [] {
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
   set_contextual(Lex::TokenKind::Var, ClassContext,
                  NodeKind::VariableIntroducer, StateKind::VarAsRegular);
+  set(Lex::TokenKind::Where, NodeKind::WhereAssignmentIntroducer,
+      StateKind::WhereAssignment);
 
   set(Lex::TokenKind::Inline, NodeKind::InlineIntroducer,
       StateKind::InlineDeclAfterIntroducer);
@@ -240,6 +242,7 @@ static auto ResolveAmbiguousTokenAsDeclaration(Context& context,
         case Lex::TokenKind::Namespace:
         case Lex::TokenKind::Require:
         case Lex::TokenKind::Var:
+        case Lex::TokenKind::Where:
 #define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"

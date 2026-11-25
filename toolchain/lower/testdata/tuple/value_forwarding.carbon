@@ -27,9 +27,9 @@ fn F(a: (i32, i32, i32), b: (i32, i32, i32)) {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple = alloca { ptr, ptr }, align 8, !dbg !33
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple), !dbg !33
-// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 0, !dbg !33
+// CHECK:STDOUT:   %tuple1 = getelementptr inbounds nuw i8, ptr %tuple, i64 0, !dbg !33
 // CHECK:STDOUT:   store ptr %a, ptr %tuple1, align 8, !dbg !33
-// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw { ptr, ptr }, ptr %tuple, i32 0, i32 1, !dbg !33
+// CHECK:STDOUT:   %tuple2 = getelementptr inbounds nuw i8, ptr %tuple, i64 8, !dbg !33
 // CHECK:STDOUT:   store ptr %b, ptr %tuple2, align 8, !dbg !33
 // CHECK:STDOUT:   call void @_CG.Main(ptr %tuple), !dbg !34
 // CHECK:STDOUT:   ret void, !dbg !35

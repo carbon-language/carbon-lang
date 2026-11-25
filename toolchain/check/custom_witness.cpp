@@ -481,7 +481,7 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
     case SemIR::SymbolicBinding::Kind:
       return DestroyFormat::NoDestroy;
 
-    // We can't work it out from the kind alone
+    // We can't work it out from the kind alone.
     default:
       return std::nullopt;
   }
@@ -498,6 +498,16 @@ static auto TryGetDestroyFormatFromKind(SemIR::InstKind type)
 //
 // This function returns `std::nullopt` if a toolchain error occurred (e.g.
 // failed to look up `Core.SubobjectDestroy`).
+//
+// Note that this algorithm is recursive because we haven't found a clean and
+// simple way to make it iterative. The algorithm determines a type's destroy
+// format by looking up the definitions for its subobjects, and deriving the
+// answer from those. Best-case lookup for a non-trivial type happens when all
+// of its subobjects' types to have already generated witnesses for
+// `Core.SubobjectDestroy` and `Core.Destroy`, as this is constant lookup.
+// Worst-case lookup for a non-trivial type happens when none of its subobjects'
+// types have generated witnesses, as this could end up with a substantial
+// amount of recursion.
 static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
                              SemIR::ConstantId query_self_const_id)
     -> std::optional<DestroyFormat> {
@@ -1044,6 +1054,10 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, *format);
 }
 
+// Builds a custom witness for `Core.TrivialDestroy` and returns its `InstId` if
+// `Self` has trivial destruction. Returns `InstId::None` if we should defer
+// building the witness, and `std::nullopt` if the object doesn't have trivial
+// destruction.
 static auto MakeTrivialDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -1068,6 +1082,20 @@ static auto MakeTrivialDestroyWitness(
 
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface, {});
+}
+
+// Requires `type_id`, the source or destination type of a built-in conversion,
+// to be complete.
+static auto RequireCompleteConversionType(Context& context, SemIR::LocId loc_id,
+                                          SemIR::TypeId type_id, bool is_source)
+    -> bool {
+  return RequireCompleteType(context, type_id, loc_id, [&] {
+    CARBON_DIAGNOSTIC(IncompleteTypeInBuiltinConversion, Error,
+                      "built-in conversion {0:from|to} incomplete type {1}",
+                      Diagnostics::BoolAsSelect, SemIR::TypeId);
+    return context.emitter().Build(loc_id, IncompleteTypeInBuiltinConversion,
+                                   is_source, type_id);
+  });
 }
 
 static auto MakeIntFitsInWitness(
@@ -1095,9 +1123,10 @@ static auto MakeIntFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
-  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
-      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id,
+                                     /*is_source=*/true) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id,
+                                     /*is_source=*/false)) {
     return std::nullopt;
   }
 
@@ -1193,9 +1222,10 @@ static auto MakeFloatFitsInWitness(
   auto dest_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(dest_const_id));
 
-  auto context_fn = [](DiagnosticContextBuilder& /*builder*/) -> void {};
-  if (!RequireCompleteType(context, src_type_id, loc_id, context_fn) ||
-      !RequireCompleteType(context, dest_type_id, loc_id, context_fn)) {
+  if (!RequireCompleteConversionType(context, loc_id, src_type_id,
+                                     /*is_source=*/true) ||
+      !RequireCompleteConversionType(context, loc_id, dest_type_id,
+                                     /*is_source=*/false)) {
     return std::nullopt;
   }
 

@@ -94,7 +94,7 @@ impl C as Core.IndexWith((), ()) {
 
 fn F() {
   let c: C = {};
-  // CHECK:STDERR:        ╭─┤ fail_wrong_arg_count.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_wrong_arg_count.carbon:[[@LINE+12]]:3
   // CHECK:STDERR: ->     │   c[()];
   // CHECK:STDERR:        ·   ━━┳━━
   // CHECK:STDERR:        ·     ┗━━┫ error: 1 argument passed to generic interface expecting 2 arguments
@@ -102,9 +102,8 @@ fn F() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ core_wrong_arg_count.carbon
   // CHECK:STDERR:        │ interface IndexWith(SubscriptType: type, ElementType: type) {
-  // CHECK:STDERR:        · ──────────────────────────────┬──────────────────────────────
-  // CHECK:STDERR:        ·                               ╰──┤ calling generic interface declared here
-  // CHECK:STDERR:        ·                                  │ [InCallToEntity]
+  // CHECK:STDERR:        ·           ────┬────
+  // CHECK:STDERR:        ·               ╰──┤ calling generic interface declared here [InCallToEntity]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c[()];

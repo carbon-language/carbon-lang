@@ -84,11 +84,11 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %no_padding.var = alloca { i32, i32, i32 }, align 4, !dbg !27
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %no_padding.var), !dbg !27
-// CHECK:STDOUT:   %.loc8.x = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc8.x = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 0, !dbg !29
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc8.x), !dbg !31
-// CHECK:STDOUT:   %.loc9.y = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 1, !dbg !32
+// CHECK:STDOUT:   %.loc9.y = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 4, !dbg !32
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9.y), !dbg !34
-// CHECK:STDOUT:   %.loc10.z = getelementptr inbounds nuw { i32, i32, i32 }, ptr %no_padding.var, i32 0, i32 2, !dbg !35
+// CHECK:STDOUT:   %.loc10.z = getelementptr inbounds nuw i8, ptr %no_padding.var, i64 8, !dbg !35
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.z), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
@@ -125,13 +125,14 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !41 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !48 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %avoid_tail_padding.var = alloca <{ ptr, i32 }>, align 8, !dbg !42
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %avoid_tail_padding.var), !dbg !42
-// CHECK:STDOUT:   %.loc8.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %avoid_tail_padding.var, i32 0, i32 1, !dbg !44
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc8.y), !dbg !46
-// CHECK:STDOUT:   ret void, !dbg !47
+// CHECK:STDOUT:   %avoid_tail_padding.var = alloca <{ ptr, i32 }>, align 8, !dbg !49
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %avoid_tail_padding.var), !dbg !49
+// CHECK:STDOUT:   %.loc8.y = getelementptr inbounds nuw i8, ptr %avoid_tail_padding.var, i64 8, !dbg !51
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc8.y), !dbg !53
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.599d5fcb55f0df44(ptr %avoid_tail_padding.var), !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -162,16 +163,17 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !50 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !64 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %use_tail_padding.var = alloca { <{ ptr, i32 }>, i32 }, align 8, !dbg !51
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %use_tail_padding.var), !dbg !51
-// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %use_tail_padding.var, i32 0, i32 0, !dbg !53
-// CHECK:STDOUT:   %.loc9_24.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc9_22.a, i32 0, i32 1, !dbg !53
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.y), !dbg !55
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %use_tail_padding.var, i32 0, i32 1, !dbg !56
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !58
-// CHECK:STDOUT:   ret void, !dbg !59
+// CHECK:STDOUT:   %use_tail_padding.var = alloca { <{ ptr, i32 }>, i32 }, align 8, !dbg !65
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %use_tail_padding.var), !dbg !65
+// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw i8, ptr %use_tail_padding.var, i64 0, !dbg !67
+// CHECK:STDOUT:   %.loc9_24.y = getelementptr inbounds nuw i8, ptr %.loc9_22.a, i64 8, !dbg !67
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.y), !dbg !69
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %use_tail_padding.var, i64 12, !dbg !70
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !72
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.20a1f5eea11f2fca(ptr %use_tail_padding.var), !dbg !65
+// CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -204,16 +206,17 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !62 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !83 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %implicit_padding.var = alloca { <{ ptr, i32 }>, ptr }, align 8, !dbg !63
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %implicit_padding.var), !dbg !63
-// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %implicit_padding.var, i32 0, i32 0, !dbg !65
-// CHECK:STDOUT:   %.loc9_24.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc9_22.a, i32 0, i32 0, !dbg !65
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.x), !dbg !67
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw { <{ ptr, i32 }>, ptr }, ptr %implicit_padding.var, i32 0, i32 1, !dbg !68
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !70
-// CHECK:STDOUT:   ret void, !dbg !71
+// CHECK:STDOUT:   %implicit_padding.var = alloca { <{ ptr, i32 }>, ptr }, align 8, !dbg !84
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %implicit_padding.var), !dbg !84
+// CHECK:STDOUT:   %.loc9_22.a = getelementptr inbounds nuw i8, ptr %implicit_padding.var, i64 0, !dbg !86
+// CHECK:STDOUT:   %.loc9_24.x = getelementptr inbounds nuw i8, ptr %.loc9_22.a, i64 0, !dbg !86
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc9_24.x), !dbg !88
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %implicit_padding.var, i64 16, !dbg !89
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !91
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a0711477393c4dd4(ptr %implicit_padding.var), !dbg !84
+// CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -246,13 +249,14 @@ fn F() {
 // CHECK:STDOUT: declare void @_CG.Main(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !74 {
+// CHECK:STDOUT: define void @_CF.Main() #0 !dbg !102 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %insert_padding.var = alloca <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, align 8, !dbg !75
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %insert_padding.var), !dbg !75
-// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, ptr %insert_padding.var, i32 0, i32 1, !dbg !77
-// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !79
-// CHECK:STDOUT:   ret void, !dbg !80
+// CHECK:STDOUT:   %insert_padding.var = alloca <{ <{ { i32, i32, i32 }, [4 x i8] }>, ptr, i32 }>, align 8, !dbg !103
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %insert_padding.var), !dbg !103
+// CHECK:STDOUT:   %.loc10.b = getelementptr inbounds nuw i8, ptr %insert_padding.var, i64 16, !dbg !105
+// CHECK:STDOUT:   call void @_CG.Main(ptr %.loc10.b), !dbg !107
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e01da6383196b847(ptr %insert_padding.var), !dbg !103
+// CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

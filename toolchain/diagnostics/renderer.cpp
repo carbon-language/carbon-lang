@@ -155,9 +155,9 @@ static auto LevelText(Level level) -> llvm::StringRef {
 // brighten them -- so the weight says nothing reliable there while it still
 // says something on words.
 //
-// `RotateUnderlineStyles` makes one exception: the heavy underline keeps its
-// bold. A terminal that ignores bold on line art loses nothing there, and one
-// that renders it matches the underline to the bold text placed under it.
+// `RotateUnderlineStyles` makes one exception: the message's underline keeps
+// its bold. A terminal that ignores bold on line art loses nothing there, and
+// on one that renders it the underline matches the bold text placed under it.
 static auto UnderlineStyle(const Style& style) -> Style {
   return style.Bold(false);
 }
@@ -463,12 +463,9 @@ struct PreparedSource {
 enum class Part : int8_t {
   // A step in the path by which the part after it was reached.
   LocationInfo,
-  // Something read against the code to explain the problem rather than to
-  // state it: a label, or the message itself once a context is stating the
-  // problem in its place.
+  // A label, which explains the problem.
   Explanation,
-  // The problem itself: whatever leads the diagnostic, and the source that is
-  // directly part of it.
+  // The message and its ranges.
   Problem,
 };
 
@@ -477,26 +474,23 @@ struct PreparedPart {
   // What this is to the reader.
   Part role = Part::Explanation;
 
-  // Whether this part states the problem: the message, or the context that
-  // `LeadingContext` returns. Its text begins with the level word and is
-  // bold, and its underline is the heavy one.
-  //
-  // TODO: The design has a context scope attach a label instead of leading the
-  // diagnostic. Make the message always lead once contexts are labels.
+  // Whether this part is the message. Its text begins with the level word and
+  // is bold, with a heavy label line and bar; every other part's text is plain.
   bool is_leading = false;
 
-  // Whether this part's range is drawn as the heavy underline: the range the
-  // leading part's text is placed under, or a problem range identical to it.
-  // It keeps the level's center color and is left out of the ramp. Set
-  // during layout.
-  bool is_heavy_underline = false;
+  // Whether this part's range is the one the message's text is placed under:
+  // the message's own location, or the extra range drawn in its place. It
+  // keeps the level's own color and bold, is skipped when
+  // `RotateUnderlineStyles` gives the other ranges on its line their colors,
+  // and is drawn over them. Set during layout.
+  bool is_message_underline = false;
 
-  // Whether this part's range came from the message's own location rather than
-  // from a range attached to the diagnostic. Only the message has one.
+  // Whether this part's range is the message's own location, as opposed to one
+  // of its extra ranges or a label's range.
   //
-  // An attached problem range containing the location takes its place: the
-  // message's text is placed under that range, and the location has no
-  // underline of its own. See `FindMessageHost`.
+  // An extra range containing the location is drawn in place of it, and the
+  // message's text is placed under that range; see `FindMessageHost`. An extra
+  // range elsewhere leaves the location underlined.
   bool from_message_loc = false;
 
   // The word leading this part's text, including its separator, and empty for
@@ -628,7 +622,7 @@ struct Row {
   const PreparedPart* part = nullptr;
   // `Underline` rows: every span underlined, in the order they are drawn:
   // widest first, so that the narrowest underline on a column is what shows,
-  // with the heavy underline last so that nothing repaints it.
+  // with the message's underline last so that nothing repaints it.
   llvm::SmallVector<const PreparedPart*, 0> spans;
   // `Source` rows: the part whose style the margin arrow and line number take,
   // set on the one line the leading part's text is placed under, and null on
@@ -988,8 +982,9 @@ static auto PlaceLabel(const PreparedSource& against,
 // Draws the underline under `span`, in source drawn from column `x`, on row
 // `y`.
 //
-// The heavy underline is drawn heavy in both character sets. ASCII draws a
-// heavy line as `^`, so that underline stays distinct without color.
+// The message's ranges are part of the problem and a label's only explain it,
+// so the message's are drawn heavy and a label's light, on whichever line they
+// are. ASCII draws a heavy line as `^`, so the two stay distinct without color.
 static auto DrawUnderline(Buffer& buffer, int x, int y,
                           const PreparedPart& span, const Style& style)
     -> void {
@@ -1003,27 +998,25 @@ static auto DrawUnderline(Buffer& buffer, int x, int y,
   buffer.DrawHorizontalLine(
       x + span.source.span_start, y, span.source.span_length, style,
       span.source.left_end, span.source.right_end,
-      span.is_heavy_underline ? Terminal::LineWeight::Heavy
-                              : Terminal::LineWeight::Light);
+      span.role == Part::Problem ? Terminal::LineWeight::Heavy
+                                 : Terminal::LineWeight::Light);
 }
 
-// Returns the part whose range stands in for `message_part`'s own, or null when
-// nothing does and the message's own location is underlined.
+// Returns the message's extra range that is drawn in place of `message_part`'s
+// own, or null when there is none and the message's own location is underlined.
 //
-// A range attached as part of the problem says where the problem is in terms
-// the reader can see, which the message's location -- a point, and often one
-// chosen for an editor to put a cursor on rather than for anyone to look at --
-// does not. So a range containing that location is underlined in its place: the
-// message underlines nothing of its own, and its text is placed under that
-// range.
+// The message's location is a point chosen for an editor's cursor, and an
+// extra range shows what the problem covers. So an extra range containing the
+// location replaces it: the location is not underlined, and the message's text
+// is placed under that range.
 //
 // It has to contain the location. A range elsewhere, even on the same line, is
-// not about the code the location names, and placing the message under it
-// would drop the underline on the code the message is about.
+// about other code, and placing the message under it would leave the code the
+// message is about without an underline.
 //
-// `candidates` are the ranges drawn alongside the message's, which is what a
-// range has to be to take its place: one drawn under a location row of its own
-// is read against the code below that one instead.
+// `candidates` are the ranges drawn under the same location row as the
+// message's; a range under another location row is read with the code below
+// that location row.
 static auto FindMessageHost(llvm::ArrayRef<PreparedPart*> candidates,
                             const PreparedPart& message_part) -> PreparedPart* {
   int column = message_part.source.span_start;
@@ -1046,10 +1039,10 @@ static auto FindMessageHost(llvm::ArrayRef<PreparedPart*> candidates,
 // ramps. Each theme counts its own way through its colors, left to right, so
 // they run in the order the code they underline is read.
 //
-// The heavy underline is left out of the ramp: it keeps the level's center
-// color and its bold, matching the level word. The other problem ranges on its
-// line take successive colors from the ramp with the center left out, so that
-// only the heavy underline has the center color.
+// The message's underline is skipped: it keeps the level's center color and its
+// bold, matching the level word. The other problem ranges on its line take
+// successive colors from the theme with the center color left out, so that only
+// the message's underline has the center color.
 static auto RotateUnderlineStyles(llvm::ArrayRef<PreparedPart*> spans,
                                   Theme problem_theme, Theme explanation_theme)
     -> void {
@@ -1059,7 +1052,7 @@ static auto RotateUnderlineStyles(llvm::ArrayRef<PreparedPart*> spans,
                       return lhs->source.span_start < rhs->source.span_start;
                     });
   bool leading_on_line = llvm::any_of(across, [](const PreparedPart* span) {
-    return span->is_heavy_underline;
+    return span->is_message_underline;
   });
   llvm::SmallVector<Terminal::Color> around_center;
   if (leading_on_line) {
@@ -1071,11 +1064,11 @@ static auto RotateUnderlineStyles(llvm::ArrayRef<PreparedPart*> spans,
   }
   int totals[2] = {0, 0};
   for (const PreparedPart* span : across) {
-    totals[span->role == Part::Problem] += !span->is_heavy_underline;
+    totals[span->role == Part::Problem] += !span->is_message_underline;
   }
   int counts[2] = {0, 0};
   for (PreparedPart* span : across) {
-    if (span->is_heavy_underline) {
+    if (span->is_message_underline) {
       span->underline_style = span->style;
       continue;
     }
@@ -1251,8 +1244,8 @@ static auto PlaceLabels(const Buffer& buffer,
 // first, so the narrowest underline covering a column is the one that shows: a
 // range containing another says less about the columns they share than the
 // range inside it does, and an underline that is part of the problem says more
-// than one that only explains it. The heavy underline is the exception; see
-// `MoveHeavyUnderlinesLast`.
+// than one that only explains it. The message's underline is the exception;
+// see `MoveMessageUnderlinesLast`.
 //
 // Ranges shouldn't overlap in the first place -- one covering another means two
 // parts of the diagnostic attached to the same code -- but they are attached by
@@ -1278,43 +1271,44 @@ static auto SpansWidestFirst(llvm::ArrayRef<PreparedPart*> line,
   return spans;
 }
 
-// Sets `is_heavy_underline` on the spans drawn as the heavy underline and moves
-// them to the end of `spans`. Returns the span the leading part's text is
-// placed under, or null when that text is not placed on this line.
-static auto MoveHeavyUnderlinesLast(llvm::MutableArrayRef<PreparedPart*> spans,
-                                    const PreparedPart* message_part,
-                                    const PreparedPart* message_host)
+// Sets `is_message_underline` on the spans drawn as the message's underline
+// and moves them to the end of `spans`. Returns the span the leading part's
+// text is placed under, or null when that text is not placed on this line.
+static auto MoveMessageUnderlinesLast(
+    llvm::MutableArrayRef<PreparedPart*> spans,
+    const PreparedPart* message_part, const PreparedPart* message_host)
     -> const PreparedPart* {
   // The leading part's text is placed under its own range, or under the host
   // of the message's location when the message leads.
   const PreparedPart* leading_host =
       message_part && message_part->is_leading ? message_host : nullptr;
-  const PreparedPart* heavy_underline = nullptr;
+  const PreparedPart* message_underline = nullptr;
   for (PreparedPart* span : spans) {
-    span->is_heavy_underline = span->is_leading || span == leading_host;
-    if (span->is_heavy_underline) {
-      heavy_underline = span;
+    span->is_message_underline = span->is_leading || span == leading_host;
+    if (span->is_message_underline) {
+      message_underline = span;
     }
   }
   // A problem range identical to the leading one underlines the same source.
-  // Identical ranges are drawn over each other, so it takes the heavy
-  // underline's weight and color; otherwise it would repaint that stretch
-  // light, in a rotated color.
-  if (heavy_underline) {
+  // Identical ranges are drawn over each other, so it takes the color and bold
+  // of the message's underline; otherwise it would redraw those columns in
+  // another of the theme's colors.
+  if (message_underline) {
     for (PreparedPart* span : spans) {
-      span->is_heavy_underline |=
+      span->is_message_underline |=
           span->role == Part::Problem &&
-          span->source.span_start == heavy_underline->source.span_start &&
-          span->source.span_length == heavy_underline->source.span_length;
+          span->source.span_start == message_underline->source.span_start &&
+          span->source.span_length == message_underline->source.span_length;
     }
   }
-  // The heavy underline is drawn last, over every other range on the row, so
-  // that no narrower range redraws a cell of it light. A range inside it shows
-  // as the tee where its label line leaves the heavy underline.
+  // The message's underline is drawn last, over every other range on the row,
+  // so that no narrower range redraws a cell of it in another color or weight.
+  // A range inside it shows as the tee where its label line leaves the
+  // message's underline.
   std::stable_partition(
       spans.begin(), spans.end(),
-      [](const PreparedPart* span) { return !span->is_heavy_underline; });
-  return heavy_underline;
+      [](const PreparedPart* span) { return !span->is_message_underline; });
+  return message_underline;
 }
 
 // Returns the parts whose words hang off `spans`, in the order of `spans`.
@@ -1405,9 +1399,9 @@ class RowLayout {
   // Adds the rows drawing the spans that fall on one source line: the line
   // itself, the underline row beneath it, and the label rows under that.
   //
-  // `message_part` is the range standing in for the part's own location, and
-  // `message_host` the attached range that has taken its place, in which case
-  // the part underlines nothing of its own and its words hang from the host.
+  // `message_part` is the message's own part, and `message_host` the extra
+  // range drawn in its place, if any, in which case the message's location is
+  // not underlined and its text is placed under that range.
   auto AddLine(llvm::ArrayRef<PreparedPart*> line, PreparedPart* message_part,
                PreparedPart* message_host) -> void;
 
@@ -1632,8 +1626,8 @@ auto RowLayout::AddLine(llvm::ArrayRef<PreparedPart*> line,
 
   llvm::SmallVector<PreparedPart*> spans =
       SpansWidestFirst(line, message_part, message_host);
-  const PreparedPart* heavy_underline =
-      MoveHeavyUnderlinesLast(spans, message_part, message_host);
+  const PreparedPart* message_underline =
+      MoveMessageUnderlinesLast(spans, message_part, message_host);
   RotateUnderlineStyles(spans, problem_theme_, explanation_theme_);
   // The part's label line and bar follow the range hosting its words, so the
   // rotation's choice for the host is copied after it is made.
@@ -1643,14 +1637,15 @@ auto RowLayout::AddLine(llvm::ArrayRef<PreparedPart*> line,
 
   // The `->` in the margin points to the one line to begin reading at: the line
   // the leading part's text is placed under, wherever it is in the frame. A
-  // problem range on any other line keeps its color and nothing more. The
-  // `->` and line number take the leading part's style, matching its level
-  // word.
-  rows_.push_back({.kind = Row::Kind::Source,
-                   .part = line.front(),
-                   .points_here = heavy_underline ? &parts_[leading_] : nullptr,
-                   .line_number = line.front()->line_number,
-                   .text = line.front()->source.text});
+  // problem range on any other line is drawn the same way as one on this
+  // line, without the `->`. The `->` and line number take the leading part's
+  // style, matching its level word.
+  rows_.push_back(
+      {.kind = Row::Kind::Source,
+       .part = line.front(),
+       .points_here = message_underline ? &parts_[leading_] : nullptr,
+       .line_number = line.front()->line_number,
+       .text = line.front()->source.text});
 
   llvm::SmallVector<PreparedPart*> labels =
       LabelsHangingFrom(spans, message_part, message_host);
@@ -1740,9 +1735,9 @@ auto RowLayout::InSnippet() const -> bool {
 // rather than as one line drawn down both.
 //
 // The cell on the underline row is drawn heavy whatever `weight` is, since it
-// is part of the heavy underline. Under ASCII, where `weight` is light, that
-// cell keeps the tee inside the `^` run, or is the `^` itself when the label
-// line is drawn in place of a one-column underline.
+// is part of the message's underline. Under ASCII, where `weight` is light,
+// that cell keeps the tee inside the `^` run, or is the `^` itself when the
+// label line is drawn in place of a one-column underline.
 static auto DrawLeadingLabelLine(Buffer& buffer, int x, int underline_y,
                                  int meet_y, const Style& style,
                                  Terminal::LineWeight weight) -> void {
@@ -1829,11 +1824,6 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
   // drawing into anything.
   Metrics metrics(capabilities_.charset);
 
-  // A context names the operation that failed, and leads the diagnostic when
-  // there is one: it is the failure the reader is being told about, and the
-  // message is then read against the code like anything else explaining it.
-  const Context* leading_context = LeadingContext(diagnostic);
-
   // A `PreparedPart` is undesirably large for inline storage by
   // SmallVector, so we specify 0.
   llvm::SmallVector<PreparedPart, 0> parts;
@@ -1844,9 +1834,8 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
   Theme problem_theme = LevelTheme(diagnostic.level, capabilities_);
   Theme explanation_theme = ExplanationTheme(capabilities_);
 
-  // What leads the diagnostic is drawn at its level and everything else as
-  // something explaining it, except that a primary range is part of the problem
-  // and so keeps the level's color wherever down the frame it sits.
+  // The message and its ranges are drawn in the level's colors wherever they
+  // are in the frame, and every label in the label colors.
   auto add_part = [&](bool is_leading, bool is_problem, bool from_message_loc,
                       const Loc& loc, std::string text, llvm::StringRef name) {
     if (is_leading) {
@@ -1860,56 +1849,30 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
                     loc, std::move(text), name, is_leading, include_kind_));
   };
 
-  // The same file reached the same way is a path drawn once. A path says how a
-  // file was got to, so every range underlined in that file has the same one,
-  // and repeating it under each of them says nothing the first didn't.
-  std::string last_place;
-  auto add_location_info = [&](llvm::ArrayRef<LocationInfo> steps,
-                               const Loc& reaches) {
-    std::string place = reaches.filename.str();
-    for (const LocationInfo& step : steps) {
-      place += "\n" + step.Format() + " " + FormatLocation(step.loc);
-    }
-    if (place == last_place) {
-      return;
-    }
-    last_place = std::move(place);
-    for (const LocationInfo& step : steps) {
-      parts.push_back(PreparePart(
-          metrics, Part::LocationInfo, /*from_message_loc=*/false,
-          /*level_text=*/"", PathStyle(), step.loc, step.Format(), step.name,
-          /*is_leading=*/false, include_kind_));
-    }
-  };
-
-  // The contexts, then the message, then everything attached to explain it,
-  // which is the order they are read in.
-  for (const Context& context : diagnostic.contexts) {
-    add_location_info(context.location_info, context.loc);
-    // Only the leading context is the failure being reported; the rest name
-    // operations it happened inside, which explain it.
-    bool is_leading = &context == leading_context;
-    add_part(is_leading, is_leading, /*from_message_loc=*/false, context.loc,
-             context.Format(), context.name);
-  }
+  // The path to the message's location, then the message, then everything
+  // attached to explain it, which is the order they are read in.
   const Message& message = diagnostic.message;
-  add_location_info(message.location_info, message.loc);
-  // The message states the problem whether or not a context leads it: a
-  // context gives it a sentence to sit under, and doesn't demote what it says
-  // to an explanation of something else. Doing otherwise puts an informational
-  // label line on a range that is underlined as part of the problem.
-  bool message_leads = leading_context == nullptr;
-  add_part(message_leads, /*is_problem=*/true, /*from_message_loc=*/true,
+  for (const LocationInfo& step : message.location_info) {
+    parts.push_back(PreparePart(
+        metrics, Part::LocationInfo, /*from_message_loc=*/false,
+        /*level_text=*/"", PathStyle(), step.loc, step.Format(), step.name,
+        /*is_leading=*/false, include_kind_));
+  }
+  add_part(/*is_leading=*/true, /*is_problem=*/true, /*from_message_loc=*/true,
            message.loc, message.Format(), message.kind.name());
+  for (const Loc& range : message.ranges) {
+    add_part(/*is_leading=*/false, /*is_problem=*/true,
+             /*from_message_loc=*/false, range, /*text=*/"", /*name=*/"");
+  }
   // A label's location information is not drawn: how the file holding a
   // declaration was reached is rarely useful, and Clang and GCC omit note
-  // include stacks for the same reason. Only the path to the problem itself,
-  // the message's own location and a context's, is shown.
+  // include stacks for the same reason. Only the path to the message's
+  // location is shown.
   for (const Label& label : diagnostic.labels) {
-    add_part(/*is_leading=*/false, label.category == LabelCategory::Primary,
+    add_part(/*is_leading=*/false, /*is_problem=*/false,
              /*from_message_loc=*/false, label.loc, label.Format(), label.name);
   }
-  CARBON_CHECK(leading >= 0, "Either the context or the message leads.");
+  CARBON_CHECK(leading >= 0, "The message leads.");
 
   // With snippets off, every diagnostic takes the compact form: nothing below
   // is drawn, so none of its geometry needs deciding.
@@ -2021,10 +1984,10 @@ class FrameRenderer {
   auto DrawFrame(Row::Kind kind, int y, int next_y) -> void;
 
   // Returns the stroke weight of the label line and bar of `part`'s label:
-  // heavy for the leading part under Unicode, matching its heavy underline.
-  // ASCII draws a heavy line as `^`, which belongs on the underline row alone,
-  // so there the leading part's label line and bar are light like every other
-  // label's.
+  // heavy for the leading part under Unicode, matching the underline it hangs
+  // from. ASCII draws a heavy line as `^`, which is only used on the underline
+  // row, so there the leading part's label line and bar are light like every
+  // other label's.
   auto LabelWeight(const PreparedPart& part) const -> Terminal::LineWeight;
 
   // Draws `text` for `part` from (x, y), after its level word and in bold when

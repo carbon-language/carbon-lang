@@ -326,7 +326,7 @@ class C;
 // CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl C as N {}
-// CHECK:STDERR:        · ━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━━
 // CHECK:STDERR:        ·      ┗━━┫ error: associated constant I1 not given a value in impl of interface I
 // CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR:        ╰────
@@ -493,8 +493,8 @@ constraint J {
 // CHECK:STDERR:        ╭─┤ fail_rewrite_twice_different.carbon:[[@LINE+8]]:12
 // CHECK:STDERR: ->     │ impl () as J where .Z1 = () {}
 // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `()` that is different
-// CHECK:STDERR:        ·               ┃        from previously given value `{}`
+// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `{}` that is different
+// CHECK:STDERR:        ·               ┃        from previously given value `()`
 // CHECK:STDERR:        ·               ┃        [AssociatedConstantGivenDifferentValues]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

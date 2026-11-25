@@ -68,7 +68,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [4 x i8], align 4, !dbg !47
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !47
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.d4cda66b3640b619"(ptr %a.var), !dbg !47
-// CHECK:STDOUT:   %.loc25.n = getelementptr inbounds nuw [4 x i8], ptr %a.var, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   %.loc25.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !49
 // CHECK:STDOUT:   store i32 %n, ptr %.loc25.n, align 4, !dbg !49
 // CHECK:STDOUT:   call void @_Z4TakeI16NaturallyAlignedEvRT_(ptr %a.var), !dbg !53
 // CHECK:STDOUT:   ret void, !dbg !54
@@ -98,7 +98,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [16 x i8], align 16, !dbg !62
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !62
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.34933c1c343bd645"(ptr %a.var), !dbg !62
-// CHECK:STDOUT:   %.loc33.n = getelementptr inbounds nuw [16 x i8], ptr %a.var, i32 0, i32 0, !dbg !64
+// CHECK:STDOUT:   %.loc33.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !64
 // CHECK:STDOUT:   store i32 %n, ptr %.loc33.n, align 4, !dbg !64
 // CHECK:STDOUT:   call void @_Z4TakeI14ExtraAlignmentEvRT_(ptr %a.var), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !69
@@ -128,7 +128,7 @@ fn Packed(n: i32) {
 // CHECK:STDOUT:   %a.var = alloca [4 x i8], align 1, !dbg !77
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !77
 // CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.3e10857902c69c1a"(ptr %a.var), !dbg !77
-// CHECK:STDOUT:   %.loc42.n = getelementptr inbounds nuw [4 x i8], ptr %a.var, i32 0, i32 0, !dbg !79
+// CHECK:STDOUT:   %.loc42.n = getelementptr inbounds nuw i8, ptr %a.var, i64 0, !dbg !79
 // CHECK:STDOUT:   store i32 %n, ptr %.loc42.n, align 4, !dbg !79
 // CHECK:STDOUT:   call void @_Z4TakeI6PackedEvRT_(ptr %a.var), !dbg !83
 // CHECK:STDOUT:   ret void, !dbg !84

@@ -91,8 +91,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder i32 %index, { 1, 0, 2 }
-// CHECK:STDOUT:   uselistorder ptr %1, { 1, 2, 0 }
-// CHECK:STDOUT:   uselistorder ptr %2, { 1, 0 }
+// CHECK:STDOUT:   uselistorder ptr %7, { 1, 0 }
 // CHECK:STDOUT:   uselistorder ptr %8, { 1, 0 }
 // CHECK:STDOUT:   uselistorder i32 %index.next.1, { 1, 0 }
 // CHECK:STDOUT: }

@@ -227,11 +227,11 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z11pass_signedasil(i8 noundef signext, i16 noundef signext, i32 noundef, i64 noundef) #3
+// CHECK:STDOUT: declare void @_Z11pass_signedasil(i8 noundef, i16 noundef, i32 noundef, i64 noundef) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z13pass_unsignedhtjm(i8 noundef zeroext, i16 noundef zeroext, i32 noundef, i64 noundef) #3
+// CHECK:STDOUT: declare void @_Z13pass_unsignedhtjm(i8 noundef, i16 noundef, i32 noundef, i64 noundef) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z10pass_shorts(i16 noundef signext) #3
+// CHECK:STDOUT: declare void @_Z10pass_shorts(i16 noundef) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z10pass_shorts.carbon_thunk._, { 3, 2, 1, 0 }
@@ -312,17 +312,18 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CTest.Main() #0 !dbg !106 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %x.var = alloca [12 x i8], align 4, !dbg !107
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !107
-// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr %x.var), !dbg !107
-// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 0, !dbg !109
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !109
-// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 4, !dbg !110
-// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !110
-// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !111
-// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !111
-// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !113
-// CHECK:STDOUT:   ret void, !dbg !114
+// CHECK:STDOUT:   %x.var = alloca [12 x i8], align 4, !dbg !143
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !143
+// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1"(ptr %x.var), !dbg !143
+// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !145
+// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !145
+// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw i8, ptr %x.var, i64 4, !dbg !146
+// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !146
+// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw i8, ptr %x.var, i64 8, !dbg !147
+// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !147
+// CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !149
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %x.var), !dbg !143
+// CHECK:STDOUT:   ret void, !dbg !150
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
@@ -436,16 +437,17 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CPassRefExpr.Main() #0 !dbg !129 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %y.var = alloca [12 x i8], align 4, !dbg !130
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !130
-// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 0, !dbg !132
-// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !132
-// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 4, !dbg !133
-// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !133
-// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !134
-// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !134
-// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !136
-// CHECK:STDOUT:   ret void, !dbg !137
+// CHECK:STDOUT:   %y.var = alloca [12 x i8], align 4, !dbg !173
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %y.var), !dbg !173
+// CHECK:STDOUT:   %.loc8_4.a = getelementptr inbounds nuw i8, ptr %y.var, i64 0, !dbg !175
+// CHECK:STDOUT:   store i32 1, ptr %.loc8_4.a, align 4, !dbg !175
+// CHECK:STDOUT:   %.loc9_4.b = getelementptr inbounds nuw i8, ptr %y.var, i64 4, !dbg !176
+// CHECK:STDOUT:   store i32 2, ptr %.loc9_4.b, align 4, !dbg !176
+// CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw i8, ptr %y.var, i64 8, !dbg !177
+// CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !177
+// CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !179
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %y.var), !dbg !173
+// CHECK:STDOUT:   ret void, !dbg !180
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable

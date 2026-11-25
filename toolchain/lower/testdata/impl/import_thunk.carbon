@@ -73,9 +73,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !24 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_47.1.a = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !29
+// CHECK:STDOUT:   %.loc9_47.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !29
 // CHECK:STDOUT:   %.loc9_47.2 = load i32, ptr %.loc9_47.1.a, align 4, !dbg !29
-// CHECK:STDOUT:   %.loc9_49.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !30
+// CHECK:STDOUT:   %.loc9_49.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !30
 // CHECK:STDOUT:   store i32 %.loc9_47.2, ptr %.loc9_49.2.b, align 4, !dbg !30
 // CHECK:STDOUT:   ret void, !dbg !31
 // CHECK:STDOUT: }
@@ -83,9 +83,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr sret({ i32 }) %return, ptr %self) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_47.1.b = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !38
+// CHECK:STDOUT:   %.loc12_47.1.b = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !38
 // CHECK:STDOUT:   %.loc12_47.2 = load i32, ptr %.loc12_47.1.b, align 4, !dbg !38
-// CHECK:STDOUT:   %.loc12_49.2.c = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !39
+// CHECK:STDOUT:   %.loc12_49.2.c = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !39
 // CHECK:STDOUT:   store i32 %.loc12_47.2, ptr %.loc12_49.2.c, align 4, !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
@@ -93,9 +93,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %b) #0 !dbg !42 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc20_35.1.b = getelementptr inbounds nuw { i32 }, ptr %b, i32 0, i32 0, !dbg !47
+// CHECK:STDOUT:   %.loc20_35.1.b = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !47
 // CHECK:STDOUT:   %.loc20_35.2 = load i32, ptr %.loc20_35.1.b, align 4, !dbg !47
-// CHECK:STDOUT:   %.loc20_37.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !48
+// CHECK:STDOUT:   %.loc20_37.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !48
 // CHECK:STDOUT:   store i32 %.loc20_35.2, ptr %.loc20_37.2.b, align 4, !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
@@ -110,6 +110,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc20_19.2.temp, ptr %a), !dbg !54
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !54
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc20_19.1.temp), !dbg !54
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -214,79 +216,12 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: source_filename = "thunk_for_imported_interface.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %b) #0 !dbg !69 {
+// CHECK:STDOUT: define void @"_CF.X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %b) #0 !dbg !85 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_35.1.b = getelementptr inbounds nuw { i32 }, ptr %b, i32 0, i32 0, !dbg !74
-// CHECK:STDOUT:   %.loc9_35.2 = load i32, ptr %.loc9_35.1.b, align 4, !dbg !74
-// CHECK:STDOUT:   %.loc9_37.2.b = getelementptr inbounds nuw { i32 }, ptr %return, i32 0, i32 0, !dbg !75
-// CHECK:STDOUT:   store i32 %.loc9_35.2, ptr %.loc9_37.2.b, align 4, !dbg !75
-// CHECK:STDOUT:   ret void, !dbg !76
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.d0cc85b6c89517e3.Main:X.Main:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !78 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_19.1.temp = alloca { i32 }, align 4, !dbg !81
-// CHECK:STDOUT:   %.loc9_19.2.temp = alloca { i32 }, align 4, !dbg !81
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.1.temp), !dbg !81
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc9_19.2.temp), !dbg !81
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc9_19.2.temp, ptr %a), !dbg !81
-// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.loc9_19.2.temp), !dbg !81
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !81
-// CHECK:STDOUT:   ret void, !dbg !81
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr sret({ i32 }), ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr sret({ i32 }), ptr)
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT:
-// CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!68}
-// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
-// CHECK:STDOUT:
-// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{!21, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !67 = !DIFile(filename: "thunk_for_imported_interface.carbon", directory: "")
-// CHECK:STDOUT: !68 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !67, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "F", linkageName: "_CF.X.Main:I.Main", scope: null, file: !67, line: 9, type: !23, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !77)
-// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !21)
-// CHECK:STDOUT: !74 = !DILocation(line: 9, column: 34, scope: !69)
-// CHECK:STDOUT: !75 = !DILocation(line: 9, column: 28, scope: !69)
-// CHECK:STDOUT: !76 = !DILocation(line: 9, column: 21, scope: !69)
-// CHECK:STDOUT: !77 = !{!70}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.d0cc85b6c89517e3.Main:X.Main:I.Main", scope: null, file: !67, line: 9, type: !23, spFlags: DISPFlagDefinition, unit: !68, retainedNodes: !82)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !21)
-// CHECK:STDOUT: !81 = !DILocation(line: 9, column: 3, scope: !78)
-// CHECK:STDOUT: !82 = !{!79}
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; ---
-// CHECK:STDOUT: ; ModuleID = 'call_thunk_for_imported_interface.carbon'
-// CHECK:STDOUT: source_filename = "call_thunk_for_imported_interface.carbon"
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) #0 !dbg !85 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 4, !dbg !91
-// CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 4, !dbg !91
-// CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 4, !dbg !90
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !91
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !91
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_18.1.temp), !dbg !90
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !90
-// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !91
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !92
+// CHECK:STDOUT:   %.loc9_35.1.b = getelementptr inbounds nuw i8, ptr %b, i64 0, !dbg !90
+// CHECK:STDOUT:   %.loc9_35.2 = load i32, ptr %.loc9_35.1.b, align 4, !dbg !90
+// CHECK:STDOUT:   %.loc9_37.2.b = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !91
+// CHECK:STDOUT:   store i32 %.loc9_35.2, ptr %.loc9_37.2.b, align 4, !dbg !91
 // CHECK:STDOUT:   ret void, !dbg !92
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -315,12 +250,90 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !22 = !{!21, !21}
 // CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
-// CHECK:STDOUT: !83 = !DIFile(filename: "call_thunk_for_imported_interface.carbon", directory: "")
+// CHECK:STDOUT: !55 = !{null, !21}
+// CHECK:STDOUT: !56 = !DISubroutineType(types: !55)
+// CHECK:STDOUT: !83 = !DIFile(filename: "thunk_for_imported_interface.carbon", directory: "")
 // CHECK:STDOUT: !84 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !83, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !83, line: 7, type: !23, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !93)
+// CHECK:STDOUT: !85 = distinct !DISubprogram(name: "F", linkageName: "_CF.X.Main:I.Main", scope: null, file: !83, line: 9, type: !23, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !93)
 // CHECK:STDOUT: !86 = !DILocalVariable(arg: 1, scope: !85, type: !21)
-// CHECK:STDOUT: !90 = !DILocation(line: 8, column: 18, scope: !85)
-// CHECK:STDOUT: !91 = !DILocation(line: 8, column: 10, scope: !85)
-// CHECK:STDOUT: !92 = !DILocation(line: 8, column: 3, scope: !85)
+// CHECK:STDOUT: !90 = !DILocation(line: 9, column: 34, scope: !85)
+// CHECK:STDOUT: !91 = !DILocation(line: 9, column: 28, scope: !85)
+// CHECK:STDOUT: !92 = !DILocation(line: 9, column: 21, scope: !85)
 // CHECK:STDOUT: !93 = !{!86}
+// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.d0cc85b6c89517e3.Main:X.Main:I.Main", scope: null, file: !83, line: 9, type: !23, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !98)
+// CHECK:STDOUT: !95 = !DILocalVariable(arg: 1, scope: !94, type: !21)
+// CHECK:STDOUT: !97 = !DILocation(line: 9, column: 3, scope: !94)
+// CHECK:STDOUT: !98 = !{!95}
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !105)
+// CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !21)
+// CHECK:STDOUT: !104 = !DILocation(line: 32, column: 1, scope: !99)
+// CHECK:STDOUT: !105 = !{!100}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'call_thunk_for_imported_interface.carbon'
+// CHECK:STDOUT: source_filename = "call_thunk_for_imported_interface.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CTest.Main(ptr sret({ i32 }) %return, ptr %a) #0 !dbg !108 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc8_19.1.temp = alloca { i32 }, align 4, !dbg !114
+// CHECK:STDOUT:   %.loc8_19.2.temp = alloca { i32 }, align 4, !dbg !114
+// CHECK:STDOUT:   %.loc8_18.1.temp = alloca { i32 }, align 4, !dbg !113
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.1.temp), !dbg !114
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_19.2.temp), !dbg !114
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc8_18.1.temp), !dbg !113
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !113
+// CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !114
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !115
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc8_19.2.temp), !dbg !114
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc8_18.1.temp), !dbg !113
+// CHECK:STDOUT:   ret void, !dbg !115
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF:thunk:I.4980a17f6b368c72.Main:X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CF.X.Main:I.Main"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr sret({ i32 }), ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !117 {
+// CHECK:STDOUT:   ret void, !dbg !122
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6579a5013ba3dcd2, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!107}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !22 = !{!21, !21}
+// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
+// CHECK:STDOUT: !55 = !{null, !21}
+// CHECK:STDOUT: !56 = !DISubroutineType(types: !55)
+// CHECK:STDOUT: !106 = !DIFile(filename: "call_thunk_for_imported_interface.carbon", directory: "")
+// CHECK:STDOUT: !107 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !106, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !108 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !106, line: 7, type: !23, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !116)
+// CHECK:STDOUT: !109 = !DILocalVariable(arg: 1, scope: !108, type: !21)
+// CHECK:STDOUT: !113 = !DILocation(line: 8, column: 18, scope: !108)
+// CHECK:STDOUT: !114 = !DILocation(line: 8, column: 10, scope: !108)
+// CHECK:STDOUT: !115 = !DILocation(line: 8, column: 3, scope: !108)
+// CHECK:STDOUT: !116 = !{!109}
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !123)
+// CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !21)
+// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 1, scope: !117)
+// CHECK:STDOUT: !123 = !{!118}
 // CHECK:STDOUT:

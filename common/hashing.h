@@ -282,10 +282,16 @@ class Hasher {
         data.size() * sizeof(T)));
   }
 
-  // An out-of-line, throughput-optimized routine for incorporating a
-  // dynamically sized sequence when the sequence size is guaranteed to be >32.
-  // The size is always incorporated into the state.
-  auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void;
+  // Incorporates a dynamically sized byte sequence into `buffer` and returns
+  // the updated hash buffer.
+  //
+  // This is an out-of-line, throughput-optimized routine for sequences whose
+  // size is guaranteed to be >32. The size is always incorporated into the
+  // state. Taking and returning the buffer by value in a pure `static` function
+  // keeps callers' `Hasher` objects in registers across the out-of-line call
+  // boundary.
+  [[gnu::pure]] static auto HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes,
+                                                uint64_t buffer) -> uint64_t;
 
   // Utility functions to read data of various sizes efficiently into a
   // 64-bit value. These pointers need-not be aligned, and can alias other
@@ -932,7 +938,8 @@ inline auto Hasher::HashRaw(const T& value) -> void {
 
   // Hashing the size isn't relevant here, but is harmless, so fall back to a
   // common code path.
-  HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)));
+  buffer = HashSizedBytesLarge(llvm::ArrayRef<std::byte>(data_ptr, sizeof(T)),
+                               buffer);
 }
 
 [[clang::always_inline]] inline auto Hasher::HashSizedBytes(
@@ -1034,7 +1041,7 @@ inline auto Hasher::HashRaw(const T& value) -> void {
     return;
   }
 
-  HashSizedBytesLarge(bytes);
+  buffer = HashSizedBytesLarge(bytes, buffer);
 }
 
 }  // namespace Carbon

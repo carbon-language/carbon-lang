@@ -199,7 +199,7 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !56
+// CHECK:STDOUT:   %.loc16_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !56
 // CHECK:STDOUT:   %.loc16_42.2 = load i32, ptr %.loc16_42.1.n, align 4, !dbg !56
 // CHECK:STDOUT:   ret i32 %.loc16_42.2, !dbg !57
 // CHECK:STDOUT: }
@@ -362,76 +362,76 @@ fn Run() {
 // CHECK:STDOUT: declare void @_CMake.Main(ptr sret({}))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !122 {
+// CHECK:STDOUT: define void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr sret({}) %return, ptr %self) #0 !dbg !136 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @Y.val.loc14_54, i64 0, i1 false), !dbg !127
-// CHECK:STDOUT:   ret void, !dbg !127
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !129 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.fb3d597a6b1c4ee1(), !dbg !130
-// CHECK:STDOUT:   call void @_CF.Main.689d8af583927bab(), !dbg !131
-// CHECK:STDOUT:   call void @_CF.Main.be297cc7300419fe(), !dbg !132
-// CHECK:STDOUT:   ret void, !dbg !133
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.fb3d597a6b1c4ee1() #0 !dbg !134 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca { {}, {}, {} }, align 1, !dbg !135
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !135
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 0, !dbg !136
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem0.tuple.elem), !dbg !137
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 1, !dbg !136
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.tuple.elem), !dbg !138
-// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw { {}, {}, {} }, ptr %w.var, i32 0, i32 2, !dbg !136
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem2.tuple.elem), !dbg !139
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @Y.val.loc14_54, i64 0, i1 false), !dbg !141
 // CHECK:STDOUT:   ret void, !dbg !141
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.689d8af583927bab() #0 !dbg !142 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !143 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca [3 x {}], align 1, !dbg !143
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !143
-// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 0, !dbg !144
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.b44.array.index), !dbg !145
-// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 1, !dbg !144
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.5b6.array.index), !dbg !146
-// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds [3 x {}], ptr %w.var, i32 0, i64 2, !dbg !144
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.97d.array.index), !dbg !147
-// CHECK:STDOUT:   ret void, !dbg !149
+// CHECK:STDOUT:   call void @_CF.Main.fb3d597a6b1c4ee1(), !dbg !144
+// CHECK:STDOUT:   call void @_CF.Main.689d8af583927bab(), !dbg !145
+// CHECK:STDOUT:   call void @_CF.Main.be297cc7300419fe(), !dbg !146
+// CHECK:STDOUT:   ret void, !dbg !147
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.be297cc7300419fe() #0 !dbg !150 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.fb3d597a6b1c4ee1() #0 !dbg !148 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca {}, align 1, !dbg !151
-// CHECK:STDOUT:   %.7a56fd.1.temp = alloca {}, align 1, !dbg !151
-// CHECK:STDOUT:   %.7a56fd.2.temp = alloca {}, align 1, !dbg !151
-// CHECK:STDOUT:   %.7a56fd.3.temp = alloca {}, align 1, !dbg !151
-// CHECK:STDOUT:   %tuple.9aa = alloca { ptr, ptr, ptr }, align 8, !dbg !155
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !151
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.1.temp), !dbg !151
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.1.temp), !dbg !152
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.2.temp), !dbg !151
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !153
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !151
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !154
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.9aa), !dbg !155
-// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 0, !dbg !155
-// CHECK:STDOUT:   store ptr %.7a56fd.1.temp, ptr %tuple.9aa1, align 8, !dbg !155
-// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 1, !dbg !155
-// CHECK:STDOUT:   store ptr %.7a56fd.2.temp, ptr %tuple.9aa2, align 8, !dbg !155
-// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw { ptr, ptr, ptr }, ptr %tuple.9aa, i32 0, i32 2, !dbg !155
-// CHECK:STDOUT:   store ptr %.7a56fd.3.temp, ptr %tuple.9aa3, align 8, !dbg !155
-// CHECK:STDOUT:   call void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr %w.var, ptr %tuple.9aa), !dbg !151
+// CHECK:STDOUT:   %w.var = alloca { {}, {}, {} }, align 1, !dbg !149
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !149
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem0.tuple.elem), !dbg !151
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.tuple.elem), !dbg !152
+// CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !150
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem2.tuple.elem), !dbg !153
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.59df9a16f8c795fe(ptr %w.var), !dbg !149
 // CHECK:STDOUT:   ret void, !dbg !157
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.689d8af583927bab() #0 !dbg !158 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %w.var = alloca [3 x {}], align 1, !dbg !159
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !159
+// CHECK:STDOUT:   %.b44.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.b44.array.index), !dbg !161
+// CHECK:STDOUT:   %.5b6.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.5b6.array.index), !dbg !162
+// CHECK:STDOUT:   %.97d.array.index = getelementptr inbounds i8, ptr %w.var, i64 0, !dbg !160
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.97d.array.index), !dbg !163
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f85fac887b9592cc(ptr %w.var), !dbg !159
+// CHECK:STDOUT:   ret void, !dbg !165
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.be297cc7300419fe() #0 !dbg !166 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %w.var = alloca {}, align 1, !dbg !167
+// CHECK:STDOUT:   %.7a56fd.1.temp = alloca {}, align 1, !dbg !167
+// CHECK:STDOUT:   %.7a56fd.2.temp = alloca {}, align 1, !dbg !167
+// CHECK:STDOUT:   %.7a56fd.3.temp = alloca {}, align 1, !dbg !167
+// CHECK:STDOUT:   %tuple.9aa = alloca { ptr, ptr, ptr }, align 8, !dbg !171
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !167
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.1.temp), !dbg !167
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.1.temp), !dbg !168
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.2.temp), !dbg !167
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !169
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !167
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !170
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %tuple.9aa), !dbg !171
+// CHECK:STDOUT:   %tuple.9aa1 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 0, !dbg !171
+// CHECK:STDOUT:   store ptr %.7a56fd.1.temp, ptr %tuple.9aa1, align 8, !dbg !171
+// CHECK:STDOUT:   %tuple.9aa2 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 8, !dbg !171
+// CHECK:STDOUT:   store ptr %.7a56fd.2.temp, ptr %tuple.9aa2, align 8, !dbg !171
+// CHECK:STDOUT:   %tuple.9aa3 = getelementptr inbounds nuw i8, ptr %tuple.9aa, i64 16, !dbg !171
+// CHECK:STDOUT:   store ptr %.7a56fd.3.temp, ptr %tuple.9aa3, align 8, !dbg !171
+// CHECK:STDOUT:   call void @"_CConvert.92e03c783d6af646:ImplicitAs.be297cc7300419fe.Core"(ptr %w.var, ptr %tuple.9aa), !dbg !167
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.994e0b2182a91858(ptr %w.var), !dbg !167
+// CHECK:STDOUT:   ret void, !dbg !173
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -495,72 +495,75 @@ fn Run() {
 // CHECK:STDOUT: declare void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr sret({}), ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !160 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !197 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.75a9ebb2041c173b(), !dbg !161
-// CHECK:STDOUT:   call void @_CF.Main.f5d9b693014ce43e(), !dbg !162
-// CHECK:STDOUT:   call void @_CF.Main.84270bb113cb754b(), !dbg !163
-// CHECK:STDOUT:   ret void, !dbg !164
+// CHECK:STDOUT:   call void @_CF.Main.75a9ebb2041c173b(), !dbg !198
+// CHECK:STDOUT:   call void @_CF.Main.f5d9b693014ce43e(), !dbg !199
+// CHECK:STDOUT:   call void @_CF.Main.84270bb113cb754b(), !dbg !200
+// CHECK:STDOUT:   ret void, !dbg !201
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.75a9ebb2041c173b() #0 !dbg !165 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.75a9ebb2041c173b() #0 !dbg !202 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !166
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !166
-// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !168
-// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 0, !dbg !167
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.ae2.a), !dbg !169
-// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.16b.tuple.elem, i32 0, i32 1, !dbg !167
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.ffd.b), !dbg !170
-// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !168
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.b82.tuple.elem), !dbg !171
-// CHECK:STDOUT:   ret void, !dbg !173
+// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !203
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !203
+// CHECK:STDOUT:   %tuple.elem0.16b.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !205
+// CHECK:STDOUT:   %.ae2.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !204
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.ae2.a), !dbg !206
+// CHECK:STDOUT:   %.ffd.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.16b.tuple.elem, i64 0, !dbg !204
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.ffd.b), !dbg !207
+// CHECK:STDOUT:   %tuple.elem1.b82.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !205
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %tuple.elem1.b82.tuple.elem), !dbg !208
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e1b668d14ae6f638(ptr %w.var), !dbg !203
+// CHECK:STDOUT:   ret void, !dbg !210
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.f5d9b693014ce43e() #0 !dbg !174 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.f5d9b693014ce43e() #0 !dbg !211 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !175
-// CHECK:STDOUT:   %.7a56fd.1.temp = alloca {}, align 1, !dbg !175
-// CHECK:STDOUT:   %.7a56fd.2.temp = alloca {}, align 1, !dbg !175
-// CHECK:STDOUT:   %.7a56fd.3.temp = alloca {}, align 1, !dbg !175
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !175
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.1.temp), !dbg !175
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.1.temp), !dbg !176
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.2.temp), !dbg !175
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !177
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !175
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !179
-// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !180
-// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 0, !dbg !178
-// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.ce4.a, ptr %.7a56fd.1.temp), !dbg !178
-// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.c3c.tuple.elem, i32 0, i32 1, !dbg !178
-// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.0ae.b, ptr %.7a56fd.2.temp), !dbg !178
-// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !180
-// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.1e9.tuple.elem, ptr %.7a56fd.3.temp), !dbg !180
-// CHECK:STDOUT:   ret void, !dbg !182
+// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !212
+// CHECK:STDOUT:   %.7a56fd.1.temp = alloca {}, align 1, !dbg !212
+// CHECK:STDOUT:   %.7a56fd.2.temp = alloca {}, align 1, !dbg !212
+// CHECK:STDOUT:   %.7a56fd.3.temp = alloca {}, align 1, !dbg !212
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !212
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.1.temp), !dbg !212
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.1.temp), !dbg !213
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.2.temp), !dbg !212
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.2.temp), !dbg !214
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.3.temp), !dbg !212
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.3.temp), !dbg !216
+// CHECK:STDOUT:   %tuple.elem0.c3c.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !217
+// CHECK:STDOUT:   %.ce4.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !215
+// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.ce4.a, ptr %.7a56fd.1.temp), !dbg !215
+// CHECK:STDOUT:   %.0ae.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.c3c.tuple.elem, i64 0, !dbg !215
+// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.0ae.b, ptr %.7a56fd.2.temp), !dbg !215
+// CHECK:STDOUT:   %tuple.elem1.1e9.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !217
+// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.1e9.tuple.elem, ptr %.7a56fd.3.temp), !dbg !217
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.d998f017deb6d2c0(ptr %w.var), !dbg !212
+// CHECK:STDOUT:   ret void, !dbg !219
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.84270bb113cb754b() #0 !dbg !183 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.84270bb113cb754b() #0 !dbg !220 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !184
-// CHECK:STDOUT:   %.7a56fd.4.temp = alloca {}, align 1, !dbg !184
-// CHECK:STDOUT:   %.7a56fd.5.temp = alloca {}, align 1, !dbg !184
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !184
-// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 0, !dbg !186
-// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 0, !dbg !185
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.014.a), !dbg !187
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.4.temp), !dbg !184
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.4.temp), !dbg !188
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.5.temp), !dbg !184
-// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.5.temp), !dbg !189
-// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw { {}, {} }, ptr %tuple.elem0.297.tuple.elem, i32 0, i32 1, !dbg !185
-// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.94f.b, ptr %.7a56fd.4.temp), !dbg !185
-// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw { { {}, {} }, {} }, ptr %w.var, i32 0, i32 1, !dbg !186
-// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.76f.tuple.elem, ptr %.7a56fd.5.temp), !dbg !186
-// CHECK:STDOUT:   ret void, !dbg !191
+// CHECK:STDOUT:   %w.var = alloca { { {}, {} }, {} }, align 1, !dbg !221
+// CHECK:STDOUT:   %.7a56fd.4.temp = alloca {}, align 1, !dbg !221
+// CHECK:STDOUT:   %.7a56fd.5.temp = alloca {}, align 1, !dbg !221
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !221
+// CHECK:STDOUT:   %tuple.elem0.297.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !223
+// CHECK:STDOUT:   %.014.a = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !222
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.014.a), !dbg !224
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.4.temp), !dbg !221
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.4.temp), !dbg !225
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.7a56fd.5.temp), !dbg !221
+// CHECK:STDOUT:   call void @_CMake.Main(ptr %.7a56fd.5.temp), !dbg !226
+// CHECK:STDOUT:   %.94f.b = getelementptr inbounds nuw i8, ptr %tuple.elem0.297.tuple.elem, i64 0, !dbg !222
+// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %.94f.b, ptr %.7a56fd.4.temp), !dbg !222
+// CHECK:STDOUT:   %tuple.elem1.76f.tuple.elem = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !223
+// CHECK:STDOUT:   call void @"_CConvert.X.Main:ImplicitAs.be297cc7300419fe.Core"(ptr %tuple.elem1.76f.tuple.elem, ptr %.7a56fd.5.temp), !dbg !223
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6458632b8fd80962(ptr %w.var), !dbg !221
+// CHECK:STDOUT:   ret void, !dbg !228
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -625,9 +628,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !205 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !210
-// CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !210
-// CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !211
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !266
+// CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !266
+// CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !267
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -708,9 +711,9 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.C.Main:As.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !247 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !252
-// CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !252
-// CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !253
+// CHECK:STDOUT:   %.loc15_42.1.n = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !308
+// CHECK:STDOUT:   %.loc15_42.2 = load i32, ptr %.loc15_42.1.n, align 4, !dbg !308
+// CHECK:STDOUT:   ret i32 %.loc15_42.2, !dbg !309
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -782,19 +785,20 @@ fn Run() {
 // CHECK:STDOUT: @B.val.loc6_14 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMakeB.B.Main(ptr sret({}) %return) #0 !dbg !282 {
+// CHECK:STDOUT: define void @_CMakeB.B.Main(ptr sret({}) %return) #0 !dbg !338 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc6_14, i64 0, i1 false), !dbg !285
-// CHECK:STDOUT:   ret void, !dbg !285
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %return, ptr align 1 @B.val.loc6_14, i64 0, i1 false), !dbg !341
+// CHECK:STDOUT:   ret void, !dbg !341
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @main() #0 !dbg !286 {
+// CHECK:STDOUT: define i32 @main() #0 !dbg !342 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc21_10.1.temp = alloca { {} }, align 1, !dbg !287
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_10.1.temp), !dbg !287
-// CHECK:STDOUT:   call void @_CMakeA.Main.a6a60dfee2d7d273(ptr %.loc21_10.1.temp), !dbg !287
-// CHECK:STDOUT:   ret i32 0, !dbg !288
+// CHECK:STDOUT:   %.loc21_10.1.temp = alloca { {} }, align 1, !dbg !343
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_10.1.temp), !dbg !343
+// CHECK:STDOUT:   call void @_CMakeA.Main.a6a60dfee2d7d273(ptr %.loc21_10.1.temp), !dbg !343
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %.loc21_10.1.temp), !dbg !343
+// CHECK:STDOUT:   ret i32 0, !dbg !344
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -806,9 +810,14 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMakeA.Main.a6a60dfee2d7d273(ptr sret({ {} }) %return) #0 !dbg !289 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !293
-// CHECK:STDOUT:   call void @_CMakeB.B.Main(ptr %.f4aa6f.1.field), !dbg !292
-// CHECK:STDOUT:   ret void, !dbg !294
+// CHECK:STDOUT:   %.f4aa6f.1.field = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !349
+// CHECK:STDOUT:   call void @_CMakeB.B.Main(ptr %.f4aa6f.1.field), !dbg !348
+// CHECK:STDOUT:   ret void, !dbg !350
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #0 !dbg !351 {
+// CHECK:STDOUT:   ret void, !dbg !356
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

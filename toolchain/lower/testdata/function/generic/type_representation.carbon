@@ -94,13 +94,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.X.Main:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc38_24.1.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !50
+// CHECK:STDOUT:   %.loc38_24.1.a = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !50
 // CHECK:STDOUT:   %.loc38_24.2 = load i32, ptr %.loc38_24.1.a, align 4, !dbg !50
-// CHECK:STDOUT:   %.loc38_37.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !51
+// CHECK:STDOUT:   %.loc38_37.1.b = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !51
 // CHECK:STDOUT:   %.loc38_37.2 = load i32, ptr %.loc38_37.1.b, align 4, !dbg !51
-// CHECK:STDOUT:   %.loc38_39.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !52
+// CHECK:STDOUT:   %.loc38_39.2.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !52
 // CHECK:STDOUT:   store i32 %.loc38_24.2, ptr %.loc38_39.2.a, align 4, !dbg !52
-// CHECK:STDOUT:   %.loc38_39.4.b = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !52
+// CHECK:STDOUT:   %.loc38_39.4.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !52
 // CHECK:STDOUT:   store i32 %.loc38_37.2, ptr %.loc38_39.4.b, align 4, !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
@@ -128,13 +128,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.35f6012581c5aabb:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !81
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !81
 // CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem0.loc59_12.1.tuple.elem, align 4, !dbg !81
-// CHECK:STDOUT:   %tuple.elem0.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 0, !dbg !81
+// CHECK:STDOUT:   %tuple.elem0.loc59_12.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !81
 // CHECK:STDOUT:   store i32 %tuple.elem0.loc59_12.1.tuple.elem.load, ptr %tuple.elem0.loc59_12.2.tuple.elem, align 4, !dbg !81
-// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !81
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !81
 // CHECK:STDOUT:   %tuple.elem1.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem1.loc59_12.1.tuple.elem, align 4, !dbg !81
-// CHECK:STDOUT:   %tuple.elem1.loc59_12.2.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %return, i32 0, i32 1, !dbg !81
+// CHECK:STDOUT:   %tuple.elem1.loc59_12.2.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !81
 // CHECK:STDOUT:   store i32 %tuple.elem1.loc59_12.1.tuple.elem.load, ptr %tuple.elem1.loc59_12.2.tuple.elem, align 4, !dbg !81
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
@@ -149,13 +149,13 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @"_COp.3fdbec21075a186f:Copy.Main"(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %self) #0 !dbg !93 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 0, !dbg !98
+// CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !98
 // CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem.load = load ptr, ptr %tuple.elem0.loc69_17.tuple.elem, align 8, !dbg !98
-// CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !99
+// CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !99
 // CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %tuple.elem0.loc69_51.tuple.elem, ptr %tuple.elem0.loc69_17.tuple.elem.load), !dbg !98
-// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 1, !dbg !100
+// CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !100
 // CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem.load = load ptr, ptr %tuple.elem1.loc69_37.tuple.elem, align 8, !dbg !100
-// CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !99
+// CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !99
 // CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %tuple.elem1.loc69_51.tuple.elem, ptr %tuple.elem1.loc69_37.tuple.elem.load), !dbg !100
 // CHECK:STDOUT:   ret void, !dbg !101
 // CHECK:STDOUT: }
@@ -175,47 +175,52 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc18 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !118
 // CHECK:STDOUT:   store i32 %Copy.WithSelf.Op.call.loc18, ptr %_.var, align 4, !dbg !117
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc19 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !120
-// CHECK:STDOUT:   ret i32 %Copy.WithSelf.Op.call.loc19, !dbg !121
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var), !dbg !117
+// CHECK:STDOUT:   ret i32 %Copy.WithSelf.Op.call.loc19, !dbg !123
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.821738257746b808(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !123 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.821738257746b808(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !125 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !128
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !128
-// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %_.var, ptr %a), !dbg !129
-// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %return, ptr %a), !dbg !131
-// CHECK:STDOUT:   ret void, !dbg !132
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !130
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !130
+// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %_.var, ptr %a), !dbg !131
+// CHECK:STDOUT:   call void @"_COp.X.Main:Copy.Main"(ptr %return, ptr %a), !dbg !133
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %_.var), !dbg !130
+// CHECK:STDOUT:   ret void, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.45674e9c4b6d1871() #0 !dbg !134 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.45674e9c4b6d1871() #0 !dbg !138 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !138
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !138
-// CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !139
-// CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !141
-// CHECK:STDOUT:   ret void, !dbg !142
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !142
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !142
+// CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !143
+// CHECK:STDOUT:   call void @"_COp.61ea2aba74ab3bf1:Copy.Main"(), !dbg !145
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9045abb8230cbcdf(ptr %_.var), !dbg !142
+// CHECK:STDOUT:   ret void, !dbg !146
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.10c8e74cd85d15bb(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !143 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.10c8e74cd85d15bb(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !147 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !148
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !148
-// CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %_.var, ptr %a), !dbg !149
-// CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %return, ptr %a), !dbg !151
-// CHECK:STDOUT:   ret void, !dbg !152
+// CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !152
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !152
+// CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %_.var, ptr %a), !dbg !153
+// CHECK:STDOUT:   call void @"_COp.35f6012581c5aabb:Copy.Main"(ptr %return, ptr %a), !dbg !155
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %_.var), !dbg !152
+// CHECK:STDOUT:   ret void, !dbg !156
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.2ed3f5f1d0ae313e(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !154 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.2ed3f5f1d0ae313e(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !158 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 4, !dbg !159
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !159
-// CHECK:STDOUT:   call void @"_COp.3fdbec21075a186f:Copy.Main"(ptr %_.var, ptr %a), !dbg !160
-// CHECK:STDOUT:   call void @"_COp.3fdbec21075a186f:Copy.Main"(ptr %return, ptr %a), !dbg !162
-// CHECK:STDOUT:   ret void, !dbg !163
+// CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 4, !dbg !163
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !163
+// CHECK:STDOUT:   call void @"_COp.3fdbec21075a186f:Copy.Main"(ptr %_.var, ptr %a), !dbg !164
+// CHECK:STDOUT:   call void @"_COp.3fdbec21075a186f:Copy.Main"(ptr %return, ptr %a), !dbg !166
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1856a248bc68ad79(ptr %_.var), !dbg !163
+// CHECK:STDOUT:   ret void, !dbg !167
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

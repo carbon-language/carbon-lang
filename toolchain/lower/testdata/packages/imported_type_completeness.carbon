@@ -228,7 +228,7 @@ fn CallF() {
 // CHECK:STDOUT: ; ModuleID = 'require_completion_in_virtual_call.carbon'
 // CHECK:STDOUT: source_filename = "require_completion_in_virtual_call.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!60}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!70}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -258,18 +258,24 @@ fn CallF() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %t) #0 !dbg !70 {
-// CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !73
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !73
-// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw { ptr }, ptr %1, i32 0, i32 0, !dbg !74
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.99f.anon, i64 8, i1 false), !dbg !73
-// CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !76
-// CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !76
-// CHECK:STDOUT:   %3 = call i11 %2(ptr %1), !dbg !76
-// CHECK:STDOUT:   %vtable1 = load ptr, ptr %1, align 8, !dbg !79
-// CHECK:STDOUT:   %4 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !79
-// CHECK:STDOUT:   %5 = call i12 %4(ptr %1, ptr %t), !dbg !79
-// CHECK:STDOUT:   ret void, !dbg !83
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.9522ff908e97e267(ptr %t) #0 !dbg !77 {
+// CHECK:STDOUT:   %1 = alloca { ptr }, align 8, !dbg !80
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !80
+// CHECK:STDOUT:   %vptr = getelementptr inbounds nuw i8, ptr %1, i64 0, !dbg !81
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %1, ptr align 8 @C.val.99f.anon, i64 8, i1 false), !dbg !80
+// CHECK:STDOUT:   %vtable = load ptr, ptr %1, align 8, !dbg !83
+// CHECK:STDOUT:   %2 = call ptr @llvm.load.relative.i32(ptr %vtable, i32 0), !dbg !83
+// CHECK:STDOUT:   %3 = call i11 %2(ptr %1), !dbg !83
+// CHECK:STDOUT:   %vtable1 = load ptr, ptr %1, align 8, !dbg !86
+// CHECK:STDOUT:   %4 = call ptr @llvm.load.relative.i32(ptr %vtable1, i32 4), !dbg !86
+// CHECK:STDOUT:   %5 = call i12 %4(ptr %1, ptr %t), !dbg !86
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f117b1909e2778d8(ptr %1), !dbg !80
+// CHECK:STDOUT:   ret void, !dbg !90
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.d2923b1341c6d18f(ptr %t) #0 !dbg !92 {
+// CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

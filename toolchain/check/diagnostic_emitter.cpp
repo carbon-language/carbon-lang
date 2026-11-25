@@ -21,8 +21,8 @@ namespace Carbon::Check {
 auto DiagnosticEmitter::ConvertLoc(LocIdForDiagnostics loc_id,
                                    ContextFnT context_fn) const
     -> Diagnostics::ConvertedLoc {
-  auto [imports, converted] = loc_converter_.ConvertWithImports(
-      loc_id.loc_id(), loc_id.is_token_only());
+  auto [imports, converted] =
+      loc_converter_.ConvertWithImports(loc_id.loc_id(), loc_id.extent());
   for (const auto& import : imports) {
     // These are rendered as `<text>: <location>`, hanging off the location
     // they were reached from, so each reads as a step in a path.

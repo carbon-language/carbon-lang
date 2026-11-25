@@ -35,8 +35,8 @@ package Other library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ other_fn.carbon
 // CHECK:STDERR:        │ fn F() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_todo_main_use_other_extern.carbon
 // CHECK:STDERR:        │   Other.F();
@@ -59,8 +59,8 @@ package Other library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ other_fn.carbon
 // CHECK:STDERR:        │ fn F() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fail_main_use_other_ambiguous.carbon
 // CHECK:STDERR:        │   Other.F();
@@ -148,8 +148,8 @@ import library "main_other_ns";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ main_other_ns.carbon
 // CHECK:STDERR:        │ namespace Other;
-// CHECK:STDERR:        · ────────┬───────
-// CHECK:STDERR:        ·         ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ·           ──┬──
+// CHECK:STDERR:        ·             ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Other library "other_fn";
@@ -161,8 +161,8 @@ import Other library "other_fn";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ other_fn.carbon
 // CHECK:STDERR:        │ fn F() {}
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·    ┬
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Other.F() {}

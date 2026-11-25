@@ -309,14 +309,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_import_short_param_int32_arg.carbon:[[@LINE+15]]:11
+  // CHECK:STDERR:        ╭─┤ fail_import_short_param_int32_arg.carbon:[[@LINE+13]]:11
   // CHECK:STDERR: ->     │   Cpp.foo(1 as i32);
   // CHECK:STDERR:        ·           ┳━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: cannot implicitly convert expression of type `i32` to
-  // CHECK:STDERR:        ·           │  ┃        `i16`
-  // CHECK:STDERR:        ·           │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·           ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(i16)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ┃        `i16`
+  // CHECK:STDERR:        ·              ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./short_param.h
   // CHECK:STDERR:        │ auto foo(short a) -> void;

@@ -89,14 +89,13 @@ namespace A {
 fn TryToUseNotLeaked() {
   // TODO: Clang's diagnostic for using a class whose definition is not
   // reachable is confusing.
-  // CHECK:STDERR:        ╭─┤ fail_not_leaked.carbon:[[@LINE+14]]:17
+  // CHECK:STDERR:        ╭─┤ fail_not_leaked.carbon:[[@LINE+13]]:17
   // CHECK:STDERR: ->     │   var unused x: Cpp.A.X = 0;
   // CHECK:STDERR:        ·                 ┳━━━━━━
   // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has incomplete type `X` in name
   // CHECK:STDERR:        ·                    ┃        binding declaration
   // CHECK:STDERR:        ·                    ┃        [IncompleteTypeInBindingDecl]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        │ ╭── included from: direct_import.carbon [InCppInclude]
   // CHECK:STDERR:        ├─┤ ./shared.h
   // CHECK:STDERR:        │   struct X {
   // CHECK:STDERR:        ·          ┬

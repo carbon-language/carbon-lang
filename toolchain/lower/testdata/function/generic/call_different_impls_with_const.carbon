@@ -134,8 +134,21 @@ fn Run() {
 // CHECK:STDOUT: !27 = !DILocation(line: 41, column: 1, scope: !22)
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.d0cc85b6c89517e3", scope: null, file: !4, line: 37, type: !25, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !29 = !DILocation(line: 38, column: 16, scope: !28)
-// CHECK:STDOUT: !32 = !DILocation(line: 37, column: 1, scope: !28)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e8d4d639bae9ba40", scope: null, file: !4, line: 37, type: !25, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !34 = !DILocation(line: 38, column: 16, scope: !33)
-// CHECK:STDOUT: !37 = !DILocation(line: 37, column: 1, scope: !33)
+// CHECK:STDOUT: !32 = !{null, !7}
+// CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
+// CHECK:STDOUT: !34 = !DILocation(line: 37, column: 1, scope: !28)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.e8d4d639bae9ba40", scope: null, file: !4, line: 37, type: !25, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !36 = !DILocation(line: 38, column: 16, scope: !35)
+// CHECK:STDOUT: !39 = !{null, !6}
+// CHECK:STDOUT: !40 = !DISubroutineType(types: !39)
+// CHECK:STDOUT: !41 = !DILocation(line: 37, column: 1, scope: !35)
+// CHECK:STDOUT: !42 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !43 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.29e6aa423646b61a", scope: null, file: !42, line: 35, type: !33, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !49)
+// CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !7)
+// CHECK:STDOUT: !48 = !DILocation(line: 35, column: 1, scope: !43)
+// CHECK:STDOUT: !49 = !{!44}
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !42, line: 35, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !56)
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !6)
+// CHECK:STDOUT: !55 = !DILocation(line: 35, column: 1, scope: !50)
+// CHECK:STDOUT: !56 = !{!51}
 // CHECK:STDOUT:

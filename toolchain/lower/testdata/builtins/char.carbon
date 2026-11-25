@@ -52,5 +52,12 @@ fn Example() -> char {
 // CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Example", linkageName: "_CExample.Main", scope: null, file: !4, line: 4, type: !8, spFlags: DISPFlagDefinition, unit: !5)
 // CHECK:STDOUT: !12 = !DILocation(line: 5, column: 3, scope: !9)
 // CHECK:STDOUT: !14 = !DILocation(line: 6, column: 10, scope: !9)
-// CHECK:STDOUT: !15 = !DILocation(line: 6, column: 3, scope: !9)
+// CHECK:STDOUT: !15 = !{null, !6}
+// CHECK:STDOUT: !16 = !DISubroutineType(types: !15)
+// CHECK:STDOUT: !17 = !DILocation(line: 6, column: 3, scope: !9)
+// CHECK:STDOUT: !18 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.00174ca91d483df7", scope: null, file: !18, line: 35, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !25)
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !19, type: !6)
+// CHECK:STDOUT: !24 = !DILocation(line: 35, column: 1, scope: !19)
+// CHECK:STDOUT: !25 = !{!20}
 // CHECK:STDOUT:

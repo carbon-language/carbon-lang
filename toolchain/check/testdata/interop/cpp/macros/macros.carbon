@@ -1014,7 +1014,7 @@ Struct s;
 ''';
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_assign_array.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_assign_array.carbon:[[@LINE+16]]:3
   // CHECK:STDERR: ->     │   Cpp.m = 2;
   // CHECK:STDERR:        ·   ━━┳━━
   // CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `lvalue path contains an array type`
@@ -1022,15 +1022,12 @@ fn F() {
   // CHECK:STDERR:        ·     ╰────┤ in `Cpp` name lookup for `m` [InCppNameLookup]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_assign_array.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_assign_array.carbon:[[@LINE+8]]:3
   // CHECK:STDERR: ->     │   Cpp.m = 2;
   // CHECK:STDERR:        ·   ┳━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
-  // CHECK:STDERR:        ·   │  ┃        `array(i32, 3)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(array(i32, 3))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·      ┃        `array(i32, 3)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.m = 2;

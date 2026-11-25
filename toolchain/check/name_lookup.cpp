@@ -157,10 +157,11 @@ auto TryGetLookupResultInCurrentScope(Context& context, SemIR::LocId loc_id,
             UncapturedLocal, Error,
             "cannot reference local `{0}` declared in enclosing scope",
             SemIR::NameId);
-        CARBON_DIAGNOSTIC_LABEL(UncapturedLocalDecl, Info, "declared here");
+        CARBON_DIAGNOSTIC_LABEL(UncapturedLocalDecl, "declared here");
         context.emitter()
             .Build(loc_id, UncapturedLocal, name_id)
-            .Attach(target_inst_id, UncapturedLocalDecl)
+            .Attach(LocIdForDiagnostics::DeclaredName(target_inst_id),
+                    UncapturedLocalDecl)
             .Emit();
         return false;
       }
@@ -355,19 +356,25 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
       Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC_LABEL(ClassMemberDeclaration, Info, "declared here");
-  context.emitter()
-      .Build(loc_id, ClassInvalidMemberAccess,
-             access_kind == SemIR::AccessKind::Private, name_id, scope_type_id)
-      .Attach(member_loc_id, ClassMemberDeclaration)
-      .Emit();
+  CARBON_DIAGNOSTIC_LABEL(ClassMemberDeclaration, "declared here");
+  auto diag = context.emitter().Build(loc_id, ClassInvalidMemberAccess,
+                                      access_kind == SemIR::AccessKind::Private,
+                                      name_id, scope_type_id);
+  // Only attach a label when the member's declaration has a location distinct
+  // from the access.
+  auto decl_loc_id = context.insts().GetCanonicalLocId(member_loc_id);
+  if (decl_loc_id.has_value() &&
+      decl_loc_id != context.insts().GetCanonicalLocId(loc_id)) {
+    diag.Attach(LocIdForDiagnostics::DeclaredName(member_loc_id),
+                ClassMemberDeclaration);
+  }
+  diag.Emit();
 }
 
 // Returns whether the access is prohibited by the access modifiers.
 static auto IsAccessProhibited(Context& context,
                                std::optional<AccessInfo> access_info,
-                               SemIR::AccessKind access_kind,
-                               bool is_parent_access) -> bool {
+                               SemIR::AccessKind access_kind) -> bool {
   // Namespace members are always available within the current library;
   // filtering of private names happens in import, not here.
   if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
@@ -381,9 +388,7 @@ static auto IsAccessProhibited(Context& context,
     case SemIR::AccessKind::Protected:
       return access_info->highest_allowed_access == SemIR::AccessKind::Public;
     case SemIR::AccessKind::Private:
-      return access_info->highest_allowed_access !=
-                 SemIR::AccessKind::Private ||
-             is_parent_access;
+      return access_info->highest_allowed_access != SemIR::AccessKind::Private;
     case SemIR::AccessKind::Hidden:
       return true;
   }
@@ -393,7 +398,7 @@ auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(context, access_info, access_kind, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -456,12 +461,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       // they are not complete.
       RequireCompleteType(
           context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-          loc_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC_CONTEXT(QualifiedExprInIncompleteClassScope,
-                                      "member access into incomplete class {0}",
-                                      InstIdAsType);
-            builder.Attach(loc_id, QualifiedExprInIncompleteClassScope,
-                           lookup_inst_id);
+          loc_id, [&] {
+            CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Error,
+                              "member access into incomplete class {0}",
+                              InstIdAsType);
+            return context.emitter().Build(
+                loc_id, QualifiedExprInIncompleteClassScope, lookup_inst_id);
           });
     }
     auto& class_info = context.classes().Get(class_ty->class_id);
@@ -484,13 +489,14 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       if (!RequireCompleteType(
               context,
               context.types().GetTypeIdForTypeConstantId(lookup_const_id),
-              loc_id, [&](auto& builder) {
-                CARBON_DIAGNOSTIC_CONTEXT(
-                    QualifiedExprInIncompleteFacetTypeScope,
+              loc_id, [&] {
+                CARBON_DIAGNOSTIC(
+                    QualifiedExprInIncompleteFacetTypeScope, Error,
                     "member access into incomplete facet type {0}",
                     InstIdAsType);
-                builder.Attach(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                               lookup_inst_id);
+                return context.emitter().Build(
+                    loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                    lookup_inst_id);
               })) {
         // Lookup into this scope should fail without producing an error since
         // `RequireCompleteFacetType` has already issued a diagnostic.
@@ -623,8 +629,19 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                      .highest_allowed_access = SemIR::AccessKind::Protected};
     }
 
+    // Conditionally update the `AccessInfo` to allow access to a private
+    // member from outside its scope, if that scope provides private access to
+    // the accessing scope (e.g. via `friend`).
+    if (access_kind == SemIR::AccessKind::Private && access_info.has_value() &&
+        scope_result.is_found()) {
+      auto scope_constant = GetConstantValueInSpecific(
+          context.sem_ir(), specific_id, name_scope.inst_id());
+      access_info->highest_allowed_access =
+          GetHighestAllowedAccess(context, scope_constant);
+    }
+
     auto is_access_prohibited =
-        IsAccessProhibited(context, access_info, access_kind, is_parent_access);
+        IsAccessProhibited(context, access_info, access_kind);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.
@@ -799,11 +816,10 @@ auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "duplicate name `{0}` being declared in the same scope",
                     SemIR::NameId);
-  CARBON_DIAGNOSTIC_LABEL(NameDeclPrevious, Info,
-                          "name is previously declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameDeclPrevious, "name is previously declared here");
   context.emitter()
       .Build(dup_def, NameDeclDuplicate, name_id)
-      .Attach(prev_def, NameDeclPrevious)
+      .Attach(LocIdForDiagnostics::DeclaredName(prev_def), NameDeclPrevious)
       .Emit();
 }
 
@@ -814,7 +830,7 @@ auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name `{0}` used before it was declared", SemIR::NameId);
-  CARBON_DIAGNOSTIC_LABEL(NameUseBeforeDeclNote, Info, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameUseBeforeDeclNote, "declared here");
   context.emitter()
       .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
       .Attach(decl_name_loc_id, NameUseBeforeDeclNote)

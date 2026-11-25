@@ -249,12 +249,17 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.e43630e9a6c38c3f(ptr sret({ i32, ptr }) %return) #0 !dbg !79 {
-// CHECK:STDOUT:   %data = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 0, !dbg !88
-// CHECK:STDOUT:   %next = getelementptr inbounds nuw { i32, ptr }, ptr %return, i32 0, i32 1, !dbg !88
-// CHECK:STDOUT:   store ptr %return, ptr %next, align 8, !dbg !88
-// CHECK:STDOUT:   store i32 42, ptr %data, align 4, !dbg !88
-// CHECK:STDOUT:   ret void, !dbg !89
+// CHECK:STDOUT: define linkonce_odr void @_CMake.Main.e43630e9a6c38c3f(ptr sret({ i32, ptr }) %return) #0 !dbg !97 {
+// CHECK:STDOUT:   %data = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !106
+// CHECK:STDOUT:   %next = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !106
+// CHECK:STDOUT:   store ptr %return, ptr %next, align 8, !dbg !106
+// CHECK:STDOUT:   store i32 42, ptr %data, align 4, !dbg !106
+// CHECK:STDOUT:   ret void, !dbg !107
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !108 {
+// CHECK:STDOUT:   ret void, !dbg !113
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

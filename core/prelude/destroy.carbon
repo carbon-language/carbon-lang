@@ -41,5 +41,6 @@ fn SelfDestruct[T: Destroy](ref t: T) {
 interface TrivialDestroyImpl {}
 
 constraint TrivialDestroy {
-  extend require impls Destroy & TrivialDestroyImpl;
+  extend require impls TrivialDestroyImpl;
+  require impls Destroy;
 }

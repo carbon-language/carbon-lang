@@ -62,13 +62,13 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %while.body, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
-// CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
-// CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !29
-// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !29
+// CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %0, %while.body ]
+// CHECK:STDOUT:   %.loc16_11 = zext nneg i32 %n.var.03 to i64, !dbg !29
+// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %.loc16_11, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !29
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !29
-// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !85
+// CHECK:STDOUT:   %0 = add nuw nsw i32 %n.var.03, 1, !dbg !93
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !25
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !24
 // CHECK:STDOUT:
@@ -78,7 +78,6 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT:   uselistorder label %while.body, { 1, 0 }
 // CHECK:STDOUT:   uselistorder i32 %n.var.03, { 0, 2, 1 }
-// CHECK:STDOUT:   uselistorder ptr %.loc16_11.array.index, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
