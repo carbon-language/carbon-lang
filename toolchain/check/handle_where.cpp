@@ -104,10 +104,10 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
           identified.EvaluateImplWitnessesToGetImplAsTarget(context, node_id);
       if (impl_as_target.is_valid()) {
         auto& declaring = context.declaring_impl_decls().Peek();
-        if (declaring != SemIR::SpecificInterface::None) {
-          CARBON_CHECK(declaring == impl_as_target.target());
+        if (declaring.specific_interface != SemIR::SpecificInterface::None) {
+          CARBON_CHECK(declaring.specific_interface == impl_as_target.target());
         }
-        declaring = impl_as_target.target();
+        declaring.specific_interface = impl_as_target.target();
       }
     }
   }
