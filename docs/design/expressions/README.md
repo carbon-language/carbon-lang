@@ -324,6 +324,11 @@ is syntactic sugar for `(` `*` _expression_ `)` `.` _..._.
 
 ## Operators
 
+> **TODO:** Update the precedence diagram above and the operator descriptions
+> below to reflect these changes in
+> [proposal #8187: Extended-type call interface and `call` syntax](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#call):
+> `call(...)` / `call[val/ref/var](...)` facet type expressions.
+
 Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |
