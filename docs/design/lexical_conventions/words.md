@@ -34,6 +34,11 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+> **TODO:** Update this keyword list (and the syntax highlighters listed below)
+> to reflect these changes in
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#using):
+> add `using`.
+
 <!--
 Keep in sync:
 - utils/highlightjs/highlightjs_carbon_lang.js

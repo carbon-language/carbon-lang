@@ -761,6 +761,13 @@ other name uses in patterns.
 
 #### Aliasing
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#namespace-aliases):
+> `alias` no longer applies to namespaces; instead, namespace aliases use
+> `namespace C = A.B;` (or `private namespace D = A.B;`), with aliases to
+> namespaces in other packages restricted to `private` declarations or `impl`
+> files.
+
 Carbon's [alias keyword](/docs/design/aliases.md) will support aliasing
 namespaces. For example, this would be valid code:
 
