@@ -238,13 +238,13 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !59 = !DILocation(line: 52, column: 7, scope: !53)
 // CHECK:STDOUT: !60 = !{!54}
 // CHECK:STDOUT: !61 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.632d99dc34484dc8", scope: null, file: !61, line: 36, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.632d99dc34484dc8", scope: null, file: !61, line: 35, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !9)
-// CHECK:STDOUT: !67 = !DILocation(line: 36, column: 1, scope: !62)
+// CHECK:STDOUT: !67 = !DILocation(line: 35, column: 1, scope: !62)
 // CHECK:STDOUT: !68 = !{!63}
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.773050755018f871", scope: null, file: !61, line: 36, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !75)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.773050755018f871", scope: null, file: !61, line: 35, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !75)
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !9)
-// CHECK:STDOUT: !74 = !DILocation(line: 36, column: 1, scope: !69)
+// CHECK:STDOUT: !74 = !DILocation(line: 35, column: 1, scope: !69)
 // CHECK:STDOUT: !75 = !{!70}
 // CHECK:STDOUT: !76 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !77 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.2313f7f09b1ddaea", scope: null, file: !76, line: 30, type: !15, spFlags: DISPFlagDefinition, unit: !5)

@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 #define CARBON_TOOLCHAIN_BASE_VALUE_IDS_H_
 
+#include <string>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"

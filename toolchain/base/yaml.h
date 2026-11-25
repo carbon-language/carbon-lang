@@ -5,6 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_BASE_YAML_H_
 #define CARBON_TOOLCHAIN_BASE_YAML_H_
 
+#include <functional>
+#include <utility>
+
 #include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"

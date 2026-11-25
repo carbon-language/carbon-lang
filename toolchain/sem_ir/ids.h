@@ -8,6 +8,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
+#include <array>
 #include <limits>
 #include <optional>
 

@@ -155,8 +155,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !50 = !DILocation(line: 30, column: 3, scope: !38)
 // CHECK:STDOUT: !51 = !{!39, !40}
 // CHECK:STDOUT: !52 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 36, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !6)
-// CHECK:STDOUT: !58 = !DILocation(line: 36, column: 1, scope: !53)
+// CHECK:STDOUT: !58 = !DILocation(line: 35, column: 1, scope: !53)
 // CHECK:STDOUT: !59 = !{!54}
 // CHECK:STDOUT:

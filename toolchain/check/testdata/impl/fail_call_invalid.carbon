@@ -50,7 +50,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.b0e: <witness> = impl_self_witness %i32, @Simple [concrete]
+// CHECK:STDOUT:   %.b0e: <witness> = impl_self_witness %i32, @Simple [symbolic_self]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @i32.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.321a2c.1: type = fn_type @i32.as.Simple.impl.G.loc26_25.1 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.d407b2.1: %i32.as.Simple.impl.G.type.321a2c.1 = struct_value () [concrete]
@@ -91,7 +91,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.Simple.impl.%i32, @Simple [concrete = constants.%.b0e]
+// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.Simple.impl.%i32, @Simple [symbolic_self = constants.%.b0e]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%n.param_patt]
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]

@@ -208,7 +208,7 @@ fn Use() {
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [concrete]
+// CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %C, (%J.impl_witness) [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
@@ -216,7 +216,7 @@ fn Use() {
 // CHECK:STDOUT:   %UseJ.specific_fn: <specific function> = specific_function %UseJ, @UseJ(%J.facet) [concrete]
 // CHECK:STDOUT:   %.d7c: type = fn_type_with_self_type %I.WithSelf.F.type.492, %I.facet.297 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.specific_fn.2f7: <specific function> = specific_function %T.as_type.as.I.impl.F.fed, @T.as_type.as.I.impl.F(%T.e40) [symbolic]
-// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.2ce: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.c8e: %I.type = facet_value %C, (%I.impl_witness.2ce) [concrete]
 // CHECK:STDOUT:   %UseI.specific_fn.0ef: <specific function> = specific_function %UseI, @UseI(%I.facet.c8e) [concrete]
@@ -284,7 +284,7 @@ fn Use() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J [concrete = constants.%.ffd]
+// CHECK:STDOUT:   %.loc15: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J [symbolic_self = constants.%.ffd]
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -589,13 +589,13 @@ fn Use() {
 // CHECK:STDOUT:   %I.facet.297833.2: %I.type = facet_value %V.as_type, (%I.impl_witness.e22ed8.2) [symbolic]
 // CHECK:STDOUT:   %B.14e: type = class_type @B, @B(%I.facet.297833.2) [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [concrete]
+// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @D.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %D, (%J.impl_witness) [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.a61: type = class_type @C, @C(%J.facet) [concrete]
-// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [concrete]
+// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.6a0: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.a62: %I.type = facet_value %D, (%I.impl_witness.6a0) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.1b8: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.a62) [concrete]
@@ -663,7 +663,7 @@ fn Use() {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [concrete = constants.%.b77]
+// CHECK:STDOUT:   %.loc20: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [symbolic_self = constants.%.b77]
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -969,7 +969,7 @@ fn Use() {
 // CHECK:STDOUT:   %UseJ: %UseJ.type = struct_value () [concrete]
 // CHECK:STDOUT:   %UseI.specific_fn.95d: <specific function> = specific_function %UseI, @UseI(%I.facet.297) [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [concrete]
+// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @D.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %J.facet: %J.type = facet_value %D, (%J.impl_witness) [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
@@ -979,7 +979,7 @@ fn Use() {
 // CHECK:STDOUT:   %require_complete.c9d: <witness> = require_complete_type %C.ac5 [symbolic]
 // CHECK:STDOUT:   %.d7c: type = fn_type_with_self_type %I.WithSelf.F.type.492, %I.facet.297 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.specific_fn.2f7: <specific function> = specific_function %T.as_type.as.I.impl.F.fed, @T.as_type.as.I.impl.F(%T.e40) [symbolic]
-// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [concrete]
+// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.6a0: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.a62: %I.type = facet_value %D, (%I.impl_witness.6a0) [concrete]
 // CHECK:STDOUT:   %UseI.specific_fn.033: <specific function> = specific_function %UseI, @UseI(%I.facet.a62) [concrete]
@@ -1058,7 +1058,7 @@ fn Use() {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [concrete = constants.%.b77]
+// CHECK:STDOUT:   %.loc18: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [symbolic_self = constants.%.b77]
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1795,16 +1795,16 @@ fn Use() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %B.val.2d3: %B.e4c = struct_value () [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [concrete]
+// CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness.90c: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %J.facet.0da: %J.type = facet_value %C, (%J.impl_witness.90c) [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [concrete]
+// CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [symbolic_self]
 // CHECK:STDOUT:   %J.impl_witness.73f: <witness> = impl_witness @D.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %J.facet.28d: %J.type = facet_value %D, (%J.impl_witness.73f) [concrete]
 // CHECK:STDOUT:   %Use.type: type = fn_type @Use [concrete]
 // CHECK:STDOUT:   %Use: %Use.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [concrete]
+// CHECK:STDOUT:   %.b7f: <witness> = impl_self_witness %C, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.2ce: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet.0da) [concrete]
 // CHECK:STDOUT:   %I.facet.c8e: %I.type = facet_value %C, (%I.impl_witness.2ce) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.151: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.c8e) [concrete]
@@ -1816,7 +1816,7 @@ fn Use() {
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.9a9: %T.as_type.as.I.impl.F.type.ad4 = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.G.type.f54: type = fn_type @T.as_type.as.I.impl.G, @T.as_type.as.I.impl(%J.facet.0da) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.G.772: %T.as_type.as.I.impl.G.type.f54 = struct_value () [concrete]
-// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [concrete]
+// CHECK:STDOUT:   %.393: <witness> = impl_self_witness %D, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.6a0: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet.28d) [concrete]
 // CHECK:STDOUT:   %I.facet.a62: %I.type = facet_value %D, (%I.impl_witness.6a0) [concrete]
 // CHECK:STDOUT:   %B.51d: type = class_type @B, @B(%I.facet.a62) [concrete]
@@ -1901,13 +1901,13 @@ fn Use() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc32: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J [concrete = constants.%.ffd]
+// CHECK:STDOUT:   %.loc32: <witness> = impl_self_witness @C.as.J.impl.%C.ref, @J [symbolic_self = constants.%.ffd]
 // CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT:   impl_decl @D.as.J.impl [concrete] {} {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %J.ref: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc35: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [concrete = constants.%.b77]
+// CHECK:STDOUT:   %.loc35: <witness> = impl_self_witness @D.as.J.impl.%D.ref, @J [symbolic_self = constants.%.b77]
 // CHECK:STDOUT:   %Use.decl: %Use.type = fn_decl @Use [concrete = constants.%Use] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

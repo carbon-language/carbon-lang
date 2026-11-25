@@ -6,6 +6,8 @@
 #define CARBON_COMMON_HASHTABLE_KEY_CONTEXT_H_
 
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
 
 #include "common/hashing.h"
 #include "llvm/ADT/APFloat.h"

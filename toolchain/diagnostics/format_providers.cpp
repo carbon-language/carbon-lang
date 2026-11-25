@@ -4,6 +4,8 @@
 
 #include "toolchain/diagnostics/format_providers.h"
 
+#include <optional>
+
 #include "common/check.h"
 #include "llvm/ADT/StringExtras.h"
 

@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <concepts>
+#include <cstddef>
 #include <filesystem>
 #include <iterator>
 #include <string>

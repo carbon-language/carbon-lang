@@ -5,6 +5,10 @@
 #ifndef CARBON_COMMON_RAW_STRING_OSTREAM_H_
 #define CARBON_COMMON_RAW_STRING_OSTREAM_H_
 
+#include <cstdint>
+#include <string>
+#include <utility>
+
 #include "common/check.h"
 #include "common/ostream.h"
 
