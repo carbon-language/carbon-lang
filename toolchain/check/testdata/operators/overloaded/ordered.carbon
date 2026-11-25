@@ -68,6 +68,59 @@ fn TestGreaterEqual(a: C2, b: C2) -> bool {
   return a >= b;
 }
 
+// --- generic.carbon
+
+package Generic;
+
+class C {};
+
+impl C as Core.OrderedWith(C) {
+  fn Less(self: C, other: C) -> bool;
+  fn LessOrEquivalent(self: C, other: C) -> bool;
+  fn Greater(self: C, other: C) -> bool;
+  fn GreaterOrEquivalent(self: C, other: C) -> bool;
+}
+
+class C2 {};
+
+impl C2 as Core.Ordered {
+  fn Less(self: C2, other: C2) -> bool;
+  fn LessOrEquivalent(self: C2, other: C2) -> bool;
+  fn Greater(self: C2, other: C2) -> bool;
+  fn GreaterOrEquivalent(self: C2, other: C2) -> bool;
+}
+
+fn TestGenericLess[T: Core.Ordered](a: T, b: T) -> bool {
+  return a < b;
+}
+
+fn TestGenericLessEqual[T: Core.Ordered](a: T, b: T) -> bool {
+  return a <= b;
+}
+
+fn TestGenericGreater[T: Core.Ordered](a: T, b: T) -> bool {
+  return a > b;
+}
+
+fn TestGenericGreaterEqual[T: Core.Ordered](a: T, b: T) -> bool {
+  return a >= b;
+}
+
+fn CallGeneric(c: C, c2: C2, i: i32) {
+  let _: bool = TestGenericLess(c, c);
+  let _: bool = TestGenericLessEqual(c, c);
+  let _: bool = TestGenericGreater(c, c);
+  let _: bool = TestGenericGreaterEqual(c, c);
+  let _: bool = TestGenericLess(c2, c2);
+  let _: bool = TestGenericLessEqual(c2, c2);
+  let _: bool = TestGenericGreater(c2, c2);
+  let _: bool = TestGenericGreaterEqual(c2, c2);
+  let _: bool = TestGenericLess(i, i);
+  let _: bool = TestGenericLessEqual(i, i);
+  let _: bool = TestGenericGreater(i, i);
+  let _: bool = TestGenericGreaterEqual(i, i);
+}
+
 // --- fail_no_impl.carbon
 
 package FailNoImpl;

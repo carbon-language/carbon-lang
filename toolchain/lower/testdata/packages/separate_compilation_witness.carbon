@@ -21,7 +21,7 @@ class Vector {
   var x: i32;
 }
 
-impl Vector as Core.AddWith(Vector) where .Result = Vector {
+impl Vector as Core.Add {
   fn Op(self, other: Vector) -> Vector {
     return {.x = self.x + other.x};
   }

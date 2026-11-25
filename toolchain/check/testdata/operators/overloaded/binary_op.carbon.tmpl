@@ -34,3 +34,47 @@ fn TestAssign(a: C*, b: C) {
   *a OP= b;
   //@dump-sem-ir-end
 }
+
+class D {};
+
+impl D as Core.INTERFACE {
+  fn Op(unused self: D, unused other: D) -> D {
+    return {};
+  }
+}
+impl D as Core.INTERFACEAssign {
+  fn Op(unused ref self: D, unused other: D) {}
+}
+
+fn TestNamedConstraintOp(a: D, b: D) -> D {
+  //@dump-sem-ir-begin
+  return a OP b;
+  //@dump-sem-ir-end
+}
+
+fn TestNamedConstraintAssign(a: D*, b: D) {
+  //@dump-sem-ir-begin
+  *a OP= b;
+  //@dump-sem-ir-end
+}
+
+fn TestGenericOp[T: Core.INTERFACE](a: T, b: T) -> T {
+  //@dump-sem-ir-begin
+  return a OP b;
+  //@dump-sem-ir-end
+}
+
+fn TestGenericAssign[T: Core.INTERFACEAssign](a: T*, b: T) {
+  //@dump-sem-ir-begin
+  *a OP= b;
+  //@dump-sem-ir-end
+}
+
+fn CallGeneric(c: C, cp: C*, d: D, dp: D*, i: i32, ip: i32*) {
+  let _: C = TestGenericOp(c, c);
+  TestGenericAssign(cp, c);
+  let _: D = TestGenericOp(d, d);
+  TestGenericAssign(dp, d);
+  let _: i32 = TestGenericOp(i, i);
+  TestGenericAssign(ip, i);
+}

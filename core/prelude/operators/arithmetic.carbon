@@ -13,22 +13,23 @@ import library "prelude/types/float_literal";
 //
 //   default let Result: type = Self;
 
-// TODO: Per the design, for each *With interface there should also be a
-// non-With named constraint, such as:
-//
-//   constraint Add {
-//     extend require impls AddWith(Self) where .Result = Self;
-//   }
-
 // Addition: `a + b`.
 interface AddWith(Other: type) {
   let Result: type;
   fn Op(self, other: Other) -> Result;
 }
 
+constraint Add {
+  extend require impls AddWith(Self) where .Result = Self;
+}
+
 // Addition with assignment: `a += b`.
 interface AddAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint AddAssign {
+  extend require impls AddAssignWith(Self);
 }
 
 // Increment: `++a`.
@@ -48,9 +49,17 @@ interface SubWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint Sub {
+  extend require impls SubWith(Self) where .Result = Self;
+}
+
 // Subtraction with assignment: `a -= b`.
 interface SubAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint SubAssign {
+  extend require impls SubAssignWith(Self);
 }
 
 // Decrement: `--a`.
@@ -64,9 +73,17 @@ interface MulWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint Mul {
+  extend require impls MulWith(Self) where .Result = Self;
+}
+
 // Multiplication with assignment: `a *= b`.
 interface MulAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint MulAssign {
+  extend require impls MulAssignWith(Self);
 }
 
 // Division: `a / b`.
@@ -75,9 +92,17 @@ interface DivWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint Div {
+  extend require impls DivWith(Self) where .Result = Self;
+}
+
 // Division with assignment: `a /= b`.
 interface DivAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint DivAssign {
+  extend require impls DivAssignWith(Self);
 }
 
 // Modulo: `a % b`.
@@ -86,9 +111,17 @@ interface ModWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint Mod {
+  extend require impls ModWith(Self) where .Result = Self;
+}
+
 // Modulo with assignment: `a %= b`.
 interface ModAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint ModAssign {
+  extend require impls ModAssignWith(Self);
 }
 
 

@@ -11,13 +11,6 @@ import library "prelude/types/int_literal";
 //
 //   default let Result: type = Self;
 
-// TODO: Per the design, for each *With interface there should also be a
-// non-With named constraint, such as:
-//
-//   constraint BitAnd {
-//     extend require impls BitAndWith(Self) where .Result = Self;
-//   }
-
 // Bit complement: `^a`.
 interface BitComplement {
   let Result: type;
@@ -30,9 +23,17 @@ interface BitAndWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint BitAnd {
+  extend require impls BitAndWith(Self) where .Result = Self;
+}
+
 // Bitwise AND with assignment: `a &= b`.
 interface BitAndAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint BitAndAssign {
+  extend require impls BitAndAssignWith(Self);
 }
 
 // Bitwise OR: `a | b`.
@@ -41,9 +42,17 @@ interface BitOrWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint BitOr {
+  extend require impls BitOrWith(Self) where .Result = Self;
+}
+
 // Bitwise OR with assignment: `a |= b`.
 interface BitOrAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint BitOrAssign {
+  extend require impls BitOrAssignWith(Self);
 }
 
 // Bitwise XOR: `a ^ b`.
@@ -52,9 +61,17 @@ interface BitXorWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint BitXor {
+  extend require impls BitXorWith(Self) where .Result = Self;
+}
+
 // Bitwise XOR with assignment: `a ^= b`.
 interface BitXorAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint BitXorAssign {
+  extend require impls BitXorAssignWith(Self);
 }
 
 // Left shift: `a << b`.
@@ -63,9 +80,17 @@ interface LeftShiftWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint LeftShift {
+  extend require impls LeftShiftWith(Self) where .Result = Self;
+}
+
 // Left shift with assignment: `a <<= b`.
 interface LeftShiftAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint LeftShiftAssign {
+  extend require impls LeftShiftAssignWith(Self);
 }
 
 // Right shift: `a >> b`.
@@ -74,9 +99,17 @@ interface RightShiftWith(Other: type) {
   fn Op(self, other: Other) -> Result;
 }
 
+constraint RightShift {
+  extend require impls RightShiftWith(Self) where .Result = Self;
+}
+
 // Right shift with assignment: `a >>= b`.
 interface RightShiftAssignWith(Other: type) {
   fn Op(ref self, other: Other);
+}
+
+constraint RightShiftAssign {
+  extend require impls RightShiftAssignWith(Self);
 }
 
 

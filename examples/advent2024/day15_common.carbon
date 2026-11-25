@@ -39,6 +39,29 @@ let Box: Square = ('O' as char) as Square;
 let Empty: Square = ('.' as char) as Square;
 let Robot: Square = ('@' as char) as Square;
 
+class Pos {
+  impl as Core.UnformedInit {}
+  impl as Core.Copy {
+    fn Op(self) -> Self {
+      return {.x = self.x, .y = self.y};
+    }
+  }
+  impl as Core.Add {
+    fn Op(self, other: Self) -> Self {
+      return {.x = self.x + other.x, .y = self.y + other.y};
+    }
+  }
+  impl as Core.AddAssign {
+    fn Op(ref self, other: Self) {
+      self.x += other.x;
+      self.y += other.y;
+    }
+  }
+
+  var x: i32;
+  var y: i32;
+}
+
 class Grid {
   impl as Core.UnformedInit {}
 
@@ -50,7 +73,7 @@ class Grid {
       while (x < 50) {
         me.data[x][y] = Square.Make(ReadChar());
         if (me.data[x][y] == Robot) {
-          me.robot = (x, y);
+          me.robot = {.x = x, .y = y};
         }
         ++x;
       }
@@ -60,17 +83,16 @@ class Grid {
     return var;
   }
 
-  fn Move(ref self, d: (i32, i32)) {
-    var distance: i32 = 1;
-    while (self.data[self.robot.0 + distance * d.0][self.robot.1 + distance * d.1] == Box) {
-      ++distance;
+  fn Move(ref self, d: Pos) {
+    var dest: Pos = self.robot + d;
+    while (self.data[dest.x][dest.y] == Box) {
+      dest += d;
     }
-    if (self.data[self.robot.0 + distance * d.0][self.robot.1 + distance * d.1] == Empty) {
-      self.data[self.robot.0][self.robot.1] = Empty;
-      self.data[self.robot.0 + distance * d.0][self.robot.1 + distance * d.1] = Box;
-      self.data[self.robot.0 + d.0][self.robot.1 + d.1] = Robot;
-      self.robot.0 += d.0;
-      self.robot.1 += d.1;
+    if (self.data[dest.x][dest.y] == Empty) {
+      self.data[self.robot.x][self.robot.y] = Empty;
+      self.data[dest.x][dest.y] = Box;
+      self.robot += d;
+      self.data[self.robot.x][self.robot.y] = Robot;
     }
   }
 
@@ -105,7 +127,7 @@ class Grid {
   }
 
   var data: array(array(Square, 50), 50);
-  var robot: (i32, i32);
+  var robot: Pos;
 }
 
 fn ReadAndExecuteActions(ref g: Grid) {
@@ -117,13 +139,13 @@ fn ReadAndExecuteActions(ref g: Grid) {
     // Core.PrintChar('\n');
     // TODO: Use `match` once it's available.
     if (m == '^') {
-      g.Move((0, -1));
+      g.Move({.x = 0, .y = -1});
     } else if (m == '<') {
-      g.Move((-1, 0));
+      g.Move({.x = -1, .y = 0});
     } else if (m == '>') {
-      g.Move((1, 0));
+      g.Move({.x = 1, .y = 0});
     } else if (m == 'v') {
-      g.Move((0, 1));
+      g.Move({.x = 0, .y = 1});
     } else if (m == CharOrEOF.EOF()) {
       return;
     }

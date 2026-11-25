@@ -47,6 +47,42 @@ fn TestNotEqual(a: C2, b: C2) -> bool {
   return a != b;
 }
 
+// --- generic.carbon
+
+package Generic;
+
+class C {};
+
+impl C as Core.EqWith(C) {
+  fn Equal(self: C, other: C) -> bool;
+  fn NotEqual(self: C, other: C) -> bool;
+}
+
+class C2 {};
+
+impl C2 as Core.Eq {
+  fn Equal(self: C2, other: C2) -> bool;
+}
+
+fn TestGenericEqual[T: Core.Eq](a: T, b: T) -> bool {
+  return a == b;
+}
+
+fn TestGenericNotEqual[T: Core.Eq](a: T, b: T) -> bool {
+  return a != b;
+}
+
+fn CallGeneric(c: C, c2: C2, i: i32, b: bool) {
+  let _: bool = TestGenericEqual(c, c);
+  let _: bool = TestGenericNotEqual(c, c);
+  let _: bool = TestGenericEqual(c2, c2);
+  let _: bool = TestGenericNotEqual(c2, c2);
+  let _: bool = TestGenericEqual(i, i);
+  let _: bool = TestGenericNotEqual(i, i);
+  let _: bool = TestGenericEqual(b, b);
+  let _: bool = TestGenericNotEqual(b, b);
+}
+
 // --- fail_no_impl.carbon
 
 package FailNoImpl;
