@@ -3494,9 +3494,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   CheckedSaveAndRestore access_context(context.access_context(),
                                        FindAccessContext(context, generic));
 
-  // TODO: There are now 3 things being set-and-restored. Can this be refactored
-  // to make this a more clear pattern?
-
   // The `eval_impl_lookup_to_identified_witness` is also a global state that
   // modifies the evaluation of LookupImplWitness. We don't want to apply that
   // state to existing instructions in eval blocks, unless we are resolving a
