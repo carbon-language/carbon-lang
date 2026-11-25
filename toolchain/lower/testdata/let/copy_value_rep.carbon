@@ -34,13 +34,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %x.var = alloca { i32 }, align 4, !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !26
 // CHECK:STDOUT:   %.loc18_21.3.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !27
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3.1, i64 4, i1 false), !dbg !26
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @X.val.loc18_3, i64 4, i1 false), !dbg !26
 // CHECK:STDOUT:   %.loc19_17.1.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !29
 // CHECK:STDOUT:   %.loc19_17.2 = load i32, ptr %.loc19_17.1.a, align 4, !dbg !29
 // CHECK:STDOUT:   %.loc20_4.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !32
 // CHECK:STDOUT:   store i32 2, ptr %.loc20_4.a, align 4, !dbg !32
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2abb6e2621dcf00d(ptr %x.var), !dbg !26
-// CHECK:STDOUT:   ret i32 %.loc19_17.2, !dbg !37
+// CHECK:STDOUT:   ret i32 %.loc19_17.2, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

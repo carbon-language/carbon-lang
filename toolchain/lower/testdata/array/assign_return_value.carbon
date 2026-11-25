@@ -47,9 +47,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc16_28.6 = load i32, ptr %tuple.elem1.tuple.elem, align 4, !dbg !35
 // CHECK:STDOUT:   %.loc16_28.7.array.index = getelementptr inbounds i8, ptr %_.var, i64 4, !dbg !35
 // CHECK:STDOUT:   store i32 %.loc16_28.6, ptr %.loc16_28.7.array.index, align 4, !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %.loc16_28.1.temp), !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %_.var), !dbg !34
-// CHECK:STDOUT:   ret i32 0, !dbg !39
+// CHECK:STDOUT:   ret i32 0, !dbg !37
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

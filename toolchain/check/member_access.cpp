@@ -339,6 +339,8 @@ auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
   return fn ? fn->function_id : SemIR::FunctionId::None;
 }
 
+// Performs impl lookup for a member name expression. This finds the relevant
+// impl witness and extracts the corresponding impl member.
 static auto PerformImplLookup(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId type_const_id,
                               SemIR::AssociatedEntityType assoc_type,

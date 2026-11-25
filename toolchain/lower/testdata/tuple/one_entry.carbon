@@ -32,9 +32,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_20.1 = load i32, ptr %tuple.elem0.tuple.elem, align 4, !dbg !29
 // CHECK:STDOUT:   %.loc15_20.2.tuple.init = insertvalue { i32 } poison, i32 %.loc15_20.1, 0, !dbg !29
 // CHECK:STDOUT:   store { i32 } %.loc15_20.2.tuple.init, ptr %_.var, align 4, !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4635d7e6af44e91a(ptr %_.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4635d7e6af44e91a(ptr %x.var), !dbg !26
-// CHECK:STDOUT:   ret i32 0, !dbg !34
+// CHECK:STDOUT:   ret i32 0, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

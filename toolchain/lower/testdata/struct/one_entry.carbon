@@ -32,9 +32,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_22.2 = load i32, ptr %.loc15_22.1.a, align 4, !dbg !29
 // CHECK:STDOUT:   %.loc15_22.3.struct.init = insertvalue { i32 } poison, i32 %.loc15_22.2, 0, !dbg !29
 // CHECK:STDOUT:   store { i32 } %.loc15_22.3.struct.init, ptr %_.var, align 4, !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0ab8a5403fe67e42(ptr %_.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0ab8a5403fe67e42(ptr %x.var), !dbg !26
-// CHECK:STDOUT:   ret i32 0, !dbg !34
+// CHECK:STDOUT:   ret i32 0, !dbg !31
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

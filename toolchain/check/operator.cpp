@@ -115,8 +115,6 @@ auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
     return SemIR::ErrorInst::InstId;
   }
 
-  // TODO: replace with a no-op implementation when we support closed overload
-  // sets
   auto interface_type_id =
       GetInterfaceType(context, trivial_destroy_id, SemIR::SpecificId::None)
           .AsConstantId();

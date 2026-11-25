@@ -96,7 +96,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p)
-// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
+// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !4
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !4
@@ -105,7 +105,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.notnull:                                   ; preds = %entry
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %0, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %0, i64 noundef 8) #11
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.end:                                       ; preds = %delete.notnull, %entry
@@ -152,7 +152,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p)
-// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #11
+// CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !6
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !6
@@ -217,16 +217,14 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.e9cc9e95545cc62f:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !41 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !43
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !43
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.28387b086eba9957:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !45 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc12_13.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !47
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc12_13.1.base), !dbg !47
+// CHECK:STDOUT:   %.loc12.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !47
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -256,8 +254,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_COp.294df737cd074d60:core.SubobjectDestroy.Core"(ptr %self) #8 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc17_17.1.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !64
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc17_17.1.base), !dbg !64
+// CHECK:STDOUT:   %.loc17.base = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !64
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -291,7 +288,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,7 +321,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #12
+// CHECK:STDOUT:   call void @_ZdlPvm(ptr allocptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -77,8 +77,7 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT:   store i32 %.loc8_36.6, ptr %tuple2, align 4, !dbg !15
 // CHECK:STDOUT:   %IdFromGeneric.call = call i1 @_CIdFromGeneric.Main.1ac5a6b0e5910c46(i1 true), !dbg !21
 // CHECK:STDOUT:   %Id.call = call i32 @_CId.Main.2fad9574e050607e(i32 %n), !dbg !27
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %.loc8_36.3.temp), !dbg !15
-// CHECK:STDOUT:   ret i32 %Id.call, !dbg !30
+// CHECK:STDOUT:   ret i32 %Id.call, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -87,11 +86,11 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CPair.Main.2fad9574e050607e(ptr sret({ i32, i32 }) %return, i32 %x) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !35
-// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem0.tuple.elem, align 4, !dbg !35
-// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !35
-// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem1.tuple.elem, align 4, !dbg !35
-// CHECK:STDOUT:   ret void, !dbg !38
+// CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !33
+// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem0.tuple.elem, align 4, !dbg !33
+// CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !33
+// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem1.tuple.elem, align 4, !dbg !33
+// CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -129,7 +128,7 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !7 = !{!6, !6}
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !4, line: 7, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !31)
+// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !4, line: 7, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !29)
 // CHECK:STDOUT: !10 = !DILocalVariable(arg: 1, scope: !9, type: !6)
 // CHECK:STDOUT: !15 = !DILocation(line: 8, column: 30, scope: !9)
 // CHECK:STDOUT: !16 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -139,33 +138,26 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT: !22 = !{!16, !16}
 // CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !27 = !DILocation(line: 10, column: 10, scope: !9)
-// CHECK:STDOUT: !28 = !{null, !16}
-// CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !30 = !DILocation(line: 10, column: 3, scope: !9)
-// CHECK:STDOUT: !31 = !{!10}
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "Pair", linkageName: "_CPair.Main.2fad9574e050607e", scope: null, file: !4, line: 4, type: !18, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !39)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !32, type: !6)
-// CHECK:STDOUT: !35 = !DILocation(line: 4, column: 46, scope: !32)
-// CHECK:STDOUT: !38 = !DILocation(line: 4, column: 39, scope: !32)
-// CHECK:STDOUT: !39 = !{!33}
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "IdFromGeneric", linkageName: "_CIdFromGeneric.Main.1ac5a6b0e5910c46", scope: null, file: !4, line: 5, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !48)
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !16)
-// CHECK:STDOUT: !46 = !DILocation(line: 5, column: 52, scope: !40)
-// CHECK:STDOUT: !47 = !DILocation(line: 5, column: 45, scope: !40)
-// CHECK:STDOUT: !48 = !{!41}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Id", linkageName: "_CId.Main.2fad9574e050607e", scope: null, file: !4, line: 3, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !54)
-// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !6)
-// CHECK:STDOUT: !53 = !DILocation(line: 3, column: 37, scope: !49)
-// CHECK:STDOUT: !54 = !{!50}
-// CHECK:STDOUT: !55 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !56 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ffbc82e0019b7bf2", scope: null, file: !55, line: 35, type: !29, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !62)
-// CHECK:STDOUT: !57 = !DILocalVariable(arg: 1, scope: !56, type: !16)
-// CHECK:STDOUT: !61 = !DILocation(line: 35, column: 1, scope: !56)
-// CHECK:STDOUT: !62 = !{!57}
-// CHECK:STDOUT: !63 = distinct !DISubprogram(name: "Id", linkageName: "_CId.Main.1ac5a6b0e5910c46", scope: null, file: !4, line: 3, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
-// CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !63, type: !16)
-// CHECK:STDOUT: !67 = !DILocation(line: 3, column: 37, scope: !63)
-// CHECK:STDOUT: !68 = !{!64}
+// CHECK:STDOUT: !28 = !DILocation(line: 10, column: 3, scope: !9)
+// CHECK:STDOUT: !29 = !{!10}
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Pair", linkageName: "_CPair.Main.2fad9574e050607e", scope: null, file: !4, line: 4, type: !18, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
+// CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !30, type: !6)
+// CHECK:STDOUT: !33 = !DILocation(line: 4, column: 46, scope: !30)
+// CHECK:STDOUT: !36 = !DILocation(line: 4, column: 39, scope: !30)
+// CHECK:STDOUT: !37 = !{!31}
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "IdFromGeneric", linkageName: "_CIdFromGeneric.Main.1ac5a6b0e5910c46", scope: null, file: !4, line: 5, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !46)
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !16)
+// CHECK:STDOUT: !44 = !DILocation(line: 5, column: 52, scope: !38)
+// CHECK:STDOUT: !45 = !DILocation(line: 5, column: 45, scope: !38)
+// CHECK:STDOUT: !46 = !{!39}
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Id", linkageName: "_CId.Main.2fad9574e050607e", scope: null, file: !4, line: 3, type: !8, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !52)
+// CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !6)
+// CHECK:STDOUT: !51 = !DILocation(line: 3, column: 37, scope: !47)
+// CHECK:STDOUT: !52 = !{!48}
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Id", linkageName: "_CId.Main.1ac5a6b0e5910c46", scope: null, file: !4, line: 3, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !58)
+// CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !16)
+// CHECK:STDOUT: !57 = !DILocation(line: 3, column: 37, scope: !53)
+// CHECK:STDOUT: !58 = !{!54}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'template.carbon'
@@ -232,12 +224,12 @@ fn Use(ref n: i32) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CPair.Main.2fad9574e050607e(ptr sret({ i32, i32 }) %return, i32 %x) #0 !dbg !100 {
-// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !103
-// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem, align 4, !dbg !103
-// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !103
-// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem1, align 4, !dbg !103
-// CHECK:STDOUT:   ret void, !dbg !106
+// CHECK:STDOUT: define linkonce_odr void @_CPair.Main.2fad9574e050607e(ptr sret({ i32, i32 }) %return, i32 %x) #0 !dbg !90 {
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !93
+// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem, align 4, !dbg !93
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !93
+// CHECK:STDOUT:   store i32 %x, ptr %tuple.elem1, align 4, !dbg !93
+// CHECK:STDOUT:   ret void, !dbg !96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }

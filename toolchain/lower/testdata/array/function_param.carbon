@@ -43,8 +43,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %.loc18_20.7.array.index = getelementptr inbounds i8, ptr %.loc18_20.3.temp, i64 4, !dbg !42
 // CHECK:STDOUT:   %.loc18_20.10.array.index = getelementptr inbounds i8, ptr %.loc18_20.3.temp, i64 8, !dbg !42
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr @array.loc18_20.15, i32 1), !dbg !43
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3c9880f178514995(ptr @array), !dbg !42
-// CHECK:STDOUT:   ret i32 %F.call, !dbg !46
+// CHECK:STDOUT:   ret i32 %F.call, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

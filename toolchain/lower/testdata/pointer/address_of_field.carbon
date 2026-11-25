@@ -32,7 +32,7 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %s.var), !dbg !27
 // CHECK:STDOUT:   %.loc16_46.3.a = getelementptr inbounds nuw i8, ptr %s.var, i64 0, !dbg !28
 // CHECK:STDOUT:   %.loc16_46.6.b = getelementptr inbounds nuw i8, ptr %s.var, i64 4, !dbg !28
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.940.loc16_3.1, i64 8, i1 false), !dbg !27
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.940.loc16_3, i64 8, i1 false), !dbg !27
 // CHECK:STDOUT:   %.loc17.b = getelementptr inbounds nuw i8, ptr %s.var, i64 4, !dbg !30
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc17.b), !dbg !32
 // CHECK:STDOUT:   ret void, !dbg !33

@@ -79,13 +79,7 @@ fn Run() {
 // CHECK:STDOUT:   %.loc20_21.1.array.index = getelementptr inbounds i8, ptr %.loc20_18.1.temp, i64 4, !dbg !49
 // CHECK:STDOUT:   %.loc20_21.2 = load i32, ptr %.loc20_21.1.array.index, align 4, !dbg !49
 // CHECK:STDOUT:   store i32 %.loc20_21.2, ptr %_.var.loc20, align 4, !dbg !48
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %.loc20_18.1.temp), !dbg !49
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var.loc20), !dbg !48
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var.loc19), !dbg !44
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %b.var), !dbg !42
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %.loc17_28.1.temp), !dbg !40
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4f2cee5f6b4c30a4(ptr %a.var), !dbg !39
-// CHECK:STDOUT:   ret i32 0, !dbg !55
+// CHECK:STDOUT:   ret i32 0, !dbg !51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

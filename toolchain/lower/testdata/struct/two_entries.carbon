@@ -30,7 +30,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !26
 // CHECK:STDOUT:   %.loc14_46.3.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !27
 // CHECK:STDOUT:   %.loc14_46.6.b = getelementptr inbounds nuw i8, ptr %x.var, i64 4, !dbg !27
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.940.loc14_3.1, i64 8, i1 false), !dbg !26
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %x.var, ptr align 4 @struct.940.loc14_3, i64 8, i1 false), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   %.loc15_31.1.a = getelementptr inbounds nuw i8, ptr %x.var, i64 0, !dbg !30
 // CHECK:STDOUT:   %.loc15_31.2 = load i32, ptr %.loc15_31.1.a, align 4, !dbg !30
@@ -40,9 +40,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc15_31.6 = load i32, ptr %.loc15_31.5.b, align 4, !dbg !30
 // CHECK:STDOUT:   %.loc15_31.7.b = getelementptr inbounds nuw i8, ptr %_.var, i64 4, !dbg !30
 // CHECK:STDOUT:   store i32 %.loc15_31.6, ptr %.loc15_31.7.b, align 4, !dbg !30
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %_.var), !dbg !29
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %x.var), !dbg !26
-// CHECK:STDOUT:   ret i32 0, !dbg !35
+// CHECK:STDOUT:   ret i32 0, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

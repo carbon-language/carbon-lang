@@ -301,35 +301,32 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !132
 // CHECK:STDOUT:   %.loc16_37.2.v = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !133
 // CHECK:STDOUT:   %.loc16_37.5.w = getelementptr inbounds nuw i8, ptr %c.var, i64 4, !dbg !133
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.b50.loc16_3.1, i64 8, i1 false), !dbg !132
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.b50.loc16_3, i64 8, i1 false), !dbg !132
 // CHECK:STDOUT:   %C.GetBool.call = call i1 @_CGetBool.C.Main.2fad9574e050607e(ptr %c.var), !dbg !135
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ab3d3663b9d81a60(ptr %c.var), !dbg !132
-// CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !138
+// CHECK:STDOUT:   ret i1 %C.GetBool.call, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessInt.Main() #0 !dbg !139 {
+// CHECK:STDOUT: define i32 @_CAccessInt.Main() #0 !dbg !137 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i1, i32 }, align 4, !dbg !142
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !142
-// CHECK:STDOUT:   %.loc21_37.2.v = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !143
-// CHECK:STDOUT:   %.loc21_37.5.w = getelementptr inbounds nuw i8, ptr %c.var, i64 4, !dbg !143
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.b50.loc16_3.1, i64 8, i1 false), !dbg !142
-// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.2fad9574e050607e(ptr %c.var), !dbg !145
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ab3d3663b9d81a60(ptr %c.var), !dbg !142
-// CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !148
+// CHECK:STDOUT:   %c.var = alloca { i1, i32 }, align 4, !dbg !140
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !140
+// CHECK:STDOUT:   %.loc21_37.2.v = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !141
+// CHECK:STDOUT:   %.loc21_37.5.w = getelementptr inbounds nuw i8, ptr %c.var, i64 4, !dbg !141
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.b50.loc16_3, i64 8, i1 false), !dbg !140
+// CHECK:STDOUT:   %C.GetT.call = call i32 @_CGetT.C.Main.2fad9574e050607e(ptr %c.var), !dbg !143
+// CHECK:STDOUT:   ret i32 %C.GetT.call, !dbg !146
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CAccessEmpty.Main() #0 !dbg !149 {
+// CHECK:STDOUT: define void @_CAccessEmpty.Main() #0 !dbg !147 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca { i1, {} }, align 1, !dbg !152
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !152
-// CHECK:STDOUT:   %.loc26_37.2.v = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !153
-// CHECK:STDOUT:   %.loc26_37.4.w = getelementptr inbounds nuw i8, ptr %c.var, i64 1, !dbg !153
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.988.loc26_3.1, i64 1, i1 false), !dbg !152
-// CHECK:STDOUT:   call void @_CGetT.C.Main.22bf4b2f6c4322a2(ptr %c.var), !dbg !155
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3900ebc9e1b9b76c(ptr %c.var), !dbg !152
+// CHECK:STDOUT:   %c.var = alloca { i1, {} }, align 1, !dbg !150
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !150
+// CHECK:STDOUT:   %.loc26_37.2.v = getelementptr inbounds nuw i8, ptr %c.var, i64 0, !dbg !151
+// CHECK:STDOUT:   %.loc26_37.4.w = getelementptr inbounds nuw i8, ptr %c.var, i64 1, !dbg !151
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @C.val.988.loc26_3, i64 1, i1 false), !dbg !150
+// CHECK:STDOUT:   call void @_CGetT.C.Main.22bf4b2f6c4322a2(ptr %c.var), !dbg !153
 // CHECK:STDOUT:   ret void, !dbg !156
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,9 +340,8 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc31_57.4.w, i64 0, !dbg !162
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc31_57.4.w, i64 4, !dbg !162
 // CHECK:STDOUT:   %tuple.elem2.tuple.elem = getelementptr inbounds nuw i8, ptr %.loc31_57.4.w, i64 8, !dbg !162
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.519.loc31_3.1, i64 16, i1 false), !dbg !160
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @C.val.519.loc31_3, i64 16, i1 false), !dbg !160
 // CHECK:STDOUT:   call void @_CGetT.C.Main.2d2ea40c1a2cefdc(ptr %return, ptr %c.var), !dbg !164
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.771b959080479bc3(ptr %c.var), !dbg !160
 // CHECK:STDOUT:   ret void, !dbg !165
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,58 +361,43 @@ fn AccessTuple() -> (i32, i32, i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ab3d3663b9d81a60(ptr %t) #0 !dbg !174 {
-// CHECK:STDOUT:   ret void, !dbg !179
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.2fad9574e050607e(ptr %self) #0 !dbg !181 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CGetT.C.Main.2fad9574e050607e(ptr %self) #0 !dbg !174 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !186
-// CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !186
-// CHECK:STDOUT:   ret i32 %.loc9_16.2, !dbg !187
+// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !179
+// CHECK:STDOUT:   %.loc9_16.2 = load i32, ptr %.loc9_16.1.w, align 4, !dbg !179
+// CHECK:STDOUT:   ret i32 %.loc9_16.2, !dbg !180
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.22bf4b2f6c4322a2(ptr %self) #0 !dbg !182 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 1, !dbg !194
-// CHECK:STDOUT:   ret void, !dbg !195
+// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 1, !dbg !187
+// CHECK:STDOUT:   ret void, !dbg !188
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3900ebc9e1b9b76c(ptr %t) #0 !dbg !197 {
-// CHECK:STDOUT:   ret void, !dbg !202
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.2d2ea40c1a2cefdc(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !204 {
+// CHECK:STDOUT: define linkonce_odr void @_CGetT.C.Main.2d2ea40c1a2cefdc(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !190 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !209
-// CHECK:STDOUT:   call void @"_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450"(ptr %return, ptr %.loc9_16.1.w), !dbg !209
-// CHECK:STDOUT:   ret void, !dbg !210
+// CHECK:STDOUT:   %.loc9_16.1.w = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !195
+// CHECK:STDOUT:   call void @"_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450"(ptr %return, ptr %.loc9_16.1.w), !dbg !195
+// CHECK:STDOUT:   ret void, !dbg !196
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.771b959080479bc3(ptr %t) #0 !dbg !212 {
-// CHECK:STDOUT:   ret void, !dbg !217
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !219 {
-// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !224
-// CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !224
-// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !225
-// CHECK:STDOUT:   %tuple.elem2 = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !226
-// CHECK:STDOUT:   %tuple.elem.load3 = load i32, ptr %tuple.elem2, align 4, !dbg !226
-// CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !225
-// CHECK:STDOUT:   %tuple.elem5 = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !227
-// CHECK:STDOUT:   %tuple.elem.load6 = load i32, ptr %tuple.elem5, align 4, !dbg !227
-// CHECK:STDOUT:   %tuple.elem7 = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !225
-// CHECK:STDOUT:   store i32 %tuple.elem.load, ptr %tuple.elem1, align 4, !dbg !225
-// CHECK:STDOUT:   store i32 %tuple.elem.load3, ptr %tuple.elem4, align 4, !dbg !225
-// CHECK:STDOUT:   store i32 %tuple.elem.load6, ptr %tuple.elem7, align 4, !dbg !225
-// CHECK:STDOUT:   ret void, !dbg !228
+// CHECK:STDOUT: define linkonce_odr void @"_COp.6753b13effab4291:Copy.Core.dc98eaa6ba6c4450"(ptr sret({ i32, i32, i32 }) %return, ptr %self) #0 !dbg !198 {
+// CHECK:STDOUT:   %tuple.elem = getelementptr inbounds nuw i8, ptr %self, i64 0, !dbg !203
+// CHECK:STDOUT:   %tuple.elem.load = load i32, ptr %tuple.elem, align 4, !dbg !203
+// CHECK:STDOUT:   %tuple.elem1 = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !204
+// CHECK:STDOUT:   %tuple.elem2 = getelementptr inbounds nuw i8, ptr %self, i64 4, !dbg !205
+// CHECK:STDOUT:   %tuple.elem.load3 = load i32, ptr %tuple.elem2, align 4, !dbg !205
+// CHECK:STDOUT:   %tuple.elem4 = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !204
+// CHECK:STDOUT:   %tuple.elem5 = getelementptr inbounds nuw i8, ptr %self, i64 8, !dbg !206
+// CHECK:STDOUT:   %tuple.elem.load6 = load i32, ptr %tuple.elem5, align 4, !dbg !206
+// CHECK:STDOUT:   %tuple.elem7 = getelementptr inbounds nuw i8, ptr %return, i64 8, !dbg !204
+// CHECK:STDOUT:   store i32 %tuple.elem.load, ptr %tuple.elem1, align 4, !dbg !204
+// CHECK:STDOUT:   store i32 %tuple.elem.load3, ptr %tuple.elem4, align 4, !dbg !204
+// CHECK:STDOUT:   store i32 %tuple.elem.load6, ptr %tuple.elem7, align 4, !dbg !204
+// CHECK:STDOUT:   ret void, !dbg !207
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives

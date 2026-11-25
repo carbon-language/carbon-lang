@@ -46,7 +46,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc21_3.6.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 4, !dbg !41
 // CHECK:STDOUT:   %.loc21_3.9.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 8, !dbg !41
 // CHECK:STDOUT:   %.loc21_3.12.array.index = getelementptr inbounds i8, ptr %_.var.loc16, i64 12, !dbg !41
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc16, ptr align 4 @array.e93.loc16_3.1, i64 16, i1 false), !dbg !40
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %_.var.loc16, ptr align 4 @array.e93.loc16_3, i64 16, i1 false), !dbg !40
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var.loc22), !dbg !43
 // CHECK:STDOUT:   %.loc29_3.3.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 0, !dbg !44
 // CHECK:STDOUT:   %.loc29_3.6.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 8, !dbg !44
@@ -54,10 +54,8 @@ fn F() {
 // CHECK:STDOUT:   %.loc29_3.12.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 24, !dbg !44
 // CHECK:STDOUT:   %.loc29_3.15.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 32, !dbg !44
 // CHECK:STDOUT:   %.loc29_3.18.array.index = getelementptr inbounds i8, ptr %_.var.loc22, i64 40, !dbg !44
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc22, ptr align 8 @array.33a.loc22_3.1, i64 48, i1 false), !dbg !43
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b5f30f9c486f7750(ptr %_.var.loc22), !dbg !43
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.8a58b7b15e68238e(ptr %_.var.loc16), !dbg !40
-// CHECK:STDOUT:   ret void, !dbg !49
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 8 %_.var.loc22, ptr align 8 @array.33a.loc22_3, i64 48, i1 false), !dbg !43
+// CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)

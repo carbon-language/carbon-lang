@@ -100,7 +100,6 @@ fn F() {
 // CHECK:STDOUT:   %.loc24_32.7.base = getelementptr inbounds nuw i8, ptr %_.var, i64 0, !dbg !39
 // CHECK:STDOUT:   %.loc24_32.8.vptr = getelementptr inbounds nuw i8, ptr %.loc24_32.7.base, i64 0, !dbg !39
 // CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon4Main1ZE, i64 16), ptr %.loc24_32.8.vptr, align 8, !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ff24853a526ad6af(ptr %_.var), !dbg !38
 // CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
