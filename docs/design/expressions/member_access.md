@@ -1096,6 +1096,20 @@ instance binding depends on what instance member `M` was found:
 
 ### Member binding interfaces
 
+> **TODO:** Update this section and
+> [Inheritance and other implicit conversions](#inheritance-and-other-implicit-conversions)
+> to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-member-binding-interface):
+>
+> -   `Bind`, `BindToValue`, and `BindToRef` are replaced with the single
+>     `MemberBind(implicit_into LHS: Core.ExtType)` interface and named
+>     constraints `BindToVal` and `BindToRef` (dropping `Bind`, and allowing
+>     `BindToVal` to match reference expressions by way of `implicit_into`),
+> -   bound method examples should use `Core.CallPrimitive` / `call[val]` (from
+>     [proposal #8187](https://github.com/carbon-language/carbon-lang/pull/8187))
+>     instead of `Call`, and
+> -   [implicit conversions of `self`](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#implicit-conversions-of-self).
+
 Instance binding in `x.(y)` or `x.y` is defined in terms of rewrites to invoking
 an interface method, like other operators. There are two interfaces used,
 depending on whether `x` is a value expression or a reference expression:

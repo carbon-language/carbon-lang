@@ -1819,6 +1819,11 @@ be detected in function overloading.
 
 ## Adapting types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-conversion-interfaces):
+> adapters automatically implement `Core.AsPrimitive` (preserving expression
+> category).
+
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
@@ -6457,6 +6462,14 @@ Multiple `==` clauses are allowed in an `observe` declaration, so you may write
 `observe A == B == C impls I;`.
 
 ## Operator overloading
+
+> **TODO:** Update this section and [Binary operators](#binary-operators) to
+> reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-versions-of-other-operator-interfaces):
+> operator interfaces (`Negate`, `As`, `MulWith`, `OrderedWith`, and so on) are
+> replaced by `Primitive` extended type interfaces and named constraints, and
+> operator operands selecting a `ref` or generic extended type `impl` are marked
+> with `ref` or `fwd`.
 
 Operations are overloaded for a type by implementing an interface specific to
 that interface for that type. For example, types implement

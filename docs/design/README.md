@@ -3315,6 +3315,12 @@ declaration may be used to
 
 ### Operator overloading
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md):
+> operator interfaces are generalized to `Primitive` extended type interfaces
+> (including returning references by way of `ref` extended return types rather
+> than pointers), with type-oriented named constraints.
+
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type
 `U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So

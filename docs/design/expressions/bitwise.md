@@ -195,18 +195,38 @@ Bitwise and shift operators can be provided for user-defined types by
 implementing the following family of interfaces:
 
 ```
+package Core;
+
 // Unary `^`.
-interface BitComplement {
-  default let Result: type = Self;
-  fn Op(self) -> Result;
+interface BitComplementPrimitive(
+    implicit_into anchor Self: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self) -> fwd ResultExtType;
+}
+constraint BitComplement {
+  let Result: type;
+  extend require exttype(val Self) impls
+      BitComplementPrimitive
+      where .ResultExtType = exttype(var Result);
 }
 ```
 
 ```
 // Binary `&`.
-interface BitAndWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface BitAndWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint BitAndWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      BitAndWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitAnd {
   extend BitAndWith(Self) where .Result = Self;
@@ -215,9 +235,19 @@ constraint BitAnd {
 
 ```
 // Binary `|`.
-interface BitOrWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface BitOrWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint BitOrWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      BitOrWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitOr {
   extend BitOrWith(Self) where .Result = Self;
@@ -226,20 +256,42 @@ constraint BitOr {
 
 ```
 // Binary `^`.
-interface BitXorWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface BitXorWithPrimitive(
+    implicit_into Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint BitXorWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      BitXorWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint BitXor {
   extend BitXorWith(Self) where .Result = Self;
 }
 ```
 
+Note that the shift operators anchor on the type of the left argument.
+
 ```
 // Binary `<<`.
-interface LeftShiftWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface LeftShiftWithPrimitive(
+    implicit_into anchor Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint LeftShiftWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      LeftShiftWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint LeftShift {
   extend LeftShiftWith(Self) where .Result = Self;
@@ -248,23 +300,38 @@ constraint LeftShift {
 
 ```
 // Binary `>>`.
-interface RightShiftWith(U: type) {
-  default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+interface RightShiftWithPrimitive(
+    implicit_into anchor Self: ExtType,
+    implicit_into U: ExtType) {
+  default let implicit_from ResultExtType: ExtType
+      = exttype(var Self.type);
+  fn Op(fwd self: Self, fwd other: U)
+      -> fwd ResultExtType;
+}
+constraint RightShiftWith(U: type) {
+  let Result: type;
+  extend require exttype(val Self) impls
+      RightShiftWithPrimitive(exttype(val U))
+      where .ResultExtType = exttype(var Result);
 }
 constraint RightShift {
   extend RightShiftWith(Self) where .Result = Self;
 }
 ```
 
-Given `x: T` and `y: U`:
+These interfaces are used to rewrite uses of the bitwise and shift operators:
 
--   The expression `^x` is rewritten to `x.(BitComplement.Op)()`.
--   The expression `x & y` is rewritten to `x.(BitAndWith(U).Op)(y)`.
--   The expression `x | y` is rewritten to `x.(BitOrWith(U).Op)(y)`.
--   The expression `x ^ y` is rewritten to `x.(BitXorWith(U).Op)(y)`.
--   The expression `x << y` is rewritten to `x.(LeftShiftWith(U).Op)(y)`.
--   The expression `x >> y` is rewritten to `x.(RightShiftWith(U).Op)(y)`.
+-   The expression `^x` is rewritten to `x.(BitComplementPrimitive.Op)()`.
+-   The expression `x & y` is rewritten to
+    `x.(BitAndWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x | y` is rewritten to
+    `x.(BitOrWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x ^ y` is rewritten to
+    `x.(BitXorWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x << y` is rewritten to
+    `x.(LeftShiftWithPrimitive(exttypeof(y)).Op)(y)`.
+-   The expression `x >> y` is rewritten to
+    `x.(RightShiftWithPrimitive(exttypeof(y)).Op)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -281,3 +348,5 @@ to give the semantics described above.
 
 -   Proposal
     [#1191: bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+-   Proposal
+    [#8188: Extended-type operator, conversion, and member binding interfaces](https://github.com/carbon-language/carbon-lang/pull/8188)

@@ -74,12 +74,13 @@ standard library.
 
 The operands of these operators can be any [expression](expressions/README.md).
 However, the first operand must be modifiable because it is passed to a
-`(ref self: Self)` parameter, which disallows most expression forms other than:
+`ref self` parameter, which disallows most expression forms other than:
 
--   The name of a `var` binding.
+-   The name of a `var` or `let ref` binding.
 -   A dereference of a pointer.
 -   Array indexing that produces a modifiable result.
 -   Member access naming a field, where the object is one of these expressions.
+-   A call to a function returning a `ref` extended type.
 
 ## Simple assignment semantics
 
@@ -172,57 +173,100 @@ provided for built-in types as necessary to give the semantics described above.
 ### Simple assignment
 
 ```
+package Core;
+
 // Simple `=`.
-interface AssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface AssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint Assign { extend AssignWith(Self); }
+constraint AssignWith(U: type) {
+  extend require impls
+      AssignWithPrimitive(exttype(val U));
+}
+constraint Assign {
+  extend require impls AssignWith(Self);
+}
 ```
 
-Given `var x: T` and `y: U`:
-
--   The statement `x = y;` is rewritten to `x.(AssignWith(U).Op)(y);`.
+The statement `x = y;` is rewritten to
+`x.(AssignWithPrimitive(exttypeof(y)).Op)(y);`.
 
 ### Arithmetic
 
 ```
 // Compound `+=`.
-interface AddAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface AddAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint AddAssign { extend AddAssignWith(Self); }
+constraint AddAssignWith(U: type) {
+  extend require impls
+      AddAssignWithPrimitive(exttype(val U));
+}
+constraint AddAssign {
+  extend require impls AddAssignWith(Self);
+}
 ```
 
 ```
 // Compound `-=`.
-interface SubAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface SubAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint SubAssign { extend SubAssignWith(Self); }
+constraint SubAssignWith(U: type) {
+  extend require impls
+      SubAssignWithPrimitive(exttype(val U));
+}
+constraint SubAssign {
+  extend require impls SubAssignWith(Self);
+}
 ```
 
 ```
 // Compound `*=`.
-interface MulAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface MulAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint MulAssign { extend MulAssignWith(Self); }
+constraint MulAssignWith(U: type) {
+  extend require impls
+      MulAssignWithPrimitive(exttype(val U));
+}
+constraint MulAssign {
+  extend require impls MulAssignWith(Self);
+}
 ```
 
 ```
 // Compound `/=`.
-interface DivAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface DivAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint DivAssign { extend DivAssignWith(Self); }
+constraint DivAssignWith(U: type) {
+  extend require impls
+      DivAssignWithPrimitive(exttype(val U));
+}
+constraint DivAssign {
+  extend require impls DivAssignWith(Self);
+}
 ```
 
 ```
 // Compound `%=`.
-interface ModAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface ModAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint ModAssign { extend ModAssignWith(Self); }
+constraint ModAssignWith(U: type) {
+  extend require impls
+      ModAssignWithPrimitive(exttype(val U));
+}
+constraint ModAssign {
+  extend require impls ModAssignWith(Self);
+}
 ```
 
 ```
@@ -232,13 +276,18 @@ interface Inc { fn Op(ref self); }
 interface Dec { fn Op(ref self); }
 ```
 
-Given `var x: T` and `y: U`:
+These assignment statements are rewritten as follows:
 
--   The statement `x += y;` is rewritten to `x.(AddAssignWith(U).Op)(y);`.
--   The statement `x -= y;` is rewritten to `x.(SubAssignWith(U).Op)(y);`.
--   The statement `x *= y;` is rewritten to `x.(MulAssignWith(U).Op)(y);`.
--   The statement `x /= y;` is rewritten to `x.(DivAssignWith(U).Op)(y);`.
--   The statement `x %= y;` is rewritten to `x.(ModAssignWith(U).Op)(y);`.
+-   The statement `x += y;` is rewritten to
+    `x.(AddAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x -= y;` is rewritten to
+    `x.(SubAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x *= y;` is rewritten to
+    `x.(MulAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x /= y;` is rewritten to
+    `x.(DivAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x %= y;` is rewritten to
+    `x.(ModAssignWithPrimitive(exttypeof(y)).Op)(y);`.
 -   The statement `++x;` is rewritten to `x.(Inc.Op)();`.
 -   The statement `--x;` is rewritten to `x.(Dec.Op)();`.
 
@@ -246,53 +295,92 @@ Given `var x: T` and `y: U`:
 
 ```
 // Compound `&=`.
-interface BitAndAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface BitAndAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint BitAndAssign { extend BitAndAssignWith(Self); }
+constraint BitAndAssignWith(U: type) {
+  extend require impls
+      BitAndAssignWithPrimitive(exttype(val U));
+}
+constraint BitAndAssign {
+  extend require impls BitAndAssignWith(Self);
+}
 ```
 
 ```
 // Compound `|=`.
-interface BitOrAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface BitOrAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint BitOrAssign { extend BitOrAssignWith(Self); }
+constraint BitOrAssignWith(U: type) {
+  extend require impls
+      BitOrAssignWithPrimitive(exttype(val U));
+}
+constraint BitOrAssign {
+  extend require impls BitOrAssignWith(Self);
+}
 ```
 
 ```
 // Compound `^=`.
-interface BitXorAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface BitXorAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint BitXorAssign { extend BitXorAssignWith(Self); }
+constraint BitXorAssignWith(U: type) {
+  extend require impls
+      BitXorAssignWithPrimitive(exttype(val U));
+}
+constraint BitXorAssign {
+  extend require impls BitXorAssignWith(Self);
+}
 ```
 
 ```
 // Compound `<<=`.
-interface LeftShiftAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface LeftShiftAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint LeftShiftAssign { extend LeftShiftAssignWith(Self); }
+constraint LeftShiftAssignWith(U: type) {
+  extend require impls
+      LeftShiftAssignWithPrimitive(exttype(val U));
+}
+constraint LeftShiftAssign {
+  extend require impls LeftShiftAssignWith(Self);
+}
 ```
 
 ```
 // Compound `>>=`.
-interface RightShiftAssignWith(U: type) {
-  fn Op(ref self, other: U);
+interface RightShiftAssignWithPrimitive
+    (implicit_into U: ExtType) {
+  fn Op(ref self, fwd other: U);
 }
-constraint RightShiftAssign { extend RightShiftAssignWith(Self); }
+constraint RightShiftAssignWith(U: type) {
+  extend require impls
+      RightShiftAssignWithPrimitive(exttype(val U));
+}
+constraint RightShiftAssign {
+  extend require impls
+    RightShiftAssignWith(Self);
+}
 ```
 
-Given `var x: T` and `y: U`:
+These assignment statements are rewritten as follows:
 
--   The statement `x &= y;` is rewritten to `x.(BitAndAssignWith(U).Op)(y);`.
--   The statement `x |= y;` is rewritten to `x.(BitOrAssignWith(U).Op)(y);`.
--   The statement `x ^= y;` is rewritten to `x.(BitXorAssignWith(U).Op)(y);`.
+-   The statement `x &= y;` is rewritten to
+    `x.(BitAndAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x |= y;` is rewritten to
+    `x.(BitOrAssignWithPrimitive(exttypeof(y)).Op)(y);`.
+-   The statement `x ^= y;` is rewritten to
+    `x.(BitXorAssignWithPrimitive(exttypeof(y)).Op)(y);`.
 -   The statement `x <<= y;` is rewritten to
-    `x.(LeftShiftAssignWith(U).Op)(y);`.
+    `x.(LeftShiftAssignWithPrimitive(exttypeof(y)).Op)(y);`.
 -   The statement `x >>= y;` is rewritten to
-    `x.(RightShiftAssignWith(U).Op)(y)`;.
+    `x.(RightShiftAssignWithPrimitive(exttypeof(y)).Op)(y)`;.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -311,7 +399,7 @@ impl forall [U: type, T: OpWith(U) where .Self impls AssignWith(.Self.Result)]
     T as OpAssignWith(U) {
   fn Op(ref self, other: U) {
     // Here, `$` is the operator described by `OpWith`.
-    *self = *self $ other;
+    self = self $ other;
   }
 }
 ```
@@ -320,11 +408,11 @@ If a more efficient form of compound assignment is possible for a type, a more
 specific `impl` can be provided:
 
 ```
-impl like MyString as AddWith(like MyString) {
+impl anchor MyString as AddWith(anchor MyString) {
   // Allocate new memory and perform addition.
 }
 
-impl MyString as AddAssignWith(like MyString) {
+impl MyString as AddAssignWith(MyString) {
   // Reuse existing storage where possible.
 }
 ```
@@ -354,3 +442,5 @@ impl MyString as AddAssignWith(like MyString) {
     [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
+-   Proposal
+    [#8188: Extended-type operator, conversion, and member binding interfaces](https://github.com/carbon-language/carbon-lang/pull/8188)

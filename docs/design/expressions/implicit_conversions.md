@@ -206,6 +206,18 @@ of `TT2`.
 
 See [here](/docs/design/values.md#type-conversions).
 
+> **TODO:** Update the built-in conversions above to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-conversion-interfaces):
+>
+> -   category-preserving derived-to-base conversions by way of
+>     `ImplicitAsPrimitive`,
+> -   [`partial` conversions](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#with-partial)
+>     (`C -> partial C` preserving category; `partial C -> C` restricted to
+>     `var` initializing expressions), and
+> -   [`const` conversions](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#with-const)
+>     (`C -> const C` preserving category; `exttype(val const C) ->
+>     exttype(val C)` and `ref const C` by way of value acquisition).
+
 ## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when
@@ -219,20 +231,39 @@ conversion.
 ## Extensibility
 
 Implicit conversions can be defined for user-defined types such as
-[classes](../classes.md) by implementing the `ImplicitAs` interface, which
-extends
-[the `As` interface used to implement `as` expressions](as_expressions.md#extensibility):
+[classes](../classes.md) by implementing the `ImplicitAsPrimitive` interface,
+which extends
+[the `AsPrimitive` interface used to implement `as` expressions](as_expressions.md#extensibility),
+or the `ImplicitAs` named constraint:
 
 ```
-interface ImplicitAs(Dest: type) {
-  extend As(Dest);
-  // Inherited from As(Dest):
-  // fn Convert(self) -> Dest;
+package Core;
+
+// FIXME: `implicit_into` is concerning here, since we
+// generally only want to perform a single implicit
+// type conversion. Perhaps it should have `anchor`?
+interface ImplicitAsPrimitive(
+    implicit_into Self: ExtType, Dest: type) {
+  final extend impl as AsPrimitive(Dest);
+  // Inherited from AsPrimitive(Dest):
+  // let implicit_from ResultExtType: ExtType where .type = Dest;
+  // fn Convert(fwd self: Self)
+  //     -> fwd ResultExtType;
+}
+constraint ImplicitAs(Dest: type) {
+  extend require exttype(val Self) impls
+      ImplicitAsPrimitive(Dest)
+      where .ResultExtType = exttype(var Dest);
 }
 ```
 
 When attempting to implicitly convert an expression `x` to type `U`, the
 expression is rewritten to `x.(ImplicitAs(U).Convert)()`.
+
+> **TODO:** Update this rewrite to `x.(ImplicitAsPrimitive(U).Convert)()` and
+> resolve the `FIXME` above regarding `implicit_into` / `anchor` on
+> `ImplicitAsPrimitive` to reflect
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-conversion-interfaces).
 
 Note that implicit conversions are not transitive. Even if an
 `impl A as ImplicitAs(B)` and an `impl B as ImplicitAs(C)` are both provided, an
@@ -258,3 +289,5 @@ types.
     [#866: Allow ties in floating literals](https://github.com/carbon-language/carbon-lang/pull/866).
 -   Proposal
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
+-   Proposal
+    [#8188: Extended-type operator, conversion, and member binding interfaces](https://github.com/carbon-language/carbon-lang/pull/8188)
