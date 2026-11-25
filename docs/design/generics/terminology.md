@@ -334,6 +334,11 @@ time.
 
 ## Facet type
 
+> **TODO:** Update this section and [Facet](#facet) to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md):
+> extended type interfaces and named extended type constraints as extended type
+> facet types.
+
 A _facet type_ is a [type](#types-and-type) whose values are some subset of the
 values of `type`, determined by a set of [type constraints](#type-constraints):
 
@@ -393,6 +398,12 @@ argument values (usually the types of those values) to the explicit parameters.
 See more [here](overview.md#deduced-parameters).
 
 ## Interface
+
+> **TODO:** Update this section and [Named constraints](#named-constraints) to
+> reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md):
+> extended type interfaces (`Self: Core.ExtType`) and named extended type
+> constraints.
 
 An interface is an API constraint used in a function signature to provide
 encapsulation. Encapsulation here means that callers of the function only need

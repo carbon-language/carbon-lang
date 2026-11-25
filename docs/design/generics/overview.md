@@ -305,6 +305,13 @@ You may combine interfaces into new facet types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
+> **TODO:** Update the Interfaces and Facet types sections to reflect these
+> changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md):
+> extended type interfaces (`Self: Core.ExtType`) and
+> `Core.ValSelf`/`Core.RefSelf`/`Core.VarSelf`. See
+> [Extended types](/docs/design/extended_types.md).
+
 ### Generic functions
 
 We want to be able to call generic functions just like ordinary functions, and
@@ -464,6 +471,10 @@ fn BothDraws[T: Renderable & EndOfGame](game_state: T*) {
 ```
 
 #### Named constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#named-extended-type-constraints):
+> named extended type constraints.
 
 You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can

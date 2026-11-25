@@ -50,6 +50,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 ## Overview
 
+> **TODO:** Update the simple (`a.b`), compound (`a.(m)`), and `impl`
+> (`a.impl(m)`) member access and `impl` lookup rules to generalize for extended
+> type interfaces and extended type facets, as proposed in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md).
+
 A _qualified name_ is a [word](../lexical_conventions/words.md) that is preceded
 by a period or a rightward arrow. The name is found within a contextually
 determined entity:
@@ -272,6 +277,12 @@ A search for a name within an extended type searches for the name in its
 [type component](/docs/design/values.md#extended-types). Note that this means
 that the extended type of an expression never affects simple member access into
 that expression, except through its type component.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#extended-type-interfaces):
+> simple member lookup on expressions with a symbolic extended type facet (which
+> looks up in the extended type facet type and performs `impl` lookup with the
+> extended type as `Self`).
 
 ### `extend`
 
