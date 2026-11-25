@@ -394,6 +394,11 @@ See more [here](overview.md#deduced-parameters).
 
 ## Interface
 
+> **TODO:** Update this section and [Named constraints](#named-constraints) to
+> reflect these changes in
+> [proposal #8189: Associated constants in named constraints](/proposals/p008189-associated-constants-in-named-constraints.md):
+> associated constants in named constraints.
+
 An interface is an API constraint used in a function signature to provide
 encapsulation. Encapsulation here means that callers of the function only need
 to know about the interface requirements to call the function, not anything
