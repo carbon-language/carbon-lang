@@ -169,22 +169,6 @@ auto TokenizedBuffer::GetTypeLiteralSize(TokenIndex token) const -> IntId {
   return token_info.int_id();
 }
 
-auto TokenizedBuffer::GetMatchedClosingToken(TokenIndex opening_token) const
-    -> TokenIndex {
-  const auto& opening_token_info = token_infos_.Get(opening_token);
-  CARBON_CHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
-               opening_token_info.kind());
-  return opening_token_info.closing_token_index();
-}
-
-auto TokenizedBuffer::GetMatchedOpeningToken(TokenIndex closing_token) const
-    -> TokenIndex {
-  const auto& closing_token_info = token_infos_.Get(closing_token);
-  CARBON_CHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
-               closing_token_info.kind());
-  return closing_token_info.opening_token_index();
-}
-
 auto TokenizedBuffer::IsRawIdentifier(TokenIndex token) const -> bool {
   const auto& token_info = token_infos_.Get(token);
   if (token_info.kind() != TokenKind::Identifier) {
