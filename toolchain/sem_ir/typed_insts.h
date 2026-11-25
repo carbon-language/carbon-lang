@@ -2130,7 +2130,7 @@ struct SpliceInst {
       {.ir_name = "splice_inst",
        .expr_category = ComputedExprCategory::DependsOnOperands,
        .is_type = InstIsType::Maybe,
-       .constant_kind = InstConstantKind::Indirect});
+       .constant_kind = InstConstantKind::SymbolicOnly});
 
   TypeId type_id;
   // The instruction that computes the instruction to splice. The type of this
