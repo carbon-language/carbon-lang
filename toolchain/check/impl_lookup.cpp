@@ -803,8 +803,8 @@ static auto FindFinalWitnessInsideImplDecl(
     return SemIR::InstId::None;
   }
 
-  const auto& declaring = context.declaring_impl_decls().Peek();
-  if (declaring.specific_interface != req_interface) {
+  auto declaring_specific_interface = context.declaring_impl_decls().Peek();
+  if (declaring_specific_interface != req_interface) {
     return SemIR::InstId::None;
   }
 
