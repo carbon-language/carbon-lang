@@ -43,7 +43,6 @@ fn G() {
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %E: type = class_type @E [concrete]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @E.as.Z.impl.%Z.impl_witness_table [concrete]
@@ -88,23 +87,7 @@ fn G() {
 // CHECK:STDOUT:   %return.param_patt.a86: %pattern_type.b01 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.4c6: %pattern_type.b01 = return_slot_pattern %return.param_patt.a86, %C.10f [concrete]
 // CHECK:STDOUT:   %Make.specific_fn: <specific function> = specific_function %Make, @Make(%Z.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc20_32.4 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.4: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.4), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.d79: %SubobjectDestroy.type = facet_value %C.10f, (%custom_witness.b80ef6.4) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.0a0: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.d79) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C.10f, (%DestroyImpl.impl_witness.0a0, %custom_witness.b80ef6.4) [concrete]
 // CHECK:STDOUT:   %C.val.a4f: %C.10f = struct_value (%D.val) [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -218,12 +201,6 @@ fn G() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b01 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc20_32.1: %Destroy.type = facet_value constants.%C.10f, (constants.%DestroyImpl.impl_witness.0a0, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc20_32.7: %Destroy.type = converted constants.%C.10f, %Destroy.facet.loc20_32.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc20_32.2: %Destroy.type = facet_value constants.%C.10f, (constants.%DestroyImpl.impl_witness.0a0, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc20_32.8: %Destroy.type = converted constants.%C.10f, %Destroy.facet.loc20_32.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_32.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

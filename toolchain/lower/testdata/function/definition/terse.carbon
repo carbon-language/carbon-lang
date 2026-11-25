@@ -115,39 +115,33 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT:   store i32 %.loc20_82.10, ptr %struct2, align 4, !dbg !58
 // CHECK:STDOUT:   %.loc21.a = getelementptr inbounds nuw i8, ptr %struct, i64 0, !dbg !63
 // CHECK:STDOUT:   %.loc21.a.load = load i32, ptr %.loc21.a, align 4, !dbg !63
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %.loc20_82.5.temp), !dbg !58
-// CHECK:STDOUT:   ret i32 %.loc21.a.load, !dbg !66
+// CHECK:STDOUT:   ret i32 %.loc21.a.load, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @_CImportedId.Main(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CImportedGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !68 {
-// CHECK:STDOUT:   ret i32 %x, !dbg !71
+// CHECK:STDOUT: define linkonce_odr i32 @_CImportedGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !66 {
+// CHECK:STDOUT:   ret i32 %x, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLocalGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !73 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CLocalGenericId.Main.2fad9574e050607e(i32 %x) #0 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !76
+// CHECK:STDOUT:   ret i32 %x, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CMakePair.Main.3eda18978e8f48e1(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !78 {
+// CHECK:STDOUT: define linkonce_odr void @_CMakePair.Main.3eda18978e8f48e1(ptr sret({ i32, i32 }) %return, i32 %x, i32 %y) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_71.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !83
-// CHECK:STDOUT:   store i32 %x, ptr %.loc10_71.3.a, align 4, !dbg !83
-// CHECK:STDOUT:   %.loc10_71.5.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !83
-// CHECK:STDOUT:   store i32 %y, ptr %.loc10_71.5.b, align 4, !dbg !83
-// CHECK:STDOUT:   ret void, !dbg !83
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %t) #0 !dbg !87 {
-// CHECK:STDOUT:   ret void, !dbg !92
+// CHECK:STDOUT:   %.loc10_71.3.a = getelementptr inbounds nuw i8, ptr %return, i64 0, !dbg !81
+// CHECK:STDOUT:   store i32 %x, ptr %.loc10_71.3.a, align 4, !dbg !81
+// CHECK:STDOUT:   %.loc10_71.5.b = getelementptr inbounds nuw i8, ptr %return, i64 4, !dbg !81
+// CHECK:STDOUT:   store i32 %y, ptr %.loc10_71.5.b, align 4, !dbg !81
+// CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -161,7 +155,6 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "lib.carbon", directory: "")
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !21 = !{!20, !20}
@@ -183,7 +176,7 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !32)
 // CHECK:STDOUT: !45 = !DILocation(line: 13, column: 25, scope: !42)
 // CHECK:STDOUT: !46 = !{!43}
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !28, line: 17, type: !34, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !67)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !28, line: 17, type: !34, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !65)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !32)
 // CHECK:STDOUT: !52 = !DILocation(line: 18, column: 3, scope: !47)
 // CHECK:STDOUT: !53 = !DILocation(line: 20, column: 45, scope: !47)
@@ -195,25 +188,19 @@ fn Test(c: C) -> i32 {
 // CHECK:STDOUT: !59 = !{!32, !20, !20}
 // CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
 // CHECK:STDOUT: !63 = !DILocation(line: 21, column: 10, scope: !47)
-// CHECK:STDOUT: !64 = !{null, !32}
-// CHECK:STDOUT: !65 = !DISubroutineType(types: !64)
-// CHECK:STDOUT: !66 = !DILocation(line: 21, column: 3, scope: !47)
-// CHECK:STDOUT: !67 = !{!48}
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "ImportedGenericId", linkageName: "_CImportedGenericId.Main.2fad9574e050607e", scope: null, file: !18, line: 4, type: !22, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !72)
-// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !20)
-// CHECK:STDOUT: !71 = !DILocation(line: 4, column: 45, scope: !68)
-// CHECK:STDOUT: !72 = !{!69}
-// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "LocalGenericId", linkageName: "_CLocalGenericId.Main.2fad9574e050607e", scope: null, file: !28, line: 6, type: !22, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !77)
-// CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !73, type: !20)
-// CHECK:STDOUT: !76 = !DILocation(line: 6, column: 42, scope: !73)
-// CHECK:STDOUT: !77 = !{!74}
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "MakePair", linkageName: "_CMakePair.Main.3eda18978e8f48e1", scope: null, file: !28, line: 10, type: !60, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !86)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !20)
-// CHECK:STDOUT: !80 = !DILocalVariable(arg: 2, scope: !78, type: !20)
-// CHECK:STDOUT: !83 = !DILocation(line: 10, column: 56, scope: !78)
-// CHECK:STDOUT: !86 = !{!79, !80}
-// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ad01ed096e1f14e2", scope: null, file: !10, line: 32, type: !65, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !93)
-// CHECK:STDOUT: !88 = !DILocalVariable(arg: 1, scope: !87, type: !32)
-// CHECK:STDOUT: !92 = !DILocation(line: 32, column: 1, scope: !87)
-// CHECK:STDOUT: !93 = !{!88}
+// CHECK:STDOUT: !64 = !DILocation(line: 21, column: 3, scope: !47)
+// CHECK:STDOUT: !65 = !{!48}
+// CHECK:STDOUT: !66 = distinct !DISubprogram(name: "ImportedGenericId", linkageName: "_CImportedGenericId.Main.2fad9574e050607e", scope: null, file: !18, line: 4, type: !22, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !70)
+// CHECK:STDOUT: !67 = !DILocalVariable(arg: 1, scope: !66, type: !20)
+// CHECK:STDOUT: !69 = !DILocation(line: 4, column: 45, scope: !66)
+// CHECK:STDOUT: !70 = !{!67}
+// CHECK:STDOUT: !71 = distinct !DISubprogram(name: "LocalGenericId", linkageName: "_CLocalGenericId.Main.2fad9574e050607e", scope: null, file: !28, line: 6, type: !22, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !75)
+// CHECK:STDOUT: !72 = !DILocalVariable(arg: 1, scope: !71, type: !20)
+// CHECK:STDOUT: !74 = !DILocation(line: 6, column: 42, scope: !71)
+// CHECK:STDOUT: !75 = !{!72}
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "MakePair", linkageName: "_CMakePair.Main.3eda18978e8f48e1", scope: null, file: !28, line: 10, type: !60, spFlags: DISPFlagDefinition, unit: !29, retainedNodes: !84)
+// CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !20)
+// CHECK:STDOUT: !78 = !DILocalVariable(arg: 2, scope: !76, type: !20)
+// CHECK:STDOUT: !81 = !DILocation(line: 10, column: 56, scope: !76)
+// CHECK:STDOUT: !84 = !{!77, !78}
 // CHECK:STDOUT:

@@ -183,8 +183,7 @@ fn CallGeneric() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc5_18.1.temp), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %.loc5_18.1.temp, ptr %v2, i32 2), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc5_18.1.temp), !dbg !45
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc5_18.1.temp), !dbg !46
-// CHECK:STDOUT:   ret void, !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -193,11 +192,6 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !52 {
-// CHECK:STDOUT:   ret void, !dbg !57
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -212,34 +206,26 @@ fn CallGeneric() {
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
 // CHECK:STDOUT: !36 = !DIFile(filename: "owner.impl.carbon", directory: "")
 // CHECK:STDOUT: !37 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !36, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "DirectInImplFile", linkageName: "_CDirectInImplFile.OwningPackage", scope: null, file: !36, line: 3, type: !9, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !50)
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "DirectInImplFile", linkageName: "_CDirectInImplFile.OwningPackage", scope: null, file: !36, line: 3, type: !9, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !48)
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !7)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 2, scope: !38, type: !7)
 // CHECK:STDOUT: !45 = !DILocation(line: 5, column: 10, scope: !38)
 // CHECK:STDOUT: !46 = !DILocation(line: 5, column: 15, scope: !38)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !49 = !DILocation(line: 5, column: 3, scope: !38)
-// CHECK:STDOUT: !50 = !{!39, !40}
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !58)
-// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !7)
-// CHECK:STDOUT: !57 = !DILocation(line: 35, column: 1, scope: !52)
-// CHECK:STDOUT: !58 = !{!53}
+// CHECK:STDOUT: !47 = !DILocation(line: 5, column: 3, scope: !38)
+// CHECK:STDOUT: !48 = !{!39, !40}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'direct_same_package.carbon'
 // CHECK:STDOUT: source_filename = "direct_same_package.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDirect.OwningPackage(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !61 {
+// CHECK:STDOUT: define void @_CDirect.OwningPackage(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_18.1.temp = alloca { i32 }, align 4, !dbg !69
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !69
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !69
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !68
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_18.1.temp), !dbg !69
-// CHECK:STDOUT:   ret void, !dbg !70
+// CHECK:STDOUT:   %.loc7_18.1.temp = alloca { i32 }, align 4, !dbg !59
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !59
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !59
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !58
+// CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -249,15 +235,10 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !72 {
-// CHECK:STDOUT:   ret void, !dbg !77
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!60}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!50}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -265,22 +246,15 @@ fn CallGeneric() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!7, !7, !7}
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !59 = !DIFile(filename: "direct_same_package.carbon", directory: "")
-// CHECK:STDOUT: !60 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !59, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "Direct", linkageName: "_CDirect.OwningPackage", scope: null, file: !59, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !60, retainedNodes: !71)
-// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !7)
-// CHECK:STDOUT: !63 = !DILocalVariable(arg: 2, scope: !61, type: !7)
-// CHECK:STDOUT: !68 = !DILocation(line: 7, column: 10, scope: !61)
-// CHECK:STDOUT: !69 = !DILocation(line: 7, column: 15, scope: !61)
-// CHECK:STDOUT: !70 = !DILocation(line: 7, column: 3, scope: !61)
-// CHECK:STDOUT: !71 = !{!62, !63}
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !60, retainedNodes: !78)
-// CHECK:STDOUT: !73 = !DILocalVariable(arg: 1, scope: !72, type: !7)
-// CHECK:STDOUT: !77 = !DILocation(line: 35, column: 1, scope: !72)
-// CHECK:STDOUT: !78 = !{!73}
+// CHECK:STDOUT: !49 = !DIFile(filename: "direct_same_package.carbon", directory: "")
+// CHECK:STDOUT: !50 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !49, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "Direct", linkageName: "_CDirect.OwningPackage", scope: null, file: !49, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !50, retainedNodes: !61)
+// CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !51, type: !7)
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 2, scope: !51, type: !7)
+// CHECK:STDOUT: !58 = !DILocation(line: 7, column: 10, scope: !51)
+// CHECK:STDOUT: !59 = !DILocation(line: 7, column: 15, scope: !51)
+// CHECK:STDOUT: !60 = !DILocation(line: 7, column: 3, scope: !51)
+// CHECK:STDOUT: !61 = !{!52, !53}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_same_package.carbon'
@@ -292,34 +266,31 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OwningPackage(ptr sret({ i32 }))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!80}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!63}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !79 = !DIFile(filename: "generic_same_package.carbon", directory: "")
-// CHECK:STDOUT: !80 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !79, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !62 = !DIFile(filename: "generic_same_package.carbon", directory: "")
+// CHECK:STDOUT: !63 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !62, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_same_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_same_package.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallGeneric.OwningPackage() #0 !dbg !87 {
+// CHECK:STDOUT: define void @_CCallGeneric.OwningPackage() #0 !dbg !70 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !88
-// CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !89
-// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !90
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !88
-// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_20.1.temp), !dbg !88
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !89
-// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_28.1.temp), !dbg !89
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !90
-// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !90
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_29.2.temp), !dbg !90
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_28.1.temp), !dbg !89
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_20.1.temp), !dbg !88
-// CHECK:STDOUT:   ret void, !dbg !91
+// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !71
+// CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !72
+// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !73
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !71
+// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_20.1.temp), !dbg !71
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !72
+// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_28.1.temp), !dbg !72
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !73
+// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !73
+// CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OwningPackage(ptr sret({ i32 }))
@@ -328,18 +299,12 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !92 {
-// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !100
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !100
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !100
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !99
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %temp), !dbg !100
-// CHECK:STDOUT:   ret void, !dbg !101
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !103 {
-// CHECK:STDOUT:   ret void, !dbg !108
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !75 {
+// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !83
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !83
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !83
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !82
+// CHECK:STDOUT:   ret void, !dbg !84
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -349,12 +314,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OwningPackage, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7e1cc1683e7a3817, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!84}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!67}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -362,44 +326,36 @@ fn CallGeneric() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!7, !7, !7}
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !79 = !DIFile(filename: "generic_same_package.carbon", directory: "")
-// CHECK:STDOUT: !83 = !DIFile(filename: "indirect_same_package.carbon", directory: "")
-// CHECK:STDOUT: !84 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !83, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !85 = !{null}
-// CHECK:STDOUT: !86 = !DISubroutineType(types: !85)
-// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.OwningPackage", scope: null, file: !83, line: 5, type: !86, spFlags: DISPFlagDefinition, unit: !84)
-// CHECK:STDOUT: !88 = !DILocation(line: 7, column: 15, scope: !87)
-// CHECK:STDOUT: !89 = !DILocation(line: 7, column: 23, scope: !87)
-// CHECK:STDOUT: !90 = !DILocation(line: 7, column: 3, scope: !87)
-// CHECK:STDOUT: !91 = !DILocation(line: 5, column: 1, scope: !87)
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OwningPackage.e43630e9a6c38c3f", scope: null, file: !79, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !102)
-// CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !7)
-// CHECK:STDOUT: !94 = !DILocalVariable(arg: 2, scope: !92, type: !7)
-// CHECK:STDOUT: !99 = !DILocation(line: 6, column: 10, scope: !92)
-// CHECK:STDOUT: !100 = !DILocation(line: 6, column: 15, scope: !92)
-// CHECK:STDOUT: !101 = !DILocation(line: 6, column: 3, scope: !92)
-// CHECK:STDOUT: !102 = !{!93, !94}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !109)
-// CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !7)
-// CHECK:STDOUT: !108 = !DILocation(line: 35, column: 1, scope: !103)
-// CHECK:STDOUT: !109 = !{!104}
+// CHECK:STDOUT: !62 = !DIFile(filename: "generic_same_package.carbon", directory: "")
+// CHECK:STDOUT: !66 = !DIFile(filename: "indirect_same_package.carbon", directory: "")
+// CHECK:STDOUT: !67 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !66, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !68 = !{null}
+// CHECK:STDOUT: !69 = !DISubroutineType(types: !68)
+// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.OwningPackage", scope: null, file: !66, line: 5, type: !69, spFlags: DISPFlagDefinition, unit: !67)
+// CHECK:STDOUT: !71 = !DILocation(line: 7, column: 15, scope: !70)
+// CHECK:STDOUT: !72 = !DILocation(line: 7, column: 23, scope: !70)
+// CHECK:STDOUT: !73 = !DILocation(line: 7, column: 3, scope: !70)
+// CHECK:STDOUT: !74 = !DILocation(line: 5, column: 1, scope: !70)
+// CHECK:STDOUT: !75 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OwningPackage.e43630e9a6c38c3f", scope: null, file: !62, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !85)
+// CHECK:STDOUT: !76 = !DILocalVariable(arg: 1, scope: !75, type: !7)
+// CHECK:STDOUT: !77 = !DILocalVariable(arg: 2, scope: !75, type: !7)
+// CHECK:STDOUT: !82 = !DILocation(line: 6, column: 10, scope: !75)
+// CHECK:STDOUT: !83 = !DILocation(line: 6, column: 15, scope: !75)
+// CHECK:STDOUT: !84 = !DILocation(line: 6, column: 3, scope: !75)
+// CHECK:STDOUT: !85 = !{!76, !77}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'direct_different_package.carbon'
 // CHECK:STDOUT: source_filename = "direct_different_package.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CDirect.OtherPackage(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !112 {
+// CHECK:STDOUT: define void @_CDirect.OtherPackage(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !88 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_18.1.temp = alloca { i32 }, align 4, !dbg !120
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !120
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !120
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !119
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_18.1.temp), !dbg !120
-// CHECK:STDOUT:   ret void, !dbg !121
+// CHECK:STDOUT:   %.loc7_18.1.temp = alloca { i32 }, align 4, !dbg !96
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_18.1.temp), !dbg !96
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %.loc7_18.1.temp, ptr %v2, i32 2), !dbg !96
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %.loc7_18.1.temp), !dbg !95
+// CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -409,15 +365,10 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !123 {
-// CHECK:STDOUT:   ret void, !dbg !128
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!111}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!87}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -425,43 +376,33 @@ fn CallGeneric() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!7, !7, !7}
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !110 = !DIFile(filename: "direct_different_package.carbon", directory: "")
-// CHECK:STDOUT: !111 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !110, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !112 = distinct !DISubprogram(name: "Direct", linkageName: "_CDirect.OtherPackage", scope: null, file: !110, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !122)
-// CHECK:STDOUT: !113 = !DILocalVariable(arg: 1, scope: !112, type: !7)
-// CHECK:STDOUT: !114 = !DILocalVariable(arg: 2, scope: !112, type: !7)
-// CHECK:STDOUT: !119 = !DILocation(line: 7, column: 10, scope: !112)
-// CHECK:STDOUT: !120 = !DILocation(line: 7, column: 15, scope: !112)
-// CHECK:STDOUT: !121 = !DILocation(line: 7, column: 3, scope: !112)
-// CHECK:STDOUT: !122 = !{!113, !114}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !129)
-// CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !7)
-// CHECK:STDOUT: !128 = !DILocation(line: 35, column: 1, scope: !123)
-// CHECK:STDOUT: !129 = !{!124}
+// CHECK:STDOUT: !86 = !DIFile(filename: "direct_different_package.carbon", directory: "")
+// CHECK:STDOUT: !87 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !86, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "Direct", linkageName: "_CDirect.OtherPackage", scope: null, file: !86, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !98)
+// CHECK:STDOUT: !89 = !DILocalVariable(arg: 1, scope: !88, type: !7)
+// CHECK:STDOUT: !90 = !DILocalVariable(arg: 2, scope: !88, type: !7)
+// CHECK:STDOUT: !95 = !DILocation(line: 7, column: 10, scope: !88)
+// CHECK:STDOUT: !96 = !DILocation(line: 7, column: 15, scope: !88)
+// CHECK:STDOUT: !97 = !DILocation(line: 7, column: 3, scope: !88)
+// CHECK:STDOUT: !98 = !{!89, !90}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_different_package_via_generic_in_same_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_different_package_via_generic_in_same_package.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallGenericInOwningPackage.OtherPackage() #0 !dbg !132 {
+// CHECK:STDOUT: define void @_CCallGenericInOwningPackage.OtherPackage() #0 !dbg !101 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_48.1.temp = alloca { i32 }, align 4, !dbg !133
-// CHECK:STDOUT:   %.loc7_70.1.temp = alloca { i32 }, align 4, !dbg !134
-// CHECK:STDOUT:   %.loc7_71.2.temp = alloca { i32 }, align 4, !dbg !135
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_48.1.temp), !dbg !133
-// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_48.1.temp), !dbg !133
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_70.1.temp), !dbg !134
-// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_70.1.temp), !dbg !134
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_71.2.temp), !dbg !135
-// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_71.2.temp, ptr %.loc7_48.1.temp, ptr %.loc7_70.1.temp), !dbg !135
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_71.2.temp), !dbg !135
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_70.1.temp), !dbg !134
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_48.1.temp), !dbg !133
-// CHECK:STDOUT:   ret void, !dbg !136
+// CHECK:STDOUT:   %.loc7_48.1.temp = alloca { i32 }, align 4, !dbg !102
+// CHECK:STDOUT:   %.loc7_70.1.temp = alloca { i32 }, align 4, !dbg !103
+// CHECK:STDOUT:   %.loc7_71.2.temp = alloca { i32 }, align 4, !dbg !104
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_48.1.temp), !dbg !102
+// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_48.1.temp), !dbg !102
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_70.1.temp), !dbg !103
+// CHECK:STDOUT:   call void @_CMake.OwningPackage(ptr %.loc7_70.1.temp), !dbg !103
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_71.2.temp), !dbg !104
+// CHECK:STDOUT:   call void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr %.loc7_71.2.temp, ptr %.loc7_48.1.temp, ptr %.loc7_70.1.temp), !dbg !104
+// CHECK:STDOUT:   ret void, !dbg !105
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OwningPackage(ptr sret({ i32 }))
@@ -470,18 +411,12 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !137 {
-// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !145
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !145
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !145
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !144
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %temp), !dbg !145
-// CHECK:STDOUT:   ret void, !dbg !146
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !148 {
-// CHECK:STDOUT:   ret void, !dbg !153
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OwningPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !106 {
+// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !114
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !114
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !114
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !113
+// CHECK:STDOUT:   ret void, !dbg !115
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -491,12 +426,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OwningPackage, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7e1cc1683e7a3817, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!131}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!100}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -504,30 +438,23 @@ fn CallGeneric() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!7, !7, !7}
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !79 = !DIFile(filename: "generic_same_package.carbon", directory: "")
-// CHECK:STDOUT: !85 = !{null}
-// CHECK:STDOUT: !86 = !DISubroutineType(types: !85)
-// CHECK:STDOUT: !130 = !DIFile(filename: "indirect_different_package_via_generic_in_same_package.carbon", directory: "")
-// CHECK:STDOUT: !131 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !130, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !132 = distinct !DISubprogram(name: "CallGenericInOwningPackage", linkageName: "_CCallGenericInOwningPackage.OtherPackage", scope: null, file: !130, line: 5, type: !86, spFlags: DISPFlagDefinition, unit: !131)
-// CHECK:STDOUT: !133 = !DILocation(line: 7, column: 29, scope: !132)
-// CHECK:STDOUT: !134 = !DILocation(line: 7, column: 51, scope: !132)
-// CHECK:STDOUT: !135 = !DILocation(line: 7, column: 3, scope: !132)
-// CHECK:STDOUT: !136 = !DILocation(line: 5, column: 1, scope: !132)
-// CHECK:STDOUT: !137 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OwningPackage.e43630e9a6c38c3f", scope: null, file: !79, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !147)
-// CHECK:STDOUT: !138 = !DILocalVariable(arg: 1, scope: !137, type: !7)
-// CHECK:STDOUT: !139 = !DILocalVariable(arg: 2, scope: !137, type: !7)
-// CHECK:STDOUT: !144 = !DILocation(line: 6, column: 10, scope: !137)
-// CHECK:STDOUT: !145 = !DILocation(line: 6, column: 15, scope: !137)
-// CHECK:STDOUT: !146 = !DILocation(line: 6, column: 3, scope: !137)
-// CHECK:STDOUT: !147 = !{!138, !139}
-// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !154)
-// CHECK:STDOUT: !149 = !DILocalVariable(arg: 1, scope: !148, type: !7)
-// CHECK:STDOUT: !153 = !DILocation(line: 35, column: 1, scope: !148)
-// CHECK:STDOUT: !154 = !{!149}
+// CHECK:STDOUT: !62 = !DIFile(filename: "generic_same_package.carbon", directory: "")
+// CHECK:STDOUT: !68 = !{null}
+// CHECK:STDOUT: !69 = !DISubroutineType(types: !68)
+// CHECK:STDOUT: !99 = !DIFile(filename: "indirect_different_package_via_generic_in_same_package.carbon", directory: "")
+// CHECK:STDOUT: !100 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !99, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !101 = distinct !DISubprogram(name: "CallGenericInOwningPackage", linkageName: "_CCallGenericInOwningPackage.OtherPackage", scope: null, file: !99, line: 5, type: !69, spFlags: DISPFlagDefinition, unit: !100)
+// CHECK:STDOUT: !102 = !DILocation(line: 7, column: 29, scope: !101)
+// CHECK:STDOUT: !103 = !DILocation(line: 7, column: 51, scope: !101)
+// CHECK:STDOUT: !104 = !DILocation(line: 7, column: 3, scope: !101)
+// CHECK:STDOUT: !105 = !DILocation(line: 5, column: 1, scope: !101)
+// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OwningPackage.e43630e9a6c38c3f", scope: null, file: !62, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !100, retainedNodes: !116)
+// CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !106, type: !7)
+// CHECK:STDOUT: !108 = !DILocalVariable(arg: 2, scope: !106, type: !7)
+// CHECK:STDOUT: !113 = !DILocation(line: 6, column: 10, scope: !106)
+// CHECK:STDOUT: !114 = !DILocation(line: 6, column: 15, scope: !106)
+// CHECK:STDOUT: !115 = !DILocation(line: 6, column: 3, scope: !106)
+// CHECK:STDOUT: !116 = !{!107, !108}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_different_package.carbon'
@@ -539,34 +466,31 @@ fn CallGeneric() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OtherPackage(ptr sret({ i32 }))
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!156}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!118}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !155 = !DIFile(filename: "generic_different_package.carbon", directory: "")
-// CHECK:STDOUT: !156 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !155, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !117 = !DIFile(filename: "generic_different_package.carbon", directory: "")
+// CHECK:STDOUT: !118 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !117, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirect_different_package_via_generic_in_different_package.carbon'
 // CHECK:STDOUT: source_filename = "indirect_different_package_via_generic_in_different_package.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallGeneric.OtherPackage() #0 !dbg !159 {
+// CHECK:STDOUT: define void @_CCallGeneric.OtherPackage() #0 !dbg !121 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !160
-// CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !161
-// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !162
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !160
-// CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_20.1.temp), !dbg !160
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !161
-// CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_28.1.temp), !dbg !161
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !162
-// CHECK:STDOUT:   call void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !162
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_29.2.temp), !dbg !162
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_28.1.temp), !dbg !161
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %.loc7_20.1.temp), !dbg !160
-// CHECK:STDOUT:   ret void, !dbg !163
+// CHECK:STDOUT:   %.loc7_20.1.temp = alloca { i32 }, align 4, !dbg !122
+// CHECK:STDOUT:   %.loc7_28.1.temp = alloca { i32 }, align 4, !dbg !123
+// CHECK:STDOUT:   %.loc7_29.2.temp = alloca { i32 }, align 4, !dbg !124
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_20.1.temp), !dbg !122
+// CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_20.1.temp), !dbg !122
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_28.1.temp), !dbg !123
+// CHECK:STDOUT:   call void @_CMake.OtherPackage(ptr %.loc7_28.1.temp), !dbg !123
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc7_29.2.temp), !dbg !124
+// CHECK:STDOUT:   call void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr %.loc7_29.2.temp, ptr %.loc7_20.1.temp, ptr %.loc7_28.1.temp), !dbg !124
+// CHECK:STDOUT:   ret void, !dbg !125
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMake.OtherPackage(ptr sret({ i32 }))
@@ -575,18 +499,12 @@ fn CallGeneric() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !164 {
-// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !172
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !172
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !172
-// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !171
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %temp), !dbg !172
-// CHECK:STDOUT:   ret void, !dbg !173
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7e1cc1683e7a3817(ptr %t) #0 !dbg !175 {
-// CHECK:STDOUT:   ret void, !dbg !180
+// CHECK:STDOUT: define linkonce_odr void @_CGeneric.OtherPackage.e43630e9a6c38c3f(ptr sret({ i32 }) %return, ptr %v1, ptr %v2) #0 !dbg !126 {
+// CHECK:STDOUT:   %temp = alloca { i32 }, align 4, !dbg !134
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %temp), !dbg !134
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr %temp, ptr %v2, i32 2), !dbg !134
+// CHECK:STDOUT:   call void @"_COp.Vector.OwningPackage:AddWith.f941828044620367.Core"(ptr %return, ptr %v1, ptr %temp), !dbg !133
+// CHECK:STDOUT:   ret void, !dbg !135
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_COp.Vector.OwningPackage:MulWith.55456748a8a2eb70.Core"(ptr sret({ i32 }), ptr, i32)
@@ -596,12 +514,11 @@ fn CallGeneric() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CMake.OtherPackage, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 3, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7e1cc1683e7a3817, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!158}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!120}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
@@ -609,28 +526,21 @@ fn CallGeneric() {
 // CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !8 = !{!7, !7, !7}
 // CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !47 = !{null, !7}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !51 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !85 = !{null}
-// CHECK:STDOUT: !86 = !DISubroutineType(types: !85)
-// CHECK:STDOUT: !155 = !DIFile(filename: "generic_different_package.carbon", directory: "")
-// CHECK:STDOUT: !157 = !DIFile(filename: "indirect_different_package_via_generic_in_different_package.carbon", directory: "")
-// CHECK:STDOUT: !158 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !157, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !159 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.OtherPackage", scope: null, file: !157, line: 5, type: !86, spFlags: DISPFlagDefinition, unit: !158)
-// CHECK:STDOUT: !160 = !DILocation(line: 7, column: 15, scope: !159)
-// CHECK:STDOUT: !161 = !DILocation(line: 7, column: 23, scope: !159)
-// CHECK:STDOUT: !162 = !DILocation(line: 7, column: 3, scope: !159)
-// CHECK:STDOUT: !163 = !DILocation(line: 5, column: 1, scope: !159)
-// CHECK:STDOUT: !164 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OtherPackage.e43630e9a6c38c3f", scope: null, file: !155, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !158, retainedNodes: !174)
-// CHECK:STDOUT: !165 = !DILocalVariable(arg: 1, scope: !164, type: !7)
-// CHECK:STDOUT: !166 = !DILocalVariable(arg: 2, scope: !164, type: !7)
-// CHECK:STDOUT: !171 = !DILocation(line: 6, column: 10, scope: !164)
-// CHECK:STDOUT: !172 = !DILocation(line: 6, column: 15, scope: !164)
-// CHECK:STDOUT: !173 = !DILocation(line: 6, column: 3, scope: !164)
-// CHECK:STDOUT: !174 = !{!165, !166}
-// CHECK:STDOUT: !175 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7e1cc1683e7a3817", scope: null, file: !51, line: 35, type: !48, spFlags: DISPFlagDefinition, unit: !158, retainedNodes: !181)
-// CHECK:STDOUT: !176 = !DILocalVariable(arg: 1, scope: !175, type: !7)
-// CHECK:STDOUT: !180 = !DILocation(line: 35, column: 1, scope: !175)
-// CHECK:STDOUT: !181 = !{!176}
+// CHECK:STDOUT: !68 = !{null}
+// CHECK:STDOUT: !69 = !DISubroutineType(types: !68)
+// CHECK:STDOUT: !117 = !DIFile(filename: "generic_different_package.carbon", directory: "")
+// CHECK:STDOUT: !119 = !DIFile(filename: "indirect_different_package_via_generic_in_different_package.carbon", directory: "")
+// CHECK:STDOUT: !120 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !119, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !121 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.OtherPackage", scope: null, file: !119, line: 5, type: !69, spFlags: DISPFlagDefinition, unit: !120)
+// CHECK:STDOUT: !122 = !DILocation(line: 7, column: 15, scope: !121)
+// CHECK:STDOUT: !123 = !DILocation(line: 7, column: 23, scope: !121)
+// CHECK:STDOUT: !124 = !DILocation(line: 7, column: 3, scope: !121)
+// CHECK:STDOUT: !125 = !DILocation(line: 5, column: 1, scope: !121)
+// CHECK:STDOUT: !126 = distinct !DISubprogram(name: "Generic", linkageName: "_CGeneric.OtherPackage.e43630e9a6c38c3f", scope: null, file: !117, line: 5, type: !9, spFlags: DISPFlagDefinition, unit: !120, retainedNodes: !136)
+// CHECK:STDOUT: !127 = !DILocalVariable(arg: 1, scope: !126, type: !7)
+// CHECK:STDOUT: !128 = !DILocalVariable(arg: 2, scope: !126, type: !7)
+// CHECK:STDOUT: !133 = !DILocation(line: 6, column: 10, scope: !126)
+// CHECK:STDOUT: !134 = !DILocation(line: 6, column: 15, scope: !126)
+// CHECK:STDOUT: !135 = !DILocation(line: 6, column: 3, scope: !126)
+// CHECK:STDOUT: !136 = !{!127, !128}
 // CHECK:STDOUT:

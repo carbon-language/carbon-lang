@@ -66,22 +66,14 @@ fn F() {
 // CHECK:STDOUT:   %tuple.loc18_108 = getelementptr inbounds nuw i8, ptr %tuple.loc18_10, i64 8, !dbg !33
 // CHECK:STDOUT:   store ptr %tuple.loc18_9, ptr %tuple.loc18_108, align 8, !dbg !33
 // CHECK:STDOUT:   call void @_CG.Main(ptr %tuple.loc18_10), !dbg !34
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %b.var), !dbg !29
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %a.var), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %t) #0 !dbg !36 {
-// CHECK:STDOUT:   ret void, !dbg !41
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6e65c86a129b7677, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -91,12 +83,8 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "value_formation.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !22 = !{null, !21}
-// CHECK:STDOUT: !23 = !DISubroutineType(types: !22)
 // CHECK:STDOUT: !24 = !{null}
 // CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
 // CHECK:STDOUT: !26 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19)
@@ -107,8 +95,4 @@ fn F() {
 // CHECK:STDOUT: !33 = !DILocation(line: 18, column: 5, scope: !26)
 // CHECK:STDOUT: !34 = !DILocation(line: 18, column: 3, scope: !26)
 // CHECK:STDOUT: !35 = !DILocation(line: 15, column: 1, scope: !26)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6e65c86a129b7677", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
-// CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !21)
-// CHECK:STDOUT: !41 = !DILocation(line: 32, column: 1, scope: !36)
-// CHECK:STDOUT: !42 = !{!37}
 // CHECK:STDOUT:

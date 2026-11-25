@@ -78,7 +78,7 @@ fn Run() {
 // CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 1575{{\r}}
+// CHECK:STDOUT: }Content-Length: 1581{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -131,7 +131,7 @@ fn Run() {
 // CHECK:STDOUT:         "source": "carbon"
 // CHECK:STDOUT:       },
 // CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "`Core.SelfDestruct` implicitly referenced here, but package `Core` not found",
+// CHECK:STDOUT:         "message": "`Core.TrivialDestroyImpl` implicitly referenced here, but package `Core` not found",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
 // CHECK:STDOUT:             "character": 12,

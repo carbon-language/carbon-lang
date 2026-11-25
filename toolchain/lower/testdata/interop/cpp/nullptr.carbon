@@ -65,12 +65,10 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, ptr %.loc12_18.2.temp, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc12_18.4 = load ptr, ptr %.loc12_18.2.temp, align 8, !dbg !17
 // CHECK:STDOUT:   call void @_Z7TakePtrPi(ptr %.loc12_18.4), !dbg !18
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.632d99dc34484dc8(ptr %.loc12_18.2.temp), !dbg !17
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_22.1.temp), !dbg !19
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc14_22.1.temp, align 8, !dbg !19
 // CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk._(ptr %.loc14_22.1.temp), !dbg !20
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.773050755018f871(ptr %.loc14_22.1.temp), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -80,8 +78,8 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: define internal void @_Z11TakeNullptrDn.carbon_thunk._(ptr noundef %n) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %n.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %n, ptr %n.addr, align 8, !tbaa !87
-// CHECK:STDOUT:   %0 = load ptr, ptr %n.addr, align 8, !tbaa !87
+// CHECK:STDOUT:   store ptr %n, ptr %n.addr, align 8, !tbaa !72
+// CHECK:STDOUT:   %0 = load ptr, ptr %n.addr, align 8, !tbaa !72
 // CHECK:STDOUT:   call void @_Z11TakeNullptrDn(ptr null)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -104,7 +102,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc22, ptr %a.var, align 8, !dbg !30
 // CHECK:STDOUT:   %.loc23 = load ptr, ptr %a.var, align 8, !dbg !33
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc23 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %.loc23), !dbg !33
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.773050755018f871(ptr %a.var), !dbg !30
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc23, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,7 +113,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk.(ptr %a.var), !dbg !39
 // CHECK:STDOUT:   %.loc28_10 = load ptr, ptr %a.var, align 8, !dbg !41
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.481e1aec351df623.Core.55456748a8a2eb70"(ptr %.loc28_10), !dbg !42
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.773050755018f871(ptr %a.var), !dbg !38
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,10 +120,10 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: define internal void @_Z13ReturnNullptrv.carbon_thunk.(ptr noundef %return) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !87
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !87
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !72
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !72
 // CHECK:STDOUT:   %call = call ptr @_Z13ReturnNullptrv()
-// CHECK:STDOUT:   store ptr %call, ptr %0, align 8, !tbaa !88
+// CHECK:STDOUT:   store ptr %call, ptr %0, align 8, !tbaa !73
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +135,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk.(ptr %.loc32_28.1.temp), !dbg !46
 // CHECK:STDOUT:   %.loc32_28.4 = load ptr, ptr %.loc32_28.1.temp, align 8, !dbg !46
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.481e1aec351df623.Core.55456748a8a2eb70"(ptr %.loc32_28.4), !dbg !47
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.773050755018f871(ptr %.loc32_28.1.temp), !dbg !46
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,21 +154,11 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.632d99dc34484dc8(ptr %t) #0 !dbg !62 {
-// CHECK:STDOUT:   ret void, !dbg !67
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.773050755018f871(ptr %t) #0 !dbg !69 {
-// CHECK:STDOUT:   ret void, !dbg !74
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: declare ptr @_CMake.NullptrT.CppCompat.Core()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.2313f7f09b1ddaea() #0 !dbg !77 {
-// CHECK:STDOUT:   ret ptr null, !dbg !81
+// CHECK:STDOUT: define linkonce_odr ptr @_CNone.Optional.Core.2313f7f09b1ddaea() #0 !dbg !62 {
+// CHECK:STDOUT:   ret ptr null, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z11TakeNullptrDn(ptr) #1
@@ -183,7 +168,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.481e1aec351df623.Core.55456748a8a2eb70", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.773050755018f871, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -191,8 +175,8 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
-// CHECK:STDOUT: !llvm.module.flags = !{!89, !90, !91, !92, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!95}
+// CHECK:STDOUT: !llvm.module.flags = !{!74, !75, !76, !77, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!80}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -201,8 +185,6 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !7 = !{null}
 // CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
 // CHECK:STDOUT: !9 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !10 = !{null, !9}
-// CHECK:STDOUT: !11 = !DISubroutineType(types: !10)
 // CHECK:STDOUT: !12 = !{!9, !9}
 // CHECK:STDOUT: !13 = !DISubroutineType(types: !12)
 // CHECK:STDOUT: !14 = !{!9}
@@ -237,30 +219,21 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !58 = !DILocation(line: 52, column: 14, scope: !53)
 // CHECK:STDOUT: !59 = !DILocation(line: 52, column: 7, scope: !53)
 // CHECK:STDOUT: !60 = !{!54}
-// CHECK:STDOUT: !61 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.632d99dc34484dc8", scope: null, file: !61, line: 35, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
-// CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !9)
-// CHECK:STDOUT: !67 = !DILocation(line: 35, column: 1, scope: !62)
-// CHECK:STDOUT: !68 = !{!63}
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.773050755018f871", scope: null, file: !61, line: 35, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !75)
-// CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !9)
-// CHECK:STDOUT: !74 = !DILocation(line: 35, column: 1, scope: !69)
-// CHECK:STDOUT: !75 = !{!70}
-// CHECK:STDOUT: !76 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
-// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.2313f7f09b1ddaea", scope: null, file: !76, line: 30, type: !15, spFlags: DISPFlagDefinition, unit: !5)
-// CHECK:STDOUT: !81 = !DILocation(line: 31, column: 5, scope: !77)
-// CHECK:STDOUT: !82 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !83 = !{!"omnipotent char", !82, i64 0}
-// CHECK:STDOUT: !84 = !{!"std::nullptr_t", !83, i64 0}
-// CHECK:STDOUT: !85 = !{!"any pointer", !83, i64 0}
-// CHECK:STDOUT: !86 = !{!"p1 std::nullptr_t", !85, i64 0}
-// CHECK:STDOUT: !87 = !{!86, !86, i64 0}
-// CHECK:STDOUT: !88 = !{!84, !84, i64 0}
-// CHECK:STDOUT: !89 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !90 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !91 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !92 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !93 = !{!"int", !83, i64 0}
-// CHECK:STDOUT: !94 = !{!"__libc_errno", !93, i64 0}
-// CHECK:STDOUT: !95 = !{!94, !93, i64 0}
+// CHECK:STDOUT: !61 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.2313f7f09b1ddaea", scope: null, file: !61, line: 30, type: !15, spFlags: DISPFlagDefinition, unit: !5)
+// CHECK:STDOUT: !66 = !DILocation(line: 31, column: 5, scope: !62)
+// CHECK:STDOUT: !67 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !68 = !{!"omnipotent char", !67, i64 0}
+// CHECK:STDOUT: !69 = !{!"std::nullptr_t", !68, i64 0}
+// CHECK:STDOUT: !70 = !{!"any pointer", !68, i64 0}
+// CHECK:STDOUT: !71 = !{!"p1 std::nullptr_t", !70, i64 0}
+// CHECK:STDOUT: !72 = !{!71, !71, i64 0}
+// CHECK:STDOUT: !73 = !{!69, !69, i64 0}
+// CHECK:STDOUT: !74 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !75 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !76 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !77 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !78 = !{!"int", !68, i64 0}
+// CHECK:STDOUT: !79 = !{!"__libc_errno", !78, i64 0}
+// CHECK:STDOUT: !80 = !{!79, !78, i64 0}
 // CHECK:STDOUT:

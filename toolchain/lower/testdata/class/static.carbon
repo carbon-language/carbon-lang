@@ -104,7 +104,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #1 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !45
 // CHECK:STDOUT:   ret void, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -113,11 +112,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @_Z1Fv(), !dbg !50
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !51
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #2 !dbg !55 {
-// CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -132,8 +126,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!37}
-// CHECK:STDOUT: !llvm.module.flags = !{!62, !63, !64, !65, !6, !7}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!67}
+// CHECK:STDOUT: !llvm.module.flags = !{!55, !56, !57, !58, !6, !7}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!60}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -141,7 +135,6 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !3 = !{!2, !2, i64 0}
 // CHECK:STDOUT: !6 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !7 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !14 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !24 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !25 = !{null}
 // CHECK:STDOUT: !26 = !DISubroutineType(types: !25)
@@ -162,14 +155,10 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !52 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !36, type: !26, spFlags: DISPFlagDefinition, unit: !37)
 // CHECK:STDOUT: !53 = !DILocation(line: 5, column: 10, scope: !52)
 // CHECK:STDOUT: !54 = !DILocation(line: 0, scope: !52)
-// CHECK:STDOUT: !55 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !14, line: 32, type: !40, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
-// CHECK:STDOUT: !56 = !DILocalVariable(arg: 1, scope: !55, type: !38)
-// CHECK:STDOUT: !60 = !DILocation(line: 32, column: 1, scope: !55)
-// CHECK:STDOUT: !61 = !{!56}
-// CHECK:STDOUT: !62 = !{i32 2, !"debugger-tuning", !"gdb"}
-// CHECK:STDOUT: !63 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !64 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !65 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !66 = !{!"__libc_errno", !2, i64 0}
-// CHECK:STDOUT: !67 = !{!66, !2, i64 0}
+// CHECK:STDOUT: !55 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !56 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !57 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !58 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !59 = !{!"__libc_errno", !2, i64 0}
+// CHECK:STDOUT: !60 = !{!59, !2, i64 0}
 // CHECK:STDOUT:

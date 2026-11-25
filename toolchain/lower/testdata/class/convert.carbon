@@ -42,7 +42,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: ; ModuleID = 'class_to_int.carbon'
 // CHECK:STDOUT: source_filename = "class_to_int.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @IntWrapper.val.loc14_3.1 = internal constant { i32 } { i32 42 }
+// CHECK:STDOUT: @IntWrapper.val.loc14_3 = internal constant { i32 } { i32 42 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !28 {
@@ -64,11 +64,10 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT:   %w.var = alloca { i32 }, align 4, !dbg !42
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !42
 // CHECK:STDOUT:   %.loc14_31.3.n = getelementptr inbounds nuw i8, ptr %w.var, i64 0, !dbg !43
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3.1, i64 4, i1 false), !dbg !42
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3, i64 4, i1 false), !dbg !42
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %w.var), !dbg !45
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !46
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b75e154fba7ce8d1(ptr %w.var), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !49
+// CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -76,11 +75,6 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b75e154fba7ce8d1(ptr %t) #0 !dbg !50 {
-// CHECK:STDOUT:   ret void, !dbg !55
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -90,7 +84,6 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "class_to_int.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -115,39 +108,33 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: !43 = !DILocation(line: 14, column: 23, scope: !41)
 // CHECK:STDOUT: !45 = !DILocation(line: 15, column: 11, scope: !41)
 // CHECK:STDOUT: !46 = !DILocation(line: 15, column: 3, scope: !41)
-// CHECK:STDOUT: !47 = !{null, !21}
-// CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
-// CHECK:STDOUT: !49 = !DILocation(line: 13, column: 1, scope: !41)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b75e154fba7ce8d1", scope: null, file: !10, line: 32, type: !48, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !56)
-// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !21)
-// CHECK:STDOUT: !55 = !DILocation(line: 32, column: 1, scope: !50)
-// CHECK:STDOUT: !56 = !{!51}
+// CHECK:STDOUT: !47 = !DILocation(line: 13, column: 1, scope: !41)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'partial_class_to_partial_base.carbon'
 // CHECK:STDOUT: source_filename = "partial_class_to_partial_base.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !61 {
+// CHECK:STDOUT: define ptr @_CF.Main(ptr %d) #0 !dbg !52 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_13.1.base = getelementptr inbounds nuw i8, ptr %d, i64 0, !dbg !67
-// CHECK:STDOUT:   ret ptr %.loc7_13.1.base, !dbg !67
+// CHECK:STDOUT:   %.loc7_13.1.base = getelementptr inbounds nuw i8, ptr %d, i64 0, !dbg !58
+// CHECK:STDOUT:   ret ptr %.loc7_13.1.base, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!58}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!49}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !57 = !DIFile(filename: "partial_class_to_partial_base.carbon", directory: "")
-// CHECK:STDOUT: !58 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !57, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !59 = !{!21, !21}
-// CHECK:STDOUT: !60 = !DISubroutineType(types: !59)
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !57, line: 6, type: !60, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !68)
-// CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !21)
-// CHECK:STDOUT: !67 = !DILocation(line: 7, column: 5, scope: !61)
-// CHECK:STDOUT: !68 = !{!62}
+// CHECK:STDOUT: !48 = !DIFile(filename: "partial_class_to_partial_base.carbon", directory: "")
+// CHECK:STDOUT: !49 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !48, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !50 = !{!21, !21}
+// CHECK:STDOUT: !51 = !DISubroutineType(types: !50)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !48, line: 6, type: !51, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !59)
+// CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !21)
+// CHECK:STDOUT: !58 = !DILocation(line: 7, column: 5, scope: !52)
+// CHECK:STDOUT: !59 = !{!53}
 // CHECK:STDOUT:

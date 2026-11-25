@@ -171,7 +171,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !77
 // CHECK:STDOUT:   store i32 %0, ptr %.addr, align 4, !tbaa !36
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %call = call noundef ptr @"\01__CC__carbon_thunk.C.Main"(ptr noundef nonnull align 4 dereferenceable(4) %this1, ptr noundef nonnull align 4 dereferenceable(4) %.addr)
@@ -182,7 +182,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: define linkonce_odr noundef ptr @_ZN6Carbon4Main1CD1Ev(ptr noundef nonnull returned align 4 dead_on_return(4) dereferenceable(4) %this) unnamed_addr #3 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !77
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %call = call noundef ptr @_ZN6Carbon4Main1CD2Ev(ptr noundef nonnull align 4 dead_on_return(4) dereferenceable(4) %this1) #4
 // CHECK:STDOUT:   ret ptr %this1
@@ -202,7 +202,6 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.C.Main"(ptr %self) #5 !dbg !61 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %self), !dbg !63
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,16 +220,11 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #4 !dbg !76 {
-// CHECK:STDOUT:   ret void, !dbg !81
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind ssp uwtable(sync)
 // CHECK:STDOUT: define linkonce_odr noundef ptr @_ZN6Carbon4Main1CD2Ev(ptr noundef nonnull returned align 4 dead_on_return(4) dereferenceable(4) %this) unnamed_addr #3 personality ptr @__gxx_personality_v0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !85
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !77
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   invoke void @"\01__C__destroy_thunk:thunk.C.Main"(ptr noundef nonnull align 4 dereferenceable(4) %this1)
 // CHECK:STDOUT:           to label %invoke.cont unwind label %terminate.lpad
@@ -319,12 +313,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: !70 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !43, line: 21, type: !17, spFlags: DISPFlagDefinition, unit: !44)
 // CHECK:STDOUT: !73 = !DILocation(line: 21, column: 24, scope: !70)
 // CHECK:STDOUT: !74 = !DILocation(line: 21, column: 17, scope: !70)
-// CHECK:STDOUT: !75 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !75, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !44, retainedNodes: !82)
-// CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !45)
-// CHECK:STDOUT: !81 = !DILocation(line: 35, column: 1, scope: !76)
-// CHECK:STDOUT: !82 = !{!77}
-// CHECK:STDOUT: !83 = !{!"any pointer", !1, i64 0}
-// CHECK:STDOUT: !84 = !{!"p1 _ZTSN6Carbon4Main1CE", !83, i64 0}
-// CHECK:STDOUT: !85 = !{!84, !84, i64 0}
+// CHECK:STDOUT: !75 = !{!"any pointer", !1, i64 0}
+// CHECK:STDOUT: !76 = !{!"p1 _ZTSN6Carbon4Main1CE", !75, i64 0}
+// CHECK:STDOUT: !77 = !{!76, !76, i64 0}
 // CHECK:STDOUT:

@@ -56,17 +56,11 @@ fn Run() {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !17
 // CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !17
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %1), !dbg !17
-// CHECK:STDOUT:   ret void, !dbg !21
+// CHECK:STDOUT:   ret void, !dbg !19
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !23 {
-// CHECK:STDOUT:   ret void, !dbg !28
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -89,12 +83,5 @@ fn Run() {
 // CHECK:STDOUT: !15 = !DILocation(line: 4, column: 1, scope: !11)
 // CHECK:STDOUT: !16 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.9de8c8f78d58a600", scope: null, file: !4, line: 4, type: !14, spFlags: DISPFlagDefinition, unit: !8)
 // CHECK:STDOUT: !17 = !DILocation(line: 7, column: 3, scope: !16)
-// CHECK:STDOUT: !19 = !{null, !6}
-// CHECK:STDOUT: !20 = !DISubroutineType(types: !19)
-// CHECK:STDOUT: !21 = !DILocation(line: 4, column: 1, scope: !16)
-// CHECK:STDOUT: !22 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !22, line: 35, type: !20, spFlags: DISPFlagDefinition, unit: !8, retainedNodes: !29)
-// CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !6)
-// CHECK:STDOUT: !28 = !DILocation(line: 35, column: 1, scope: !23)
-// CHECK:STDOUT: !29 = !{!24}
+// CHECK:STDOUT: !19 = !DILocation(line: 4, column: 1, scope: !16)
 // CHECK:STDOUT:

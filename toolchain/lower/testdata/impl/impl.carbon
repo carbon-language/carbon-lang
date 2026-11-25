@@ -156,9 +156,7 @@ impl C(B) as I {
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.bd4fb75a414fe858.Main"(ptr %a.var, ptr %x), !dbg !66
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !68
 // CHECK:STDOUT:   call void @"_CF.C.Main:I.a6a60dfee2d7d273.Main"(ptr %b.var, ptr %y), !dbg !69
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %b.var), !dbg !68
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %a.var), !dbg !65
-// CHECK:STDOUT:   ret void, !dbg !73
+// CHECK:STDOUT:   ret void, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -166,16 +164,6 @@ impl C(B) as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !75 {
-// CHECK:STDOUT:   ret void, !dbg !80
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #0 !dbg !82 {
-// CHECK:STDOUT:   ret void, !dbg !87
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
@@ -189,7 +177,6 @@ impl C(B) as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !21 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !40 = !DIFile(filename: "generic_impls.carbon", directory: "")
 // CHECK:STDOUT: !41 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !40, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -205,55 +192,45 @@ impl C(B) as I {
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !21)
 // CHECK:STDOUT: !58 = !DILocation(line: 17, column: 31, scope: !53)
 // CHECK:STDOUT: !59 = !{!54}
-// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "F1", linkageName: "_CF1.Main", scope: null, file: !40, line: 20, type: !45, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !74)
+// CHECK:STDOUT: !60 = distinct !DISubprogram(name: "F1", linkageName: "_CF1.Main", scope: null, file: !40, line: 20, type: !45, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !72)
 // CHECK:STDOUT: !61 = !DILocalVariable(arg: 1, scope: !60, type: !21)
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 2, scope: !60, type: !21)
 // CHECK:STDOUT: !65 = !DILocation(line: 21, column: 3, scope: !60)
 // CHECK:STDOUT: !66 = !DILocation(line: 21, column: 21, scope: !60)
 // CHECK:STDOUT: !68 = !DILocation(line: 22, column: 3, scope: !60)
 // CHECK:STDOUT: !69 = !DILocation(line: 22, column: 21, scope: !60)
-// CHECK:STDOUT: !71 = !{null, !21}
-// CHECK:STDOUT: !72 = !DISubroutineType(types: !71)
-// CHECK:STDOUT: !73 = !DILocation(line: 20, column: 1, scope: !60)
-// CHECK:STDOUT: !74 = !{!61, !62}
-// CHECK:STDOUT: !75 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !72, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !81)
-// CHECK:STDOUT: !76 = !DILocalVariable(arg: 1, scope: !75, type: !21)
-// CHECK:STDOUT: !80 = !DILocation(line: 32, column: 1, scope: !75)
-// CHECK:STDOUT: !81 = !{!76}
-// CHECK:STDOUT: !82 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6b8b385dcf82cc70", scope: null, file: !10, line: 32, type: !72, spFlags: DISPFlagDefinition, unit: !41, retainedNodes: !88)
-// CHECK:STDOUT: !83 = !DILocalVariable(arg: 1, scope: !82, type: !21)
-// CHECK:STDOUT: !87 = !DILocation(line: 32, column: 1, scope: !82)
-// CHECK:STDOUT: !88 = !{!83}
+// CHECK:STDOUT: !71 = !DILocation(line: 20, column: 1, scope: !60)
+// CHECK:STDOUT: !72 = !{!61, !62}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_class_impls.carbon'
 // CHECK:STDOUT: source_filename = "generic_class_impls.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.C.bd4fb75a414fe858.Main:I.Main"() #0 !dbg !93 {
+// CHECK:STDOUT: define void @"_CF.C.bd4fb75a414fe858.Main:I.Main"() #0 !dbg !77 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !94
+// CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_CF.C.a6a60dfee2d7d273.Main:I.Main"() #0 !dbg !95 {
+// CHECK:STDOUT: define void @"_CF.C.a6a60dfee2d7d273.Main:I.Main"() #0 !dbg !79 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !96
+// CHECK:STDOUT:   ret void, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!90}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!74}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !89 = !DIFile(filename: "generic_class_impls.carbon", directory: "")
-// CHECK:STDOUT: !90 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !89, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !91 = !{null}
-// CHECK:STDOUT: !92 = !DISubroutineType(types: !91)
-// CHECK:STDOUT: !93 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.bd4fb75a414fe858.Main:I.Main", scope: null, file: !89, line: 14, type: !92, spFlags: DISPFlagDefinition, unit: !90)
-// CHECK:STDOUT: !94 = !DILocation(line: 14, column: 3, scope: !93)
-// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.a6a60dfee2d7d273.Main:I.Main", scope: null, file: !89, line: 18, type: !92, spFlags: DISPFlagDefinition, unit: !90)
-// CHECK:STDOUT: !96 = !DILocation(line: 18, column: 3, scope: !95)
+// CHECK:STDOUT: !73 = !DIFile(filename: "generic_class_impls.carbon", directory: "")
+// CHECK:STDOUT: !74 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !73, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !75 = !{null}
+// CHECK:STDOUT: !76 = !DISubroutineType(types: !75)
+// CHECK:STDOUT: !77 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.bd4fb75a414fe858.Main:I.Main", scope: null, file: !73, line: 14, type: !76, spFlags: DISPFlagDefinition, unit: !74)
+// CHECK:STDOUT: !78 = !DILocation(line: 14, column: 3, scope: !77)
+// CHECK:STDOUT: !79 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.a6a60dfee2d7d273.Main:I.Main", scope: null, file: !73, line: 18, type: !76, spFlags: DISPFlagDefinition, unit: !74)
+// CHECK:STDOUT: !80 = !DILocation(line: 18, column: 3, scope: !79)
 // CHECK:STDOUT:

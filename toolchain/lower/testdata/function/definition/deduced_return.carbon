@@ -75,9 +75,7 @@ fn Use() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_33.1.temp), !dbg !61
 // CHECK:STDOUT:   call void @_CReturnedVar.Main(ptr %.loc33_33.1.temp), !dbg !61
 // CHECK:STDOUT:   %Copy.call = call i32 @_CCopy.Main(), !dbg !64
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %.loc33_33.1.temp), !dbg !61
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr %.loc32_29.1.temp), !dbg !58
-// CHECK:STDOUT:   ret i32 %Copy.call, !dbg !67
+// CHECK:STDOUT:   ret i32 %Copy.call, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -86,15 +84,9 @@ fn Use() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !68 {
-// CHECK:STDOUT:   ret void, !dbg !73
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.356af3b6aef18564, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -104,7 +96,6 @@ fn Use() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !34 = !DIFile(filename: "deduced_return.carbon", directory: "")
 // CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -126,11 +117,5 @@ fn Use() -> i32 {
 // CHECK:STDOUT: !58 = !DILocation(line: 32, column: 21, scope: !55)
 // CHECK:STDOUT: !61 = !DILocation(line: 33, column: 21, scope: !55)
 // CHECK:STDOUT: !64 = !DILocation(line: 34, column: 10, scope: !55)
-// CHECK:STDOUT: !65 = !{null, !39}
-// CHECK:STDOUT: !66 = !DISubroutineType(types: !65)
-// CHECK:STDOUT: !67 = !DILocation(line: 34, column: 3, scope: !55)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !26, line: 32, type: !66, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !74)
-// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !39)
-// CHECK:STDOUT: !73 = !DILocation(line: 32, column: 1, scope: !68)
-// CHECK:STDOUT: !74 = !{!69}
+// CHECK:STDOUT: !65 = !DILocation(line: 34, column: 3, scope: !55)
 // CHECK:STDOUT:

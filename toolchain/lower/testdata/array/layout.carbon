@@ -50,17 +50,11 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT:   %.loc12_13.array.index = getelementptr inbounds i8, ptr %v.var, i64 32, !dbg !37
 // CHECK:STDOUT:   %.loc12_14.b = getelementptr inbounds nuw i8, ptr %.loc12_13.array.index, i64 8, !dbg !37
 // CHECK:STDOUT:   call void @_CCheck.Main(ptr %.loc12_14.b), !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bcc30dc1c10b07a0(ptr %v.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bcc30dc1c10b07a0(ptr %t) #0 !dbg !41 {
-// CHECK:STDOUT:   ret void, !dbg !46
-// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -70,12 +64,8 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !14 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !20 = !DIFile(filename: "element_tail_padding.carbon", directory: "")
 // CHECK:STDOUT: !21 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !20, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !23 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !24 = !{null, !23}
-// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
 // CHECK:STDOUT: !26 = !{null}
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !20, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !21)
@@ -87,10 +77,6 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: !37 = !DILocation(line: 12, column: 10, scope: !28)
 // CHECK:STDOUT: !39 = !DILocation(line: 12, column: 3, scope: !28)
 // CHECK:STDOUT: !40 = !DILocation(line: 5, column: 1, scope: !28)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bcc30dc1c10b07a0", scope: null, file: !14, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
-// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !23)
-// CHECK:STDOUT: !46 = !DILocation(line: 32, column: 1, scope: !41)
-// CHECK:STDOUT: !47 = !{!42}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'constant_with_padding.carbon'
@@ -101,10 +87,10 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !51 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !44 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 32 @_Cc.Main, ptr align 32 @array.loc3_1, i64 320, i1 false), !dbg !53
-// CHECK:STDOUT:   ret void, !dbg !54
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 32 @_Cc.Main, ptr align 32 @array.loc3_1, i64 320, i1 false), !dbg !46
+// CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
@@ -113,16 +99,16 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!49}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!42}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !26 = !{null}
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
-// CHECK:STDOUT: !48 = !DIFile(filename: "constant_with_padding.carbon", directory: "")
-// CHECK:STDOUT: !49 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !48, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !48, type: !27, spFlags: DISPFlagDefinition, unit: !49)
-// CHECK:STDOUT: !53 = !DILocation(line: 3, column: 1, scope: !51)
-// CHECK:STDOUT: !54 = !DILocation(line: 0, scope: !51)
+// CHECK:STDOUT: !41 = !DIFile(filename: "constant_with_padding.carbon", directory: "")
+// CHECK:STDOUT: !42 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !41, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !41, type: !27, spFlags: DISPFlagDefinition, unit: !42)
+// CHECK:STDOUT: !46 = !DILocation(line: 3, column: 1, scope: !44)
+// CHECK:STDOUT: !47 = !DILocation(line: 0, scope: !44)
 // CHECK:STDOUT:

@@ -13,8 +13,11 @@
 #include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl_lookup.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/sem_ir/class.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/name_scope.h"
@@ -105,6 +108,26 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
     -> SemIR::InstId {
   auto loc_id = context.insts().GetLocIdForDesugaring(object_id);
+
+  auto trivial_destroy_id =
+      GetCoreInterfaceId(context, loc_id, CoreIdentifier::TrivialDestroyImpl);
+  if (!trivial_destroy_id.has_value()) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  auto interface_type_id =
+      GetInterfaceType(context, trivial_destroy_id, SemIR::SpecificId::None)
+          .AsConstantId();
+  auto type_const_id =
+      context.types().GetConstantId(context.insts().Get(object_id).type_id());
+  auto impls_trivial_destroy =
+      LookupImplWitness(context, loc_id, type_const_id, interface_type_id);
+
+  if (impls_trivial_destroy.has_value() &&
+      !impls_trivial_destroy.has_error_value()) {
+    return SemIR::InstId::None;
+  }
+
   return PerformCall(
       context, loc_id,
       LookupNameInCore(context, loc_id, CoreIdentifier::SelfDestruct),

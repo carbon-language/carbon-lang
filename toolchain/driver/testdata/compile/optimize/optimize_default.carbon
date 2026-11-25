@@ -50,9 +50,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !84
-// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !85
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !84
+// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !76
+// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !77
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !76
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !29
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !29
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !29
-// CHECK:STDOUT:   %0 = add nuw nsw i32 %n.var.03, 1, !dbg !93
+// CHECK:STDOUT:   %0 = add nuw nsw i32 %n.var.03, 1, !dbg !85
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !25
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !24
 // CHECK:STDOUT:
@@ -84,7 +84,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!1}
-// CHECK:STDOUT: !llvm.module.flags = !{!79, !80}
+// CHECK:STDOUT: !llvm.module.flags = !{!71, !72}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !0, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -115,16 +115,16 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !42 = !{null, !2, !2}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !45 = !{!39}
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !61)
-// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !2)
-// CHECK:STDOUT: !56 = !DILocalVariable(arg: 2, scope: !54, type: !2)
-// CHECK:STDOUT: !61 = !{!55, !56}
-// CHECK:STDOUT: !79 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !80 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !83 = distinct !DILocation(line: 9, column: 10, scope: !14)
-// CHECK:STDOUT: !84 = distinct !DILocation(line: 4, column: 10, scope: !8, inlinedAt: !83)
-// CHECK:STDOUT: !85 = distinct !DILocation(line: 4, column: 19, scope: !8, inlinedAt: !83)
-// CHECK:STDOUT: !91 = distinct !DILocation(line: 17, column: 5, scope: !19)
-// CHECK:STDOUT: !92 = distinct !DILocation(line: 398, column: 5, scope: !38, inlinedAt: !91)
-// CHECK:STDOUT: !93 = distinct !DILocation(line: 331, column: 3, scope: !54, inlinedAt: !92)
+// CHECK:STDOUT: !46 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !53)
+// CHECK:STDOUT: !47 = !DILocalVariable(arg: 1, scope: !46, type: !2)
+// CHECK:STDOUT: !48 = !DILocalVariable(arg: 2, scope: !46, type: !2)
+// CHECK:STDOUT: !53 = !{!47, !48}
+// CHECK:STDOUT: !71 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !72 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !75 = distinct !DILocation(line: 9, column: 10, scope: !14)
+// CHECK:STDOUT: !76 = distinct !DILocation(line: 4, column: 10, scope: !8, inlinedAt: !75)
+// CHECK:STDOUT: !77 = distinct !DILocation(line: 4, column: 19, scope: !8, inlinedAt: !75)
+// CHECK:STDOUT: !83 = distinct !DILocation(line: 17, column: 5, scope: !19)
+// CHECK:STDOUT: !84 = distinct !DILocation(line: 398, column: 5, scope: !38, inlinedAt: !83)
+// CHECK:STDOUT: !85 = distinct !DILocation(line: 331, column: 3, scope: !46, inlinedAt: !84)
 // CHECK:STDOUT:

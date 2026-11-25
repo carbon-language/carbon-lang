@@ -756,7 +756,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
@@ -828,17 +827,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %bound_method.f84: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.239: %f32.3bc = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %Array.f2e = tuple_value (%float.239) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc11_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.322: %SubobjectDestroy.type = facet_value %Array.f2e, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.322) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.f2e, (%DestroyImpl.impl_witness.7d2, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -854,8 +842,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %As.impl_witness_table.1c2 = impl_witness_table (%Core.import_ref.9e0), @Core.IntLiteral.as.As.impl.753 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.0c7: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f2e = impl_witness_table (%Core.import_ref.0c7), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -896,8 +882,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc11_55.3: ref %f32.3bc = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_55.4: init %f32.3bc to %.loc11_55.3 = in_place_init %.loc11_55.2 [concrete = constants.%float.239]
 // CHECK:STDOUT:   %.loc11_55.5: init %Array.f2e to %a.var = array_init (%.loc11_55.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_3.1: init %Array.f2e = converted %.loc11_55.1, %.loc11_55.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc11_3.1
+// CHECK:STDOUT:   %.loc11_3: init %Array.f2e = converted %.loc11_55.1, %.loc11_55.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_46: type = splice_block %Array [concrete = constants.%Array.f2e] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
 // CHECK:STDOUT:     %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -924,12 +910,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.98f = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.98f = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc11_3.1: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc11_3.2: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc11_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc11_3.2: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc11_3.3: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc11_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -943,7 +923,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
@@ -1015,17 +994,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %bound_method.f84: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.239: %f32.3bc = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %Array.f2e = tuple_value (%float.239) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc11_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.322: %SubobjectDestroy.type = facet_value %Array.f2e, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.322) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Array.f2e, (%DestroyImpl.impl_witness.7d2, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1041,8 +1009,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %As.impl_witness_table.43c = impl_witness_table (%Core.import_ref.d9c7), @Core.IntLiteral.as.As.impl.d83 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.0c7: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f2e = impl_witness_table (%Core.import_ref.0c7), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
@@ -1083,8 +1049,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc11_64.3: ref %f32.3bc = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_64.4: init %f32.3bc to %.loc11_64.3 = in_place_init %.loc11_64.2 [concrete = constants.%float.239]
 // CHECK:STDOUT:   %.loc11_64.5: init %Array.f2e to %a.var = array_init (%.loc11_64.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_3.1: init %Array.f2e = converted %.loc11_64.1, %.loc11_64.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc11_3.1
+// CHECK:STDOUT:   %.loc11_3: init %Array.f2e = converted %.loc11_64.1, %.loc11_64.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc11_3
 // CHECK:STDOUT:   %.loc11_55: type = splice_block %Array [concrete = constants.%Array.f2e] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
 // CHECK:STDOUT:     %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -1111,12 +1077,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.98f = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.98f = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc11_3.1: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc11_3.2: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc11_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc11_3.2: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc11_3.3: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc11_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1226,32 +1186,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.239: %f32.3bc = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %Array.f2e = tuple_value (%float.239) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
-// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
+// CHECK:STDOUT:   %TrivialDestroyImpl.type: type = facet_type <@TrivialDestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc26_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.322: %SubobjectDestroy.type = facet_value %Array.f2e, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.322) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.9d5: %Destroy.type = facet_value %Array.f2e, (%DestroyImpl.impl_witness.7d2, %custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %IntResult.cpp_destructor.type: type = fn_type @IntResult.cpp_destructor [concrete]
-// CHECK:STDOUT:   %IntResult.cpp_destructor: %IntResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.fe1878.1: <witness> = custom_witness (%IntResult.cpp_destructor), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.dac: %SubobjectDestroy.type = facet_value %IntResult, (%custom_witness.fe1878.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.746: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.dac) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.e9b: %Destroy.type = facet_value %IntResult, (%DestroyImpl.impl_witness.746, %custom_witness.fe1878.1) [concrete]
-// CHECK:STDOUT:   %LongResult.cpp_destructor.type: type = fn_type @LongResult.cpp_destructor [concrete]
-// CHECK:STDOUT:   %LongResult.cpp_destructor: %LongResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.fe1878.2: <witness> = custom_witness (%LongResult.cpp_destructor), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.794: %SubobjectDestroy.type = facet_value %LongResult, (%custom_witness.fe1878.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.91f: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.794) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.b43: %Destroy.type = facet_value %LongResult, (%DestroyImpl.impl_witness.91f, %custom_witness.fe1878.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1262,7 +1199,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     .Array = %Core.Array
-// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroyImpl = %Core.TrivialDestroyImpl
 // CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
 // CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
@@ -1310,9 +1247,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/types/array, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT:   %Core.import_ref.0c7: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f2e = impl_witness_table (%Core.import_ref.0c7), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.TrivialDestroyImpl: type = import_ref Core//prelude/destroy, TrivialDestroyImpl, loaded [concrete = constants.%TrivialDestroyImpl.type]
 // CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
 // CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
@@ -1427,8 +1362,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc26_50.3: ref %f32.3bc = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc26_50.4: init %f32.3bc to %.loc26_50.3 = in_place_init %.loc26_50.2 [concrete = constants.%float.239]
 // CHECK:STDOUT:   %.loc26_50.5: init %Array.f2e to %a.var = array_init (%.loc26_50.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc26_3.1: init %Array.f2e = converted %.loc26_50.1, %.loc26_50.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc26_3.1
+// CHECK:STDOUT:   %.loc26_3: init %Array.f2e = converted %.loc26_50.1, %.loc26_50.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc26_3
 // CHECK:STDOUT:   %.loc26_41: type = splice_block %Array [concrete = constants.%Array.f2e] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
 // CHECK:STDOUT:     %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -1451,30 +1386,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.98f = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.98f = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc26_3.1: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %.loc26_3.2: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc26_3.1 [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %Destroy.facet.loc26_3.2: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %.loc26_3.3: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc26_3.2 [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc26: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%a.var)
-// CHECK:STDOUT:   %Destroy.facet.loc22_72.1: %Destroy.type = facet_value constants.%IntResult, (constants.%DestroyImpl.impl_witness.746, constants.%custom_witness.fe1878.1) [concrete = constants.%Destroy.facet.e9b]
-// CHECK:STDOUT:   %.loc22_72.5: %Destroy.type = converted constants.%IntResult, %Destroy.facet.loc22_72.1 [concrete = constants.%Destroy.facet.e9b]
-// CHECK:STDOUT:   %Destroy.facet.loc22_72.2: %Destroy.type = facet_value constants.%IntResult, (constants.%DestroyImpl.impl_witness.746, constants.%custom_witness.fe1878.1) [concrete = constants.%Destroy.facet.e9b]
-// CHECK:STDOUT:   %.loc22_72.6: %Destroy.type = converted constants.%IntResult, %Destroy.facet.loc22_72.2 [concrete = constants.%Destroy.facet.e9b]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc22: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc22_72.3)
-// CHECK:STDOUT:   %Destroy.facet.loc19_83.1: %Destroy.type = facet_value constants.%LongResult, (constants.%DestroyImpl.impl_witness.91f, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %.loc19_83.5: %Destroy.type = converted constants.%LongResult, %Destroy.facet.loc19_83.1 [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %Destroy.facet.loc19_83.2: %Destroy.type = facet_value constants.%LongResult, (constants.%DestroyImpl.impl_witness.91f, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %.loc19_83.6: %Destroy.type = converted constants.%LongResult, %Destroy.facet.loc19_83.2 [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc19: init %empty_tuple.type = call %SelfDestruct.specific_fn.3(%.loc19_83.3)
-// CHECK:STDOUT:   %Destroy.facet.loc16_69.1: %Destroy.type = facet_value constants.%LongResult, (constants.%DestroyImpl.impl_witness.91f, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %.loc16_69.5: %Destroy.type = converted constants.%LongResult, %Destroy.facet.loc16_69.1 [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %Destroy.facet.loc16_69.2: %Destroy.type = facet_value constants.%LongResult, (constants.%DestroyImpl.impl_witness.91f, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   %.loc16_69.6: %Destroy.type = converted constants.%LongResult, %Destroy.facet.loc16_69.2 [concrete = constants.%Destroy.facet.b43]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc16: init %empty_tuple.type = call %SelfDestruct.specific_fn.4(%.loc16_69.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1488,7 +1399,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cpp.long: type = class_type @Long32 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -1515,17 +1425,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.590: type = fn_type_with_self_type %Copy.WithSelf.Op.type.a93, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Copy.impl.Op.type: type = fn_type @Cpp.long.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Copy.impl.Op: %Cpp.long.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1537,8 +1436,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.763 = impl_witness_table (%Core.import_ref.06c), @Core.IntLiteral.as.ImplicitAs.impl.ed6 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %Cpp.long.as.Copy.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.6ef = impl_witness_table (%Core.import_ref.9c3), @Cpp.long.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CopyLong() {
@@ -1548,8 +1445,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %Cpp.long = call %bound_method.loc8(%int_1) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref.loc8 [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -1575,18 +1472,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %b.patt: %pattern_type.25ee = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.25ee = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.1: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%b.var)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3062,17 +2947,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.0fc2da.2: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.b9cae1.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.30be6a.1: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.0fc2da.2, @Cpp.long.as.RightShiftAssignWith.impl.Op.1(%ImplicitAs.facet.b5c) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.30be6a.2: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.0fc2da.1, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(%ImplicitAs.facet.b5c) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Copy.impl.Op.type: type = fn_type @Cpp.long.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Copy.impl.Op: %Cpp.long.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -3118,8 +2992,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.478: @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.type.2 (%Cpp.long.as.RightShiftAssignWith.impl.Op.type.f27273.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.2 (constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.afe2b4.1)]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness_table.6aa = impl_witness_table (%Core.import_ref.478), @Cpp.long.as.RightShiftAssignWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Op.627: @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.type.1 (%Cpp.long.as.RightShiftAssignWith.impl.Op.type.f27273.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.1 (constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.afe2b4.2)]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CompoundAssignmentHomogeneousLong() {
@@ -3129,8 +3001,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %Cpp.long = call %bound_method.loc8(%int_1.loc8) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref.loc8 [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc8: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -3145,8 +3017,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc9: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %Cpp.long = call %bound_method.loc9(%int_1.loc9) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc9_3.1: init %Cpp.long = converted %int_1.loc9, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %b.var, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3: init %Cpp.long = converted %int_1.loc9, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %b.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_13: type = splice_block %long.ref.loc9 [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref.loc9: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref.loc9: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -3326,18 +3198,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn: <specific function> = specific_function %Op.ref.loc21, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(constants.%ImplicitAs.facet.b5c) [concrete = constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.30be6a.2]
 // CHECK:STDOUT:   %bound_method.loc21_5.3: <bound method> = bound_method %a.ref.loc21, %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc21_5.3(%a.ref.loc21, %.loc21_9)
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%b.var)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3526,17 +3386,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.a8366c.2: %Cpp.long.as.RightShiftAssignWith.impl.Op.type.4051bd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.777143.1: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.a8366c.2, @Cpp.long.as.RightShiftAssignWith.impl.Op.1(%ImplicitAs.facet.8ee) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.specific_fn.777143.2: <specific function> = specific_function %Cpp.long.as.RightShiftAssignWith.impl.Op.a8366c.1, @Cpp.long.as.RightShiftAssignWith.impl.Op.2(%ImplicitAs.facet.8ee) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3578,8 +3427,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.478: @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.type.2 (%Cpp.long.as.RightShiftAssignWith.impl.Op.type.f27273.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.2 (constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.afe2b4.1)]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness_table.6aa = impl_witness_table (%Core.import_ref.478), @Cpp.long.as.RightShiftAssignWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Op.627: @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.type.1 (%Cpp.long.as.RightShiftAssignWith.impl.Op.type.f27273.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.RightShiftAssignWith.impl.%Cpp.long.as.RightShiftAssignWith.impl.Op.1 (constants.%Cpp.long.as.RightShiftAssignWith.impl.Op.afe2b4.2)]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CompoundAssignmentLongAndI32() {
@@ -3590,8 +3437,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc9: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3ce]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5d7]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %Cpp.long = call %bound_method.loc9(%int_1.loc9) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc9_3.1: init %Cpp.long = converted %int_1.loc9, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc9_3.1
+// CHECK:STDOUT:   %.loc9_3: init %Cpp.long = converted %int_1.loc9, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc9_3
 // CHECK:STDOUT:   %.loc9_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -3811,12 +3658,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc20_9.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call.loc20
 // CHECK:STDOUT:   %.loc20_9.2: %Cpp.long = converted %b.ref.loc20, %.loc20_9.1
 // CHECK:STDOUT:   %Cpp.long.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc20_5.3(%a.ref.loc20, %.loc20_9.2)
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3864,17 +3705,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.d85b7d.2: %Cpp.long.as.AddAssignWith.impl.Op.type.365040.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn.69abc1.1: <specific function> = specific_function %Cpp.long.as.AddAssignWith.impl.Op.d85b7d.2, @Cpp.long.as.AddAssignWith.impl.Op.1(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.specific_fn.69abc1.2: <specific function> = specific_function %Cpp.long.as.AddAssignWith.impl.Op.d85b7d.1, @Cpp.long.as.AddAssignWith.impl.Op.2(%ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -3887,8 +3717,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.51b: @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.type.2 (%Cpp.long.as.AddAssignWith.impl.Op.type.4a4937.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.2 (constants.%Cpp.long.as.AddAssignWith.impl.Op.199fad.1)]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table.d07 = impl_witness_table (%Core.import_ref.51b), @Cpp.long.as.AddAssignWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Op.aed: @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.type.1 (%Cpp.long.as.AddAssignWith.impl.Op.type.4a4937.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.1 (constants.%Cpp.long.as.AddAssignWith.impl.Op.199fad.2)]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CompoundAssignmentLongAndIntLiteral() {
@@ -3898,8 +3726,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %Cpp.long = call %bound_method.loc8(%int_1.loc8) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -3930,12 +3758,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc9_8.1: %Cpp.long = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.9ce]
 // CHECK:STDOUT:   %.loc9_8.2: %Cpp.long = converted %int_1.loc9, %.loc9_8.1 [concrete = constants.%int_1.9ce]
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc9_5.3(%a.ref, %.loc9_8.2)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4005,17 +3827,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.c62: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.870, %ImplicitAs.facet.8ee [concrete]
 // CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert.type: type = fn_type @i32.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %i32.as.ImplicitAs.impl.Convert: %i32.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4032,8 +3843,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.Op.aed: @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.type.1 (%Cpp.long.as.AddAssignWith.impl.Op.type.4a4937.2) = import_ref Core//prelude/types/cpp/int, Op, loaded [symbolic = @Cpp.long.as.AddAssignWith.impl.%Cpp.long.as.AddAssignWith.impl.Op.1 (constants.%Cpp.long.as.AddAssignWith.impl.Op.199fad.2)]
 // CHECK:STDOUT:   %Core.import_ref.06c923.2: %i32.as.ImplicitAs.impl.Convert.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%i32.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.967 = impl_witness_table (%Core.import_ref.06c923.2), @i32.as.ImplicitAs.impl.2bf [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CompoundAssignmentLongAndRuntimeI32() {
@@ -4043,8 +3852,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.3ce]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.5d7]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8: init %Cpp.long = call %bound_method.loc8(%int_1.loc8) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1.loc8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8 [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -4088,12 +3897,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc10_8.1: %Cpp.long = value_of_initializer %i32.as.ImplicitAs.impl.Convert.call
 // CHECK:STDOUT:   %.loc10_8.2: %Cpp.long = converted %b.ref, %.loc10_8.1
 // CHECK:STDOUT:   %Cpp.long.as.AddAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10_5.3(%a.ref, %.loc10_8.2)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4139,17 +3942,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.c69: type = fn_type_with_self_type %Dec.WithSelf.Op.type.88b, %Dec.facet [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Dec.impl.Op.type: type = fn_type @Cpp.long.as.Dec.impl.Op [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.Dec.impl.Op: %Cpp.long.as.Dec.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.7f3: %SubobjectDestroy.type = facet_value %Cpp.long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d03: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f3) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.long, (%DestroyImpl.impl_witness.d03, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4163,8 +3955,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Inc.impl_witness_table = impl_witness_table (%Core.import_ref.9c3475.1), @Cpp.long.as.Inc.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.9c3475.2: %Cpp.long.as.Dec.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.long.as.Dec.impl.Op]
 // CHECK:STDOUT:   %Dec.impl_witness_table = impl_witness_table (%Core.import_ref.9c3475.2), @Cpp.long.as.Dec.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IncrementDecrementLong() {
@@ -4174,8 +3964,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.cdd = impl_witness_access constants.%ImplicitAs.impl_witness.39e, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %Cpp.long = call %bound_method.loc8(%int_1) [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.9ce]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.9ce]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %long.ref [concrete = constants.%Cpp.long] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %long.ref: type = name_ref long, constants.%Cpp.long [concrete = constants.%Cpp.long]
@@ -4193,12 +3983,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc10: %.c69 = impl_witness_access constants.%Dec.impl_witness, element0 [concrete = constants.%Cpp.long.as.Dec.impl.Op]
 // CHECK:STDOUT:   %bound_method.loc10: <bound method> = bound_method %a.ref.loc10, %impl.elem0.loc10
 // CHECK:STDOUT:   %Cpp.long.as.Dec.impl.Op.call: init %empty_tuple.type = call %bound_method.loc10(%a.ref.loc10)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.long, (constants.%DestroyImpl.impl_witness.d03, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4311,32 +4095,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %bound_method.f84: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.239: %f32.3bc = float_value 1 [concrete]
 // CHECK:STDOUT:   %array: %Array.f2e = tuple_value (%float.239) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
-// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
+// CHECK:STDOUT:   %TrivialDestroyImpl.type: type = facet_type <@TrivialDestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc24_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.322: %SubobjectDestroy.type = facet_value %Array.f2e, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7d2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.322) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.9d5: %Destroy.type = facet_value %Array.f2e, (%DestroyImpl.impl_witness.7d2, %custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %UIntResult.cpp_destructor.type: type = fn_type @UIntResult.cpp_destructor [concrete]
-// CHECK:STDOUT:   %UIntResult.cpp_destructor: %UIntResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.fe1878.1: <witness> = custom_witness (%UIntResult.cpp_destructor), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.0ff: %SubobjectDestroy.type = facet_value %UIntResult, (%custom_witness.fe1878.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.c44: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.0ff) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.5cf: %Destroy.type = facet_value %UIntResult, (%DestroyImpl.impl_witness.c44, %custom_witness.fe1878.1) [concrete]
-// CHECK:STDOUT:   %ULongResult.cpp_destructor.type: type = fn_type @ULongResult.cpp_destructor [concrete]
-// CHECK:STDOUT:   %ULongResult.cpp_destructor: %ULongResult.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.fe1878.2: <witness> = custom_witness (%ULongResult.cpp_destructor), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.3e8: %SubobjectDestroy.type = facet_value %ULongResult, (%custom_witness.fe1878.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.2ef: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.3e8) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.cbb: %Destroy.type = facet_value %ULongResult, (%DestroyImpl.impl_witness.2ef, %custom_witness.fe1878.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4347,7 +4108,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     .Float = %Core.Float
 // CHECK:STDOUT:     .As = %Core.As
 // CHECK:STDOUT:     .Array = %Core.Array
-// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroyImpl = %Core.TrivialDestroyImpl
 // CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
 // CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
@@ -4395,9 +4156,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/types/array, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT:   %Core.import_ref.0c7: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f2e = impl_witness_table (%Core.import_ref.0c7), @Core.FloatLiteral.as.ImplicitAs.impl [concrete]
-// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.TrivialDestroyImpl: type = import_ref Core//prelude/destroy, TrivialDestroyImpl, loaded [concrete = constants.%TrivialDestroyImpl.type]
 // CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
 // CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
@@ -4505,8 +4264,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.loc24_59.3: ref %f32.3bc = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc24_59.4: init %f32.3bc to %.loc24_59.3 = in_place_init %.loc24_59.2 [concrete = constants.%float.239]
 // CHECK:STDOUT:   %.loc24_59.5: init %Array.f2e to %a.var = array_init (%.loc24_59.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc24_3.1: init %Array.f2e = converted %.loc24_59.1, %.loc24_59.5 [concrete = constants.%array]
-// CHECK:STDOUT:   assign %a.var, %.loc24_3.1
+// CHECK:STDOUT:   %.loc24_3: init %Array.f2e = converted %.loc24_59.1, %.loc24_59.5 [concrete = constants.%array]
+// CHECK:STDOUT:   assign %a.var, %.loc24_3
 // CHECK:STDOUT:   %.loc24_50: type = splice_block %Array [concrete = constants.%Array.f2e] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
 // CHECK:STDOUT:     %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -4529,30 +4288,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %a.patt: %pattern_type.98f = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.98f = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.1: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %.loc24_3.2: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc24_3.1 [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.2: %Destroy.type = facet_value constants.%Array.f2e, (constants.%DestroyImpl.impl_witness.7d2, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   %.loc24_3.3: %Destroy.type = converted constants.%Array.f2e, %Destroy.facet.loc24_3.2 [concrete = constants.%Destroy.facet.9d5]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc24: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%a.var)
-// CHECK:STDOUT:   %Destroy.facet.loc22_74.1: %Destroy.type = facet_value constants.%UIntResult, (constants.%DestroyImpl.impl_witness.c44, constants.%custom_witness.fe1878.1) [concrete = constants.%Destroy.facet.5cf]
-// CHECK:STDOUT:   %.loc22_74.5: %Destroy.type = converted constants.%UIntResult, %Destroy.facet.loc22_74.1 [concrete = constants.%Destroy.facet.5cf]
-// CHECK:STDOUT:   %Destroy.facet.loc22_74.2: %Destroy.type = facet_value constants.%UIntResult, (constants.%DestroyImpl.impl_witness.c44, constants.%custom_witness.fe1878.1) [concrete = constants.%Destroy.facet.5cf]
-// CHECK:STDOUT:   %.loc22_74.6: %Destroy.type = converted constants.%UIntResult, %Destroy.facet.loc22_74.2 [concrete = constants.%Destroy.facet.5cf]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc22: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc22_74.3)
-// CHECK:STDOUT:   %Destroy.facet.loc19_87.1: %Destroy.type = facet_value constants.%ULongResult, (constants.%DestroyImpl.impl_witness.2ef, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %.loc19_87.5: %Destroy.type = converted constants.%ULongResult, %Destroy.facet.loc19_87.1 [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %Destroy.facet.loc19_87.2: %Destroy.type = facet_value constants.%ULongResult, (constants.%DestroyImpl.impl_witness.2ef, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %.loc19_87.6: %Destroy.type = converted constants.%ULongResult, %Destroy.facet.loc19_87.2 [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc19: init %empty_tuple.type = call %SelfDestruct.specific_fn.3(%.loc19_87.3)
-// CHECK:STDOUT:   %Destroy.facet.loc16_89.1: %Destroy.type = facet_value constants.%ULongResult, (constants.%DestroyImpl.impl_witness.2ef, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %.loc16_89.5: %Destroy.type = converted constants.%ULongResult, %Destroy.facet.loc16_89.1 [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %Destroy.facet.loc16_89.2: %Destroy.type = facet_value constants.%ULongResult, (constants.%DestroyImpl.impl_witness.2ef, constants.%custom_witness.fe1878.2) [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   %.loc16_89.6: %Destroy.type = converted constants.%ULongResult, %Destroy.facet.loc16_89.2 [concrete = constants.%Destroy.facet.cbb]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc16: init %empty_tuple.type = call %SelfDestruct.specific_fn.4(%.loc16_89.3)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4566,7 +4301,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long: type = class_type @ULong32 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
@@ -4593,17 +4327,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %.f71: type = fn_type_with_self_type %Copy.WithSelf.Op.type.7ae, %Copy.facet [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.Copy.impl.Op.type: type = fn_type @Cpp.unsigned_long.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.Copy.impl.Op: %Cpp.unsigned_long.as.Copy.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9_3.3 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.a37: %SubobjectDestroy.type = facet_value %Cpp.unsigned_long, (%custom_witness.b80ef6.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.91e: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.a37) [concrete]
-// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %Cpp.unsigned_long, (%DestroyImpl.impl_witness.91e, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -4615,8 +4338,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.df0 = impl_witness_table (%Core.import_ref.06c), @Core.IntLiteral.as.ImplicitAs.impl.7b0 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %Cpp.unsigned_long.as.Copy.impl.Op.type = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [concrete = constants.%Cpp.unsigned_long.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.786 = impl_witness_table (%Core.import_ref.9c3), @Cpp.unsigned_long.as.Copy.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CopyUnsignedLong() {
@@ -4626,8 +4347,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %impl.elem0.loc8: %.219 = impl_witness_access constants.%ImplicitAs.impl_witness.938, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method.loc8: <bound method> = bound_method %int_1, %impl.elem0.loc8 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %Cpp.unsigned_long = call %bound_method.loc8(%int_1) [concrete = constants.%int_1.0e4]
-// CHECK:STDOUT:   %.loc8_3.1: init %Cpp.unsigned_long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0e4]
-// CHECK:STDOUT:   assign %a.var, %.loc8_3.1
+// CHECK:STDOUT:   %.loc8_3: init %Cpp.unsigned_long = converted %int_1, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.0e4]
+// CHECK:STDOUT:   assign %a.var, %.loc8_3
 // CHECK:STDOUT:   %.loc8_13: type = splice_block %unsigned_long.ref.loc8 [concrete = constants.%Cpp.unsigned_long] {
 // CHECK:STDOUT:     %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %unsigned_long.ref.loc8: type = name_ref unsigned_long, constants.%Cpp.unsigned_long [concrete = constants.%Cpp.unsigned_long]
@@ -4653,18 +4374,6 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %b.patt: %pattern_type.1a0 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.1a0 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Cpp.unsigned_long, (constants.%DestroyImpl.impl_witness.91e, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.1: %Destroy.type = converted constants.%Cpp.unsigned_long, %Destroy.facet.loc9_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc9_3.2: %Destroy.type = facet_value constants.%Cpp.unsigned_long, (constants.%DestroyImpl.impl_witness.91e, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc9_3.2: %Destroy.type = converted constants.%Cpp.unsigned_long, %Destroy.facet.loc9_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%b.var)
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%Cpp.unsigned_long, (constants.%DestroyImpl.impl_witness.91e, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%Cpp.unsigned_long, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%Cpp.unsigned_long, (constants.%DestroyImpl.impl_witness.91e, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%Cpp.unsigned_long, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
