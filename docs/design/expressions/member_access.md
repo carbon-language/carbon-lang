@@ -273,6 +273,10 @@ A search for a name within an extended type searches for the name in its
 that the extended type of an expression never affects simple member access into
 that expression, except through its type component.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#type-property-of-extended-type-values):
+> the `.type` property on `Core.ExtType` values.
+
 ### `extend`
 
 An `extend` declaration declares that the enclosing scope extends the scope

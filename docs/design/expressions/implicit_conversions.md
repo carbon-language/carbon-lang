@@ -206,6 +206,13 @@ of `TT2`.
 
 See [here](/docs/design/values.md#type-conversions).
 
+> **TODO:** Update the built-in conversions above to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+> [extended type facet](/proposals/p008183-first-class-extended-types-and-fwd.md#extended-type-facet-types)
+> and
+> [compound extended type](/proposals/p008183-first-class-extended-types-and-fwd.md#compound-extended-type-values)
+> conversions to `Core.ExtType`.
+
 ## Consistency with `as`
 
 An implicit conversion of an expression `E` of type `T` to type `U`, when

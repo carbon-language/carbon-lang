@@ -688,6 +688,10 @@ address of an object in memory in Carbon.
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
 
+> **TODO:** Add a summary of extended types (`Core.ExtType`, `fwd`) linking to
+> [Extended types](extended_types.md) to reflect
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md).
+
 ### Expression categories
 
 A Carbon expression produces a value, references an object, or initializes an

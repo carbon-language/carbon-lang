@@ -129,6 +129,14 @@ would, in the cases where they overlap.
 
 #### Name binding patterns
 
+> **TODO:** Update this section and [Anonymous bindings](#anonymous-bindings) to
+> reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#specifying-the-extended-type-of-a-binding):
+> `fwd` binding patterns (`fwd n: B`, `fwd _: B`), overriding contextual default
+> phases, allowed nesting (tuple, struct, pack expansions, `unused`), and
+> disallowed combinations with other keyword binding modifiers or pattern
+> operators. See [Extended types](extended_types.md).
+
 A name binding pattern is a pattern.
 
 -   _binding-pattern_ ::= `ref`? (_identifier_ `:` _expression_ | `self` (`:`
@@ -310,6 +318,14 @@ fn H2(p: X) { G(p); }
 
 The above is only an illustration; the behavior of type deduction is not yet
 specified.
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#auto-extended-type):
+> `auto` extended type deduction (`let fwd x: auto = y;`),
+> [deducing `Core.ExtType` parameters](/proposals/p008183-first-class-extended-types-and-fwd.md#deducing-an-extended-type-value)
+> (including `ref`/`fwd` call-site marker rules and category conversions for
+> `Core.No*ExtType`), and deducing types through `where .type = ...`. See
+> [Extended types](extended_types.md).
 
 #### Alternatives considered
 
