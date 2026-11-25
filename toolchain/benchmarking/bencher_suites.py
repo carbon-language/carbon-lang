@@ -51,11 +51,6 @@ class SuiteSpec:
         return self.label.split(":", 1)[1]
 
     @property
-    def benchmark_prefix(self) -> str:
-        """Returns the `<target_name>::` prefix prepended in BMF output."""
-        return f"{self.target_name}::"
-
-    @property
     def bazel_bin_relpath(self) -> Path:
         """Returns the relative path under `bazel-bin` for the built binary."""
         return Path("bazel-bin", *self.label[2:].split(":", 1))
@@ -89,12 +84,17 @@ class ThresholdSpec:
     min_sample_size: int
     max_sample_size: int
     upper_boundary: float
+    # BMF v1 requires `--threshold-metric` on every threshold so `bencher run`
+    # sends `thresholds.models` as a v1 list rather than a v0 map.
+    metric: str = "value"
 
     def to_bencher_args(self) -> list[str]:
         """Returns CLI flags for `bencher run`."""
         return [
             "--threshold-measure",
             self.measure,
+            "--threshold-metric",
+            self.metric,
             "--threshold-test",
             self.test,
             "--threshold-min-sample-size",

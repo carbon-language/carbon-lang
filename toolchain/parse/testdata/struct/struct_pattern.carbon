@@ -392,6 +392,29 @@ let {ref _: i32} = {};
 // CHECK:STDERR:
 let {var _: i32} = {};
 
+// --- fail_struct_pattern_shorthand_generic_binding.carbon
+
+// CHECK:STDERR:        ╭─┤ fail_struct_pattern_shorthand_generic_binding.carbon:[[@LINE+8]]:17
+// CHECK:STDERR: ->     │ let {generic x:y} = {};
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: found generic binding as shorthand struct pattern
+// CHECK:STDERR:        ·                    ┃        element
+// CHECK:STDERR:        ·                    ┃        [NonRegularBindingInStructPatternShorthand]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let {generic x:y} = {};
+
+// --- fail_struct_pattern_shorthand_form_binding.carbon
+
+// CHECK:STDERR:        ╭─┤ fail_struct_pattern_shorthand_form_binding.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ let {x:?y} = {};
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: found `:?` binding as shorthand struct pattern element
+// CHECK:STDERR:        ·             ┃        [NonRegularBindingInStructPatternShorthand]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+let {x:?y} = {};
+
 // CHECK:STDOUT: - filename: struct_pattern_empty.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
@@ -1228,6 +1251,36 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldVarBindingPattern ':' has_error
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─StructPattern '}' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_struct_pattern_shorthand_generic_binding.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─StructPattern '}' has_error
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_struct_pattern_shorthand_form_binding.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':?'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ├─FormBindingPattern ':?' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'

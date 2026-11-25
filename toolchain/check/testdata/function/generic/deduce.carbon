@@ -105,9 +105,9 @@ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
 fn CallBigStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_bigger_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───────┬──────
+  // CHECK:STDERR:        ·           ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   BigStructParam({.c = 3, .d = 4});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━
@@ -127,9 +127,9 @@ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
 fn CallSmallStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_smaller_struct.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ────────┬───────
+  // CHECK:STDERR:        ·            ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·               │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   SmallStructParam({.f = 5, .g = 6, .h = 7});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
@@ -149,9 +149,9 @@ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
 fn CallWrongNameStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_struct_wrong_name.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongNameStructParam({.i = 8, .j = 9});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
@@ -171,9 +171,9 @@ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
 fn CallWrongOrderStructParam() {
   // CHECK:STDERR:        ╭─┤ fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬──────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongOrderStructParam({.second = 11, .first = 10});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -195,9 +195,9 @@ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_incomplete.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━
@@ -217,9 +217,9 @@ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
 fn CallImplicitNotDeducible() {
   // CHECK:STDERR:        ╭─┤ fail_deduce_inconsistent.carbon:[[@LINE+12]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ──────────┬─────────
+  // CHECK:STDERR:        ·              ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                 │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42, {.x = 12});
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -646,6 +646,7 @@ fn F() {
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
@@ -663,12 +664,16 @@ fn F() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1903,7 +1908,7 @@ fn F() {
 // CHECK:STDOUT:   %EE: type = class_type @EE [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.236: <witness> = impl_self_witness %EE, @Z [concrete]
+// CHECK:STDOUT:   %.236: <witness> = impl_self_witness %EE, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness.ccc: <witness> = impl_witness @EE.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z.facet.932: %Z.type = facet_value %EE, (%Z.impl_witness.ccc) [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
@@ -1931,11 +1936,11 @@ fn F() {
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %DD.41e: type = class_type @DD, @DD(%EE) [concrete]
-// CHECK:STDOUT:   %.945: <witness> = impl_self_witness %DD.41e, @Z [concrete]
+// CHECK:STDOUT:   %.945: <witness> = impl_self_witness %DD.41e, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness.4c0: <witness> = impl_witness @DD.as.Z.impl.%Z.impl_witness_table, @DD.as.Z.impl(%EE) [concrete]
 // CHECK:STDOUT:   %Z.facet.b2d: %Z.type = facet_value %DD.41e, (%Z.impl_witness.4c0) [concrete]
 // CHECK:STDOUT:   %CC.f5d: type = class_type @CC, @CC(%Z.facet.b2d) [concrete]
-// CHECK:STDOUT:   %.05a: <witness> = impl_self_witness %CC.f5d, @Z [concrete]
+// CHECK:STDOUT:   %.05a: <witness> = impl_self_witness %CC.f5d, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness.a79: <witness> = impl_witness @CC.as.Z.impl.%Z.impl_witness_table, @CC.as.Z.impl(%EE) [concrete]
 // CHECK:STDOUT:   %Z.facet.7f0: %Z.type = facet_value %CC.f5d, (%Z.impl_witness.a79) [concrete]
 // CHECK:STDOUT: }
@@ -1963,7 +1968,7 @@ fn F() {
 // CHECK:STDOUT:     %EE.ref: type = name_ref EE, file.%EE.decl [concrete = constants.%EE]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc6: <witness> = impl_self_witness @EE.as.Z.impl.%EE.ref, @Z [concrete = constants.%.236]
+// CHECK:STDOUT:   %.loc6: <witness> = impl_self_witness @EE.as.Z.impl.%EE.ref, @Z [symbolic_self = constants.%.236]
 // CHECK:STDOUT:   %DD.decl: %DD.type = class_decl @DD [concrete = constants.%DD.generic] {
 // CHECK:STDOUT:     %E.patt.loc8_11.1: %pattern_type.9a5 = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc8_11.2 (constants.%E.patt)]
 // CHECK:STDOUT:   } {

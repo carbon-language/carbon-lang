@@ -17,7 +17,7 @@ interface I {
     // CHECK:STDERR:        ╭─┤ fail_extend_partially_defined_interface.carbon:[[@LINE+12]]:5
     // CHECK:STDERR:        │ interface I {
     // CHECK:STDERR:        · ──────┬──────
-    // CHECK:STDERR:        ·       ╰──┤ interface is currently being defined
+    // CHECK:STDERR:        ·       ╰──┤ interface is incomplete within its definition
     // CHECK:STDERR:        ·          │ [InterfaceIncompleteWithinDefinition]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     extend impl as I;

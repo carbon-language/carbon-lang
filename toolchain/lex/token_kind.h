@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_LEX_TOKEN_KIND_H_
 
 #include <cstdint>
+#include <initializer_list>
 
 #include "common/check.h"
 #include "common/enum_base.h"

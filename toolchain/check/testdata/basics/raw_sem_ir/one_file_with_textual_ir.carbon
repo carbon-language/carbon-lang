@@ -24,6 +24,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     name0:           Foo
 // CHECK:STDOUT:     name1:           n
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts: {}

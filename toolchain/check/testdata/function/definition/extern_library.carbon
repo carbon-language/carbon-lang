@@ -66,8 +66,8 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ two_file_impl_mismatch.carbon
 // CHECK:STDERR:        │ extern fn F();
-// CHECK:STDERR:        · ───────┬──────
-// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() {}

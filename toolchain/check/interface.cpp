@@ -178,6 +178,9 @@ auto AddSelfSymbolicBindingToScope(Context& context,
 auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
                         CoreIdentifier interface_name) -> SemIR::InterfaceId {
   auto inst_id = LookupNameInCore(context, loc_id, interface_name);
+  if (inst_id == SemIR::ErrorInst::InstId) {
+    return SemIR::InterfaceId::None;
+  }
 
   // Non-generic interfaces.
   if (auto facet_type = context.insts().TryGetAs<SemIR::FacetType>(inst_id)) {

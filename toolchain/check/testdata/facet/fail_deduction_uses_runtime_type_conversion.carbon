@@ -29,11 +29,11 @@ fn F[T: (type, )](unused generic A: T.0, unused x: HoldsType(T)) {}
 fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom) {
   // CHECK:STDERR:        ╭─┤ fail_deduction_uses_runtime_type_conversion.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn F[T: (type, )](unused generic A: T.0, unused x: HoldsType(T)) {}
-  // CHECK:STDERR:        · ───────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                        ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                        │  │ [DeductionGenericHere]
-  // CHECK:STDERR:        ·                        ╰────┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ┬
+  // CHECK:STDERR:        ·    ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·    │  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ╰────┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·         │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(from, holds_to);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
@@ -67,7 +67,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.47c: type = facet_type <@ImplicitAs, @ImplicitAs(%RuntimeConvertTo)> [concrete]
-// CHECK:STDOUT:   %.692: <witness> = impl_self_witness %RuntimeConvertFrom, @ImplicitAs, @ImplicitAs(%RuntimeConvertTo) [concrete]
+// CHECK:STDOUT:   %.692: <witness> = impl_self_witness %RuntimeConvertFrom, @ImplicitAs, @ImplicitAs(%RuntimeConvertTo) [symbolic_self]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @RuntimeConvertFrom.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.598: type = pattern_type %RuntimeConvertFrom [concrete]
 // CHECK:STDOUT:   %self.param_patt.c41: %pattern_type.598 = value_param_pattern [concrete]
@@ -111,6 +111,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
@@ -128,6 +129,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -135,6 +138,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -167,7 +172,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:     %RuntimeConvertTo.ref: type = name_ref RuntimeConvertTo, file.%RuntimeConvertTo.decl [concrete = constants.%RuntimeConvertTo]
 // CHECK:STDOUT:     %ImplicitAs.type: type = facet_type <@ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo)> [concrete = constants.%ImplicitAs.type.47c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref, @ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo) [concrete = constants.%.692]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref, @ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo) [symbolic_self = constants.%.692]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %T.patt.loc27_7.1: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt.d26)]
 // CHECK:STDOUT:     %A.patt.loc27_35.1: @F.%pattern_type.loc27_35 (%pattern_type.251) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc27_35.2 (constants.%A.patt.ee4)]

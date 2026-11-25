@@ -92,15 +92,12 @@ import Cpp library "implicit_conversions.h";
 
 fn NonConstConversionTest(s: Cpp.NonConstConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_expr_category.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_expr_category.carbon:[[@LINE+8]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.Dest = s;
   // CHECK:STDERR:        ·                     ┳
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                     │  ┃        `NonConstConversion` to `Cpp.Dest`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `Cpp.NonConstConversion` does not implement
-  // CHECK:STDERR:        ·                          │ interface `Core.ImplicitAs(Cpp.Dest)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `NonConstConversion` to `Cpp.Dest`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -161,17 +158,13 @@ import Cpp library "implicit_conversions.h";
 
 fn DeletedConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+13]]:35
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+9]]:35
   // CHECK:STDERR: ->     │   let _: Cpp.DeletedConstructor = s;
   // CHECK:STDERR:        ·                                   ┳
   // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                                   │  ┃        expression of type `Source` to
-  // CHECK:STDERR:        ·                                   │  ┃        `Cpp.DeletedConstructor`
-  // CHECK:STDERR:        ·                                   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭─────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `Cpp.Source` does not implement interface
-  // CHECK:STDERR:        · │ `Core.ImplicitAs(Cpp.DeletedConstructor)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                      ┃        expression of type `Source` to
+  // CHECK:STDERR:        ·                                      ┃        `Cpp.DeletedConstructor`
+  // CHECK:STDERR:        ·                                      ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.DeletedConstructor = s;
@@ -180,15 +173,12 @@ fn DeletedConstructorTest(s: Cpp.Source) {
 
 fn DeletedConversionTest(s: Cpp.DeletedConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+8]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.Dest = s;
   // CHECK:STDERR:        ·                     ┳
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                     │  ┃        `DeletedConversion` to `Cpp.Dest`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `Cpp.DeletedConversion` does not implement
-  // CHECK:STDERR:        ·                          │ interface `Core.ImplicitAs(Cpp.Dest)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `DeletedConversion` to `Cpp.Dest`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -203,17 +193,13 @@ import Cpp library "implicit_conversions.h";
 
 fn ExplicitConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_explicit.carbon:[[@LINE+13]]:36
+  // CHECK:STDERR:        ╭─┤ fail_explicit.carbon:[[@LINE+9]]:36
   // CHECK:STDERR: ->     │   let _: Cpp.ExplicitConstructor = s;
   // CHECK:STDERR:        ·                                    ┳
   // CHECK:STDERR:        ·                                    ┗━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                                    │  ┃        expression of type `Source` to
-  // CHECK:STDERR:        ·                                    │  ┃        `Cpp.ExplicitConstructor`
-  // CHECK:STDERR:        ·                                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭──────────────────────────────────╯
-  // CHECK:STDERR:        · │ type `Cpp.Source` does not implement interface
-  // CHECK:STDERR:        · │ `Core.ImplicitAs(Cpp.ExplicitConstructor)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                       ┃        expression of type `Source` to
+  // CHECK:STDERR:        ·                                       ┃        `Cpp.ExplicitConstructor`
+  // CHECK:STDERR:        ·                                       ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.ExplicitConstructor = s;
@@ -222,15 +208,12 @@ fn ExplicitConstructorTest(s: Cpp.Source) {
 
 fn ExplicitConversionTest(s: Cpp.ExplicitConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_explicit.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_explicit.carbon:[[@LINE+8]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.Dest = s;
   // CHECK:STDERR:        ·                     ┳
   // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                     │  ┃        `ExplicitConversion` to `Cpp.Dest`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `Cpp.ExplicitConversion` does not implement
-  // CHECK:STDERR:        ·                          │ interface `Core.ImplicitAs(Cpp.Dest)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                        ┃        `ExplicitConversion` to `Cpp.Dest`
+  // CHECK:STDERR:        ·                        ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -257,15 +240,12 @@ import Cpp library "implicit_conversions.h";
 
 fn IntConstructorTest(u: u32) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+16]]:31
+  // CHECK:STDERR:        ╭─┤ fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+13]]:31
   // CHECK:STDERR: ->     │   let _: Cpp.IntConstructor = u;
   // CHECK:STDERR:        ·                               ┳
   // CHECK:STDERR:        ·                               ┗━━┫ error: cannot implicitly convert expression
-  // CHECK:STDERR:        ·                               │  ┃        of type `u32` to `i32`
-  // CHECK:STDERR:        ·                               │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                               ╰────┤ type `u32` does not implement interface
-  // CHECK:STDERR:        ·                                    │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                  ┃        of type `u32` to `i32`
+  // CHECK:STDERR:        ·                                  ┃        [ConversionFailure]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./implicit_conversions.h
   // CHECK:STDERR:        │   IntConstructor(int);
@@ -341,42 +321,32 @@ import Cpp library "aggregate.h";
 
 fn InitFromTuple() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+11]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+8]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = ();
   // CHECK:STDERR:        ·                          ┳━
   // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                          │  ┃        type `()` to `Cpp.Aggregate`
-  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰────┤ type `()` does not implement interface
-  // CHECK:STDERR:        ·                               │ `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             ┃        type `()` to `Cpp.Aggregate`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = ();
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+12]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+9]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = (1,);
   // CHECK:STDERR:        ·                          ┳━━━
   // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                          │  ┃        type `(Core.IntLiteral,)` to
-  // CHECK:STDERR:        ·                          │  ┃        `Cpp.Aggregate`
-  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰────┤ type `(Core.IntLiteral,)` does not implement
-  // CHECK:STDERR:        ·                               │ interface `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             ┃        type `(Core.IntLiteral,)` to
+  // CHECK:STDERR:        ·                             ┃        `Cpp.Aggregate`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = (1,);
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+13]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_tuple.carbon:[[@LINE+9]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = (1, 2);
   // CHECK:STDERR:        ·                          ┳━━━━━
   // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                          │  ┃        type `(Core.IntLiteral, Core.IntLiteral)`
-  // CHECK:STDERR:        ·                          │  ┃        to `Cpp.Aggregate`
-  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰────┤ type `(Core.IntLiteral, Core.IntLiteral)` does
-  // CHECK:STDERR:        ·                               │ not implement interface
-  // CHECK:STDERR:        ·                               │ `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             ┃        type `(Core.IntLiteral, Core.IntLiteral)`
+  // CHECK:STDERR:        ·                             ┃        to `Cpp.Aggregate`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = (1, 2);
@@ -391,42 +361,32 @@ import Cpp library "aggregate.h";
 
 fn InitFromStruct() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+11]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+8]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = {};
   // CHECK:STDERR:        ·                          ┳━
   // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                          │  ┃        type `{}` to `Cpp.Aggregate`
-  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰────┤ type `{}` does not implement interface
-  // CHECK:STDERR:        ·                               │ `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             ┃        type `{}` to `Cpp.Aggregate`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {};
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+12]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+9]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = {.x = 1};
   // CHECK:STDERR:        ·                          ┳━━━━━━━
   // CHECK:STDERR:        ·                          ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                          │  ┃        type `{.x: Core.IntLiteral}` to
-  // CHECK:STDERR:        ·                          │  ┃        `Cpp.Aggregate`
-  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰────┤ type `{.x: Core.IntLiteral}` does not implement
-  // CHECK:STDERR:        ·                               │ interface `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             ┃        type `{.x: Core.IntLiteral}` to
+  // CHECK:STDERR:        ·                             ┃        `Cpp.Aggregate`
+  // CHECK:STDERR:        ·                             ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {.x = 1};
-  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+13]]:26
+  // CHECK:STDERR:        ╭─┤ fail_todo_aggregate_from_struct.carbon:[[@LINE+9]]:26
   // CHECK:STDERR: ->     │   let _: Cpp.Aggregate = {.x = 1, .y = 2};
-  // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        ·                          ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type
   // CHECK:STDERR:        · ┃        `{.x: Core.IntLiteral, .y: Core.IntLiteral}` to `Cpp.Aggregate`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                          ╰──┤ type `{.x: Core.IntLiteral, .y: Core.IntLiteral}`
-  // CHECK:STDERR:        ·                             │ does not implement interface
-  // CHECK:STDERR:        ·                             │ `Core.ImplicitAs(Cpp.Aggregate)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {.x = 1, .y = 2};
@@ -455,44 +415,32 @@ import Cpp library "aggregate.h";
 
 fn InitFromStruct() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+11]]:29
+  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+8]]:29
   // CHECK:STDERR: ->     │   let _: Cpp.NonAggregate = {};
   // CHECK:STDERR:        ·                             ┳━
   // CHECK:STDERR:        ·                             ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                             │  ┃        type `{}` to `Cpp.NonAggregate`
-  // CHECK:STDERR:        ·                             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰────┤ type `{}` does not implement interface
-  // CHECK:STDERR:        ·                                  │ `Core.ImplicitAs(Cpp.NonAggregate)`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                ┃        type `{}` to `Cpp.NonAggregate`
+  // CHECK:STDERR:        ·                                ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {};
-  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+13]]:29
+  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+9]]:29
   // CHECK:STDERR: ->     │   let _: Cpp.NonAggregate = {.x = 1};
   // CHECK:STDERR:        ·                             ┳━━━━━━━
   // CHECK:STDERR:        ·                             ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                             │  ┃        type `{.x: Core.IntLiteral}` to
-  // CHECK:STDERR:        ·                             │  ┃        `Cpp.NonAggregate`
-  // CHECK:STDERR:        ·                             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰────┤ type `{.x: Core.IntLiteral}` does not
-  // CHECK:STDERR:        ·                                  │ implement interface
-  // CHECK:STDERR:        ·                                  │ `Core.ImplicitAs(Cpp.NonAggregate)`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                ┃        type `{.x: Core.IntLiteral}` to
+  // CHECK:STDERR:        ·                                ┃        `Cpp.NonAggregate`
+  // CHECK:STDERR:        ·                                ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {.x = 1};
-  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+14]]:29
+  // CHECK:STDERR:        ╭─┤ fail_non_aggregate_from_struct.carbon:[[@LINE+9]]:29
   // CHECK:STDERR: ->     │   let _: Cpp.NonAggregate = {.x = 1, .y = 2};
-  // CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        ·                             ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type
   // CHECK:STDERR:        · ┃        `{.x: Core.IntLiteral, .y: Core.IntLiteral}` to `Cpp.NonAggregate`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰──┤ type
-  // CHECK:STDERR:        ·                                │ `{.x: Core.IntLiteral, .y: Core.IntLiteral}`
-  // CHECK:STDERR:        ·                                │ does not implement interface
-  // CHECK:STDERR:        ·                                │ `Core.ImplicitAs(Cpp.NonAggregate)`
-  // CHECK:STDERR:        ·                                │ [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {.x = 1, .y = 2};
@@ -680,9 +628,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @NonConstConversionTest(%s.param: %NonConstConversion) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %NonConstConversion = name_ref s, %s
-// CHECK:STDOUT:   %.loc19_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc16_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
@@ -844,9 +792,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @DeletedConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc21_35: %DeletedConstructor = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %DeletedConstructor.ref [concrete = constants.%DeletedConstructor] {
-// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc17_35: %DeletedConstructor = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_13: type = splice_block %DeletedConstructor.ref [concrete = constants.%DeletedConstructor] {
+// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %DeletedConstructor.ref: type = name_ref DeletedConstructor, imports.%DeletedConstructor.decl [concrete = constants.%DeletedConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %DeletedConstructor = wrapper_binding _, <error> [concrete = <error>]
@@ -859,9 +807,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @DeletedConversionTest(%s.param: %DeletedConversion) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %DeletedConversion = name_ref s, %s
-// CHECK:STDOUT:   %.loc38_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc38_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
-// CHECK:STDOUT:     %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc31_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
+// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
@@ -902,9 +850,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @ExplicitConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc21_36: %ExplicitConstructor = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %ExplicitConstructor.ref [concrete = constants.%ExplicitConstructor] {
-// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc17_36: %ExplicitConstructor = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc17_13: type = splice_block %ExplicitConstructor.ref [concrete = constants.%ExplicitConstructor] {
+// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ExplicitConstructor.ref: type = name_ref ExplicitConstructor, imports.%ExplicitConstructor.decl [concrete = constants.%ExplicitConstructor]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %ExplicitConstructor = wrapper_binding _, <error> [concrete = <error>]
@@ -917,9 +865,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @ExplicitConversionTest(%s.param: %ExplicitConversion) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %ExplicitConversion = name_ref s, %s
-// CHECK:STDOUT:   %.loc38_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc38_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
-// CHECK:STDOUT:     %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc31_21: %Dest.980 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc31_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
+// CHECK:STDOUT:     %Cpp.ref.loc31: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, <error> [concrete = <error>]
@@ -1042,28 +990,28 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @IntConstructorTest(%u.param: %u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %u32 = name_ref u, %u
-// CHECK:STDOUT:   %.loc24_31.1: ref %IntConstructor = temporary_storage
-// CHECK:STDOUT:   %.loc24_31.2: %i32 = converted %u.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr: %ptr.100 = addr_of %.loc24_31.1
+// CHECK:STDOUT:   %.loc21_31.1: ref %IntConstructor = temporary_storage
+// CHECK:STDOUT:   %.loc21_31.2: %i32 = converted %u.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr: %ptr.100 = addr_of %.loc21_31.1
 // CHECK:STDOUT:   %IntConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%IntConstructor__carbon_thunk.decl(<error>, %addr)
-// CHECK:STDOUT:   %.loc24_31.3: init %IntConstructor to %.loc24_31.1 = mark_in_place_init %IntConstructor__carbon_thunk.call
-// CHECK:STDOUT:   %.loc24_31.4: init %IntConstructor = converted %u.ref, %.loc24_31.3
-// CHECK:STDOUT:   %.loc24_31.5: ref %IntConstructor = temporary %.loc24_31.1, %.loc24_31.4
-// CHECK:STDOUT:   %.loc24_31.6: %IntConstructor = acquire_value %.loc24_31.5
-// CHECK:STDOUT:   %.loc24_13: type = splice_block %IntConstructor.ref [concrete = constants.%IntConstructor] {
+// CHECK:STDOUT:   %.loc21_31.3: init %IntConstructor to %.loc21_31.1 = mark_in_place_init %IntConstructor__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_31.4: init %IntConstructor = converted %u.ref, %.loc21_31.3
+// CHECK:STDOUT:   %.loc21_31.5: ref %IntConstructor = temporary %.loc21_31.1, %.loc21_31.4
+// CHECK:STDOUT:   %.loc21_31.6: %IntConstructor = acquire_value %.loc21_31.5
+// CHECK:STDOUT:   %.loc21_13: type = splice_block %IntConstructor.ref [concrete = constants.%IntConstructor] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IntConstructor.ref: type = name_ref IntConstructor, imports.%IntConstructor.decl [concrete = constants.%IntConstructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %IntConstructor = wrapper_binding _, %.loc24_31.6
+// CHECK:STDOUT:   %_: %IntConstructor = wrapper_binding _, %.loc21_31.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc24_31.1: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc24_31.7: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc24_31.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc24_31.2: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc24_31.8: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc24_31.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc21_31.1: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc21_31.7: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc21_31.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc21_31.2: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc21_31.8: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc21_31.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc24_31.5)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc21_31.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1384,38 +1332,38 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromTuple() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc19_27.2: %Aggregate = converted %.loc19_27.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %Aggregate.ref.loc19 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc19: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc16_27.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_27.2: %Aggregate = converted %.loc16_27.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %Aggregate.ref.loc16 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc16: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc19: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc16: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc19: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc16: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc32: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc32_29.1: %tuple.type.985 = tuple_literal (%int_1.loc32) [concrete = constants.%tuple.378]
-// CHECK:STDOUT:   %.loc32_29.2: %Aggregate = converted %.loc32_29.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc32_13: type = splice_block %Aggregate.ref.loc32 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc32: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc26_29.1: %tuple.type.985 = tuple_literal (%int_1.loc26) [concrete = constants.%tuple.378]
+// CHECK:STDOUT:   %.loc26_29.2: %Aggregate = converted %.loc26_29.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_13: type = splice_block %Aggregate.ref.loc26 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc26: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc32: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc26: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc32: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc26: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc46: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc46_31.1: %tuple.type.f94 = tuple_literal (%int_1.loc46, %int_2) [concrete = constants.%tuple.ad8]
-// CHECK:STDOUT:   %.loc46_31.2: %Aggregate = converted %.loc46_31.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc46_13: type = splice_block %Aggregate.ref.loc46 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc46: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc46: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc36_31.1: %tuple.type.f94 = tuple_literal (%int_1.loc36, %int_2) [concrete = constants.%tuple.ad8]
+// CHECK:STDOUT:   %.loc36_31.2: %Aggregate = converted %.loc36_31.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc36_13: type = splice_block %Aggregate.ref.loc36 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc36: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc46: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc36: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc46: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc36: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1447,38 +1395,38 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_27.2: %Aggregate = converted %.loc19_27.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %Aggregate.ref.loc19 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc19: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc16_27.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_27.2: %Aggregate = converted %.loc16_27.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %Aggregate.ref.loc16 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc16: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc19: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc16: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc19: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc16: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc32: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc32_33.1: %struct_type.x = struct_literal (%int_1.loc32) [concrete = constants.%struct.147]
-// CHECK:STDOUT:   %.loc32_33.2: %Aggregate = converted %.loc32_33.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc32_13: type = splice_block %Aggregate.ref.loc32 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc32: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc26_33.1: %struct_type.x = struct_literal (%int_1.loc26) [concrete = constants.%struct.147]
+// CHECK:STDOUT:   %.loc26_33.2: %Aggregate = converted %.loc26_33.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_13: type = splice_block %Aggregate.ref.loc26 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc26: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc32: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc26: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc32: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc26: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc46: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc46_41.1: %struct_type.x.y = struct_literal (%int_1.loc46, %int_2) [concrete = constants.%struct.004]
-// CHECK:STDOUT:   %.loc46_41.2: %Aggregate = converted %.loc46_41.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc46_13: type = splice_block %Aggregate.ref.loc46 [concrete = constants.%Aggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc46: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %Aggregate.ref.loc46: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
+// CHECK:STDOUT:   %.loc36_41.1: %struct_type.x.y = struct_literal (%int_1.loc36, %int_2) [concrete = constants.%struct.004]
+// CHECK:STDOUT:   %.loc36_41.2: %Aggregate = converted %.loc36_41.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc36_13: type = splice_block %Aggregate.ref.loc36 [concrete = constants.%Aggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %Aggregate.ref.loc36: type = name_ref Aggregate, imports.%Aggregate.decl [concrete = constants.%Aggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc46: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc36: %Aggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc46: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc36: %pattern_type.5dc = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -1686,38 +1634,38 @@ fn InitFromStruct() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc19_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_30.2: %NonAggregate = converted %.loc19_30.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %NonAggregate.ref.loc19 [concrete = constants.%NonAggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc19: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %NonAggregate.ref.loc19: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
+// CHECK:STDOUT:   %.loc16_30.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_30.2: %NonAggregate = converted %.loc16_30.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_13: type = splice_block %NonAggregate.ref.loc16 [concrete = constants.%NonAggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc16: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %NonAggregate.ref.loc16: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc19: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc16: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc19: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc16: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc33_36.1: %struct_type.x = struct_literal (%int_1.loc33) [concrete = constants.%struct.147]
-// CHECK:STDOUT:   %.loc33_36.2: %NonAggregate = converted %.loc33_36.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc33_13: type = splice_block %NonAggregate.ref.loc33 [concrete = constants.%NonAggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc33: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %NonAggregate.ref.loc33: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
+// CHECK:STDOUT:   %int_1.loc26: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc26_36.1: %struct_type.x = struct_literal (%int_1.loc26) [concrete = constants.%struct.147]
+// CHECK:STDOUT:   %.loc26_36.2: %NonAggregate = converted %.loc26_36.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_13: type = splice_block %NonAggregate.ref.loc26 [concrete = constants.%NonAggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc26: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %NonAggregate.ref.loc26: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc33: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc26: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc33: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc26: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc48_44.1: %struct_type.x.y = struct_literal (%int_1.loc48, %int_2) [concrete = constants.%struct.004]
-// CHECK:STDOUT:   %.loc48_44.2: %NonAggregate = converted %.loc48_44.1, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc48_13: type = splice_block %NonAggregate.ref.loc48 [concrete = constants.%NonAggregate] {
-// CHECK:STDOUT:     %Cpp.ref.loc48: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %NonAggregate.ref.loc48: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
+// CHECK:STDOUT:   %.loc36_44.1: %struct_type.x.y = struct_literal (%int_1.loc36, %int_2) [concrete = constants.%struct.004]
+// CHECK:STDOUT:   %.loc36_44.2: %NonAggregate = converted %.loc36_44.1, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc36_13: type = splice_block %NonAggregate.ref.loc36 [concrete = constants.%NonAggregate] {
+// CHECK:STDOUT:     %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %NonAggregate.ref.loc36: type = name_ref NonAggregate, imports.%NonAggregate.decl [concrete = constants.%NonAggregate]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_.loc48: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
+// CHECK:STDOUT:   %_.loc36: %NonAggregate = wrapper_binding _, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %_.patt.loc48: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
+// CHECK:STDOUT:     %_.patt.loc36: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

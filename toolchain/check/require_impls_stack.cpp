@@ -4,6 +4,8 @@
 
 #include "toolchain/check/require_impls_stack.h"
 
+#include <algorithm>
+
 namespace Carbon::Check {
 
 auto RequireImplsStack::Push(EnclosingScopeId scope_id) -> void {

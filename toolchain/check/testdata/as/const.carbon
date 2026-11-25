@@ -58,27 +58,21 @@ var reference: const X;
 let ptr: const X* = &reference;
 
 fn Use() {
-  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_const.carbon:[[@LINE+11]]:24
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_const.carbon:[[@LINE+8]]:24
   // CHECK:STDERR: ->     │   let unused a: X* = &(reference as X);
   // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert expression of type `const X`
-  // CHECK:STDERR:        ·                        │  ┃        to `X` with `as`
-  // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                        ╰────┤ type `const X` does not implement interface
-  // CHECK:STDERR:        ·                             │ `Core.As(X)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           ┃        to `X` with `as`
+  // CHECK:STDERR:        ·                           ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
-  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_const.carbon:[[@LINE+11]]:22
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_const.carbon:[[@LINE+8]]:22
   // CHECK:STDERR: ->     │   let unused b: X* = ptr as X*;
   // CHECK:STDERR:        ·                      ┳━━━━━━━━
   // CHECK:STDERR:        ·                      ┗━━┫ error: cannot convert expression of type `const X*` to
-  // CHECK:STDERR:        ·                      │  ┃        `X*` with `as`
-  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                      ╰────┤ type `const X*` does not implement interface
-  // CHECK:STDERR:        ·                           │ `Core.As(X*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         ┃        `X*` with `as`
+  // CHECK:STDERR:        ·                         ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;
@@ -217,10 +211,7 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_3.3(%self.param: ref %const) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc14_3.3(%self.param: ref %const) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

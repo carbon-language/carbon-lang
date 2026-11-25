@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -65,7 +65,7 @@ jobs:
           matrix_runner: ubuntu-22.04
           remote_cache_upload: '--remote_upload_local_results=false'
 
-      - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
+      - uses: j178/prek-action@7b101f8338a08d2bd6fdb3625e4e7692428763a3 # v3.1.1
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
@@ -78,7 +78,7 @@ jobs:
         run: |
           mkdir -p prek-output
           git diff > prek-output/diff
-          cp $GITHUB_EVENT_PATH prek-output/event
+          cp "$GITHUB_EVENT_PATH" prek-output/event
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:

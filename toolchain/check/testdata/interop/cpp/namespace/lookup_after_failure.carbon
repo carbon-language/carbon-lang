@@ -134,7 +134,7 @@ void TestTypoInCarbon() {
   // CHECK:STDERR:        ·                    ╰──┤ 'ExportedType' declared here [CppInteropParseNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Carbon::ExportedTyp* p_typo = p1;
-  // CHECK:STDERR:        ·   ───────╴┎┬─────────
+  // CHECK:STDERR:        ·   ━━━━━━━╸┎┬─────────
   // CHECK:STDERR:        ·           ┗━━━┫ error: no type named 'ExportedTyp' in namespace 'Carbon'; did
   // CHECK:STDERR:        ·            │  ┃        you mean 'ExportedType'?
   // CHECK:STDERR:        ·            │  ┃        [CppInteropParseError]

@@ -5,6 +5,9 @@
 #ifndef CARBON_COMMON_ARRAY_STACK_H_
 #define CARBON_COMMON_ARRAY_STACK_H_
 
+#include <cstdint>
+#include <utility>
+
 #include "common/check.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"

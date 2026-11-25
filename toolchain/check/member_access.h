@@ -27,17 +27,18 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 
 // Creates SemIR to perform a compound member access with base expression
 // `base_id` and member name expression `member_expr_id`. Returns the result of
-// the access. If specified, `missing_impl_diagnostic_context()` is used to
-// provide context for the error diagnostic when impl binding fails due to a
-// missing `impl`.
+// the access. If specified, `missing_impl_diagnostic()` is emitted in place of
+// the generic diagnostic when impl binding fails due to a missing `impl`; see
+// `BuildUnaryOperator`.
 //
 // On failure, an ErrorInst is returned and a diagnostic is produced unless
 // `diagnose` is false. It is incorrect to specify `diagnose` as false if the
 // resulting ErrorInst may appear in the produced SemIR.
-auto PerformCompoundMemberAccess(
-    Context& context, SemIR::LocId loc_id, SemIR::InstId base_id,
-    SemIR::InstId member_expr_id, bool diagnose = true,
-    DiagnosticContextFn missing_impl_diagnostic_context = nullptr)
+auto PerformCompoundMemberAccess(Context& context, SemIR::LocId loc_id,
+                                 SemIR::InstId base_id,
+                                 SemIR::InstId member_expr_id,
+                                 bool diagnose = true,
+                                 Diagnoser missing_impl_diagnostic = nullptr)
     -> SemIR::InstId;
 
 // Finds the value of an associated entity (given by assoc_entity_inst_id, a
@@ -47,6 +48,22 @@ auto GetAssociatedValue(Context& context, SemIR::LocId loc_id,
                         SemIR::InstId base_id,
                         SemIR::ConstantId assoc_entity_const_id,
                         SemIR::SpecificInterface interface) -> SemIR::InstId;
+
+// Returns the function that `type_inst_id` uses for the associated function
+// named `assoc_fn_name_id` in `specific_interface`.
+//
+// Similar to `BuildCustomWitness`, `GetAssociatedFunction` returns
+// `std::nullopt` if an error was encountered, and that error was reported by
+// the callee. Returns `SemIR::FunctionId::None` if the type doesn't implement
+// the interface, or there isn't an associated function with the specified name.
+//
+// A symbolic witness has no witness table yet, so in that case this returns the
+// interface's own declaration of the function.
+auto GetAssociatedFunction(Context& context, SemIR::LocId loc_id,
+                           SemIR::TypeInstId type_inst_id,
+                           SemIR::SpecificInterface specific_interface,
+                           SemIR::NameId assoc_fn_name_id)
+    -> std::optional<SemIR::FunctionId>;
 
 // Creates SemIR to perform a tuple index with base expression `tuple_inst_id`
 // and index expression `index_inst_id`. Returns the result of the access.

@@ -14,7 +14,8 @@ auto HashCode::Print(llvm::raw_ostream& out) const -> void {
   out << llvm::formatv("{0:x16}", value_);
 }
 
-auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {
+auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes,
+                                 uint64_t buffer) -> uint64_t {
   const std::byte* data_ptr = bytes.data();
   const ssize_t size = bytes.size();
   CARBON_DCHECK(size > 32);
@@ -80,8 +81,10 @@ auto Hasher::HashSizedBytesLarge(llvm::ArrayRef<std::byte> bytes) -> void {
                   Read8(tail_16b_ptr + 8) ^ buffer1);
   }
 
-  buffer = buffer0 ^ buffer1;
-  HashDense(size);
+  Hasher hasher;
+  hasher.buffer = buffer0 ^ buffer1;
+  hasher.HashDense(size);
+  return hasher.buffer;
 }
 
 }  // namespace Carbon

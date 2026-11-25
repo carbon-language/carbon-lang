@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_BASE_TIMINGS_H_
 
 #include <chrono>
+#include <cstdint>
+#include <string>
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

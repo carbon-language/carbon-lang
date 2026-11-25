@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_BUNDLE_H_
 #define CARBON_TOOLCHAIN_SEM_IR_BUNDLE_H_
 
+#include <array>
 #include <string>
 #include <utility>
 

@@ -6,6 +6,7 @@
 #define CARBON_COMMON_RAW_HASHTABLE_METADATA_GROUP_H_
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <type_traits>

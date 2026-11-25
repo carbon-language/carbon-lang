@@ -216,7 +216,7 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
   CARBON_DIAGNOSTIC(BaseDeclRepeated, Error,
                     "multiple `base` declarations in class; multiple "
                     "inheritance is not permitted");
-  CARBON_DIAGNOSTIC_LABEL(ClassSpecificDeclPrevious, Info,
+  CARBON_DIAGNOSTIC_LABEL(ClassSpecificDeclPrevious,
                           "previous `{0}` declaration is here", Lex::TokenKind);
   CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
@@ -259,19 +259,21 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
       ExprAsType(context, node_id, adapted_type_expr_id);
   if (!RequireConcreteType(
           context, adapted_type_id, node_id,
-          [&](auto& builder) {
-            CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInAdaptDecl,
-                                      "adapted type {0} is an incomplete type",
-                                      InstIdAsType);
-            builder.Attach(node_id, IncompleteTypeInAdaptDecl,
-                           adapted_type_inst_id);
+          [&] {
+            CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Error,
+                              "adapted type {0} is an incomplete type",
+                              InstIdAsType);
+            return context.emitter().Build(adapted_type_node,
+                                           IncompleteTypeInAdaptDecl,
+                                           adapted_type_inst_id);
           },
-          [&](auto& builder) {
-            CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInAdaptDecl,
-                                      "adapted type {0} is an abstract type",
-                                      InstIdAsType);
-            builder.Attach(node_id, AbstractTypeInAdaptDecl,
-                           adapted_type_inst_id);
+          [&] {
+            CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Error,
+                              "adapted type {0} is an abstract type",
+                              InstIdAsType);
+            return context.emitter().Build(adapted_type_node,
+                                           AbstractTypeInAdaptDecl,
+                                           adapted_type_inst_id);
           })) {
     adapted_type_id = SemIR::ErrorInst::TypeId;
   }
@@ -335,11 +337,11 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
   if (base_type_id == SemIR::ErrorInst::TypeId) {
     return BaseInfo::Error;
   }
-  if (!RequireCompleteType(context, base_type_id, node_id, [&](auto& builder) {
-        CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInBaseDecl,
-                                  "base {0} is an incomplete type",
-                                  InstIdAsType);
-        builder.Attach(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
+  if (!RequireCompleteType(context, base_type_id, node_id, [&] {
+        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Error,
+                          "base {0} is an incomplete type", InstIdAsType);
+        return context.emitter().Build(node_id, IncompleteTypeInBaseDecl,
+                                       base_type_inst_id);
       })) {
     return BaseInfo::Error;
   }

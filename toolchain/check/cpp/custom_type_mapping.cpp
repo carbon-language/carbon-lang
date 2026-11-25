@@ -4,6 +4,8 @@
 
 #include "toolchain/check/cpp/custom_type_mapping.h"
 
+#include <initializer_list>
+
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "llvm/ADT/STLExtras.h"

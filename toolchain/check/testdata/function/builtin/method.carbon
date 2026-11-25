@@ -46,7 +46,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [concrete]
+// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %self.param_patt.f52: %pattern_type.d94 = value_param_pattern [concrete]
@@ -165,7 +165,7 @@ var arr: array(i32, (1 as i32).(I.F)(2));
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.I.impl.%i32, @I [concrete = constants.%.c43]
+// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.I.impl.%i32, @I [symbolic_self = constants.%.c43]
 // CHECK:STDOUT:   %arr.var: ref %Array.95c = var_storage %arr.var_patt [concrete]
 // CHECK:STDOUT:   %.loc23_40: type = splice_block %Array [concrete = constants.%Array.95c] {
 // CHECK:STDOUT:     %i32.loc23_16: type = type_literal constants.%i32 [concrete = constants.%i32]

@@ -26,7 +26,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        uses: step-security/harden-runner@aebdcf6156ab6691adf63218240e476564a1ed4c # v2.23.0
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -92,4 +92,6 @@ jobs:
         env:
           FILTER_FILES: ${{ steps.filter.outputs.has_cpp_files }}
         run: |
+          # FILTER_FILES is a space-separated file list from paths-filter.
+          # shellcheck disable=SC2086
           uvx --with clangd-tidy==1.1.0.post2 clangd-tidy -p . -j 10 $FILTER_FILES

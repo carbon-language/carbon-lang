@@ -134,13 +134,11 @@ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+7]]:10
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `NonConstCopy`
-  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.NonConstCopy` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
@@ -148,14 +146,11 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+7]]:10
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AmbiguousCopy`
-  // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.AmbiguousCopy` does not implement interface
-  // CHECK:STDERR:        ·               │ `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;

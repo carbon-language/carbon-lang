@@ -111,8 +111,8 @@ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
 
 // CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
 // CHECK:STDERR:        │ fn Add(a: i32, b: i32) -> i32 = "int.uadd";
-// CHECK:STDERR:        · ───────────────┬───────────────
-// CHECK:STDERR:        ·                ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ·    ─┬─
+// CHECK:STDERR:        ·     ╰──┤ calling function declared here [InCallToEntity]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var bad_call: array(i32, Add(1, 2, 3));
 // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━

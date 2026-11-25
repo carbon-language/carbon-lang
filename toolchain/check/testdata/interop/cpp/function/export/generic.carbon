@@ -142,7 +142,7 @@ void CallEnclosingF() {
   Carbon::EnclosingB b;
   // CHECK:STDERR:        ╭─┤ fail_todo_enclosing_generic.carbon:[[@LINE+7]]:5
   // CHECK:STDERR: ->     │   b.MemberF(1, 2);
-  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·   ━ ┳
   // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'MemberF' in 'Carbon::Main::EnclosingA<int>'
   // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
   // CHECK:STDERR:        ╰────
@@ -185,6 +185,23 @@ void CallUnsupportedF() {
 }
 ''';
 
+// --- generic_class_param.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class A {}
+
+class C(T: type) {}
+
+fn F[T: type](unused c: C(T)) {}
+
+inline Cpp '''
+void G() {
+  Carbon::C<Carbon::A> c;
+  Carbon::F(c);
+}
+''';
+
 // CHECK:STDOUT: --- generic_facet.carbon = $generic_facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -196,7 +213,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %.822: <witness> = impl_self_witness %D, @Z [concrete]
+// CHECK:STDOUT:   %.822: <witness> = impl_self_witness %D, @Z [symbolic_self]
 // CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @D.as.Z.impl.%Z.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %D, (%Z.impl_witness) [concrete]
 // CHECK:STDOUT:   %.592: Core.Form = init_form %D [concrete]
@@ -263,7 +280,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @D.as.Z.impl.%D.ref, @Z [concrete = constants.%.822]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @D.as.Z.impl.%D.ref, @Z [symbolic_self = constants.%.822]
 // CHECK:STDOUT:   %MakeD.decl: %MakeD.type = fn_decl @MakeD [concrete = constants.%MakeD] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d8d = out_param_pattern [concrete = constants.%return.param_patt.eae]
 // CHECK:STDOUT:     %return.patt: %pattern_type.d8d = return_slot_pattern %return.param_patt, %D.ref.loc9_15 [concrete = constants.%return.patt.e38]
@@ -545,9 +562,9 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.Doit.228: %I.WithSelf.Doit.type.bce = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Doit.decl [concrete]
+// CHECK:STDOUT:   %assoc0.bd5: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.Doit.decl [concrete]
 // CHECK:STDOUT:   %A: type = class_type @A [concrete]
-// CHECK:STDOUT:   %.b03: <witness> = impl_self_witness %A, @I [concrete]
+// CHECK:STDOUT:   %.b03: <witness> = impl_self_witness %A, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.ca2: <witness> = impl_witness @A.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %self.param_patt.04e: %pattern_type.9ef = value_param_pattern [concrete]
@@ -565,7 +582,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.val: %A = struct_value () [concrete]
 // CHECK:STDOUT:   %B: type = class_type @B [concrete]
-// CHECK:STDOUT:   %.d64: <witness> = impl_self_witness %B, @I [concrete]
+// CHECK:STDOUT:   %.d64: <witness> = impl_self_witness %B, @I [symbolic_self]
 // CHECK:STDOUT:   %I.impl_witness.b14: <witness> = impl_witness @B.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %self.param_patt.f1f: %pattern_type.e39 = value_param_pattern [concrete]
@@ -699,7 +716,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:     %return.param: ref @I.WithSelf.Doit.%Self.as_type.loc6_11.1 (%Self.as_type.c84) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @I.WithSelf.Doit.%Self.as_type.loc6_11.1 (%Self.as_type.c84) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Doit.decl [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.Doit.decl [concrete = constants.%assoc0.bd5]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -762,7 +779,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%A [concrete = constants.%A]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc10: <witness> = impl_self_witness @A.as.I.impl.%Self.ref, @I [concrete = constants.%.b03]
+// CHECK:STDOUT:   %.loc10: <witness> = impl_self_witness @A.as.I.impl.%Self.ref, @I [symbolic_self = constants.%.b03]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -777,7 +794,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @B.as.I.impl.%Self.ref, @I [concrete = constants.%.d64]
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @B.as.I.impl.%Self.ref, @I [symbolic_self = constants.%.d64]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -838,7 +855,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   fn(%t.param: @F.%T.as_type.loc24_15.1 (%T.as_type.b38)) -> out %return.param: @F.%T.as_type.loc24_15.1 (%T.as_type.b38) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: @F.%T.as_type.loc24_15.1 (%T.as_type.b38) = name_ref t, %t
-// CHECK:STDOUT:     %Doit.ref: %I.assoc_type = name_ref Doit, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %Doit.ref: %I.assoc_type = name_ref Doit, @I.WithSelf.%assoc0 [concrete = constants.%assoc0.bd5]
 // CHECK:STDOUT:     %impl.elem0.loc25_11.1: @F.%.loc25_11 (%.7ed) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc25_11.2 (constants.%impl.elem0.fa2)]
 // CHECK:STDOUT:     %bound_method.loc25_11: <bound method> = bound_method %t.ref, %impl.elem0.loc25_11.1
 // CHECK:STDOUT:     %.loc25_17.1: %I.type = converted constants.%T.as_type.b38, constants.%T.dda [symbolic = %T.loc24_7.1 (constants.%T.dda)]

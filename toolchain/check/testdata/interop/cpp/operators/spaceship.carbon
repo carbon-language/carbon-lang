@@ -154,9 +154,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
         cross_type_rhs: Cpp.CrossTypeRhs) {
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(default_spaceship_only, default_spaceship_only);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -169,9 +169,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
 
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   OrderedWith(default_spaceship_only, default_spaceship_only);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -183,9 +183,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
   OrderedWith(default_spaceship_only, default_spaceship_only);
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   OrderedWith(returns_strong_ordering, returns_strong_ordering);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -197,9 +197,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
   OrderedWith(returns_strong_ordering, returns_strong_ordering);
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   OrderedWith(returns_partial_ordering, returns_partial_ordering);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -211,9 +211,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
   OrderedWith(returns_partial_ordering, returns_partial_ordering);
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   OrderedWith(cross_type_lhs, cross_type_rhs);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -225,9 +225,9 @@ fn Test(default_spaceship_only: Cpp.DefaultSpaceshipOnly,
   OrderedWith(cross_type_lhs, cross_type_rhs);
   // CHECK:STDERR:        ╭─┤ fail_todo_spaceship_rewrites.carbon:[[@LINE+20]]:3
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ─────┬─────
+  // CHECK:STDERR:        ·         ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·            │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   OrderedWith(cross_type_rhs, cross_type_lhs);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -257,9 +257,9 @@ fn EqWith[U: type, T: Core.EqWith(U)](unused x: T, unused y: U) {}
 fn Test(returns_strong_ordering: Cpp.ReturnsStrongOrdering) {
   // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](unused x: T, unused y: U) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·    ───┬──
+  // CHECK:STDERR:        ·       ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·          │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   EqWith(returns_strong_ordering, returns_strong_ordering);
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

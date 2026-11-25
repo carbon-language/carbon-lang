@@ -122,25 +122,17 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
                      .format = "",
                      .format_fn = SaysText(bytes.Text().str())};
 
-  // A context leads the diagnostic in place of the message, so this reaches the
-  // shapes that only exist when one does.
-  llvm::SmallVector<Context, 0> contexts;
-  int context_count = bytes.Below(3);
-  for (int i = 0; i < context_count; ++i) {
-    contexts.push_back({.loc = MakeLoc(bytes, file_text),
-                        .name = "TestContext",
-                        .format = "",
-                        .format_fn = SaysText(bytes.Text().str())});
+  int range_count = bytes.Below(3);
+  for (int i = 0; i < range_count; ++i) {
+    message.ranges.push_back(MakeLoc(bytes, file_text));
   }
 
   llvm::SmallVector<Label, 0> labels;
   int label_count = bytes.Below(8);
   for (int i = 0; i < label_count; ++i) {
-    auto category = static_cast<LabelCategory>(bytes.Below(2));
     llvm::StringRef words = bytes.Text();
     labels.push_back(
-        {.category = category,
-         .loc = MakeLoc(bytes, file_text),
+        {.loc = MakeLoc(bytes, file_text),
          .name = "TestLabel",
          .format = "",
          .format_fn = words.empty() ? FormatFn() : SaysText(words.str())});
@@ -148,7 +140,6 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
 
   Diagnostic diagnostic = {.level = level,
                            .message = std::move(message),
-                           .contexts = std::move(contexts),
                            .labels = std::move(labels)};
 
   Renderer renderer(capabilities);

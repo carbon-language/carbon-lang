@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_ID_KIND_H_
 #define CARBON_TOOLCHAIN_SEM_IR_ID_KIND_H_
 
+#include <array>
+
 #include "common/type_enum.h"
 #include "toolchain/base/int.h"
 #include "toolchain/sem_ir/ids.h"

@@ -10,6 +10,7 @@
 #include <compare>
 #include <concepts>
 #include <ostream>
+#include <string>
 #include <type_traits>
 
 #include "llvm/Support/Compiler.h"

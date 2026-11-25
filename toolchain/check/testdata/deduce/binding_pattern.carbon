@@ -19,7 +19,7 @@ class C(T: type) {
 }
 
 fn F(unused generic U: type, generic V: type) {
-  // CHECK:STDERR:        ╭─┤ fail_incompatible_deduce.carbon:[[@LINE+15]]:15
+  // CHECK:STDERR:        ╭─┤ fail_incompatible_deduce.carbon:[[@LINE+13]]:15
   // CHECK:STDERR:        │   fn Create(unused value: T) {}
   // CHECK:STDERR:        ·                    ────┬───
   // CHECK:STDERR:        ·                        ╰──┤ initializing function parameter
@@ -28,10 +28,8 @@ fn F(unused generic U: type, generic V: type) {
   // CHECK:STDERR: ->     │   C(V).Create({});
   // CHECK:STDERR:        ·               ┳━
   // CHECK:STDERR:        ·               ┗━━┫ error: cannot implicitly convert expression of type `{}` to
-  // CHECK:STDERR:        ·               │  ┃        `V`
-  // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·               ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(V)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                  ┃        `V`
+  // CHECK:STDERR:        ·                  ┃        [ConversionFailure]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(V).Create({});

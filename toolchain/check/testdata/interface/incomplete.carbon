@@ -32,8 +32,8 @@ interface I {
 
 // CHECK:STDERR:        ╭─┤ fail_incomplete_type_impl.carbon:[[@LINE+11]]:26
 // CHECK:STDERR:        │ class C;
-// CHECK:STDERR:        · ────┬───
-// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl {} as I where .T = ({} as C) {}
 // CHECK:STDERR:        ·                          ━━━┳━━━
@@ -65,9 +65,9 @@ constraint A;
 interface B {
   // CHECK:STDERR:        ╭─┤ fail_incomplete_extend_constraint.carbon:[[@LINE+13]]:24
   // CHECK:STDERR:        │ constraint A;
-  // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
-  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·               │ [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   extend require impls A;
   // CHECK:STDERR:        ·                        ┳
@@ -86,7 +86,7 @@ interface A {
   // CHECK:STDERR:        ╭─┤ fail_extend_require_enclosing.carbon:[[@LINE+12]]:24
   // CHECK:STDERR:        │ interface A {
   // CHECK:STDERR:        · ──────┬──────
-  // CHECK:STDERR:        ·       ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·       ╰──┤ interface is incomplete within its definition
   // CHECK:STDERR:        ·          │ [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   extend require impls A;
@@ -105,7 +105,7 @@ interface A(T: type) {
   // CHECK:STDERR:        ╭─┤ fail_extend_require_enclosing_generic.carbon:[[@LINE+13]]:24
   // CHECK:STDERR:        │ interface A(T: type) {
   // CHECK:STDERR:        · ───────────┬──────────
-  // CHECK:STDERR:        ·            ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·            ╰──┤ interface is incomplete within its definition
   // CHECK:STDERR:        ·               │ [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   extend require impls A({});

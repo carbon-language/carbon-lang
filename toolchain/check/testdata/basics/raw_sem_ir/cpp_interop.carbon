@@ -44,6 +44,7 @@ fn G(x: Cpp.X) {
 // CHECK:STDOUT:     name5:           p
 // CHECK:STDOUT:     name6:           f__carbon_thunk
 // CHECK:STDOUT:   import_irs:
+// CHECK:STDOUT:     'import_ir(Local)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(ApiForImpl)': {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:     'import_ir(Cpp)':  {decl_id: inst<none>, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:

@@ -31,7 +31,7 @@ package Example library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ┆
 // CHECK:STDERR:        ├─┤ fn.carbon
 // CHECK:STDERR:        │ fn Foo();
-// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·    ─┬─
 // CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

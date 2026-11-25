@@ -20,8 +20,8 @@ fn Test() {
   fn Inner() {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured.carbon:[[@LINE+12]]:23
     // CHECK:STDERR:        │   let x: X = {};
-    // CHECK:STDERR:        ·       ──┬─
-    // CHECK:STDERR:        ·         ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     let unused y: X = x;
     // CHECK:STDERR:        ·                       ┳
@@ -42,8 +42,8 @@ fn Test() {
   fn G() -> i32 {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_var.carbon:[[@LINE+11]]:12
     // CHECK:STDERR:        │   var n: i32;
-    // CHECK:STDERR:        ·       ───┬──
-    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     return n;
     // CHECK:STDERR:        ·            ┳
@@ -62,8 +62,8 @@ fn Test(p: i32) {
   fn H() -> i32 {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_param.carbon:[[@LINE+11]]:12
     // CHECK:STDERR:        │ fn Test(p: i32) {
-    // CHECK:STDERR:        ·         ───┬──
-    // CHECK:STDERR:        ·            ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·         ┬
+    // CHECK:STDERR:        ·         ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     return p;
     // CHECK:STDERR:        ·            ┳
@@ -85,8 +85,8 @@ fn Test() {
   (fn() {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_lambda.carbon:[[@LINE+12]]:23
     // CHECK:STDERR:        │   let x: X = {};
-    // CHECK:STDERR:        ·       ──┬─
-    // CHECK:STDERR:        ·         ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     let unused y: X = x;
     // CHECK:STDERR:        ·                       ┳
@@ -107,8 +107,8 @@ fn F() {
   class Local {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_var_in_class.carbon:[[@LINE+12]]:22
     // CHECK:STDERR:        │   var n: i32 = 0;
-    // CHECK:STDERR:        ·       ───┬──
-    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     var field: i32 = n;
     // CHECK:STDERR:        ·                      ┳
@@ -129,8 +129,8 @@ fn F() {
   class Local {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_let_in_class.carbon:[[@LINE+12]]:27
     // CHECK:STDERR:        │   let m: i32 = 1;
-    // CHECK:STDERR:        ·       ───┬──
-    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     let member_let: i32 = m;
     // CHECK:STDERR:        ·                           ┳
@@ -152,8 +152,8 @@ fn F() {
     fn Method() -> i32 {
       // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_var_in_method.carbon:[[@LINE+11]]:14
       // CHECK:STDERR:        │   var n: i32 = 0;
-      // CHECK:STDERR:        ·       ───┬──
-      // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ·       ┬
+      // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
       // CHECK:STDERR:        ┆
       // CHECK:STDERR: ->     │       return n;
       // CHECK:STDERR:        ·              ┳
@@ -176,8 +176,8 @@ fn F() {
   interface LocalIface {
     // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_interface.carbon:[[@LINE+12]]:18
     // CHECK:STDERR:        │   var n: i32 = 0;
-    // CHECK:STDERR:        ·       ───┬──
-    // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+    // CHECK:STDERR:        ·       ┬
+    // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
     // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     let X: i32 = n;
     // CHECK:STDERR:        ·                  ┳
@@ -202,8 +202,8 @@ fn F() {
   }
   // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_impl.carbon:[[@LINE+26]]:35
   // CHECK:STDERR:        │   var n: i32 = 0;
-  // CHECK:STDERR:        ·       ───┬──
-  // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   impl C as LocalIface where .Y = n {};
   // CHECK:STDERR:        ·                                   ┳
@@ -243,8 +243,8 @@ fn F() {
     fn Get(unused self) -> i32 {
       // CHECK:STDERR:        ╭─┤ fail_reference_uncaptured_local_in_interface_member.carbon:[[@LINE+11]]:14
       // CHECK:STDERR:        │   var n: i32 = 0;
-      // CHECK:STDERR:        ·       ───┬──
-      // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+      // CHECK:STDERR:        ·       ┬
+      // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
       // CHECK:STDERR:        ┆
       // CHECK:STDERR: ->     │       return n;
       // CHECK:STDERR:        ·              ┳
@@ -282,8 +282,8 @@ fn F() {
   var n: i32 = 0;
   // CHECK:STDERR:        ╭─┤ fail_typeof_nested_lambda.carbon:[[@LINE+13]]:46
   // CHECK:STDERR:        │   var n: i32 = 0;
-  // CHECK:STDERR:        ·       ───┬──
-  // CHECK:STDERR:        ·          ╰──┤ declared here [UncapturedLocalDecl]
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ declared here [UncapturedLocalDecl]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused x: typeof((fn() -> i32 { return n; })()) = 0;
   // CHECK:STDERR:        ·                                              ┳
@@ -362,7 +362,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
-// CHECK:STDOUT:   %.0b3: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %.0b3e: Core.Form = init_form %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt.299: %pattern_type.d94 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
@@ -455,7 +455,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:       %.loc31_34.1: type = type_of %local_var.ref in [concrete = constants.%i32] {
 // CHECK:STDOUT:         %local_var.ref: ref %i32 = name_ref local_var, @Outer.%local_var
 // CHECK:STDOUT:       }
-// CHECK:STDOUT:       %.loc31_34.2: Core.Form = init_form %.loc31_34.1 [concrete = constants.%.0b3]
+// CHECK:STDOUT:       %.loc31_34.2: Core.Form = init_form %.loc31_34.1 [concrete = constants.%.0b3e]
 // CHECK:STDOUT:       %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:       %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:     }
