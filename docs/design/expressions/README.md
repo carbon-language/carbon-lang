@@ -324,6 +324,15 @@ is syntactic sugar for `(` `*` _expression_ `)` `.` _..._.
 
 ## Operators
 
+> **TODO:** Update the precedence diagram above and the operator descriptions
+> below to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#marking-ref-and-fwd-on-operator-operands):
+>
+> -   the `fwd` prefix marker on generic-extended-type operator operands (for
+>     example, `(fwd self) == (fwd u)`), and
+> -   marking operator operands with `ref` when selecting an `impl` taking a
+>     `ref` extended type (for example, `(ref out_stream) << x;`).
+
 Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |

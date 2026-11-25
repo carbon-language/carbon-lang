@@ -867,8 +867,10 @@ Evaluation of the last line involves 6 function calls:
 5.  Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
 6.  Call `B.(Core.Copy).Op`.
 
-> **Note:** These `Core` interfaces haven't been specified yet, and their
-> details may change.
+> **Note:** `Core.ImplicitAsPrimitive` is defined in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md#primitive-conversion-interfaces)
+> (**TODO:** update this example to reflect that proposal); `Core.Copy` has not
+> been specified yet, and its details may change.
 
 To define the evaluation order of these calls, we have to consider the
 dependencies between them, which we'll model as a DAG, with function calls as

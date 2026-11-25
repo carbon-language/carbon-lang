@@ -673,6 +673,11 @@ priority order in a prioritization block.
 
 ### Operator overloading
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8188: Extended-type operator, conversion, and member binding interfaces](/proposals/p008188-extended-type-operator-conversion-and-member-binding-interfaces.md):
+> operator interfaces are replaced by `Primitive` extended type interfaces with
+> named constraints (such as `AddWithPrimitive` and `AddWith`).
+
 To overload an operator, implement the corresponding interface from the standard
 library. For example, to define how the unary `-` operator behaves for a type,
 implement the `Negatable` interface for that type. The interfaces and rewrites
