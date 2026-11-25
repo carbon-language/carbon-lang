@@ -464,14 +464,15 @@ expression [erroneous behavior](/docs/design/program_behavior.md).
 
 > Note: this is _not_ undefined behavior, but instead
 > [erroneous behavior](/docs/design/program_behavior.md). We want to be able to
-> detect and report such code as having a bug without permitting unbounded UB.
+> detect and report such code as having a bug without permitting unbounded
+> undefined behavior.
 >
 > **TODO:** Document the pointer-value-representation scope and permitted reload
 > semantics for mutating an object bound to an active value expression, as
 > adopted in
 > [#5434](/proposals/p005434-ref-parameters-arguments-returns-and-val-returns.md#mututation-restriction-on-objects-bound-to-a-value)
 > and
-> [#8161](/proposals/p008161-defining-program-behavior.md#mutating-an-immutable-value).
+> [#8161](/proposals/p008161-defining-program-behavior.md#mutating-an-object-bound-to-a-value).
 
 > Note: this restriction is also **experimental** -- we may want to strengthen
 > or weaken it based on experience, especially with C++ interop and a more
@@ -1531,6 +1532,7 @@ itself.
 -   [Mixed expression categories](/proposals/p005545-expression-form-basics.md#mixed-expression-categories)
 -   [Don't implicitly convert to less-primitive forms](/proposals/p005545-expression-form-basics.md#dont-implicitly-convert-to-less-primitive-forms)
 -   [Use `exprtype` and `expr` keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-exprtype-and-expr-keywords)
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
 
 ## References
 

@@ -133,7 +133,7 @@ The second operand of a bit-shift is required to be between zero (inclusive) and
 the bit-width of the first operand (exclusive); if the second operand is not
 within that range, it is
 [erroneous behavior](/docs/design/program_behavior.md): it is a programming
-error, and the compiler may not optimize under the assumption that it does not
+error, and the compiler must not optimize under the assumption that it does not
 occur.
 
 -   In a [debug build](/docs/design/safety/README.md#build-modes), it is caught
@@ -277,6 +277,7 @@ to give the semantics described above.
 -   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
 -   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
 -   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
+-   [Make erroneous behavior ordinary defined behavior](/proposals/p008161-defining-program-behavior.md#make-erroneous-behavior-ordinary-defined-behavior)
 
 ## References
 

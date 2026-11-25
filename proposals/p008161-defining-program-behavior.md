@@ -19,7 +19,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   ["As-if" rule](#as-if-rule)
     -   [Erroneous behavior](#erroneous-behavior)
-        -   [Mutating an immutable value](#mutating-an-immutable-value)
+        -   [Mutating an object bound to a value](#mutating-an-object-bound-to-a-value)
     -   [Undefined behavior](#undefined-behavior)
     -   [Safety assumptions, safety modes, and C++ interoperability](#safety-assumptions-safety-modes-and-c-interoperability)
         -   [Mixing safety modes and safety annotations](#mixing-safety-modes-and-safety-annotations)
@@ -44,17 +44,17 @@ operations or C++) has no undefined behavior; execution within Carbon without
 C++ can only have undefined behavior in permissive mode or after passing through
 an `unsafe`-marked operation. Erroneous behavior identifies bugs that
 nonetheless have defined, bounded behavior: unlike undefined behavior, the
-compiler may not optimize under the assumption that erroneous behavior does not
+compiler must not optimize under the assumption that erroneous behavior does not
 occur, and may optimize only on the basis of a proof under the "as-if" rule.
 Similarly, adding safety annotations or switching to strict mode never
-introduces undefined behavior—the compiler may optimize based on safety
+introduces undefined behavior -- the compiler may optimize based on safety
 information, but not in ways that introduce undefined behavior if unsafe,
-permissive, or C++ code compromises those safety assumptions—and Carbon code
+permissive, or C++ code compromises those safety assumptions -- and Carbon code
 always has at most the undefined behavior of corresponding C++. Accordingly,
 this proposal changes existing cases previously specified as undefined behavior
-in performance builds—signed integer arithmetic overflow, integer division by
-zero, out-of-range bit shifts, and operations on unformed objects—into erroneous
-behavior.
+in performance builds -- signed integer arithmetic overflow, integer division by
+zero, out-of-range bit shifts, and operations on unformed objects -- into
+erroneous behavior.
 
 ## Problem
 
@@ -79,7 +79,7 @@ definition of these concepts and the constraints they place on compilers:
     and
     [leads issue #5524](https://github.com/carbon-language/carbon-lang/issues/5524)
     allowed optimizers to treat several programming errors as undefined behavior
-    in "performance builds"—including signed integer overflow and integer
+    in "performance builds" -- including signed integer overflow and integer
     division by zero
     ([proposal #1083](https://github.com/carbon-language/carbon-lang/pull/1083)),
     out-of-range bit shifts
@@ -98,8 +98,9 @@ definition of these concepts and the constraints they place on compilers:
     strict Carbon, permissive Carbon, `unsafe` operations, and C++. Without
     explicit rules specifying where undefined behavior can arise and prohibiting
     safety annotations or strict-mode checks from introducing new undefined
-    behavior, adding safety checks could introduce unfamiliar UB hazards across
-    mixed-mode and C++ boundaries rather than strictly improving safety.
+    behavior, adding safety checks could introduce unfamiliar undefined-behavior
+    hazards across mixed-mode and C++ boundaries rather than strictly improving
+    safety.
 
 Without a shared definition and consistent classification of these error cases,
 language proposals risk specifying conflicting rules for buggy programs,
@@ -122,8 +123,8 @@ Carbon's approach builds on concepts from C++ and prior Carbon design decisions:
 -   **C++ erroneous behavior**:
     [C++ Proposal P2795: Erroneous behaviour for uninitialized reads](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/p2795r2.html)
     introduced _erroneous behavior_ to describe program behavior that is
-    well-defined yet still considered an incorrect bug that implementations and
-    tools are encouraged to diagnose.
+    well-defined yet still considered a bug that implementations and tools are
+    encouraged to diagnose.
 -   **Prior Carbon proposals and leads decisions**:
     -   [Proposal #257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257),
         [proposal #1083: Arithmetic expressions](https://github.com/carbon-language/carbon-lang/pull/1083),
@@ -179,7 +180,7 @@ used across the Carbon language design:
     transformations that preserve observable behavior, subject to a bound on
     peak memory growth while allowing reductions in resource usage.
 -   **[Erroneous behavior](#erroneous-behavior)** classifies behavior that is
-    incorrect and a bug, yet remains defined. Compilers may not optimize under
+    incorrect and a bug, yet remains defined. Compilers must not optimize under
     the assumption that erroneous behavior does not occur (they will not
     optimize on unvalidated assumptions that could introduce undefined
     behavior); they may optimize only when they prove it does not occur, under
@@ -193,29 +194,30 @@ used across the Carbon language design:
 This proposal also establishes the undefined-behavior invariants for
 [safety assumptions, safety modes, and C++ interoperability](#safety-assumptions-safety-modes-and-c-interoperability):
 
--   **At most the UB of C++**: Permissive Carbon has a subset of the undefined
-    behavior of corresponding C++ even with no safety annotations (some C++ UB
-    is diagnosed at compile time, and some becomes erroneous behavior), and
-    Carbon code always has at most the undefined behavior of corresponding C++.
--   **No UB from safety assumptions**: Adding safety annotations to permissive
-    code or switching to strict mode never introduces undefined behavior. The
-    compiler may optimize based on safety information, but not in ways that
-    introduce undefined behavior if unsafe, permissive, or C++ code compromises
-    those safety assumptions.
+-   **At most the undefined behavior of C++**: Permissive Carbon has a subset of
+    the undefined behavior of corresponding C++ even with no safety annotations
+    (some C++ undefined behavior is diagnosed at compile time, and some becomes
+    erroneous behavior), and Carbon code always has at most the undefined
+    behavior of corresponding C++.
+-   **No undefined behavior from safety assumptions**: Adding safety annotations
+    to permissive code or switching to strict mode never introduces undefined
+    behavior. The compiler may optimize based on safety information, but not in
+    ways that introduce undefined behavior if unsafe, permissive, or C++ code
+    compromises those safety assumptions.
 -   **Reasonable C++ interop boundary**: Reasonable C++ code following a
     sanitizable set of rules does not compromise Carbon's safety checks. If C++
-    UB or unreasonable (even if well-defined) C++ compromises safety checks,
-    Carbon still does not introduce additional undefined behavior from its
-    safety assumptions, so Carbon code retains less undefined behavior than the
-    equivalent C++.
+    undefined behavior or unreasonable (even if well-defined) C++ compromises
+    safety checks, Carbon still does not introduce additional undefined behavior
+    from its safety assumptions, so Carbon code retains less undefined behavior
+    than the equivalent C++.
 
 This proposal also explicitly changes the existing language cases that were
-previously allowed to produce undefined behavior in performance builds—signed
+previously allowed to produce undefined behavior in performance builds -- signed
 integer arithmetic overflow, integer division by zero, out-of-range bit shifts,
-and operations on unformed objects—to be **erroneous behavior** instead,
+and operations on unformed objects -- to be **erroneous behavior** instead,
 eliminating undefined behavior from these operations across all build modes.
 
-To keep the living documentation current, this PR adds a stub
+To keep the living documentation current, this proposal adds a stub
 [program behavior design document](/docs/design/program_behavior.md) with a
 `TODO` to fill in the full definitions, updates small affected passages in
 existing design documents, and adds `TODO`s where larger updates remain.
@@ -231,8 +233,8 @@ The _"as-if" rule_ is:
 
 This [matches C++](https://en.cppreference.com/w/cpp/language/as_if.html).
 
-Clarification: The peak memory usage of a program must not be increased beyond a
-constant amount that does not vary by program input.
+The peak memory usage of a program must not be increased beyond a constant
+amount that does not vary by program input.
 
 However, optimizations are allowed to decrease resource usage, including
 reducing the asymptotic complexity of that usage. For example, it is legal to
@@ -256,7 +258,7 @@ fn SumUpTo(n: i16) -> i64 {
 ### Erroneous behavior
 
 _Erroneous behavior_ is behavior that is incorrect and a bug, but unlike
-[undefined behavior](#undefined-behavior), the compiler may not optimize under
+[undefined behavior](#undefined-behavior), the compiler must not optimize under
 the assumption that it does not occur. If the compiler can prove that erroneous
 behavior does not occur, then it may optimize on the basis of that proof under
 [the "as-if" rule](#as-if-rule). Turning C++ undefined behavior (such as signed
@@ -288,7 +290,7 @@ Examples of acceptable results of erroneous behavior:
 -   A defined value is produced, but a later runtime check detects that
     erroneous behavior occurred and halts the program.
 
-#### Mutating an immutable value
+#### Mutating an object bound to a value
 
 When erroneous behavior occurs because code mutates a value that the safety
 model specifies is currently immutable, the defined behavior still permits the
@@ -312,9 +314,9 @@ always a bug and must be assumed to be a security vulnerability if reachable.
 
 Carbon makes an active effort to define as much behavior as possible. We admit
 undefined behavior only because of a constructive inability to define the
-behavior—for example, when defining the behavior would undermine the very effect
-of the feature, such as an explicit optimization assumption like "assume this
-pointer is never null".
+behavior -- for example, when defining the behavior would undermine the very
+effect of the feature, such as an explicit optimization assumption like "assume
+this pointer is never null".
 
 Within Carbon's [safety modes](/docs/design/safety/README.md#safety-modes) and
 relative to C++:
@@ -322,8 +324,8 @@ relative to C++:
 -   **Fully strict Carbon code has no undefined behavior**: valid code written
     entirely in [strict Carbon](/docs/design/safety/README.md#safety-modes)
     without `unsafe` operations or C++ has completely defined behavior.
--   **Pure Carbon UB requires permissive mode or `unsafe`**: execution within
-    Carbon, with no C++, can only have undefined behavior in
+-   **Pure Carbon undefined behavior requires permissive mode or `unsafe`**:
+    execution within Carbon, with no C++, can only have undefined behavior in
     [permissive mode](/docs/design/safety/README.md#safety-modes) or after
     execution passes through an operation marked `unsafe`.
 -   **Permissive Carbon has a subset of C++'s undefined behavior**: even without
@@ -335,8 +337,8 @@ relative to C++:
         [erroneous behavior](#erroneous-behavior) (for example, signed integer
         arithmetic overflow), meaning the compiler will not optimize based on
         unvalidated assumptions that could introduce undefined behavior.
--   **At most the UB of corresponding C++**: Carbon code always has at most the
-    undefined behavior of the corresponding C++ code.
+-   **At most the undefined behavior of corresponding C++**: Carbon code always
+    has at most the undefined behavior of the corresponding C++ code.
 
 Examples of undefined behavior:
 
@@ -359,7 +361,7 @@ undefined behavior** if `unsafe` Carbon, permissive Carbon, or C++ code
 compromises those safety assumptions.
 
 This differs deliberately from Rust, where unsafe code must uphold additional
-unchecked safety invariants unfamiliar to many C++ developers—such as the
+unchecked safety invariants unfamiliar to many C++ developers -- such as the
 [Rustonomicon](https://doc.rust-lang.org/nomicon/) rule making it undefined
 behavior to alias a mutable reference. Carbon does not turn violations of its
 safety annotations into undefined behavior, because incremental C++ migration
@@ -369,11 +371,11 @@ boundary.
 
 This choice intentionally gives up some performance optimization opportunities
 that would depend on assuming safety annotations are never violated. Bounded
-optimizations that cannot introduce undefined behavior (such as eliding or
+optimizations that cannot introduce undefined behavior -- such as eliding or
 inserting reloads when
-[mutating an immutable value](#mutating-an-immutable-value)) remain allowed, and
-developers can still write explicit `unsafe` optimization assumptions when peak
-performance requires an unproven invariant.
+[mutating an object bound to a value](#mutating-an-object-bound-to-a-value)
+-- remain allowed, and developers can still write explicit `unsafe`
+optimization assumptions when peak performance requires an unproven invariant.
 
 #### Reasonable C++ code and compromised safety checks
 
@@ -404,9 +406,9 @@ compilers in `performance` builds to assume those errors never occurred
 (undefined behavior). Because fully strict Carbon code must have no undefined
 behavior, permissive Carbon converts C++ undefined behavior into erroneous
 behavior where practical instead of optimizing on unvalidated assumptions, and
-Carbon's release build mode does not opt into UB for these errors, this proposal
-explicitly changes each of those existing cases from undefined behavior to
-[erroneous behavior](#erroneous-behavior):
+Carbon's release build mode does not opt into undefined behavior for these
+errors, this proposal explicitly changes each of those existing cases from
+undefined behavior to [erroneous behavior](#erroneous-behavior):
 
 -   **Signed integer arithmetic overflow** (including `char` arithmetic
     overflow) and **signed or unsigned integer division and remainder by zero**,
@@ -426,7 +428,7 @@ explicitly changes each of those existing cases from undefined behavior to
     [proposal #257](https://github.com/carbon-language/carbon-lang/pull/257) and
     documented in [unformed state](/docs/design/README.md#unformed-state).
 
-In all of these cases, the compiler may no longer optimize under the assumption
+In all of these cases, the compiler must no longer optimize under the assumption
 that the error does not occur in any build mode unless it proves that the error
 cannot occur (under [the "as-if" rule](#as-if-rule)). In
 [debug builds](/docs/design/safety/README.md#build-modes), detectable erroneous
@@ -449,13 +451,13 @@ producing a defined value).
     -   The "as-if" rule allows aggressive optimizations, including asymptotic
         reductions in resource usage, while bounding peak memory growth to a
         constant independent of program input to keep performance predictable.
-    -   Although disallowing UB-introducing optimizations based on safety
-        assumptions gives up some optimization opportunities, bounded
-        optimizations based on safety information (such as eliding or inserting
-        reloads for values treated as immutable by the safety model) remain
-        permitted, and explicit `unsafe` optimization assumptions (backed by
-        undefined behavior if violated) preserve full performance control when
-        the compiler cannot statically prove an invariant.
+    -   Although disallowing optimizations that introduce undefined behavior
+        based on safety assumptions gives up some optimization opportunities,
+        bounded optimizations based on safety information (such as eliding or
+        inserting reloads for values treated as immutable by the safety model)
+        remain permitted, and explicit `unsafe` optimization assumptions (backed
+        by undefined behavior if violated) preserve full performance control
+        when the compiler cannot statically prove an invariant.
 -   [Code that is easy to read, understand, and write](/docs/project/goals.md#code-that-is-easy-to-read-understand-and-write):
     -   Carbon's goals explicitly call for clearly and simply specified behavior
         whenever possible, avoiding undefined behavior due to its high cost, and
@@ -483,7 +485,8 @@ producing a defined value).
         of corresponding C++, and that migrating to permissive Carbon, adding
         safety annotations, or switching to strict Carbon never introduces new
         undefined behavior, ensures every incremental migration step improves
-        safety without introducing unfamiliar unsafe UB rules (as in Rust).
+        safety without introducing unfamiliar unsafe undefined-behavior rules
+        (as in Rust).
     -   Scoping C++ interop safety assumptions to rules whose violations are
         recognizable as buggy or dangerous to C++ developers and checkable by a
         sanitizer keeps mixed C++/Carbon codebases practical while bounding the
@@ -505,10 +508,10 @@ shifts, and unformed objects in
 [proposal #1083](https://github.com/carbon-language/carbon-lang/pull/1083), and
 [proposal #1191](https://github.com/carbon-language/carbon-lang/pull/1191).
 
--   **Advantages**: Allows optimizations that depend on unproven invariants—such
-    as assuming signed integer arithmetic never overflows or assuming an object
-    bound to a value expression is never mutated—without requiring the compiler
-    to prove them or the programmer to write an explicit assumption.
+-   **Advantages**: Allows optimizations that depend on unproven invariants --
+    such as assuming signed integer arithmetic never overflows or assuming an
+    object bound to a value expression is never mutated -- without requiring the
+    compiler to prove them or developers to write an explicit assumption.
 -   **Disadvantages**: Allowing "as-if" optimizations without a proof is
     precisely what makes undefined behavior dangerous. If the erroneous
     condition is reachable, the optimizer can remove checks or produce arbitrary
@@ -534,7 +537,8 @@ We could treat violations of Carbon's safety annotations or strict-mode
 invariants (such as aliasing constraints when reached from permissive Carbon,
 `unsafe` Carbon, or C++) as undefined behavior, similar to Rust's aliasing rules
 in the [Rustonomicon](https://doc.rust-lang.org/nomicon/), so the compiler could
-freely emit UB-backed optimizations from safety information alone.
+freely emit optimizations backed by undefined behavior from safety information
+alone.
 
 -   **Advantages**: Unlocks additional compiler optimization opportunities
     driven by safety annotations and strict-mode invariants without requiring
@@ -542,10 +546,11 @@ freely emit UB-backed optimizations from safety information alone.
 -   **Disadvantages**: Adding safety annotations to permissive code or switching
     to strict mode could introduce new undefined behavior whenever
     interoperating C++, permissive Carbon, or `unsafe` code compromises a safety
-    assumption—even when the corresponding C++ code had no undefined behavior.
-    This forces C++ developers migrating incrementally to track unfamiliar,
-    unchecked safety constraints across mixed-mode and C++ boundaries and
-    undermines the property that every migration step strictly improves safety.
+    assumption -- even when the corresponding C++ code had no undefined
+    behavior. This forces C++ developers migrating incrementally to track
+    unfamiliar, unchecked safety constraints across mixed-mode and C++
+    boundaries and undermines the property that every migration step strictly
+    improves safety.
 -   **Core of the decision**: Carbon's
     [C++ interoperability and incremental migration](/docs/project/goals.md#interoperability-with-and-migration-from-existing-c-code)
     and
@@ -553,10 +558,10 @@ freely emit UB-backed optimizations from safety information alone.
     goals require that adding safety checks or switching modes never introduces
     new undefined behavior and that Carbon code always has at most the undefined
     behavior of corresponding C++. Carbon therefore accepts giving up those
-    UB-dependent optimization opportunities, while still allowing bounded
-    optimizations based on safety information that cannot introduce undefined
-    behavior and providing explicit `unsafe` optimization assumptions when
-    needed.
+    optimization opportunities that depend on undefined behavior, while still
+    allowing bounded optimizations based on safety information that cannot
+    introduce undefined behavior and providing explicit `unsafe` optimization
+    assumptions when needed.
 
 ### Eliminate undefined behavior completely
 
@@ -566,11 +571,11 @@ behavior.
 
 -   **Advantages**: Provides the simplest possible execution model with no
     unbounded undefined behavior anywhere in the language, eliminating the risk
-    of UB-based miscompilation even in `unsafe` code.
+    of miscompilation based on undefined behavior even in `unsafe` code.
 -   **Disadvantages**: Constructively precludes language features whose entire
-    purpose depends on undefined behavior if violated—most notably explicit
-    optimization assumptions such as assuming a pointer is never null—as well as
-    low-overhead unsynchronized concurrency where preventing data races
+    purpose depends on undefined behavior if violated -- most notably explicit
+    optimization assumptions such as assuming a pointer is never null -- as well
+    as low-overhead unsynchronized concurrency where preventing data races
     everywhere without synchronization is infeasible. This conflicts with
     Carbon's top-priority
     [performance-critical software](/docs/project/goals.md#performance-critical-software)
@@ -591,7 +596,8 @@ objects to yield a valid value).
 
 -   **Advantages**: Reduces the number of behavioral categories in the language
     specification to two (defined behavior and undefined behavior) and gives
-    every non-UB operation deterministic semantics that programs can rely on.
+    every operation without undefined behavior deterministic semantics that
+    programs can rely on.
 -   **Disadvantages**: Makes programming bugs indistinguishable from intentional
     code. Compilers, static analyzers, fuzzers, and debug builds could not
     diagnose or halt on these mistakes without rejecting or aborting valid

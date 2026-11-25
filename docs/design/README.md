@@ -2136,8 +2136,9 @@ Any operation on an unformed object _other_ than destruction or assignment from
 a fully formed value is [erroneous behavior](program_behavior.md), even if its
 in-memory representation is that of a valid value for that type.
 
-> **TODO:** Update the unformed-state build-mode details above to reflect the
-> current [build modes](/docs/design/safety/README.md#build-modes) and
+> **TODO:** Update the unformed-state build-mode details in this section to
+> reflect the current [build modes](/docs/design/safety/README.md#build-modes)
+> and
 > [erroneous behavior](/proposals/p008161-defining-program-behavior.md#changes-to-existing-undefined-behavior-cases).
 
 > References:

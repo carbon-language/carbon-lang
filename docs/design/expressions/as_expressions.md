@@ -183,9 +183,12 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
 -   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
 -   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
 
 ## References
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161).

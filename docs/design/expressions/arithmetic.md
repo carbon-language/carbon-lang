@@ -150,7 +150,7 @@ example, given a value `v: iN` that is the least possible value for its type,
 
 Signed integer overflow and signed or unsigned integer division by zero are
 [erroneous behavior](/docs/design/program_behavior.md): they are programming
-errors, and the compiler may not optimize under the assumption that they do not
+errors, and the compiler must not optimize under the assumption that they do not
 occur.
 
 -   In a [debug build](/docs/design/safety/README.md#build-modes), they are
@@ -306,6 +306,7 @@ to give the semantics described above.
 -   [Use the same precedence group for modulo and multiplication](/proposals/p001083-arithmetic-expressions.md#use-the-same-precedence-group-for-modulo-and-multiplication)
 -   [Use a different spelling for modulo](/proposals/p001083-arithmetic-expressions.md#use-a-different-spelling-for-modulo)
 -   [Use `i32` or similar as the result type for `CharLiteral` difference](/proposals/p007314-charliteral-difference-should-be-an-intliteral.md#use-a-fixed-result-type)
+-   [Make erroneous behavior ordinary defined behavior](/proposals/p008161-defining-program-behavior.md#make-erroneous-behavior-ordinary-defined-behavior)
 
 ## References
 

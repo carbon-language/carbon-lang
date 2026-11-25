@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Build modes](#build-modes)
 -   [Constraints](#constraints)
     -   [Probabilistic techniques likely cannot stop attacks](#probabilistic-techniques-likely-cannot-stop-attacks)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -29,8 +30,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 One of Carbon's core goals is [practical safety]. This is referring to _[code
 safety]_ as opposed to the larger space of [systems safety]. The largest aspect
 of code safety at the language level is [memory safety], but this also applies
-to other aspects of code safety such as avoiding
-[undefined behavior](/docs/design/program_behavior.md) in other forms.
+to other aspects of code safety such as avoiding [undefined behavior] in other
+forms.
 
 [practical safety]:
     /docs/project/goals.md#practical-safety-and-testing-mechanisms
@@ -38,6 +39,7 @@ to other aspects of code safety such as avoiding
     /docs/design/safety/terminology.md#code-software-or-program-safety
 [systems safety]: /docs/design/safety/terminology.md#safety
 [memory safety]: /docs/design/safety/terminology.md#memory-safety
+[undefined behavior]: /docs/design/program_behavior.md
 
 However, Carbon also has a goal of fine grained, smooth interop-with and
 migration-from existing C++ code, and C++ is a fundamentally unsafe language. It
@@ -127,20 +129,22 @@ expressivity is available at that finer granularity through explicitly marking
 ### Undefined behavior across safety modes
 
 -   Fully strict Carbon code (without `unsafe` operations or C++) has no
-    [undefined behavior](/docs/design/program_behavior.md).
+    [undefined behavior].
 -   Execution within Carbon, with no C++, can only have undefined behavior in
     permissive mode or after execution passes through an operation marked
     `unsafe`.
 -   Permissive Carbon has a subset of the undefined behavior of corresponding
-    C++ even without safety annotations (some C++ UB is diagnosed at compile
-    time, such as ODR violations, and some becomes
-    [erroneous behavior](/docs/design/program_behavior.md), such as signed
-    integer arithmetic overflow). Carbon code always has at most the undefined
-    behavior of corresponding C++.
+    C++ even without safety annotations (some C++ undefined behavior is
+    diagnosed at compile time, such as One Definition Rule (ODR) violations, and
+    some becomes [erroneous behavior], such as signed integer arithmetic
+    overflow). Carbon code always has at most the undefined behavior of
+    corresponding C++.
 -   Adding safety annotations to permissive code or switching to strict mode
     never introduces undefined behavior. The compiler may optimize based on
     safety information, but not in ways that introduce undefined behavior if
     unsafe, permissive, or C++ code compromises those safety assumptions.
+
+[erroneous behavior]: /docs/design/program_behavior.md
 
 ## Memory safety model
 
@@ -248,9 +252,8 @@ overhead incurred.
 [performance control]: /docs/project/goals.md#performance-critical-software
 
 The debug build will change the actual behavior of both safe and unsafe code
-with detectable bugs or detectable
-[undefined or erroneous behavior](/docs/design/program_behavior.md) to have
-[fail-stop] behavior and provide detailed diagnostics to enable better
+with detectable bugs or detectable [undefined behavior] or [erroneous behavior]
+to have [fail-stop] behavior and provide detailed diagnostics to enable better
 debugging. This mode will at least provide similar bug [detection] capabilities
 to [AddressSanitizer] and [MemorySanitizer].
 
@@ -311,6 +314,13 @@ overheads. However, when these can be applied usefully such as with [PKeys],
 they are robust.
 
 [PKeys]: https://docs.kernel.org/core-api/protection-keys.html
+
+## Alternatives considered
+
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
+-   [Allow safety assumptions and strict mode to introduce undefined behavior](/proposals/p008161-defining-program-behavior.md#allow-safety-assumptions-and-strict-mode-to-introduce-undefined-behavior)
+-   [Eliminate undefined behavior completely](/proposals/p008161-defining-program-behavior.md#eliminate-undefined-behavior-completely)
+-   [Make erroneous behavior ordinary defined behavior](/proposals/p008161-defining-program-behavior.md#make-erroneous-behavior-ordinary-defined-behavior)
 
 ## References
 
