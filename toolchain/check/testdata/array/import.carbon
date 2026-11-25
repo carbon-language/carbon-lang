@@ -147,7 +147,7 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8f9: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.030]
-// CHECK:STDOUT:   %Main.import_ref.178: %Array.00c = import_ref Main//symbolic_decl, loc10_33, loaded [concrete = constants.%array]
+// CHECK:STDOUT:   %Main.import_ref.178: %Array.00c = import_ref Main//symbolic_decl, loc10_13, loaded [concrete = constants.%array]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.178), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.995: %Array.00c = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %Array.00c = assoc_const_decl @value [concrete] {}

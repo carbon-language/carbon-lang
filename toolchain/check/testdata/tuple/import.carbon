@@ -354,7 +354,7 @@ fn F() -> (i32,) {
 // CHECK:STDOUT:   %Main.I: type = import_ref Main//symbolic_decl, I, loaded [concrete = constants.%I.type]
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//symbolic_decl, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.8ce: %I.assoc_type = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = constants.%assoc0.aac]
-// CHECK:STDOUT:   %Main.import_ref.495: %tuple.type.294 = import_ref Main//symbolic_decl, loc10_33, loaded [concrete = constants.%tuple.f6b]
+// CHECK:STDOUT:   %Main.import_ref.495: %tuple.type.294 = import_ref Main//symbolic_decl, loc10_13, loaded [concrete = constants.%tuple.f6b]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.495), @C.as.I.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.85a: %tuple.type.294 = import_ref Main//symbolic_decl, loc5_12, loaded [concrete = %value]
 // CHECK:STDOUT:   %value: %tuple.type.294 = assoc_const_decl @value [concrete] {}
