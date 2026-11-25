@@ -26,23 +26,12 @@
 
 namespace Carbon::Check {
 
-auto FindSelfPattern(Context& context,
-                     SemIR::InstBlockId implicit_param_patterns_id,
-                     SemIR::InstBlockId param_patterns_id) -> SemIR::InstId {
-  auto is_self_pattern = [&](auto param_id) {
-    return SemIR::IsSelfPattern(context.sem_ir(), param_id);
-  };
-  // `self` is the first explicit parameter. We also look in the implicit
-  // parameter list for error recovery: declaring `self` there is diagnosed (see
-  // `SelfInImplicitParamList`), but we still treat it as `self` afterwards.
+auto FindSelfPattern(Context& context, SemIR::InstBlockId param_patterns_id)
+    -> SemIR::InstId {
   auto param_patterns = context.inst_blocks().GetOrEmpty(param_patterns_id);
-  if (auto self_id = FindIfOrNone(param_patterns, is_self_pattern);
-      self_id.has_value()) {
-    return self_id;
-  }
-  auto implicit_param_patterns =
-      context.inst_blocks().GetOrEmpty(implicit_param_patterns_id);
-  return FindIfOrNone(implicit_param_patterns, is_self_pattern);
+  return FindIfOrNone(param_patterns, [&](auto param_id) {
+    return SemIR::IsSelfPattern(context.sem_ir(), param_id);
+  });
 }
 
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
