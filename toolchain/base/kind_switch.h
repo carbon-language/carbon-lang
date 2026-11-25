@@ -6,6 +6,8 @@
 #define CARBON_TOOLCHAIN_BASE_KIND_SWITCH_H_
 
 #include <type_traits>
+#include <utility>
+#include <variant>
 
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/base/for_each_macro.h"

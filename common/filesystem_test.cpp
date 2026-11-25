@@ -7,7 +7,9 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <array>
 #include <concepts>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <utility>

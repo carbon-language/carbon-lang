@@ -5,12 +5,18 @@
 #ifndef CARBON_COMMON_HASHING_H_
 #define CARBON_COMMON_HASHING_H_
 
+#include <array>
 #include <bit>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "common/check.h"
 #include "common/ostream.h"

@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_LANGUAGE_SERVER_SEM_IR_TEXT_H_
 #define CARBON_TOOLCHAIN_LANGUAGE_SERVER_SEM_IR_TEXT_H_
 
+#include <cstdint>
 #include <optional>
 #include <vector>
 

@@ -5,6 +5,7 @@
 #include "common/command_line.h"
 
 #include <array>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>

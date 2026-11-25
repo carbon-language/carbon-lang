@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_CLANG_DECL_H_
 
 #include <concepts>
+#include <initializer_list>
 
 #include "clang/AST/TypeBase.h"
 #include "common/hashtable_key_context.h"

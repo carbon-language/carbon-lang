@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CPP_CUSTOM_TYPE_MAPPING_H_
 #define CARBON_TOOLCHAIN_CHECK_CPP_CUSTOM_TYPE_MAPPING_H_
 
+#include <cstdint>
+
 #include "clang/AST/DeclCXX.h"
 
 namespace Carbon::Check {

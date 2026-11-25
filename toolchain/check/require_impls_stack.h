@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_REQUIRE_IMPLS_STACK_H_
 #define CARBON_TOOLCHAIN_CHECK_REQUIRE_IMPLS_STACK_H_
 
+#include <variant>
+
 #include "common/array_stack.h"
 #include "toolchain/sem_ir/ids.h"
 

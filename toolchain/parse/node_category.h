@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_NODE_CATEGORY_H_
 #define CARBON_TOOLCHAIN_PARSE_NODE_CATEGORY_H_
 
+#include <cstdint>
+
 #include "common/enum_mask_base.h"
 #include "common/ostream.h"
 

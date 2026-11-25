@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_DRIVER_COMPILE_DRIVER_H_
 
 #include <memory>
+#include <string_view>
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/diagnostics/sorting_consumer.h"

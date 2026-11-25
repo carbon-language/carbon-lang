@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_CONSUMER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_CONSUMER_H_
 
+#include <utility>
+
 #include "common/ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/diagnostic.h"

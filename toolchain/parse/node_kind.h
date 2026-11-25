@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_PARSE_NODE_KIND_H_
 
 #include <cstdint>
+#include <optional>
 
 #include "common/check.h"
 #include "common/enum_base.h"
