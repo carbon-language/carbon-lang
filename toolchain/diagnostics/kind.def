@@ -390,6 +390,7 @@ CARBON_DIAGNOSTIC_KIND(AssociatedConstantGivenDifferentValues)
 CARBON_DIAGNOSTIC_KIND(MissingImplForCoreDestroyOp)
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
+CARBON_DIAGNOSTIC_KIND(ImplLookupCycleToImplDecl)
 
 // Require checking.
 CARBON_DIAGNOSTIC_KIND(RequireImplsExtendWithExplicitSelf)

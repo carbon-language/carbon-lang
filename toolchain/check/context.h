@@ -324,6 +324,8 @@ class Context {
     return eval_impl_lookup_to_identified_witness_;
   }
 
+  int32_t impl_lookup_deduction_depth_ = 0;
+
   // Data about a form expression.
   //
   // TODO: consider moving this out of Context.

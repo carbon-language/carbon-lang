@@ -252,6 +252,7 @@ static auto TryGetSpecificWitnessIdForImpl(
   // that specific to map values in the impl to the deduced values.
   auto specific_id = SemIR::SpecificId::None;
   if (impl.generic_id.has_value()) {
+    IncrementScope scope(context.impl_lookup_deduction_depth_);
     specific_id =
         DeduceImplArguments(context, loc_id, impl_id, query_self_const_id,
                             query_specific_interface.specific_id);
@@ -793,12 +794,50 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
+static auto FindAndDiagnoseCycleInImplDeclaration(
+    Context& context, SemIR::LocId loc_id, SemIR::ConstantId query_self,
+    SemIR::SpecificInterface query_specific_interface) -> bool {
+  if (context.declaring_impl_decls().empty()) {
+    return false;
+  }
+  if (!context.impl_lookup_deduction_depth_) {
+    return false;
+  }
+
+  auto declaring_specific_interface = context.declaring_impl_decls().Peek();
+  if (declaring_specific_interface != query_specific_interface) {
+    return false;
+  }
+
+  // This indicates we're doing a lookup with `.Self` from in a facet type.
+  if (!IsPeriodSelf(context, context.constant_values().GetInstId(query_self))) {
+    return false;
+  }
+
+  CARBON_DIAGNOSTIC(
+      ImplLookupCycleToImplDecl, Error,
+      "query for `.Self as {0}` depends on an impl that is being declared",
+      SemIR::SpecificInterface);
+  context.emitter().Emit(loc_id, ImplLookupCycleToImplDecl,
+                         declaring_specific_interface);
+  return true;
+}
+
 // If the access comes from inside an impl decl and is for that impl, get a
 // witness for that impl even though it does not yet exist, instead of
 // searching for another impl decl.
+//
+// If we're forming a cycle back to the impl declaration from outside, we want
+// to diagnose an error. But lookups from within the impl decl find a final
+// witness referring to the impl being declared.
 static auto FindFinalWitnessInsideImplDecl(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId req_self_facet,
     SemIR::SpecificInterface req_interface) -> SemIR::InstId {
+  if (FindAndDiagnoseCycleInImplDeclaration(context, loc_id, req_self_facet,
+                                            req_interface)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
   if (context.declaring_impl_decls().empty()) {
     return SemIR::InstId::None;
   }
@@ -1188,6 +1227,13 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       context.insts().Get(eval_query.query_self_inst_id).type_id()));
   SemIR::ConstantId query_self_const_id =
       context.constant_values().Get(eval_query.query_self_inst_id);
+
+  // Impl lookup cycles that start inside an impl declaration and query back to
+  // the decl are diagnosed.
+  if (FindAndDiagnoseCycleInImplDeclaration(
+          context, loc_id, query_self_const_id, query_specific_interface)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
 
   // If the lookup is due to `.Self` substitution while identifying a facet
   // type, the witness is preserved as an IdentifiedWitness for the caller to
