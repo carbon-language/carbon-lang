@@ -182,6 +182,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the closing token matched with the given opening token.
   //
   // The given token must be an opening token kind.
+  //
+  // Profiling demonstrated this function is very hot, so it's written inline.
   auto GetMatchedClosingToken(TokenIndex opening_token) const -> TokenIndex {
     const auto& opening_token_info = token_infos_.Get(opening_token);
     CARBON_DCHECK(opening_token_info.kind().is_opening_symbol(), "{0}",
@@ -192,6 +194,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // Returns the opening token matched with the given closing token.
   //
   // The given token must be a closing token kind.
+  //
+  // Profiling demonstrated this function is very hot, so it's written inline.
   auto GetMatchedOpeningToken(TokenIndex closing_token) const -> TokenIndex {
     const auto& closing_token_info = token_infos_.Get(closing_token);
     CARBON_DCHECK(closing_token_info.kind().is_closing_symbol(), "{0}",
