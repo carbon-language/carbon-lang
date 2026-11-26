@@ -279,10 +279,12 @@ auto CheckFunctionReturnTypeMatches(Context& context,
       prev_return_type_id == SemIR::ErrorInst::TypeId) {
     return false;
   }
-  
-  auto type_constant_id =
+
+  // Template types may not have enough information to compare successfully,
+  // so we fall back to syntax comparison between the decls for those.
+  auto prev_type_constant_id =
       context.types().GetConstantId(prev_return_type_id);
-  if (context.constant_values().GetDependence(type_constant_id) ==
+  if (context.constant_values().GetDependence(prev_type_constant_id) ==
       SemIR::ConstantDependence::Template) {
     return true;
   }

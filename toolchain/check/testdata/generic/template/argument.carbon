@@ -169,11 +169,12 @@ library "[[@TEST_NAME]]";
 class C(T: type) {};
 class D(T: type) {};
 fn F(template T: type, c: C(T)) -> C(T);
-// CHECK:STDERR:        ╭─┤ fail_template_signature_type_mismatch.carbon:[[@LINE+11]]:34
+// CHECK:STDERR:        ╭─┤ fail_template_signature_type_mismatch.carbon:[[@LINE+12]]:34
 // CHECK:STDERR:        │ fn F(template T: type, c: C(T)) -> C(T);
 // CHECK:STDERR:        ·                           ┬
 // CHECK:STDERR:        ·                           ╰──┤ comparing with previous declaration here
 // CHECK:STDERR:        ·                              │ [RedeclParamSyntaxPrevious]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(template T: type, unused c: D(T)) -> C(T) { return {} as D(T); }
 // CHECK:STDERR:        ·                                  ┳
 // CHECK:STDERR:        ·                                  ┗━━┫ error: redeclaration syntax differs here
