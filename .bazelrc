@@ -2,6 +2,10 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+# Enable native symlinks on Windows (a no-op on Unix). Required by
+# `rules_python` 2.0+ runtime venvs and materialized runfiles on Windows.
+startup --windows_enable_symlinks
+
 # Setup stamping with Carbon's workspace status attached but disable it by
 # default.
 #
@@ -10,6 +14,10 @@
 # stamping by default and builds that need to include the workspace status
 # should explicitly enable it with `--stamp`.
 common --workspace_status_command=./scripts/workspace_status.py
+# On Windows, Bazel cannot execute the Unix `#!/usr/bin/env -S uv run` shebang
+# directly. Disable the workspace status command by default on Windows since
+# stamping is already disabled (`--nostamp`).
+common:windows --workspace_status_command=
 common --nostamp
 
 # Provide aliases for configuring the release and pre-release version being
@@ -76,7 +84,10 @@ common --dynamic_mode=off
 
 # Always compile PIC code. There are few if any disadvantages on the platforms
 # and architectures we care about and it avoids the need to compile files twice.
+# On Windows, all code is position-independent and `@rules_cc`'s MSVC/`clang-cl`
+# toolchain does not declare the `supports_pic` feature.
 common --force_pic
+common:windows --noforce_pic
 
 # Completely disable Bazel's automatic stripping of debug information. Removing
 # that information causes unhelpful backtraces from unittest failures and other
@@ -99,11 +110,10 @@ test:asan --test_timeout=120,600,1800,-1
 # Configuration for enabling LibFuzzer (along with ASan).
 common:fuzzer --features=fuzzer
 
-# Force actions to have a UTF-8 language encoding.
-# TODO: Need to investigate what this should be on Windows, but at least for
-# Linux and macOS this seems strictly better than the Bazel default of just
-# `en_US`.
-common --action_env=LANG=en_US.UTF-8
+# Force actions to have a UTF-8 language encoding on Unix platforms.
+common:linux --action_env=LANG=en_US.UTF-8
+common:macos --action_env=LANG=en_US.UTF-8
+common:freebsd --action_env=LANG=en_US.UTF-8
 
 # Allow per-platform configuration.
 common --enable_platform_specific_config
@@ -133,7 +143,25 @@ common --@rules_python//python/config_settings:venvs_use_declare_symlink=no
 # Removes the leading `/proc/self/cwd/` from file paths in the debug info. Some
 # tools like VS Code don't understand `/proc/self/cwd` in places like terminal
 # stack dumps, but do understand paths relative to the workspace root.
-common --copt=-fdebug-prefix-map=/proc/self/cwd=
+common:linux --copt=-fdebug-prefix-map=/proc/self/cwd=
+common:macos --copt=-fdebug-prefix-map=/proc/self/cwd=
+common:freebsd --copt=-fdebug-prefix-map=/proc/self/cwd=
+
+# Stage 0 Windows builds use `@rules_cc`'s dedicated `clang-cl` toolchain
+# (`@local_config_cc//:cc-compiler-*-windows-clang-cl`, where `clang-cl.exe` is
+# also the assembler for GAS `.S` files such as LLVM's BLAKE3 assembly).
+# `USE_CLANG_CL=1` also ensures any fallback to the default MSVC toolchain uses
+# `clang-cl`, and `BAZEL_WIN32_WINNT` targets Windows 10+ instead of Windows 7.
+common:windows --repo_env=USE_CLANG_CL=1
+common:windows --repo_env=BAZEL_WIN32_WINNT=/D_WIN32_WINNT=0x0A00
+common:windows --enable_runfiles
+common:windows --features=shorten_virtual_includes --host_features=shorten_virtual_includes
+common:windows --cxxopt=/std:c++20 --host_cxxopt=/std:c++20
+common:windows --cxxopt=/Zc:__cplusplus --host_cxxopt=/Zc:__cplusplus
+common:windows --copt=/Zc:inline --host_copt=/Zc:inline
+common:windows --copt=/permissive- --host_copt=/permissive-
+common:windows --copt=/bigobj --host_copt=/bigobj
+common:windows --copt=/utf-8 --host_copt=/utf-8
 
 # Allow users to override any of the flags desired by importing a user-specific
 # RC file here if present.

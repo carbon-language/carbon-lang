@@ -23,6 +23,7 @@ have significantly more. These are:
 -   prek.yaml (Bazel, prek)
 -   nightly_release.yaml (Bazel)
 -   tests.yaml (Bazel)
+-   windows.yaml (Bazel)
 
 When updating one of these, consider updating all of them.
 

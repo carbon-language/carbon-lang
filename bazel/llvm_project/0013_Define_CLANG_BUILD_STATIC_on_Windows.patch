@@ -1,0 +1,32 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: JJ Furman <jfurman@google.com>
+Date: Tue, 24 Nov 2026 19:37:00 +0000
+Subject: [PATCH] Define CLANG_BUILD_STATIC on Windows in Clang's Bazel overlay
+
+Upstream clang/include/clang/Support/Compiler.h gates CLANG_ABI on
+CLANG_BUILD_STATIC (unlike llvm/Support/Compiler.h, which also checks
+LLVM_ENABLE_LLVM_EXPORT_ANNOTATIONS), causing CLANG_ABI to expand to
+__declspec(dllimport) on Windows static Bazel builds. Define
+CLANG_BUILD_STATIC on @llvm-project//clang:support for Windows so all
+Clang libraries and downstream consumers link statically without
+invalidating cached @llvm-project//llvm targets.
+---
+ utils/bazel/llvm-project-overlay/clang/BUILD.bazel | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+--- a/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
++++ b/utils/bazel/llvm-project-overlay/clang/BUILD.bazel
+@@ -2324,6 +2324,10 @@ cc_library(
+     hdrs = glob([
+         "include/clang/Support/*.h",
+     ]),
++    defines = select({
++        "@platforms//os:windows": ["CLANG_BUILD_STATIC"],
++        "//conditions:default": [],
++    }),
+     includes = ["include"],
+     deps = [
+         "//llvm:Support",
+--
+2.48.1

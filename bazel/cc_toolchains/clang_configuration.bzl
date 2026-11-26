@@ -172,6 +172,88 @@ def _compute_clang_cpp_include_search_paths(repository_ctx, clang, sysroot):
     ]
 
 def _configure_clang_toolchain_impl(repository_ctx):
+    # Stage 0 Windows builds use `@rules_cc`'s dedicated `clang-cl` toolchains
+    # (`@local_config_cc//:cc-compiler-*-windows-clang-cl`), where
+    # `clang-cl.exe` is also configured as the assembler for GAS `.S` files
+    # (unlike `:msvc_x64` under `USE_CLANG_CL=1`, which keeps `ml64.exe`).
+    # Emit `toolchain()` targets without the `@rules_cc//cc/private/toolchain:clang-cl`
+    # exec constraint so they match `@platforms//host`, alongside a minimal
+    # `clang_detected_variables.bzl` for rules that load `llvm_symbolizer`.
+    if repository_ctx.os.name.lower().startswith("windows"):
+        symbolizer = (
+            repository_ctx.which("llvm-symbolizer") or
+            repository_ctx.which("llvm-symbolizer.exe")
+        )
+        if not symbolizer:
+            for llvm_root in [
+                repository_ctx.os.environ.get("BAZEL_LLVM"),
+                "C:/Program Files/LLVM",
+            ]:
+                if llvm_root:
+                    candidate = repository_ctx.path(llvm_root).get_child("bin").get_child("llvm-symbolizer.exe")
+                    if candidate.exists:
+                        symbolizer = candidate
+                        break
+        symbolizer_str = str(symbolizer).replace("\\", "/") if symbolizer else ""
+        repository_ctx.file(
+            "BUILD",
+            """# Stage 0 Windows builds use @rules_cc's dedicated clang-cl toolchains.
+package(default_visibility = ["//visibility:public"])
+
+toolchain(
+    name = "bazel_cc_toolchain_windows_x86_64",
+    exec_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:x86_64",
+        "@platforms//os:windows",
+    ],
+    target_settings = [
+        "@carbon//toolchain/install:is_bootstrap_stage_0",
+        "@carbon//toolchain/install:not_runtimes_build",
+    ],
+    toolchain = "@local_config_cc//:cc-compiler-x64_windows-clang-cl",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+
+toolchain(
+    name = "bazel_cc_toolchain_windows_arm64",
+    exec_compatible_with = [
+        "@platforms//os:windows",
+    ],
+    target_compatible_with = [
+        "@platforms//cpu:arm64",
+        "@platforms//os:windows",
+    ],
+    target_settings = [
+        "@carbon//toolchain/install:is_bootstrap_stage_0",
+        "@carbon//toolchain/install:not_runtimes_build",
+    ],
+    toolchain = "@local_config_cc//:cc-compiler-arm64_windows-clang-cl",
+    toolchain_type = "@bazel_tools//tools/cpp:toolchain_type",
+)
+""",
+            executable = False,
+        )
+        repository_ctx.template(
+            "clang_detected_variables.bzl",
+            repository_ctx.attr._clang_detected_variables_template,
+            substitutions = {
+                "{CLANG_BINDIR}": "",
+                "{CLANG_INCLUDE_DIRS}": "[]",
+                "{CLANG_RESOURCE_DIR}": "",
+                "{CLANG_VERSION_FOR_CACHE}": "unknown",
+                "{CLANG_VERSION}": "None",
+                "{LLVM_BINDIR}": "",
+                "{LLVM_SYMBOLIZER}": symbolizer_str,
+                "{SYSROOT}": "None",
+            },
+            executable = False,
+        )
+        return
+
     # First just symlink in the untemplated parts of the toolchain repo.
     repository_ctx.symlink(repository_ctx.attr._clang_toolchain_build, "BUILD")
     repository_ctx.symlink(
@@ -217,13 +299,6 @@ def _configure_clang_toolchain_impl(repository_ctx):
         ar_path = repository_ctx.which("llvm-ar")
         if not ar_path:
             fail("`llvm-ar` not found in PATH or adjacent to clang")
-
-    # By default Windows uses '\' in its paths. These will be
-    # interpreted as escape characters and fail the build, thus
-    # we must manually replace the backslashes with '/'
-    if repository_ctx.os.name.lower().startswith("windows"):
-        resource_dir = resource_dir.replace("\\", "/")
-        include_dirs = [str(s).replace("\\", "/") for s in include_dirs]
 
     repository_ctx.template(
         "clang_detected_variables.bzl",
@@ -281,7 +356,7 @@ configure_clang_toolchain = repository_rule(
             ],
         ),
     },
-    environ = ["CC"],
+    environ = ["BAZEL_LLVM", "CC"],
 )
 
 clang_toolchain_extension = module_extension(

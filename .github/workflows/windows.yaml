@@ -1,0 +1,281 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+name: Windows Tests
+
+on:
+  push:
+    branches: [trunk, action-test]
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read # For actions/checkout.
+  pull-requests: read # For dorny/paths-filter to read pull requests.
+
+# Cancel previous workflows on the PR when there are multiple fast commits.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-windows:
+    name: Testing (windows-latest)
+    runs-on: windows-latest
+    env:
+      LLVM_RELEASE: '22.1.8'
+      LLVM_DIR: 'C:\llvm'
+      BAZEL_DISK_CACHE: 'C:\bazel-disk-cache'
+      BAZEL_REPO_CACHE: 'C:\bazel-repo-cache'
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: block
+          # When adding endpoints, see README.md.
+          # prettier-ignore
+          allowed-endpoints: >
+            *.blob.storage.azure.net:443
+            *.githubapp.com:443
+            *.sourceforge.net:443
+            api.github.com:443
+            api.ipify.org:443
+            bcr.bazel.build:443
+            download.gnome.org:443
+            downloads.sourceforge.net:443
+            files.pythonhosted.org:443
+            formulae.brew.sh:443
+            github.com:443
+            go.dev:443
+            index.crates.io:443
+            mirror.bazel.build:443
+            mirrors.kernel.org:443
+            nodejs.org:443
+            oauth2.googleapis.com:443
+            objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
+            pypi.org:443
+            raw.githubusercontent.com:443
+            registry.npmjs.org:443
+            release-assets.githubusercontent.com:443
+            releases.astral.sh:443
+            releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
+            storage.googleapis.com:443
+            uploads.github.com:443
+            www.googleapis.com:443
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            has_code:
+              - '!{**/*.md,LICENSE,CODEOWNERS,.git*}'
+
+      - name: Restore LLVM and Clang cache
+        id: cache-llvm-windows
+        if: steps.filter.outputs.has_code == 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LLVM_DIR }}
+          key: LLVM-${{ env.LLVM_RELEASE }}-Cache-windows-${{ runner.arch }}
+
+      - name: Download LLVM and Clang installation
+        id: download-llvm-windows
+        if:
+          steps.filter.outputs.has_code == 'true' &&
+          steps.cache-llvm-windows.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $installer = Join-Path $env:RUNNER_TEMP "LLVM-$env:LLVM_RELEASE-win64.exe"
+          $url = "https://github.com/llvm/llvm-project/releases/download/llvmorg-$env:LLVM_RELEASE/LLVM-$env:LLVM_RELEASE-win64.exe"
+          Write-Host "*** Downloading $url"
+          # harden-runner blocks outbound OCSP/CRL revocation servers, which
+          # causes Windows Schannel to fail with CRYPT_E_REVOCATION_OFFLINE.
+          curl.exe -fsSL --ssl-revoke-best-effort --retry 5 -o $installer $url
+          Write-Host "*** Extracting to $env:LLVM_DIR"
+          New-Item -ItemType Directory -Force -Path $env:LLVM_DIR | Out-Null
+          7z x $installer "-o$env:LLVM_DIR" -y | Out-Null
+          Remove-Item -Force $installer
+          # Prune large unused LLVM components to save runner disk space and
+          # GitHub Actions cache budget.
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue `
+            (Join-Path $env:LLVM_DIR '$PLUGINSDIR'), `
+            (Join-Path $env:LLVM_DIR 'Uninstall.exe')
+          $binDir = Join-Path $env:LLVM_DIR 'bin'
+          Get-ChildItem -Path $binDir -File | Where-Object {
+            $_.Name -like 'flang*' -or
+            $_.Name -like 'lldb*' -or
+            $_.Name -like 'mlir*' -or
+            $_.Name -like 'clangd*' -or
+            $_.Name -like 'clang-tidy*' -or
+            $_.Name -like 'clang-check*' -or
+            $_.Name -like 'clang-repl*' -or
+            $_.Name -like 'clang-scan-deps*' -or
+            $_.Name -like 'llvm-lto*' -or
+            $_.Name -like 'llvm-bolt*' -or
+            $_.Name -like 'llvm-exegesis*' -or
+            $_.Name -like 'llvm-jitlink*' -or
+            $_.Name -like 'llvm-reduce*' -or
+            $_.Name -in @('opt.exe', 'llc.exe', 'bugpoint.exe')
+          } | Remove-Item -Force
+
+      - name: Setup LLVM, Visual Studio, and Bazelisk
+        if: steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $llvmBin = Join-Path $env:LLVM_DIR 'bin'
+          Add-Content -Path $env:GITHUB_ENV -Value "BAZEL_LLVM=$env:LLVM_DIR"
+          Add-Content -Path $env:GITHUB_PATH -Value $llvmBin
+
+          # Point Bazel at Git Bash so repository rules that invoke bash do not
+          # fall through to the unconfigured WSL `C:\Windows\System32\bash.exe`.
+          $gitBash = 'C:\Program Files\Git\bin\bash.exe'
+          if (Test-Path $gitBash) {
+            Add-Content -Path $env:GITHUB_ENV -Value "BAZEL_SH=$gitBash"
+          }
+
+          # harden-runner blocks outbound OCSP/CRL revocation servers; disable
+          # Git for Windows Schannel revocation checks so Bazel git_override
+          # fetches do not fail with CRYPT_E_REVOCATION_OFFLINE (no-op if Git
+          # uses OpenSSL).
+          git config --global http.schannelCheckRevoke false
+
+          # Prefer a native `bazelisk.exe` over npm's `bazelisk.ps1` wrapper so
+          # PowerShell does not intercept arguments such as `--`.
+          if (-not (Get-Command bazelisk.exe -ErrorAction SilentlyContinue)) {
+            $bazeliskDir = Join-Path $env:RUNNER_TEMP 'bazelisk'
+            New-Item -ItemType Directory -Force -Path $bazeliskDir | Out-Null
+            $bazeliskExe = Join-Path $bazeliskDir 'bazelisk.exe'
+            $url = 'https://github.com/bazelbuild/bazelisk/releases/download/v1.28.1/bazelisk-windows-amd64.exe'
+            # harden-runner blocks outbound OCSP/CRL revocation servers, which
+            # causes Windows Schannel to fail with CRYPT_E_REVOCATION_OFFLINE.
+            curl.exe -fsSL --ssl-revoke-best-effort --retry 5 -o $bazeliskExe $url
+            $actualHash = (Get-FileHash -Algorithm SHA256 -Path $bazeliskExe).Hash.ToLower()
+            $expectedHash = 'b9d65a1f7c2d7af885a96a4fd5aa36b40fb41816d30944390569eef908bdc954'
+            if ($actualHash -ne $expectedHash) {
+              throw "Bazelisk sha256 mismatch: got $actualHash, expected $expectedHash"
+            }
+            Add-Content -Path $env:GITHUB_PATH -Value $bazeliskDir
+            $env:PATH = "$bazeliskDir;$env:PATH"
+          }
+
+          Write-Host '*** clang-cl'
+          & (Join-Path $llvmBin 'clang-cl.exe') --version
+          Write-Host '*** lld-link'
+          & (Join-Path $llvmBin 'lld-link.exe') --version
+          Write-Host '*** bazelisk'
+          bazelisk.exe --version
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            Write-Host '*** Visual Studio'
+            & $vswhere -latest -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          }
+
+      - name: Restore Bazel disk and repository caches
+        id: cache-bazel-windows
+        if: steps.filter.outputs.has_code == 'true'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.BAZEL_DISK_CACHE }}
+            ${{ env.BAZEL_REPO_CACHE }}
+          key: >-
+            bazel-cache-windows-${{ runner.arch }}-llvm-${{ env.LLVM_RELEASE
+            }}-${{ hashFiles('.bazelversion', 'MODULE.bazel',
+            'MODULE.bazel.lock', '.bazelrc') }}-${{ github.sha }}
+          restore-keys: |
+            bazel-cache-windows-${{ runner.arch }}-llvm-${{ env.LLVM_RELEASE }}-${{ hashFiles('.bazelversion', 'MODULE.bazel', 'MODULE.bazel.lock', '.bazelrc') }}-
+            bazel-cache-windows-${{ runner.arch }}-llvm-${{ env.LLVM_RELEASE }}-
+
+      - name: Configure Bazel
+        if: steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          $diskCache = $env:BAZEL_DISK_CACHE -replace '\\', '/'
+          $repoCache = $env:BAZEL_REPO_CACHE -replace '\\', '/'
+          @"
+          startup --output_user_root=C:/b
+          common --disk_cache=$diskCache
+          common --repository_cache=$repoCache
+          common --experimental_disk_cache_gc_max_size=8G
+          common --experimental_repository_downloader_retries=5
+          build --verbose_failures
+          test --test_output=errors
+          "@ | Set-Content -Path user.bazelrc -Encoding utf8
+          bazelisk.exe info
+
+      - name: Build carbon-busybox
+        if: steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          bazelisk.exe build //toolchain/install:carbon-busybox //toolchain/install:carbon_cc_toolchain_config_for_install
+
+      - name: Run carbon-busybox --version
+        if: steps.filter.outputs.has_code == 'true'
+        # Use cmd so PowerShell does not consume the `--` argument separator.
+        shell: cmd
+        run: bazelisk.exe run //toolchain/install:carbon-busybox -- --version
+
+      - name: Run filesystem_test
+        if: steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $true
+          bazelisk.exe test //common:filesystem_test
+
+      - name: Shut down Bazel before saving cache
+        id: shutdown-bazel
+        if: always() && steps.filter.outputs.has_code == 'true'
+        shell: pwsh
+        run: |
+          if (Get-Command bazelisk.exe -ErrorAction SilentlyContinue) {
+            bazelisk.exe shutdown
+          }
+          if (Test-Path (Join-Path $env:LLVM_DIR 'bin\clang-cl.exe')) {
+            Add-Content -Path $env:GITHUB_OUTPUT -Value 'has_llvm=true'
+          }
+          if ((Test-Path $env:BAZEL_DISK_CACHE) -or (Test-Path $env:BAZEL_REPO_CACHE)) {
+            Add-Content -Path $env:GITHUB_OUTPUT -Value 'has_bazel_cache=true'
+          }
+
+      - name: Save LLVM and Clang cache
+        if:
+          always() && !cancelled() && steps.filter.outputs.has_code == 'true' &&
+          steps.cache-llvm-windows.outputs.cache-primary-key != '' &&
+          steps.cache-llvm-windows.outputs.cache-hit != 'true' &&
+          steps.download-llvm-windows.outcome == 'success' &&
+          steps.shutdown-bazel.outputs.has_llvm == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.LLVM_DIR }}
+          key: ${{ steps.cache-llvm-windows.outputs.cache-primary-key }}
+
+      - name: Save Bazel disk and repository caches
+        if:
+          always() && !cancelled() && steps.filter.outputs.has_code == 'true' &&
+          steps.cache-bazel-windows.outputs.cache-primary-key != '' &&
+          steps.cache-bazel-windows.outputs.cache-hit != 'true' &&
+          steps.shutdown-bazel.outputs.has_bazel_cache == 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ${{ env.BAZEL_DISK_CACHE }}
+            ${{ env.BAZEL_REPO_CACHE }}
+          key: ${{ steps.cache-bazel-windows.outputs.cache-primary-key }}
