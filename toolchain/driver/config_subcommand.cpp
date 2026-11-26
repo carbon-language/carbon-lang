@@ -14,6 +14,7 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "common/check.h"
 #include "common/command_line.h"
+#include "common/string_helpers.h"
 #include "common/version.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/STLExtras.h"
@@ -194,18 +195,20 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // Start with basic data available from the driver or global constants.
   llvm::SmallVector<ConfigDataEntry> data = {
       {.key = "CLANG_RESOURCE_DIR",
-       .value = driver_env.installation->clang_resource_path().string()},
+       .value =
+           PathToUtf8String(driver_env.installation->clang_resource_path())},
       {.key = "INSTALL_ROOT",
-       .value = driver_env.installation->root().string()},
+       .value = PathToUtf8String(driver_env.installation->root())},
       {.key = "LLVM_BINDIR",
-       .value = driver_env.installation->llvm_install_bin().string()},
+       .value = PathToUtf8String(driver_env.installation->llvm_install_bin())},
       {.key = "VERSION", .value = Version::String.str()},
   };
 
   // Try to read the installation digest and include that. This goes through the
   // driver's filesystem so that tests get consistent results regardless of
   // whether the digest happens to exist on the real filesystem.
-  std::string digest_path = driver_env.installation->digest_path().string();
+  std::string digest_path =
+      PathToUtf8String(driver_env.installation->digest_path());
   auto read_result = driver_env.fs->getBufferForFile(digest_path);
   if (!read_result) {
     CARBON_DIAGNOSTIC(ConfigFailedToReadDigest, Error,

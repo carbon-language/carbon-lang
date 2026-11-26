@@ -20,6 +20,7 @@
 #include "clang/Serialization/ObjectFilePCHContainerReader.h"
 #include "clang/Serialization/PCHContainerOperations.h"
 #include "common/check.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
@@ -105,7 +106,7 @@ auto RunClangCC1Main(const InstallPaths& installation,
   if (clang_instance->getHeaderSearchOpts().UseBuiltinIncludes &&
       clang_instance->getHeaderSearchOpts().ResourceDir.empty()) {
     clang_instance->getHeaderSearchOpts().ResourceDir =
-        installation.clang_resource_path().string();
+        PathToUtf8String(installation.clang_resource_path());
   }
 
   // Create the filesystem.

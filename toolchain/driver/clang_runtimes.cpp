@@ -18,6 +18,7 @@
 #include "common/error.h"
 #include "common/filesystem.h"
 #include "common/latch.h"
+#include "common/string_helpers.h"
 #include "common/vlog.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -127,7 +128,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::Finish() -> ErrorOr<Success> {
     // effect, just log that we couldn't clean up a directory.
     if (!rmdir_result.ok()) {
       CARBON_VLOG("Unable to remove object directory `{0}` in the runtime: {1}",
-                  obj_dir.string(), rmdir_result.error());
+                  PathToUtf8String(obj_dir), rmdir_result.error());
     }
   }
 
@@ -171,7 +172,7 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CreateObjDir(
   if (!create_result.ok()) {
     return Error(llvm::formatv(
         "Unable to create object directory mirroring source file `{0}`: {1}",
-        src_path.string(), create_result.error()));
+        PathToUtf8String(src_path), create_result.error()));
   }
 
   it = obj_dirs_.insert(it, obj_dir_path);
@@ -198,8 +199,8 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   std::filesystem::path obj_path =
       builder_->runtimes_builder_->path() / std::string_view(src_file);
   obj_path += ".o";
-  std::string src_path_str = src_path.string();
-  std::string obj_path_str = obj_path.string();
+  std::string src_path_str = PathToUtf8String(src_path);
+  std::string obj_path_str = PathToUtf8String(obj_path);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", obj_path_str, src_file);
 
   llvm::SmallVector<llvm::StringRef> args(cflags_);
@@ -297,18 +298,19 @@ ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
 
   if constexpr (Component == Runtimes::LibUnwind) {
     archive_path_ = std::filesystem::path("lib") / "libunwind.a";
-    include_paths_ = {(installation().libunwind_path() / "include").string()};
+    include_paths_ = {
+        PathToUtf8String(installation().libunwind_path() / "include")};
   } else if constexpr (Component == Runtimes::Libcxx) {
     archive_path_ = std::filesystem::path("lib") / "libc++.a";
     include_paths_ = {
-        (installation().libcxx_path() / "include").string(),
+        PathToUtf8String(installation().libcxx_path() / "include"),
         // Some private headers of libc++ are nested in the source directory.
-        (installation().libcxx_path() / "src").string(),
-        (installation().libcxxabi_path() / "include").string(),
+        PathToUtf8String(installation().libcxx_path() / "src"),
+        PathToUtf8String(installation().libcxxabi_path() / "include"),
         // Libc++ also uses llvm-libc header-only libraries for parts of its
         // implementation. All the `#include`s are relative to the root of the
         // internal libc source tree rather than an `include` directory.
-        (installation().libc_path() / "internal").string(),
+        PathToUtf8String(installation().libc_path() / "internal"),
     };
   } else {
     static_assert(false,
@@ -395,7 +397,7 @@ auto ClangArchiveRuntimesBuilder<Component>::Setup() -> void {
 template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 auto ClangArchiveRuntimesBuilder<Component>::Finish() -> void {
-  CARBON_VLOG("Finished building {0}...\n", archive_path_.string());
+  CARBON_VLOG("Finished building {0}...\n", PathToUtf8String(archive_path_));
   if (!archive_->result().ok()) {
     result_ = std::move(archive_->result()).error();
     return;
@@ -473,7 +475,7 @@ ClangResourceDirBuilder::ClangResourceDirBuilder(
   // example to support SipHash. If that need doesn't materialize, we should
   // simplify this to a single path instead of a vector.
   include_paths_.push_back(
-      (installation().runtimes_root() / "builtins").string());
+      PathToUtf8String(installation().runtimes_root() / "builtins"));
 
   llvm::SmallVector<llvm::StringRef> copts = {
       "-no-canonical-prefixes",
@@ -522,7 +524,7 @@ auto ClangResourceDirBuilder::Setup() -> void {
   std::filesystem::path install_resource_path =
       installation().clang_resource_path();
   if (auto result = runtimes_builder_->dir().Symlink(
-          "include", (install_resource_path / "include").string());
+          "include", PathToUtf8String(install_resource_path / "include"));
       !result.ok()) {
     result_ = std::move(result).error();
     return;
@@ -581,8 +583,8 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
                                                : "clang_rt.crtend.o");
   std::filesystem::path src_path =
       installation().root() / std::string_view(src_file);
-  std::string out_path_str = out_path.string();
-  std::string src_path_str = src_path.string();
+  std::string out_path_str = PathToUtf8String(out_path);
+  std::string src_path_str = PathToUtf8String(src_path);
   CARBON_VLOG("Building `{0}' from `{1}`...\n", out_path_str, src_path_str);
 
   llvm::SmallVector<llvm::StringRef> copts = {

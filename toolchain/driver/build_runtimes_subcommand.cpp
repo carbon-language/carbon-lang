@@ -4,6 +4,7 @@
 
 #include "toolchain/driver/build_runtimes_subcommand.h"
 
+#include "common/string_helpers.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/driver/carbon_runtimes.h"
 #include "toolchain/driver/clang_runner.h"
@@ -73,7 +74,7 @@ auto BuildRuntimesSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
-  llvm::outs() << "Built runtimes: " << run_result->string() << "\n";
+  llvm::outs() << "Built runtimes: " << PathToUtf8String(*run_result) << "\n";
   return {.success = true};
 }
 

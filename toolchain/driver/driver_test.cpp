@@ -17,6 +17,7 @@
 #include "common/error_test_helpers.h"
 #include "common/filesystem.h"
 #include "common/raw_string_ostream.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/Object/Binary.h"
 #include "llvm/Support/Error.h"
@@ -79,10 +80,10 @@ class DriverTest : public testing::Test {
             .str());
     std::filesystem::create_directory(test_dir, ec);
     CARBON_CHECK(!ec, "Could not create test working dir '{0}': {1}",
-                 test_dir.string(), ec.message());
+                 PathToUtf8String(test_dir), ec.message());
     std::filesystem::current_path(test_dir, ec);
     CARBON_CHECK(!ec, "Could not change the current working dir to '{0}': {1}",
-                 test_dir.string(), ec.message());
+                 PathToUtf8String(test_dir), ec.message());
 
     // Build an overlay filesystem between the in-memory one and this new
     // directory.
@@ -99,11 +100,11 @@ class DriverTest : public testing::Test {
       std::filesystem::current_path(original_dir, ec);
       CARBON_CHECK(!ec,
                    "Could not change the current working dir to '{0}': {1}",
-                   original_dir.string(), ec.message());
+                   PathToUtf8String(original_dir), ec.message());
       driver_ = original_driver;
       std::filesystem::remove_all(test_dir, ec);
       CARBON_CHECK(!ec, "Could not remove the test working dir '{0}': {1}",
-                   test_dir.string(), ec.message());
+                   PathToUtf8String(test_dir), ec.message());
     });
   }
 

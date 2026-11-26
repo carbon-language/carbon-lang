@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_STRING_HELPERS_H_
 #define CARBON_COMMON_STRING_HELPERS_H_
 
+#include <filesystem>
 #include <optional>
 #include <string>
 
@@ -64,6 +65,16 @@ auto BuildCStrArgs(llvm::StringRef tool_path,
                    llvm::ArrayRef<llvm::StringRef> args,
                    llvm::BumpPtrAllocator& alloc)
     -> llvm::SmallVector<const char*, 64>;
+
+// Converts `path` to a UTF-8 `std::string`.
+//
+// `std::filesystem::path::u8string()` returns `std::u8string` in C++20; this
+// converts the UTF-8 code units to `std::string` without relying on the native
+// narrow encoding used by `path.string()`.
+inline auto PathToUtf8String(const std::filesystem::path& path) -> std::string {
+  std::u8string u8 = path.u8string();
+  return std::string(u8.begin(), u8.end());
+}
 
 }  // namespace Carbon
 

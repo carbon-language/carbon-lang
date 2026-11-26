@@ -14,6 +14,7 @@
 #include "absl/strings/str_replace.h"
 #include "common/check.h"
 #include "common/error.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -108,7 +109,7 @@ class ToolchainFileTest : public FileTestBase {
   auto GetArgReplacement(llvm::StringRef key) const
       -> std::optional<std::string> override {
     if (key == "core") {
-      return data_->installation.core_package().string();
+      return PathToUtf8String(data_->installation.core_package());
     }
     return std::nullopt;
   }
@@ -301,15 +302,16 @@ auto ToolchainFileTest::GetDefaultArgs() const
     return args;
   }
 
-  args.insert(args.end(), {
-                              "compile",
-                              "--phase=" + (component_ == "diagnostics"
-                                                ? std::string("check")
-                                                : component_.str()),
-                              // Use the install path to exclude prelude files.
-                              "--exclude-dump-file-prefix=" +
-                                  data_->installation.core_package().string(),
-                          });
+  args.insert(
+      args.end(),
+      {
+          "compile",
+          "--phase=" + (component_ == "diagnostics" ? std::string("check")
+                                                    : component_.str()),
+          // Use the install path to exclude prelude files.
+          "--exclude-dump-file-prefix=" +
+              PathToUtf8String(data_->installation.core_package()),
+      });
 
   if (component_ == "lex") {
     args.insert(args.end(), {"--no-prelude-import", "--dump-tokens",
@@ -390,8 +392,9 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
   // TODO: Consider adding a content keyword to name the core package, and
   // replace with that instead. Alternatively, consider adding the core
   // package to the VFS with a fixed name.
-  absl::StrReplaceAll({{data_->installation.core_package().string(), "{{.*}}"}},
-                      &check_line);
+  absl::StrReplaceAll(
+      {{PathToUtf8String(data_->installation.core_package()), "{{.*}}"}},
+      &check_line);
 
   if (component_ == "driver") {
     // TODO: Disable token output, it's not interesting for these tests.

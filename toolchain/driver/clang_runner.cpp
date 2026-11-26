@@ -297,7 +297,7 @@ auto ClangRunner::RunInternal(
     std::optional<std::filesystem::path> libcxx_path, bool link_runtime_libs,
     bool enable_leaking) -> ErrorOr<bool> {
   llvm::BumpPtrAllocator alloc;
-  std::string clang_path = clang_path_.string();
+  std::string clang_path = PathToUtf8String(clang_path_);
 
   // Handle special dispatch for CC1 commands as they don't use the driver and
   // we don't synthesize any default arguments there.
@@ -325,11 +325,12 @@ auto ClangRunner::RunInternal(
     // to use command line flags to force static runtime linking to occur.
     if (libunwind_path) {
       prefix_args.push_back(
-          llvm::formatv("-L{0}", (*libunwind_path / "lib").string()).str());
+          llvm::formatv("-L{0}", PathToUtf8String(*libunwind_path / "lib"))
+              .str());
     }
     if (libcxx_path) {
       prefix_args.push_back(
-          llvm::formatv("-L{0}", (*libcxx_path / "lib").string()).str());
+          llvm::formatv("-L{0}", PathToUtf8String(*libcxx_path / "lib")).str());
     }
   } else {
     // If we are suppressing the linking of default libs, ensure we didn't get a
@@ -413,16 +414,17 @@ auto ClangRunner::RunInternal(
 
   // If we have a target-specific resource directory, set it as the default
   // here, otherwise use the installation's resource directory.
-  driver.ResourceDir = target_resource_dir_path
-                           ? target_resource_dir_path->string()
-                           : installation_->clang_resource_path().string();
+  driver.ResourceDir =
+      target_resource_dir_path
+          ? PathToUtf8String(*target_resource_dir_path)
+          : PathToUtf8String(installation_->clang_resource_path());
 
   // Configure the install directory to find other tools and data files.
   //
   // We directly override the detected directory as we use a synthetic path
   // above. This makes it appear that our binary was in the installed binaries
   // directory, and allows finding tools relative to it.
-  driver.Dir = installation_->llvm_install_bin().string();
+  driver.Dir = PathToUtf8String(installation_->llvm_install_bin());
   CARBON_VLOG("Setting bin directory to: {0}\n", driver.Dir);
 
   // When there's only one command being run, this will run it in-process.

@@ -14,6 +14,7 @@
 #include "common/error_test_helpers.h"
 #include "common/ostream.h"
 #include "common/raw_string_ostream.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Object/Binary.h"
@@ -74,8 +75,9 @@ TEST_F(ClangRunnerTest, Version) {
                               llvm::sys::getDefaultTargetTriple())
                                  .str()));
   // Clang's install should be our private LLVM install bin directory.
-  EXPECT_THAT(out, HasSubstr(std::string("InstalledDir: ") +
-                             install_paths_.llvm_install_bin().string()));
+  EXPECT_THAT(out,
+              HasSubstr(std::string("InstalledDir: ") +
+                        PathToUtf8String(install_paths_.llvm_install_bin())));
 }
 
 TEST_F(ClangRunnerTest, DashC) {
@@ -218,7 +220,7 @@ TEST_F(ClangRunnerTest, ParamsFile) {
   overlay_fs->pushOverlay(in_memory_fs);
 
   std::filesystem::path params_path = "/params";
-  in_memory_fs->addFile(params_path.string(), 0,
+  in_memory_fs->addFile(PathToUtf8String(params_path), 0,
                         llvm::MemoryBuffer::getMemBuffer(R"(
 --version
 )"));
@@ -228,13 +230,13 @@ TEST_F(ClangRunnerTest, ParamsFile) {
 
   std::string out;
   std::string err;
-  EXPECT_THAT(
-      Testing::CallWithCapturedOutput(out, err,
-                                      [&] {
-                                        return runner.RunWithNoRuntimes(
-                                            {"@" + params_path.string()});
-                                      }),
-      IsSuccess(true))
+  EXPECT_THAT(Testing::CallWithCapturedOutput(
+                  out, err,
+                  [&] {
+                    return runner.RunWithNoRuntimes(
+                        {"@" + PathToUtf8String(params_path)});
+                  }),
+              IsSuccess(true))
       << "Verbose output:\n"
       << verbose_out.TakeStr();
   verbose_out.clear();
