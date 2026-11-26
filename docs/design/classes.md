@@ -1242,6 +1242,13 @@ Assert(&sp1.first == &sp1.key);
 **Future work:** This needs to be connected to the broader design of aliases,
 once that lands.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#alias):
+> the new `alias` definition (in class scope, limited to compile-time constants
+> by way of `let fwd A: auto = V;`) and
+> [`using`](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#using).
+> See [Aliases](aliases.md).
+
 ### Inheritance
 
 Carbon supports

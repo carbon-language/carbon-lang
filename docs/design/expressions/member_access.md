@@ -220,6 +220,11 @@ namespace, and the result is the package or namespace member with that name.
 An expression that names a package or namespace can only be used as the first
 operand of a member access or as the target of an `alias` declaration.
 
+> **TODO:** Update this paragraph and example to reflect
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#namespace-aliases):
+> namespaces are aliased with `namespace MyNS = MyNamespace;` rather than
+> `alias`.
+
 ```carbon
 namespace MyNamespace;
 fn MyNamespace.MyFunction() {}

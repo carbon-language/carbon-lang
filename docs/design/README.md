@@ -2506,6 +2506,10 @@ class C {
 
 ### Namespaces
 
+> **TODO:** Update this section to reflect
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#namespace-aliases):
+> namespace aliases (`namespace C = A.B;` and `private namespace D = A.B;`).
+
 A `namespace` declaration defines a name that may be used as a prefix of names
 declared afterward. When defining a member of a namespace, other members of that
 namespace are considered in scope and may be found by
@@ -2597,6 +2601,13 @@ Our naming conventions are:
 >     [#861: Naming conventions](https://github.com/carbon-language/carbon-lang/pull/861)
 
 ### Aliases
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8184: Redefining `alias`, `using`, and namespace aliases](/proposals/p008184-redefining-alias-using-and-namespace-aliases.md#alias):
+> `alias A = B;` is defined on compile-time values as `let fwd A: auto = V;`
+> (with `alias ref A = R;` for compile-time-known references), `using` provides
+> a shorthand, and namespaces instead use [`namespace C = A.B;`](#namespaces).
+> See [Aliases](aliases.md).
 
 `alias` declares a name as equivalent to another name, for example:
 
