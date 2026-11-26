@@ -265,10 +265,18 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
 
     // Conditionally checks for and diagnoses a type mismatch between the old
-    // and new parameter patterns. Returns false if a mismatch was found.
+    // and new parameter patterns. Returns false if a mismatch was found. We
+    // don't have enough information to match incomplete types, so we fall back
+    // to syntax matching only for those.
     auto check_for_type_mismatch_with = [&](SemIR::TypeId prev_param_type_id) {
       if (check_type && !context.types().AreEqualAcrossDeclarations(
                             new_param_pattern.type_id(), prev_param_type_id)) {
+        auto type_constant_id =
+            context.types().GetConstantId(prev_param_type_id);
+        if (context.constant_values().GetDependence(type_constant_id) ==
+            SemIR::ConstantDependence::Template) {
+          return true;
+        }
         if (diagnose) {
           CARBON_DIAGNOSTIC(
               RedeclParamDiffersType, Error,

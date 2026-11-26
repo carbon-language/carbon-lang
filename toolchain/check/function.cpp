@@ -279,6 +279,14 @@ auto CheckFunctionReturnTypeMatches(Context& context,
       prev_return_type_id == SemIR::ErrorInst::TypeId) {
     return false;
   }
+  
+  auto type_constant_id =
+      context.types().GetConstantId(prev_return_type_id);
+  if (context.constant_values().GetDependence(type_constant_id) ==
+      SemIR::ConstantDependence::Template) {
+    return true;
+  }
+
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
     if (new_function.name_id == SemIR::NameId::CppOperator &&
