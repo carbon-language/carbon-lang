@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/JSON.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/clang_invocation.h"
@@ -148,26 +149,25 @@ static auto ComputeClangConfig(DriverEnv& driver_env,
 
 static auto RenderDataAsJson(llvm::ArrayRef<ConfigDataEntry> data,
                              llvm::raw_ostream& out) -> void {
-  out << "{\n";
-  llvm::ListSeparator data_sep(",\n");
-  for (const auto& entry : data) {
-    out << data_sep << "    \"" << entry.key << "\": ";
-
-    if (const auto* value = std::get_if<std::string>(&entry.value)) {
-      out << "\"" << *value << "\"";
-    } else if (const auto* value =
-                   std::get_if<llvm::SmallVector<std::string>>(&entry.value)) {
-      out << "[\n";
-      llvm::ListSeparator element_sep(",\n");
-      for (const std::string& value_element : *value) {
-        out << element_sep << "        \"" << value_element << "\"";
+  llvm::json::OStream json(out, /*IndentSize=*/4);
+  json.object([&] {
+    for (const auto& entry : data) {
+      if (const auto* value = std::get_if<std::string>(&entry.value)) {
+        json.attribute(entry.key, *value);
+      } else if (const auto* value =
+                     std::get_if<llvm::SmallVector<std::string>>(
+                         &entry.value)) {
+        json.attributeArray(entry.key, [&] {
+          for (const std::string& value_element : *value) {
+            json.value(value_element);
+          }
+        });
+      } else {
+        CARBON_FATAL("Invalid value in config data entry!");
       }
-      out << "\n    ]";
-    } else {
-      CARBON_FATAL("Invalid value in config data entry!");
     }
-  }
-  out << "\n}\n";
+  });
+  out << "\n";
 }
 
 static auto RenderData(llvm::ArrayRef<ConfigDataEntry> data,

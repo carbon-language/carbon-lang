@@ -5,9 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 #define CARBON_TOOLCHAIN_SEM_IR_INST_KIND_H_
 
+#include <array>
 #include <concepts>
 #include <cstdint>
 #include <optional>
+#include <variant>
 
 #include "common/enum_base.h"
 #include "toolchain/parse/node_ids.h"

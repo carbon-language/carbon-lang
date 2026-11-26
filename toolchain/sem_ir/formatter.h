@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FORMATTER_H_
 
+#include <array>
 #include <concepts>
 
 #include "common/concepts.h"

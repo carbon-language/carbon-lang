@@ -6,7 +6,10 @@
 #define CARBON_COMMON_FIND_H_
 
 #include <concepts>
+#include <iterator>
+#include <memory>
 #include <type_traits>
+#include <utility>
 
 #include "llvm/ADT/STLExtras.h"
 

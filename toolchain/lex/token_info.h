@@ -52,11 +52,13 @@ struct CharLiteralValue {
 class TokenInfo {
  public:
   // The kind for this token.
-  auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
+  auto kind() const -> TokenKind {
+    return TokenKind::Make(static_cast<TokenKind::RawEnumType>(kind_));
+  }
 
   // Whether this token is preceded by whitespace. We only store the preceding
   // state, and look at the next token to check for trailing whitespace.
-  auto has_leading_space() const -> bool { return has_leading_space_; }
+  auto has_leading_space() const -> bool { return has_leading_space_ != 0; }
 
   // Returns a copy of this token info with the given leading space flag.
   [[nodiscard]] auto WithLeadingSpace(bool has_leading_space) const
@@ -168,7 +170,7 @@ class TokenInfo {
   // plain 32-bit store rather than a read-modify-write preserving uninitialized
   // upper bits (which SROA otherwise promotes to loop-carried registers).
   TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
-      : kind_(kind),
+      : kind_(kind.AsInt()),
         has_leading_space_(has_leading_space),
 #if !__has_feature(memory_sanitizer)
         token_payload_(0),
@@ -181,7 +183,7 @@ class TokenInfo {
   // Only used by the lexer which enforces the correct kind and payload types.
   TokenInfo(TokenKind kind, bool has_leading_space, int payload,
             int32_t byte_offset)
-      : kind_(kind),
+      : kind_(kind.AsInt()),
         has_leading_space_(has_leading_space),
         token_payload_(payload),
         byte_offset_(byte_offset) {}
@@ -191,14 +193,17 @@ class TokenInfo {
   // density and because these are the hottest fields of tokens for consumers
   // after lexing.
   //
+  // All three bitfields use `unsigned` so MSVC ABI packs them into a single
+  // 4-byte storage unit, matching Itanium ABI.
+  //
   // Payload values are typically ID types for which we create at most one per
   // token, so we ensure that `token_payload_` is large enough to fit any
   // token index. Stores to this field may overflow, but we produce an error
   // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
   // so this value never overflows if lexing succeeds.
   static_assert(sizeof(TokenKind) == 1, "TokenKind must pack to 8 bits");
-  TokenKind::RawEnumType kind_ : 8;
-  bool has_leading_space_ : 1;
+  unsigned kind_ : 8;
+  unsigned has_leading_space_ : 1;
   unsigned token_payload_ : PayloadBits;
 
   // Separate storage for the byte offset, this is hot while lexing but then

@@ -6,6 +6,7 @@
 #define CARBON_COMMON_LATCH_H_
 
 #include <atomic>
+#include <utility>
 
 #include "llvm/ADT/FunctionExtras.h"
 

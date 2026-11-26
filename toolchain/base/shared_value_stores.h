@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 #define CARBON_TOOLCHAIN_BASE_SHARED_VALUE_STORES_H_
 
+#include <optional>
+
 #include "common/hashing_llvm.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/StringRef.h"

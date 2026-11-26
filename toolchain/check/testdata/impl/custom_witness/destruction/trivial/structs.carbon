@@ -89,7 +89,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_first.carbon
+// --- fail_nontrivial_struct_nontrivial_field_first.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -97,10 +97,18 @@ import library "types";
 alias Struct = {.a: HasNonTrivialDestruction, .b: HasTrivialDestruction};
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_first.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Struct as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_second.carbon
+// --- fail_nontrivial_struct_nontrivial_field_second.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -108,10 +116,18 @@ import library "types";
 alias Struct = {.a: HasTrivialDestruction, .b: HasNonTrivialDestruction};
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_second.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Struct as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_struct_nontrivial_field_nested.carbon
+// --- fail_nontrivial_struct_nontrivial_field_nested.carbon
 library "[[@TEST_NAME]]";
 
 import library "types";
@@ -119,6 +135,14 @@ import library "types";
 alias Struct = {.a: {.b: HasNonTrivialDestruction}};
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_struct_nontrivial_field_nested.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Struct as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Struct` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Struct as Core.TrivialDestroy;
 }
 
@@ -143,6 +167,7 @@ fn Test() {
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.011: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6b7) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %empty_struct_type, (%custom_witness.b80, %DestroyImpl.impl_witness.011) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -162,7 +187,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -215,6 +240,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.137: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.364) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %struct_type.a.b.06d, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.137) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -234,7 +260,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -290,6 +316,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.f23: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.570) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %struct_type.a.c.0dc, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.f23) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -309,7 +336,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

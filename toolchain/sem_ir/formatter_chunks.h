@@ -5,7 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_FORMATTER_CHUNKS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_FORMATTER_CHUNKS_H_
 
+#include <memory>
 #include <string>
+#include <variant>
 
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"

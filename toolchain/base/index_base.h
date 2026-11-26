@@ -7,6 +7,7 @@
 
 #include <compare>
 #include <concepts>
+#include <cstdint>
 #include <iterator>
 #include <type_traits>
 

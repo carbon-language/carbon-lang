@@ -231,7 +231,14 @@ LATENCY_VALUE_BENCHMARKS(std::pair<uint64_t, uint32_t>);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint32_t, uint64_t>);
 LATENCY_VALUE_BENCHMARKS(std::pair<int*, uint32_t>);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint32_t, int*>);
+#ifdef ABSL_HAVE_INTRINSIC_INT128
 LATENCY_VALUE_BENCHMARKS(__uint128_t);
+#else
+// Abseil disables `ABSL_HAVE_INTRINSIC_INT128` on Windows even under Clang, so
+// `absl::HashOf(__uint128_t)` is unavailable there.
+BENCHMARK(BM_LatencyHash<RandValues<__uint128_t>, CarbonHashBench>);
+BENCHMARK(BM_LatencyHash<RandValues<__uint128_t>, LLVMHashBench>);
+#endif
 LATENCY_VALUE_BENCHMARKS(std::pair<uint64_t, uint64_t>);
 LATENCY_VALUE_BENCHMARKS(std::pair<int*, int*>);
 LATENCY_VALUE_BENCHMARKS(std::pair<uint64_t, int*>);

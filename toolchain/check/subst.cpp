@@ -62,17 +62,20 @@ struct WorklistItem {
   // The instruction that we are substituting into.
   SemIR::InstId inst_id;
   // Whether the operands of this instruction have been added to the worklist.
-  bool is_expanded : 1;
+  // The flag bit-fields use `unsigned` (matching `int`'s 32-bit storage unit)
+  // so MSVC ABI packs all four bit-fields into one word.
+  unsigned is_expanded : 1;
   // Whether the instruction was subst'd and re-added to the worklist.
-  bool is_repeated : 1;
+  unsigned is_repeated : 1;
   // Whether the inst should skip being subst'd.
-  bool skip : 1;
+  unsigned skip : 1;
   // The index of the worklist item to process after we finish updating this
   // one. For the final child of an instruction, this is the parent. For any
   // other child, this is the index of the next child of the parent. For the
   // root, this is -1.
   int next_index : 29;
 };
+static_assert(sizeof(WorklistItem) == 8, "Unexpected WorklistItem size");
 
 // A list of instructions that we're currently in the process of substituting
 // into. For details of the algorithm used here, see `SubstConstant`.

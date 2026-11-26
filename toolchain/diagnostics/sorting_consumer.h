@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_SORTING_CONSUMER_H_
 
+#include <tuple>
+
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "toolchain/diagnostics/emitter.h"

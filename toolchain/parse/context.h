@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_PARSE_CONTEXT_H_
 
+#include <initializer_list>
 #include <optional>
 
 #include "common/check.h"

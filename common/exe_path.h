@@ -5,6 +5,8 @@
 #ifndef CARBON_COMMON_EXE_PATH_H_
 #define CARBON_COMMON_EXE_PATH_H_
 
+#include <string>
+
 #include "llvm/ADT/StringRef.h"
 
 namespace Carbon {

@@ -860,15 +860,15 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %.loc23_73: <witness> = impl_self_witness %U.loc23_15.2, @Z [symbolic = %.loc23_73 (constants.%.1f4)]
 // CHECK:STDOUT:   %Z.impl_witness.loc23_73.2: <witness> = impl_witness %Z.impl_witness_table, @U.as_type.as.Z.impl(%U.loc23_15.2) [symbolic = %Z.impl_witness.loc23_73.2 (constants.%Z.impl_witness)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc23_15.2, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.7d0)]
-// CHECK:STDOUT:   %facet_value.loc23_73: %facet_type = facet_value %U.as_type.loc23_20.2, (%Z.impl_witness.loc23_73.2, %Y.lookup_impl_witness) [symbolic = %facet_value.loc23_73 (constants.%facet_value.02b)]
-// CHECK:STDOUT:   %C.loc23_73: type = class_type @C, @C(%facet_value.loc23_73) [symbolic = %C.loc23_73 (constants.%C.92a)]
+// CHECK:STDOUT:   %facet_value.loc23_27: %facet_type = facet_value %U.as_type.loc23_20.2, (%Z.impl_witness.loc23_73.2, %Y.lookup_impl_witness) [symbolic = %facet_value.loc23_27 (constants.%facet_value.02b)]
+// CHECK:STDOUT:   %C.loc23_27: type = class_type @C, @C(%facet_value.loc23_27) [symbolic = %C.loc23_27 (constants.%C.92a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc23_20 as %Z.ref {
 // CHECK:STDOUT:     %Z.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @U.as_type.as.Z.impl [concrete]
 // CHECK:STDOUT:     %Z.impl_witness.loc23_73.1: <witness> = impl_witness %Z.impl_witness_table, @U.as_type.as.Z.impl(constants.%U) [symbolic = %Z.impl_witness.loc23_73.2 (constants.%Z.impl_witness)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C.92a [symbolic = %C.loc23_73 (constants.%C.92a)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C.92a [symbolic = %C.loc23_27 (constants.%C.92a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     extend %Z.ref
@@ -935,8 +935,8 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %.loc23_73 => constants.%.1f4
 // CHECK:STDOUT:   %Z.impl_witness.loc23_73.2 => constants.%Z.impl_witness
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.7d0
-// CHECK:STDOUT:   %facet_value.loc23_73 => constants.%facet_value.02b
-// CHECK:STDOUT:   %C.loc23_73 => constants.%C.92a
+// CHECK:STDOUT:   %facet_value.loc23_27 => constants.%facet_value.02b
+// CHECK:STDOUT:   %C.loc23_27 => constants.%C.92a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- period_self_conversion_in_generic_impl.carbon = $period_self_conversion_in_generic_impl
@@ -1022,15 +1022,15 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %.loc12_48: <witness> = impl_self_witness %U.loc12_15.2, @Z [symbolic = %.loc12_48 (constants.%.1f4)]
 // CHECK:STDOUT:   %Z.impl_witness.loc12_48.2: <witness> = impl_witness %Z.impl_witness_table, @U.as_type.as.Z.impl(%U.loc12_15.2) [symbolic = %Z.impl_witness.loc12_48.2 (constants.%Z.impl_witness)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc12_15.2, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.7d0)]
-// CHECK:STDOUT:   %facet_value.loc12_48: %facet_type = facet_value %U.as_type.loc12_20.2, (%Y.lookup_impl_witness, %Z.impl_witness.loc12_48.2) [symbolic = %facet_value.loc12_48 (constants.%facet_value.a92)]
-// CHECK:STDOUT:   %C.loc12_48: type = class_type @C, @C(%facet_value.loc12_48) [symbolic = %C.loc12_48 (constants.%C.098)]
+// CHECK:STDOUT:   %facet_value.loc12_27: %facet_type = facet_value %U.as_type.loc12_20.2, (%Y.lookup_impl_witness, %Z.impl_witness.loc12_48.2) [symbolic = %facet_value.loc12_27 (constants.%facet_value.a92)]
+// CHECK:STDOUT:   %C.loc12_27: type = class_type @C, @C(%facet_value.loc12_27) [symbolic = %C.loc12_27 (constants.%C.098)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc12_20 as %Z.ref {
 // CHECK:STDOUT:     %Z.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant), @U.as_type.as.Z.impl [concrete]
 // CHECK:STDOUT:     %Z.impl_witness.loc12_48.1: <witness> = impl_witness %Z.impl_witness_table, @U.as_type.as.Z.impl(constants.%U) [symbolic = %Z.impl_witness.loc12_48.2 (constants.%Z.impl_witness)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C.098 [symbolic = %C.loc12_48 (constants.%C.098)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant: type = impl_witness_assoc_constant constants.%C.098 [symbolic = %C.loc12_27 (constants.%C.098)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     extend %Z.ref
@@ -1045,7 +1045,7 @@ impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 // CHECK:STDOUT:   %.loc12_48 => constants.%.1f4
 // CHECK:STDOUT:   %Z.impl_witness.loc12_48.2 => constants.%Z.impl_witness
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.7d0
-// CHECK:STDOUT:   %facet_value.loc12_48 => constants.%facet_value.a92
-// CHECK:STDOUT:   %C.loc12_48 => constants.%C.098
+// CHECK:STDOUT:   %facet_value.loc12_27 => constants.%facet_value.a92
+// CHECK:STDOUT:   %C.loc12_27 => constants.%C.098
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

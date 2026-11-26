@@ -31,7 +31,7 @@ fn Test() {
   //@dump-sem-ir-end
 }
 
-// --- todo_fail_nontrivial_maybe_unformed.carbon
+// --- fail_nontrivial_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -43,10 +43,18 @@ class HasNonTrivialDestruction {
 alias MaybeUnformed = Core.MaybeUnformed(HasNonTrivialDestruction);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_maybe_unformed_member.carbon
+// --- fail_nontrivial_maybe_unformed_member.carbon
 library "[[@TEST_NAME]]";
 
 class HasNonTrivialDestruction {
@@ -62,10 +70,18 @@ class HasNonTrivialMember {
 alias MaybeUnformed = Core.MaybeUnformed(HasNonTrivialMember);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed_member.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_maybe_unformed_of_const.carbon
+// --- fail_nontrivial_maybe_unformed_of_const.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -83,10 +99,18 @@ class HasNonTrivialMember {
 alias MaybeUnformed = Core.MaybeUnformed(const HasNonTrivialMember);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_maybe_unformed_of_const.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   MaybeUnformed as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `MaybeUnformed` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   MaybeUnformed as Core.TrivialDestroy;
 }
 
-// --- todo_fail_nontrivial_const_maybe_unformed.carbon
+// --- fail_nontrivial_const_maybe_unformed.carbon
 library "[[@TEST_NAME]]";
 
 // Not in `const.carbon`, since that file uses a smaller `min_prelude` than unformed.
@@ -104,6 +128,14 @@ class HasNonTrivialMember {
 alias Const = const Core.MaybeUnformed(HasNonTrivialMember);
 
 fn Test() {
+  // CHECK:STDERR:        ╭─┤ fail_nontrivial_const_maybe_unformed.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   Const as Core.TrivialDestroy;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Const` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.TrivialDestroy`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   Const as Core.TrivialDestroy;
 }
 
@@ -132,6 +164,7 @@ fn Test() {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.ce8: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7d1) [concrete]
 // CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %MaybeUnformed.f4e, (%custom_witness.b80ef6.4, %DestroyImpl.impl_witness.ce8) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -153,7 +186,7 @@ fn Test() {
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.TrivialDestroy: type = import_ref Core//prelude/parts/destroy, TrivialDestroy, loaded [concrete = constants.%TrivialDestroy.type]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

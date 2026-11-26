@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_SEM_IR_SINGLETON_INSTS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_SINGLETON_INSTS_H_
 
+#include <array>
+
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 

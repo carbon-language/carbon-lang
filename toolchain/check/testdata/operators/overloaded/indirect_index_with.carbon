@@ -309,7 +309,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %Core.import_ref.25c: @IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%assoc1 (constants.%assoc1.f633d8.2)]
 // CHECK:STDOUT:   %Core.import_ref.17a: @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
 // CHECK:STDOUT:   %Core.import_ref.c78b2f.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
+// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_49, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.bdc, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/copy, Copy, loaded [concrete = constants.%Copy.type]
@@ -388,7 +388,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %Core.import_ref.25c: @IndirectIndexWith.WithSelf.%IndirectIndexWith.assoc_type (%IndirectIndexWith.assoc_type.ea2) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%assoc1 (constants.%assoc1.f633d8.2)]
 // CHECK:STDOUT:   %Core.import_ref.17a: @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref.type (%IndirectIndexWith.WithSelf.Ref.type.923) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @IndirectIndexWith.WithSelf.%IndirectIndexWith.WithSelf.Ref (constants.%IndirectIndexWith.WithSelf.Ref.62a)]
 // CHECK:STDOUT:   %Core.import_ref.c78b2f.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_38, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_5, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %CNonCopy.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc30_68, loaded [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.e33, %Main.import_ref.2b0), @CNonCopy.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT: }
@@ -471,7 +471,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT:   %Core.import_ref.44f = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.630: @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At.type (%T.as_type.as.IndexWith.impl.At.type.152) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At (constants.%T.as_type.as.IndexWith.impl.At.68d)]
 // CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.44f, %Core.import_ref.630), @T.as_type.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %Main.import_ref.967: type = import_ref Main//types, loc17_79, loaded [concrete = constants.%Copyable]
+// CHECK:STDOUT:   %Main.import_ref.967: type = import_ref Main//types, loc17_49, loaded [concrete = constants.%Copyable]
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.967, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.b8e: %Copyable.as.Copy.impl.Op.type = import_ref Main//types, loc6_32, loaded [concrete = constants.%Copyable.as.Copy.impl.Op]
@@ -521,7 +521,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
+// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_49, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.bdc, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.b8e: %Copyable.as.Copy.impl.Op.type = import_ref Main//types, loc6_32, loaded [concrete = constants.%Copyable.as.Copy.impl.Op]
@@ -560,7 +560,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_38, unloaded
+// CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_5, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %CNonCopy.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc30_68, loaded [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.e33, %Main.import_ref.2b0), @CNonCopy.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT: }
@@ -599,7 +599,7 @@ fn F(c: C, s: SubscriptType, v: Copyable) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
+// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_49, unloaded
 // CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.bdc, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.b8e: %Copyable.as.Copy.impl.Op.type = import_ref Main//types, loc6_32, loaded [concrete = constants.%Copyable.as.Copy.impl.Op]

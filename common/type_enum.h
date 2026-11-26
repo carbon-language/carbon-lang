@@ -6,6 +6,9 @@
 #define CARBON_COMMON_TYPE_ENUM_H_
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
+#include <tuple>
 
 #include "common/ostream.h"
 

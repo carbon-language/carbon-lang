@@ -5,6 +5,9 @@
 #ifndef CARBON_COMMON_COMMAND_LINE_H_
 #define CARBON_COMMON_COMMAND_LINE_H_
 
+#include <array>
+#include <cstdint>
+#include <initializer_list>
 #include <memory>
 #include <utility>
 
