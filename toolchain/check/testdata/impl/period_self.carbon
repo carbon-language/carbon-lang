@@ -95,7 +95,7 @@ interface X {}
 impl forall [U: X] U as Z where .Z1 = C(.Self) and .Self impls N(.Self) {}
 //@dump-sem-ir-end
 
-// --- fail_todo_early_rewrite_query_indirectly_in_interface_specific.carbon
+// --- fail_early_rewrite_query_indirectly_in_interface_specific.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -105,6 +105,25 @@ interface Z {
 interface Y(V: type) {}
 
 class B(U: type) {}
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_query_indirectly_in_interface_specific.carbon:[[@LINE+19]]:29
+// CHECK:STDERR: ->     │ impl forall [T: Z] T as Y(B(T.Z1)) {}
+// CHECK:STDERR:        ·                             ┳━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: query for `.Self as Z` depends on an
+// CHECK:STDERR:        ·                                ┃        impl that is being declared
+// CHECK:STDERR:        ·                                ┃        [ImplLookupCycleToImplDecl]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ class C(T: Y(B({}))) {}
+// CHECK:STDERR:        ·         ─────┬─────
+// CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                 │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ impl () as Z where .Z1 = {} and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                       ┬───────
+// CHECK:STDERR:        ·                                       ╰──┤ in monomorphization of `<unnamed>`
+// CHECK:STDERR:        ·                                          │ here
+// CHECK:STDERR:        ·                                          │ [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 impl forall [T: Z] T as Y(B(T.Z1)) {}
 
 class C(T: Y(B({}))) {}
@@ -113,11 +132,7 @@ class C(T: Y(B({}))) {}
 // the specific `Y(B(.Self.(Z.Z1)))` which requires the access of `.Z1` to
 // evaluate to `{}` from the facet type being declared.
 //
-// TODO: `ImplWitnessAccess` evaluation (in a specific, through a
-// symbolic witness) doesn't yet look on the `where_stack` for rewrites into
-// `.Self`.
-//
-// CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_interface_specific.carbon:[[@LINE+14]]:39
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_query_indirectly_in_interface_specific.carbon:[[@LINE+14]]:39
 // CHECK:STDERR:        │ class C(T: Y(B({}))) {}
 // CHECK:STDERR:        ·         ─────┬─────
 // CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
@@ -133,164 +148,33 @@ class C(T: Y(B({}))) {}
 // CHECK:STDERR:
 impl () as Z where .Z1 = {} and .Z2 = C(.Self) {}
 
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_interface_specific.carbon:[[@LINE+13]]:37
-  // CHECK:STDERR:        │ class C(T: Y(B({}))) {}
-  // CHECK:STDERR:        ·         ─────┬─────
-  // CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
-  // CHECK:STDERR:        ·                 │ [InitializingGenericParam]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = {} and .Z2 = C(()));
-  // CHECK:STDERR:        ·                                     ┳━━━━
-  // CHECK:STDERR:        ·                                     ┗━━┫ error: cannot convert type `()` into
-  // CHECK:STDERR:        ·                                        ┃        type implementing `Y(B({}))`
-  // CHECK:STDERR:        ·                                        ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = {} and .Z2 = C(()));
-}
-
-// --- fail_todo_early_rewrite_query_indirectly_in_interface_specific_out_of_order.carbon
+// --- fail_early_rewrite_query_indirectly_in_where.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
   let Z1: type;
   let Z2: type;
 }
-interface Y(V: type) {}
-
-class B(U: type) {}
-// Forming a specific for this impl forms the specific `B(T.Z2)`, which
-// tries to perform the access `T.Z2`.
-impl forall [T: Z] T as Y(B(T.Z2)) {}
-
-class C(T: Y(B({}))) {}
-// Forming the specific C(.Self) does a lookup for `.Self as Y(B({}))`.
-// That matches the type structure of the first impl, so it forms
-// the specific `Y(B(.Self.(Z.Z2)))` which does an access to see if
-// `.Z2 == {}`.
-//
-// TODO: The lookup doesn't know `.Z2 == {}` yet, but it should succeed.
-// Maybe through the use of implied constraints? Since the actual use of
-// the witness table can't be performed yet.
-// CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_interface_specific_out_of_order.carbon:[[@LINE+13]]:26
-// CHECK:STDERR:        │ class C(T: Y(B({}))) {}
-// CHECK:STDERR:        ·         ─────┬─────
-// CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
-// CHECK:STDERR:        ·                 │ [InitializingGenericParam]
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->     │ impl () as Z where .Z1 = C(.Self) and .Z2 = {} {}
-// CHECK:STDERR:        ·                          ┳━━━━━━━
-// CHECK:STDERR:        ·                          ┗━━┫ error: cannot convert type `.Self` that implements
-// CHECK:STDERR:        ·                             ┃        `Z` into type implementing `Y(B({}))`
-// CHECK:STDERR:        ·                             ┃        [ConversionFailureFacetToFacet]
+interface Y { let Y1: type; }
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_query_indirectly_in_where.carbon:[[@LINE+14]]:25
+// CHECK:STDERR: ->     │ impl forall [T: Z] T as Y where .Y1 = T.Z1 {}
+// CHECK:STDERR:        ·                         ┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                         ┗━━┫ error: query for `.Self as Z` depends on an impl
+// CHECK:STDERR:        ·                            ┃        that is being declared
+// CHECK:STDERR:        ·                            ┃        [ImplLookupCycleToImplDecl]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ impl () as Z where .Z1 = {} and .Z2 = .Self.(Y.Y1) {}
+// CHECK:STDERR:        ·                                       ┬───────────
+// CHECK:STDERR:        ·                                       ╰──┤ in monomorphization of `<unnamed>`
+// CHECK:STDERR:        ·                                          │ here
+// CHECK:STDERR:        ·                                          │ [ResolvingSpecificHere]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-impl () as Z where .Z1 = C(.Self) and .Z2 = {} {}
-
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_interface_specific_out_of_order.carbon:[[@LINE+13]]:24
-  // CHECK:STDERR:        │ class C(T: Y(B({}))) {}
-  // CHECK:STDERR:        ·         ─────┬─────
-  // CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
-  // CHECK:STDERR:        ·                 │ [InitializingGenericParam]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = C(()) and .Z2 = {});
-  // CHECK:STDERR:        ·                        ┳━━━━
-  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert type `()` into type
-  // CHECK:STDERR:        ·                           ┃        implementing `Y(B({}))`
-  // CHECK:STDERR:        ·                           ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = C(()) and .Z2 = {});
-}
-
-// --- fail_todo_early_rewrite_query_indirectly_in_where.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let Z1: type;
-  let Z2: type;
-}
-interface Y { let Y1: type; }
 impl forall [T: Z] T as Y where .Y1 = T.Z1 {}
 
 impl () as Z where .Z1 = {} and .Z2 = .Self.(Y.Y1) {}
 
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_where.carbon:[[@LINE+8]]:3
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = {} and .Z2 = {});
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `()` into type implementing
-  // CHECK:STDERR:        ·      ┃        `Z where .(Z.Z1) = {} and .(Z.Z2) = {}`
-  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = {} and .Z2 = {});
-}
-
-// --- fail_todo_early_rewrite_query_indirectly_in_where_with_constant_id_ordering.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let Z1: type;
-  let Z2: type;
-}
-interface Y { let Y1: type; }
-impl forall [T: Z] T as Y where .Y1 = T.Z1 {}
-
-// The identified facet type of the impl stores rewrite constraints in
-// some order. It happens to be in the order of the rewrite LHS
-// constant ids. This manufactures a constant id for `.Z2` before `.Z1`
-// which makes the order we visit rewrites in the impl's identified facet
-// type go in the same order.
-//
-// TODO: The order of constant ids should not affect the ability of
-// .Z2 to see .Z1, when .Z1 is written first.
-impl {} as Z where .Z2 = () and .Z1 = () {}
-
-impl () as Z where .Z1 = {} and .Z2 = .Self.(Y.Y1) {}
-
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_where_with_constant_id_ordering.carbon:[[@LINE+8]]:3
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = {} and .Z2 = {});
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `()` into type implementing
-  // CHECK:STDERR:        ·      ┃        `Z where .(Z.Z1) = {} and .(Z.Z2) = {}`
-  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = {} and .Z2 = {});
-}
-
-// --- fail_todo_early_rewrite_query_indirectly_in_where_out_of_order.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {
-  let Z1: type;
-  let Z2: type;
-}
-interface Y { let Y1: type; }
-impl forall [T: Z] T as Y where .Y1 = T.Z2 {}
-
-// TODO: This should resolve to `.Z1 = {} and .Z2 = {}`, but .Z2 is not known
-// yet when we evaluate the RHS of `.Z1`. Maybe through the use of implied
-// constraints?
-impl () as Z where .Z1 = .Self.(Y.Y1) and .Z2 = {} {}
-
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_indirectly_in_where_out_of_order.carbon:[[@LINE+8]]:3
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = {} and .Z2 = {});
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `()` into type implementing
-  // CHECK:STDERR:        ·      ┃        `Z where .(Z.Z1) = {} and .(Z.Z2) = {}`
-  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = {} and .Z2 = {});
-}
-
-// --- fail_todo_early_rewrite_query_in_deduce.carbon
+// --- fail_early_rewrite_query_in_deduce.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -299,12 +183,28 @@ interface Z {
 }
 
 interface Y {}
-// TODO: This should be able to see that `.Z1 = {}` from both `C(.Self)`
-// constructions below.
 impl forall [T: Z where .Z1 = {}] T as Y {}
 
 class C(T: Y) {}
-// CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_in_deduce.carbon:[[@LINE+14]]:39
+// TODO: The error happens in deduce inside convert. Since it's a hard
+// error and actually gets diagnosed, we should not need to produce a
+// second error when convert fails. To do so we'd need Convert failures to
+// differentiate a failure vs a failure-with-error when diagnose is false.
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_query_in_deduce.carbon:[[@LINE+28]]:39
+// CHECK:STDERR:        │ class C(T: Y) {}
+// CHECK:STDERR:        ·         ──┬─
+// CHECK:STDERR:        ·           ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·              │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = {} and .Z2 = C(.Self) {}
+// CHECK:STDERR:        ·                                       ┳━━━━━━━
+// CHECK:STDERR:        ·                                       ┗━━┫ error: query for `.Self as Z` depends
+// CHECK:STDERR:        ·                                          ┃        on an impl that is being
+// CHECK:STDERR:        ·                                          ┃        declared
+// CHECK:STDERR:        ·                                          ┃        [ImplLookupCycleToImplDecl]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╭─┤ fail_early_rewrite_query_in_deduce.carbon:[[@LINE+14]]:39
 // CHECK:STDERR:        │ class C(T: Y) {}
 // CHECK:STDERR:        ·         ──┬─
 // CHECK:STDERR:        ·           ╰──┤ initializing generic parameter `T` declared here
@@ -320,24 +220,6 @@ class C(T: Y) {}
 // CHECK:STDERR:
 impl () as Z where .Z1 = {} and .Z2 = C(.Self) {}
 
-fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_early_rewrite_query_in_deduce.carbon:[[@LINE+14]]:37
-  // CHECK:STDERR:        │ class C(T: Y) {}
-  // CHECK:STDERR:        ·         ──┬─
-  // CHECK:STDERR:        ·           ╰──┤ initializing generic parameter `T` declared here
-  // CHECK:STDERR:        ·              │ [InitializingGenericParam]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->     │   () as (Z where .Z1 = {} and .Z2 = C(.Self));
-  // CHECK:STDERR:        ·                                     ┳━━━━━━━
-  // CHECK:STDERR:        ·                                     ┗━━┫ error: cannot convert type `.Self` that
-  // CHECK:STDERR:        ·                                        ┃        implements `Z` into type
-  // CHECK:STDERR:        ·                                        ┃        implementing `Y`
-  // CHECK:STDERR:        ·                                        ┃        [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:        ╰────
-  // CHECK:STDERR:
-  () as (Z where .Z1 = {} and .Z2 = C(.Self));
-}
-
 // --- period_self_conversion_in_generic_impl.carbon
 library "[[@TEST_NAME]]";
 
@@ -352,6 +234,69 @@ class C(T: Z & Y) {}
 //@dump-sem-ir-begin
 impl forall [U: X] U as Z where .Z1 = C(.Self) {}
 //@dump-sem-ir-end
+
+// --- fail_todo_class_specific_accesses_impl_witness_table_order_one.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+  let Z2: type;
+}
+class C(T: Z) { alias C1 = T.Z1; }
+// TODO: Z1 is set first in the facet type, so we should resolve its value
+// first in the witness table.
+// CHECK:STDERR:        ╭─┤ fail_todo_class_specific_accesses_impl_witness_table_order_one.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = {} and .Z2 = C(.Self).C1 {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+// CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Z1 = {} and .Z2 = C(.Self).C1 {}
+
+// --- class_specific_accesses_impl_witness_table_order_two.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+  let Z2: type;
+}
+// Change the order of .Z1 and .Z2 constant ids.
+impl {} as Z where .Z2 = {} and .Z1 = {} {}
+
+class C(T: Z) { alias C1 = T.Z1; }
+impl () as Z where .Z1 = {} and .Z2 = C(.Self).C1 {}
+
+// --- todo_fail_class_specific_accesses_impl_witness_table_order_three.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+  let Z2: type;
+}
+class C(T: Z) { alias C1 = T.Z2; }
+// TODO: Z2 is accessed through Z1 before it's set, we should get an error.
+impl () as Z where .Z1 = C(.Self).C1 and .Z2 = {} {}
+
+// --- fail_class_specific_accesses_impl_witness_table_order_four.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  let Z1: type;
+  let Z2: type;
+}
+// Change the order of .Z1 and .Z2 constant ids.
+impl {} as Z where .Z2 = {} and .Z1 = {} {}
+
+class C(T: Z) { alias C1 = T.Z2; }
+// CHECK:STDERR:        ╭─┤ fail_class_specific_accesses_impl_witness_table_order_four.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl () as Z where .Z1 = C(.Self).C1 and .Z2 = {} {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: accessing member from impl before it has a defined value
+// CHECK:STDERR:        ·                ┃        [ImplAccessMemberBeforeSet]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+impl () as Z where .Z1 = C(.Self).C1 and .Z2 = {} {}
 
 // CHECK:STDOUT: --- period_self_converted_in_impl_as_decl.carbon = $period_self_converted_in_impl_as_decl
 // CHECK:STDOUT:
