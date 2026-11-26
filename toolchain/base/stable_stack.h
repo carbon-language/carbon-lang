@@ -49,7 +49,7 @@ namespace Carbon {
 template <typename T, int32_t FirstCapacity = 32>
 class StableStack {
   static_assert(FirstCapacity > 0);
-  static_assert(llvm::isPowerOf2_32(uint32_t{FirstCapacity}),
+  static_assert(llvm::isPowerOf2_32(static_cast<uint32_t>(FirstCapacity)),
                 "FirstCapacity must be a power of 2");
 
  public:
@@ -242,7 +242,7 @@ class StableStack {
     // cap = ((1 << num_chunks) - 1) * FirstCapacity;
     auto ucap = static_cast<uint32_t>(cap);
     // Shifting by this simulates division by FirstCapacity.
-    auto division = llvm::Log2_32(uint32_t{FirstCapacity});
+    auto division = llvm::Log2_32(static_cast<uint32_t>(FirstCapacity));
     return llvm::Log2_32_Ceil(((ucap + (FirstCapacity - 1)) >> division) + 1);
   }
 

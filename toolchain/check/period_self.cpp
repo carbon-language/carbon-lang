@@ -61,7 +61,7 @@ static auto TryGetAsPeriodSelf(Context& context, SemIR::InstId inst_id,
           context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
     const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
     if (entity_name.name_id == SemIR::NameId::PeriodSelf) {
-      return {{*bind, entity_name.is_frozen_period_self}};
+      return {{*bind, static_cast<bool>(entity_name.is_frozen_period_self)}};
     }
   }
   return std::nullopt;

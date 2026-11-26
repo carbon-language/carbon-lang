@@ -864,7 +864,7 @@ class TableImpl : public InputBaseT {
 
   auto SetUpStorage() -> void;
 
-  [[no_unique_address]] mutable SmallStorage small_storage_;
+  LLVM_NO_UNIQUE_ADDRESS mutable SmallStorage small_storage_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

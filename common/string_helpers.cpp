@@ -5,7 +5,6 @@
 #include "common/string_helpers.h"
 
 #include <string.h>
-#include <sys/types.h>
 
 #include <algorithm>
 #include <array>
@@ -222,12 +221,10 @@ auto BuildCStrArgs(llvm::StringRef tool_path,
                    llvm::ArrayRef<llvm::StringRef> args,
                    llvm::BumpPtrAllocator& alloc)
     -> llvm::SmallVector<const char*, 64> {
-  ssize_t i = 0;
   auto make_cstr = [&](llvm::StringRef arg) {
     char* cstr = alloc.Allocate<char>(arg.size() + 1);
     memcpy(cstr, arg.data(), arg.size());
     cstr[arg.size()] = '\0';
-    i += arg.size() + 1;
     return cstr;
   };
 
