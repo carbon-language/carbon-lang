@@ -793,6 +793,37 @@ static auto CollectCandidateImplsForQuery(
   return candidates;
 }
 
+// If the access comes from inside an impl decl and is for that impl, get a
+// witness for that impl even though it does not yet exist, instead of
+// searching for another impl decl.
+static auto FindFinalWitnessInsideImplDecl(
+    Context& context, SemIR::LocId loc_id, SemIR::ConstantId req_self_facet,
+    SemIR::SpecificInterface req_interface) -> SemIR::InstId {
+  if (context.declaring_impl_decls().empty()) {
+    return SemIR::InstId::None;
+  }
+
+  auto declaring_specific_interface = context.declaring_impl_decls().Peek();
+  if (declaring_specific_interface != req_interface) {
+    return SemIR::InstId::None;
+  }
+
+  auto self_facet_inst_id = context.constant_values().GetInstId(req_self_facet);
+  // Using the impl's self concrete type does a full lookup. A symbolic lookup
+  // through `.Self` will find the impl decl being constructed.
+  if (!IsPeriodSelf(context, self_facet_inst_id)) {
+    return SemIR::InstId::None;
+  }
+
+  auto specific_interface_id = context.specific_interfaces().Add(req_interface);
+  auto impl_self_witness_id = EvalOrAddInst<SemIR::ImplSelfWitness>(
+      context, loc_id,
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .period_self = self_facet_inst_id,
+       .specific_interface_id = specific_interface_id});
+  return context.constant_values().GetInstId(impl_self_witness_id);
+}
+
 static auto FindFinalWitnessFromFacetValue(
     llvm::ArrayRef<FacetWitnessSource> witness_sources,
     SemIR::ConstantId req_self_const_id,
@@ -963,11 +994,19 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     auto req_interface =
         req_impl.interface.EvaluateIdentifiedWitnesses(context, loc_id);
 
+    auto result_witness_id = FindFinalWitnessInsideImplDecl(
+        context, loc_id, req_self_facet, req_interface);
+    if (result_witness_id.has_value()) {
+      // Found a final witness, use it.
+      result_witness_ids.push_back(result_witness_id);
+      continue;
+    }
+
     // If the self facet contains a final witness for the required interface, we
     // use that and avoid any further work. This is strictly an optimization,
     // since that same final witness should be found by evaluating a
     // LookupImplWitness instruction for the required self+interface pair.
-    auto result_witness_id = FindFinalWitnessFromFacetValue(
+    result_witness_id = FindFinalWitnessFromFacetValue(
         witness_sources, req_self_facet, req_interface);
     if (result_witness_id.has_value()) {
       // Found a final witness, use it.
@@ -1160,22 +1199,6 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
          .query_self_inst_id = eval_query.query_self_inst_id,
          .query_specific_interface_id =
              eval_query.query_specific_interface_id});
-  }
-  // If the lookup comes from inside an impl decl and is for that impl, get a
-  // witness for that impl even though it does not yet exist.
-  if (!context.declaring_impl_decls().empty()) {
-    const auto& declaring = context.declaring_impl_decls().Peek();
-    if (query_self_const_id == declaring.self_id ||
-        IsPeriodSelf(context, eval_query.query_self_inst_id)) {
-      if (query_specific_interface == declaring.specific_interface) {
-        return EvalOrAddInst<SemIR::ImplSelfWitness>(
-            context, loc_id,
-            {.type_id =
-                 GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-             .period_self = eval_query.query_self_inst_id,
-             .specific_interface_id = eval_query.query_specific_interface_id});
-      }
-    }
   }
 
   // If the query self is monomorphized as a FacetValue, we can't use its
