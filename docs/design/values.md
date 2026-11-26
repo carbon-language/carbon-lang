@@ -733,6 +733,13 @@ one of the field extended types to be proper.
 > **Open question:** Should there be a way to specify symbolic or template phase
 > in extended return types?
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#specifying-the-extended-type-of-a-return):
+> the `fwd` return tag (`-> fwd R`,
+> [`-> fwd auto`](/proposals/p008183-first-class-extended-types-and-fwd.md#auto-extended-type-returns),
+> and nested `fwd` inside tuple and struct extended return types) wherever
+> `val`, `ref`, or `var` is allowed.
+
 #### Deferred initialization from values and references
 
 TODO: This section needs to be updated to reflect the addition of `-> val`
@@ -806,6 +813,13 @@ The model of initialization of returns also facilitates the use of
 directly observe the storage provided for initialization of a function's return.
 
 ## Extended types
+
+> **TODO:** Update this section and cross-link to
+> [Extended types](extended_types.md) to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+> `Core.ExtType` values (`exttype(...)`, `exttypeof(...)`, compound tuple and
+> struct `as Core.ExtType`, `.type`, and the single `"compile time"` phase in
+> `Core.ExtType`) and extended type facet types.
 
 We typically treat the category and type of an expression as independent
 properties. However, in some cases we need to deal with them as an integrated

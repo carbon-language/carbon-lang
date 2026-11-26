@@ -175,6 +175,10 @@ The expression `x as U` is rewritten to `x.(As(U).Convert)()`.
 **Note:** This rewrite causes the expression `U` to be implicitly converted to
 type `type`. The program is invalid if this conversion is not possible.
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#compound-extended-type-values):
+> compound tuple and struct `as Core.ExtType` conversions.
+
 ## Alternatives considered
 
 -   [Allow `as` to perform some unsafe conversions](/proposals/p000845-as-expressions.md#allow-as-to-perform-some-unsafe-conversions)

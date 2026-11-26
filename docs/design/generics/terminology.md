@@ -313,6 +313,10 @@ corresponding to
 These patterns use the keywords `runtime`, `generic`, and `template` to override
 the contextual defaults when necessary.
 
+> **TODO:** Update this section to reflect
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#specifying-the-extended-type-of-a-binding):
+> `fwd` binding patterns parameterized by a `Core.ExtType` value.
+
 The name being declared, which is the identifier to the left of the `:` is
 called a _binding_, or more specifically a _runtime binding_, _compile-time
 binding_, _checked generic binding_, or _template generic binding_. The
@@ -333,6 +337,11 @@ long as it has an implicit conversion to `type` that may be performed at compile
 time.
 
 ## Facet type
+
+> **TODO:** Update this section and [Facet](#facet) to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#extended-type-facet-types):
+> generalizing facet types and facets to include extended type facet types
+> (`Core.ExtType` and `Core.No*ExtType`) and extended type facets.
 
 A _facet type_ is a [type](#types-and-type) whose values are some subset of the
 values of `type`, determined by a set of [type constraints](#type-constraints):

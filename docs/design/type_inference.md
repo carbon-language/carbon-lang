@@ -34,6 +34,12 @@ Type inference is currently supported for [function return types](functions.md)
 and
 [declared variable types](values.md#binding-patterns-and-local-variables-with-let-and-var).
 
+> **TODO:** Update this document to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#auto-extended-type):
+> `auto` extended type deduction in `fwd` bindings (`let fwd x: auto = y;`),
+> `-> fwd auto` returns, and positional parameters (`fn F(... fwd _: auto)`).
+> See [Extended types](extended_types.md).
+
 ## Open questions
 
 ### Inferring a variable type from literals

@@ -324,6 +324,13 @@ is syntactic sugar for `(` `*` _expression_ `)` `.` _..._.
 
 ## Operators
 
+> **TODO:** Update the precedence diagram above and the operator descriptions
+> below to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+>
+> -   the `fwd` prefix marker on generic-extended-type call arguments, and
+> -   `exttype(...)` and `exttypeof(...)` extended type expressions.
+
 Most expressions are modeled as operators:
 
 | Category   | Operator                            | Syntax    | Function                                                              |

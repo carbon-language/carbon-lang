@@ -185,7 +185,10 @@ The return type of a function or lambda can be specified using a return clause
         defined using `=>` cannot have a separate forward declaration.
 
 > **TODO:** Update this section to cover extended return types, as discussed
-> [here](values.md#function-calls-and-returns).
+> [here](values.md#function-calls-and-returns), including `-> fwd R`,
+> `-> fwd auto`, and nested `fwd` return tags from
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#specifying-the-extended-type-of-a-return)
+> (while noting that `=>` continues to deduce only type).
 
 #### Unused parameters
 
@@ -240,6 +243,12 @@ statement must have an expression that is convertible to the return type, and a
 > of the expression.
 
 ## Positional parameters
+
+> **TODO:** Update this section to reflect
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#positional-parameters):
+> positional parameters change from `auto` type to `auto` extended type
+> (`fn F(... fwd _: auto)`), so arguments mutated by reference must be marked
+> `ref` at the call site.
 
 Positional parameters, denoted by a dollar sign followed by a non-negative
 integer (for example, `$3`), are auto-typed parameters defined within the
@@ -730,6 +739,19 @@ callee of a call expression. There are several kinds of callable:
 Function calls are divided into _direct calls_ and _indirect calls_.
 
 ### Direct calls
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+>
+> -   marking call-site arguments that have a symbolic extended type with `fwd`
+>     (alongside `ref` for concrete reference arguments),
+> -   [deducing `Core.ExtType` parameters](/proposals/p008183-first-class-extended-types-and-fwd.md#deducing-an-extended-type-value)
+>     (including the `ref`/`fwd` call-site marker rule and category conversions
+>     for `Core.No*ExtType`),
+> -   [exact-value compile-time parameters](/proposals/p008183-first-class-extended-types-and-fwd.md#compile-time-parameter-equal-to-a-specified-value)
+>     (`fwd _: exttypeof(V)`), and
+> -   [exact type matching](/proposals/p008183-first-class-extended-types-and-fwd.md#parameter-requires-exact-type-match)
+>     (`[fwd T: exttypeof(bool)](x: T)`).
 
 A call expression is a _direct call_ when the callee:
 

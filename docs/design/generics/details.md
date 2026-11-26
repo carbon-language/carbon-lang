@@ -878,6 +878,14 @@ concept, for which interfaces are a building block.
 
 ## Facet types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+>
+> -   [extended type facet types and extended type facets](/docs/design/extended_types.md#extended-type-facet-types),
+>     and
+> -   constraining extended type facet types with `where .type = T` and
+>     `where .type impls C`.
+
 A [facet type](terminology.md#facet-type) consists of a set of requirements and
 a set of names. Requirements are typically a set of interfaces that a type must
 satisfy, though other kinds of requirements are added below. The names are
@@ -3447,6 +3455,10 @@ breaking existing code.
 
 #### Implements constraints
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#any-extended-type-with-this-type):
+> `where .type = T` and `where .type impls C` on extended type facet types.
+
 An _implements constraint_ is written `where T impls C`, and expresses that the
 facet `T` must implement the requirements of facet type `C`. This is more
 flexible than using
@@ -3980,6 +3992,12 @@ Whichever approach is used, the result is `NameOfConstraint` is a compile-time
 constant that is equivalent to `C where <condition>`.
 
 ## Other constraints as facet types
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#extended-type-facet-types):
+> extended type facet types (`Core.NoValExtType`, `Core.NoRefExtType`,
+> `Core.NoVarExtType`, `Core.NoCompileTimeExtType`, `Core.NoRunTimeExtType`).
+> See [Extended types](/docs/design/extended_types.md).
 
 There are some constraints that Carbon naturally represents as named facet
 types. These can either be used directly to constrain a facet binding, or in a

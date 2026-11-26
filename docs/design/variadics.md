@@ -233,6 +233,11 @@ For example:
 
 This ensures that `each` remains most tightly attached to the binding name.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#specifying-the-extended-type-of-a-binding):
+> `... fwd each x: each PET` pack expansion patterns and `... fwd each arg`
+> argument pack expansions.
+
 > **Future work:** That restriction can probably be relaxed, but we currently
 > don't have motivating use cases to constrain the design.
 

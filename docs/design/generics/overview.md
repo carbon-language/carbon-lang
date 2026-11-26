@@ -305,6 +305,11 @@ You may combine interfaces into new facet types using
 [the `&` operator](#combining-interfaces) or
 [named constraints](#named-constraints).
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md#extended-type-facet-types):
+> extended type facet types. See
+> [Extended types](/docs/design/extended_types.md).
+
 ### Generic functions
 
 We want to be able to call generic functions just like ordinary functions, and

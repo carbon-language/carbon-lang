@@ -34,6 +34,11 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+> **TODO:** Update this keyword list (and the syntax highlighters listed below)
+> to reflect these changes in
+> [proposal #8183: First-class extended types and `fwd`](/proposals/p008183-first-class-extended-types-and-fwd.md):
+> add `exttype`, `exttypeof`, and `fwd`.
+
 <!--
 Keep in sync:
 - utils/highlightjs/highlightjs_carbon_lang.js
