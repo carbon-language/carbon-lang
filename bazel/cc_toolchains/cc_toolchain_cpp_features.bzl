@@ -245,6 +245,8 @@ clang_warnings_feature = feature(
             "-Wmissing-prototypes",
             "-Wzero-as-null-pointer-constant",
             "-Wdelete-non-virtual-dtor",
+            "-Wms-bitfield-padding",
+            "-Wsigned-enum-bitfield",
 
             # TODO: Regression that warns on anonymous unions; remove depending
             # on fix.
