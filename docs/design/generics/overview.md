@@ -465,6 +465,10 @@ fn BothDraws[T: Renderable & EndOfGame](game_state: T*) {
 
 #### Named constraints
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8189: Associated constants in named constraints](/proposals/p008189-associated-constants-in-named-constraints.md):
+> associated constants in named constraints.
+
 You may also declare a new facet type directly using
 ["named constraints"](terminology.md#named-constraints). Named constraints can
 express requirements that multiple interfaces be implemented, and give you

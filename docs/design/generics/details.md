@@ -937,6 +937,11 @@ the requirements that are known at that time may be used.
 
 ## Named constraints
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8189: Associated constants in named constraints](/proposals/p008189-associated-constants-in-named-constraints.md):
+> associated constants in named constraints (deducible `let` declarations and
+> `final let`).
+
 If the interfaces discussed above are the building blocks for facet types,
 [named constraints](terminology.md#named-constraints) describe how they may be
 composed together. Unlike interfaces which are nominal, the name of a named
@@ -2194,6 +2199,10 @@ fn Render(w: Window) {
 > **TODO:** Update this section to reflect the new rules and guidance on
 > associated constants in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8189: Associated constants in named constraints](/proposals/p008189-associated-constants-in-named-constraints.md):
+> associated constants in named constraints.
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
