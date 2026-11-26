@@ -54,7 +54,8 @@ For example:
     not unsurprising, because there is more than one possible expected behavior
     for an input value that is not within the destination type, and those
     behaviors are not substantially the same -- we could perform two's
-    complement wrapping, saturate, or produce undefined behavior analogous to
+    complement wrapping, saturate, or produce
+    [erroneous behavior](/docs/design/program_behavior.md) analogous to
     arithmetic overflow.
 -   A conversion from `iM` to `fN` can be unsurprising, because even though
     there may be a choice of which way to round, the possible values are
@@ -116,7 +117,7 @@ var c: i32 = a + b as i64;
 var d: i32 = a as i64 + b;
 
 // OK, `(-a) as f64`, not `-(a as f64)`.
-// Unfortunately, the former is undefined if `a` is `i32.MinValue()`;
+// Unfortunately, the former is erroneous behavior if `a` is `i32.MinValue()`;
 // the latter is not.
 var u: f64 = -a as f64;
 
@@ -182,9 +183,12 @@ type `type`. The program is invalid if this conversion is not possible.
 -   [`as` only performs implicit conversions](/proposals/p000845-as-expressions.md#as-only-performs-implicit-conversions)
 -   [Integer to bool conversions](/proposals/p000845-as-expressions.md#integer-to-bool-conversions)
 -   [Bool to integer conversions](/proposals/p000845-as-expressions.md#bool-to-integer-conversions)
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
 
 ## References
 
 -   [Implicit conversions in C++](https://en.cppreference.com/w/cpp/language/implicit_conversion)
 -   Proposal
     [#845: `as` expressions](https://github.com/carbon-language/carbon-lang/pull/845).
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161).

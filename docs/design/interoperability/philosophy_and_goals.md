@@ -41,6 +41,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Carbon type inheritance from non-pure interface C++ types](#carbon-type-inheritance-from-non-pure-interface-c-types)
     -   [CRTP support](#crtp-support)
     -   [Object lifetimes](#object-lifetimes)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -157,6 +158,20 @@ should be provided where possible. However, safety guarantees will be focused on
 native Carbon code. C++ code will not benefit from the same set of safety
 mechanisms that Carbon offers, so Carbon code calling into C++ will accept
 higher safety risks.
+
+Carbon code always has at most the
+[undefined behavior](/docs/design/program_behavior.md) of corresponding C++
+code. As long as interoperating C++ code follows a set of rules, it will not
+compromise Carbon's safety checks. Violations of these rules are recognizable as
+buggy or dangerous by C++ developers (such as `delete this;`) and checkable by a
+sanitizer. If C++ undefined behavior or unreasonable C++ code compromises
+Carbon's safety checks, Carbon still does not introduce additional undefined
+behavior based on its safety assumptions, so Carbon code retains less undefined
+behavior than the equivalent C++.
+
+> **TODO:** Document the specific rules for reasonable C++ code and any reactive
+> sanitizer support for detecting violations at the C++/Carbon boundary (see
+> [#8161](/proposals/p008161-defining-program-behavior.md#reasonable-c-code-and-compromised-safety-checks)).
 
 ### Fast and scalable development
 
@@ -464,7 +479,13 @@ More analysis should be done on object lifetimes and potential Carbon designs
 for it before deciding how to treat object lifetimes in the scope of
 interoperability.
 
+## Alternatives considered
+
+-   [Allow safety assumptions and strict mode to introduce undefined behavior](/proposals/p008161-defining-program-behavior.md#allow-safety-assumptions-and-strict-mode-to-introduce-undefined-behavior)
+
 ## References
 
 -   Proposal
     [#175: C++ interoperability goals](https://github.com/carbon-language/carbon-lang/pull/175)
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161)

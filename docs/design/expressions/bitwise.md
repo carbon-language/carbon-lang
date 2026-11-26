@@ -130,24 +130,24 @@ equivalent to a multiplication by a power of 2 and a right shift is equivalent
 to a division by a power of two, rounding downwards.
 
 The second operand of a bit-shift is required to be between zero (inclusive) and
-the bit-width of the first operand (exclusive); it is a programming error if the
-second operand is not within that range.
+the bit-width of the first operand (exclusive); if the second operand is not
+within that range, it is
+[erroneous behavior](/docs/design/program_behavior.md): it is a programming
+error, and the compiler must not optimize under the assumption that it does not
+occur.
 
--   In a development build, they will be caught immediately when they happen at
-    runtime.
--   In a performance build, the optimizer may assume that this programming error
-    does not occur.
--   In a hardened build, the result will have well the defined behavior of
-    either aborting the program or performing a shift of an unspecified number
-    of bits, which if wider than the first operand will result in `0` or `-1`.
-    In the case where the program is aborted, the program might not in all cases
-    be aborted immediately -- for example, multiple checks might be combined
-    into one -- but no control flow or memory access that depends on the value
-    will be performed.
+-   In a [debug build](/docs/design/safety/README.md#build-modes), it is caught
+    at runtime with [fail-stop](/docs/design/safety/terminology.md#fail-stop)
+    behavior and a diagnostic.
+-   In a [release build](/docs/design/safety/README.md#build-modes), it does not
+    result in undefined behavior. Instead, either the program halts (immediately
+    or at a later runtime check), or the operation produces a defined value by
+    performing a shift of an unspecified number of bits, which if wider than the
+    first operand results in `0` or `-1`.
 
-**TODO:** Unify the description of these programming errors with those of
-arithmetic overflow, document the behavior in a common place and link to it from
-here.
+**TODO:** Align any release-build deferred-check constraints with
+[program behavior](/docs/design/program_behavior.md) (see
+[#8161](/proposals/p008161-defining-program-behavior.md)).
 
 ## Integer constants
 
@@ -276,8 +276,12 @@ to give the semantics described above.
 -   [Provide rotate operators](/proposals/p001191-bitwise-and-shift-operators.md#provide-rotate-operators)
 -   [Guarantee the behavior of large shifts](/proposals/p001191-bitwise-and-shift-operators.md#guarantee-behavior-of-large-shifts)
 -   [Support shifting a constant by a variable](/proposals/p001191-bitwise-and-shift-operators.md#support-shifting-a-constant-by-a-variable)
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
+-   [Make erroneous behavior ordinary defined behavior](/proposals/p008161-defining-program-behavior.md#make-erroneous-behavior-ordinary-defined-behavior)
 
 ## References
 
 -   Proposal
     [#1191: bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161).

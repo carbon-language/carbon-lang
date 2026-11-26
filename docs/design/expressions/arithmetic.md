@@ -149,28 +149,25 @@ example, given a value `v: iN` that is the least possible value for its type,
 `-v`, `v + v`, `v - 1`, `v * 2`, `v / -1`, and `v % -1` all result in overflow.
 
 Signed integer overflow and signed or unsigned integer division by zero are
-programming errors:
+[erroneous behavior](/docs/design/program_behavior.md): they are programming
+errors, and the compiler must not optimize under the assumption that they do not
+occur.
 
--   In a development build, they will be caught immediately when they happen at
-    runtime.
--   In a performance build, the optimizer can assume that such conditions don't
-    occur. As a consequence, if they do, the behavior of the program is not
-    defined.
--   In a hardened build, overflow and division by zero do not result in
-    undefined behavior. On overflow and division by zero, either the program
-    will be aborted, or the arithmetic will evaluate to a mathematically
-    incorrect result, such as a two's complement result or zero. The program
-    might not in all cases be aborted immediately -- for example, multiple
-    overflow checks might be combined into one -- but no control flow or memory
-    access that depends on the value will be performed.
+-   In a [debug build](/docs/design/safety/README.md#build-modes), they are
+    caught at runtime with
+    [fail-stop](/docs/design/safety/terminology.md#fail-stop) behavior and a
+    diagnostic.
+-   In a [release build](/docs/design/safety/README.md#build-modes), they do not
+    result in undefined behavior. Instead, either the program halts (immediately
+    or at a later runtime check), or the arithmetic evaluates to a defined
+    (though mathematically incorrect) result, such as a two's complement result
+    or zero.
 
-**TODO:** Unify the description of these programming errors with those of
-bit-shift domain errors, document the behavior in a common place and link to it
-from here.
-
-**TODO:** In a hardened build, should we prefer to trap on overflow, give a
-two's complement result, or produce zero? Using zero may defeat some classes of
-exploit, but comes at a code size and performance cost.
+**TODO:** In a release build, should we prefer to halt on overflow, give a two's
+complement result, or produce zero? Using zero may defeat some classes of
+exploit, but comes at a code size and performance cost. Also align any deferred
+check rules with [program behavior](/docs/design/program_behavior.md) (see
+[#8161](/proposals/p008161-defining-program-behavior.md)).
 
 ### Floating-point types
 
@@ -296,7 +293,7 @@ to give the semantics described above.
 -   [Use a sufficiently wide result type to avoid overflow](/proposals/p001083-arithmetic-expressions.md#use-a-sufficiently-wide-result-type-to-avoid-overflow)
 -   [Guarantee that the program never proceeds with an incorrect value after overflow](/proposals/p001083-arithmetic-expressions.md#guarantee-that-the-program-never-proceeds-with-an-incorrect-value-after-overflow)
 -   [Guarantee that all integer arithmetic is two's complement](/proposals/p001083-arithmetic-expressions.md#guarantee-that-all-integer-arithmetic-is-twos-complement)
--   [Treat overflow as an error but don't optimize on it](/proposals/p001083-arithmetic-expressions.md#treat-overflow-as-an-error-but-dont-optimize-on-it)
+-   [Allow the compiler to optimize assuming erroneous behavior does not occur](/proposals/p008161-defining-program-behavior.md#allow-the-compiler-to-optimize-assuming-erroneous-behavior-does-not-occur)
 -   [Don't let `Unsigned` arithmetic wrap](/proposals/p001083-arithmetic-expressions.md#dont-let-unsigned-arithmetic-wrap)
 -   [Provide separate wrapping types](/proposals/p001083-arithmetic-expressions.md#provide-separate-wrapping-types)
 -   [Do not provide an ordering or division for `uN`](/proposals/p001083-arithmetic-expressions.md#do-not-provide-an-ordering-or-division-for-un)
@@ -309,6 +306,7 @@ to give the semantics described above.
 -   [Use the same precedence group for modulo and multiplication](/proposals/p001083-arithmetic-expressions.md#use-the-same-precedence-group-for-modulo-and-multiplication)
 -   [Use a different spelling for modulo](/proposals/p001083-arithmetic-expressions.md#use-a-different-spelling-for-modulo)
 -   [Use `i32` or similar as the result type for `CharLiteral` difference](/proposals/p007314-charliteral-difference-should-be-an-intliteral.md#use-a-fixed-result-type)
+-   [Make erroneous behavior ordinary defined behavior](/proposals/p008161-defining-program-behavior.md#make-erroneous-behavior-ordinary-defined-behavior)
 
 ## References
 
@@ -320,3 +318,5 @@ to give the semantics described above.
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 -   Proposal
     [#7314: `CharLiteral` difference should be an `IntLiteral`](https://github.com/carbon-language/carbon-lang/pull/7314)
+-   Proposal
+    [#8161: Defining program behavior](https://github.com/carbon-language/carbon-lang/pull/8161)

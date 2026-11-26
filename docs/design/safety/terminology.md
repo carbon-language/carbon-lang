@@ -87,8 +87,9 @@ most often focused on with programming language and library design.
 Bugs where some aspect of program behavior has insufficient (often none)
 invariants or limits.
 
-For example, _undefined behavior_ definitionally has no invariant or limit, and
-reaching it is always a safety bug.
+For example, [_undefined behavior_](/docs/design/program_behavior.md)
+definitionally has no invariant or limit, and reaching it is always a safety
+bug.
 
 ### _Initial bug_
 
