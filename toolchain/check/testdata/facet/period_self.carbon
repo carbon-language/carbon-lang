@@ -996,6 +996,158 @@ fn F() {
   () as (Z where .Z1 = ());
 }
 
+// --- lookups_outside_period_self_type_find_final_witness.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {}
+impl () as Z {}
+
+interface Y { let Y1: type; }
+final impl forall [T: Z] T as Y where .Y1 = () {}
+
+interface X(U: Z) {}
+class Other(T: type) {}
+
+constraint N {
+  extend require impls Z;
+  require Other(Self) impls Y;
+}
+
+// `X` needs a value of type `Z`. `Y1` has been set to `()` which impls
+// `Z`.
+//
+// The named constraint `N` provides multiple required impls constraints.
+// The `Other(Self) impls Y` constraint in the type of `.Self` shouldn't
+// interfere with our ability to find the value of `.Y1` from the final
+// impl.
+fn F(_: N where .Self impls X(.Self.(Y.Y1))) {}
+
+// --- access_in_rewrite_lhs_with_period_self_in_specific.carbon
+library "[[@TEST_NAME]]";
+
+interface J { let Y: type; }
+interface I(V: J) { let X: type; }
+final impl forall [T: J] T as I(T) where .X = () {}
+
+constraint N {
+  extend require impls J;
+  // The specific of I holds a FacetValue with a witness `Self as J`, which
+  // gets replaced with `.Self as J`
+  extend require impls I(Self);
+}
+
+// T.Y performs an access lookup into the facet type of T, which walks
+// through each rewrite constraint. The `.X` can be replaced by `()` via
+// the final impl, but shouldn't cause a crash or diagnostics.
+fn F[T: N where .X = ()]() -> T.Y;
+
+// --- access_in_rewrite_lhs_with_period_self_in_nested_specific.carbon
+library "[[@TEST_NAME]]";
+
+interface J { let Y: type; }
+class C(T: type) {}
+interface I(V: type) { let X: type; }
+final impl forall [T: J] T as I(C(T)) where .X = () {}
+
+constraint N {
+  extend require impls J;
+  // This puts `Self` into a nested specific in the type of `.Self` when
+  // `N` is on the LHS of `where`. Identifying the type of `.Self` means
+  // constructing nested specifics as a result.
+  extend require impls I(C(Self));
+}
+
+// T.Y performs an access lookup into the facet type of T, which walks
+// through each rewrite constraint. The `.X` can be replaced by `()` via
+// the final impl, but shouldn't cause a crash or diagnostics.
+fn F[T: N where .X = ()]() -> T.Y;
+
+// --- access_in_rewrite_lhs_with_period_self_pointer_final_witness_in_specific.carbon
+library "[[@TEST_NAME]]";
+
+interface K {}
+interface J { let Y: type; }
+interface I(V: K) { let X: type; }
+
+constraint N {
+  extend require impls J;
+  require Self* impls K;
+  extend require impls I(Self*);
+}
+
+final impl forall [T: type] T* as K {}
+final impl forall [T: J] T as I(T*) where .X = () {}
+
+// T.Y performs an access lookup into the facet type of T, which walks
+// through each rewrite constraint. The `.X` can be replaced by `()` via
+// the final impl, but shouldn't cause a crash or diagnostics.
+fn F[T: N where .X = ()]() -> T.Y;
+
+// --- access_through_single_extended_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let I1: type; let I2: type; }
+
+final impl forall [T: type] T as I where .I1 = {} and .I2 = () {}
+
+interface Tuple {}
+impl () as Tuple {}
+interface J(T: Tuple) {}
+
+// .I2 is an access into the single extended interface, which has the same
+// shape as for an `impl as` facet type. The .I2 access needs to find the
+// final impl saying `.I2 = ()` above for J(.I2) to be valid.
+fn F(T: I where .I1 impls J(.I2));
+
+// --- period_self_cycle_during_eval.carbon
+library "[[@TEST_NAME]]";
+
+interface I(V: type) {}
+class NeedI(T: I(())) {}
+impl forall [T: type] T as I(()) {}
+
+constraint N {
+  extend require impls I(NeedI(Self));
+}
+
+// When we evaluate `NeedI(.Self)` we do a lookup for `.Self as I(())`.
+// If eval identifies the type of `.Self`, causing evaluation, it will
+// cycle back into the same lookup again, which repeats forever.
+fn F(_: N where .Self impls I(NeedI(.Self)));
+
+// --- period_self_cycle_through_deduce_during_eval.carbon
+library "[[@TEST_NAME]]";
+
+interface K {}
+impl () as K {}
+interface J(V: K) {}
+
+// If T impls J(()) then Wrapper(T) impls K.
+class Wrapper(T: type) {}
+final impl forall [T: J(())] Wrapper(T) as K {}
+
+constraint N {
+  require Wrapper(Self) impls K;
+  extend require impls J(Wrapper(Self));
+}
+
+final impl forall [T: type] T as J(()) {}
+
+interface I(T: J(())) {}
+// This requires the final impl `T as J(())` to satisfy the requirements of
+// I which require `.Self impls J(())`.
+//
+// When we look in the type of `.Self` we find `.Self as J(Wrapper(.Self))`
+// with J requiring `Wrapper(.Self) impls K`. We have an impl for
+// `Wrapper(T) as K` but it does deduction and requires `T impls J(())`, so
+// this causes a query of `.Self as J(())`. This was the original query we
+// started with in the evaluation of the facet type, which will repeat
+// causing a cycle through deduction during evaluation.
+//
+// This cycle is avoided if we look for the final impl before trying the
+// type of `.Self`, and we don't try to identify the facet type of `.Self`.
+fn F(_: N where .Self impls I(.Self));
+
 // CHECK:STDOUT: --- period_self_param.carbon = $period_self_param
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
