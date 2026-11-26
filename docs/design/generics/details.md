@@ -234,6 +234,13 @@ strategy prevent some features that we considered important, as described in
 
 ## Interfaces
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#extended-type-interfaces):
+> extended type interfaces (`interface I(Self: Core.ExtType)` or another
+> extended type facet type), explicit `Self: type`, and `Self` being omitted
+> from the argument list when referencing the interface. See
+> [Extended types](/docs/design/extended_types.md).
+
 An [interface](terminology.md#interface), defines an API that a given type can
 implement. For example, an interface capturing a linear-algebra vector API might
 have two methods:
@@ -293,6 +300,15 @@ class Point_Inline {
 ```
 
 ### `extend impl`
+
+> **TODO:** Update this section,
+> [Interface extension](#interface-extension), and
+> [Declaring implementations](#declaring-implementations) to reflect these
+> changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#extend):
+> `extend impl`, `extend final impl`, and `extend require` now allow an explicit
+> type or extended type to be specified before `as` or `impls` instead of
+> requiring `Self` to be omitted.
 
 Interfaces that are implemented inline with the `extend` keyword contribute to
 the type's API:
@@ -878,6 +894,12 @@ concept, for which interfaces are a building block.
 
 ## Facet types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#converting-from-an-extended-type-facet-type-to-a-type-facet-type):
+> converting extended type facet types to type facet types by way of
+> `Core.ValSelf`, `Core.RefSelf`, `Core.VarSelf`, named constraints, or
+> `where ... impls`.
+
 A [facet type](terminology.md#facet-type) consists of a set of requirements and
 a set of names. Requirements are typically a set of interfaces that a type must
 satisfy, though other kinds of requirements are added below. The names are
@@ -936,6 +958,11 @@ the requirements that are known at that time may be used.
 >     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ## Named constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#named-extended-type-constraints):
+> named extended type constraints (`constraint C(Self: Core.ExtType)` and
+> explicit `Self: type`).
 
 If the interfaces discussed above are the building blocks for facet types,
 [named constraints](terminology.md#named-constraints) describe how they may be
@@ -2194,6 +2221,10 @@ fn Render(w: Window) {
 > **TODO:** Update this section to reflect the new rules and guidance on
 > associated constants in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md):
+> `Core.ExtType` associated constants.
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
@@ -2374,6 +2405,10 @@ argument.
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update calling associated functions directly to generalize deducing
+> `Self` for extended type interfaces, as proposed in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md).
 
 ## Associated facets
 
@@ -2511,6 +2546,10 @@ and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support these, but call them "associated types."
 
 ## Parameterized interfaces
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md):
+> `Core.ExtType` interface parameters.
 
 Associated constants don't change the fact that a type can only implement an
 interface at most once.
@@ -3446,6 +3485,11 @@ implementations of interfaces to symbolic facets, they may be added without
 breaking existing code.
 
 #### Implements constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#whereimpls):
+> `where A impls B` when `A` is an extended type or extended type facet and `B`
+> is an extended type facet type.
 
 An _implements constraint_ is written `where T impls C`, and expresses that the
 facet `T` must implement the requirements of facet type `C`. This is more
@@ -4685,6 +4729,11 @@ most specific implementation is chosen, for some definition of "specific."
 
 #### Type structure of an impl declaration
 
+> **TODO:** Update this section and [Overlap rule](#overlap-rule) to reflect
+> these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#extended-types-in-impls):
+> extended types in `impl`s (prioritizing on the full extended type).
+
 Given an impl declaration, find the type structure by deleting deduced
 parameters and replacing type parameters by a `?`. The type structure of this
 declaration:
@@ -4718,6 +4767,11 @@ either in the current library or be publicly defined in some library this
 library depends on.
 
 #### Orphan rule
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8185: Extended type interfaces and named constraint extensions](/proposals/p008185-extended-type-interfaces-and-named-constraint-extensions.md#extended-types-in-impls):
+> using the `.type` property (including by way of `where .type = ...` in a
+> `forall` clause) for extended types in the orphan rule.
 
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
 given `impl` can only be defined where it is always visible when it could be
