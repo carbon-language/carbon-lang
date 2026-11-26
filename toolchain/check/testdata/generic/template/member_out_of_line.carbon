@@ -37,21 +37,17 @@ fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+17]]:39
+// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+13]]:39
+// CHECK:STDERR:        │   fn G(self) -> T;
+// CHECK:STDERR:        ·                 ┬
+// CHECK:STDERR:        ·                 ╰──┤ instruction in previous declaration
+// CHECK:STDERR:        ·                    │ [RedeclGenericDiffersPrevious]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Class(template T: type).G(self) -> T.U {
-// CHECK:STDERR:        ·                                       ━┳━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-// CHECK:STDERR:        · ┃ error: semantics TODO:
-// CHECK:STDERR:        · ┃        `generic redeclaration differs from previous declaration`
-// CHECK:STDERR:        · ┃        [SemanticsTodo]
-// CHECK:STDERR:        ╰────
-// CHECK:STDERR:
-// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE-29]]:17
-// CHECK:STDERR: ->     │   fn G(self) -> T;
-// CHECK:STDERR:        ·                 ┳
-// CHECK:STDERR:        ·                 ┗━━┫ error: semantics TODO:
-// CHECK:STDERR:        ·                    ┃        `instruction in previous declaration`
-// CHECK:STDERR:        ·                    ┃        [SemanticsTodo]
+// CHECK:STDERR:        ·                                       ┳━━
+// CHECK:STDERR:        ·                                       ┗━━┫ error: generic redeclaration differs
+// CHECK:STDERR:        ·                                          ┃        from previous declaration
+// CHECK:STDERR:        ·                                          ┃        [RedeclGenericDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Class(template T: type).G(self) -> T.U {
@@ -117,17 +113,17 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %require_complete.cb0614.2: <witness> = require_complete_type %.5372ba.2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (<instruction>) [concrete]
 // CHECK:STDOUT:   %.5d6323.1: %.5372ba.2 = splice_inst @Class.F.loc23.%tuple.elem0 [template]
-// CHECK:STDOUT:   %.eff391.4: type = type_of_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template]
-// CHECK:STDOUT:   %.b66113.4: %.eff391.4 = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template]
-// CHECK:STDOUT:   %.5372ba.4: type = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template]
+// CHECK:STDOUT:   %.eff391.4: type = type_of_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template]
+// CHECK:STDOUT:   %.b66113.4: %.eff391.4 = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template]
+// CHECK:STDOUT:   %.5372ba.4: type = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template]
 // CHECK:STDOUT:   %.cd79f1.3: Core.Form = init_form %.5372ba.4 [template]
 // CHECK:STDOUT:   %pattern_type.fcb8f3.4: type = pattern_type %.5372ba.4 [template]
 // CHECK:STDOUT:   %return.param_patt.2e9ac5.3: %pattern_type.fcb8f3.4 = out_param_pattern [template]
 // CHECK:STDOUT:   %return.patt.7fc6a1.3: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.2e9ac5.3, %.5372ba.4 [template]
 // CHECK:STDOUT:   %require_complete.ac0: <witness> = require_complete_type %Class [template]
 // CHECK:STDOUT:   %require_complete.cb0614.3: <witness> = require_complete_type %.5372ba.4 [template]
-// CHECK:STDOUT:   %.237: type = type_of_inst @Class.G.%.loc45_14.3 [template]
-// CHECK:STDOUT:   %.f96: %.237 = splice_inst @Class.G.%.loc45_14.3 [template]
+// CHECK:STDOUT:   %.237: type = type_of_inst @Class.G.%.loc41_14.3 [template]
+// CHECK:STDOUT:   %.f96: %.237 = splice_inst @Class.G.%.loc41_14.3 [template]
 // CHECK:STDOUT:   %.5d6323.2: %.5372ba.4 = splice_inst @Class.G.%tuple.elem0 [template]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -171,30 +167,30 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:     %return: ref @Class.F.loc23.%.loc23_42.5 (%.5372ba.2) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.G.decl: %Class.G.type = fn_decl @Class.G [template = constants.%Class.G] {
-// CHECK:STDOUT:     %self.param_patt.loc44: %pattern_type.28f = value_param_pattern [template = constants.%self.param_patt]
-// CHECK:STDOUT:     %self.patt.loc44: %pattern_type.28f = wrapper_binding_pattern self, %self.param_patt.loc44 [template = constants.%self.patt]
-// CHECK:STDOUT:     %return.param_patt.loc44: %pattern_type.fcb8f3.4 = out_param_pattern [template = constants.%return.param_patt.2e9ac5.3]
-// CHECK:STDOUT:     %return.patt.loc44: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.loc44, %.loc44_40.3 [template = constants.%return.patt.7fc6a1.3]
+// CHECK:STDOUT:     %self.param_patt.loc40: %pattern_type.28f = value_param_pattern [template = constants.%self.param_patt]
+// CHECK:STDOUT:     %self.patt.loc40: %pattern_type.28f = wrapper_binding_pattern self, %self.param_patt.loc40 [template = constants.%self.patt]
+// CHECK:STDOUT:     %return.param_patt.loc40: %pattern_type.fcb8f3.4 = out_param_pattern [template = constants.%return.param_patt.2e9ac5.3]
+// CHECK:STDOUT:     %return.patt.loc40: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.loc40, %.loc40_40.3 [template = constants.%return.patt.7fc6a1.3]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc44_22.1: type = splice_block %.loc44_22.2 [concrete = type] {
+// CHECK:STDOUT:     %.loc40_22.1: type = splice_block %.loc40_22.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc44_22.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:       %.loc40_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc44: type = symbolic_binding T, 0, template [template = @Class.%T.loc5_23.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc44_39: type = specific_constant %T.loc44, @Class(constants.%T) [template = constants.%T]
-// CHECK:STDOUT:     %T.ref.loc44: type = name_ref T, %.loc44_39 [template = constants.%T]
-// CHECK:STDOUT:     %.loc44_40.1: type = type_of_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template = constants.%.eff391.4]
-// CHECK:STDOUT:     %.loc44_40.2: %.eff391.4 = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template = constants.%.b66113.4]
-// CHECK:STDOUT:     %.loc44_40.3: type = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc44_40 [template = constants.%.5372ba.4]
-// CHECK:STDOUT:     %.loc44_40.4: Core.Form = init_form %.loc44_40.3 [template = constants.%.cd79f1.3]
-// CHECK:STDOUT:     %self.param.loc44: %Class = value_param call_param0
-// CHECK:STDOUT:     %.loc44_30.1: type = splice_block %Self.ref.loc44 [template = constants.%Class] {
-// CHECK:STDOUT:       %.loc44_30.2: type = specific_constant constants.%Class, @Class(constants.%T) [template = constants.%Class]
-// CHECK:STDOUT:       %Self.ref.loc44: type = name_ref Self, %.loc44_30.2 [template = constants.%Class]
+// CHECK:STDOUT:     %T.loc40: type = symbolic_binding T, 0, template [template = @Class.%T.loc5_23.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc40_39: type = specific_constant %T.loc40, @Class(constants.%T) [template = constants.%T]
+// CHECK:STDOUT:     %T.ref.loc40: type = name_ref T, %.loc40_39 [template = constants.%T]
+// CHECK:STDOUT:     %.loc40_40.1: type = type_of_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template = constants.%.eff391.4]
+// CHECK:STDOUT:     %.loc40_40.2: %.eff391.4 = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template = constants.%.b66113.4]
+// CHECK:STDOUT:     %.loc40_40.3: type = splice_inst <unexpected>.inst{{[0-9A-F]+}}.loc40_40 [template = constants.%.5372ba.4]
+// CHECK:STDOUT:     %.loc40_40.4: Core.Form = init_form %.loc40_40.3 [template = constants.%.cd79f1.3]
+// CHECK:STDOUT:     %self.param.loc40: %Class = value_param call_param0
+// CHECK:STDOUT:     %.loc40_30.1: type = splice_block %Self.ref.loc40 [template = constants.%Class] {
+// CHECK:STDOUT:       %.loc40_30.2: type = specific_constant constants.%Class, @Class(constants.%T) [template = constants.%Class]
+// CHECK:STDOUT:       %Self.ref.loc40: type = name_ref Self, %.loc40_30.2 [template = constants.%Class]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self.loc44: %Class = wrapper_binding self, %self.param.loc44
-// CHECK:STDOUT:     %return.param.loc44: ref %.5372ba.4 = out_param call_param1
-// CHECK:STDOUT:     %return.loc44: ref %.5372ba.4 = return_slot %return.param.loc44
+// CHECK:STDOUT:     %self.loc40: %Class = wrapper_binding self, %self.param.loc40
+// CHECK:STDOUT:     %return.param.loc40: ref %.5372ba.4 = out_param call_param1
+// CHECK:STDOUT:     %return.loc40: ref %.5372ba.4 = return_slot %return.param.loc40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -233,10 +229,10 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %return: ref @Class.F.loc6.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type) = fn_decl @Class.G [template = @Class.%Class.G (constants.%Class.G)] {
-// CHECK:STDOUT:       %self.param_patt.loc44: %pattern_type.28f = value_param_pattern [template = constants.%self.param_patt]
-// CHECK:STDOUT:       %self.patt.loc44: %pattern_type.28f = wrapper_binding_pattern self, %self.param_patt.loc44 [template = constants.%self.patt]
-// CHECK:STDOUT:       %return.param_patt.loc44: %pattern_type.fcb8f3.4 = out_param_pattern [template = constants.%return.param_patt.2e9ac5.3]
-// CHECK:STDOUT:       %return.patt.loc44: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.loc44, %.loc44_40.3 [template = constants.%return.patt.7fc6a1.3]
+// CHECK:STDOUT:       %self.param_patt.loc40: %pattern_type.28f = value_param_pattern [template = constants.%self.param_patt]
+// CHECK:STDOUT:       %self.patt.loc40: %pattern_type.28f = wrapper_binding_pattern self, %self.param_patt.loc40 [template = constants.%self.patt]
+// CHECK:STDOUT:       %return.param_patt.loc40: %pattern_type.fcb8f3.4 = out_param_pattern [template = constants.%return.param_patt.2e9ac5.3]
+// CHECK:STDOUT:       %return.patt.loc40: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.loc40, %.loc40_40.3 [template = constants.%return.patt.7fc6a1.3]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc7_17.2: type = specific_constant @Class.%T.loc5_23.2, @Class(constants.%T) [template = %T.loc7 (constants.%T)]
 // CHECK:STDOUT:       %T.ref.loc7: type = name_ref T, %.loc7_17.2 [template = %T.loc7 (constants.%T)]
@@ -289,24 +285,24 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %return.patt.loc7: @Class.G.%pattern_type.loc7_17 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc7, %T.loc7 [template = %return.patt.loc7 (constants.%return.patt.b39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc44_30: <witness> = require_complete_type %Class [template = %require_complete.loc44_30 (constants.%require_complete.ac0)]
-// CHECK:STDOUT:   %.loc44_36.1: <instruction> = convert_to_value_action %.loc44_40.2, type [template = %.loc44_36.1 (<unexpected>.inst{{[0-9A-F]+}}.loc44_40)]
-// CHECK:STDOUT:   %.loc44_36.2: type = splice_inst %.loc44_36.1 [template = %.loc44_36.2 (constants.%.5372ba.4)]
-// CHECK:STDOUT:   %require_complete.loc44_36: <witness> = require_complete_type %.loc44_36.2 [template = %require_complete.loc44_36 (constants.%require_complete.cb0614.3)]
-// CHECK:STDOUT:   %.loc45_14.3: <instruction> = access_member_action %self.ref, n [template]
-// CHECK:STDOUT:   %.loc45_14.4: type = type_of_inst %.loc45_14.3 [template = %.loc45_14.4 (constants.%.237)]
-// CHECK:STDOUT:   %.loc45_14.5: @Class.G.%.loc45_14.4 (%.237) = splice_inst %.loc45_14.3 [template = %.loc45_14.5 (constants.%.f96)]
-// CHECK:STDOUT:   %.loc45_16.2: %tuple.type = initialize_action %.loc45_14.2, %.loc44_36.2, %return.param.loc44, none, false [template]
-// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc45_16.2, element0 [template]
-// CHECK:STDOUT:   %.loc45_16.3: @Class.G.%.loc44_36.2 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc45_16.3 (constants.%.5d6323.2)]
+// CHECK:STDOUT:   %require_complete.loc40_30: <witness> = require_complete_type %Class [template = %require_complete.loc40_30 (constants.%require_complete.ac0)]
+// CHECK:STDOUT:   %.loc40_36.1: <instruction> = convert_to_value_action %.loc40_40.2, type [template = %.loc40_36.1 (<unexpected>.inst{{[0-9A-F]+}}.loc40_40)]
+// CHECK:STDOUT:   %.loc40_36.2: type = splice_inst %.loc40_36.1 [template = %.loc40_36.2 (constants.%.5372ba.4)]
+// CHECK:STDOUT:   %require_complete.loc40_36: <witness> = require_complete_type %.loc40_36.2 [template = %require_complete.loc40_36 (constants.%require_complete.cb0614.3)]
+// CHECK:STDOUT:   %.loc41_14.3: <instruction> = access_member_action %self.ref, n [template]
+// CHECK:STDOUT:   %.loc41_14.4: type = type_of_inst %.loc41_14.3 [template = %.loc41_14.4 (constants.%.237)]
+// CHECK:STDOUT:   %.loc41_14.5: @Class.G.%.loc41_14.4 (%.237) = splice_inst %.loc41_14.3 [template = %.loc41_14.5 (constants.%.f96)]
+// CHECK:STDOUT:   %.loc41_16.2: %tuple.type = initialize_action %.loc41_14.2, %.loc40_36.2, %return.param.loc40, none, false [template]
+// CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc41_16.2, element0 [template]
+// CHECK:STDOUT:   %.loc41_16.3: @Class.G.%.loc40_36.2 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc41_16.3 (constants.%.5d6323.2)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param.loc44: %Class) -> out %return.param.loc44: %.5372ba.4 {
+// CHECK:STDOUT:   fn(%self.param.loc40: %Class) -> out %return.param.loc40: %.5372ba.4 {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self.loc44
-// CHECK:STDOUT:     %.loc45_14.1: type = type_of_inst %.loc45_14.3 [template = %.loc45_14.4 (constants.%.237)]
-// CHECK:STDOUT:     %.loc45_14.2: @Class.G.%.loc45_14.4 (%.237) = splice_inst %.loc45_14.3 [template = %.loc45_14.5 (constants.%.f96)]
-// CHECK:STDOUT:     %.loc45_16.1: @Class.G.%.loc44_36.2 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc45_16.3 (constants.%.5d6323.2)]
-// CHECK:STDOUT:     return %.loc45_16.1 to %return.param.loc44
+// CHECK:STDOUT:     %self.ref: @Class.G.%Class (%Class) = name_ref self, %self.loc40
+// CHECK:STDOUT:     %.loc41_14.1: type = type_of_inst %.loc41_14.3 [template = %.loc41_14.4 (constants.%.237)]
+// CHECK:STDOUT:     %.loc41_14.2: @Class.G.%.loc41_14.4 (%.237) = splice_inst %.loc41_14.3 [template = %.loc41_14.5 (constants.%.f96)]
+// CHECK:STDOUT:     %.loc41_16.1: @Class.G.%.loc40_36.2 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc41_16.3 (constants.%.5d6323.2)]
+// CHECK:STDOUT:     return %.loc41_16.1 to %return.param.loc40
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
