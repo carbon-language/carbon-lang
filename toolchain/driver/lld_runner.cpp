@@ -54,12 +54,13 @@ auto LldRunner::LinkHelper(llvm::StringLiteral label,
 }
 
 auto LldRunner::ElfLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  return LinkHelper("GNU", args, installation_->ld_lld_path(),
+  return LinkHelper("GNU", args, PathToUtf8String(installation_->ld_lld_path()),
                     {.f = lld::Gnu, .d = &lld::elf::link});
 }
 
 auto LldRunner::MachOLink(llvm::ArrayRef<llvm::StringRef> args) -> bool {
-  return LinkHelper("Darwin", args, installation_->ld64_lld_path(),
+  return LinkHelper("Darwin", args,
+                    PathToUtf8String(installation_->ld64_lld_path()),
                     {.f = lld::Darwin, .d = &lld::macho::link});
 }
 

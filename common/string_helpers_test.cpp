@@ -7,6 +7,7 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <filesystem>
 #include <optional>
 #include <string>
 
@@ -293,6 +294,22 @@ TEST(BuildCStrArgsWithPrefix, BothPrefixAndArgs) {
   EXPECT_THAT(result[2], Eq(prefix_args[1].c_str()));
   EXPECT_THAT(result[3], StrEq("arg1"));
   EXPECT_THAT(result[4], StrEq("arg2"));
+}
+
+TEST(PathToUtf8String, Empty) {
+  EXPECT_THAT(PathToUtf8String(std::filesystem::path()), Eq(""));
+}
+
+TEST(PathToUtf8String, Ascii) {
+  EXPECT_THAT(PathToUtf8String(std::filesystem::path("foo/bar/baz.carbon")),
+              Eq("foo/bar/baz.carbon"));
+}
+
+TEST(PathToUtf8String, NonAsciiUtf8) {
+  std::filesystem::path path(u8"dir/café/日本語/🚀.carbon");
+  EXPECT_THAT(PathToUtf8String(path),
+              Eq("dir/caf\xC3\xA9/\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E/"
+                 "\xF0\x9F\x9A\x80.carbon"));
 }
 
 }  // namespace

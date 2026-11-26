@@ -34,6 +34,7 @@ cc_library(
     deps = [
         ":check",
         ":filesystem",
+        ":string_helpers",
         "@llvm-project//llvm:Support",
     ],
 )

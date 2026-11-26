@@ -15,6 +15,7 @@
 #include "common/error.h"
 #include "common/filesystem.h"
 #include "common/ostream.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
@@ -421,7 +422,7 @@ class Runtimes::Builder : public Printable<Builder> {
   auto Commit() && -> ErrorOr<std::filesystem::path>;
 
   auto Print(llvm::raw_ostream& out) const -> void {
-    out << "Runtimes::Builder{.path = '" << path() << "'}";
+    out << "Runtimes::Builder{.path = '" << PathToUtf8String(path()) << "'}";
   }
 
  private:

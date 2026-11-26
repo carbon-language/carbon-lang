@@ -14,6 +14,7 @@
 #include "common/check.h"
 #include "common/error_test_helpers.h"
 #include "common/filesystem.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "testing/base/global_exe_path.h"
@@ -53,7 +54,8 @@ class InstallPathsTest : public ::testing::Test {
   auto TestInstallPaths(const InstallPaths& paths) -> void {
     std::filesystem::path root_path = InstallPathsTestPeer::GetRoot(paths);
 
-    SCOPED_TRACE(llvm::formatv("Install root: '{0}'", root_path));
+    SCOPED_TRACE(
+        llvm::formatv("Install root: '{0}'", PathToUtf8String(root_path)));
 
     // Open the root directory.
     auto root_result = Filesystem::Cwd().OpenDir(root_path);
@@ -61,13 +63,15 @@ class InstallPathsTest : public ::testing::Test {
     Filesystem::Dir root = *std::move(root_result);
 
     std::filesystem::path core_package_path = paths.core_package();
-    ASSERT_THAT(core_package_path, StartsWith(root_path));
+    ASSERT_THAT(PathToUtf8String(core_package_path),
+                StartsWith(PathToUtf8String(root_path)));
     EXPECT_THAT(Filesystem::Cwd().Access(core_package_path / "prelude.carbon"),
                 IsSuccess(Eq(true)))
         << "path: " << core_package_path;
 
     std::filesystem::path llvm_bin_path = paths.llvm_install_bin();
-    ASSERT_THAT(llvm_bin_path, StartsWith(root_path));
+    ASSERT_THAT(PathToUtf8String(llvm_bin_path),
+                StartsWith(PathToUtf8String(root_path)));
     auto open_result = Filesystem::Cwd().OpenDir(llvm_bin_path);
     ASSERT_THAT(open_result, IsSuccess(_));
     Filesystem::Dir llvm_bin = *std::move(open_result);
@@ -119,7 +123,8 @@ TEST_F(InstallPathsTest, BinaryRunfiles) {
               IsSuccess(Eq(true)))
       << "path: " << test_binary_path;
 
-  auto paths = InstallPaths::MakeForBazelRunfiles(test_binary_path.native());
+  auto paths =
+      InstallPaths::MakeForBazelRunfiles(PathToUtf8String(test_binary_path));
   ASSERT_THAT(paths.error(), Eq(std::nullopt)) << *paths.error();
   TestInstallPaths(paths);
 }

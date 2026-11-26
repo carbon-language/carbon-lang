@@ -12,6 +12,7 @@
 #include "clang/Basic/Version.h"
 #include "common/check.h"
 #include "common/filesystem.h"
+#include "common/string_helpers.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
@@ -106,9 +107,9 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
   auto read_result =
       Filesystem::Cwd().ReadFileToString(manifest_path / manifest_file);
   if (!read_result.ok()) {
-    result = ErrorBuilder()
-             << "Loading manifest `" << (manifest_path / manifest_file)
-             << "`: " << read_result.error();
+    result = ErrorBuilder() << "Loading manifest `"
+                            << PathToUtf8String(manifest_path / manifest_file)
+                            << "`: " << read_result.error();
     return result;
   }
 
@@ -119,13 +120,15 @@ auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
     if (token.empty()) {
       break;
     }
-    result->push_back((manifest_path / std::string_view(token)).native());
+    result->push_back(
+        PathToUtf8String(manifest_path / std::string_view(token)));
     buffer = remainder;
   }
 
   if (result->empty()) {
     result = ErrorBuilder()
-             << "Manifest `" << (manifest_path / manifest_file) << "` is empty";
+             << "Manifest `" << PathToUtf8String(manifest_path / manifest_file)
+             << "` is empty";
   }
   return result;
 }
@@ -167,7 +170,7 @@ auto InstallPaths::CheckMarkerFile() -> void {
   }
   if (!*access_result) {
     SetError(llvm::Twine("No install marker at path: ") +
-             (root_ / std::string_view(MarkerPath)).native());
+             PathToUtf8String(root_ / std::string_view(MarkerPath)));
     return;
   }
 

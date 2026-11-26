@@ -72,6 +72,7 @@ file_test(
         "//common:all_llvm_targets",
         "//common:check",
         "//common:error",
+        "//common:string_helpers",
         "//testing/file_test:autoupdate",
         "//testing/file_test:file_test_base",
         "//toolchain/driver",

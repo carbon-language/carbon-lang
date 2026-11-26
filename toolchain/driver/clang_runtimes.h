@@ -242,8 +242,9 @@ class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
   std::filesystem::path archive_path_;
 
   // The (absolute) include paths used during the compilation of the source
-  // files.
-  llvm::SmallVector<std::filesystem::path> include_paths_;
+  // files. Stored as UTF-8 strings to provide backing storage for `StringRef`s
+  // in compile flags.
+  llvm::SmallVector<std::string> include_paths_;
 
   // The archive builder if it is necessary to build the archive.
   std::optional<ArchiveBuilder> archive_;
@@ -307,8 +308,9 @@ class ClangResourceDirBuilder : public ClangRuntimesBuilderBase {
   ErrorOr<Success> crt_begin_result_;
   ErrorOr<Success> crt_end_result_;
 
-  // The include paths used during the compilation of the builtins.
-  llvm::SmallVector<std::filesystem::path> include_paths_;
+  // The include paths used during the compilation of the builtins. Stored as
+  // UTF-8 strings to provide backing storage for `StringRef`s in compile flags.
+  llvm::SmallVector<std::string> include_paths_;
 
   // The archive builder for the builtins archive in the resource directory.
   std::optional<ArchiveBuilder> archive_;
