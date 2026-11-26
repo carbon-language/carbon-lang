@@ -270,6 +270,10 @@ fn Min[T: Comparable & Value](first: T, ... each next: T) -> T {
 }
 ```
 
+> **TODO:** Update the `Apply` example below to reflect
+> [proposal #8187: Extended-type call interface and `call` syntax](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#forwarding):
+> variadic `Core.ExtType` forwarding with `Core.CallPrimitive`.
+
 ```carbon
 // Invokes f, with the tuple `args` as its arguments.
 fn Apply[... each T: type, F: Call(... each T)]

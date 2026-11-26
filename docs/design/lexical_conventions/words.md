@@ -34,6 +34,11 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+> **TODO:** Update this keyword list (and the syntax highlighters listed below)
+> to reflect these changes in
+> [proposal #8187: Extended-type call interface and `call` syntax](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#call):
+> add `call`.
+
 <!--
 Keep in sync:
 - utils/highlightjs/highlightjs_carbon_lang.js

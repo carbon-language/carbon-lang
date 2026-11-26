@@ -3315,6 +3315,12 @@ declaration may be used to
 
 ### Operator overloading
 
+> **TODO:** Update this section (including the `Function call: f(4)` TODO below)
+> to reflect these changes in
+> [proposal #8187: Extended-type call interface and `call` syntax](/proposals/p008187-extended-type-call-interface-and-call-syntax.md):
+> function calls use the `Core.CallPrimitive` extended type interface and
+> `call(...)` / `call[val/ref/var](...)` facet type syntax.
+
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type
 `U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So

@@ -781,6 +781,26 @@ The result of the call expression depends on the callee:
 
 ### Indirect calls and the `Call` interface
 
+> **TODO:** Update this section and
+> [Overloaded call operator](#overloaded-call-operator) to reflect these changes
+> in
+> [proposal #8187: Extended-type call interface and `call` syntax](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#primitive-call-interface):
+>
+> -   the `Core.Call` interface is replaced with the `Core.CallPrimitive`
+>     extended type interface and the
+>     [`Core.Call` named constraint](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#corecall-named-constraint),
+> -   the
+>     [`call(...)` and `call[val/ref/var](...)`](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#call)
+>     facet type syntax,
+> -   modeling
+>     [deduced parameters](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#representing-deduced-parameters)
+>     and
+>     [explicit compile-time parameters](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#representing-explicit-compile-time-parameters)
+>     by way of parameterized `impl`s of `CallPrimitive`,
+> -   [implicit conversions on indirect calls](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#conversions-when-calling-a-function-argument)
+>     by way of interface variance, and
+> -   [callables that may or may not mutate](/proposals/p008187-extended-type-call-interface-and-call-syntax.md#callables-that-may-or-may-not-mutate).
+
 A generic parameter can be constrained to be a callable type using the `Call`
 interface:
 
