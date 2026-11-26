@@ -2593,6 +2593,74 @@ TEST(RendererTest, AWhitespaceOnlyLabelIsJustAnUnderline) {
                  ""));
 }
 
+TEST(RendererTest, ZeroWidthUtf8TextIsTreatedAsEmpty) {
+  // In UTF-8 mode, text containing only whitespace and zero-width combining
+  // marks should be treated as empty: a source label renders only its
+  // underline, and a file-only label is omitted.
+  Terminal::Capabilities utf8 = {.charset = Terminal::Charset::Utf8};
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(At(4, 3, 4), "bad call"),
+      .labels = {MakeLabel(LabelCategory::Primary, At(4, 8, 2), "\xcc\x81"),
+                 MakeLabel(LabelCategory::Info, FileOnly(), "\n\xcc\x81")}};
+  EXPECT_THAT(Render(utf8, diagnostic), Eq("       ╭─┤ foo.carbon:4:3\n"
+                                           "->   4 │   Run0(1);\n"
+                                           "       ·   ━━┳━ ──\n"
+                                           "       ·     ┗━━┫ error: bad call\n"
+                                           "       ╰────\n"
+                                           ""));
+
+  // Test the right edge of the 89-column frame (both for a leading message
+  // after `error: ` and for an attached label), where attempting to wrap a
+  // non-empty zero-width string would create a 0-column wrapped block past the
+  // end of the buffer.
+  std::string line_69(69, 'x');
+  Loc edge_message_loc = {.filename = "foo.carbon",
+                          .line = line_69,
+                          .line_number = 1,
+                          .column_number = 69,
+                          .length = 1};
+  Renderer with_kind(utf8);
+  with_kind.set_include_kind(true);
+  llvm::SmallString<256> rendered;
+  with_kind.Render(rendered,
+                   {.level = Level::Error,
+                    .message = MakeMessage(edge_message_loc, "\n\xcc\x81 ")});
+  EXPECT_THAT(std::string(rendered),
+              Eq("       ╭─┤ foo.carbon:1:69\n"
+                 "->   1 │ " +
+                 line_69 +
+                 "\n"
+                 "       ·                                                     "
+                 "                ━\n"
+                 "       ╰────\n"));
+
+  std::string line_76(76, 'x');
+  Loc edge_label_loc = {.filename = "foo.carbon",
+                        .line = line_76,
+                        .line_number = 1,
+                        .column_number = 76,
+                        .length = 1};
+  Diagnostic edge_label = {
+      .level = Level::Error,
+      .message = MakeMessage(LineOnly(1), "bad"),
+      .labels = {MakeLabel(LabelCategory::Info, edge_label_loc, " \xcc\x81")}};
+  EXPECT_THAT(Render(utf8, edge_label),
+              Eq("->     ╭─┤ foo.carbon:1\n"
+                 "       · ┗━━┫ error: bad\n"
+                 "       ┆\n"
+                 "     1 │ " +
+                 line_76 +
+                 "\n"
+                 "       ·                                                     "
+                 "                       ─\n"
+                 "       ╰────\n"));
+
+  // In ASCII mode, those non-ASCII bytes are each rendered as `?` (1 column
+  // wide), so the label is non-empty and wraps onto an out-dented row.
+  EXPECT_THAT(Render(Plain(), edge_label), HasSubstr("|  ??\n"));
+}
+
 TEST(RendererTest, AZeroLengthSpanIsDrawnAsAPoint) {
   // A `Loc` promises a length of at least 1; one of 0 -- an insertion point
   // from a fix-it -- is drawn as a single column rather than trusted.

@@ -874,29 +874,35 @@ static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
                                   Bytes(loc.length));
   }
 
-  // Text with no source to underline is placed under the part's location row.
-  // Everything else, the message included, is a label placed under its
-  // underline.
+  // Replace control characters (such as newlines) with spaces so they cannot
+  // break single-line layout invariants.
+  for (char& c : text) {
+    if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) {
+      c = ' ';
+    }
+  }
+
+  // Treat text containing only spaces and zero-width characters (such as UTF-8
+  // combining marks) as empty so we don't render blank label rows or lay out
+  // zero-width wrapped text blocks.
+  bool has_visible_char = false;
+  for (llvm::StringRef rest = text; !rest.empty();) {
+    char32_t code_point = metrics.TakeCodePoint(rest);
+    if (code_point != ' ' && metrics.CodePointWidth(code_point) > 0) {
+      has_visible_char = true;
+      break;
+    }
+  }
+  if (!has_visible_char) {
+    text.clear();
+  }
+
+  // Parts without a source snippet render `text` under their location row;
+  // parts with a snippet render `label` under the source underline.
   if (!result.has_source) {
     result.text = std::move(text);
   } else {
     result.label = std::move(text);
-  }
-
-  // Every row is one row: text carrying a newline would otherwise be measured
-  // as one column and drawn over the row below it.
-  for (std::string* row : {&result.text, &result.label}) {
-    for (char& c : *row) {
-      if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) {
-        c = ' ';
-      }
-    }
-  }
-  // A label that scrubbed away to spaces has nothing to hang, and hanging it
-  // would spend rows and a label line on drawing nothing. It becomes what a
-  // label with no words is: an underline and nothing else.
-  if (result.label.find_first_not_of(' ') == std::string::npos) {
-    result.label.clear();
   }
 
   if (include_kind && !name.empty()) {
