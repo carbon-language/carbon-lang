@@ -878,6 +878,11 @@ concept, for which interfaces are a building block.
 
 ## Facet types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#facets-create-adapters):
+> forming facets of interfaces with variant parameters
+> [creates adapter types](variance.md#facets-create-adapters).
+
 A [facet type](terminology.md#facet-type) consists of a set of requirements and
 a set of names. Requirements are typically a set of interfaces that a type must
 satisfy, though other kinds of requirements are added below. The names are
@@ -936,6 +941,13 @@ the requirements that are known at that time may be used.
 >     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
 
 ## Named constraints
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+>
+> -   [`match_first` blocks in named constraints](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#match_first-in-named-constraints),
+>     and
+> -   [interaction between `anchor`, `exact`, and named constraints](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#interaction-between-anchor-exact-and-named-constraints).
 
 If the interfaces discussed above are the building blocks for facet types,
 [named constraints](terminology.md#named-constraints) describe how they may be
@@ -1819,6 +1831,11 @@ be detected in function overloading.
 
 ## Adapting types
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#facets-create-adapters):
+> forming a facet of an interface with variant parameters implicitly
+> [creates an adapter](variance.md#facets-create-adapters).
+
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
@@ -2194,6 +2211,10 @@ fn Render(w: Window) {
 > **TODO:** Update this section to reflect the new rules and guidance on
 > associated constants in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
+>
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#implicit_from-variance):
+> [`implicit_from` covariant associated constants](variance.md#implicit_from-variance-covariance).
 
 In addition to associated methods, we allow other kinds of
 [associated entities](terminology.md#associated-entity). For consistency, we use
@@ -2511,6 +2532,11 @@ and [Swift](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID189)
 support these, but call them "associated types."
 
 ## Parameterized interfaces
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> variant (`implicit_into` and `implicit_from`) parameters. See
+> [Interface variance](variance.md).
 
 Associated constants don't change the fact that a type can only implement an
 interface at most once.
@@ -3502,6 +3528,11 @@ in `T: I where .Self impls C`, is represented by an
 
 ##### Implied constraints
 
+> **TODO:** Update this section to reflect
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#implied-constraints):
+> implied constraints do not apply to interfaces with variant parameters. See
+> [Interface variance](variance.md#implied-constraints).
+
 Imagine we have a checked-generic function that accepts an arbitrary
 [`HashMap` parameterized type](#parameterized-types):
 
@@ -3980,6 +4011,13 @@ Whichever approach is used, the result is `NameOfConstraint` is a compile-time
 constant that is equivalent to `C where <condition>`.
 
 ## Other constraints as facet types
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#coreconvertsinto):
+> `Core.ConvertsInto` and
+> [`Core.ConvertsFrom`](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#coreconvertsfrom).
+> See
+> [Extended types](/docs/design/extended_types.md#extended-type-conversion-constraints).
 
 There are some constraints that Carbon naturally represents as named facet
 types. These can either be used directly to constrain a facet binding, or in a
@@ -4685,6 +4723,13 @@ most specific implementation is chosen, for some definition of "specific."
 
 #### Type structure of an impl declaration
 
+> **TODO:** Update this section and [Overlap rule](#overlap-rule) to reflect
+> these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> `(type, extended type)` pairs and multiple type structures for variant
+> parameters, and `impl` lookup updates for interfaces with variant parameters.
+> See [Interface variance](variance.md#coherence-and-impl-lookup).
+
 Given an impl declaration, find the type structure by deleting deduced
 parameters and replacing type parameters by a `?`. The type structure of this
 declaration:
@@ -4718,6 +4763,11 @@ either in the current library or be publicly defined in some library this
 library depends on.
 
 #### Orphan rule
+
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#modifiers-for-coherence):
+> how variant (`implicit_into`) parameters interact with the orphan rule and the
+> [`anchor` and `exact` coherence modifiers](variance.md#anchor-and-exact-modifiers).
 
 To achieve [coherence](terminology.md#coherence), we need to ensure that any
 given `impl` can only be defined where it is always visible when it could be
@@ -4972,7 +5022,9 @@ of type structures, which is resolved using this rule:
 >     prioritization block are required to have the same type structure, at a
 >     cost in expressivity. This option was not chosen since it wouldn't support
 >     the different type structures created by the
->     [`like` operator](#like-operator-for-implicit-conversions).
+>     [`like` operator](#like-operator-for-implicit-conversions). TODO: Update
+>     to reflect
+>     [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md).
 >
 > To see the difference from the first option, consider two libraries with type
 > structures as follows:
@@ -6595,6 +6647,11 @@ if (positive > even) { ... }
 ```
 
 ### `like` operator for implicit conversions
+
+> **TODO:** Replace this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#implicit_into-interface-parameter-variance):
+> `like` is replaced by `implicit_into`/`implicit_from` interface variance and
+> `anchor`/`exact` coherence modifiers. See [Interface variance](variance.md).
 
 Because the type of the operands is directly used to select the operator
 interface implementation, there are no automatic implicit conversions, unlike

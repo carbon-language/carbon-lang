@@ -34,6 +34,12 @@ in Unicode Normalization Form C (NFC).
 
 ## Keywords
 
+> **TODO:** Update this keyword list (and the syntax highlighters listed below)
+> to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md):
+> remove `like` and add `anchor`, `exact`, `implicit_from`, and `implicit_into`
+> (and verify whether `match_first` should also be listed).
+
 <!--
 Keep in sync:
 - utils/highlightjs/highlightjs_carbon_lang.js

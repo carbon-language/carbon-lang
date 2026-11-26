@@ -807,6 +807,13 @@ directly observe the storage provided for initialization of a function's return.
 
 ## Extended types
 
+> **TODO:** Update this section and cross-link to
+> [Extended types](extended_types.md#extended-type-conversion-constraints) to
+> reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#coreconvertsinto):
+> `Core.ConvertsInto` and
+> [`Core.ConvertsFrom`](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#coreconvertsfrom).
+
 We typically treat the category and type of an expression as independent
 properties. However, in some cases we need to deal with them as an integrated
 whole. The _extended type_ of an expression captures all of the information

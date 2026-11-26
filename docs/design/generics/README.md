@@ -17,6 +17,9 @@ feature of Carbon:
 -   [Terminology](terminology.md) - A glossary establishing common terminology
     for describing the design
 -   [Detailed design](details.md) - In-depth description
+    -   [Interface variance](variance.md) - Stub describing `implicit_into` and
+        `implicit_from` interface variance (TODO for
+        [proposal #8186](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md))
     -   [Appendix: Coherence](appendix-coherence.md) - Describes the rationale
         for Carbon's choice to have coherent generics, and the alternatives.
     -   [Appendix: Rewrite constraints](appendix-rewrite-constraints.md) -

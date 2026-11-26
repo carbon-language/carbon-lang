@@ -1820,6 +1820,11 @@ applications of adapters to generics, see
 [Adapting types](/docs/design/generics/details.md#adapting-types) in the
 generics design.
 
+> **TODO:** Update this section to reflect these changes in
+> [proposal #8186: Interface variance (`implicit_into` and `implicit_from`)](/proposals/p008186-interface-variance-implicit-into-and-implicit-from.md#facets-create-adapters):
+> forming a facet of an interface with variant parameters implicitly
+> [creates an adapter](/docs/design/generics/variance.md#facets-create-adapters).
+
 **Comparison with other languages:** This is similar to the Rust idiom called
 "newtype", which is used to implement traits on types while avoiding
 [coherence](/docs/design/generics/terminology.md#coherence) problems, see
