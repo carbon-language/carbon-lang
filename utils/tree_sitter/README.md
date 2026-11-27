@@ -8,35 +8,18 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 Tree-sitter is currently used for syntax highlighting in supported editors.
 
+
 ## Development
 
-We use a non-hermetic tree-sitter invocation, so it must be installed locally.
-To install tree-sitter, run:
-
-```
-npm install -g tree-sitter-cli
-```
-
-### Building and Testing
-
-To build and test changes to the grammar using Bazel, provide specific flags to
-allow the build to access the system `tree-sitter` binary and environment.
+tree-sitter is only built by upstream for Windows, macOS, and Linux, so if
+you're using a BSD you cannot currently build the tree-sitter stuff. If you
+are so inclined, it is very reasonable that one could build tree-sitter in
+our bazel project, no one has yet done that work.
 
 ```bash
-bazel test //utils/tree_sitter:string_tests \
-  --strategy=Genrule=local \
-  --action_env=PATH \
-  --action_env=HOME
+bazel build //utils/tree_sitter:parser_shared
+bazel test //utils/tree_sitter:string_tests
 ```
-
--   `--strategy=Genrule=local`: Disables sandboxing for the genrule that runs
-    `tree-sitter generate`, allowing it to find the system-installed binary.
--   `--action_env=PATH`: Passes your current `PATH` to the build actions,
-    ensuring `tree-sitter` can be found. If `tree-sitter` is not in your default
-    PATH, you can specify it explicitly, for example:
-    `--action_env=PATH=/path/to/tree-sitter/bin:$PATH`.
--   `--action_env=HOME`: Passes your `HOME` environment variable, which
-    `tree-sitter` may need to locate its configuration or cache.
 
 ## Editor Installation
 
