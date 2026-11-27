@@ -313,26 +313,24 @@ library "[[@TEST_NAME]]";
 
 fn F(generic T: type);
 
-// CHECK:STDERR:        ╭─┤ fail_todo_unused_generic.carbon:[[@LINE+9]]:21
+// CHECK:STDERR:        ╭─┤ fail_todo_unused_generic.carbon:[[@LINE+8]]:21
 // CHECK:STDERR: ->     │ fn F(unused generic T: type) {}
-// CHECK:STDERR:        ·                     ━━━┳━━━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━┛
-// CHECK:STDERR:        · ┃ error: semantics TODO:
-// CHECK:STDERR:        · ┃        `generic redeclaration differs from previous declaration`
-// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ·                     ┳━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: generic redeclaration differs from previous
+// CHECK:STDERR:        ·                        ┃        declaration
+// CHECK:STDERR:        ·                        ┃        [RedeclGenericDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type) {}
 
 class C(T: type);
 
-// CHECK:STDERR:        ╭─┤ fail_todo_unused_generic.carbon:[[@LINE+9]]:16
+// CHECK:STDERR:        ╭─┤ fail_todo_unused_generic.carbon:[[@LINE+8]]:16
 // CHECK:STDERR: ->     │ class C(unused T: type) {}
-// CHECK:STDERR:        ·                ━━━┳━━━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━┛
-// CHECK:STDERR:        · ┃ error: semantics TODO:
-// CHECK:STDERR:        · ┃        `generic redeclaration differs from previous declaration`
-// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ·                ┳━━━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: generic redeclaration differs from previous
+// CHECK:STDERR:        ·                   ┃        declaration
+// CHECK:STDERR:        ·                   ┃        [RedeclGenericDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C(unused T: type) {}

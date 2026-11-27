@@ -650,23 +650,21 @@ auto FinishGenericRedecl(Context& context, SemIR::GenericId generic_id)
   if (auto [old_inst_id, new_inst_id] = FirstDifferenceBetweenEvalBlocks(
           context, old_eval_block, new_eval_block);
       new_inst_id.has_value()) {
-    // This shouldn't be possible: we should have already checked that the
-    // syntax of the redeclaration matches the prior declaration, and none of
-    // the name lookups or semantic checks should be allowed to differ between
-    // the two declarations, so we should have built the same eval block as in
-    // the prior declaration.
-    //
-    // However, that isn't a strong enough invariant that it seems appropriate
-    // to CHECK-fail here, so we produce a diagnostic with context.TODO()
-    // instead.
-    //
-    // TODO: Add something like context.UNEXPECTED() instead of using
-    // context.TODO() here because there's not really anything to do.
-    context.TODO(new_inst_id,
-                 "generic redeclaration differs from previous declaration");
+    // Some dependent generic instructions defer instruction comparison during
+    // redeclaration checking because their types cannot be exactly compared.
+    // So, a difference here means a valid redeclaration error, and we didn't
+    // have the needed information to diagnose it previously.
+    CARBON_DIAGNOSTIC(
+        RedeclGenericDiffers, Error,
+        "generic redeclaration differs from previous declaration");
+    CARBON_DIAGNOSTIC_LABEL(RedeclGenericDiffersPrevious,
+                            "instruction in previous declaration");
+    auto builder = context.emitter().Build(new_inst_id, RedeclGenericDiffers);
     if (old_inst_id.has_value()) {
-      context.TODO(old_inst_id, "instruction in previous declaration");
+      builder.Attach(old_inst_id, RedeclGenericDiffersPrevious);
     }
+    builder.Emit();
+
     DiscardGenericDecl(context);
     return;
   }

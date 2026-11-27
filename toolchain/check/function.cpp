@@ -285,6 +285,18 @@ auto CheckFunctionReturnTypeMatches(Context& context,
         !prev_return_type_id.has_value()) {
       return true;
     }
+
+    // Template types may not have enough information to compare successfully,
+    // so we fall back to syntax comparison between the decls for those.
+    auto prev_type_dep = context.constant_values().GetDependence(
+        context.types().GetConstantId(prev_return_type_id));
+    auto new_type_dep = context.constant_values().GetDependence(
+        context.types().GetConstantId(new_return_type_id));
+    if (prev_type_dep == SemIR::ConstantDependence::Template &&
+        new_type_dep == SemIR::ConstantDependence::Template) {
+      return true;
+    }
+
     if (!diagnose) {
       return false;
     }

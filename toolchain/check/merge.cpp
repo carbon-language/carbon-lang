@@ -269,6 +269,18 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     auto check_for_type_mismatch_with = [&](SemIR::TypeId prev_param_type_id) {
       if (check_type && !context.types().AreEqualAcrossDeclarations(
                             new_param_pattern.type_id(), prev_param_type_id)) {
+        // Template types may not have enough information to compare
+        // successfully, so we fall back to syntax comparison between the decls
+        // for those.
+        auto prev_type_dep = context.constant_values().GetDependence(
+            context.types().GetConstantId(prev_param_type_id));
+        auto new_type_dep = context.constant_values().GetDependence(
+            context.types().GetConstantId(new_param_pattern.type_id()));
+        if (prev_type_dep == SemIR::ConstantDependence::Template &&
+            new_type_dep == SemIR::ConstantDependence::Template) {
+          return true;
+        }
+
         if (diagnose) {
           CARBON_DIAGNOSTIC(
               RedeclParamDiffersType, Error,
