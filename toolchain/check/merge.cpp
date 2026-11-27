@@ -265,9 +265,7 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
     }
 
     // Conditionally checks for and diagnoses a type mismatch between the old
-    // and new parameter patterns. Returns false if a mismatch was found. We
-    // don't have enough information to match incomplete types, so we fall back
-    // to syntax matching only for those.
+    // and new parameter patterns. Returns false if a mismatch was found.
     auto check_for_type_mismatch_with = [&](SemIR::TypeId prev_param_type_id) {
       if (check_type && !context.types().AreEqualAcrossDeclarations(
                             new_param_pattern.type_id(), prev_param_type_id)) {
