@@ -279,7 +279,6 @@ auto CheckFunctionReturnTypeMatches(Context& context,
       prev_return_type_id == SemIR::ErrorInst::TypeId) {
     return false;
   }
-
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
     if (new_function.name_id == SemIR::NameId::CppOperator &&
