@@ -63,7 +63,6 @@ The following words are interpreted as keywords:
 -   `constraint`
 -   `continue`
 -   `default`
--   `destroy`
 -   `each`
 -   `else`
 -   `expand`
