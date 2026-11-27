@@ -280,21 +280,24 @@ auto CheckFunctionReturnTypeMatches(Context& context,
     return false;
   }
 
-  // Template types may not have enough information to compare successfully,
-  // so we fall back to syntax comparison between the decls for those.
-  auto prev_type_constant_id =
-      context.types().GetConstantId(prev_return_type_id);
-  if (context.constant_values().GetDependence(prev_type_constant_id) ==
-      SemIR::ConstantDependence::Template) {
-    return true;
-  }
-
   if (!context.types().AreEqualAcrossDeclarations(new_return_type_id,
                                                   prev_return_type_id)) {
     if (new_function.name_id == SemIR::NameId::CppOperator &&
         !prev_return_type_id.has_value()) {
       return true;
     }
+
+    // Template types may not have enough information to compare successfully,
+    // so we fall back to syntax comparison between the decls for those.
+    auto prev_type_dep = context.constant_values().GetDependence(
+        context.types().GetConstantId(prev_return_type_id));
+    auto new_type_dep = context.constant_values().GetDependence(
+        context.types().GetConstantId(new_return_type_id));
+    if (prev_type_dep == SemIR::ConstantDependence::Template &&
+        new_type_dep == SemIR::ConstantDependence::Template) {
+      return true;
+    }
+
     if (!diagnose) {
       return false;
     }

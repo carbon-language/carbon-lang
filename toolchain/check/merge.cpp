@@ -274,12 +274,15 @@ static auto CheckRedeclParam(Context& context, bool is_implicit_param,
         // Template types may not have enough information to compare
         // successfully, so we fall back to syntax comparison between the decls
         // for those.
-        auto type_constant_id =
-            context.types().GetConstantId(prev_param_type_id);
-        if (context.constant_values().GetDependence(type_constant_id) ==
-            SemIR::ConstantDependence::Template) {
+        auto prev_type_dep = context.constant_values().GetDependence(
+            context.types().GetConstantId(prev_param_type_id));
+        auto new_type_dep = context.constant_values().GetDependence(
+            context.types().GetConstantId(new_param_pattern.type_id()));
+        if (prev_type_dep == SemIR::ConstantDependence::Template &&
+            new_type_dep == SemIR::ConstantDependence::Template) {
           return true;
         }
+
         if (diagnose) {
           CARBON_DIAGNOSTIC(
               RedeclParamDiffersType, Error,
