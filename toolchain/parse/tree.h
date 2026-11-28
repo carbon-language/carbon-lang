@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TREE_H_
 #define CARBON_TOOLCHAIN_PARSE_TREE_H_
 
+#include <cstdint>
 #include <iterator>
 
 #include "common/check.h"
@@ -206,13 +207,13 @@ class Tree : public Printable<Tree> {
 
     auto kind() const -> NodeKind { return kind_; }
     auto set_kind(NodeKind kind) -> void { kind_ = kind; }
-    auto has_error() const -> bool { return has_error_; }
+    auto has_error() const -> bool { return has_error_ != 0; }
     auto token() const -> Lex::TokenIndex {
       return Lex::TokenIndex(token_index_);
     }
 
     auto Print(llvm::raw_ostream& output) const -> void {
-      output << "{kind: " << kind_ << ", has_error: " << has_error_
+      output << "{kind: " << kind_ << ", has_error: " << has_error()
              << ", token_index: " << token_index_ << "}\n";
     }
 
@@ -233,10 +234,10 @@ class Tree : public Printable<Tree> {
     // optional (and will depend on the particular parse implementation
     // strategy). The goal is that you can rely on grammar-based structural
     // invariants *until* you encounter a node with this set.
-    bool has_error_ : 1;
+    uint32_t has_error_ : 1;
 
     // The token root of this node.
-    unsigned token_index_ : Lex::TokenIndex::Bits;
+    uint32_t token_index_ : Lex::TokenIndex::Bits;
   };
 
   static_assert(sizeof(NodeImpl) == 8,

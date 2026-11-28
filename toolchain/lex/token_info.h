@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_LEX_TOKEN_INFO_H_
 #define CARBON_TOOLCHAIN_LEX_TOKEN_INFO_H_
 
+#include <cstdint>
+
 #include "common/check.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/value_ids.h"
@@ -193,7 +195,7 @@ class TokenInfo {
   // density and because these are the hottest fields of tokens for consumers
   // after lexing.
   //
-  // All three bitfields use `unsigned` so MSVC ABI packs them into a single
+  // All three bitfields use `uint32_t` so MSVC ABI packs them into a single
   // 4-byte storage unit, matching Itanium ABI.
   //
   // Payload values are typically ID types for which we create at most one per
@@ -202,9 +204,9 @@ class TokenInfo {
   // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
   // so this value never overflows if lexing succeeds.
   static_assert(sizeof(TokenKind) == 1, "TokenKind must pack to 8 bits");
-  unsigned kind_ : 8;
-  unsigned has_leading_space_ : 1;
-  unsigned token_payload_ : PayloadBits;
+  uint32_t kind_ : 8;
+  uint32_t has_leading_space_ : 1;
+  uint32_t token_payload_ : PayloadBits;
 
   // Separate storage for the byte offset, this is hot while lexing but then
   // generally cold.

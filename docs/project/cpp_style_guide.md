@@ -23,6 +23,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use of `auto`](#use-of-auto)
     -   [Copyable and movable types](#copyable-and-movable-types)
     -   [Static and global variables](#static-and-global-variables)
+    -   [Bitfields](#bitfields)
     -   [Foundational libraries and data types](#foundational-libraries-and-data-types)
     -   [Iterative algorithms](#iterative-algorithms)
 -   [Suggested `.clang-format` contents](#suggested-clang-format-contents)
@@ -237,6 +238,26 @@ parameters generally name the type of each parameter, though lambdas may use
 
 -   Global and static variables, whether at file, class, or function scope,
     should be declared `constexpr`.
+
+### Bitfields
+
+To pack bitfields portably across the Itanium and MSVC ABIs (where adjacent
+bitfields share a storage unit only when their underlying types have the same
+size):
+
+-   For each packed group of bitfields, choose the smallest explicitly sized
+    storage unit (`8`, `16`, `32`, or `64` bits) wide enough for all bitfields
+    in the group combined, and give every bitfield in the group a type of that
+    size.
+    -   A break at an aligned storage-unit boundary resets the packed group (for
+        example, bitfields that break cleanly at a 4-byte aligned bit position
+        can use two 32-bit units instead of one 64-bit unit).
+    -   Use `intN_t` for signed two's-complement values (width `>= 2`) and
+        `uintN_t` for unsigned values and 1-bit flags.
+    -   `bool` (in 8-bit groups) or an `enum` with an explicit unsigned
+        underlying type may be used when its size matches the group; otherwise
+        store in `uintN_t`.
+-   Guard layout-sensitive bitfield types with `static_assert(sizeof(...))`.
 
 ### Foundational libraries and data types
 
