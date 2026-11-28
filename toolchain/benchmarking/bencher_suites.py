@@ -35,11 +35,15 @@ class SuiteSpec:
     min_time: str = "0.05s"
     # Explicit allowlist of non-time Google Benchmark counters to export.
     extra_metrics: tuple[str, ...] = ()
+    # Explicit allowlist of synthetic measures derived by `run_bencher.py`.
+    derived_measures: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.label.startswith("//") or ":" not in self.label:
             raise ValueError(f"Expected canonical Bazel label: {self.label}")
-        unknown_units = set(self.extra_metrics) - MEASURE_UNITS.keys()
+        unknown_units = (
+            set(self.extra_metrics) | set(self.derived_measures)
+        ) - MEASURE_UNITS.keys()
         if unknown_units:
             raise ValueError(
                 f"Missing `MEASURE_UNITS` entry for {sorted(unknown_units)}."
@@ -72,7 +76,9 @@ class SuiteSpec:
 
     def allowed_measures(self) -> frozenset[str]:
         """Returns the complete set of Bencher measure names for this suite."""
-        return frozenset(("latency", *self.extra_metrics))
+        return frozenset(
+            ("latency", *self.extra_metrics, *self.derived_measures)
+        )
 
 
 @dataclass(frozen=True)
@@ -106,8 +112,9 @@ class ThresholdSpec:
         ]
 
 
-# Bencher unit string enabling automatic `B`..`PB` scaling in plots and tables.
+# Bencher unit strings for automatic formatting in plots and tables.
 BYTES_UNITS = "bytes (B)"
+PERCENTAGE_UNITS = "percentage (%)"
 
 # Deterministic memory counters reported by `prelude_benchmark`.
 PRELUDE_MEM_METRICS: tuple[str, ...] = (
@@ -118,8 +125,15 @@ PRELUDE_MEM_METRICS: tuple[str, ...] = (
     "MemSemIRInstBlocks",
 )
 
+# Synthetic measure expressing Carbon compile latency as a percentage of C++
+# (`100 * carbon / cpp`) for paired `compile_benchmark` variants.
+CARBON_VS_CPP_MEASURE = "CarbonVsCpp"
+
 # Project-wide Bencher unit strings for every opted-in custom measure.
-MEASURE_UNITS: dict[str, str] = {m: BYTES_UNITS for m in PRELUDE_MEM_METRICS}
+MEASURE_UNITS: dict[str, str] = {
+    **{m: BYTES_UNITS for m in PRELUDE_MEM_METRICS},
+    CARBON_VS_CPP_MEASURE: PERCENTAGE_UNITS,
+}
 
 SUITES: tuple[SuiteSpec, ...] = (
     SuiteSpec(
@@ -138,6 +152,7 @@ SUITES: tuple[SuiteSpec, ...] = (
         # Run all input sizes (`256..262144`) on nightly builds.
         nightly_filter=r"^BM_Compile(ApiFile|ImplFile)",
         runs=6,
+        derived_measures=(CARBON_VS_CPP_MEASURE,),
     ),
 )
 
@@ -161,6 +176,13 @@ _MEM_THRESHOLDS: tuple[ThresholdSpec, ...] = tuple(
 TRUNK_THRESHOLDS: tuple[ThresholdSpec, ...] = (
     ThresholdSpec(
         measure="latency",
+        test="t_test",
+        min_sample_size=10,
+        max_sample_size=64,
+        upper_boundary=0.995,
+    ),
+    ThresholdSpec(
+        measure=CARBON_VS_CPP_MEASURE,
         test="t_test",
         min_sample_size=10,
         max_sample_size=64,

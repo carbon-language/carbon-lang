@@ -28,6 +28,7 @@ from typing import Any, Optional
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.append(str(_REPO_ROOT))
 from toolchain.benchmarking.bencher_suites import (  # noqa: E402
+    CARBON_VS_CPP_MEASURE,
     MEASURE_UNITS,
     SUITES,
     TRUNK_THRESHOLDS,
@@ -136,6 +137,135 @@ def parse_benchmark_identity(
     raise BmfValidationError(f"Unknown benchmark suite: {target_name!r}")
 
 
+def _as_finite_float(val: Any, label: str) -> float:
+    """Converts `val` to a finite `float` or raises `BmfValidationError`."""
+    if not _is_finite_number(val):
+        raise BmfValidationError(f"Non-finite {label}: {val!r}")
+    return float(val)
+
+
+def _strip_measure_bounds(measures: Any) -> Any:
+    """Drops `lower_value` and `upper_value` from each metric object.
+
+    Bencher BMF v1 plots every named metric as its own line rather than an
+    error band, so keeping only `value` avoids tripling plot clutter while
+    preserving the median across repeated runs. Unexpected keys are left
+    untouched so `validate_bmf` still rejects malformed payloads.
+    """
+    if not isinstance(measures, dict):
+        return measures
+    return {
+        measure: (
+            {
+                k: v
+                for k, v in metric.items()
+                if k not in ("lower_value", "upper_value")
+            }
+            if isinstance(metric, dict)
+            else metric
+        )
+        for measure, metric in measures.items()
+    }
+
+
+def strip_metric_bounds(
+    bmf: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Drops `lower_value` and `upper_value` from every variant in `bmf`."""
+    return {
+        bench_name: [
+            {**variant, "measures": _strip_measure_bounds(variant["measures"])}
+            if isinstance(variant, dict) and "measures" in variant
+            else variant
+            for variant in variants
+        ]
+        if isinstance(variants, list)
+        else variants
+        for bench_name, variants in bmf.items()
+    }
+
+
+def _compute_carbon_vs_cpp_metric(
+    bench_name: str,
+    file_kind: str,
+    carbon_latency: dict[str, Any],
+    cpp_latency: dict[str, Any],
+) -> dict[str, float]:
+    """Computes `100 * carbon / cpp` latency percentage."""
+    label = f"latency for {bench_name!r} ({file_kind})"
+    c_val = _as_finite_float(carbon_latency.get("value"), label)
+    p_val = _as_finite_float(cpp_latency.get("value"), label)
+    if c_val < 0.0 or p_val <= 0.0:
+        raise BmfValidationError(f"Invalid {label}: ({c_val}, {p_val}).")
+    return {"value": 100.0 * c_val / p_val}
+
+
+def add_carbon_vs_cpp_ratios(
+    bmf: dict[str, list[dict[str, Any]]],
+) -> dict[str, list[dict[str, Any]]]:
+    """Synthesizes `CarbonVsCpp` variants for paired Carbon/C++ compile cases.
+
+    For every `compile_benchmark` (`<phase>/<size>`) and `file` pattern with
+    both `lang=carbon` and `lang=cpp` `latency` measures, appends a
+    `{"file": <pattern>}` variant measuring `100 * carbon / cpp`. Idempotent:
+    skips any `file` pattern that already has a `CarbonVsCpp` variant.
+    """
+    result: dict[str, list[dict[str, Any]]] = {}
+    for bench_name, variants in bmf.items():
+        updated = list(variants)
+        if _suite_for_v1_benchmark(bench_name) == "compile_benchmark":
+            by_file_lang: dict[tuple[str, str], dict[str, Any]] = {}
+            existing_ratios: set[str] = set()
+            file_order: list[str] = []
+            for variant in variants:
+                if not isinstance(variant, dict):
+                    continue
+                params = variant.get("parameters")
+                measures = variant.get("measures")
+                if not isinstance(params, dict) or not isinstance(
+                    measures, dict
+                ):
+                    continue
+                file_kind = params.get("file")
+                if not isinstance(file_kind, str):
+                    continue
+                if (
+                    params == {"file": file_kind}
+                    and CARBON_VS_CPP_MEASURE in measures
+                ):
+                    existing_ratios.add(file_kind)
+                    continue
+                lang = params.get("lang")
+                latency = measures.get("latency")
+                if (
+                    lang in ("carbon", "cpp")
+                    and set(params.keys()) == {"file", "lang"}
+                    and isinstance(latency, dict)
+                ):
+                    if file_kind not in file_order:
+                        file_order.append(file_kind)
+                    by_file_lang[(file_kind, lang)] = latency
+
+            for file_kind in file_order:
+                if file_kind in existing_ratios:
+                    continue
+                carbon_lat = by_file_lang.get((file_kind, "carbon"))
+                cpp_lat = by_file_lang.get((file_kind, "cpp"))
+                if carbon_lat is None or cpp_lat is None:
+                    continue
+                ratio_metric = _compute_carbon_vs_cpp_metric(
+                    bench_name, file_kind, carbon_lat, cpp_lat
+                )
+                updated.append(
+                    {
+                        "parameters": {"file": file_kind},
+                        "measures": {CARBON_VS_CPP_MEASURE: ratio_metric},
+                    }
+                )
+        result[bench_name] = updated
+    return result
+
+
 def convert_suite_bmf_to_v1(
     target_name: str, raw_bmf: dict[str, Any]
 ) -> dict[str, list[dict[str, Any]]]:
@@ -149,8 +279,13 @@ def convert_suite_bmf_to_v1(
             raise BmfValidationError(f"Invalid benchmark name: {raw_name!r}")
         bench_name, parameters = parse_benchmark_identity(target_name, raw_name)
         v1.setdefault(bench_name, []).append(
-            {"parameters": parameters, "measures": measures}
+            {
+                "parameters": parameters,
+                "measures": _strip_measure_bounds(measures),
+            }
         )
+    if target_name == "compile_benchmark":
+        return add_carbon_vs_cpp_ratios(v1)
     return v1
 
 
@@ -283,30 +418,24 @@ def validate_bmf(
                         f"Metric {bench_name!r}/{measure_name!r} missing "
                         "`value`."
                     )
-                extra_keys = metric_obj.keys() - {
-                    "value",
-                    "lower_value",
-                    "upper_value",
-                }
+                extra_keys = metric_obj.keys() - {"value"}
                 if extra_keys:
                     raise BmfValidationError(
                         f"Unexpected keys {sorted(extra_keys)} in "
                         f"{bench_name!r}/{measure_name!r}."
                     )
-                for k, v in metric_obj.items():
-                    if not _is_finite_number(v):
-                        raise BmfValidationError(
-                            f"Non-finite value for "
-                            f"{bench_name!r}/{measure_name!r}.{k}: {v!r}"
-                        )
-
-                val = float(metric_obj["value"])
-                low = float(metric_obj.get("lower_value", val))
-                high = float(metric_obj.get("upper_value", val))
-                if not (0.0 <= low <= val <= high):
+                val_raw = metric_obj["value"]
+                if not _is_finite_number(val_raw):
                     raise BmfValidationError(
-                        f"Invalid bounds [{low}, {high}] for `value` ({val}) "
-                        f"in {bench_name!r}/{measure_name!r}."
+                        f"Non-finite value for "
+                        f"{bench_name!r}/{measure_name!r}.value: {val_raw!r}"
+                    )
+
+                val = float(val_raw)
+                if val < 0.0:
+                    raise BmfValidationError(
+                        f"Negative value ({val}) in "
+                        f"{bench_name!r}/{measure_name!r}."
                     )
 
                 metric_count += 1
