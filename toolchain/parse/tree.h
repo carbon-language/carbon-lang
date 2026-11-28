@@ -5,7 +5,9 @@
 #ifndef CARBON_TOOLCHAIN_PARSE_TREE_H_
 #define CARBON_TOOLCHAIN_PARSE_TREE_H_
 
+#include <cstdint>
 #include <iterator>
+#include <type_traits>
 
 #include "common/check.h"
 #include "common/error.h"
@@ -197,22 +199,28 @@ class Tree : public Printable<Tree> {
 
   // The in-memory representation of data used for a particular node in the
   // tree.
+  //
+  // This is an 8-byte struct with no padding so that it can be read as a
+  // single 64-bit word, which lets `Verify` scan nodes cheaply.
   class NodeImpl : public Printable<NodeImpl> {
    public:
     explicit NodeImpl(NodeKind kind, bool has_error, Lex::TokenIndex token)
-        : kind_(kind), has_error_(has_error), token_index_(token.index) {
+        : kind_(kind),
+          has_error_(has_error),
+          unused_flags_(0),
+          token_index_(token.index) {
       CARBON_DCHECK(token.index >= 0, "Unexpected token for node: {0}", token);
     }
 
     auto kind() const -> NodeKind { return kind_; }
     auto set_kind(NodeKind kind) -> void { kind_ = kind; }
-    auto has_error() const -> bool { return has_error_; }
+    auto has_error() const -> bool { return has_error_ != 0; }
     auto token() const -> Lex::TokenIndex {
       return Lex::TokenIndex(token_index_);
     }
 
     auto Print(llvm::raw_ostream& output) const -> void {
-      output << "{kind: " << kind_ << ", has_error: " << has_error_
+      output << "{kind: " << kind_ << ", has_error: " << has_error()
              << ", token_index: " << token_index_ << "}\n";
     }
 
@@ -220,7 +228,7 @@ class Tree : public Printable<Tree> {
     // The kind of this node.
     NodeKind kind_;
 
-    // Whether this node is or contains a parse error.
+    // Whether this node is or contains a parse error, as 0 or 1.
     //
     // When this is true, this node and its children may not have the expected
     // grammatical production structure. Prior to reasoning about any specific
@@ -233,14 +241,27 @@ class Tree : public Printable<Tree> {
     // optional (and will depend on the particular parse implementation
     // strategy). The goal is that you can rely on grammar-based structural
     // invariants *until* you encounter a node with this set.
-    bool has_error_ : 1;
+    //
+    // Packed into a 16-bit bitfield group to fill the space between `kind_`
+    // and `token_index_` with no padding while leaving room for future flags.
+    // Any unused bits are explicitly zeroed so `NodeImpl` remains a
+    // padding-free 8-byte word.
+    uint16_t has_error_ : 1;
+    [[maybe_unused]] uint16_t unused_flags_ : 15;
 
     // The token root of this node.
-    unsigned token_index_ : Lex::TokenIndex::Bits;
+    int32_t token_index_;
   };
 
   static_assert(sizeof(NodeImpl) == 8,
                 "Unexpected size of node implementation!");
+  static_assert(std::has_unique_object_representations_v<NodeImpl>,
+                "Node implementation should have no padding!");
+
+  struct VerifyScanResult;
+
+  // Scans `node_impls_` as 8-byte words to detect error or placeholder nodes.
+  auto ScanNodesForVerify() const -> VerifyScanResult;
 
   // Sets the kind of a node. This is intended to allow putting the tree into a
   // state where verification can fail, in order to make the failure path of
